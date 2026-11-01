@@ -1,44 +1,278 @@
+import ActivityKit
 import SwiftUI
 import WidgetKit
 
-/// Placeholder do prompt 01. Live Activity e widgets reais chegam no prompt 09.
 @main
 struct MustWidgetsBundle: WidgetBundle {
     var body: some Widget {
-        PlaceholderWidget()
+        TodayWidget()
+        NearbyWidget()
+        PlanTomorrowWidget()
+        NextStopLiveActivity()
     }
 }
 
-struct PlaceholderEntry: TimelineEntry {
+// MARK: - Timeline
+
+struct SnapshotEntry: TimelineEntry {
     let date: Date
+    let snapshot: WidgetSnapshot?
 }
 
-struct PlaceholderProvider: TimelineProvider {
-    func placeholder(in context: Context) -> PlaceholderEntry { PlaceholderEntry(date: .now) }
+/// Lê o retrato que o app escreveu no App Group; atualiza a cada 30 min.
+struct SnapshotProvider: TimelineProvider {
+    func placeholder(in context: Context) -> SnapshotEntry { SnapshotEntry(date: .now, snapshot: .sample) }
 
-    func getSnapshot(in context: Context, completion: @escaping (PlaceholderEntry) -> Void) {
-        completion(PlaceholderEntry(date: .now))
+    func getSnapshot(in context: Context, completion: @escaping (SnapshotEntry) -> Void) {
+        completion(SnapshotEntry(date: .now, snapshot: context.isPreview ? .sample : (WidgetSnapshot.load() ?? .sample)))
     }
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<PlaceholderEntry>) -> Void) {
-        completion(Timeline(entries: [PlaceholderEntry(date: .now)], policy: .never))
+    func getTimeline(in context: Context, completion: @escaping (Timeline<SnapshotEntry>) -> Void) {
+        let entry = SnapshotEntry(date: .now, snapshot: WidgetSnapshot.load())
+        completion(Timeline(entries: [entry], policy: .after(.now.addingTimeInterval(30 * 60))))
     }
 }
 
-struct PlaceholderWidget: Widget {
+private struct OpenAppHint: View {
+    var body: some View {
+        Text("Abra o Must uma vez pra aparecer aqui.")
+            .font(SharedStyle.archivo(12))
+            .foregroundStyle(SharedStyle.secondary)
+    }
+}
+
+// MARK: - Hoje (médio)
+
+struct TodayWidget: Widget {
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: "dev.viniso.must.placeholder", provider: PlaceholderProvider()) { _ in
-            ZStack {
-                Circle().fill(Color(red: 0x22 / 255, green: 0xDD / 255, blue: 0x7E / 255))
-                Text("済")
-                    .font(.custom("ZenKakuGothicNew-Bold", fixedSize: 28))
-                    .foregroundStyle(Color(red: 0x0B / 255, green: 0x2A / 255, blue: 0x18 / 255))
-            }
-            .frame(width: 56, height: 56)
-            .containerBackground(.white, for: .widget)
+        StaticConfiguration(kind: "dev.viniso.must.today", provider: SnapshotProvider()) { entry in
+            TodayWidgetView(snapshot: entry.snapshot)
+                .containerBackground(.white, for: .widget)
+                .widgetURL(URL(string: "must://hoje"))
         }
-        .configurationDisplayName("Must")
-        .description("Em breve: Hoje, Perto de você e Montar o dia.")
+        .configurationDisplayName("Hoje")
+        .description("Gasto do dia, paradas feitas e a próxima.")
+        .supportedFamilies([.systemMedium])
+    }
+}
+
+struct TodayWidgetView: View {
+    var snapshot: WidgetSnapshot?
+
+    var body: some View {
+        if let s = snapshot {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Gasto hoje").font(SharedStyle.archivo(13)).foregroundStyle(SharedStyle.secondary)
+                    Text(s.spentText).font(SharedStyle.mono(28, .semibold)).foregroundStyle(SharedStyle.ink)
+                        .lineLimit(1).minimumScaleFactor(0.6)
+                    let progress = Text(s.hasDay ? "\(s.doneCount) de \(s.totalCount) feitos" : "sem dia montado").bold()
+                    Text("de \(s.budgetText) · \(progress)")
+                        .font(SharedStyle.archivo(12)).foregroundStyle(SharedStyle.secondary)
+                    Spacer(minLength: 0)
+                    HStack(spacing: 5) {
+                        ForEach(Array(s.seals.prefix(6).enumerated()), id: \.offset) { i, seal in
+                            ZStack {
+                                switch seal {
+                                case .done:
+                                    Circle().fill(SharedStyle.green)
+                                    Text("済").font(SharedStyle.kanji(10)).foregroundStyle(SharedStyle.greenText)
+                                case .next:
+                                    Circle().fill(SharedStyle.ink)
+                                    Text("\(i + 1)").font(SharedStyle.archivo(10, .bold)).foregroundStyle(.white)
+                                case .future:
+                                    Circle().fill(SharedStyle.surface)
+                                    Text("\(i + 1)").font(SharedStyle.archivo(10, .bold)).foregroundStyle(SharedStyle.secondary)
+                                }
+                            }
+                            .frame(width: 22, height: 22)
+                        }
+                    }
+                }
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Próxima").font(SharedStyle.archivo(12)).foregroundStyle(SharedStyle.blueText)
+                    Spacer(minLength: 0)
+                    Text(s.nextName ?? "Montar o dia").font(SharedStyle.archivo(15, .semibold)).foregroundStyle(SharedStyle.ink).lineLimit(2)
+                    Text([s.nextTime, s.nextMinutes.map { "\($0) min" }].compactMap { $0 }.joined(separator: " · "))
+                        .font(SharedStyle.mono(12, .semibold)).foregroundStyle(SharedStyle.blueText)
+                }
+                .padding(12)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                .background(SharedStyle.blueGradient, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            }
+        } else {
+            OpenAppHint()
+        }
+    }
+}
+
+// MARK: - Perto de você (pequeno)
+
+struct NearbyWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "dev.viniso.must.nearby", provider: SnapshotProvider()) { entry in
+            NearbyWidgetView(snapshot: entry.snapshot)
+                .containerBackground(SharedStyle.greenGradient, for: .widget)
+                .widgetURL(URL(string: "must://mapa"))
+        }
+        .configurationDisplayName("Perto de você")
+        .description("Quantos musts estão abertos perto (última posição do app).")
         .supportedFamilies([.systemSmall])
     }
 }
+
+struct NearbyWidgetView: View {
+    var snapshot: WidgetSnapshot?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text("Perto de você\(snapshot?.tempNow.map { " · \($0)°" } ?? "")")
+                .font(SharedStyle.archivo(12)).foregroundStyle(SharedStyle.greenText)
+            Spacer(minLength: 0)
+            Text("\(snapshot?.nearbyCount ?? 0)").font(SharedStyle.mono(44, .semibold)).foregroundStyle(SharedStyle.ink)
+            Text("musts abertos").font(SharedStyle.archivo(14, .semibold)).foregroundStyle(SharedStyle.ink)
+            Text(snapshot?.area ?? "—").font(SharedStyle.archivo(12)).foregroundStyle(SharedStyle.greenText).lineLimit(1)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+// MARK: - Montar o dia (pequeno, escuro)
+
+struct PlanTomorrowWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "dev.viniso.must.plan", provider: SnapshotProvider()) { entry in
+            PlanTomorrowView(snapshot: entry.snapshot)
+                .containerBackground(SharedStyle.ink, for: .widget)
+                .widgetURL(URL(string: "must://montar?date=\(entry.snapshot?.tomorrowDate ?? "")"))
+        }
+        .configurationDisplayName("Montar o dia")
+        .description("Previsão de amanhã e um atalho pra montar o roteiro.")
+        .supportedFamilies([.systemSmall])
+    }
+}
+
+struct PlanTomorrowView: View {
+    var snapshot: WidgetSnapshot?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Amanhã\(snapshot?.tomorrowWeather.map { " · \($0)" } ?? "")")
+                .font(SharedStyle.archivo(12)).foregroundStyle(.white.opacity(0.6)).lineLimit(1)
+            Spacer(minLength: 0)
+            Text("Montar o dia").font(SharedStyle.archivo(16, .semibold)).foregroundStyle(.white)
+            Text(snapshot?.tomorrowLine ?? "toque pra montar").font(SharedStyle.archivo(11)).foregroundStyle(.white.opacity(0.7)).lineLimit(1)
+            Text("Montar").font(SharedStyle.archivo(12, .semibold)).foregroundStyle(SharedStyle.greenText)
+                .padding(.horizontal, 12).padding(.vertical, 6)
+                .background(Capsule().fill(SharedStyle.green))
+                .padding(.top, 2)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+// MARK: - Live Activity
+
+struct NextStopLiveActivity: Widget {
+    var body: some WidgetConfiguration {
+        ActivityConfiguration(for: NextStopAttributes.self) { context in
+            LockScreenStopView(state: context.state)
+                .activityBackgroundTint(SharedStyle.ink)
+                .activitySystemActionForegroundColor(.white)
+                .widgetURL(URL(string: "must://hoje"))
+        } dynamicIsland: { context in
+            DynamicIsland {
+                DynamicIslandExpandedRegion(.leading) {
+                    HStack(spacing: 8) {
+                        NumberBadge(number: context.state.number)
+                        Text(context.state.name).font(SharedStyle.archivo(15, .semibold)).foregroundStyle(.white).lineLimit(1)
+                    }
+                }
+                DynamicIslandExpandedRegion(.trailing) {
+                    LeaveTime(state: context.state, size: 18)
+                }
+                DynamicIslandExpandedRegion(.bottom) {
+                    ProgressDetail(state: context.state)
+                }
+            } compactLeading: {
+                NumberBadge(number: context.state.number)
+            } compactTrailing: {
+                Text(context.state.minutesAway.map { "\($0) min" } ?? "agora")
+                    .font(SharedStyle.mono(13, .semibold)).foregroundStyle(SharedStyle.green)
+            } minimal: {
+                NumberBadge(number: context.state.number)
+            }
+            .widgetURL(URL(string: "must://hoje"))
+        }
+    }
+}
+
+private struct NumberBadge: View {
+    var number: Int
+    var body: some View {
+        Text("\(number)").font(SharedStyle.archivo(12, .bold)).foregroundStyle(SharedStyle.greenText)
+            .frame(width: 22, height: 22).background(Circle().fill(SharedStyle.green))
+    }
+}
+
+private struct LeaveTime: View {
+    var state: NextStopAttributes.ContentState
+    var size: CGFloat
+
+    var body: some View {
+        VStack(alignment: .trailing, spacing: 0) {
+            if let leave = state.leaveAt, leave > .now {
+                Text(leave, style: .time).font(SharedStyle.mono(size, .semibold)).foregroundStyle(SharedStyle.green)
+                Text("saia às").font(SharedStyle.archivo(12)).foregroundStyle(.white.opacity(0.6))
+            } else {
+                Text(state.at, style: .time).font(SharedStyle.mono(size, .semibold)).foregroundStyle(SharedStyle.green)
+                Text("saia agora").font(SharedStyle.archivo(12)).foregroundStyle(.white.opacity(0.6))
+            }
+        }
+    }
+}
+
+private struct ProgressDetail: View {
+    var state: NextStopAttributes.ContentState
+
+    var body: some View {
+        HStack(spacing: 12) {
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(.white.opacity(0.18))
+                    Capsule().fill(SharedStyle.blue).frame(width: geo.size.width * max(0.04, state.progress))
+                }
+            }
+            .frame(height: 5)
+            Text(state.detail).font(SharedStyle.mono(12)).foregroundStyle(.white.opacity(0.85)).lineLimit(1).fixedSize()
+        }
+    }
+}
+
+struct LockScreenStopView: View {
+    var state: NextStopAttributes.ContentState
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Must · próxima parada").font(SharedStyle.archivo(13)).foregroundStyle(.white.opacity(0.6))
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        Text(state.name).font(SharedStyle.archivo(20, .semibold)).foregroundStyle(.white).lineLimit(1)
+                        if let local = state.nameLocal {
+                            Text(local).font(.custom("ZenKakuGothicNew-Medium", fixedSize: 12)).foregroundStyle(.white.opacity(0.6)).lineLimit(1)
+                        }
+                    }
+                }
+                Spacer()
+                LeaveTime(state: state, size: 22)
+            }
+            ProgressDetail(state: state)
+        }
+        .padding(18)
+    }
+}
+
+#Preview("Hoje", as: .systemMedium) { TodayWidget() } timeline: { SnapshotEntry(date: .now, snapshot: .sample) }
+#Preview("Perto", as: .systemSmall) { NearbyWidget() } timeline: { SnapshotEntry(date: .now, snapshot: .sample) }
+#Preview("Montar", as: .systemSmall) { PlanTomorrowWidget() } timeline: { SnapshotEntry(date: .now, snapshot: .sample) }

@@ -102,6 +102,7 @@ targets:
     platform: iOS
     sources:
       - path: Must/Widgets
+      - path: Must/Shared
       - path: Must/Resources/Fonts
         excludes:
           - "licenses/**"
@@ -109,6 +110,7 @@ targets:
     dependencies:
       - sdk: WidgetKit.framework
       - sdk: SwiftUI.framework
+      - sdk: ActivityKit.framework
     entitlements:
       path: Must/Widgets/MustWidgets.entitlements
       properties:
