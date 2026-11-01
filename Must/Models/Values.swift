@@ -100,6 +100,42 @@ enum SourceKind: String, Codable, CaseIterable, Sendable {
     }
 }
 
+/// Tipo de evento da viagem sem lugar no board (Reservas).
+enum TripEventKind: String, Codable, CaseIterable, Sendable, Identifiable {
+    case train, flight, dayTrip, event, other
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .train: "trem"
+        case .flight: "voo"
+        case .dayTrip: "dia inteiro"
+        case .event: "evento"
+        case .other: "outro"
+        }
+    }
+
+    /// Tag na lista de Reservas.
+    var tag: String {
+        switch self {
+        case .train, .flight: "viagem"
+        case .dayTrip: "dia"
+        case .event, .other: "evento"
+        }
+    }
+
+    var icon: MustIcon {
+        switch self {
+        case .train: .shinkansenTrem
+        case .flight: .rota
+        case .dayTrip: .calendario
+        case .event: .reservaAncora
+        case .other: .pino
+        }
+    }
+}
+
 /// Foto de fundo de uma lista (Wikimedia Commons, CC).
 struct ListPhoto: Codable, Hashable, Sendable {
     /// Id da foto na fonte (nome antigo mantido pra não migrar o banco).

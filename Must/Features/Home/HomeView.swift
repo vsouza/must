@@ -118,6 +118,10 @@ struct HomeView: View {
             HStack(spacing: 22) {
                 ForEach(HeaderTab.allCases, id: \.self) { tab in
                     Button {
+                        if tab == .viagem {
+                            router.push(.trip, on: .inicio)
+                            return
+                        }
                         headerTab = tab
                         withAnimation(.snappy) { proxy.scrollTo(tab, anchor: .top) }
                     } label: {

@@ -181,8 +181,8 @@ extension TripInfo {
     /// "dia 3 de 5 em Tóquio"
     func dayIndex(in city: City, on date: Date, calendar: Calendar) -> (index: Int, total: Int)? {
         guard hasTrip, let from = city.from, let to = city.to else { return nil }
-        let isLast = city.id == cities.last?.id
-        let total = (calendar.dateComponents([.day], from: from, to: to).day ?? 0) + (isLast ? 1 : 0)
+        // Conta o trecho inteiro, com o dia de troca ("Tóquio 13–17" = 5 dias), como no design.
+        let total = (calendar.dateComponents([.day], from: from, to: to).day ?? 0) + 1
         let index = (calendar.dateComponents([.day], from: from, to: calendar.startOfDay(for: date)).day ?? 0) + 1
         return (min(max(1, index), max(1, total)), max(1, total))
     }

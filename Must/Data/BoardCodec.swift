@@ -153,6 +153,7 @@ struct BoardCodec {
 
         summary.expensesInserted = try importExpenses(board.expenses ?? [], places: places)
         summary.daysUpserted = try importDays(board.days ?? [], places: places)
+        try importEvents(board.events ?? [])
 
         try context.save()
         Log.data.info("import \(region.rawValue): \(summary.description, privacy: .public)")
@@ -272,6 +273,18 @@ struct BoardCodec {
         return count
     }
 
+    /// Eventos: dedupe por (instante, título).
+    private func importEvents(_ items: [BoardEvent]) throws {
+        let existing = try context.fetch(FetchDescriptor<TripEvent>())
+        var keys = Set(existing.map { "\(Int($0.at.timeIntervalSince1970))|\($0.title)" })
+        for item in items {
+            let key = "\(Int(item.at.timeIntervalSince1970))|\(item.title)"
+            guard keys.insert(key).inserted else { continue }
+            context.insert(TripEvent(at: item.at, title: item.title, kind: item.kind ?? .event, note: item.note ?? "",
+                                     allDay: item.allDay ?? false, weatherDependent: item.weatherDependent ?? false))
+        }
+    }
+
     static func cityName(from id: String) -> String {
         let letters = id.trimmingCharacters(in: .decimalDigits)
         return letters.prefix(1).uppercased() + letters.dropFirst()
@@ -287,6 +300,7 @@ struct BoardCodec {
         let places = try context.fetch(FetchDescriptor<Place>(sortBy: [SortDescriptor(\.id)]))
         let expenses = try context.fetch(FetchDescriptor<Expense>(sortBy: [SortDescriptor(\.at)]))
         let days = try context.fetch(FetchDescriptor<PlannedDay>(sortBy: [SortDescriptor(\.date)]))
+        let events = try context.fetch(FetchDescriptor<TripEvent>(sortBy: [SortDescriptor(\.at), SortDescriptor(\.title)]))
 
         let boardTrip = trip.map { t in
             BoardTrip(start: t.start.map(d.dayString), end: t.end.map(d.dayString), home: t.home,
@@ -322,6 +336,10 @@ struct BoardCodec {
                              s.place.map { BoardStop(placeId: $0.id, at: d.timeString(s.at), done: s.done) }
                          },
                          accepted: day.accepted)
+            },
+            events: events.map { e in
+                BoardEvent(at: e.at, title: e.title, kind: e.kind, note: e.note.isEmpty ? nil : e.note,
+                           allDay: e.allDay, weatherDependent: e.weatherDependent)
             }
         )
     }

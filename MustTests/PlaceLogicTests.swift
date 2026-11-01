@@ -222,3 +222,47 @@ struct SavedPlacesImporterTests {
         #expect(places.first?.note == "Toyosu")
     }
 }
+
+@MainActor
+struct TripStatsTests {
+    private let region = Region.jp
+
+    private func trip() -> TripInfo {
+        let d = BoardDates(timeZone: region.timeZone)
+        func city(_ id: String, _ name: String, _ from: String, _ to: String) -> City {
+            City(id: id, name: name, from: d.day(from: from), to: d.day(from: to), tz: "Asia/Tokyo", currency: "JPY", lat: 0, lng: 0)
+        }
+        return TripInfo(start: d.day(from: "2026-11-11"), end: d.day(from: "2026-11-24"), home: "Naka-Meguro", cities: [
+            city("tokyo1", "Tóquio", "2026-11-13", "2026-11-17"), city("kyoto", "Kyoto", "2026-11-17", "2026-11-20"),
+            city("tokyo2", "Tóquio", "2026-11-20", "2026-11-24"),
+        ])
+    }
+
+    @Test func dayStatesAcrossTheTrip() {
+        let cal = region.calendar
+        let d = BoardDates(timeZone: region.timeZone)
+        let now = BoardDates.parseDateTime("2026-11-15T10:00:00+09:00")!
+        let t = trip()
+        let period = TripStats.period(trip: t, now: now, calendar: cal)
+        let cells = TripStats.days(in: period, trip: t, now: now, calendar: cal, doneDays: [d.day(from: "2026-11-13")!, d.day(from: "2026-11-14")!])
+        func state(_ day: String) -> TripStats.DayState? { cells.first { $0.date == d.day(from: day) }?.state }
+        #expect(cells.count == 14)
+        #expect(state("2026-11-13") == .done)
+        #expect(state("2026-11-15") == .today)
+        #expect(state("2026-11-16") == .future)
+        #expect(state("2026-11-18") == .otherCity) // Kyoto
+        #expect(state("2026-11-21") == .future)    // Tóquio de novo: mesma cidade de hoje
+        #expect(state("2026-11-12") == .past)
+        #expect(TripStats.elapsedDays(period, now: now, calendar: cal) == 5)
+    }
+
+    @Test func bhUsesTheCurrentMonth() {
+        let cal = Region.bh.calendar
+        let now = BoardDates.parseDateTime("2026-11-01T10:00:00-03:00")!
+        let period = TripStats.period(trip: nil, now: now, calendar: cal)
+        let d = BoardDates(timeZone: Region.bh.timeZone)
+        #expect(d.dayString(period.lowerBound) == "2026-11-01")
+        #expect(d.dayString(period.upperBound) == "2026-11-30")
+        #expect(TripStats.elapsedDays(period, now: now, calendar: cal) == 1)
+    }
+}

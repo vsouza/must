@@ -349,3 +349,23 @@ struct RegionStoreTests {
         #expect(try store.container.mainContext.fetchCount(FetchDescriptor<Expense>()) == 1)
     }
 }
+
+@MainActor
+struct TripEventCodecTests {
+    @Test func eventsRoundTripWithoutDuplicates() throws {
+        let container = try ModelContainer(for: MustSchema.schema, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        let ctx = container.mainContext
+        let codec = BoardCodec(context: ctx, region: .jp)
+        final class T {}
+        try codec.import(board: BoardCodec.decode(Data(contentsOf: Region.jp.seedURL(in: Bundle(for: T.self))!)))
+        let at = BoardDates.parseDateTime("2026-11-17T09:12:00+09:00")!
+        ctx.insert(TripEvent(at: at, title: "Shinkansen → Kyoto", kind: .train, note: "Nozomi 215 · vagão 8"))
+        try ctx.save()
+        let exported = try codec.export()
+        #expect(exported.events?.first?.title == "Shinkansen → Kyoto")
+        let json = String(data: try BoardCodec.encode(exported), encoding: .utf8)!
+        #expect(json.contains("2026-11-17T09:12:00+09:00"))
+        try codec.import(board: BoardCodec.decode(BoardCodec.encode(exported)))
+        #expect(try ctx.fetchCount(FetchDescriptor<TripEvent>()) == 1)
+    }
+}

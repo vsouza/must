@@ -12,6 +12,17 @@ struct Board: Codable, Equatable, Sendable {
     var places: [BoardPlace]
     var expenses: [BoardExpense]?
     var days: [BoardDay]?
+    /// Extensão do schema: eventos sem lugar (Shinkansen, voo, dia inteiro).
+    var events: [BoardEvent]?
+}
+
+struct BoardEvent: Codable, Equatable, Sendable {
+    var at: Date
+    var title: String
+    var kind: TripEventKind?
+    var note: String?
+    var allDay: Bool?
+    var weatherDependent: Bool?
 }
 
 struct BoardTrip: Codable, Equatable, Sendable {

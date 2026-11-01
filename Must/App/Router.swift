@@ -9,6 +9,10 @@ enum Route: Hashable {
     case settings
     /// Montar o dia (meia-noite do dia, no fuso da região).
     case montar(date: Date)
+    case trip
+    case reservations
+    /// Um dia aceito que não é hoje.
+    case day(date: Date)
 }
 
 /// Navegação do app: aba atual, pilha de cada aba e o que está apresentado por cima.
@@ -64,16 +68,29 @@ final class AppRouter {
         self.tab = tab
     }
 
-    /// `must://add?url=…`
-    func handle(url: URL) {
+    /// `must://add?url=…`, `must://hoje`, `must://montar?date=2026-11-16`, `must://lugar/<id>`, `must://mapa`
+    func handle(url: URL, region: Region) {
         guard url.scheme == "must" else { return }
         let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
         switch url.host() {
         case "add":
             sheet = .addLink(url: items.first { $0.name == "url" }?.value, listId: nil)
         case "hoje":
-            tab = .hoje
+            sheet = nil
+            select(.hoje)
+            paths[.hoje] = []
+        case "mapa":
+            sheet = nil
+            select(.mapa)
+        case "montar":
+            sheet = nil
+            let dates = BoardDates(timeZone: region.timeZone)
+            let day = items.first { $0.name == "date" }?.value.flatMap(dates.day(from:))
+                ?? region.calendar.startOfDay(for: AppClock.now)
+            paths[.hoje] = []
+            push(.montar(date: day), on: .hoje)
         case "lugar":
+            sheet = nil
             let id = url.pathComponents.dropFirst().first
             if let id { push(.place(id: id), on: .musts) }
         default:
@@ -92,6 +109,9 @@ extension View {
             case .place(let id): PlaceView(placeId: id)
             case .settings: SettingsView()
             case .montar(let date): MontarView(date: date)
+            case .trip: TripView()
+            case .reservations: ReservationsView()
+            case .day(let date): TodayView(date: date)
             }
         }
     }

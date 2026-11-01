@@ -197,6 +197,35 @@ final class Stop {
     }
 }
 
+/// Evento da viagem sem lugar no board: Shinkansen, voo, "Nara · dia inteiro".
+@Model
+final class TripEvent {
+    @Attribute(.unique) var id: UUID
+    var at: Date
+    var title: String
+    var kindRaw: String
+    var note: String
+    /// Sem hora (dia inteiro).
+    var allDay: Bool
+    /// Só acontece com tempo bom (ex.: Fuji).
+    var weatherDependent: Bool
+
+    init(at: Date, title: String, kind: TripEventKind = .event, note: String = "", allDay: Bool = false, weatherDependent: Bool = false) {
+        self.id = UUID()
+        self.at = at
+        self.title = title
+        self.kindRaw = kind.rawValue
+        self.note = note
+        self.allDay = allDay
+        self.weatherDependent = weatherDependent
+    }
+
+    var kind: TripEventKind {
+        get { TripEventKind(rawValue: kindRaw) ?? .other }
+        set { kindRaw = newValue.rawValue }
+    }
+}
+
 /// Viagem (singleton por região). Em BH não há start/end: só a cidade de casa.
 @Model
 final class TripInfo {
@@ -288,7 +317,7 @@ extension ModelContext {
 /// Todos os modelos persistidos.
 enum MustSchema {
     static let models: [any PersistentModel.Type] = [
-        MustList.self, Place.self, Expense.self, PlannedDay.self, Stop.self, TripInfo.self, Settings.self,
+        MustList.self, Place.self, Expense.self, PlannedDay.self, Stop.self, TripInfo.self, Settings.self, TripEvent.self,
     ]
     static var schema: Schema { Schema(models) }
 }

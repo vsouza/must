@@ -10,13 +10,17 @@ struct TodayView: View {
     @Query private var days: [PlannedDay]
     @Query private var expenses: [Expense]
     @Query private var settingsList: [Settings]
+    @Environment(\.dismiss) private var dismiss
+
+    /// Outro dia aceito (aberto pela Viagem). `nil` = hoje.
+    var date: Date?
 
     private var region: Region { store.region }
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { _ in
             let now = AppClock.now
-            let start = region.calendar.startOfDay(for: now)
+            let start = region.calendar.startOfDay(for: date ?? now)
             let today = days.first { $0.date == start && $0.accepted }
             ZStack(alignment: .bottomTrailing) {
                 ScrollView {
@@ -52,7 +56,11 @@ struct TodayView: View {
 
     private func topBar(hasDay: Bool) -> some View {
         HStack {
-            Color.clear.frame(width: 40, height: 40)
+            if date != nil {
+                IconButton(.voltar, label: "Voltar") { dismiss() }
+            } else {
+                Color.clear.frame(width: 40, height: 40)
+            }
             Spacer()
             Button { router.sheet = .expense(placeId: nil) } label: {
                 Text("+ gasto")
@@ -98,7 +106,7 @@ struct TodayView: View {
         let current = stops.first { !$0.done }
         return VStack(alignment: .leading, spacing: 18) {
             VStack(alignment: .leading, spacing: 6) {
-                Text("Hoje").mustTitle()
+                Text(date.map { region.shortDay($0) } ?? "Hoje").mustTitle()
                 Text("dia \(day.kind.label) · \(done) de \(stops.count) feitos").mustSerif(18).foregroundStyle(Color.must.secondary)
             }
             .padding(.top, 22)
@@ -109,7 +117,7 @@ struct TodayView: View {
 
     /// Gasto do dia (verde) e da exceção aceita (azul).
     private func spendCard(day: PlannedDay?, now: Date) -> some View {
-        let range = region.dayRange(now)
+        let range = region.dayRange(date ?? now)
         let todays = expenses.filter { range.contains($0.at) }
         let exceptionIds = Set(day?.stops.filter(\.isException).compactMap { $0.place?.id } ?? [])
         let exception = todays.filter { $0.place.map { exceptionIds.contains($0.id) } ?? false }.reduce(0) { $0 + $1.amount }

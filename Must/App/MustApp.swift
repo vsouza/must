@@ -46,16 +46,38 @@ struct AppRoot: View {
                 DebugLaunch.apply(to: router, context: context, region: store.region, services: services)
                 #endif
             }
-            .task { await services.sync.syncIfNeeded(context: context, region: store.region) }
-            .onChange(of: scenePhase) { _, phase in
+            .task {
+                await services.sync.syncIfNeeded(context: context, region: store.region)
+                OutsideBridge.refresh(context: context, region: store.region, services: services)
+            }
+            // Widgets e Live Activity acompanham qualquer gravação (dia aceito, 済, troca, gasto).
+            .onReceive(NotificationCenter.default.publisher(for: ModelContext.didSave)) { _ in
+                refreshOutsideSoon()
+            }
+            .onChange(of: scenePhase, initial: true) { _, phase in
                 if phase == .active {
                     services.location.start()
-                    Task { await services.sync.syncIfNeeded(context: context, region: store.region) }
+                    Task {
+                        await services.sync.syncIfNeeded(context: context, region: store.region)
+                        OutsideBridge.refresh(context: context, region: store.region, services: services)
+                    }
                 } else if phase == .background {
                     services.location.stop()
                 }
             }
-            .onOpenURL { router.handle(url: $0) }
+            .onOpenURL { router.handle(url: $0, region: store.region) }
+    }
+
+    @State private var outsideTask: Task<Void, Never>?
+
+    /// Junta várias gravações seguidas numa atualização só.
+    private func refreshOutsideSoon() {
+        outsideTask?.cancel()
+        outsideTask = Task {
+            try? await Task.sleep(for: .milliseconds(600))
+            guard !Task.isCancelled else { return }
+            OutsideBridge.refresh(context: context, region: store.region, services: services)
+        }
     }
 
     private static func shouldShowOnboarding(onboarded: Bool) -> Bool {
@@ -103,6 +125,8 @@ enum DebugLaunch {
             router.select(.hoje)
         case "mapa": router.select(.mapa)
         case "assistente": router.sheet = .assistant
+        case "viagem": router.push(.trip, on: .inicio)
+        case "reservas": router.push(.reservations, on: .inicio)
         case "sincronizar":
             router.push(.settings, on: .inicio)
             Task { await services.sync.syncPlaces(context: context, region: region) }
