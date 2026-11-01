@@ -35,7 +35,7 @@ enum ListMode: String, Sendable, Hashable, CaseIterable {
 }
 
 /// Previsão de um dia (preenchida pelo WeatherService no prompt 07).
-struct DayWeather: Sendable, Hashable {
+struct DayWeather: Sendable, Hashable, Codable {
     var tempMin: Double
     var tempMax: Double
     /// Código WMO (Open-Meteo).

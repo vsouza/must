@@ -1,0 +1,12 @@
+{
+  "note": "Últimos trens pra casa (aproximados — confira no Japan Transit/Google antes da viagem e edite aqui).",
+  "home": "Naka-Meguro",
+  "homeStation": "中目黒",
+  "trains": [
+    {"line": "H", "lineName": "Hibiya", "from": "銀座", "fromLatin": "Ginza", "to": "中目黒", "last": "00:12"},
+    {"line": "H", "lineName": "Hibiya", "from": "六本木", "fromLatin": "Roppongi", "to": "中目黒", "last": "00:24"},
+    {"line": "H", "lineName": "Hibiya", "from": "恵比寿", "fromLatin": "Ebisu", "to": "中目黒", "last": "00:30"},
+    {"line": "TY", "lineName": "Tōyoko", "from": "渋谷", "fromLatin": "Shibuya", "to": "中目黒", "last": "00:44"},
+    {"line": "JY", "lineName": "Yamanote → Hibiya", "from": "新宿", "fromLatin": "Shinjuku", "to": "中目黒", "last": "23:58"}
+  ]
+}

@@ -106,6 +106,8 @@ struct ListPhoto: Codable, Hashable, Sendable {
     var url: String?
     var credit: String?
     var license: String?
+    /// Página da foto no Flickr (o crédito abre aqui).
+    var page: String?
 }
 
 struct Reservation: Codable, Hashable, Sendable {
