@@ -13,8 +13,6 @@ struct PlaceView: View {
     @Query private var matches: [Place]
     @Query private var trips: [TripInfo]
 
-    @State private var askingSpent = false
-    @State private var spentText = ""
 
     init(placeId: String) {
         self.placeId = placeId
@@ -55,16 +53,6 @@ struct PlaceView: View {
         }
         .background(Color.must.bg.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
-        .alert("Quanto foi?", isPresented: $askingSpent) {
-            TextField(region.currencySymbol, text: $spentText).keyboardType(.decimalPad)
-            Button("Marcar 済") {
-                let value = Double(spentText.replacingOccurrences(of: ".", with: "").replacingOccurrences(of: ",", with: ".")) ?? 0
-                PlaceActions.markDone(place, spent: max(0, value), context: context)
-            }
-            Button("Cancelar", role: .cancel) {}
-        } message: {
-            Text("Pode ser 0. Vira um gasto de hoje em \(region.currency).")
-        }
     }
 
     // MARK: Hero
@@ -295,10 +283,7 @@ struct PlaceView: View {
                 GhostButton("Desfazer 済") { PlaceActions.undoDone(place, context: context) }
                     .frame(width: 150)
             } else {
-                PrimaryButton("Feito", icon: .feito) {
-                    spentText = place.price.map { region.money($0, symbol: false) } ?? ""
-                    askingSpent = true
-                }
+                PrimaryButton("Feito", icon: .feito) { router.sheet = .expense(placeId: place.id) }
                 .frame(width: 130)
             }
         }

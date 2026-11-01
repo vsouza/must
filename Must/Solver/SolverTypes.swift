@@ -54,6 +54,7 @@ struct DayWeather: Sendable, Hashable {
 struct SolverPlace: Sendable, Hashable, Identifiable {
     var id: String
     var name: String
+    var nameLocal: String? = nil
     var listId: String
     var listColor: MustColor
     var sub: String?
@@ -81,7 +82,7 @@ struct SolverPlace: Sendable, Hashable, Identifiable {
 extension SolverPlace {
     @MainActor
     init(_ place: Place) {
-        self.init(id: place.id, name: place.name, listId: place.list?.id ?? "", listColor: place.list?.color ?? .eat,
+        self.init(id: place.id, name: place.name, nameLocal: place.nameLocal, listId: place.list?.id ?? "", listColor: place.list?.color ?? .eat,
                   sub: place.sub, cityId: place.cityId, area: place.area, lat: place.lat, lng: place.lng, price: place.price,
                   windows: place.windows, hours: place.hours, reservation: place.reservation, saveForEnd: place.saveForEnd,
                   allowBudgetException: place.allowBudgetException, queueMinutes: place.queueMinutes, notes: place.notes,
@@ -89,7 +90,7 @@ extension SolverPlace {
     }
 
     init(_ p: BoardPlace, color: MustColor) {
-        self.init(id: p.id, name: p.name, listId: p.listId, listColor: color, sub: p.sub, cityId: p.cityId, area: p.area,
+        self.init(id: p.id, name: p.name, nameLocal: p.nameLocal, listId: p.listId, listColor: color, sub: p.sub, cityId: p.cityId, area: p.area,
                   lat: p.lat ?? 0, lng: p.lng ?? 0, price: p.price, windows: p.window ?? [], hours: p.hours,
                   reservation: p.reservation, saveForEnd: p.saveForEnd ?? false, allowBudgetException: p.allowBudgetException ?? false,
                   queueMinutes: p.queueMinutes, notes: p.notes ?? "", sourceKind: p.source?.kind, done: p.done != nil)

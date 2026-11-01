@@ -27,6 +27,7 @@ struct RootView: View {
             case .addLink(let url, let listId): AddLinkView(initialURL: url, preferredListId: listId)
             case .editPlace(let id): EditPlaceView(placeId: id)
             case .newPlace(let listId): EditPlaceView(newInListId: listId)
+            case .expense(let placeId): ExpenseView(placeId: placeId)
             case .assistant: AssistantPlaceholder()
             }
         }
@@ -46,7 +47,7 @@ struct RootView: View {
     @ViewBuilder private func root(for tab: MustTab) -> some View {
         switch tab {
         case .inicio: HomeView()
-        case .hoje: TodayPlaceholder()
+        case .hoje: TodayView()
         case .mapa: MapPlaceholder()
         case .musts: MustsHubView()
         }
@@ -59,12 +60,6 @@ struct TabBarSpacer: View {
 }
 
 // MARK: - Placeholders (prompts 05, 06, 08)
-
-struct TodayPlaceholder: View {
-    var body: some View {
-        PlaceholderScreen(title: "Hoje", subtitle: "o dia montado aparece aqui", note: "Montar o dia chega no prompt 05.", icon: .hoje)
-    }
-}
 
 struct MapPlaceholder: View {
     @Environment(AppRouter.self) private var router

@@ -7,6 +7,8 @@ enum Route: Hashable {
     case saveForEnd
     case place(id: String)
     case settings
+    /// Montar o dia (meia-noite do dia, no fuso da região).
+    case montar(date: Date)
 }
 
 /// Navegação do app: aba atual, pilha de cada aba e o que está apresentado por cima.
@@ -17,6 +19,7 @@ final class AppRouter {
         case addLink(url: String?, listId: String?)
         case editPlace(id: String)
         case newPlace(listId: String?)
+        case expense(placeId: String?)
         case assistant
 
         var id: String {
@@ -24,6 +27,7 @@ final class AppRouter {
             case .addLink(let url, let list): "add-\(url ?? "")-\(list ?? "")"
             case .editPlace(let id): "edit-\(id)"
             case .newPlace(let list): "new-\(list ?? "")"
+            case .expense(let id): "expense-\(id ?? "")"
             case .assistant: "assistant"
             }
         }
@@ -87,6 +91,7 @@ extension View {
             case .saveForEnd: ListView(listId: nil, initialSub: nil, saveForEndOnly: true)
             case .place(let id): PlaceView(placeId: id)
             case .settings: SettingsView()
+            case .montar(let date): MontarView(date: date)
             }
         }
     }

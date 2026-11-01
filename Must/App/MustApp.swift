@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 @main
@@ -23,6 +24,7 @@ struct AppRoot: View {
     @Environment(RegionStore.self) private var store
     @Environment(Services.self) private var services
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.modelContext) private var context
 
     @State private var router = AppRouter()
     @State private var showOnboarding = false
@@ -37,7 +39,7 @@ struct AppRoot: View {
                 showOnboarding = Self.shouldShowOnboarding(onboarded: store.isOnboarded)
                 services.location.start()
                 #if DEBUG
-                DebugLaunch.apply(to: router)
+                DebugLaunch.apply(to: router, context: context, region: store.region, location: services.location)
                 #endif
             }
             .onChange(of: scenePhase) { _, phase in
@@ -62,7 +64,7 @@ struct AppRoot: View {
 /// `-gallery` abre a Gallery.
 @MainActor
 enum DebugLaunch {
-    static func apply(to router: AppRouter) {
+    static func apply(to router: AppRouter, context: ModelContext, region: Region, location: LocationService) {
         if ProcessInfo.processInfo.arguments.contains("-gallery") { router.cover = .gallery }
         guard let screen = UserDefaults.standard.string(forKey: "debugScreen") else { return }
         let parts = screen.split(separator: ":", maxSplits: 1).map(String.init)
@@ -77,6 +79,17 @@ enum DebugLaunch {
         case "nova-lista": router.select(.musts); router.cover = .newList
         case "adicionar": router.sheet = .addLink(url: arg, listId: nil)
         case "hoje": router.select(.hoje)
+        case "montar", "proposta", "trocar": router.push(.montar(date: region.calendar.startOfDay(for: AppClock.now)), on: .hoje)
+        case "gasto": router.select(.hoje); router.sheet = .expense(placeId: nil)
+        case "aceitar":
+            // Monta e aceita o dia de hoje com os padrões (prints da tela Hoje).
+            let settings = try? context.fetch(FetchDescriptor<Settings>()).first
+            let trip = try? context.fetch(FetchDescriptor<TripInfo>()).first
+            let places = (try? context.fetch(FetchDescriptor<Place>())) ?? []
+            let planner = DayPlanner(date: AppClock.now, region: region, settings: settings, existing: nil)
+            planner.build(catalog: places.solverCatalog, trip: trip, settings: settings, location: location.current)
+            try? planner.accept(context: context)
+            router.select(.hoje)
         case "mapa": router.select(.mapa)
         default: break
         }

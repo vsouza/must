@@ -227,7 +227,11 @@ struct HomeView: View {
             subtitle = parts.joined(separator: " · ")
         }
         return Button {
-            if let id = next?.place.id { router.push(.place(id: id), on: .inicio) } else { router.select(.hoje) }
+            if let id = next?.place.id {
+                router.push(.place(id: id), on: .inicio)
+            } else {
+                router.push(.montar(date: region.calendar.startOfDay(for: now)), on: .hoje)
+            }
         } label: {
             stackRow(icon: .relogio, title: title, subtitle: subtitle, subtitleColor: Color.must.blueText)
         }
@@ -235,7 +239,10 @@ struct HomeView: View {
     }
 
     private func tomorrowCard(_ model: HomeModel) -> some View {
-        Button { router.select(.hoje) } label: {
+        Button {
+            let tomorrow = region.calendar.date(byAdding: .day, value: 1, to: region.calendar.startOfDay(for: now)) ?? now
+            router.push(.montar(date: tomorrow), on: .hoje)
+        } label: {
             stackRow(icon: .montarAjustar, title: "Montar amanhã", subtitle: model.tomorrowLine, subtitleColor: Color.must.greenTextSoft)
         }
         .buttonStyle(MustPressStyle())
