@@ -28,6 +28,10 @@ targets:
         excludes:
           - "Widgets/**"
           - "Resources/Fonts/licenses/**"
+      - path: data/seed-bh.json
+        buildPhase: resources
+      - path: data/seed-jp.json
+        buildPhase: resources
     dependencies:
       - target: MustWidgets
         embed: true
@@ -130,6 +134,10 @@ targets:
     platform: iOS
     sources:
       - path: MustTests
+      - path: data/seed-bh.json
+        buildPhase: resources
+      - path: data/seed-jp.json
+        buildPhase: resources
     dependencies:
       - target: Must
     settings:

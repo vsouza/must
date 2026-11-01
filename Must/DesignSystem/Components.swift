@@ -70,12 +70,14 @@ struct PrimaryButton: View {
 
     var title: String
     var icon: MustIcon?
+    var iconTrailing = false
     var style: Style = .green
     var action: () -> Void
 
-    init(_ title: String, icon: MustIcon? = nil, style: Style = .green, action: @escaping () -> Void) {
+    init(_ title: String, icon: MustIcon? = nil, iconTrailing: Bool = false, style: Style = .green, action: @escaping () -> Void) {
         self.title = title
         self.icon = icon
+        self.iconTrailing = iconTrailing
         self.style = style
         self.action = action
     }
@@ -83,8 +85,9 @@ struct PrimaryButton: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 9) {
-                if let icon { MustIconView(icon, size: 18) }
+                if let icon, !iconTrailing { MustIconView(icon, size: 18) }
                 Text(title)
+                if let icon, iconTrailing { MustIconView(icon, size: 18) }
             }
             .font(.must.archivo(15, .bold))
             .foregroundStyle(style == .green ? Color.must.greenText : .white)
