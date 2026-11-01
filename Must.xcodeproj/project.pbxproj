@@ -27,7 +27,6 @@
 		2112256931B46241E389365A /* Network.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C5AA907B51E3A312E8DEA0D /* Network.swift */; };
 		22D230B4C5811B7A165D26B1 /* Typography.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEA9433C369F5E569448A38F /* Typography.swift */; };
 		23E5F5CBB10426C71A2EDFBB /* PlaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 486E283B4CB2889203AE8597 /* PlaceView.swift */; };
-		23EDA9A9080F429146D51003 /* FlickrService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A58E85EAAD5F9FF79C3B2C1 /* FlickrService.swift */; };
 		24272338F7D1250862BDEE12 /* PlaceLogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CD1E440AD926B55E75952EB /* PlaceLogicTests.swift */; };
 		25F1D69D524D1DB8234C3152 /* MustTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9E45EB741EE7A4B0C62B1E9 /* MustTests.swift */; };
 		2F61642C63CD0B2F85023063 /* NotesRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC9FD34E64012CFB56E93D7 /* NotesRules.swift */; };
@@ -62,6 +61,7 @@
 		736ED6B65BFF4FC38AAA284F /* Glass.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF9EDF96B7E35C8B90CD7648 /* Glass.swift */; };
 		7991783AFD37AA9A273508C9 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 641406D94759EFD74130F34E /* Components.swift */; };
 		7BFE05D0B10A5B55DC6A8EC3 /* bh-lines.geojson in Resources */ = {isa = PBXBuildFile; fileRef = 91BE0666599C9AA1BFA54CBD /* bh-lines.geojson */; };
+		7F456549CD866F3E56308A20 /* PhotoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EEE4426948C34EEC1760344 /* PhotoService.swift */; };
 		84BC80D387C9068BA8B64472 /* RoutesService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 972BE7D900669A53822A7176 /* RoutesService.swift */; };
 		85FA09E7E2CE32161AD50AF8 /* ZenKakuGothicNew-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D4380F8F09B4251F1DECE96C /* ZenKakuGothicNew-Bold.ttf */; };
 		85FF5B41404618DAEC523F24 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 988D5ED4FA848499B21CF6FD /* SettingsView.swift */; };
@@ -140,12 +140,12 @@
 /* Begin PBXFileReference section */
 		01C978BEB3995473BF8B3039 /* Blobs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Blobs.swift; sourceTree = "<group>"; };
 		073EE5D0C62BCB42F2F0FB7C /* last-trains.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "last-trains.json"; sourceTree = "<group>"; };
-		0A58E85EAAD5F9FF79C3B2C1 /* FlickrService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlickrService.swift; sourceTree = "<group>"; };
 		0C42FCB610CD3F0DCA2D3DAF /* MustsHubView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MustsHubView.swift; sourceTree = "<group>"; };
 		0C5AA907B51E3A312E8DEA0D /* Network.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Network.swift; sourceTree = "<group>"; };
 		0FF11D40BC1FD6464D2737BB /* DayFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayFlowTests.swift; sourceTree = "<group>"; };
 		10E1AAF40DE6541D6FB3D78D /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		16948024C7E738EE615EA8B4 /* DayPlanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayPlanner.swift; sourceTree = "<group>"; };
+		1EEE4426948C34EEC1760344 /* PhotoService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoService.swift; sourceTree = "<group>"; };
 		21F59305A744CEF4BA26807A /* InstrumentSerif-Italic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "InstrumentSerif-Italic.ttf"; sourceTree = "<group>"; };
 		23249DD22EE3CC5D75564551 /* Log.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Log.swift; sourceTree = "<group>"; };
 		249BE4A213B5ED57BBC9CB4E /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
@@ -292,11 +292,11 @@
 			isa = PBXGroup;
 			children = (
 				7C9AC26060BA3518B7B154B8 /* Ingest */,
-				0A58E85EAAD5F9FF79C3B2C1 /* FlickrService.swift */,
 				7BC23CD2D9B7A3D345E2FA14 /* LocationService.swift */,
 				23249DD22EE3CC5D75564551 /* Log.swift */,
 				DE208BD7EAA8E7F3FAC1E77B /* MapsLinks.swift */,
 				0C5AA907B51E3A312E8DEA0D /* Network.swift */,
+				1EEE4426948C34EEC1760344 /* PhotoService.swift */,
 				A0DE882D97FE358B156A3EE9 /* PlacesService.swift */,
 				81C441C4CF94405A51158D55 /* RouteGeometry.swift */,
 				972BE7D900669A53822A7176 /* RoutesService.swift */,
@@ -810,7 +810,6 @@
 				B369709BE73796C1EF00ABCA /* EditPlaceView.swift in Sources */,
 				169A7658B2D10B88262ADE14 /* ExpenseView.swift in Sources */,
 				6C755E8474DB048155383234 /* Features.swift in Sources */,
-				23EDA9A9080F429146D51003 /* FlickrService.swift in Sources */,
 				6B9F6C927AC6F89623638391 /* FlowLayout.swift in Sources */,
 				AC93C36A928764F301522D26 /* Fonts.swift in Sources */,
 				ADE9A44DD49A3B092599D163 /* FormRows.swift in Sources */,
@@ -834,6 +833,7 @@
 				2112256931B46241E389365A /* Network.swift in Sources */,
 				C309A755522150372D686AC8 /* NewListFlow.swift in Sources */,
 				2F61642C63CD0B2F85023063 /* NotesRules.swift in Sources */,
+				7F456549CD866F3E56308A20 /* PhotoService.swift in Sources */,
 				6B1D76E59DB26263796CFB33 /* PlaceExtractor.swift in Sources */,
 				6D1EC7ED209B59FEE8D444ED /* PlaceLogic.swift in Sources */,
 				D0981A28EC0EAE4A6BC81105 /* PlaceMatcher.swift in Sources */,

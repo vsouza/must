@@ -100,13 +100,14 @@ enum SourceKind: String, Codable, CaseIterable, Sendable {
     }
 }
 
-/// Foto de fundo de uma lista (Flickr CC).
+/// Foto de fundo de uma lista (Wikimedia Commons, CC).
 struct ListPhoto: Codable, Hashable, Sendable {
+    /// Id da foto na fonte (nome antigo mantido pra não migrar o banco).
     var flickrId: String?
     var url: String?
     var credit: String?
     var license: String?
-    /// Página da foto no Flickr (o crédito abre aqui).
+    /// Página da foto (o crédito abre aqui).
     var page: String?
 }
 

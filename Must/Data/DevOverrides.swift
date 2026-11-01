@@ -16,7 +16,7 @@ enum DevOverrides {
 
     private static var defaults: UserDefaults { .standard }
 
-    /// "Dados ao vivo" (Places, tempo, Flickr). Desligado → só cache. Padrão: ligado.
+    /// "Dados ao vivo" (Places, tempo, fotos). Desligado → só cache. Padrão: ligado.
     static var liveData: Bool {
         get { defaults.object(forKey: Key.liveData) as? Bool ?? true }
         set { defaults.set(newValue, forKey: Key.liveData) }

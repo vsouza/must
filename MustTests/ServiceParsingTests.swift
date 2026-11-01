@@ -78,22 +78,41 @@ struct ServiceParsingTests {
         #expect(f.now?.code == 3)
     }
 
-    // MARK: Flickr
+    // MARK: Wikimedia Commons
 
-    @Test func parsesFlickrAndDropsDisallowedLicenses() throws {
-        let json = #"{"photos":{"photo":[{"id":"1","owner":"12@N0","ownername":"kissa_fan","license":"4","url_m":"https://live.staticflickr.com/1_m.jpg","url_l":"https://live.staticflickr.com/1_l.jpg"},{"id":"2","owner":"34@N0","ownername":"x","license":"1","url_m":"https://a/2.jpg"}]},"stat":"ok"}"#
-        let photos = try FlickrService.parse(Data(json.utf8))
-        #expect(photos.count == 1) // licença 1 (NC) fica de fora
-        let p = try #require(photos.first)
-        #expect(p.credit == "foto · Flickr CC · @kissa_fan")
-        #expect(p.pageURL?.absoluteString == "https://www.flickr.com/photos/12@N0/1")
-        #expect(p.listPhoto.url == "https://live.staticflickr.com/1_l.jpg")
+    /// Formato real de `prop=imageinfo&iiprop=url|extmetadata|mime` (Senso-ji, geosearch).
+    @Test func parsesCommonsAndDropsNonFreeLicenses() throws {
+        let json = #"""
+        {"query":{"pages":{
+          "127799441":{"pageid":127799441,"index":1,"title":"File:Lantern above Sensō-ji.jpg","imageinfo":[{"mime":"image/jpeg",
+            "thumburl":"https://upload.wikimedia.org/thumb/9/96/Lantern.jpg/1024px-Lantern.jpg","url":"https://upload.wikimedia.org/9/96/Lantern.jpg",
+            "descriptionurl":"https://commons.wikimedia.org/wiki/File:Lantern_above_Sens%C5%8D-ji.jpg",
+            "extmetadata":{"LicenseShortName":{"value":"CC BY 2.0"},"License":{"value":"cc-by-2.0"},
+              "Artist":{"value":"<a rel=\"nofollow\" class=\"external text\" href=\"https://www.flickr.com/people/65847118@N06\">Maarten Heerlien</a> from Voorschoten"}}}]},
+          "2":{"pageid":2,"index":2,"imageinfo":[{"mime":"image/jpeg","thumburl":"https://x/2.jpg","descriptionurl":"https://c/2",
+            "extmetadata":{"LicenseShortName":{"value":"CC BY-NC 2.0"},"License":{"value":"cc-by-nc-2.0"}}}]},
+          "3":{"pageid":3,"index":3,"imageinfo":[{"mime":"image/svg+xml","thumburl":"https://x/3.png","descriptionurl":"https://c/3",
+            "extmetadata":{"License":{"value":"cc0"}}}]},
+          "4":{"pageid":4,"index":0,"imageinfo":[{"mime":"image/jpeg","thumburl":"https://x/4.jpg","descriptionurl":"https://c/4",
+            "extmetadata":{"LicenseShortName":{"value":"Public domain"},"License":{"value":"pd"},"Artist":{"value":"Unknown"}}}]}
+        }}}
+        """#
+        let photos = try CommonsPhotoService.parse(Data(json.utf8))
+        #expect(photos.map(\.id) == ["4", "127799441"]) // ordem do índice; NC e SVG ficam de fora
+        let p = try #require(photos.last)
+        #expect(p.owner == "Maarten Heerlien")
+        #expect(p.credit == "foto · Wikimedia CC BY 2.0 · @Maarten Heerlien")
+        #expect(p.pageURL?.host() == "commons.wikimedia.org")
+        #expect(p.listPhoto.url == "https://upload.wikimedia.org/thumb/9/96/Lantern.jpg/1024px-Lantern.jpg")
     }
 
-    @Test func flickrFailIsAnError() {
-        #expect(throws: ServiceError.self) {
-            try FlickrService.parse(Data(#"{"stat":"fail","code":100,"message":"Invalid API Key"}"#.utf8))
-        }
+    @Test func freeLicenseRules() {
+        #expect(CommonsPhotoService.isFree("cc-by-sa-4.0"))
+        #expect(CommonsPhotoService.isFree("cc0"))
+        #expect(CommonsPhotoService.isFree("pd"))
+        #expect(!CommonsPhotoService.isFree("cc-by-nc-sa-2.0"))
+        #expect(!CommonsPhotoService.isFree("cc-by-nd-3.0"))
+        #expect(!CommonsPhotoService.isFree("arr"))
     }
 
     // MARK: Rotas
@@ -121,7 +140,7 @@ struct PlacesSyncTests {
             ], fetchedAt: Date()), priceLevel: 1, priceFrom: 12, priceCurrency: "BRL")]
         )
         let sync = SyncCoordinator(places: fake, weather: FakeWeatherService(forecast: Forecast(days: [:], now: nil, fetchedAt: Date())),
-                                   flickr: FakeFlickrService())
+                                   photos: FakePhotoService())
         DevOverrides.liveData = true
         await sync.syncPlaces(context: ctx, region: .bh)
 

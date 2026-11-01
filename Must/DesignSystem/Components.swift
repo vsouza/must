@@ -301,7 +301,7 @@ struct KanjiSeal: View {
 
 // MARK: - Fotos
 
-/// Chip de crédito "foto · Flickr CC · @user". Com `url`, abre a página da foto.
+/// Chip de crédito "foto · Wikimedia CC BY 2.0 · @autor". Com `url`, abre a página da foto.
 struct Credit: View {
     var text: String
     var color: Color = Color.must.ink
@@ -327,7 +327,9 @@ struct Credit: View {
             .textCase(.uppercase)
             .tracking(0.54)
             .lineLimit(1)
-            .fixedSize()
+            .truncationMode(.tail)
+            .frame(maxWidth: 260)
+            .fixedSize(horizontal: true, vertical: false)
             .foregroundStyle(color)
             .padding(.vertical, 3)
             .padding(.horizontal, 7)
@@ -335,7 +337,7 @@ struct Credit: View {
     }
 }
 
-/// Foto (Flickr) com saturação .7 e o gradiente da cor por cima a 82%.
+/// Foto (Wikimedia Commons) com saturação .7 e o gradiente da cor por cima a 82%.
 /// Sem URL ou enquanto carrega: só o gradiente.
 struct TintedPhoto: View {
     var url: URL?
@@ -349,18 +351,19 @@ struct TintedPhoto: View {
     }
 
     var body: some View {
-        ZStack {
-            color.gradient
-            if let url {
-                AsyncImage(url: url) { phase in
-                    if let image = phase.image {
-                        image.resizable().scaledToFill().saturation(0.7)
+        // A foto fica num overlay pra nunca mudar o tamanho proposto (scaledToFill passaria da largura).
+        color.gradient
+            .overlay {
+                if let url {
+                    AsyncImage(url: url) { phase in
+                        if let image = phase.image {
+                            image.resizable().scaledToFill().saturation(0.7)
+                        }
                     }
+                    color.gradient.opacity(tintOpacity)
                 }
-                color.gradient.opacity(tintOpacity)
             }
-        }
-        .clipped()
+            .clipped()
     }
 }
 

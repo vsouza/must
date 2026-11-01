@@ -33,8 +33,8 @@ struct NewListView: View {
     @State private var color: MustColor = .coffee
     @State private var showIcons = false
     @State private var createdId: String?
-    @State private var photos: [FlickrPhoto] = []
-    @State private var selectedPhoto: FlickrPhoto?
+    @State private var photos: [CCPhoto] = []
+    @State private var selectedPhoto: CCPhoto?
     @State private var photoNote: String?
     /// Modelo fora do contexto só pra prévia.
     @State private var preview = MustList(id: "preview", name: "", icon: .cafe, color: .coffee)
@@ -183,7 +183,7 @@ struct NewListView: View {
     private var photoSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Micro("foto de fundo · Flickr CC")
+                Micro("foto de fundo · Wikimedia CC")
                 Spacer()
                 Text("busca “\(name.isEmpty ? "…" : name) \(cityName.lowercased())”").mustMeta().lineLimit(1)
             }
@@ -220,16 +220,25 @@ struct NewListView: View {
     private func loadPhotos() async {
         let query = name.trimmingCharacters(in: .whitespaces)
         guard !query.isEmpty else { photos = []; return }
-        guard services.flickr.isConfigured else { photoNote = "Fotos do Flickr aparecem quando a FLICKR_KEY estiver no Secrets.plist."; return }
         try? await Task.sleep(for: .milliseconds(600)) // espera parar de digitar
         guard !Task.isCancelled else { return }
         do {
-            photos = try await services.flickr.search(text: "\(query) \(cityName)")
+            photos = try await searchWithFallback(query)
             photoNote = photos.isEmpty ? "Nada com licença CC pra essa busca — fica só a cor." : nil
             if let selectedPhoto, !photos.contains(selectedPhoto) { self.selectedPhoto = nil }
         } catch {
             photoNote = "Sem fotos agora: \(error.localizedDescription)"
         }
+    }
+
+    /// "kissaten Tóquio"; se vier pouco, só "kissaten".
+    private func searchWithFallback(_ query: String) async throws -> [CCPhoto] {
+        var photos = try await services.photos.search(text: "\(query) \(cityName)")
+        if photos.count < 4 {
+            let more = try await services.photos.search(text: query)
+            photos += more.filter { m in !photos.contains { $0.id == m.id } }
+        }
+        return photos
     }
 
     private func create() {

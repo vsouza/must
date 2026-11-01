@@ -38,6 +38,11 @@ struct PlacesService: PlacesProviding {
     static let searchMask = "places.id,places.displayName,places.location,places.formattedAddress"
     static let detailsMask = "id,regularOpeningHours,currentOpeningHours,priceLevel,priceRange,rating"
 
+    /// Chave restrita a apps iOS exige o bundle id no cabeçalho.
+    private func headers(_ key: String, mask: String) -> [String: String] {
+        ["X-Goog-Api-Key": key, "X-Goog-FieldMask": mask, "X-Ios-Bundle-Identifier": Bundle.main.bundleIdentifier ?? "dev.viniso.must"]
+    }
+
     func searchText(_ query: String, near: CLLocationCoordinate2D, radius: Double = 30_000, languageCode: String = "pt-BR") async throws -> [PlaceCandidate] {
         guard let apiKey else { throw ServiceError.missingKey("GOOGLE_PLACES_KEY") }
         let body: [String: Any] = [
@@ -47,7 +52,7 @@ struct PlacesService: PlacesProviding {
             "locationBias": ["circle": ["center": ["latitude": near.latitude, "longitude": near.longitude], "radius": min(radius, 50_000)]],
         ]
         let data = try await http.post(URL(string: "https://places.googleapis.com/v1/places:searchText")!, json: body,
-                                       headers: ["X-Goog-Api-Key": apiKey, "X-Goog-FieldMask": Self.searchMask], service: "places.search")
+                                       headers: headers(apiKey, mask: Self.searchMask), service: "places.search")
         await MainActor.run { PlacesUsage.record() }
         return try Self.parseSearch(data)
     }
@@ -56,8 +61,7 @@ struct PlacesService: PlacesProviding {
         guard let apiKey else { throw ServiceError.missingKey("GOOGLE_PLACES_KEY") }
         var comps = URLComponents(string: "https://places.googleapis.com/v1/places/\(placeId)")!
         comps.queryItems = [URLQueryItem(name: "languageCode", value: languageCode)]
-        let data = try await http.get(comps.url!, headers: ["X-Goog-Api-Key": apiKey, "X-Goog-FieldMask": Self.detailsMask],
-                                      service: "places.details")
+        let data = try await http.get(comps.url!, headers: headers(apiKey, mask: Self.detailsMask), service: "places.details")
         await MainActor.run { PlacesUsage.record() }
         return try Self.parseDetails(data)
     }

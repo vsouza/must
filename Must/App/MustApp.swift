@@ -43,7 +43,7 @@ struct AppRoot: View {
                 showOnboarding = Self.shouldShowOnboarding(onboarded: store.isOnboarded)
                 services.location.start()
                 #if DEBUG
-                DebugLaunch.apply(to: router, context: context, region: store.region, location: services.location)
+                DebugLaunch.apply(to: router, context: context, region: store.region, services: services)
                 #endif
             }
             .task { await services.sync.syncIfNeeded(context: context, region: store.region) }
@@ -74,7 +74,8 @@ struct AppRoot: View {
 /// `-gallery` abre a Gallery.
 @MainActor
 enum DebugLaunch {
-    static func apply(to router: AppRouter, context: ModelContext, region: Region, location: LocationService) {
+    static func apply(to router: AppRouter, context: ModelContext, region: Region, services: Services) {
+        let location = services.location
         if ProcessInfo.processInfo.arguments.contains("-gallery") { router.cover = .gallery }
         guard let screen = UserDefaults.standard.string(forKey: "debugScreen") else { return }
         let parts = screen.split(separator: ":", maxSplits: 1).map(String.init)
@@ -101,6 +102,9 @@ enum DebugLaunch {
             try? planner.accept(context: context)
             router.select(.hoje)
         case "mapa": router.select(.mapa)
+        case "sincronizar":
+            router.push(.settings, on: .inicio)
+            Task { await services.sync.syncPlaces(context: context, region: region) }
         default: break
         }
     }

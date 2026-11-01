@@ -14,7 +14,7 @@ struct PlaceView: View {
     @Query private var trips: [TripInfo]
     @Query private var settingsList: [Settings]
 
-    @State private var heroPhoto: FlickrPhoto?
+    @State private var heroPhoto: CCPhoto?
 
 
     init(placeId: String) {
@@ -60,17 +60,17 @@ struct PlaceView: View {
         .task(id: place.id) { await loadHero(place) }
     }
 
-    /// Foto do Flickr perto do lugar (300 m), senão do bairro.
+    /// Foto do Commons perto do lugar (300 m), senão do bairro.
     private func loadHero(_ place: Place) async {
-        let flickr = services.flickr
-        guard flickr.isConfigured, settingsList.first?.flickrPhotos ?? true, heroPhoto == nil else { return }
+        let photos = services.photos
+        guard photos.isConfigured, settingsList.first?.flickrPhotos ?? true, heroPhoto == nil else { return }
         do {
-            var photos = try await flickr.search(near: place.coordinate, radiusKm: 0.3)
-            if photos.isEmpty, let area = place.area {
+            var found = try await photos.search(near: place.coordinate, radiusKm: 0.3)
+            if found.isEmpty, let area = place.area {
                 let city = trips.first?.city(id: place.cityId)?.name ?? region.displayName
-                photos = try await flickr.search(text: "\(area) \(city)")
+                found = try await photos.search(text: "\(area) \(city)")
             }
-            heroPhoto = photos.first
+            heroPhoto = found.first
         } catch {
             Log.network.error("hero \(place.id, privacy: .public): \(error.localizedDescription, privacy: .public)")
         }

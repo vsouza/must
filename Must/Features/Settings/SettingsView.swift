@@ -250,7 +250,7 @@ private struct SettingsSections: View {
             }
             RowDivider()
             Toggle(isOn: $settings.flickrPhotos) {
-                FormRow("Fotos de fundo", subtitle: "Flickr CC · crédito sempre visível")
+                FormRow("Fotos de fundo", subtitle: "Wikimedia Commons · CC · crédito sempre visível")
             }
             .toggleStyle(.must)
             RowDivider()

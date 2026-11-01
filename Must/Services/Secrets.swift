@@ -5,7 +5,6 @@ import Foundation
 enum Secrets {
     enum Key: String, CaseIterable {
         case googlePlaces = "GOOGLE_PLACES_KEY"
-        case flickr = "FLICKR_KEY"
         case anthropic = "ANTHROPIC_KEY"
     }
 
@@ -16,7 +15,6 @@ enum Secrets {
     }
 
     static var googlePlacesKey: String? { self[.googlePlaces] }
-    static var flickrKey: String? { self[.flickr] }
     static var anthropicKey: String? { self[.anthropic] }
 
     private static let values: [String: String] = load(from: .main)

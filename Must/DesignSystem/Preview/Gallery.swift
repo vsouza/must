@@ -177,7 +177,7 @@ struct Gallery: View {
                 Spacer()
             }
             HStack {
-                Credit("foto · Flickr CC · @user")
+                Credit("foto · Wikimedia CC BY 2.0 · @autor")
                 Spacer()
                 SheetHandle()
             }

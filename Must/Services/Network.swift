@@ -10,7 +10,7 @@ enum ServiceError: LocalizedError, Equatable {
         switch self {
         case .liveDataOff: "Dados ao vivo desligados (menu escondido)."
         case .missingKey(let key): "Falta \(key) no Secrets.plist."
-        case .http(let code, let body): "HTTP \(code): \(body.prefix(140))"
+        case .http(let code, let body): "HTTP \(code): \(body.prefix(700))"
         case .decoding(let what): "Resposta inesperada: \(what)"
         }
     }
@@ -20,7 +20,7 @@ enum ServiceError: LocalizedError, Equatable {
 struct HTTP: Sendable {
     var session: URLSession = .shared
 
-    /// URLCache de 50 MB (fotos do Flickr, respostas GET).
+    /// URLCache de 50 MB (fotos do Commons, respostas GET).
     static func configureCache() {
         URLCache.shared = URLCache(memoryCapacity: 16 * 1024 * 1024, diskCapacity: 50 * 1024 * 1024)
     }

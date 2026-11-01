@@ -235,6 +235,7 @@ final class Settings {
     var onDeviceAI: Bool
     var cloudBoost: Bool
     var transcribeVideos: Bool
+    /// Fotos de fundo (Wikimedia Commons). Nome antigo mantido pra não migrar o banco.
     var flickrPhotos: Bool
     /// Quanto vale 1 unidade da moeda da região em BRL (¥1 = R$ 0,036). BH = 1.
     var fxRate: Double

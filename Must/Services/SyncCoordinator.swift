@@ -28,7 +28,7 @@ final class SyncCoordinator {
 
     @ObservationIgnored private let places: any PlacesProviding
     @ObservationIgnored private let weather: any WeatherProviding
-    @ObservationIgnored private let flickr: any FlickrProviding
+    @ObservationIgnored private let photos: any PhotoProviding
     @ObservationIgnored private var lastSync: Date?
     @ObservationIgnored private var detailsInFlight: Set<String> = []
 
@@ -36,10 +36,10 @@ final class SyncCoordinator {
     /// Máximo de lugares resolvidos por sincronização (cada um = busca + detalhes).
     static let placesBatch = 50
 
-    init(places: any PlacesProviding, weather: any WeatherProviding, flickr: any FlickrProviding) {
+    init(places: any PlacesProviding, weather: any WeatherProviding, photos: any PhotoProviding) {
         self.places = places
         self.weather = weather
-        self.flickr = flickr
+        self.photos = photos
     }
 
     // MARK: Tempo
@@ -100,13 +100,15 @@ final class SyncCoordinator {
 
         // 3. Foto das listas que não têm.
         let settings = context.settings(for: region)
-        if flickr.isConfigured, settings.flickrPhotos {
+        if photos.isConfigured, settings.flickrPhotos {
             let cityName = trip?.city(on: AppClock.now, calendar: region.calendar)?.name ?? region.displayName
             for list in (try? context.fetch(FetchDescriptor<MustList>())) ?? [] where list.photo == nil {
                 do {
-                    if let photo = try await flickr.search(text: "\(list.name) \(cityName)").first { list.photo = photo.listPhoto }
+                    var photo = try await photos.search(text: "\(list.name) \(cityName)").first
+                    if photo == nil { photo = try await photos.search(text: "\(list.name)").first }
+                    if let photo { list.photo = photo.listPhoto }
                 } catch {
-                    problems.append("flickr: \(error.localizedDescription)")
+                    problems.append("fotos: \(error.localizedDescription)")
                     break
                 }
             }
@@ -174,7 +176,7 @@ final class SyncCoordinator {
                     let center = CLLocationCoordinate2D(latitude: city?.lat ?? place.lat, longitude: city?.lng ?? place.lng)
                     let query = [place.name, place.area, city?.name].compactMap { $0 }.joined(separator: " ")
                     let results = try await places.searchText(query, near: center, radius: 30_000, languageCode: "pt-BR")
-                    guard let best = results.first(where: { PlaceMatcher.similar($0.name, place.name) }) ?? results.first else {
+                    guard let best = Self.bestMatch(results, for: place.name) else {
                         notFound.append(place.name)
                         placesProgress = (i + 1, pending.count)
                         continue
@@ -202,6 +204,14 @@ final class SyncCoordinator {
         placesSummary = parts.joined(separator: " · ")
     }
 
+    /// Nome igual (sem acento/pontuação) > parecido > o primeiro (se `allowAny`).
+    nonisolated static func bestMatch(_ results: [PlaceCandidate], for name: String, allowAny: Bool = true) -> PlaceCandidate? {
+        let key = PlaceMatcher.normalize(name)
+        return results.first { PlaceMatcher.normalize($0.name) == key }
+            ?? results.first { PlaceMatcher.similar($0.name, name) }
+            ?? (allowAny ? results.first : nil)
+    }
+
     /// Busca de lugares pro Adicionar (Places Text Search restrito à cidade).
     func search(_ query: String, near: CLLocationCoordinate2D) async throws -> [PlaceCandidate] {
         try await places.searchText(query, near: near, radius: 20_000, languageCode: "pt-BR")
@@ -216,7 +226,7 @@ final class SyncCoordinator {
                 if chosen == nil {
                     let results = try await places.searchText([place.name, place.area].compactMap { $0 }.joined(separator: " "),
                                                               near: place.coordinate, radius: 20_000, languageCode: "pt-BR")
-                    chosen = results.first { PlaceMatcher.similar($0.name, place.name) }
+                    chosen = Self.bestMatch(results, for: place.name, allowAny: false)
                 }
                 guard let chosen else { return }
                 place.placeId = chosen.id
@@ -231,5 +241,4 @@ final class SyncCoordinator {
         }
     }
 
-    var flickrService: any FlickrProviding { flickr }
 }
