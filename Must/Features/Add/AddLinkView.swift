@@ -394,7 +394,8 @@ struct AddLinkView: View {
             place.list = list
             if let sub = e.sub, list?.subs.contains(sub) == true { place.sub = sub }
             place.source = Source(kind: source.sourceKind, url: model.caption?.url?.absoluteString ?? model.resolved?.url?.absoluteString,
-                                  savedAt: today)
+                                  savedAt: today, caption: model.caption?.text.isEmpty == false ? model.caption?.text : nil,
+                                  author: model.caption?.title)
             place.notes = e.hint == "link do Maps" ? "" : "Achado \(e.hint)."
             context.insert(place)
             // (d) Places Text Search perto da cidade: placeId, coordenada exata e horário, em segundo plano.

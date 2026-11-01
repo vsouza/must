@@ -44,6 +44,8 @@ struct MapPin: Identifiable, Equatable, Sendable {
         case cluster(count: Int)
         /// Rótulo preto ao lado de um pino (o "mais perto", prompt 11).
         case callout(text: String)
+        /// Pílula preta centrada, em mono (meio da linha de distância: "2,1 km · 9 min de metrô").
+        case badge(text: String)
     }
 
     enum TodayStatus: Equatable, Sendable { case future, next, done }
@@ -72,7 +74,7 @@ struct MapPin: Identifiable, Equatable, Sendable {
         case .unplanned, .cluster: 1
         case .tomorrow: 2
         case .today(_, let status, _): status == .next ? 5 : 4
-        case .callout: 6
+        case .callout, .badge: 6
         }
     }
 }
@@ -205,7 +207,13 @@ final class PinView: MLNAnnotationView {
         case .callout(let caption):
             setSize(2)
             disc.isHidden = true
+            label.isHidden = true
             showPill(caption, gap: 22)
+        case .badge(let caption):
+            setSize(2)
+            disc.isHidden = true
+            label.isHidden = true
+            showPill(caption, gap: 0, font: PinStyle.mono(12), centered: true)
         }
         accessibilityLabel = pin.placeId
     }
@@ -279,12 +287,14 @@ final class PinView: MLNAnnotationView {
         label.textColor = color
     }
 
-    private func showPill(_ caption: String, gap: CGFloat) {
+    private func showPill(_ caption: String, gap: CGFloat, font: UIFont = PinStyle.archivo(11), centered: Bool = false) {
+        pill.font = font
         pill.text = caption
         pill.sizeToFit()
-        let height: CGFloat = 26
+        let height: CGFloat = centered ? 30 : 26
         let width = pill.bounds.width + 22
-        pillBackground.frame = CGRect(x: bounds.maxX + gap, y: bounds.midY - height / 2, width: width, height: height)
+        let x = centered ? bounds.midX - width / 2 : bounds.maxX + gap
+        pillBackground.frame = CGRect(x: x, y: bounds.midY - height / 2, width: width, height: height)
         pillBackground.layer.cornerRadius = height / 2
         PinStyle.applyShadow(pillBackground.layer)
         pill.frame = CGRect(x: 11, y: 0, width: pill.bounds.width, height: height)

@@ -158,6 +158,17 @@ struct Source: Codable, Hashable, Sendable {
     var kind: SourceKind
     var url: String?
     var savedAt: String?
+    /// Legenda do Reel/TikTok/YouTube de onde o lugar veio (primeiro card das Dicas).
+    var caption: String?
+    var author: String?
+
+    init(kind: SourceKind, url: String?, savedAt: String?, caption: String? = nil, author: String? = nil) {
+        self.kind = kind
+        self.url = url
+        self.savedAt = savedAt
+        self.caption = caption
+        self.author = author
+    }
 }
 
 /// 済 — quando foi feito e quanto custou.

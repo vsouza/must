@@ -69,6 +69,32 @@ xcodebuild -project Must.xcodeproj -scheme Must -destination 'platform=iOS Simul
   ETA em cache de 10 min; widgets/Live Activity só atualizam quando algo muda.
 - [ ] iPhone — uma tarde com o mapa aberto: ≤ ~10% de bateria (Xcode → Debug Navigator → Energy).
 
+## 13. Mapa papel em relevo (prompt 12)
+- [x] sim — Centro de BH: relevo nas quadras, fitas e pontilhado, nomes em Archivo caps, parque com pontinhos, sem POIs.
+- [x] sim — pinos: carimbo de sem plano, aberto cheio com anel (forçado com `-debugPinsOpen YES`, faltam horários do Places),
+  fechando com arco, hoje numerado com pílula no próximo, contas na rota futura, amanhã tracejado.
+- [x] sim — zoom out (~14 km): prédios somem, quadras lisas, cidades; sem plano vira cluster.
+- [x] sim — Japão: tiles offline (Tóquio/Kansai), rótulos em japonês com Zen Kaku, metrô em vermelho.
+- [ ] iPhone — 60 fps no iPhone Air com as 3 camadas de pino; pulso do aberto só com o mapa parado.
+
+## 14. Abertura e zoom do mapa (prompt 11 · A)
+- [x] auto — perto → bairro; nada a 500 m → mais perto; próxima parada ganha se < 3×; gesto segura 20 s; ⌖ volta;
+  < 100 m não reavalia; enquadramento respeita as folgas (`MapCameraPlannerTests`, `MapCameraControllerTests`).
+- [x] sim — Savassi: escala de bairro, sheet "Perto de você" com os 2 mais perto e a próxima parada.
+- [x] sim — Santo Agostinho: zoom até o Mercado Central, linha tracejada com "1,2 km · 10 min de metrô", aviso em serif,
+  card com Apple Maps / Google Maps / Ver o dia.
+- [ ] iPhone — arrastar o mapa não briga com a câmera; ligar/desligar camada reavalia.
+
+## 15. Dicas de quem foi (prompt 11 · B)
+- [x] auto — parse do Google (original + tradução), Foursquare (match + tips), Reddit (só comentários que citam o nome),
+  legenda de origem primeiro, cache 24 h / apaga com 30 dias, fallback do resumo em texto (`TipsParsingTests`, `TipsSummaryParseTests`).
+- [x] sim — Udatsu com amostras (`-debugScreen dicas:j01 -debugTips fake`): header comprimido, resumo e temas gerados no
+  aparelho, card verde "de onde veio este must", dica em japonês com a tradução embaixo, filtros, rodapé.
+- [!] — fontes reais: Google depende do item 2 (403 e sem `placeId`); Foursquare e Reddit precisam de `FOURSQUARE_KEY` e
+  `REDDIT_CLIENT_ID`. Sem elas a seção mostra só a legenda de origem.
+- [!] — o modelo do simulador recusou (guardrail) resumir as amostras de BH; as do Japão passaram. Conferir no iPhone com
+  dicas reais; quando recusa, a tela diz "O modelo do aparelho não resumiu essas dicas".
+
 ## Notas
 - O simulador "iPhone 17 Pro" ficou travando o test runner ("hung before establishing connection") depois de muitas
   execuções; o "iPhone 17" roda limpo. Se acontecer: `xcrun simctl erase <udid>`.

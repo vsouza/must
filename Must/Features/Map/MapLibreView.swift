@@ -339,29 +339,59 @@ struct MapLibreView: UIViewRepresentable {
 
         func run(_ command: MapCameraCommand) {
             guard let map else { return }
+            // Na abertura o MapLibre ainda não tem tamanho: espera o primeiro layout.
+            guard map.bounds.width > 0, map.bounds.height > 0 else {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+                    guard let self, self.lastCommand == command.id else { return }
+                    self.run(command)
+                }
+                return
+            }
             let duration: TimeInterval = command.animated ? 0.6 : 0
-            let easeOut = CAMediaTimingFunction(name: .easeOut)
             switch command.target {
             case .center(let lat, let lng, let width):
-                let center = CLLocationCoordinate2D(latitude: lat, longitude: lng)
-                let viewWidth = max(map.bounds.width, 320)
-                let mpp = width / viewWidth
+                let mpp = width / Double(map.bounds.width)
                 let zoom = log2(40_075_016.686 * cos(lat * .pi / 180) / (512 * mpp))
-                if duration == 0 {
-                    map.setCenter(center, zoomLevel: zoom, animated: false)
-                } else {
-                    let altitude = MLNAltitudeForZoomLevel(zoom, 0, lat, map.bounds.size)
-                    let camera = MLNMapCamera(lookingAtCenter: center, altitude: altitude, pitch: 0, heading: 0)
-                    map.setCamera(camera, withDuration: duration, animationTimingFunction: easeOut)
-                }
+                move(map, to: CLLocationCoordinate2D(latitude: lat, longitude: lng), zoom: zoom, duration: duration)
             case .fit(let points, let top, let bottom, let sides):
                 guard points.count > 1 else { return }
-                var coords = points.map(\.value)
-                let padding = UIEdgeInsets(top: top, left: sides, bottom: bottom, right: sides)
-                let camera = map.cameraThatFitsShape(MLNPolyline(coordinates: &coords, count: UInt(coords.count)),
-                                                     direction: 0, edgePadding: padding)
-                map.setCamera(camera, withDuration: duration, animationTimingFunction: easeOut)
+                let (center, zoom) = Self.fit(points.map(\.value), size: map.bounds.size, top: top, bottom: bottom, sides: sides)
+                move(map, to: center, zoom: min(zoom, 16.5), duration: duration)
             }
+        }
+
+        private func move(_ map: MLNMapView, to center: CLLocationCoordinate2D, zoom: Double, duration: TimeInterval) {
+            if duration == 0 {
+                map.setCenter(center, zoomLevel: zoom, animated: false)
+            } else {
+                let altitude = MLNAltitudeForZoomLevel(zoom, 0, center.latitude, map.bounds.size)
+                let camera = MLNMapCamera(lookingAtCenter: center, altitude: altitude, pitch: 0, heading: 0)
+                map.setCamera(camera, withDuration: duration, animationTimingFunction: CAMediaTimingFunction(name: .easeOut))
+            }
+        }
+
+        /// Centro e zoom (Web Mercator, mundo de 512 pt no z0) que enquadram os pontos dentro da área livre.
+        nonisolated static func fit(_ coords: [CLLocationCoordinate2D], size: CGSize, top: CGFloat, bottom: CGFloat, sides: CGFloat)
+            -> (CLLocationCoordinate2D, Double) {
+            func world(_ c: CLLocationCoordinate2D) -> CGPoint {
+                let x = (c.longitude + 180) / 360 * 512
+                let s = sin(c.latitude * .pi / 180)
+                let y = (0.5 - log((1 + s) / (1 - s)) / (4 * .pi)) * 512
+                return CGPoint(x: x, y: y)
+            }
+            let pts = coords.map(world)
+            let minX = pts.map(\.x).min()!, maxX = pts.map(\.x).max()!
+            let minY = pts.map(\.y).min()!, maxY = pts.map(\.y).max()!
+            let availW = max(40, size.width - 2 * sides), availH = max(40, size.height - top - bottom)
+            let scale = min(availW / max(maxX - minX, 1e-9), availH / max(maxY - minY, 1e-9))
+            let zoom = log2(scale)
+            // O conteúdo fica no meio da área livre; o centro da tela desce/sobe a diferença.
+            let shift = (size.height / 2 - (top + availH / 2)) / scale
+            let cx = (minX + maxX) / 2, cy = (minY + maxY) / 2 + shift
+            let lng = cx / 512 * 360 - 180
+            let n = Double.pi - 2 * .pi * cy / 512
+            let lat = 180 / .pi * atan(0.5 * (exp(n) - exp(-n)))
+            return (CLLocationCoordinate2D(latitude: lat, longitude: lng), zoom)
         }
 
         nonisolated func mapView(_ mapView: MLNMapView, regionWillChangeWith reason: MLNCameraChangeReason, animated: Bool) {

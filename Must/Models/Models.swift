@@ -73,6 +73,8 @@ final class Place {
     var notes: String
     var source: Source?
     var done: DoneMark?
+    /// `fsq_place_id` do Foursquare (match feito uma vez pras Dicas).
+    var fsqId: String?
 
     @Relationship(deleteRule: .nullify, inverse: \Expense.place)
     var expenses: [Expense] = []
@@ -266,6 +268,8 @@ final class Settings {
     var transcribeVideos: Bool
     /// Fotos de fundo (Wikimedia Commons). Nome antigo mantido pra não migrar o banco.
     var flickrPhotos: Bool
+    /// Ajustes → Dados → "Dicas de pessoas" (Google, Foursquare, Reddit no Lugar).
+    var peopleTips: Bool = true
     /// Quanto vale 1 unidade da moeda da região em BRL (¥1 = R$ 0,036). BH = 1.
     var fxRate: Double
     var fxDate: Date?

@@ -12,8 +12,11 @@ Primeiro em **Belo Horizonte** (dia a dia, GPS real); a viagem ao **Japão** (11
 2. Abra `Must.xcodeproj`, escolha o iPhone e ⌘R. Sem Apple Developer Program: Xcode → Settings → Accounts → seu Apple ID
    (Personal Team); no iPhone, Ajustes → Geral → VPN e Gerenciamento de Dispositivo → confiar no desenvolvedor. O build grátis
    expira em 7 dias.
-3. Testes: `xcodebuild -project Must.xcodeproj -scheme Must -destination 'platform=iOS Simulator,name=iPhone 17' test`.
-4. Prints de revisão no simulador: `./scripts/qa-screens.sh` (ver `QA.md`).
+3. Mapa offline: `brew install pmtiles && ./scripts/tiles.sh` gera `Must/Data/tiles/*.pmtiles` (BH 10 MB, Tóquio 90 MB,
+   Kyoto/Nara 64 MB; fora do git). Sem eles o mapa usa o Protomaps hospedado (`PROTOMAPS_KEY`) ou só o fundo.
+   Glyphs e sprite do style: `scripts/gen-glyphs.py` e `scripts/gen-sprites.py` (já commitados).
+4. Testes: `xcodebuild -project Must.xcodeproj -scheme Must -destination 'platform=iOS Simulator,name=iPhone 17' test`.
+5. Prints de revisão no simulador: `./scripts/qa-screens.sh` (ver `QA.md`).
 
 ## Chaves
 
@@ -23,6 +26,9 @@ Copie `Secrets.example.plist` para `Secrets.plist` (na raiz; fica fora do git) e
 |---|---|---|
 | `GOOGLE_PLACES_KEY` | horários, preço e placeId (Places API **New**) | não — sem ela o app usa só o board |
 | `ANTHROPIC_KEY` | "Reforço na nuvem" (Claude Haiku) pra extrair lugar de legenda difícil | não — desligado por padrão |
+| `PROTOMAPS_KEY` | tiles hospedados quando faltam os PMTiles no bundle | não |
+| `FOURSQUARE_KEY` | Dicas de quem foi · Foursquare (tier grátis) | não |
+| `REDDIT_CLIENT_ID` | Dicas de quem foi · Reddit (app "installed", sem segredo) | não |
 
 Na chave do Google: ative a **Places API (New)**, inclua-a nas restrições de API da chave e, se restringir por app iOS, use o
 bundle `dev.viniso.must`. O tempo (Open-Meteo) e as fotos (Wikimedia Commons) não precisam de chave.

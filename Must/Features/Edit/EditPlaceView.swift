@@ -436,7 +436,8 @@ struct PlaceDraft {
         place.notes = notes
         let savedAt = sourceSavedAt ?? BoardDates(timeZone: region.timeZone).dayString(AppClock.now)
         place.source = Source(kind: sourceKind, url: sourceURL.isEmpty ? nil : sourceURL,
-                              savedAt: sourceKind == .board ? sourceSavedAt : savedAt)
+                              savedAt: sourceKind == .board ? sourceSavedAt : savedAt,
+                              caption: place.source?.caption, author: place.source?.author)
         place.lat = lat
         place.lng = lng
         place.approx = approx

@@ -15,6 +15,9 @@ struct PlaceView: View {
     @Query private var settingsList: [Settings]
 
     @State private var heroPhoto: CCPhoto?
+    @State private var tips = TipsModel()
+    /// Header comprimido (nome + "Dicas de quem foi" + horário) quando o título sai da tela.
+    @State private var compact = false
 
 
     init(placeId: String) {
@@ -41,16 +44,40 @@ struct PlaceView: View {
     private func content(_ place: Place) -> some View {
         let color = place.list?.color ?? .drink
         return ZStack(alignment: .bottom) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    hero(place, color: color)
-                    titleBlock(place).padding(.horizontal, 22).padding(.top, -96)
-                    cards(place).padding(.horizontal, 22).padding(.top, 40)
-                    Color.clear.frame(height: 170)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        hero(place, color: color)
+                        titleBlock(place).padding(.horizontal, 22).padding(.top, -96)
+                            .onScrollVisibilityChange(threshold: 0.95) { visible in
+                                withAnimation(.easeOut(duration: 0.2)) { compact = !visible }
+                            }
+                        cards(place).padding(.horizontal, 22).padding(.top, 40)
+                        // Só busca as dicas quando a seção aparece (Google cobra SKU Atmosphere).
+                        TipsSection(model: tips, region: region)
+                            .padding(.horizontal, 22)
+                            .padding(.top, 44)
+                            .id("tips")
+                            .onScrollVisibilityChange(threshold: 0.01) { visible in
+                                if visible { Task { await loadTips(place) } }
+                            }
+                        Color.clear.frame(height: 240).id("tips-end")
+                    }
                 }
+                .scrollIndicators(.hidden)
+                .ignoresSafeArea(edges: .top)
+                #if DEBUG
+                .task {
+                    // -debugScreen dicas:<id> rola direto pras Dicas (prints).
+                    guard UserDefaults.standard.string(forKey: "debugScreen")?.hasPrefix("dicas") == true else { return }
+                    try? await Task.sleep(for: .milliseconds(600))
+                    let toEnd = UserDefaults.standard.string(forKey: "debugScreen")?.hasSuffix(":fim") == true
+                    withAnimation { proxy.scrollTo(toEnd ? "tips-end" : "tips", anchor: toEnd ? .bottom : .top) }
+                }
+                #endif
             }
-            .scrollIndicators(.hidden)
-            .ignoresSafeArea(edges: .top)
+
+            if compact { compactHeader(place).frame(maxHeight: .infinity, alignment: .top).transition(.opacity) }
 
             actions(place)
         }
@@ -58,6 +85,49 @@ struct PlaceView: View {
         .toolbar(.hidden, for: .navigationBar)
         .onAppear { services.sync.refreshIfStale(place, region: region) }
         .task(id: place.id) { await loadHero(place) }
+    }
+
+    private func loadTips(_ place: Place) async {
+        let query = TipsQuery(id: place.id, name: place.name, nameLocal: place.nameLocal,
+                              city: trips.first?.city(id: place.cityId)?.name ?? region.displayName, region: region,
+                              lat: place.lat, lng: place.lng, googlePlaceId: place.placeId, fsqId: place.fsqId,
+                              sourceKind: place.source?.kind, sourceCaption: place.source?.caption, sourceAuthor: place.source?.author,
+                              sourceSavedAt: place.source?.savedAt, sourceURL: place.source?.url)
+        tips.onFoursquareMatch = { id in
+            place.fsqId = id
+            try? context.save()
+        }
+        await tips.load(query, providers: services.tipsProviders(for: query), enabled: settingsList.first?.peopleTips ?? true)
+    }
+
+    /// Nome + "Dicas de quem foi" + tag de horário, fixo no topo quando o título sai da tela.
+    private func compactHeader(_ place: Place) -> some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 14) {
+                Button { dismiss() } label: {
+                    MustIconView(.voltar, size: 18).foregroundStyle(Color.must.ink)
+                        .frame(width: 44, height: 44).background(Circle().fill(Color.must.surface))
+                }
+                .buttonStyle(MustPressStyle())
+                .accessibilityLabel("Voltar")
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        Text(place.name).font(.must.archivo(18, .semibold)).foregroundStyle(Color.must.ink).lineLimit(1)
+                        if let local = place.nameLocal {
+                            Text(local).font(.must.kanji(12, bold: false)).foregroundStyle(Color.must.secondary).lineLimit(1)
+                        }
+                    }
+                    Micro("dicas de quem foi")
+                }
+                Spacer(minLength: 6)
+                statusTag(place)
+            }
+            .padding(.horizontal, 22)
+            .padding(.top, 6)
+            .padding(.bottom, 12)
+            RowDivider()
+        }
+        .background(Color.white.ignoresSafeArea(edges: .top))
     }
 
     /// Foto do Commons perto do lugar (300 m), senão do bairro.

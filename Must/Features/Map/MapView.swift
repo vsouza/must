@@ -16,7 +16,8 @@ struct MapView: View {
 
     @State private var layers: Set<MapLayer> = [.today, .tomorrow, .unplanned, .metro]
     @State private var camera: MapCameraState?
-    @State private var command: MapCameraCommand?
+    @State private var cam = MapCameraController()
+    @Environment(\.scenePhase) private var scenePhase
     @State private var routes = RouteGeometry()
     @State private var selectedId: String?
     @State private var query = ""
@@ -66,8 +67,10 @@ struct MapView: View {
     var body: some View {
         ZStack {
             Color(hex: 0xE9EBEF).ignoresSafeArea()
-            MapLibreView(scene: scene, command: command,
+            MapLibreView(scene: scene, command: cam.command,
                          onCamera: { camera = $0 },
+                         onGesture: { cam.userGestured() },
+                         onIdle: { cam.cameraIdle() },
                          onSelect: select)
                 .ignoresSafeArea()
             overlays
@@ -75,6 +78,46 @@ struct MapView: View {
         .onAppear(perform: appear)
         .onChange(of: router.mapShowsOpenNow) { _, open in if open { consumeOpenNow() } }
         .onChange(of: (stops + tomorrowStops).map(\.id)) { _, _ in requestRoutes() }
+        // Reavaliar a câmera: andou (> 100 m, o controlador filtra), camada, 済, voltou pro app com o mapa em foco.
+        .onChange(of: here.map { [$0.coordinate.latitude, $0.coordinate.longitude] }) { _, _ in reevaluate(force: false) }
+        .onChange(of: layers) { _, _ in reevaluate(force: true) }
+        .onChange(of: stops.filter(\.done).count) { _, _ in reevaluate(force: true) }
+        .onChange(of: scenePhase) { _, phase in if phase == .active && router.tab == .mapa { reevaluate(force: true) } }
+    }
+
+    // MARK: Câmera (prompt 11)
+
+    /// Pinos das camadas ligadas que contam pro "mais perto".
+    private var candidates: [MapCandidate] {
+        let nextId = nextStop?.place?.id
+        return pins.filter { pin in
+            guard layers.contains(pin.layer), pin.placeId != nil else { return false }
+            if case .today(_, .done, _) = pin.kind { return false }
+            return true
+        }
+        .map { MapCandidate(placeId: $0.placeId!, coordinate: $0.coordinate, isNextStop: $0.placeId == nextId && $0.layer == .today) }
+    }
+
+    private func reevaluate(force: Bool, animated: Bool = true) {
+        cam.evaluate(here: here, candidates: candidates, fallback: fallbackCenter, force: force, animated: animated)
+    }
+
+    /// O "mais perto" quando não há nada a 500 m.
+    private var farTarget: (place: Place, target: MapFocus.Target)? {
+        guard selectedId == nil, let target = cam.focus?.target, let place = places.first(where: { $0.id == target.placeId }) else { return nil }
+        return (place, target)
+    }
+
+    /// "2,1 km · 9 min de metrô" (a pé quando < 1,2 km).
+    private func distanceText(_ meters: CLLocationDistance, to place: Place) -> String {
+        guard let leg = legFromHere(to: place, walkUnderKm: 1.2) else { return Self.meters(meters) }
+        return "\(Self.meters(meters)) · \(leg.text)"
+    }
+
+    /// Minutos a pé pela rua (80 m/min), pro "26 a pé" do card.
+    private func walkMinutes(to place: Place) -> Int? {
+        guard let here else { return nil }
+        return Int((DaySolver.streetKm(here.coordinate, place.coordinate) * 1000 / 80).rounded())
     }
 
     // MARK: Cena
@@ -92,6 +135,20 @@ struct MapView: View {
         }
         scene.you = here?.coordinate
         scene.heading = services.location.heading
+        if let far = farTarget, let here {
+            let target = far.target.coordinate.value
+            if cam.showsDistanceLine {
+                scene.distanceLine = [here.coordinate, target]
+                let mid = CLLocationCoordinate2D(latitude: (here.coordinate.latitude + target.latitude) / 2,
+                                                 longitude: (here.coordinate.longitude + target.longitude) / 2)
+                scene.pins.append(MapPin(id: "distance-badge", coordinate: mid, kind: .badge(text: distanceText(far.target.meters, to: far.place)),
+                                         placeId: nil, layer: far.target.isNextStop ? .today : .unplanned))
+            }
+            if !far.target.isNextStop {
+                scene.pins.append(MapPin(id: "nearest-callout", coordinate: target, kind: .callout(text: "\(Self.shortName(far.place.name)) · mais perto"),
+                                         placeId: far.place.id, layer: .unplanned))
+            }
+        }
         return scene
     }
 
@@ -101,7 +158,8 @@ struct MapView: View {
         for (i, stop) in stops.enumerated() {
             guard let place = stop.place else { continue }
             let status: MapPin.TodayStatus = stop.done ? .done : (stop.id == next?.id ? .next : .future)
-            let caption = status == .next ? nextCaption(place) : nil
+            let isFarTarget = cam.focus?.target?.placeId == place.id && selectedId == nil
+            let caption = status == .next ? (isFarTarget ? "\(Self.shortName(place.name)) · mais perto" : nextCaption(place)) : nil
             pins.append(MapPin(id: "today-\(place.id)", coordinate: place.coordinate,
                                kind: .today(number: i + 1, status: status, label: caption), placeId: place.id, layer: .today))
         }
@@ -155,9 +213,9 @@ struct MapView: View {
         return "\(Self.shortName(place.name)) · \(leg.text)"
     }
 
-    private func legFromHere(to place: Place) -> (minutes: Int, text: String, mode: LegMode)? {
+    private func legFromHere(to place: Place, walkUnderKm: Double? = nil) -> (minutes: Int, text: String, mode: LegMode)? {
         guard let here else { return nil }
-        let leg = DaySolver.leg(here.coordinate, place.coordinate, walkMax: walkMaxKm)
+        let leg = DaySolver.leg(here.coordinate, place.coordinate, walkMax: walkUnderKm ?? walkMaxKm)
         let minutes = services.eta.minutes(from: here.coordinate, to: place.coordinate, transit: leg.mode == .metro) ?? leg.minutes
         return (minutes, leg.mode == .walk ? "\(minutes) min a pé" : "\(minutes) min de metrô", leg.mode)
     }
@@ -217,6 +275,7 @@ struct MapView: View {
                 }
                 .padding(.horizontal, 22)
                 legend
+                if let far = farTarget { farNotice(far.place, target: far.target).padding(.horizontal, 22) }
             }
             .padding(.top, 8)
 
@@ -228,10 +287,10 @@ struct MapView: View {
                 VStack(spacing: 10) {
                     roundButton(label: "Centralizar em mim") {
                         MustIconView(.voceGps, size: 20).foregroundStyle(Color.must.ink)
-                    } action: { centerOnMe() }
+                    } action: { selectedId = nil; cam.resumeAuto(here: here, candidates: candidates, fallback: fallbackCenter) }
                     roundButton(label: "Escala de bairro") {
                         Text("300").font(.must.mono(13, .semibold)).foregroundStyle(Color.must.ink)
-                    } action: { centerOnMe() }
+                    } action: { selectedId = nil; cam.forceNeighborhood(here?.coordinate ?? fallbackCenter) }
                 }
             }
             .padding(.horizontal, 22)
@@ -248,6 +307,32 @@ struct MapView: View {
                 }
                 .padding(.bottom, 96)
         }
+    }
+
+    /// "Nada a menos de 500 m. Abri o mapa até o mais perto: **Inimá de Paula**, parada 3 de hoje."
+    private func farNotice(_ place: Place, target: MapFocus.Target) -> some View {
+        let index = stops.firstIndex { $0.place?.id == place.id }
+        let tail = index.map { ", parada \($0 + 1) de hoje." } ?? (place.list.map { ", \($0.displayName)." } ?? ".")
+        let name = Text(Self.withoutGeneric(place.name)).font(.must.archivo(15, .semibold)).foregroundStyle(Color.must.ink)
+        return HStack(alignment: .center, spacing: 12) {
+            MustIconView(.buscar, size: 16).foregroundStyle(Color.must.ink)
+                .frame(width: 38, height: 38).background(Circle().fill(Color.must.surface))
+            Text("Nada a menos de 500 m. Abri o mapa até o mais perto: \(name)\(tail)")
+                .font(.must.serif(16.5)).foregroundStyle(Color.must.ink)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .glass(cornerRadius: 26)
+        .transition(.opacity.combined(with: .move(edge: .top)))
+    }
+
+    /// "Museu Inimá de Paula" → "Inimá de Paula".
+    static func withoutGeneric(_ name: String) -> String {
+        let words = name.split(separator: " ").map(String.init)
+        guard words.count >= 3, shortName(name) != name else { return name }
+        return words.dropFirst().joined(separator: " ")
     }
 
     private func searchField(_ near: [Near]) -> some View {
@@ -329,6 +414,15 @@ struct MapView: View {
                            leg: legFromHere(to: place), region: region, now: now,
                            onClose: { selectedId = nil },
                            onOpen: { router.push(.place(id: place.id), on: .mapa) },
+                           onDay: { router.select(.hoje) })
+        } else if let far = farTarget {
+            let index = stops.firstIndex { $0.place?.id == far.place.id }
+            PlaceSheetCard(place: far.place, number: index.map { $0 + 1 }, stop: index.map { stops[$0] },
+                           leg: legFromHere(to: far.place, walkUnderKm: 1.2), region: region, now: now,
+                           distance: far.target.meters,
+                           walkMinutes: walkMinutes(to: far.place),
+                           onClose: { cam.forceNeighborhood(here?.coordinate ?? fallbackCenter) },
+                           onOpen: { router.push(.place(id: far.place.id), on: .mapa) },
                            onDay: { router.select(.hoje) })
         } else if !near.isEmpty || nextStop != nil {
             VStack(alignment: .leading, spacing: 0) {
@@ -449,21 +543,18 @@ struct MapView: View {
     private func appear() {
         consumeOpenNow()
         requestRoutes()
-        guard !didCenter else { return }
+        guard !didCenter else { reevaluate(force: true); return }
         didCenter = true
-        var width = Self.neighborhoodWidth
         #if DEBUG
         let debugWidth = UserDefaults.standard.double(forKey: "debugMapWidth") // -debugMapWidth 450 (prints)
-        if debugWidth > 0 { width = debugWidth }
+        if debugWidth > 0 { cam.show(fallbackCenter, widthMeters: debugWidth, animated: false); return }
         #endif
-        command = MapCameraCommand(target: .center(lat: fallbackCenter.latitude, lng: fallbackCenter.longitude,
-                                                    widthMeters: width), animated: false)
+        reevaluate(force: true, animated: false)
     }
 
     private func centerOnMe() {
         selectedId = nil
-        command = MapCameraCommand(target: .center(lat: fallbackCenter.latitude, lng: fallbackCenter.longitude,
-                                                    widthMeters: Self.neighborhoodWidth))
+        cam.resumeAuto(here: here, candidates: candidates, fallback: fallbackCenter)
     }
 
     private func consumeOpenNow() {
@@ -490,7 +581,7 @@ struct MapView: View {
     private func search() {
         guard let first = places.first(where: { $0.matches(query) }) else { return }
         selectedId = first.id
-        command = MapCameraCommand(target: .center(lat: first.lat, lng: first.lng, widthMeters: Self.neighborhoodWidth))
+        cam.show(first.coordinate)
     }
 }
 
@@ -504,6 +595,7 @@ struct PlaceSheetCard: View {
     var region: Region
     var now: Date
     var distance: CLLocationDistance?
+    var walkMinutes: Int?
     var onClose: () -> Void
     var onOpen: () -> Void
     var onDay: () -> Void
@@ -570,6 +662,7 @@ struct PlaceSheetCard: View {
             pieces.append(Text(MapView.meters(distance)).font(.must.mono(15, .semibold)).foregroundStyle(Color.must.ink))
         }
         if let leg { pieces.append(Text(leg.text)) }
+        if let walkMinutes, leg?.mode == .metro { pieces.append(Text("\(walkMinutes) a pé")) }
         if let at { pieces.append(Text(region.timeString(at)).font(.must.mono(15, .semibold)).foregroundStyle(Color.must.ink)) }
         if pieces.isEmpty, let list = place.list { pieces.append(Text(list.displayName)) }
         var out = Text("")
@@ -596,7 +689,7 @@ struct ScaleBar: View {
 
     var body: some View {
         if let mpp = metersPerPoint, mpp > 0 {
-            let meters = Self.steps.min { abs($0 / mpp - 70) < abs($1 / mpp - 70) } ?? 300
+            let meters = Self.steps.min { abs($0 / mpp - 125) < abs($1 / mpp - 125) } ?? 300
             let width = min(140, max(24, meters / mpp))
             VStack(alignment: .leading, spacing: 2) {
                 Text(meters >= 1000 ? "\(Int(meters / 1000)) km" : "\(Int(meters)) m")

@@ -1,3 +1,4 @@
+import Foundation
 import Observation
 
 /// Serviços compartilhados do app (o único "singleton" além do `RegionStore`).
@@ -22,5 +23,15 @@ final class Services {
         self.routes = routes
         eta = ETACache(routes: routes)
         sync = SyncCoordinator(places: places, weather: weather, photos: photos)
+    }
+
+    /// Fontes das "Dicas de quem foi" (prompt 11). `-debugTips fake` usa amostras (prints/simulador).
+    func tipsProviders(for query: TipsQuery) -> [any TipsProviding] {
+        #if DEBUG
+        if UserDefaults.standard.string(forKey: "debugTips") == "fake" {
+            return [SourceCaptionTips()] + FakeTipsProvider.samples(for: query)
+        }
+        #endif
+        return [SourceCaptionTips(), GoogleReviewsTips(), FoursquareTips(), RedditTips(), TripAdvisorTips()]
     }
 }

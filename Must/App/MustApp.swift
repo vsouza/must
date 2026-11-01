@@ -108,6 +108,7 @@ enum DebugLaunch {
         case "lista": router.push(.list(id: arg ?? "eat"), on: .musts)
         case "fim": router.push(.saveForEnd, on: .musts)
         case "lugar": router.push(.place(id: arg ?? "p01"), on: .musts)
+        case "dicas": router.push(.place(id: (arg ?? "p01").replacingOccurrences(of: ":fim", with: "")), on: .musts) // rola até as Dicas (PlaceView)
         case "editar": router.sheet = .editPlace(id: arg ?? "p01")
         case "nova-lista": router.select(.musts); router.cover = .newList
         case "adicionar": router.sheet = .addLink(url: arg, listId: nil)
