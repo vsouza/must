@@ -53,7 +53,7 @@ enum PlaceMatcher {
     }
 
     /// Mesmo nome, ignorando caixa, acento e pontuação, ou um contido no outro (≥ 5 letras).
-    static func similar(_ a: String, _ b: String) -> Bool {
+    nonisolated static func similar(_ a: String, _ b: String) -> Bool {
         let na = normalize(a), nb = normalize(b)
         guard !na.isEmpty, !nb.isEmpty else { return false }
         if na == nb { return true }
@@ -61,7 +61,7 @@ enum PlaceMatcher {
         return short.count >= 5 && long.contains(short)
     }
 
-    static func normalize(_ s: String) -> String {
+    nonisolated static func normalize(_ s: String) -> String {
         s.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: nil).filter { $0.isLetter || $0.isNumber }
     }
 }

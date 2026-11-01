@@ -54,7 +54,7 @@ struct BoardCodec {
 
     // MARK: JSON
 
-    static func decode(_ data: Data) throws -> Board {
+    nonisolated static func decode(_ data: Data) throws -> Board {
         do {
             return try JSONDecoder.board.decode(Board.self, from: data)
         } catch let error as DecodingError {
@@ -62,12 +62,12 @@ struct BoardCodec {
         }
     }
 
-    static func encode(_ board: Board) throws -> Data {
+    nonisolated static func encode(_ board: Board) throws -> Data {
         let tz: TimeZone = board.region.timeZone
         return try JSONEncoder.board(timeZone: tz).encode(board)
     }
 
-    private static func describe(_ error: DecodingError) -> String {
+    nonisolated private static func describe(_ error: DecodingError) -> String {
         switch error {
         case .keyNotFound(let key, let ctx):
             "falta “\(key.stringValue)” em \(ctx.codingPath.map(\.stringValue).joined(separator: "."))"
