@@ -22,7 +22,8 @@ App iOS pessoal (um usuário: Vinicius) que transforma um board de "Musts" (Must
 - 済 (feito) é o selo do app: círculo verde com o kanji.
 
 ## Convenções de código
-- Pastas: `App/`, `DesignSystem/`, `Models/`, `Data/` (import/export, seeds, Region), `Services/` (Places, Weather, Flickr, Routes, Location, Intelligence), `Solver/`, `Features/<Tela>/`, `Widgets/` (extension).
+- Pastas: `App/`, `DesignSystem/`, `Models/`, `Data/` (import/export, seeds, Region), `Services/` (Places, Weather, Flickr, Routes, Location, Intelligence), `Solver/`, `Features/<Tela>/`, `Widgets/` (extension). Todas ficam dentro de `Must/` (o APFS não diferencia `Data/` de `data/`); testes em `MustTests/`.
+- Projeto gerado por **xcodegen**: edite `project.yml` e rode `xcodegen generate` (nunca edite o `.pbxproj` à mão). Arquivo novo dentro de `Must/` entra sozinho no target do app; `Must/Widgets/` é só da extensão. Team `BS5ZUHVH99` (Personal Team).
 - Views pequenas; estado em `@Observable` por feature; nada de singletons globais além de `RegionStore` e `Services`.
 - Tudo em pt-BR na UI. Datas e moeda via `FormatStyle` com o locale/currency da região.
 - Sem dependências externas de UI. Pacotes permitidos: nenhum obrigatório; se precisar de Markdown no chat, usar o nativo.
