@@ -96,8 +96,14 @@ enum AIPlaceExtractor {
 
 /// Reforço opcional com Claude Haiku (desligado por padrão). Só manda o texto da legenda —
 /// nunca localização nem o board. Chave em `Secrets.plist` (ANTHROPIC_KEY).
+///
+/// REGRA (pedido do Vinicius, crítico): só o modelo mais barato (Haiku) e o effort mais baixo (`low`).
+/// Nada de Sonnet/Opus, thinking ou effort maior. `CloudBoostTests` quebra se isso mudar.
 enum CloudBoost {
     static let model = "claude-haiku-5-5"
+    static let effort = "low"
+    /// Até 5 lugares em JSON cabem com folga.
+    static let maxTokens = 1024
     static var isConfigured: Bool { Secrets.anthropicKey != nil }
 
     /// Mesmo esquema do extrator no aparelho.
@@ -127,16 +133,20 @@ enum CloudBoost {
 
     static func extract(_ text: String, knownAreas: [String], http: HTTP = HTTP()) async throws -> [ExtractedPlace] {
         guard let key = Secrets.anthropicKey else { throw ServiceError.missingKey("ANTHROPIC_KEY") }
-        let body: [String: Any] = [
-            "model": model,
-            "max_tokens": 2048,
-            "system": AIPlaceExtractor.instructions + " Responda em pt-BR. Use string vazia quando não souber.",
-            "output_config": ["effort": "low", "format": ["type": "json_schema", "schema": schema]],
-            "messages": [["role": "user", "content": "Legenda:\n\(text)"]],
-        ]
-        let data = try await http.post(URL(string: "https://api.anthropic.com/v1/messages")!, json: body,
+        let data = try await http.post(URL(string: "https://api.anthropic.com/v1/messages")!, json: requestBody(text),
                                        headers: ["x-api-key": key, "anthropic-version": "2026-10-21"], service: "anthropic")
         return try parse(data, text: text, knownAreas: knownAreas)
+    }
+
+    /// Corpo da chamada: Haiku, effort `low`, saída estruturada, sem thinking.
+    static func requestBody(_ text: String) -> [String: Any] {
+        [
+            "model": model,
+            "max_tokens": maxTokens,
+            "system": AIPlaceExtractor.instructions + " Responda em pt-BR. Use string vazia quando não souber.",
+            "output_config": ["effort": effort, "format": ["type": "json_schema", "schema": schema]],
+            "messages": [["role": "user", "content": "Legenda:\n\(text)"]],
+        ]
     }
 
     /// Lê a resposta da Messages API (checa `stop_reason` antes do conteúdo).

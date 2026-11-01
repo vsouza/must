@@ -163,3 +163,16 @@ struct AssistantSuggestionTests {
         #expect(reply.actions.first?.place.id == "j02") // Sushi no Midori, ¥3.500 — o mais barato em Tóquio 1
     }
 }
+
+/// Regra crítica: o reforço na nuvem só usa o modelo barato (Haiku) e o effort mais baixo.
+struct CloudBoostTests {
+    @Test func onlyHaikuWithLowEffort() throws {
+        let body = CloudBoost.requestBody("fomos no Bar Benfiddich ontem")
+        let model = try #require(body["model"] as? String)
+        #expect(model.hasPrefix("claude-haiku-"), "modelo caro no reforço: \(model)")
+        let output = try #require(body["output_config"] as? [String: Any])
+        #expect(output["effort"] as? String == "low")
+        #expect(body["thinking"] == nil)
+        #expect((body["max_tokens"] as? Int ?? .max) <= 1024)
+    }
+}

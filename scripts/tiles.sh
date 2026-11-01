@@ -12,4 +12,7 @@ echo "→ build $DAY (maxzoom $MAXZ)"
 pmtiles extract $SRC $OUT/bh.pmtiles        --bbox=-44.10,-20.05,-43.80,-19.75 --maxzoom=$MAXZ
 pmtiles extract $SRC $OUT/jp-tokyo.pmtiles  --bbox=139.55,35.55,139.95,35.80   --maxzoom=$MAXZ
 pmtiles extract $SRC $OUT/jp-kansai.pmtiles --bbox=135.60,34.60,135.90,35.10   --maxzoom=$MAXZ
+# Recortes pequenos fora das cidades: Inhotim (Brumadinho) e Fuji · Kawaguchiko (lago, Chureito, 5ª estação).
+pmtiles extract $SRC $OUT/bh-inhotim.pmtiles --bbox=-44.30,-20.20,-44.10,-20.05 --maxzoom=$MAXZ
+pmtiles extract $SRC $OUT/jp-fuji.pmtiles    --bbox=138.62,35.34,138.86,35.56   --maxzoom=$MAXZ
 ls -lh $OUT/*.pmtiles

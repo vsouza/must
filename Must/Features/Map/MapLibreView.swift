@@ -414,7 +414,8 @@ struct MapLibreView: UIViewRepresentable {
                 report(mapView)
                 let bucket = mapView.zoomLevel <= 13 ? Int(mapView.zoomLevel * 2) : 99
                 if bucket != clusterBucket { clusterBucket = bucket; applyPins(parent.scene, map: mapView) }
-                if parent.scene.region == .jp { loadStyle(near: mapView.centerCoordinate) }
+                // Troca o arquivo de tiles quando a câmera passa pra outra área (BH × Inhotim, Tóquio × Kansai × Fuji).
+                loadStyle(near: mapView.centerCoordinate)
                 setPulse(paused: false, map: mapView)
                 parent.onIdle()
             }

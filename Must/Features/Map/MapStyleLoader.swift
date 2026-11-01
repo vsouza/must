@@ -12,26 +12,42 @@ enum MapTiles: Equatable, Sendable {
         var name: String
         var region: Region
         var center: CLLocationCoordinate2D
+        /// Recorte do `scripts/tiles.sh`: oeste, sul, leste, norte.
+        var bbox: (west: Double, south: Double, east: Double, north: Double)
+
+        func contains(_ c: CLLocationCoordinate2D) -> Bool {
+            (bbox.west...bbox.east).contains(c.longitude) && (bbox.south...bbox.north).contains(c.latitude)
+        }
     }
 
+    /// Principais primeiro: quando a câmera está em duas áreas, vale a maior.
     static let areas: [Area] = [
-        Area(name: "bh", region: .bh, center: CLLocationCoordinate2D(latitude: -19.90, longitude: -43.95)),
-        Area(name: "jp-tokyo", region: .jp, center: CLLocationCoordinate2D(latitude: 35.675, longitude: 139.75)),
-        Area(name: "jp-kansai", region: .jp, center: CLLocationCoordinate2D(latitude: 34.85, longitude: 135.75)),
+        Area(name: "bh", region: .bh, center: CLLocationCoordinate2D(latitude: -19.90, longitude: -43.95),
+             bbox: (-44.10, -20.05, -43.80, -19.75)),
+        Area(name: "bh-inhotim", region: .bh, center: CLLocationCoordinate2D(latitude: -20.125, longitude: -44.20),
+             bbox: (-44.30, -20.20, -44.10, -20.05)),
+        Area(name: "jp-tokyo", region: .jp, center: CLLocationCoordinate2D(latitude: 35.675, longitude: 139.75),
+             bbox: (139.55, 35.55, 139.95, 35.80)),
+        Area(name: "jp-kansai", region: .jp, center: CLLocationCoordinate2D(latitude: 34.85, longitude: 135.75),
+             bbox: (135.60, 34.60, 135.90, 35.10)),
+        Area(name: "jp-fuji", region: .jp, center: CLLocationCoordinate2D(latitude: 35.50, longitude: 138.76),
+             bbox: (138.62, 35.34, 138.86, 35.56)),
     ]
 
-    /// Escolhe o arquivo da região mais perto de `center` (Tóquio × Kyoto/Nara no Japão).
+    /// Arquivo da área que contém `center`; fora de todas, o da área mais perto (Tóquio × Kansai × Fuji no Japão).
     static func pick(region: Region, near center: CLLocationCoordinate2D, bundle: Bundle = .main) -> MapTiles {
         let here = CLLocation(latitude: center.latitude, longitude: center.longitude)
-        let candidates = areas.filter { $0.region == region }
+        let available = areas.filter { $0.region == region }
             .compactMap { area -> (Area, URL)? in
                 bundle.url(forResource: area.name, withExtension: "pmtiles", subdirectory: "tiles").map { (area, $0) }
             }
-            .sorted {
-                here.distance(from: CLLocation(latitude: $0.0.center.latitude, longitude: $0.0.center.longitude))
-                    < here.distance(from: CLLocation(latitude: $1.0.center.latitude, longitude: $1.0.center.longitude))
-            }
-        if let (area, url) = candidates.first { return .bundled(name: area.name, url: url) }
+        let nearest = available.sorted {
+            here.distance(from: CLLocation(latitude: $0.0.center.latitude, longitude: $0.0.center.longitude))
+                < here.distance(from: CLLocation(latitude: $1.0.center.latitude, longitude: $1.0.center.longitude))
+        }
+        if let (area, url) = available.first(where: { $0.0.contains(center) }) ?? nearest.first {
+            return .bundled(name: area.name, url: url)
+        }
         if let key = Secrets.protomapsKey { return .hosted(key: key) }
         return .none
     }
