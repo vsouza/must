@@ -179,14 +179,21 @@ final class Stop {
     var order: Int
     /// `Place.id` da parada original, quando foi trocada.
     var swappedFrom: String?
+    /// Reserva (âncora fixa do dia).
+    var isAnchor: Bool = false
+    /// Fora da meta do dia ("vale a exceção").
+    var isException: Bool = false
 
-    init(place: Place?, at: Date, order: Int, done: Bool = false, swappedFrom: String? = nil) {
+    init(place: Place?, at: Date, order: Int, done: Bool = false, swappedFrom: String? = nil,
+         isAnchor: Bool = false, isException: Bool = false) {
         self.id = UUID()
         self.place = place
         self.at = at
         self.order = order
         self.done = done
         self.swappedFrom = swappedFrom
+        self.isAnchor = isAnchor
+        self.isException = isException
     }
 }
 

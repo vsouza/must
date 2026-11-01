@@ -143,6 +143,11 @@ enum Walk {
         return "\((meters / 1000).formatted(.number.locale(Locale(identifier: "pt_BR")).precision(.fractionLength(1)))) km"
     }
 
+    /// "0,8 km" / "4,1 km" (totais do dia; nunca "aqui").
+    static func kmText(_ km: Double) -> String {
+        "\(km.formatted(.number.locale(Locale(identifier: "pt_BR")).precision(.fractionLength(1)))) km"
+    }
+
     /// "4 min" a pé até 2 km, senão a distância.
     static func shortText(_ meters: CLLocationDistance) -> String {
         meters <= 2000 ? "\(minutes(meters)) min" : distanceText(meters)
@@ -161,6 +166,25 @@ extension TripInfo {
         if let city = dated.last(where: { $0.from! <= day && day <= $0.to! }) { return city }
         if let first = dated.first, day < first.from! { return first }
         return dated.last
+    }
+
+    /// Dias que restam na cidade depois de `date` (0 = último dia). `nil` sem viagem.
+    /// O dia de troca já é da cidade seguinte, então o último dia de um trecho é `to − 1` (exceto o último trecho).
+    func daysLeft(in city: City, after date: Date, calendar: Calendar) -> Int? {
+        guard hasTrip, let to = city.to else { return nil }
+        let isLast = city.id == cities.last?.id
+        let lastDay = isLast ? to : (calendar.date(byAdding: .day, value: -1, to: to) ?? to)
+        let days = calendar.dateComponents([.day], from: calendar.startOfDay(for: date), to: calendar.startOfDay(for: lastDay)).day ?? 0
+        return max(0, days)
+    }
+
+    /// "dia 3 de 5 em Tóquio"
+    func dayIndex(in city: City, on date: Date, calendar: Calendar) -> (index: Int, total: Int)? {
+        guard hasTrip, let from = city.from, let to = city.to else { return nil }
+        let isLast = city.id == cities.last?.id
+        let total = (calendar.dateComponents([.day], from: from, to: to).day ?? 0) + (isLast ? 1 : 0)
+        let index = (calendar.dateComponents([.day], from: from, to: calendar.startOfDay(for: date)).day ?? 0) + 1
+        return (min(max(1, index), max(1, total)), max(1, total))
     }
 
     /// Nome legível ("Tóquio 13–17" quando o nome se repete).
@@ -192,6 +216,18 @@ enum PlaceActions {
         }
         try? context.save()
         Log.data.info("済 \(place.id, privacy: .public) · \(spent)")
+    }
+
+    /// Registrar gasto: cria o `Expense` (se > 0) e, com lugar, marca 済 no lugar e na parada do dia.
+    static func record(amount: Double, place: Place?, category: ExpenseCategory?, method: PaymentMethod,
+                       day: PlannedDay?, at date: Date = AppClock.now, context: ModelContext) {
+        if let place {
+            markDone(place, spent: amount, category: category, method: method, at: date, context: context)
+            for stop in day?.stops ?? [] where stop.place?.id == place.id { stop.done = true }
+        } else if amount > 0 {
+            context.insert(Expense(at: date, amount: amount, category: category ?? .other, place: nil, method: method))
+        }
+        try? context.save()
     }
 
     static func undoDone(_ place: Place, context: ModelContext) {
