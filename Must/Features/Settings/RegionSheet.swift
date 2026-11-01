@@ -147,7 +147,7 @@ struct RegionSheet: View {
         VStack(alignment: .leading, spacing: 0) {
             Button { toggle(.date) } label: {
                 FormRow("Simular data e hora") {
-                    MonoValue(simDateOn ? AppClock.now.formatted(store.region.dateStyle(.abbreviated, time: .shortened)) : "off",
+                    MonoValue(simDateOn ? store.region.shortDayTime(AppClock.now) : "off",
                               color: simDateOn ? Color.must.ink : Color.must.ink)
                 }
             }

@@ -239,7 +239,7 @@ private struct SettingsSections: View {
                     fxText = (settings.fxRate * 100).formatted(.number.locale(region.locale).precision(.fractionLength(2)))
                     editingFX = true
                 } label: {
-                    FormRow("Moeda", subtitle: settings.fxDate.map { "câmbio salvo \($0.formatted(region.dateStyle(.abbreviated)))" }
+                    FormRow("Moeda", subtitle: settings.fxDate.map { "câmbio salvo \(region.shortDay($0))" }
                             ?? "câmbio padrão · toque pra atualizar") {
                         MonoValue("¥100 = \((settings.fxRate * 100).formatted(.money("BRL")))", chevron: true)
                     }
