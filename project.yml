@@ -1,0 +1,155 @@
+name: Must
+options:
+  bundleIdPrefix: dev.viniso
+  deploymentTarget:
+    iOS: "26.0"
+  developmentLanguage: pt-BR
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    DEVELOPMENT_TEAM: BS5ZUHVH99
+    CODE_SIGN_STYLE: Automatic
+    TARGETED_DEVICE_FAMILY: "1"
+    SWIFT_STRICT_CONCURRENCY: complete
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+
+targets:
+  Must:
+    type: application
+    platform: iOS
+    sources:
+      - path: Must
+        excludes:
+          - "Widgets/**"
+          - "Resources/Fonts/licenses/**"
+    dependencies:
+      - target: MustWidgets
+        embed: true
+    postBuildScripts:
+      - name: Copiar Secrets.plist (se existir)
+        basedOnDependencyAnalysis: false
+        script: |
+          SRC="${SRCROOT}/Secrets.plist"
+          DST="${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/Secrets.plist"
+          if [ -f "$SRC" ]; then
+            cp "$SRC" "$DST"
+            echo "Secrets.plist copiado"
+          else
+            rm -f "$DST"
+            echo "warning: Secrets.plist ausente — serviços ao vivo ficam desligados (ver Secrets.example.plist)"
+          fi
+    entitlements:
+      path: Must/Must.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.dev.viniso.must
+    info:
+      path: Must/Info.plist
+      properties:
+        CFBundleDisplayName: Must
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleDevelopmentRegion: pt-BR
+        UILaunchScreen:
+          UIColorName: ""
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UIUserInterfaceStyle: Light
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        NSLocationWhenInUseUsageDescription: Pra mostrar o que está aberto perto de você
+        NSSupportsLiveActivities: true
+        UIAppFonts:
+          - Archivo.ttf
+          - InstrumentSerif-Regular.ttf
+          - InstrumentSerif-Italic.ttf
+          - GeistMono.ttf
+          - ZenKakuGothicNew-Medium.ttf
+          - ZenKakuGothicNew-Bold.ttf
+        CFBundleURLTypes:
+          - CFBundleURLName: dev.viniso.must
+            CFBundleURLSchemes:
+              - must
+        LSApplicationQueriesSchemes:
+          - comgooglemaps
+          - maps
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.viniso.must
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        SUPPORTS_MACCATALYST: NO
+        SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
+        SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD: NO
+
+  MustWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Must/Widgets
+      - path: Must/Resources/Fonts
+        excludes:
+          - "licenses/**"
+        buildPhase: resources
+    dependencies:
+      - sdk: WidgetKit.framework
+      - sdk: SwiftUI.framework
+    entitlements:
+      path: Must/Widgets/MustWidgets.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.dev.viniso.must
+    info:
+      path: Must/Widgets/Info.plist
+      properties:
+        CFBundleDisplayName: Must
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+        UIAppFonts:
+          - Archivo.ttf
+          - InstrumentSerif-Regular.ttf
+          - InstrumentSerif-Italic.ttf
+          - GeistMono.ttf
+          - ZenKakuGothicNew-Medium.ttf
+          - ZenKakuGothicNew-Bold.ttf
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.viniso.must.widgets
+        SKIP_INSTALL: YES
+
+  MustTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: MustTests
+    dependencies:
+      - target: Must
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.viniso.must.tests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/Must.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Must
+        BUNDLE_LOADER: $(TEST_HOST)
+
+schemes:
+  Must:
+    build:
+      targets:
+        Must: all
+        MustWidgets: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - MustTests
+    archive:
+      config: Release

@@ -1,0 +1,14 @@
+Leia `CLAUDE.md`, `design/screens/must-light.css` e olhe `design/screens/HomeClaro.png`, `Musts.png`, `Hoje.png`, `Lugar.png`. Vamos construir o design system do Must em SwiftUI, em `DesignSystem/`.
+
+## Entregar
+1. `Colors.swift`: `Color.must.bg`, `.ink`, `.secondary`, `.surface` (#F1F2F4), `.surface2` (#F6F7F9), `.line` (#EEF0F3), `.green`, `.greenText`, `.blue`, `.blueText`. Enum `MustColor: String, Codable, CaseIterable` com os 8 casos (`eat, drink, coffee, see, temple, listen, shop, night`) e propriedades `light`, `strong`, `text` (valores no `CLAUDE.md`) e `gradient: LinearGradient` (135°, light → strong).
+2. `Blobs.swift`: `BlobBackground(style:)` — 2 ou 3 elipses com gradiente (green/blue/sky), giradas, posições parametrizáveis, igual aos SVGs das telas. Desenhar com `Ellipse().fill(gradient).rotationEffect`. Nunca animar.
+3. `Glass.swift`: modificador `.glass()` = fundo branco 75% + `.ultraThinMaterial` por baixo, borda 1px branca 70%, sombra `0 10 30 rgba(18,19,22,.08)`, raio 22. `.card()` = fundo `surface2`, raio 22. `.stackCard(color:rotation:)` = card de vidro colorido (gradiente da `MustColor` a ~90% de opacidade), raio 26, sombra `0 20 50 .12`, rotação em graus (−2, 1.5, 0) — é o card empilhado da Home.
+4. Componentes: `Pill(text, isOn, style: .default/.dark/.green)`, `PrimaryButton(title, icon, style: .green/.dark)` 52pt raio 999, `GhostButton`, `IconButton(symbol)` 40pt circular (`.gray`, `.dark`, `.glass`), `Tag`, `Micro(text)` (mono 11 caixa alta tracking .1em), `MonoNumber(value, size)` com `tabular-nums`, `KanjiSeal(done:)` (済 em círculo verde 30pt, ou número em círculo preto), `Credit(text)` (chip "foto · Flickr CC · @user"), `TintedPhoto(url, color)` (AsyncImage com saturação .7 + gradiente da cor a 82%), `MustTabBar(selected:)` flutuante (pílula branca com sombra, 62pt, itens Início/Hoje/Mapa/Musts com os ícones do set), `Fab(symbol)` 54pt preto, `SheetHandle`, `Toggle` estilizado (46×28, verde).
+5. `Icons.swift`: importe `design/icons/*.svg` como *Symbol Image Sets* no Asset Catalog (`Must.xcassets/Icons/`), nome = nome do arquivo. Crie `enum MustIcon: String` com todos e `Image(mustIcon:)`. Se algum SVG não passar na validação de símbolo, renderize como imagem template (`Image(decorative:)` com `.renderingMode(.template)`) e anote no README. Fallbacks SF Symbols em `design/icons/README.md`.
+6. `Typography.swift`: estilos de texto prontos (`.mustTitle()`, `.mustPlace()`, `.mustMeta()`, `.mustSerif()`, `.mustMono()`).
+7. Uma tela `DesignSystem/Preview/Gallery.swift` (só DEBUG) listando tudo, acessível por um botão escondido na `ContentView` atual.
+
+## Verificar
+- A Gallery no iPhone bate com `design/screens/Icones.png` (ícones) e com os componentes das telas: pílula, botão verde, tab bar flutuante, card empilhado girado, selo 済.
+- Nada usa `Color.accentColor` do sistema; tema claro forçado (`.preferredColorScheme(.light)` no root por enquanto).

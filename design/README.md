@@ -1,0 +1,31 @@
+# Telas do Must (v5 · tema claro)
+
+`screens/<Nome>.png` é o render (2x) e `screens/<Nome>.html` o HTML de referência — abra no navegador; os links entre telas funcionam e os valores exatos (posições, tamanhos, cores) estão no HTML e em `must-light.css`. As fotos nas telas são placeholders aleatórios (picsum) no lugar das fotos do Flickr.
+
+| Tela | Arquivo | Abre a partir de | Prompt |
+|---|---|---|---|
+| Início | HomeClaro | tab bar / launch | 04 |
+| Musts (hub) | Musts | tab Musts | 04 |
+| Lista (Must eat › Sushi) | Lista | tile do hub | 04 |
+| Lugar | Lugar | Lista, Hoje, Mapa | 04 |
+| Nova lista | NovaLista | hub → "Nova lista" | 04 |
+| Adicionar lugares à lista | AddItens | Nova lista → criar | 04 |
+| Editar lugar | Editar | Lugar → lápis; long-press na Lista | 04 |
+| Adicionar por link | Adicionar | Início ↓, Lista +, `must://add` | 04 |
+| Montar o dia | Montar | Início "Montar amanhã", Hoje ⇅ | 05 |
+| Proposta do dia | Proposta | Montar → "Montar o dia" | 05 |
+| Trocar parada (sheet) | Trocar | Proposta ⇅ | 05 |
+| Hoje | Hoje | tab Hoje, Proposta → aceitar | 05 |
+| Registrar gasto | Gasto | Hoje "+ gasto", Lugar "Feito" | 05 |
+| Mapa | Mapa | tab Mapa, Início "Perto de você" | 06 |
+| Assistente (vazio) | Assistente | Início +, FAB do Hoje | 08 |
+| Assistente respondendo | Chat | Assistente → pergunta | 08 |
+| Viagem | Viagem | Início aba Viagem | 09 |
+| Reservas | Reservas | Viagem → calendário; Editar → reserva | 09 |
+| Ajustes | Ajustes | Viagem → engrenagem | 03 |
+| Região (menu escondido) | Regiao | Ajustes → 5 toques na versão | 03 |
+| Importar board | Importar | primeira abertura; Ajustes → Reimportar | 03 |
+| Live Activity e widgets | Widgets | fora do app | 09 |
+| Ícones | Icones | — (folha de referência; SVGs em `icons/`) | 02 |
+
+Fluxo principal: Início → Montar → Proposta → (Trocar) → Hoje → Lugar → Gasto (済) → Hoje. Mapa acompanha o Hoje. Musts → Lista → Lugar é o lado "catálogo". Nova lista → Adicionar lugares e Adicionar por link alimentam o board.

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Must — Live Activity e widgets (claro)</title>
+
+<link rel="stylesheet" href="must-light.css"><style>html,body{background:#EEF0F3}body{display:flex;justify-content:center;padding:24px 0}.app{box-shadow:0 30px 80px rgba(0,0,0,.18);border-radius:44px}</style>
+</head>
+<body>
+
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;family=Instrument+Serif:ital@0;1&amp;family=Geist+Mono:wght@400;600&amp;family=Zen+Kaku+Gothic+New:wght@500;700&amp;display=swap">
+<style>
+body{margin:0;background:#fff}
+.lbl{font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#7A7F87}
+.wd{border-radius:22px;box-shadow:0 14px 36px rgba(18,19,22,.12);box-sizing:border-box}
+</style>
+
+<div class="app" style="background:#F6F7F9">
+  <div style="position:absolute;left:22px;right:22px;top:58px;display:flex;flex-direction:column;gap:4px">
+    <h1 class="h1" style="font-size:26px">Fora do app</h1>
+    <span class="serif" style="font-size:17px;color:#7A7F87">onde o Must aparece sem abrir nada</span>
+  </div>
+
+  <!-- Dynamic Island -->
+  <span class="lbl" style="position:absolute;left:22px;top:140px">Dynamic Island · a caminho</span>
+  <div style="position:absolute;left:95px;top:162px;width:200px;height:38px;border-radius:999px;background:#000;display:flex;align-items:center;justify-content:space-between;padding:0 14px;box-sizing:border-box">
+    <span style="display:flex;align-items:center;gap:6px"><span style="width:18px;height:18px;border-radius:50%;background:#22DD7E;display:flex;align-items:center;justify-content:center;font-family:'Geist Mono',monospace;font-size:10px;font-weight:600;color:#0B2A18">4</span><span style="color:#fff;font-size:12px;font-weight:600">Udatsu</span></span>
+    <span class="mono" style="color:#22DD7E;font-size:12px;font-weight:600">4 min</span>
+  </div>
+
+  <!-- Live Activity expandida (lock screen) -->
+  <span class="lbl" style="position:absolute;left:22px;top:222px">Live Activity · tela bloqueada</span>
+  <div class="wd" style="position:absolute;left:22px;right:22px;top:244px;height:120px;background:#121316;color:#fff;padding:16px 18px;display:flex;flex-direction:column;justify-content:space-between">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:11px;color:rgba(255,255,255,.6)">Must · próxima parada</span><span style="font-size:19px;font-weight:600;letter-spacing:-.01em">Udatsu Sushi <span class="jp" style="font-size:12px;color:rgba(255,255,255,.6);font-weight:500">鮨 うだつ</span></span></div>
+      <div style="text-align:right;display:flex;flex-direction:column;gap:2px"><span class="mono" style="font-size:22px;font-weight:600;color:#22DD7E;line-height:1">18:50</span><span style="font-size:11px;color:rgba(255,255,255,.6)">saia agora</span></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="flex:1;height:4px;border-radius:999px;background:rgba(255,255,255,.15);overflow:hidden"><div style="width:35%;height:100%;background:#2B7BFF"></div></div>
+      <span class="mono" style="font-size:11px;color:rgba(255,255,255,.75)">350 m · reserva 19:00</span>
+    </div>
+  </div>
+
+  <!-- Widget médio (home) -->
+  <span class="lbl" style="position:absolute;left:22px;top:384px">Widget médio · hoje</span>
+  <div class="wd" style="position:absolute;left:22px;right:22px;top:406px;height:158px;background:#fff;padding:16px 18px;display:flex;gap:14px">
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:space-between">
+      <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:11px;color:#7A7F87">Gasto hoje</span><span class="mono" style="font-size:28px;font-weight:600;letter-spacing:-.03em;line-height:1">¥ 7.650</span><span style="font-size:11px;color:#7A7F87">de 15.000 · <span style="color:#121316;font-weight:600">3 de 5 feitos</span></span></div>
+      <div style="display:flex;gap:4px"><span class="jp" style="width:22px;height:22px;border-radius:50%;background:#22DD7E;color:#0B2A18;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">済</span><span class="jp" style="width:22px;height:22px;border-radius:50%;background:#22DD7E;color:#0B2A18;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">済</span><span class="jp" style="width:22px;height:22px;border-radius:50%;background:#22DD7E;color:#0B2A18;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">済</span><span class="mono" style="width:22px;height:22px;border-radius:50%;background:#121316;color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600">4</span><span class="mono" style="width:22px;height:22px;border-radius:50%;background:#F1F2F4;color:#7A7F87;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600">5</span></div>
+    </div>
+    <div class="blue" style="width:130px;border-radius:16px;padding:12px;display:flex;flex-direction:column;justify-content:space-between;color:#0F3B8C;box-sizing:border-box">
+      <span style="font-size:11px">Próxima</span>
+      <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:600;color:#121316;line-height:1.1">Udatsu Sushi</span><span class="mono" style="font-size:12px;font-weight:600">19:00 · 4 min</span></div>
+    </div>
+  </div>
+
+  <!-- Widget pequeno + Smart Stack -->
+  <span class="lbl" style="position:absolute;left:22px;top:584px">Widgets pequenos</span>
+  <div class="wd green" style="position:absolute;left:22px;top:606px;width:158px;height:158px;padding:14px;display:flex;flex-direction:column;justify-content:space-between;color:#0B5A33">
+    <span style="font-size:11px">Perto de você · 12°</span>
+    <div style="display:flex;flex-direction:column;gap:0"><span class="mono" style="font-size:44px;font-weight:600;letter-spacing:-.04em;line-height:.95;color:#121316">6</span><span style="font-size:13px;font-weight:600;color:#121316">musts abertos</span><span style="font-size:11px">Naka-Meguro</span></div>
+  </div>
+  <div class="wd" style="position:absolute;right:22px;top:606px;width:158px;height:158px;padding:14px;display:flex;flex-direction:column;justify-content:space-between;background:#121316;color:#fff">
+    <span style="font-size:11px;color:rgba(255,255,255,.6)">Amanhã · 13° sol</span>
+    <div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:15px;font-weight:600;line-height:1.15">Montar o dia</span><span style="font-size:11px;color:rgba(255,255,255,.6)">templo cedo, ramen, café</span><span class="pill pill-green" style="padding:6px 10px;font-size:11px;align-self:flex-start">Montar</span></div>
+  </div>
+
+  <span class="lbl" style="position:absolute;left:22px;right:22px;top:790px;text-transform:none;letter-spacing:0;font-family:'Archivo',sans-serif;font-size:12px">ActivityKit + WidgetKit · atualiza a cada parada e quando a reserva se aproxima</span>
+</div>
+
+</body>
+</html>

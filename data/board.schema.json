@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Must board",
+  "description": "Formato de importação/exportação do board. Um arquivo por região (bh, jp). Tudo que o app sabe de um lugar cabe aqui; o que vem do Google Places (horários, preço, placeId) é cache e pode ser nulo.",
+  "type": "object",
+  "required": ["version", "region", "lists", "places"],
+  "properties": {
+    "version": {"const": 1},
+    "region": {"enum": ["bh", "jp"]},
+    "trip": {
+      "type": "object",
+      "properties": {
+        "start": {"type": "string", "format": "date"},
+        "end": {"type": "string", "format": "date"},
+        "home": {"type": "string", "description": "bairro/base onde dorme; usado pra 'último metrô pra casa'"},
+        "cities": {"type": "array", "items": {"type": "object", "required": ["id", "name"], "properties": {
+          "id": {"type": "string"}, "name": {"type": "string"}, "from": {"type": "string", "format": "date"}, "to": {"type": "string", "format": "date"},
+          "tz": {"type": "string"}, "currency": {"enum": ["BRL", "JPY"]}, "lat": {"type": "number"}, "lng": {"type": "number"}}}}
+      }
+    },
+    "budget": {"type": "object", "properties": {"perDay": {"type": "number"}, "currency": {"enum": ["BRL", "JPY"]}, "walkMaxKm": {"type": "number"}, "dayStart": {"type": "string", "pattern": "^[0-2][0-9]:[0-5][0-9]$"}}},
+    "lists": {"type": "array", "items": {"type": "object", "required": ["id", "name", "color"], "properties": {
+      "id": {"type": "string"}, "name": {"type": "string", "description": "sem o prefixo 'Must'"}, "kanji": {"type": "string", "maxLength": 1},
+      "icon": {"type": "string", "description": "nome do arquivo em design/icons sem .svg"},
+      "color": {"enum": ["eat", "drink", "coffee", "see", "temple", "listen", "shop", "night"]},
+      "photo": {"type": ["object", "null"], "properties": {"flickrId": {"type": "string"}, "url": {"type": "string"}, "credit": {"type": "string"}, "license": {"type": "string"}}},
+      "sub": {"type": "array", "items": {"type": "string"}, "description": "sub-listas como Ramen, Sushi"}}}},
+    "places": {"type": "array", "items": {"type": "object", "required": ["id", "name", "listId", "cityId"], "properties": {
+      "id": {"type": "string"}, "name": {"type": "string"}, "nameLocal": {"type": "string"}, "listId": {"type": "string"}, "sub": {"type": "string"}, "cityId": {"type": "string"},
+      "area": {"type": "string", "description": "bairro"}, "lat": {"type": "number"}, "lng": {"type": "number"}, "approx": {"type": "boolean", "description": "coordenada chutada; resolver no Places"},
+      "placeId": {"type": ["string", "null"]},
+      "price": {"type": ["number", "null"], "description": "gasto esperado por pessoa, na moeda da região"}, "priceLevel": {"type": ["integer", "null"], "minimum": 0, "maximum": 4},
+      "hours": {"type": ["object", "null"], "description": "cache do Places: weekdayText + periods"},
+      "window": {"type": "array", "items": {"enum": ["morning", "lunch", "afternoon", "dinner", "night"]}},
+      "reservation": {"type": ["object", "null"], "properties": {"at": {"type": "string", "format": "date-time"}, "party": {"type": "integer"}, "note": {"type": "string"}}},
+      "saveForEnd": {"type": "boolean"}, "allowBudgetException": {"type": "boolean"}, "queueMinutes": {"type": ["integer", "null"]},
+      "notes": {"type": "string"},
+      "source": {"type": ["object", "null"], "properties": {"kind": {"enum": ["instagram", "tiktok", "youtube", "maps", "manual", "board"]}, "url": {"type": "string"}, "savedAt": {"type": "string", "format": "date"}}},
+      "done": {"type": ["object", "null"], "properties": {"at": {"type": "string", "format": "date-time"}, "spent": {"type": "number"}}}}}},
+    "expenses": {"type": "array", "items": {"type": "object", "required": ["at", "amount"], "properties": {"at": {"type": "string", "format": "date-time"}, "amount": {"type": "number"}, "category": {"enum": ["food", "coffee", "transit", "shop", "ticket", "other"]}, "placeId": {"type": ["string", "null"]}, "method": {"enum": ["cash", "card", "transit-card"]}}}},
+    "days": {"type": "array", "description": "dias já montados/aceitos", "items": {"type": "object", "properties": {"date": {"type": "string", "format": "date"}, "kind": {"enum": ["free", "shopping", "night", "photo", "temples", "rest"]}, "budget": {"type": "number"}, "walk": {"enum": ["low", "normal", "high"]}, "stops": {"type": "array", "items": {"type": "object", "properties": {"placeId": {"type": "string"}, "at": {"type": "string"}, "done": {"type": "boolean"}}}}}}}
+  }
+}

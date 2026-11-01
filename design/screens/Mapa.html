@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Must — Mapa (claro)</title>
+
+<link rel="stylesheet" href="must-light.css"><style>html,body{background:#EEF0F3}body{display:flex;justify-content:center;padding:24px 0}.app{box-shadow:0 30px 80px rgba(0,0,0,.18);border-radius:44px}</style>
+</head>
+<body>
+
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;family=Instrument+Serif:ital@0;1&amp;family=Geist+Mono:wght@400;600&amp;family=Zen+Kaku+Gothic+New:wght@500;700&amp;display=swap">
+<style>
+body{margin:0;background:#fff}
+.mono-xs{font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.06em;fill:#7A7F87}
+.lbl{font-family:'Archivo',sans-serif;font-size:11px;fill:#7A7F87}
+.pinT{font-family:'Geist Mono',monospace;font-size:12px;font-weight:600;fill:#fff}
+.pinJ{font-family:'Zen Kaku Gothic New',sans-serif;font-size:13px;font-weight:700;fill:#0B2A18}
+</style>
+
+<div class="app" style="background:#F6F7F9">
+
+  <!-- mapa customizado: fundo claro, quadras brancas, metrô fino nas cores oficiais, rota azul -->
+  <svg aria-hidden="true" viewBox="0 0 390 844" width="390" height="844" style="position:absolute;inset:0" fill="none">
+    <defs>
+      <pattern id="grid" width="26" height="26" patternUnits="userSpaceOnUse"><path d="M26 0H0V26" stroke="#ECEEF1" stroke-width="1"/></pattern>
+      <filter id="sh" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#121316" flood-opacity=".18"/></filter>
+    </defs>
+    <rect width="390" height="844" fill="#F6F7F9"/>
+    <rect width="390" height="844" fill="url(#grid)"/>
+    <!-- parque / rio -->
+    <path d="M-10 560 C 80 520, 140 600, 230 560 S 360 520, 410 560 L 410 640 C 330 660, 250 600, 170 640 S 60 680, -10 640 Z" fill="#DCEBFF" opacity=".9"/>
+    <rect x="40" y="150" width="120" height="90" rx="18" fill="#E7F7EC"/>
+    <!-- quadras -->
+    <g fill="#fff" stroke="#E6E8EC" stroke-width="1">
+      <rect x="20" y="40" width="110" height="90" rx="6"/><rect x="150" y="30" width="90" height="70" rx="6"/><rect x="260" y="40" width="110" height="110" rx="6"/>
+      <rect x="180" y="120" width="60" height="110" rx="6"/><rect x="260" y="170" width="110" height="70" rx="6"/>
+      <rect x="20" y="260" width="140" height="80" rx="6"/><rect x="180" y="250" width="190" height="60" rx="6"/>
+      <rect x="20" y="360" width="80" height="80" rx="6"/><rect x="120" y="330" width="120" height="110" rx="6"/><rect x="260" y="330" width="110" height="60" rx="6"/><rect x="260" y="410" width="110" height="60" rx="6"/>
+      <rect x="20" y="460" width="100" height="70" rx="6"/><rect x="140" y="460" width="100" height="70" rx="6"/>
+      <rect x="20" y="680" width="120" height="70" rx="6"/><rect x="160" y="670" width="90" height="100" rx="6"/><rect x="270" y="680" width="100" height="80" rx="6"/>
+    </g>
+    <!-- metrô: Hibiya (prata), Ginza (laranja), Chiyoda (verde), Tōkyū Tōyoko (vermelho) -->
+    <path d="M-10 300 L 120 300 L 200 380 L 400 380" stroke="#B5B5AC" stroke-width="3"/>
+    <path d="M60 -10 L 60 200 L 150 300" stroke="#FF9500" stroke-width="3"/>
+    <path d="M320 -10 L 320 230 L 250 300 L 250 700" stroke="#00BB85" stroke-width="3"/>
+    <path d="M-10 740 L 400 500" stroke="#DA0442" stroke-width="3"/>
+    <!-- estações -->
+    <g fill="#fff" stroke="#121316" stroke-width="1.6"><circle cx="150" cy="300" r="4.5"/><circle cx="250" cy="300" r="4.5"/><circle cx="250" cy="600" r="4.5"/><circle cx="320" cy="150" r="4.5"/></g>
+    <text x="158" y="292" class="lbl">Naka-Meguro</text><text x="258" y="292" class="lbl">Hibiya · H01</text><text x="258" y="616" class="lbl">Yūtenji</text>
+    <!-- rota do dia -->
+    <path d="M70 90 L 150 300 L 250 300 L 250 600 L 300 720" stroke="#2B7BFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="0" opacity=".95"/>
+    <path d="M250 600 L 300 720" stroke="#2B7BFF" stroke-width="4" stroke-linecap="round" stroke-dasharray="2 9"/>
+    <!-- você -->
+    <circle cx="250" cy="300" r="16" fill="#2B7BFF" opacity=".18"/><circle cx="250" cy="300" r="7" fill="#2B7BFF" stroke="#fff" stroke-width="2.5"/>
+    <!-- pins -->
+    <g filter="url(#sh)">
+      <circle cx="70" cy="90" r="15" fill="#22DD7E"/><text x="70" y="95" text-anchor="middle" class="pinJ">済</text>
+      <circle cx="150" cy="200" r="15" fill="#22DD7E"/><text x="150" y="205" text-anchor="middle" class="pinJ">済</text>
+      <circle cx="320" cy="400" r="15" fill="#22DD7E"/><text x="320" y="405" text-anchor="middle" class="pinJ">済</text>
+      <circle cx="250" cy="600" r="16" fill="#121316"/><text x="250" y="604" text-anchor="middle" class="pinT">4</text>
+      <circle cx="300" cy="720" r="15" fill="#fff" stroke="#121316" stroke-width="1.6"/><text x="300" y="724" text-anchor="middle" class="pinT" style="fill:#121316">5</text>
+    </g>
+    <!-- musts abertos perto (não no roteiro) -->
+    <g fill="#fff" stroke="#2B7BFF" stroke-width="1.6"><circle cx="95" cy="395" r="6"/><circle cx="210" cy="480" r="6"/><circle cx="340" cy="250" r="6"/><circle cx="60" cy="520" r="6"/></g>
+    <!-- escala -->
+    <path d="M24 790 L 24 798 L 104 798 L 104 790" stroke="#121316" stroke-width="1.4"/><text x="64" y="786" text-anchor="middle" class="mono-xs" style="fill:#121316">300 m</text>
+  </svg>
+
+  <div style="position:absolute;left:22px;right:22px;top:58px;display:flex;gap:8px;align-items:center">
+    <a href="HomeClaro.html" class="ic glass" aria-label="Voltar"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></a>
+    <label class="glass" style="flex:1;height:40px;border-radius:999px;display:flex;align-items:center;gap:8px;padding:0 14px;box-sizing:border-box;cursor:text"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7A7F87" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg><input type="text" placeholder="Naka-Meguro · 6 musts abertos" style="flex:1;background:transparent;border:0;outline:0;font-family:'Archivo',sans-serif;font-size:14px;color:#121316;min-width:0"></label>
+    <button class="ic glass" aria-label="Camadas"><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l8 4-8 4-8-4z"/><path d="M4 12l8 4 8-4M4 16l8 4 8-4"/></svg></button>
+  </div>
+
+  <div style="position:absolute;left:22px;top:108px;display:flex;gap:6px">
+    <button class="pill pill-on" style="box-shadow:0 6px 16px rgba(18,19,22,.14)">Roteiro</button><button class="pill glass">Abertos agora</button><button class="pill glass">Metrô</button>
+  </div>
+
+  <div style="position:absolute;right:22px;bottom:270px;display:flex;flex-direction:column;gap:8px">
+    <button class="ic glass" aria-label="Centralizar em mim"><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="8"/></svg></button>
+    <button class="ic ic-dark" aria-label="Zoom bairro"><span class="mono" style="font-size:11px;font-weight:600">300</span></button>
+  </div>
+
+  <a href="Lugar.html" class="card glass" style="position:absolute;left:22px;right:22px;bottom:96px;padding:16px 18px;display:flex;flex-direction:column;gap:12px;text-decoration:none;color:#121316;background:rgba(255,255,255,.9)">
+    <div style="display:flex;align-items:center;gap:12px">
+      <span style="width:34px;height:34px;border-radius:50%;background:#121316;color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Geist Mono',monospace;font-size:13px;font-weight:600">4</span>
+      <div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:19px;font-weight:600;letter-spacing:-.01em">Udatsu Sushi <span class="jp" style="font-size:13px;color:#7A7F87;font-weight:500">鮨 うだつ</span></span><span style="font-size:13px;color:#7A7F87">reserva <span class="mono" style="color:#121316;font-weight:600">19:00</span> · 4 min a pé · abre em 18 min</span></div>
+      <span class="pill pill-green" style="padding:7px 11px">saia 18:50</span>
+    </div>
+    <div style="display:flex;gap:8px">
+      <span class="ghost" style="flex:1;height:44px;font-size:13px"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-8 18-2-8z"/></svg>Apple Maps</span>
+      <span class="ghost" style="flex:1;height:44px;font-size:13px">Google Maps</span>
+      <span class="ic ic-dark" style="width:44px;height:44px"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+    </div>
+  </a>
+
+  <nav class="tabs">
+    <a href="HomeClaro.html" class="tab"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7v9H4z"/></svg>Início</a>
+    <a href="Hoje.html" class="tab"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>Hoje</a>
+    <a href="Mapa.html" class="tab tab-on"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg>Mapa</a>
+    <a href="Musts.html" class="tab"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6h14M5 12h14M5 18h9"/></svg>Musts</a>
+  </nav>
+</div>
+
+</body>
+</html>

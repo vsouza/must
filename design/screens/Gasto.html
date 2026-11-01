@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Must — Registrar gasto (claro)</title>
+
+<link rel="stylesheet" href="must-light.css"><style>html,body{background:#EEF0F3}body{display:flex;justify-content:center;padding:24px 0}.app{box-shadow:0 30px 80px rgba(0,0,0,.18);border-radius:44px}</style>
+</head>
+<body>
+
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;family=Instrument+Serif:ital@0;1&amp;family=Geist+Mono:wght@400;600&amp;family=Zen+Kaku+Gothic+New:wght@500;700&amp;display=swap">
+<style>
+body{margin:0;background:#fff}
+.key{height:60px;border-radius:18px;background:#F6F7F9;border:0;font-family:'Geist Mono',monospace;font-size:24px;font-weight:600;color:#121316;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.key-ghost{background:transparent;color:#7A7F87}
+</style>
+
+<div class="app">
+  <svg aria-hidden="true" viewBox="0 0 390 844" width="390" height="844" style="position:absolute;inset:0" fill="none">
+    <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#B9F5CF"/><stop offset="1" stop-color="#22DD7E"/></linearGradient><linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9FD6FF"/><stop offset="1" stop-color="#2B7BFF"/></linearGradient></defs>
+    <ellipse cx="340" cy="230" rx="100" ry="66" fill="url(#g)" opacity=".85" transform="rotate(-20 340 230)"/>
+    <ellipse cx="40" cy="330" rx="80" ry="50" fill="url(#b)" opacity=".8" transform="rotate(18 40 330)"/>
+  </svg>
+
+  <div style="position:absolute;left:22px;right:22px;top:58px;display:flex;justify-content:space-between;align-items:center">
+    <a href="Hoje.html" class="ic" aria-label="Fechar"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></a>
+    <span class="micro">Gasto · hoje ¥7.650 de 15.000</span>
+    <span style="width:40px"></span>
+  </div>
+
+  <div style="position:absolute;left:22px;right:22px;top:130px;display:flex;flex-direction:column;gap:6px;align-items:center;text-align:center">
+    <span style="font-size:14px;color:#7A7F87">Quanto foi?</span>
+    <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:22px;font-weight:600;color:#7A7F87">¥</span><span class="mono" style="font-size:64px;font-weight:600;letter-spacing:-.04em;line-height:1">1.400</span></div>
+    <span class="serif" style="font-size:16px;color:#7A7F87">≈ R$ 50,40 · cabe: sobram ¥5.950 hoje</span>
+  </div>
+
+  <div class="card glass" style="position:absolute;left:22px;right:22px;top:300px;padding:12px 14px;display:flex;align-items:center;gap:12px;transform:rotate(-1deg);background:rgba(255,255,255,.92)">
+    <span class="jp" style="width:36px;height:36px;border-radius:50%;background:#22DD7E;color:#0B2A18;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">済</span>
+    <div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:600">Koffee Mameya</span><span style="font-size:12.5px;color:#7A7F87">você está aqui · parada 3 · Must drink</span></div>
+    <button class="pill" style="padding:7px 11px">Outro lugar</button>
+  </div>
+
+  <div style="position:absolute;left:22px;right:22px;top:376px;display:flex;gap:6px">
+    <button class="pill pill-on">Café</button><button class="pill">Comida</button><button class="pill">Metrô</button><button class="pill">Compra</button><button class="pill">Entrada</button>
+  </div>
+
+  <div style="position:absolute;left:22px;right:22px;top:430px;display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:8px">
+    <button class="key">1</button><button class="key">2</button><button class="key">3</button>
+    <button class="key">4</button><button class="key">5</button><button class="key">6</button>
+    <button class="key">7</button><button class="key">8</button><button class="key">9</button>
+    <button class="key key-ghost" style="font-size:14px;font-family:'Archivo',sans-serif;font-weight:600">000</button><button class="key">0</button><button class="key key-ghost" aria-label="Apagar"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5h11a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H9l-6-7z"/><path d="M13 10l4 4M17 10l-4 4"/></svg></button>
+  </div>
+
+  <div style="position:absolute;left:22px;right:22px;bottom:24px;display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;justify-content:center;gap:6px"><span class="tag">pago em dinheiro</span><span class="tag" style="background:#fff;border:1px solid #EEF0F3">cartão</span><span class="tag" style="background:#fff;border:1px solid #EEF0F3">Suica</span></div>
+    <a href="Hoje.html" class="btn">Registrar ¥1.400 e marcar 済</a>
+  </div>
+</div>
+
+</body>
+</html>

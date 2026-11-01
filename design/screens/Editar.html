@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Must — Editar lugar (claro)</title>
+
+<link rel="stylesheet" href="must-light.css"><style>html,body{background:#EEF0F3}body{display:flex;justify-content:center;padding:24px 0}.app{box-shadow:0 30px 80px rgba(0,0,0,.18);border-radius:44px}</style>
+</head>
+<body>
+
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;family=Instrument+Serif:ital@0;1&amp;family=Geist+Mono:wght@400;600&amp;family=Zen+Kaku+Gothic+New:wght@500;700&amp;display=swap">
+<style>
+body{margin:0;background:#fff}
+.f{display:flex;flex-direction:column;gap:6px}
+.f label{font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#7A7F87}
+.in{height:48px;border-radius:14px;background:#F1F2F4;border:0;padding:0 14px;font-family:'Archivo',sans-serif;font-size:15px;color:#121316;outline:0;width:100%;box-sizing:border-box}
+.sw{position:relative;width:46px;height:28px;border-radius:14px;flex-shrink:0;cursor:pointer;border:0;padding:0}
+.knob{position:absolute;top:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+</style>
+
+<div class="app">
+  <svg aria-hidden="true" viewBox="0 0 390 844" width="390" height="844" style="position:absolute;inset:0" fill="none">
+    <defs><linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9FD6FF"/><stop offset="1" stop-color="#2B7BFF"/></linearGradient></defs>
+    <ellipse cx="370" cy="100" rx="80" ry="55" fill="url(#b)" opacity=".8" transform="rotate(-20 370 100)"/>
+  </svg>
+
+  <div style="position:absolute;left:22px;right:22px;top:58px;display:flex;justify-content:space-between;align-items:center">
+    <a href="Lugar.html" class="ic glass" aria-label="Cancelar"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></a>
+    <span class="micro">Editar lugar</span>
+    <a href="Lugar.html" class="pill pill-on" style="padding:9px 14px">Salvar</a>
+  </div>
+
+  <div style="position:absolute;left:22px;right:22px;top:118px;display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;gap:10px">
+      <div class="f" style="flex:1"><label>Nome</label><input class="in" type="text" value="Udatsu Sushi"></div>
+      <div class="f" style="width:130px"><label>日本語</label><input class="in jp" type="text" value="鮨 うだつ"></div>
+    </div>
+
+    <div class="f"><label>Lista</label><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="pill pill-green">Eat · Sushi</button><button class="pill">Eat · Ramen</button><button class="pill">Drink</button><button class="pill">See</button><button class="pill">Listen</button><button class="pill">Shop</button></div></div>
+
+    <div style="display:flex;gap:10px">
+      <div class="f" style="flex:1"><label>Cidade</label><div style="display:flex;gap:6px"><button class="pill pill-on">Tóquio</button><button class="pill">Kyoto</button><button class="pill">Nara</button></div></div>
+      <div class="f" style="width:110px"><label>Preço · ¥</label><input class="in mono" type="text" value="22.000"></div>
+    </div>
+
+    <div class="card" style="padding:4px 14px;background:#F6F7F9">
+      <div class="row" style="border-top:0"><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:600">Google Places</span><span class="mono" style="font-size:12px;color:#7A7F87">ChIJ…x9Q · 18:00–23:00 · fecha dom</span></div><span class="tag"><span class="dot" style="background:#22DD7E"></span>ligado</span></div>
+      <div class="row"><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:600">Reserva</span><span style="font-size:12.5px;color:#7A7F87">vira âncora do dia</span></div><a href="Reservas.html" class="mono" style="font-size:13px;color:#121316;text-decoration:none;display:flex;align-items:center;gap:6px">15 nov 19:00<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7A7F87" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></a></div>
+      <div class="row"><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:600">Fica pro fim</span><span style="font-size:12.5px;color:#7A7F87">só entra nos últimos dias da cidade</span></div><button class="sw" aria-label="desligado" style="background:#E4E6EA"><span class="knob" style="left:3px"></span></button></div>
+      <div class="row"><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:600">Vale a exceção</span><span style="font-size:12.5px;color:#7A7F87">pode estourar o orçamento do dia</span></div><button class="sw" aria-label="ligado" style="background:#22DD7E"><span class="knob" style="right:3px"></span></button></div>
+    </div>
+
+    <div class="f"><label>Melhor janela</label><div style="display:flex;gap:6px"><button class="pill">Manhã</button><button class="pill">Almoço</button><button class="pill">Tarde</button><button class="pill pill-on">Jantar</button><button class="pill">Noite</button></div></div>
+
+    <div class="f"><label>Notas do board</label><textarea class="in serif" style="height:84px;padding:12px 14px;resize:none;font-size:16px;line-height:1.3">Pedir o uni extra. Sentar no balcão, chef fala inglês. Levar dinheiro — cartão só acima de ¥10k.</textarea></div>
+
+    <div class="f"><label>Fonte</label><div class="card" style="padding:10px 14px;display:flex;align-items:center;gap:10px;background:#F6F7F9"><span class="mono" style="font-size:11px;font-weight:600;background:#121316;color:#fff;border-radius:8px;padding:4px 6px">IG</span><span class="mono" style="font-size:12.5px;color:#7A7F87;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">instagram.com/reel/C8xQ2…</span><span style="font-size:12.5px;color:#7A7F87">02 out</span></div></div>
+  </div>
+
+  <div style="position:absolute;left:22px;right:22px;bottom:24px"><button class="ghost" style="width:100%;color:#B42318;border-color:#F3D4D0">Remover do board</button></div>
+</div>
+
+</body>
+</html>

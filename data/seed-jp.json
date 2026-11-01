@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "region": "jp",
+  "trip": {"start": "2026-11-11", "end": "2026-11-24", "home": "Naka-Meguro",
+    "cities": [
+      {"id": "tokyo1", "name": "Tóquio", "from": "2026-11-13", "to": "2026-11-17", "tz": "Asia/Tokyo", "currency": "JPY", "lat": 35.6762, "lng": 139.6503},
+      {"id": "kyoto", "name": "Kyoto", "from": "2026-11-17", "to": "2026-11-20", "tz": "Asia/Tokyo", "currency": "JPY", "lat": 35.0116, "lng": 135.7681},
+      {"id": "tokyo2", "name": "Tóquio", "from": "2026-11-20", "to": "2026-11-24", "tz": "Asia/Tokyo", "currency": "JPY", "lat": 35.6762, "lng": 139.6503}
+    ]},
+  "budget": {"perDay": 15000, "currency": "JPY", "walkMaxKm": 1.5, "dayStart": "09:30"},
+  "lists": [
+    {"id": "eat", "name": "eat", "kanji": "食", "icon": "ramen", "color": "eat", "sub": ["Ramen", "Sushi"]},
+    {"id": "drink", "name": "drink", "kanji": "飲", "icon": "coquetel", "color": "drink", "sub": ["Café", "Bar"]},
+    {"id": "see", "name": "see", "kanji": "観", "icon": "museu", "color": "see", "sub": ["Arte", "Templos"]},
+    {"id": "listen", "name": "listen", "kanji": "聴", "icon": "listening-bar", "color": "listen"},
+    {"id": "shop", "name": "shop", "kanji": "買", "icon": "compras", "color": "shop", "sub": ["Câmeras", "Roupa", "Discos"]}
+  ],
+  "places": [
+    {"id": "j01", "name": "Udatsu Sushi", "nameLocal": "鮨 うだつ", "listId": "eat", "sub": "Sushi", "cityId": "tokyo1", "area": "Naka-Meguro", "lat": 35.6442, "lng": 139.6985, "approx": true, "placeId": null, "price": 22000, "window": ["dinner"], "reservation": {"at": "2026-11-15T19:00:00+09:00", "party": 2, "note": "confirmado por e-mail"}, "saveForEnd": false, "allowBudgetException": true, "notes": "Pedir o uni extra. Balcão, chef fala inglês. Levar dinheiro.", "source": {"kind": "instagram", "url": "https://www.instagram.com/reel/EXEMPLO/", "savedAt": "2026-10-02"}},
+    {"id": "j02", "name": "Sushi no Midori", "nameLocal": "梅丘寿司の美登利", "listId": "eat", "sub": "Sushi", "cityId": "tokyo1", "area": "Shibuya", "lat": 35.6586, "lng": 139.7013, "approx": true, "placeId": null, "price": 3500, "window": ["lunch", "dinner"], "queueMinutes": 40, "saveForEnd": false, "allowBudgetException": false, "notes": "", "source": {"kind": "board"}},
+    {"id": "j03", "name": "Manten Sushi", "nameLocal": "まんてん鮨", "listId": "eat", "sub": "Sushi", "cityId": "tokyo1", "area": "Marunouchi", "lat": 35.6812, "lng": 139.7671, "approx": true, "placeId": null, "price": 5500, "window": ["lunch"], "saveForEnd": false, "allowBudgetException": false, "notes": "Almoço vale mais que jantar.", "source": {"kind": "board"}},
+    {"id": "j04", "name": "Sushi Dai", "nameLocal": "寿司大", "listId": "eat", "sub": "Sushi", "cityId": "tokyo2", "area": "Toyosu", "lat": 35.6456, "lng": 139.7854, "approx": true, "placeId": null, "price": 5000, "window": ["morning"], "queueMinutes": 120, "saveForEnd": true, "allowBudgetException": false, "notes": "Só manhã, fila 2h.", "source": {"kind": "board"}},
+    {"id": "j05", "name": "Fuunji", "nameLocal": "風雲児", "listId": "eat", "sub": "Ramen", "cityId": "tokyo1", "area": "Shinjuku", "lat": 35.6873, "lng": 139.6994, "approx": true, "placeId": null, "price": 1250, "window": ["lunch"], "queueMinutes": 25, "saveForEnd": false, "allowBudgetException": false, "notes": "Tsukemen.", "source": {"kind": "board"}},
+    {"id": "j06", "name": "Menya Kaijin", "nameLocal": "麺屋 海神", "listId": "eat", "sub": "Ramen", "cityId": "tokyo1", "area": "Shinjuku", "lat": 35.6907, "lng": 139.7024, "approx": true, "placeId": null, "price": 1100, "window": ["lunch", "dinner"], "saveForEnd": false, "allowBudgetException": false, "notes": "Ramen de peixe.", "source": {"kind": "instagram", "url": "https://www.instagram.com/reel/EXEMPLO2/", "savedAt": "2026-10-20"}},
+    {"id": "j07", "name": "Nakiryu", "nameLocal": "創作麺工房 鳴龍", "listId": "eat", "sub": "Ramen", "cityId": "tokyo1", "area": "Otsuka", "lat": 35.7316, "lng": 139.7284, "approx": true, "placeId": null, "price": 1300, "window": ["lunch"], "queueMinutes": 40, "saveForEnd": false, "allowBudgetException": false, "notes": "Tantanmen.", "source": {"kind": "board"}},
+    {"id": "j08", "name": "Afuri Harajuku", "listId": "eat", "sub": "Ramen", "cityId": "tokyo1", "area": "Harajuku", "lat": 35.6705, "lng": 139.7038, "approx": true, "placeId": null, "price": 1250, "window": ["lunch", "dinner"], "saveForEnd": false, "allowBudgetException": false, "notes": "Yuzu shio.", "source": {"kind": "board"}},
+    {"id": "j09", "name": "Koffee Mameya", "listId": "drink", "sub": "Café", "cityId": "tokyo1", "area": "Omotesando", "lat": 35.6667, "lng": 139.7088, "approx": true, "placeId": null, "price": 1400, "window": ["afternoon"], "saveForEnd": false, "allowBudgetException": false, "notes": "", "source": {"kind": "board"}},
+    {"id": "j10", "name": "Café de l'Ambre", "nameLocal": "カフェ・ド・ランブル", "listId": "drink", "sub": "Café", "cityId": "tokyo1", "area": "Ginza", "lat": 35.6699, "lng": 139.7626, "approx": true, "placeId": null, "price": 1000, "window": ["afternoon"], "saveForEnd": false, "allowBudgetException": false, "notes": "Desde 1948.", "source": {"kind": "board"}},
+    {"id": "j11", "name": "Ginza Music Bar", "listId": "listen", "cityId": "tokyo1", "area": "Ginza", "lat": 35.6697, "lng": 139.7617, "approx": true, "placeId": null, "price": 3000, "window": ["night"], "saveForEnd": false, "allowBudgetException": false, "notes": "", "source": {"kind": "board"}},
+    {"id": "j12", "name": "Bar Trench", "listId": "drink", "sub": "Bar", "cityId": "tokyo1", "area": "Ebisu", "lat": 35.6467, "lng": 139.7085, "approx": true, "placeId": null, "price": 2500, "window": ["night"], "saveForEnd": false, "allowBudgetException": false, "notes": "", "source": {"kind": "board"}},
+    {"id": "j13", "name": "Senso-ji", "nameLocal": "浅草寺", "listId": "see", "sub": "Templos", "cityId": "tokyo1", "area": "Asakusa", "lat": 35.7148, "lng": 139.7967, "approx": false, "placeId": null, "price": 0, "window": ["morning"], "saveForEnd": false, "allowBudgetException": false, "notes": "Cedo, antes da multidão.", "source": {"kind": "board"}},
+    {"id": "j14", "name": "teamLab Planets", "listId": "see", "sub": "Arte", "cityId": "tokyo1", "area": "Toyosu", "lat": 35.6493, "lng": 139.7895, "approx": true, "placeId": null, "price": 3800, "window": ["afternoon"], "reservation": {"at": "2026-11-13T15:00:00+09:00", "party": 2, "note": "ingresso com hora"}, "saveForEnd": false, "allowBudgetException": false, "notes": "", "source": {"kind": "board"}},
+    {"id": "j15", "name": "Nakano Broadway", "listId": "shop", "sub": "Câmeras", "cityId": "tokyo2", "area": "Nakano", "lat": 35.7093, "lng": 139.6656, "approx": true, "placeId": null, "price": 20000, "window": ["afternoon"], "saveForEnd": true, "allowBudgetException": true, "notes": "Dia de compras; domingo lota.", "source": {"kind": "board"}},
+    {"id": "j16", "name": "Sushi Iwa", "listId": "eat", "sub": "Sushi", "cityId": "kyoto", "area": "Gion", "lat": 35.0037, "lng": 135.7753, "approx": true, "placeId": null, "price": 15000, "window": ["dinner"], "reservation": {"at": "2026-11-18T18:30:00+09:00", "party": 2, "note": "pede pontualidade"}, "saveForEnd": false, "allowBudgetException": true, "notes": "", "source": {"kind": "board"}},
+    {"id": "j17", "name": "Fuji · Kawaguchiko", "listId": "see", "sub": "Mirante", "cityId": "tokyo2", "area": "Yamanashi", "lat": 35.5171, "lng": 138.7514, "approx": true, "placeId": null, "price": 4000, "window": ["morning"], "saveForEnd": true, "allowBudgetException": true, "notes": "Condicional: só se céu limpo. Ônibus 07:35.", "source": {"kind": "board"}}
+  ],
+  "expenses": [],
+  "days": []
+}

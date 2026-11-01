@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Must — Ajustes (claro)</title>
+
+<link rel="stylesheet" href="must-light.css"><style>html,body{background:#EEF0F3}body{display:flex;justify-content:center;padding:24px 0}.app{box-shadow:0 30px 80px rgba(0,0,0,.18);border-radius:44px}</style>
+</head>
+<body>
+
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;family=Instrument+Serif:ital@0;1&amp;family=Geist+Mono:wght@400;600&amp;family=Zen+Kaku+Gothic+New:wght@500;700&amp;display=swap">
+<style>
+body{margin:0;background:#fff}
+.sw{position:relative;width:46px;height:28px;border-radius:14px;flex-shrink:0;cursor:pointer;border:0;padding:0}
+.knob{position:absolute;top:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.lab{flex:1;display:flex;flex-direction:column;gap:2px}
+.lab b{font-size:15px;font-weight:600}
+.lab span{font-size:12.5px;color:#7A7F87}
+.val{font-family:'Geist Mono',monospace;font-size:13px;color:#121316;display:flex;align-items:center;gap:6px}
+.sec-t{font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#7A7F87;padding:4px 0 2px}
+</style>
+
+<div class="app">
+  <svg aria-hidden="true" viewBox="0 0 390 844" width="390" height="844" style="position:absolute;inset:0" fill="none">
+    <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#B9F5CF"/><stop offset="1" stop-color="#22DD7E"/></linearGradient><linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9FD6FF"/><stop offset="1" stop-color="#2B7BFF"/></linearGradient></defs>
+    <ellipse cx="370" cy="110" rx="70" ry="48" fill="url(#g)" opacity=".85" transform="rotate(-20 370 110)"/>
+    <ellipse cx="20" cy="800" rx="90" ry="55" fill="url(#b)" opacity=".75" transform="rotate(15 20 800)"/>
+  </svg>
+
+  <div style="position:absolute;left:22px;right:22px;top:58px;display:flex;justify-content:space-between;align-items:center">
+    <a href="Viagem.html" class="ic" aria-label="Voltar"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></a>
+    <a href="Regiao.html" class="micro" style="text-decoration:none" title="5 toques abrem Região">Must · 1.0 · só pra mim</a>
+    <span style="width:40px"></span>
+  </div>
+
+  <div style="position:absolute;left:22px;right:22px;top:118px;display:flex;flex-direction:column;gap:4px">
+    <h1 class="h1">Ajustes</h1>
+    <span class="serif" style="font-size:18px;color:#7A7F87">como o Must monta o seu dia</span>
+  </div>
+
+  <div style="position:absolute;left:22px;right:22px;top:196px;bottom:24px;display:flex;flex-direction:column;gap:12px;overflow:hidden">
+
+    <div class="card" style="padding:4px 16px">
+      <div class="sec-t">Dia</div>
+      <div class="row" style="border-top:0"><div class="lab"><b>Orçamento padrão</b><span>por dia, fora reservas aceitas</span></div><span class="val">¥ 15.000<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7A7F87" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></div>
+      <div class="row"><div class="lab"><b>Uma refeição por janela</b><span>almoço e jantar, exceções pedem confirmação</span></div><button class="sw" aria-label="ligado" style="background:#22DD7E"><span class="knob" style="right:3px"></span></button></div>
+      <div class="row"><div class="lab"><b>Andar</b><span>máximo entre paradas</span></div><span class="val">1,5 km</span></div>
+      <div class="row"><div class="lab"><b>Começar o dia</b><span>hora que você costuma sair</span></div><span class="val">09:30</span></div>
+    </div>
+
+    <div class="card glass" style="padding:4px 16px;background:rgba(246,247,249,.9)">
+      <div class="sec-t">Inteligência</div>
+      <div class="row" style="border-top:0"><div class="lab"><b>Modelo no aparelho</b><span>Apple Foundation Models · pt/ja · offline</span></div><button class="sw" aria-label="ligado" style="background:#22DD7E"><span class="knob" style="right:3px"></span></button></div>
+      <div class="row"><div class="lab"><b>Reforço na nuvem</b><span>Claude Haiku só pra links difíceis</span></div><button class="sw" aria-label="ligado" style="background:#22DD7E"><span class="knob" style="right:3px"></span></button></div>
+      <div class="row"><div class="lab"><b>Transcrever vídeos</b><span>Gemini Flash · YouTube por URL</span></div><button class="sw" aria-label="desligado" style="background:#E4E6EA"><span class="knob" style="left:3px"></span></button></div>
+    </div>
+
+    <div class="card" style="padding:4px 16px">
+      <div class="sec-t">Dados</div>
+      <div class="row" style="border-top:0"><div class="lab"><b>Google Places</b><span>horários e preço · 1.000 grátis/mês</span></div><span class="val"><span class="dot" style="background:#22DD7E"></span>412 usados</span></div>
+      <div class="row"><div class="lab"><b>Tempo</b><span>Open-Meteo + JMA</span></div><span class="val"><span class="dot" style="background:#22DD7E"></span>ok</span></div>
+      <div class="row"><div class="lab"><b>Fotos de fundo</b><span>Flickr CC · crédito sempre visível</span></div><button class="sw" aria-label="ligado" style="background:#22DD7E"><span class="knob" style="right:3px"></span></button></div>
+      <div class="row"><div class="lab"><b>Moeda</b><span>câmbio salvo 31 out</span></div><span class="val">¥100 = R$ 3,60</span></div>
+    </div>
+
+    <div style="display:flex;gap:8px">
+      <button class="ghost" style="flex:1">Exportar board (.json)</button>
+      <button class="ghost" style="flex:1">Reimportar</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
