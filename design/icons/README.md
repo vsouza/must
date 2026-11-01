@@ -72,3 +72,10 @@
 | `voltar.svg` | voltar | `chevron.left` |
 | `ok.svg` | ok | `checkmark` |
 | `fechar.svg` | fechar | `xmark` |
+
+## Como estão no app
+
+Os SVGs são de traço; o template de *custom SF Symbol* exige contornos expandidos (sem `stroke`), então **nenhum** entrou como Symbol Image Set. Todos estão em `Must/Resources/Assets.xcassets/Icons/` como **image sets SVG** com `template-rendering-intent: template` e vetor preservado — pegam `foregroundStyle` e escalam sem perder nitidez. Usar `MustIconView(.ramen, size: 20)` ou `Image(mustIcon:)`.
+
+- `feito.svg` usa `<text>` (o CoreSVG não desenha texto): fica fora do catálogo e o `MustIconView` desenha 済 em Zen Kaku Gothic New.
+- Ícone novo: salvar o SVG aqui, adicionar a linha na tabela acima e rodar `python3 scripts/gen-icons.py` (gera os image sets e `Must/DesignSystem/MustIcon.swift`).
