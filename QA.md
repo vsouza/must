@@ -1,6 +1,6 @@
 # QA do Must — Belo Horizonte, antes de usar de verdade
 
-Legenda: **[x] auto** = coberto por teste automático (`MustTests`, 140 testes) · **[x] sim** = visto no simulador
+Legenda: **[x] auto** = coberto por teste automático (`MustTests`, 144 testes) · **[x] sim** = visto no simulador
 (prints em `scripts/qa-screens.sh`) · **[ ] iPhone** = precisa do aparelho/GPS real · **[!]** = bloqueado (motivo ao lado).
 
 Rodar tudo que é automático:
@@ -122,6 +122,17 @@ xcodebuild -project Must.xcodeproj -scheme Must -destination 'platform=iOS Simul
   O assistente filtra por photo/sport e vê golden de hoje, "termina em N dias"/preço/sessão e "evitar agora (quente · 31°)".
 - [ ] iPhone — "Começar" abre o Strava (`strava://record`) se estiver instalado; senão a rota a pé.
 - Nota — as exposições dos seeds (Moriyama no TOP Museum, mostras de BH) são exemplos do design: conferir as agendas.
+
+## 17. Região pelo GPS e boards maiores (01/11)
+- [x] sim — GPS simulado em Savassi abre BH; em Naka-Meguro abre Japão; 6 trocas seguidas sem crash. Ajustes › Região
+  mostra Automático / BH / Japão ("pelo GPS · agora em Belo Horizonte").
+- [x] corrigido — trocar de região com a sincronização rodando derrubava o app (container antigo solto no meio do
+  `await`). Agora cada tarefa segura o container dela e para se a região mudou.
+- [x] auto — seeds: BH 50 lugares, Japão 103 (lista do Milanote inteira) + 3 voos; board antigo recebe os novos uma vez
+  e o "see" violeta com museus vira templos/mirantes + art (`OldSeedRealignTests`, `ExtrasDataTests`).
+- [x] auto — Tóquio 13–17 e 20–24 são a mesma cidade pro solver; "fica pro fim" ganha prioridade nos últimos dias.
+- [!] — Places resolve 50 lugares por sincronização: o Japão (103 aproximados) precisa de 3 sincronizações quando o
+  Google voltar a funcionar.
 
 ## Notas
 - O simulador "iPhone 17 Pro" ficou travando o test runner ("hung before establishing connection") depois de muitas

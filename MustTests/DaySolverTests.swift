@@ -182,7 +182,8 @@ struct DaySolverJapanTests {
         // Acordou cedo (07:30): o templo entra antes das 09:30.
         let p = DaySolver.solve(sunday(.temples, start: "07:30"), catalog: catalog)
         let first = try #require(p.stops.first)
-        #expect(first.place.id == "j13") // Senso-ji
+        // Um templo (Senso-ji, Meiji…) — o mais perto ganha.
+        #expect(first.place.sub == "Templos" || first.place.listColor == .temple, "primeira parada não é templo: \(first.place.name)")
         #expect(p.minute(first) < 9 * 60 + 30)
     }
 

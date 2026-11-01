@@ -135,7 +135,7 @@ extension DaySolver {
     static func ticketAnchors(_ catalog: [SolverPlace], ctx: Context) -> [ProposedStop] {
         let req = ctx.request
         var out: [ProposedStop] = []
-        for p in catalog where !p.done && p.cityId == req.cityId && !ctx.mustExclude.contains(p.id) {
+        for p in catalog where !p.done && req.isInCity(p.cityId) && !ctx.mustExclude.contains(p.id) {
             for s in p.extra?.sessions ?? [] where s.bought && req.calendar.isDate(s.at, inSameDayAs: req.date) {
                 let minute = ctx.minute(s.at)
                 let length = p.extra?.art?.durationMinutes ?? (p.kind == .sport ? 150 : 120)

@@ -160,6 +160,8 @@ struct DayRequest: Sendable {
     var startAt: Date
     var origin: CLLocationCoordinate2D
     var cityId: String
+    /// Outros trechos da mesma cidade (Tóquio 13–17 e 20–24): os lugares de um valem no outro.
+    var sameCityIds: Set<String> = []
     /// Dias que ainda restam na cidade depois de hoje (0 = último dia). `nil` = sem viagem (BH).
     var daysLeftInCity: Int?
     var weather: DayWeather?
@@ -169,6 +171,9 @@ struct DayRequest: Sendable {
     var cityCenter: CLLocationCoordinate2D?
     /// Desempate (↻ "outra proposta").
     var seed = 0
+
+    /// Lugar da cidade do dia (ou de outro trecho dela).
+    func isInCity(_ id: String) -> Bool { id == cityId || sameCityIds.contains(id) }
 
     var calendar: Calendar {
         var cal = Calendar(identifier: .gregorian)

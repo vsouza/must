@@ -59,6 +59,7 @@ final class DayPlanner {
         }
         return DayRequest(date: date, timeZone: region.timeZone, kind: kind, budget: budget, walk: walk, lists: lists,
                           intent: intent, startAt: startAt, origin: origin, cityId: city?.id ?? region.rawValue,
+                          sameCityIds: Set((trip?.cities ?? []).filter { $0.name == city?.name && $0.id != city?.id }.map(\.id)),
                           daysLeftInCity: city.flatMap { trip?.daysLeft(in: $0, after: date, calendar: cal) },
                           weather: weather, walkMaxKm: settings?.walkMaxKm ?? 1.5,
                           oneMealPerWindow: settings?.oneMealPerWindow ?? true, cityCenter: center, seed: seed)

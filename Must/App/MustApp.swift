@@ -46,10 +46,7 @@ struct AppRoot: View {
                 DebugLaunch.apply(to: router, context: context, region: store.region, services: services)
                 #endif
             }
-            .task {
-                await services.sync.syncIfNeeded(context: context, region: store.region)
-                OutsideBridge.refresh(context: context, region: store.region, services: services)
-            }
+            .task { await syncThenRefresh() }
             // Widgets e Live Activity acompanham qualquer gravação (dia aceito, 済, troca, gasto).
             .onReceive(NotificationCenter.default.publisher(for: ModelContext.didSave)) { _ in
                 refreshOutsideSoon()
@@ -57,25 +54,40 @@ struct AppRoot: View {
             .onChange(of: scenePhase, initial: true) { _, phase in
                 if phase == .active {
                     services.location.start()
-                    Task {
-                        await services.sync.syncIfNeeded(context: context, region: store.region)
-                        OutsideBridge.refresh(context: context, region: store.region, services: services)
-                    }
+                    Task { await syncThenRefresh() }
                 } else if phase == .background {
                     services.location.stop()
                 }
             }
             .onOpenURL { router.handle(url: $0, region: store.region) }
+            // Abre na região onde você está (Ajustes › Região › Automático).
+            .onChange(of: services.location.current.map { Region.detect($0.coordinate) }, initial: true) { _, _ in
+                if let c = services.location.current?.coordinate { store.followGPS(c) }
+            }
     }
 
     @State private var outsideTask: Task<Void, Never>?
 
+    /// Sincroniza e atualiza widgets. Se a região trocar no meio (GPS, Ajustes), para: a árvore nova
+    /// já faz o dela, e o `context` daqui é do board antigo (o container fica vivo até o fim).
+    private func syncThenRefresh() async {
+        let region = store.region
+        let container = context.container
+        defer { withExtendedLifetime(container) {} }
+        await services.sync.syncIfNeeded(context: context, region: region)
+        guard store.region == region, !Task.isCancelled else { return }
+        OutsideBridge.refresh(context: context, region: region, services: services)
+    }
+
     /// Junta várias gravações seguidas numa atualização só.
     private func refreshOutsideSoon() {
         outsideTask?.cancel()
+        let region = store.region
+        let container = context.container
         outsideTask = Task {
+            defer { withExtendedLifetime(container) {} }
             try? await Task.sleep(for: .milliseconds(600))
-            guard !Task.isCancelled else { return }
+            guard !Task.isCancelled, store.region == region else { return }
             OutsideBridge.refresh(context: context, region: store.region, services: services)
         }
     }

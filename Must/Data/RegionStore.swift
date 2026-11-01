@@ -1,3 +1,4 @@
+import CoreLocation
 import Foundation
 import Observation
 import OSLog
@@ -9,6 +10,8 @@ import SwiftData
 @Observable
 final class RegionStore {
     static let regionKey = "region"
+    /// Região pelo GPS (padrão). Escolher BH ou Japão à mão desliga.
+    static let autoKey = "region.auto"
 
     private(set) var region: Region
     private(set) var container: ModelContainer
@@ -32,6 +35,26 @@ final class RegionStore {
         let (container, error) = Self.openContainer(for: region, in: self.directory, seedBundle: seedBundle)
         self.container = container
         self.lastError = error
+    }
+
+    /// Automático: abre na região onde o GPS está (BH no Brasil, Japão lá).
+    var isAuto: Bool { defaults.object(forKey: Self.autoKey) as? Bool ?? true }
+
+    /// Ajustes › Região: `nil` = automático pelo GPS; uma região = fixa nela.
+    func choose(_ newRegion: Region?, near coordinate: CLLocationCoordinate2D?) {
+        defaults.set(newRegion == nil, forKey: Self.autoKey)
+        if let newRegion {
+            switchTo(newRegion)
+        } else if let coordinate {
+            followGPS(coordinate)
+        }
+    }
+
+    /// No automático, troca pra região do GPS (sem GPS ou fora das duas, fica como está).
+    func followGPS(_ coordinate: CLLocationCoordinate2D) {
+        guard isAuto, let detected = Region.detect(coordinate), detected != region else { return }
+        Log.data.info("GPS em \(detected.rawValue, privacy: .public): abrindo essa região")
+        switchTo(detected)
     }
 
     func switchTo(_ newRegion: Region) {
@@ -97,7 +120,7 @@ final class RegionStore {
         let count = try context.fetchCount(FetchDescriptor<MustList>())
         _ = context.settings(for: region)
         guard count == 0 else {
-            try addNewKinds(context, region: region, bundle: bundle)
+            try mergeSeed(context, region: region, bundle: bundle)
             try context.save()
             return
         }
@@ -108,27 +131,80 @@ final class RegionStore {
         }
         let board = try BoardCodec.decode(Data(contentsOf: url))
         let summary = try BoardCodec(context: context, region: region).import(board: board)
+        context.settings(for: region).seenSeedIds = board.places.map(\.id)
+        try context.save()
         Log.data.info("seed \(region.rawValue, privacy: .public): \(summary.description, privacy: .public)")
     }
 
-    /// Board de antes do prompt 13: acrescenta as listas photo/art/sport do seed e os lugares delas
-    /// (só o que não existe — nada do usuário é sobrescrito). Roda uma vez por região.
-    static func addNewKinds(_ context: ModelContext, region: Region, bundle: Bundle) throws {
-        let lists = try context.fetch(FetchDescriptor<MustList>())
-        guard !lists.contains(where: { $0.kind != .place }), let url = region.seedURL(in: bundle) else { return }
+    /// O que ainda está igual ao seed antigo acompanha o novo (prompt 13): "see" violeta com museus vira
+    /// templos/mirantes em teal, os museus que continuam nele vão pra art, e as listas seguem a ordem do design.
+    /// Só mexe no que bate exatamente com o padrão antigo; o que o usuário mudou fica. Roda sem custo se nada bate.
+    static func realign(_ context: ModelContext, lists: [MustList], seed: Board) throws {
+        var changed = false
+        let byId = Dictionary(lists.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        if let see = byId["see"], see.colorRaw == MustColor.see.rawValue, see.iconRaw == MustIcon.museu.rawValue,
+           let s = seed.lists.first(where: { $0.id == "see" }), s.color != .see,
+           seed.places.allSatisfy({ $0.listId == "see" || byId[$0.listId] != nil }) {
+            // Só quando as listas de destino (art…) já existem: recolore e move de uma vez.
+            see.color = s.color
+            if let icon = s.icon.flatMap(MustIcon.init(rawValue:)) { see.icon = icon }
+            see.subs = s.sub ?? see.subs
+            let seedPlaces = Dictionary(seed.places.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+            for place in see.places {
+                guard let sp = seedPlaces[place.id], sp.listId != "see", let target = byId[sp.listId] else { continue }
+                place.list = target
+                place.sub = sp.sub
+            }
+            changed = true
+        }
+        // Ordem do design pras listas do seed; as criadas pelo usuário vêm depois, na ordem em que estavam.
+        let order = seed.lists.map(\.id)
+        if lists.allSatisfy({ !order.contains($0.id) || $0.order == order.firstIndex(of: $0.id)! }) == false {
+            let custom = lists.filter { !order.contains($0.id) }.sorted { $0.order < $1.order }
+            for list in lists { if let i = order.firstIndex(of: list.id) { list.order = i } }
+            for (i, list) in custom.enumerated() { list.order = order.count + i }
+            changed = true
+        }
+        if changed {
+            try context.save()
+            Log.data.info("board alinhado com o seed novo")
+        }
+    }
+
+    /// Board já existente: recebe o que o seed ganhou depois (listas, lugares, eventos), uma vez só.
+    /// Nada do usuário é sobrescrito; lugar que ele apagou não volta (o id fica em `seenSeedIds`).
+    static func mergeSeed(_ context: ModelContext, region: Region, bundle: Bundle) throws {
+        guard let url = region.seedURL(in: bundle) else { return }
         let seed = try BoardCodec.decode(Data(contentsOf: url))
-        let kinds = seed.lists.filter { ($0.kind ?? .place) != .place }
-        let ids = Set(kinds.map(\.id))
-        // Uma lista do usuário com o mesmo id ganha o tipo; nenhuma lista nova se ela já existir.
-        for list in lists where ids.contains(list.id) { list.kind = kinds.first { $0.id == list.id }?.kind ?? .place }
-        let existing = Set(lists.map(\.id))
-        let knownPlaces = Set(try context.fetch(FetchDescriptor<Place>()).map(\.id))
+        let settings = context.settings(for: region)
+        let seen = Set(settings.seenSeedIds)
+        let seedIds = Set(seed.places.map(\.id))
+        let lists = try context.fetch(FetchDescriptor<MustList>())
+        try realign(context, lists: lists, seed: seed)
+        guard !seedIds.isSubset(of: seen) else { return }
+
+        for list in lists {
+            guard let s = seed.lists.first(where: { $0.id == list.id }) else { continue }
+            // Lista antiga com o mesmo id ganha o tipo (photo/art/sport) e as sub-listas novas.
+            if list.kind == .place, let kind = s.kind, kind != .place { list.kind = kind }
+            let extra = (s.sub ?? []).filter { !list.subs.contains($0) }
+            if !extra.isEmpty { list.subs += extra }
+        }
+        let listIds = Set(lists.map(\.id))
+        let known = Set(try context.fetch(FetchDescriptor<Place>()).map(\.id))
+        let places = seed.places.filter { !seen.contains($0.id) && !known.contains($0.id) }
+        let events = try context.fetch(FetchDescriptor<TripEvent>())
+        let newEvents = (seed.events ?? []).filter { e in !events.contains { $0.title == e.title && abs($0.at.timeIntervalSince(e.at)) < 60 } }
         let board = Board(version: seed.version, region: seed.region, trip: nil, budget: nil,
-                          lists: kinds.filter { !existing.contains($0.id) },
-                          places: seed.places.filter { ids.contains($0.listId) && !knownPlaces.contains($0.id) },
-                          expenses: nil, days: nil, events: nil)
-        guard !board.lists.isEmpty || !board.places.isEmpty else { return }
-        let summary = try BoardCodec(context: context, region: region).import(board: board)
-        Log.data.info("tipos novos \(region.rawValue, privacy: .public): \(summary.description, privacy: .public)")
+                          lists: seed.lists.filter { !listIds.contains($0.id) },
+                          places: places, expenses: nil, days: nil, events: newEvents)
+        if !board.lists.isEmpty || !board.places.isEmpty || !newEvents.isEmpty {
+            let summary = try BoardCodec(context: context, region: region).import(board: board)
+            Log.data.info("seed novo \(region.rawValue, privacy: .public): \(summary.description, privacy: .public)")
+        }
+        settings.seenSeedIds = Array(seen.union(seedIds)).sorted()
+        try context.save()
+        // As listas novas (art…) já existem: agora dá pra mover os museus e ordenar.
+        try realign(context, lists: try context.fetch(FetchDescriptor<MustList>()), seed: seed)
     }
 }

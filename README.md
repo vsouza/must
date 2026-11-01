@@ -35,7 +35,10 @@ bundle `dev.viniso.must`. O tempo (Open-Meteo) e as fotos (Wikimedia Commons) n�
 
 ## Trocar de região
 
-Ajustes (avatar "V" na Início, ou a engrenagem na Viagem) → **5 toques em "Must · 1.0 · só pra mim"** → sheet Região:
+O app abre na região onde você está (GPS no Brasil → BH, no Japão → Japão). Pra fixar uma, Ajustes → **Região** →
+Automático / BH / Japão.
+
+Ferramentas de teste: Ajustes → **5 toques em "Must · 1.0 · só pra mim"** → sheet Região:
 Belo Horizonte / Japão, dados ao vivo on/off, simular data e hora, simular GPS, simular nuvens (golden), exportar logs,
 zerar o board da região.
 Cada região tem o próprio arquivo (`must-bh.store`, `must-jp.store`): trocar não apaga nada.

@@ -47,7 +47,7 @@ struct QAScenarioTests {
     /// "Primeira abertura: seed BH carregado."
     @Test func firstOpenLoadsBHSeed() throws {
         let c = try container(.bh)
-        #expect(try c.mainContext.fetchCount(FetchDescriptor<Place>()) == 28)
+        #expect(try c.mainContext.fetchCount(FetchDescriptor<Place>()) == 50)
         #expect(try c.mainContext.fetchCount(FetchDescriptor<MustList>()) == 8)
         #expect(c.mainContext.settings(for: .bh).perDayBudget == 200)
     }

@@ -140,7 +140,7 @@ struct RegionSheet: View {
         // Troca depois que a sheet sai; o root recria a árvore com `.id(region)`.
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(250))
-            store.switchTo(region)
+            store.choose(region, near: nil)
         }
     }
 

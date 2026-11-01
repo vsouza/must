@@ -90,7 +90,9 @@ struct ExtrasDataTests {
         #expect(lists.count == 8)
         #expect(lists.first { $0.id == "art" }?.kind == .art)
         let after = try ctx.fetchCount(FetchDescriptor<Place>())
-        #expect(after == before + 6) // j14 (teamLab, agora art) + j18…j22
+        let seed = K.board(.jp)
+        let kindLists = Set(seed.lists.filter { ($0.kind ?? .place) != .place }.map(\.id))
+        #expect(after == before + seed.places.filter { kindLists.contains($0.listId) }.count)
         try RegionStore.seedIfEmpty(ctx, region: .jp, bundle: Bundle(for: K.Token.self))
         #expect(try ctx.fetchCount(FetchDescriptor<Place>()) == after)
     }
@@ -165,7 +167,8 @@ struct SportRulesTests {
     @Test func earlyMorningRunEnters() throws {
         let p = DaySolver.solve(K.request(.bh, day: "2026-11-01", city: "bh", origin: K.savassi, start: "07:00", weather: Self.sunday),
                                 catalog: K.catalog(.bh))
-        let run = try #require(p.stop("p28"))
+        // Corrida na Pampulha ou trilha nas Mangabeiras: o que estiver mais perto, nas horas frescas.
+        let run = try #require(p.stops.first { $0.place.role == .sport })
         #expect(p.minute(run) < 9 * 60 + 30)
         #expect(run.reason.hasPrefix("janela boa"))
     }
@@ -174,6 +177,7 @@ struct SportRulesTests {
         let p = DaySolver.solve(K.request(.bh, day: "2026-11-01", city: "bh", origin: K.savassi, start: "12:00", weather: Self.sunday),
                                 catalog: K.catalog(.bh))
         #expect(p.stop("p28") == nil)
+        #expect(!p.stops.contains { $0.place.role == .sport })
     }
 
     @Test func scoreAndWindow() throws {
@@ -227,5 +231,36 @@ struct KindIntentTests {
         #expect(RegexIntentParser.parse("sem corrida hoje").roles[.sport] == .off)
         let photo = RegexIntentParser.parse("dia de fotografia, pegar o golden")
         #expect(photo.kind == .photo && photo.roles[.photo] == .on)
+    }
+}
+
+struct OldSeedRealignTests {
+    /// BH semeado antes do prompt 13: "see" violeta com museus, sem photo/art/sport.
+    @MainActor @Test func oldSeeListBecomesTemplesAndMuseumsMoveToArt() throws {
+        let container = try ModelContainer(for: MustSchema.schema, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        let ctx = container.mainContext
+        var old = K.board(.bh)
+        let museums = ["p11", "p12", "p13", "p15", "p16"]
+        old.lists = old.lists.filter { ($0.kind ?? .place) == .place }.map { l in
+            var l = l
+            if l.id == "see" { l.color = .see; l.icon = "museu"; l.sub = ["Arte", "Arquitetura", "Mirante"] }
+            return l
+        }
+        old.places = old.places.compactMap { p in
+            var p = p
+            if museums.contains(p.id) { p.listId = "see"; p.sub = "Arte" }
+            return old.lists.contains { $0.id == p.listId } ? p : nil
+        }
+        try BoardCodec(context: ctx, region: .bh).import(board: old)
+
+        try RegionStore.seedIfEmpty(ctx, region: .bh, bundle: Bundle(for: K.Token.self))
+        let lists = try ctx.fetch(FetchDescriptor<MustList>(sortBy: [SortDescriptor(\.order)]))
+        #expect(lists.map(\.id) == K.board(.bh).lists.map(\.id))
+        let see = try #require(lists.first { $0.id == "see" })
+        #expect(see.color == .temple && see.icon == .temploTorii)
+        let places = try ctx.fetch(FetchDescriptor<Place>())
+        #expect(places.first { $0.id == "p11" }?.list?.id == "art")
+        #expect(places.first { $0.id == "p14" }?.list?.id == "see") // a Igrejinha fica
+        #expect(places.count == K.board(.bh).places.count)
     }
 }

@@ -80,6 +80,9 @@ final class SyncCoordinator {
     }
 
     func sync(context: ModelContext, region: Region) async {
+        // Trocar de região no meio (GPS, Ajustes) solta o container antigo: segura até terminar.
+        let container = context.container
+        defer { withExtendedLifetime(container) {} }
         guard status != .syncing else { return }
         guard DevOverrides.liveData else {
             status = .offline
@@ -141,6 +144,8 @@ final class SyncCoordinator {
 
     /// Sem dados ao vivo: usa a última previsão salva.
     private func loadCachedWeather(context: ModelContext, region: Region) async {
+        let container = context.container
+        defer { withExtendedLifetime(container) {} }
         let trip = try? context.fetch(FetchDescriptor<TripInfo>()).first
         for city in trip?.cities ?? [] {
             if let f = try? await weather.forecast(at: CLLocationCoordinate2D(latitude: city.lat, longitude: city.lng), region: region) {
@@ -156,8 +161,9 @@ final class SyncCoordinator {
         guard places.isConfigured, DevOverrides.liveData, place.placeId != nil, place.hours?.isStale ?? true,
               !detailsInFlight.contains(place.id) else { return }
         detailsInFlight.insert(place.id)
+        let container = place.modelContext?.container
         Task {
-            defer { detailsInFlight.remove(place.id) }
+            defer { detailsInFlight.remove(place.id); withExtendedLifetime(container) {} }
             do { try await refresh(place, region: region) } catch {
                 Log.network.error("detalhes \(place.id, privacy: .public): \(error.localizedDescription, privacy: .public)")
             }
@@ -180,6 +186,8 @@ final class SyncCoordinator {
 
     /// Ajustes → Sincronizar: resolve os lugares sem placeId ou com coordenada chutada (até 50).
     func syncPlaces(context: ModelContext, region: Region) async {
+        let container = context.container
+        defer { withExtendedLifetime(container) {} }
         guard placesProgress == nil else { return }
         guard places.isConfigured else { placesSummary = "Falta GOOGLE_PLACES_KEY no Secrets.plist."; return }
         guard DevOverrides.liveData else { placesSummary = "Dados ao vivo estão desligados."; return }
@@ -239,7 +247,9 @@ final class SyncCoordinator {
     /// Completa um lugar novo (placeId + coordenada exata + horário) em segundo plano.
     func resolveNew(_ place: Place, candidate: PlaceCandidate?, region: Region, context: ModelContext) {
         guard places.isConfigured, DevOverrides.liveData else { return }
+        let container = context.container
         Task {
+            defer { withExtendedLifetime(container) {} }
             do {
                 var chosen = candidate
                 if chosen == nil {

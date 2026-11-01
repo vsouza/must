@@ -33,6 +33,7 @@ struct SettingsView: View {
                     .padding(.top, 18)
                     .padding(.bottom, 12)
 
+                    RegionPicker()
                     if let settings = settingsList.first {
                         SettingsSections(settings: settings, region: store.region,
                                          onExport: exportBoard, onReimport: { showReimport = true })

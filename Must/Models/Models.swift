@@ -291,6 +291,8 @@ final class Settings {
     /// Quanto vale 1 unidade da moeda da região em BRL (¥1 = R$ 0,036). BH = 1.
     var fxRate: Double
     var fxDate: Date?
+    /// Ids do seed que este board já recebeu (lugar novo no seed entra uma vez; apagado não volta).
+    var seenSeedIds: [String] = []
 
     init(region: Region) {
         self.perDayBudget = region.defaultBudget

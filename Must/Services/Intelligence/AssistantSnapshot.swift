@@ -20,6 +20,8 @@ struct AssistantSnapshot: Sendable {
     var areaName: String
     var cityId: String?
     var cityName: String?
+    /// Outros trechos da mesma cidade (Tóquio 1 e 2).
+    var sameCityIds: Set<String> = []
     var catalog: [SolverPlace]
     var listNames: [String: String]
     var stops: [StopInfo]
@@ -68,6 +70,7 @@ struct AssistantSnapshot: Sendable {
         let tomorrow = cal.date(byAdding: .day, value: 1, to: now) ?? now
         return AssistantSnapshot(
             region: region, now: now, here: here, areaName: area, cityId: city?.id, cityName: city?.name,
+            sameCityIds: Set((trip?.cities ?? []).filter { $0.name == city?.name && $0.id != city?.id }.map(\.id)),
             catalog: places.solverCatalog, listNames: Dictionary(uniqueKeysWithValues: lists.map { ($0.id, $0.displayName) }),
             stops: stops, dayKind: day?.kind, budget: day?.budget ?? settings.perDayBudget,
             spentDay: expenses.reduce(0) { $0 + $1.amount } - spentException, spentException: spentException,
@@ -152,7 +155,9 @@ enum AssistantEngine {
         CLLocation(latitude: a.latitude, longitude: a.longitude).distance(from: CLLocation(latitude: b.latitude, longitude: b.longitude)) / 1000
     }
 
-    static func sameCity(_ p: SolverPlace, _ s: AssistantSnapshot) -> Bool { s.cityId == nil || p.cityId == s.cityId }
+    static func sameCity(_ p: SolverPlace, _ s: AssistantSnapshot) -> Bool {
+        s.cityId == nil || p.cityId == s.cityId || s.sameCityIds.contains(p.cityId)
+    }
 
     /// Abertos agora perto (ou, sem horário no cache, os mais perto marcados "sem horário").
     static func openNow(_ s: AssistantSnapshot, radiusKm: Double = 1.5, role: StopRole? = nil) -> (places: [SolverPlace], confirmed: Bool) {

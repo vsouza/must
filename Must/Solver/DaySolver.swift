@@ -163,7 +163,7 @@ enum DaySolver {
         let forced = ctx.mustInclude.contains(p.id)
         if p.done { return ("já feito", true) }
         if ctx.mustExclude.contains(p.id) { return ("você pediu pra tirar", false) }
-        if p.cityId != req.cityId { return ("outra cidade", true) }
+        if !req.isInCity(p.cityId) { return ("outra cidade", true) }
         let mode = ctx.mode(p)
         let rare = p.rules.isRareToday(weekday: req.weekday)
         if mode == .off && !forced { return ("lista desligada", true) }
@@ -217,7 +217,7 @@ enum DaySolver {
         var hasException = false
         for p in catalog where !p.done {
             guard let r = p.reservation, req.calendar.isDate(r.at, inSameDayAs: req.date) else { continue }
-            guard p.cityId == req.cityId else { leftOut.append(LeftOut(place: p, reason: "outra cidade")); continue }
+            guard req.isInCity(p.cityId) else { leftOut.append(LeftOut(place: p, reason: "outra cidade")); continue }
             if ctx.mustExclude.contains(p.id) { continue }
             let minute = ctx.minute(r.at)
             let duration = p.role == .eat ? 105 : p.role.duration
@@ -428,6 +428,8 @@ enum DaySolver {
                     if light != nil { score -= 30 }
                     if slot.timing == .sunHigh, p.kind == .art { score -= 40 }
                     if let left = daysLeft(p, ctx: ctx), left <= 7 { score -= 80 - Double(left) * 5 }
+                    // "Fica pro fim" nos últimos dias da cidade: é agora ou nunca.
+                    if p.saveForEnd, let left = req.daysLeftInCity, left <= 1 { score -= 200 }
                     score += tieBreak(p.id, seed: req.seed)
                     if best == nil || score < best!.score {
                         best = (ProposedStop(place: p, at: ctx.date(start), end: ctx.date(end), window: slot.window,

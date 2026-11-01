@@ -66,6 +66,13 @@ enum Region: String, CaseIterable, Codable, Sendable, Identifiable {
     }
 
     /// Centro padrão (cidade de casa / primeira cidade).
+    /// Região pelo GPS: Japão (ilhas principais) ou Brasil → BH. Fora dos dois, `nil` (não troca).
+    static func detect(_ c: CLLocationCoordinate2D) -> Region? {
+        if (24...46).contains(c.latitude), (122...154).contains(c.longitude) { return .jp }
+        if (-34...6).contains(c.latitude), (-74...(-34)).contains(c.longitude) { return .bh }
+        return nil
+    }
+
     var defaultCenter: CLLocationCoordinate2D {
         switch self {
         case .bh: CLLocationCoordinate2D(latitude: -19.9245, longitude: -43.9352)

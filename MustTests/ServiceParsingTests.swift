@@ -150,7 +150,7 @@ struct PlacesSyncTests {
         #expect(nice.hours?.periods?.count == 1)
         #expect(nice.priceLevel == 1)
         #expect(nice.price == 15) // preço do board não é sobrescrito
-        #expect(sync.placesSummary?.contains("28 resolvidos") == true)
+        #expect(sync.placesSummary?.contains("50 resolvidos") == true)
         #expect(sync.placesProgress == nil)
     }
 }

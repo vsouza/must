@@ -50,7 +50,7 @@ struct BoardCodecTests {
 
     // MARK: Decodificação
 
-    @Test(arguments: [(Region.bh, 28, 8), (Region.jp, 22, 8)])
+    @Test(arguments: [(Region.bh, 50, 8), (Region.jp, 103, 8)])
     func decodesSeeds(region: Region, places: Int, lists: Int) throws {
         let board = try Self.seed(region)
         #expect(board.version == 1)
@@ -77,7 +77,7 @@ struct BoardCodecTests {
 
     // MARK: Import
 
-    @Test(arguments: [(Region.bh, 28, 8), (Region.jp, 22, 8)])
+    @Test(arguments: [(Region.bh, 50, 8), (Region.jp, 103, 8)])
     func importsSeed(region: Region, places: Int, lists: Int) throws {
         let codec = try Self.makeCodec(region)
         let summary = try codec.import(board: Self.seed(region))
@@ -203,7 +203,7 @@ struct BoardCodecTests {
         #expect(exported.budget?.perDay == seed.budget?.perDay)
 
         let seedPlaces = seed.places.map(Self.canon).sorted { $0.id < $1.id }
-        let exportedPlaces = exported.places.map(Self.canon)
+        let exportedPlaces = exported.places.map(Self.canon).sorted { $0.id < $1.id }
         #expect(exportedPlaces.count == seedPlaces.count)
         for (a, b) in zip(exportedPlaces, seedPlaces) {
             #expect(a == b, "lugar \(b.id) mudou no round-trip")
@@ -295,7 +295,7 @@ struct RegionStoreTests {
         let store = RegionStore(directory: dir, defaults: defaults, seedBundle: Bundle(for: Token.self))
         #expect(store.region == .bh)
         #expect(store.lastError == nil)
-        #expect(try store.container.mainContext.fetchCount(FetchDescriptor<Place>()) == 28)
+        #expect(try store.container.mainContext.fetchCount(FetchDescriptor<Place>()) == 50)
         #expect(try store.container.mainContext.fetchCount(FetchDescriptor<MustList>()) == 8)
 
         // Um gasto em BH.
@@ -305,18 +305,18 @@ struct RegionStoreTests {
         store.switchTo(.jp)
         #expect(store.region == .jp)
         #expect(defaults.string(forKey: RegionStore.regionKey) == "jp")
-        #expect(try store.container.mainContext.fetchCount(FetchDescriptor<Place>()) == 22)
+        #expect(try store.container.mainContext.fetchCount(FetchDescriptor<Place>()) == 103)
         #expect(try store.container.mainContext.fetchCount(FetchDescriptor<Expense>()) == 0)
 
         store.switchTo(.bh)
-        #expect(try store.container.mainContext.fetchCount(FetchDescriptor<Place>()) == 28)
+        #expect(try store.container.mainContext.fetchCount(FetchDescriptor<Place>()) == 50)
         #expect(try store.container.mainContext.fetchCount(FetchDescriptor<Expense>()) == 1)
 
         // Uma nova instância lembra da região e lê o mesmo arquivo.
         store.switchTo(.jp)
         let reopened = RegionStore(directory: dir, defaults: defaults, seedBundle: Bundle(for: Token.self))
         #expect(reopened.region == .jp)
-        #expect(try reopened.container.mainContext.fetchCount(FetchDescriptor<Place>()) == 22)
+        #expect(try reopened.container.mainContext.fetchCount(FetchDescriptor<Place>()) == 103)
     }
 
     @Test func resetBoardReseedsOnlyThatRegion() throws {
@@ -334,7 +334,7 @@ struct RegionStoreTests {
         let extra = Place(id: "x1", name: "Extra", cityId: "bh")
         ctx.insert(extra)
         try ctx.save()
-        #expect(try ctx.fetchCount(FetchDescriptor<Place>()) == 29)
+        #expect(try ctx.fetchCount(FetchDescriptor<Place>()) == 51)
 
         store.switchTo(.jp)
         store.container.mainContext.insert(Expense(at: .now, amount: 1000))
@@ -342,7 +342,7 @@ struct RegionStoreTests {
         store.switchTo(.bh)
 
         store.resetBoard()
-        #expect(try store.container.mainContext.fetchCount(FetchDescriptor<Place>()) == 28)
+        #expect(try store.container.mainContext.fetchCount(FetchDescriptor<Place>()) == 50)
         #expect(try store.container.mainContext.fetchCount(FetchDescriptor<Expense>()) == 0)
 
         store.switchTo(.jp)
@@ -357,15 +357,17 @@ struct TripEventCodecTests {
         let ctx = container.mainContext
         let codec = BoardCodec(context: ctx, region: .jp)
         final class T {}
-        try codec.import(board: BoardCodec.decode(Data(contentsOf: Region.jp.seedURL(in: Bundle(for: T.self))!)))
+        let seed = try BoardCodec.decode(Data(contentsOf: Region.jp.seedURL(in: Bundle(for: T.self))!))
+        try codec.import(board: seed)
+        let seedEvents = seed.events?.count ?? 0
         let at = BoardDates.parseDateTime("2026-11-17T09:12:00+09:00")!
         ctx.insert(TripEvent(at: at, title: "Shinkansen → Kyoto", kind: .train, note: "Nozomi 215 · vagão 8"))
         try ctx.save()
         let exported = try codec.export()
-        #expect(exported.events?.first?.title == "Shinkansen → Kyoto")
+        #expect(exported.events?.contains { $0.title == "Shinkansen → Kyoto" } == true)
         let json = String(data: try BoardCodec.encode(exported), encoding: .utf8)!
         #expect(json.contains("2026-11-17T09:12:00+09:00"))
         try codec.import(board: BoardCodec.decode(BoardCodec.encode(exported)))
-        #expect(try ctx.fetchCount(FetchDescriptor<TripEvent>()) == 1)
+        #expect(try ctx.fetchCount(FetchDescriptor<TripEvent>()) == seedEvents + 1)
     }
 }
