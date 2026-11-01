@@ -1,0 +1,446 @@
+{
+ "type": "FeatureCollection",
+ "name": "bh-lines",
+ "attribution": "traçado aproximado à mão",
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "line",
+    "id": "L1",
+    "name": "Linha 1",
+    "nameLatin": "Metrô BH · Linha 1",
+    "operator": "CBTU / Metrô BH",
+    "color": "#0C6DB2",
+    "approx": true,
+    "firstTrain": "05:15",
+    "lastTrain": "23:00"
+   },
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       -44.0283,
+       -19.9339
+      ],
+      [
+       -44.0083,
+       -19.937
+      ],
+      [
+       -43.9965,
+       -19.9378
+      ],
+      [
+       -43.9858,
+       -19.9348
+      ],
+      [
+       -43.972,
+       -19.9265
+      ],
+      [
+       -43.9575,
+       -19.9165
+      ],
+      [
+       -43.944,
+       -19.9128
+      ],
+      [
+       -43.9345,
+       -19.9175
+      ],
+      [
+       -43.9235,
+       -19.922
+      ],
+      [
+       -43.916,
+       -19.9127
+      ],
+      [
+       -43.912,
+       -19.904
+      ],
+      [
+       -43.91,
+       -19.8945
+      ],
+      [
+       -43.9217,
+       -19.8852
+      ],
+      [
+       -43.9255,
+       -19.8738
+      ],
+      [
+       -43.9278,
+       -19.8605
+      ],
+      [
+       -43.9335,
+       -19.848
+      ],
+      [
+       -43.9375,
+       -19.837
+      ],
+      [
+       -43.941,
+       -19.827
+      ],
+      [
+       -43.948,
+       -19.816
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Eldorado",
+    "lines": [
+     "L1"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -44.0283,
+     -19.9339
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Cidade Industrial",
+    "lines": [
+     "L1"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -44.0083,
+     -19.937
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Vila Oeste",
+    "lines": [
+     "L1"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -43.9965,
+     -19.9378
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Gameleira",
+    "lines": [
+     "L1"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -43.9858,
+     -19.9348
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Calafate",
+    "lines": [
+     "L1"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -43.972,
+     -19.9265
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Carlos Prates",
+    "lines": [
+     "L1"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -43.9575,
+     -19.9165
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Lagoinha",
+    "lines": [
+     "L1"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -43.944,
+     -19.9128
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Central",
+    "lines": [
+     "L1"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -43.9345,
+     -19.9175
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Santa Efigênia",
+    "lines": [
+     "L1"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -43.9235,
+     -19.922
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Santa Tereza",
+    "lines": [
+     "L1"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -43.916,
+     -19.9127
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Horto",
+    "lines": [
+     "L1"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -43.912,
+     -19.904
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Santa Inês",
+    "lines": [
+     "L1"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -43.91,
+     -19.8945
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "José Cândido da Silveira",
+    "lines": [
+     "L1"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -43.9217,
+     -19.8852
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Minas Shopping",
+    "lines": [
+     "L1"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -43.9255,
+     -19.8738
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "São Gabriel",
+    "lines": [
+     "L1"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -43.9278,
+     -19.8605
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Primeiro de Maio",
+    "lines": [
+     "L1"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -43.9335,
+     -19.848
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Waldomiro Lobo",
+    "lines": [
+     "L1"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -43.9375,
+     -19.837
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Floramar",
+    "lines": [
+     "L1"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -43.941,
+     -19.827
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Vilarinho",
+    "lines": [
+     "L1"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -43.948,
+     -19.816
+    ]
+   }
+  }
+ ]
+}

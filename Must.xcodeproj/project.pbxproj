@@ -35,6 +35,7 @@
 		486C94238E5229A67D788E4A /* seed-bh.json in Resources */ = {isa = PBXBuildFile; fileRef = 50B7B2806BAB98E03649662B /* seed-bh.json */; };
 		48AA788A7B981CC9E7AECA9D /* Values.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A1B075763A86D919443CA48 /* Values.swift */; };
 		494A874D8E4AEE61CFDA0A51 /* MustWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = DC4442205EBAF11DB237C5A7 /* MustWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		557573511C2BA71F587A0011 /* RouteGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81C441C4CF94405A51158D55 /* RouteGeometry.swift */; };
 		573A8C6B428AE9DF2820EFF2 /* InstrumentSerif-Italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 21F59305A744CEF4BA26807A /* InstrumentSerif-Italic.ttf */; };
 		57590FCCF8C0835A67C5F0ED /* Formatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4F154F0FA0C43621F70D409 /* Formatting.swift */; };
 		5C31CF333FD9EAD6D2801698 /* Router.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5621525C6CB7D37030B2A19B /* Router.swift */; };
@@ -53,17 +54,20 @@
 		6F927F37EE7B4783C5BCA0AE /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B265EE23EBB5953B8879351 /* HomeView.swift */; };
 		736ED6B65BFF4FC38AAA284F /* Glass.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF9EDF96B7E35C8B90CD7648 /* Glass.swift */; };
 		7991783AFD37AA9A273508C9 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 641406D94759EFD74130F34E /* Components.swift */; };
+		7BFE05D0B10A5B55DC6A8EC3 /* bh-lines.geojson in Resources */ = {isa = PBXBuildFile; fileRef = 91BE0666599C9AA1BFA54CBD /* bh-lines.geojson */; };
 		85FA09E7E2CE32161AD50AF8 /* ZenKakuGothicNew-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D4380F8F09B4251F1DECE96C /* ZenKakuGothicNew-Bold.ttf */; };
 		85FF5B41404618DAEC523F24 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 988D5ED4FA848499B21CF6FD /* SettingsView.swift */; };
 		87A771375F4DF10DBDDCB9C3 /* SavedPlacesImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CE017A72A1FB6FBBC0A7C46 /* SavedPlacesImporter.swift */; };
 		8E2C34166575E81B9180D841 /* BoardCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59C0F2D3F8FD625357FE147C /* BoardCodec.swift */; };
 		930C3451311B48537EBBE0BE /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 249BE4A213B5ED57BBC9CB4E /* README.md */; };
 		94774E26A0C6C57A165985A7 /* AddItemsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C738346CC8CF5261BCCCB131 /* AddItemsView.swift */; };
+		96E0913F9D72F3B10D1248D9 /* Transit.swift in Sources */ = {isa = PBXBuildFile; fileRef = B64501536181B0AE5A3EEEB6 /* Transit.swift */; };
 		97B9E5921A0F2C1BCB59BC0B /* MustIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C9781C95F5102BF62B994C /* MustIcon.swift */; };
 		9A77B2D4B575DE9C7D2E8DC4 /* ImportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ED7B13AFB24194D16FBE4EC /* ImportView.swift */; };
 		9BBA57388D9476677238D7DF /* PlaceRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3F38CC9A34BCE9763AB73ED /* PlaceRow.swift */; };
 		9CD2200A8546E3B5F71FEF4D /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4574509CFEC4FC14741A8455 /* Models.swift */; };
 		A653778BB8318C9B046608E9 /* MustsHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C42FCB610CD3F0DCA2D3DAF /* MustsHubView.swift */; };
+		A6E54DD819864C777D940C51 /* tokyo-lines.geojson in Resources */ = {isa = PBXBuildFile; fileRef = FE11D8C2ED0A877468648D71 /* tokyo-lines.geojson */; };
 		A86517F1E14EC151CADEB22C /* Blobs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01C978BEB3995473BF8B3039 /* Blobs.swift */; };
 		A8C5CE7DA792FB7AF07C8A9E /* Icons.swift in Sources */ = {isa = PBXBuildFile; fileRef = 510AFA185D11B399A89AD9EF /* Icons.swift */; };
 		A91E9EAB66133760DAF239C8 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F73465FDB27FA97ECEDBBB81 /* SwiftUI.framework */; };
@@ -86,6 +90,7 @@
 		D6C8A98A1AE102D60705D9F8 /* BoardCodecTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3847B720AFE775247C5B85A9 /* BoardCodecTests.swift */; };
 		D6CC08448AD770BB98B95B92 /* Archivo.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 80AB3193D4A8D68E8A7C7975 /* Archivo.ttf */; };
 		D8C83096663EABCDEB891BA3 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9278CE4A9CF30F816B6DC2F7 /* Assets.xcassets */; };
+		DD5E6D8A757E93CC8EC8EBD3 /* MapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE3E6D8F34B608E1137D706F /* MapView.swift */; };
 		E12912B2424A4D9E74CC51F7 /* Documents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4845D90197D61866104D474E /* Documents.swift */; };
 		E4041EB8347B9BC2BC29332E /* RegionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7FBEB4202ADD7DA375DEE4B /* RegionStore.swift */; };
 		E87174357FA887F8991F2A23 /* Services.swift in Sources */ = {isa = PBXBuildFile; fileRef = 285FD848392F6AFEB450AFE3 /* Services.swift */; };
@@ -166,12 +171,14 @@
 		7F254E195A33BA760DE16C3A /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		80374DD7C366832956DAD9EC /* FlowLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowLayout.swift; sourceTree = "<group>"; };
 		80AB3193D4A8D68E8A7C7975 /* Archivo.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Archivo.ttf; sourceTree = "<group>"; };
+		81C441C4CF94405A51158D55 /* RouteGeometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteGeometry.swift; sourceTree = "<group>"; };
 		857547316EC7074891DD51AD /* Colors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Colors.swift; sourceTree = "<group>"; };
 		873F50CBBAED2C9EB558BCDD /* RegexIntentParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegexIntentParser.swift; sourceTree = "<group>"; };
 		87D1D2A66B5AA23C5106223F /* Must.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Must.entitlements; sourceTree = "<group>"; };
 		888774E525344E91000A78D6 /* SolverTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolverTypes.swift; sourceTree = "<group>"; };
 		8CC9FD34E64012CFB56E93D7 /* NotesRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesRules.swift; sourceTree = "<group>"; };
 		8EC31260FFD7C170271ED2A1 /* PlaceExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceExtractor.swift; sourceTree = "<group>"; };
+		91BE0666599C9AA1BFA54CBD /* bh-lines.geojson */ = {isa = PBXFileReference; path = "bh-lines.geojson"; sourceTree = "<group>"; };
 		9249901293C5FA229AFF4AC2 /* seed-jp.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "seed-jp.json"; sourceTree = "<group>"; };
 		9278CE4A9CF30F816B6DC2F7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		9402F5580C133734764AAAE2 /* MontarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MontarView.swift; sourceTree = "<group>"; };
@@ -180,10 +187,12 @@
 		A3F38CC9A34BCE9763AB73ED /* PlaceRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceRow.swift; sourceTree = "<group>"; };
 		A53EF3E304761D067B014383 /* ProposalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProposalView.swift; sourceTree = "<group>"; };
 		A7FBEB4202ADD7DA375DEE4B /* RegionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegionStore.swift; sourceTree = "<group>"; };
+		B64501536181B0AE5A3EEEB6 /* Transit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Transit.swift; sourceTree = "<group>"; };
 		B689C01B709B42BEFAE7CE9C /* DaySolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DaySolver.swift; sourceTree = "<group>"; };
 		B74D63E1FC2830947EF080AD /* ExpenseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExpenseView.swift; sourceTree = "<group>"; };
 		B835205B427F746058E51145 /* MustTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = MustTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		BA84783523E1CAF2DB54207B /* NewListFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewListFlow.swift; sourceTree = "<group>"; };
+		BE3E6D8F34B608E1137D706F /* MapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapView.swift; sourceTree = "<group>"; };
 		BF9EDF96B7E35C8B90CD7648 /* Glass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Glass.swift; sourceTree = "<group>"; };
 		C3179781E81E77B5D303D63F /* CaptionFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptionFetcher.swift; sourceTree = "<group>"; };
 		C738346CC8CF5261BCCCB131 /* AddItemsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddItemsView.swift; sourceTree = "<group>"; };
@@ -205,6 +214,7 @@
 		F4F154F0FA0C43621F70D409 /* Formatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Formatting.swift; sourceTree = "<group>"; };
 		F6C9781C95F5102BF62B994C /* MustIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MustIcon.swift; sourceTree = "<group>"; };
 		F73465FDB27FA97ECEDBBB81 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		FE11D8C2ED0A877468648D71 /* tokyo-lines.geojson */ = {isa = PBXFileReference; path = "tokyo-lines.geojson"; sourceTree = "<group>"; };
 		FED236518F13E68EAEBCC987 /* MustApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MustApp.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -245,6 +255,14 @@
 			path = Fonts;
 			sourceTree = "<group>";
 		};
+		09F500CD5EA3D252AE1778C1 /* Map */ = {
+			isa = PBXGroup;
+			children = (
+				BE3E6D8F34B608E1137D706F /* MapView.swift */,
+			);
+			path = Map;
+			sourceTree = "<group>";
+		};
 		0CD9247D19FAAB8F52DC596B /* List */ = {
 			isa = PBXGroup;
 			children = (
@@ -261,6 +279,7 @@
 				7BC23CD2D9B7A3D345E2FA14 /* LocationService.swift */,
 				23249DD22EE3CC5D75564551 /* Log.swift */,
 				DE208BD7EAA8E7F3FAC1E77B /* MapsLinks.swift */,
+				81C441C4CF94405A51158D55 /* RouteGeometry.swift */,
 				6221CDECA41AE4E770C02080 /* Secrets.swift */,
 				285FD848392F6AFEB450AFE3 /* Services.swift */,
 			);
@@ -392,6 +411,7 @@
 		875E9015748B425E59A425C0 /* Data */ = {
 			isa = PBXGroup;
 			children = (
+				BF45C954D5F589601C688B3D /* transit */,
 				7D95D7682A4AE8EC7C64CFBE /* Board.swift */,
 				59C0F2D3F8FD625357FE147C /* BoardCodec.swift */,
 				444EAB9A96A0EA348EFC1987 /* DevOverrides.swift */,
@@ -399,6 +419,7 @@
 				F4F154F0FA0C43621F70D409 /* Formatting.swift */,
 				DA6E59F40F1B2D3D5518007E /* Region.swift */,
 				A7FBEB4202ADD7DA375DEE4B /* RegionStore.swift */,
+				B64501536181B0AE5A3EEEB6 /* Transit.swift */,
 			);
 			path = Data;
 			sourceTree = "<group>";
@@ -422,6 +443,7 @@
 				36EB3C74DB146DDD30F48968 /* Home */,
 				AF89EF84CE5A81BC463701F2 /* Import */,
 				0CD9247D19FAAB8F52DC596B /* List */,
+				09F500CD5EA3D252AE1778C1 /* Map */,
 				420EF28B6F2A4788DA77A29A /* Musts */,
 				821FC3EE942A4638F469DBD3 /* NewList */,
 				B796295EF3113E3572446502 /* Place */,
@@ -457,6 +479,15 @@
 				5A1B075763A86D919443CA48 /* Values.swift */,
 			);
 			path = Models;
+			sourceTree = "<group>";
+		};
+		BF45C954D5F589601C688B3D /* transit */ = {
+			isa = PBXGroup;
+			children = (
+				91BE0666599C9AA1BFA54CBD /* bh-lines.geojson */,
+				FE11D8C2ED0A877468648D71 /* tokyo-lines.geojson */,
+			);
+			path = transit;
 			sourceTree = "<group>";
 		};
 		C1481F368CBA77F5F1961CEE /* Settings */ = {
@@ -682,8 +713,10 @@
 				0420DD8F9172BEA3EA7E9237 /* README.md in Resources */,
 				1997D8E9BAE575BD34F4F001 /* ZenKakuGothicNew-Bold.ttf in Resources */,
 				143F8A8613A4C8CB8860CD11 /* ZenKakuGothicNew-Medium.ttf in Resources */,
+				7BFE05D0B10A5B55DC6A8EC3 /* bh-lines.geojson in Resources */,
 				B552F06B9A8678A705988367 /* seed-bh.json in Resources */,
 				1C8D335D6A42CFAC51C70BB8 /* seed-jp.json in Resources */,
+				A6E54DD819864C777D940C51 /* tokyo-lines.geojson in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -764,6 +797,7 @@
 				5E280721697733309D36E7A5 /* ListView.swift in Sources */,
 				C746B3886460D56AD5A787F8 /* LocationService.swift in Sources */,
 				EC5C18C548CABCD692B91098 /* Log.swift in Sources */,
+				DD5E6D8A757E93CC8EC8EBD3 /* MapView.swift in Sources */,
 				12EA9BA58876503AD27F40B9 /* MapsLinks.swift in Sources */,
 				9CD2200A8546E3B5F71FEF4D /* Models.swift in Sources */,
 				136519D4039985EED25D5766 /* MontarView.swift in Sources */,
@@ -783,6 +817,7 @@
 				34D24804DAFF68EE0520CCB8 /* RegionSheet.swift in Sources */,
 				E4041EB8347B9BC2BC29332E /* RegionStore.swift in Sources */,
 				67BEEE9773A82874943B84D4 /* RootView.swift in Sources */,
+				557573511C2BA71F587A0011 /* RouteGeometry.swift in Sources */,
 				5C31CF333FD9EAD6D2801698 /* Router.swift in Sources */,
 				87A771375F4DF10DBDDCB9C3 /* SavedPlacesImporter.swift in Sources */,
 				0FCBAB9B8E90602EF05DEEA6 /* Secrets.swift in Sources */,
@@ -790,6 +825,7 @@
 				85FF5B41404618DAEC523F24 /* SettingsView.swift in Sources */,
 				037A42A0D37EEDD3EEA3C0A0 /* SolverTypes.swift in Sources */,
 				CA7378B09FACBE946E187D68 /* TodayView.swift in Sources */,
+				96E0913F9D72F3B10D1248D9 /* Transit.swift in Sources */,
 				22D230B4C5811B7A165D26B1 /* Typography.swift in Sources */,
 				48AA788A7B981CC9E7AECA9D /* Values.swift in Sources */,
 			);

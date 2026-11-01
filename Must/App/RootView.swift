@@ -48,7 +48,7 @@ struct RootView: View {
         switch tab {
         case .inicio: HomeView()
         case .hoje: TodayView()
-        case .mapa: MapPlaceholder()
+        case .mapa: MapView()
         case .musts: MustsHubView()
         }
     }
@@ -60,14 +60,6 @@ struct TabBarSpacer: View {
 }
 
 // MARK: - Placeholders (prompts 05, 06, 08)
-
-struct MapPlaceholder: View {
-    @Environment(AppRouter.self) private var router
-    var body: some View {
-        PlaceholderScreen(title: "Mapa", subtitle: router.mapShowsOpenNow ? "abertos agora perto de você" : "o roteiro no mapa",
-                          note: "O mapa customizado chega no prompt 06.", icon: .mapa)
-    }
-}
 
 struct AssistantPlaceholder: View {
     @Environment(\.dismiss) private var dismiss
