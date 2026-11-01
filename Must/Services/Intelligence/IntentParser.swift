@@ -25,9 +25,9 @@ enum OnDeviceAI {
 struct GeneratedDayIntent {
     @Guide(description: "Tipo de dia pedido, ou none", .anyOf(["none", "free", "shopping", "night", "photo", "temples", "rest"]))
     var kind: String
-    @Guide(description: "Listas que o usuário quer incluir (eat, drink, see, listen, shop)")
+    @Guide(description: "Listas que o usuário quer incluir (eat, drink, see, listen, shop, photo, sport)")
     var turnOn: [String]
-    @Guide(description: "Listas que o usuário quer tirar (eat, drink, see, listen, shop)")
+    @Guide(description: "Listas que o usuário quer tirar (eat, drink, see, listen, shop, photo, sport)")
     var turnOff: [String]
     @Guide(description: "Orçamento do dia em número, ou 0 se não falou")
     var budget: Int

@@ -1,6 +1,6 @@
 # QA do Must — Belo Horizonte, antes de usar de verdade
 
-Legenda: **[x] auto** = coberto por teste automático (`MustTests`, 139 testes) · **[x] sim** = visto no simulador
+Legenda: **[x] auto** = coberto por teste automático (`MustTests`, 140 testes) · **[x] sim** = visto no simulador
 (prints em `scripts/qa-screens.sh`) · **[ ] iPhone** = precisa do aparelho/GPS real · **[!]** = bloqueado (motivo ao lado).
 
 Rodar tudo que é automático:
@@ -118,6 +118,8 @@ xcodebuild -project Must.xcodeproj -scheme Must -destination 'platform=iOS Simul
   real de hoje (chuva 40% de manhã, sensação 30° ao meio-dia) não há janela verde — a tela diz isso.
 - [x] sim — hub com 8 tiles de 118 pt (photo "golden hoje 15:50", art "1 termina esta semana", sport "corrida 1",
   see teal de templos/mirantes).
+- [x] auto — "quero correr cedo" liga sport, "sem corrida" desliga, "pegar o golden" liga photo (`KindIntentTests`).
+  O assistente filtra por photo/sport e vê golden de hoje, "termina em N dias"/preço/sessão e "evitar agora (quente · 31°)".
 - [ ] iPhone — "Começar" abre o Strava (`strava://record`) se estiver instalado; senão a rota a pé.
 - Nota — as exposições dos seeds (Moriyama no TOP Museum, mostras de BH) são exemplos do design: conferir as agendas.
 

@@ -9,7 +9,8 @@ struct GeneratedPlace {
     var nameLocal: String
     @Guide(description: "Bairro se aparecer, ou vazio")
     var area: String
-    @Guide(description: "Categoria", .anyOf(["eat", "drink", "coffee", "see", "temple", "listen", "shop", "night", "none"]))
+    @Guide(description: "Categoria (photo = spot de foto/mirante de rua, art = exposição/galeria/show, sport = corrida/trilha/jogo)",
+           .anyOf(["eat", "drink", "coffee", "see", "temple", "listen", "shop", "night", "photo", "art", "sport", "none"]))
     var category: String
     @Guide(description: "Frase curta do porquê/o que a legenda diz (até 8 palavras)")
     var hint: String
@@ -115,7 +116,8 @@ enum CloudBoost {
                         "name": ["type": "string"],
                         "nameLocal": ["type": "string"],
                         "area": ["type": "string"],
-                        "category": ["type": "string", "enum": ["eat", "drink", "coffee", "see", "temple", "listen", "shop", "night", "none"]],
+                        "category": ["type": "string", "enum": ["eat", "drink", "coffee", "see", "temple", "listen", "shop", "night",
+                                                                "photo", "art", "sport", "none"]],
                         "hint": ["type": "string"],
                     ],
                 ],

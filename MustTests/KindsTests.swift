@@ -220,3 +220,12 @@ struct EventExtractorTests {
         #expect(EventExtractor.runsUntil(in: "〜12月7日まで", timeZone: Self.tokyo, now: Self.now).map { BoardDates(timeZone: .gmt).dayString($0) } == "2026-12-07")
     }
 }
+
+struct KindIntentTests {
+    @Test func runAndPhotoWordsTurnRolesOn() {
+        #expect(RegexIntentParser.parse("quero correr cedo e depois café").roles[.sport] == .on)
+        #expect(RegexIntentParser.parse("sem corrida hoje").roles[.sport] == .off)
+        let photo = RegexIntentParser.parse("dia de fotografia, pegar o golden")
+        #expect(photo.kind == .photo && photo.roles[.photo] == .on)
+    }
+}

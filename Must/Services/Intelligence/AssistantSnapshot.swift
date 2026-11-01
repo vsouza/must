@@ -114,6 +114,40 @@ struct AssistantAction: Sendable, Hashable, Identifiable {
 
 /// Respostas determinísticas sobre o retrato (as ferramentas e o modo sem modelo usam as mesmas).
 enum AssistantEngine {
+    /// O que o assistente precisa saber dos tipos novos: "golden 15:56", "termina em 4 dias · ¥1.400",
+    /// "bom agora · 23°" / "quente · 31°" (pra não sugerir corrida no sol do meio-dia).
+    static func kindNote(_ p: SolverPlace, _ s: AssistantSnapshot) -> String? {
+        let r = s.region
+        switch p.kind {
+        case .photo:
+            let sun = SunService.day(s.now, CLLocationCoordinate2D(latitude: p.lat, longitude: p.lng), timeZone: r.timeZone)
+            guard let g = sun.goldenPM else { return nil }
+            let light = p.extra?.photo?.bestLight.map(\.label).joined(separator: "/") ?? ""
+            return (s.now <= g.end ? "golden hoje \(r.timeString(g.start))–\(r.timeString(g.end))" : "golden já passou hoje")
+                + (light.isEmpty ? "" : " · melhor: \(light)")
+        case .art:
+            guard let art = p.extra?.art else { return nil }
+            var parts: [String] = []
+            if let left = art.daysLeft(from: s.now, calendar: r.calendar) { parts.append(left < 0 ? "temporada acabou" : DaySolver.endsText(left)) }
+            if let price = art.priceAdult { parts.append(price == 0 ? "grátis" : r.money(price)) }
+            if let next = art.sessions.filter({ $0.at > s.now && !$0.soldOut }).min(by: { $0.at < $1.at }) {
+                parts.append("sessão \(r.shortDayTime(next.at)) \(next.title)\(next.bought ? " (ingresso comprado)" : "")")
+            }
+            return parts.isEmpty ? nil : parts.joined(separator: " · ")
+        case .sport:
+            guard let spot = p.extra?.sport, spot.activity != .watch, let h = s.weatherToday?.hour(at: s.now) else { return nil }
+            if SportScore.isGood(h, spot: spot) {
+                let until = SportScore.goodUntil(s.weatherToday?.hours ?? [], from: s.now, spot: spot)
+                return "bom agora · \(Int(h.temp.rounded()))°" + (until.map { " até \(r.timeString($0))" } ?? "")
+            }
+            let why = DaySolver.sportRejection(spot, at: s.now, hourly: s.weatherToday?.hours ?? []) ?? "fora da janela boa"
+            let next = SportScore.nextGood(s.weatherToday?.hours ?? [], after: s.now, spot: spot).map { " · melhor às \(r.timeString($0))" } ?? ""
+            return "evitar agora (\(why))\(next)"
+        case .place:
+            return nil
+        }
+    }
+
     static func distanceKm(_ a: CLLocationCoordinate2D, _ b: CLLocationCoordinate2D) -> Double {
         CLLocation(latitude: a.latitude, longitude: a.longitude).distance(from: CLLocation(latitude: b.latitude, longitude: b.longitude)) / 1000
     }

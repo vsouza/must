@@ -56,8 +56,30 @@ shot jp-reservas -debugScreen reservas
 shot jp-mapa -debugScreen mapa
 WAIT=10 shot jp-assistente -debugScreen assistente -debugAsk "tô cansado, troca o bar de hoje por algo perto do jantar e me diz quanto já fui"
 
+echo "→ Japão · photo/art (prompt 13) · Yanaka 15 nov 15:20, nuvens 20%"
+${=W} dev.simDate -float $(epoch 2026-11-15T15:20:00+09:00)
+${=W} dev.simLat -float 35.7270; ${=W} dev.simLng -float 139.7700
+${=W} dev.simCloud -int 20
+shot jp-foto -debugScreen lugar:j18
+shot jp-foto-painel -debugScreen painel:j18
+shot jp-luz -debugScreen luz
+${=W} dev.simCloud -int 80
+shot jp-foto-nublado -debugScreen painel:j18
+${=W} dev.simCloud -int -1
+${=W} dev.simDate -float $(epoch 2026-11-26T11:00:00+09:00)
+shot jp-arte -debugScreen lugar:j20
+shot jp-arte-painel -debugScreen painel:j20
+shot jp-musts -debugScreen musts
+
+echo "→ BH · sport · Pampulha dom 1 nov 07:40"
+${=W} region bh
+${=W} dev.simDate -float $(epoch 2026-11-01T07:40:00-03:00)
+${=W} dev.simLat -float -19.8517; ${=W} dev.simLng -float -43.9733
+shot bh-esporte -debugScreen lugar:p28
+shot bh-esporte-painel -debugScreen painel:p28
+
 echo "→ limpando simulações"
-for k in dev.simDateOn dev.simDate dev.simSetAt dev.simGPSOn dev.simLat dev.simLng skipOnboarding; do
+for k in dev.simDateOn dev.simDate dev.simSetAt dev.simGPSOn dev.simLat dev.simLng dev.simCloud skipOnboarding; do
   xcrun simctl spawn "$UDID" defaults delete dev.viniso.must $k 2>/dev/null || true
 done
 ${=W} region bh

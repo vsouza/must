@@ -31,6 +31,8 @@ enum RegexIntentParser {
             (.see, ["museu", "arte", "templo", "mirante", "exposic", "galeria", "igreja"]),
             (.listen, ["musica", "jazz", "show", "listening", "ao vivo", "vinil"]),
             (.shop, ["compra", "loja", "feira", "camera", "disco"]),
+            (.photo, ["fotografar", "spot de foto", "golden", "por do sol"]),
+            (.sport, ["correr", "corrida", "pedalar", "trilha", "treino", "nadar"]),
         ]
         for (role, words) in roleWords {
             for word in words {

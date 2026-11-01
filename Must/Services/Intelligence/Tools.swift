@@ -26,7 +26,7 @@ struct SearchBoardTool: Tool {
     struct Arguments {
         @Guide(description: "Texto de busca: nome, bairro, prato (ex.: ramen, Shibuya). Vazio = todos.")
         var query: String
-        @Guide(description: "Papel opcional", .anyOf(["any", "eat", "drink", "see", "listen", "shop"]))
+        @Guide(description: "Papel opcional (photo = spot de foto, sport = corrida/trilha/jogo)", .anyOf(["any", "eat", "drink", "see", "listen", "shop", "photo", "sport"]))
         var role: String
         @Guide(description: "Só abertos agora?")
         var openNow: Bool
@@ -39,6 +39,7 @@ struct SearchBoardTool: Tool {
         guard !found.isEmpty else { return "Nada no board com isso." }
         return found.prefix(8).map { p in
             "\(p.name) [id \(p.id)] · \(snapshot.listName(p))\(p.sub.map { " · \($0)" } ?? "") · \(p.area ?? "") · \(snapshot.region.money(p.cost))"
+                + (AssistantEngine.kindNote(p, snapshot).map { " · \($0)" } ?? "")
         }.joined(separator: "\n")
     }
 }
@@ -53,7 +54,7 @@ struct OpenNowTool: Tool {
     struct Arguments {
         @Guide(description: "Raio em km (padrão 1.5)", .range(0.3...10))
         var radiusKm: Double
-        @Guide(description: "Papel opcional", .anyOf(["any", "eat", "drink", "see", "listen", "shop"]))
+        @Guide(description: "Papel opcional (photo = spot de foto, sport = corrida/trilha/jogo)", .anyOf(["any", "eat", "drink", "see", "listen", "shop", "photo", "sport"]))
         var role: String
     }
 
@@ -64,7 +65,9 @@ struct OpenNowTool: Tool {
         }
         guard !places.isEmpty else { return "Nenhum must num raio de \(arguments.radiusKm) km de \(snapshot.areaName)." }
         let header = confirmed ? "Abertos agora perto de \(snapshot.areaName):" : "Perto de \(snapshot.areaName) (sem horário confirmado):"
-        return header + "\n" + places.prefix(6).map { "\($0.name) · \($0.area ?? "") · \(snapshot.listName($0))" }.joined(separator: "\n")
+        return header + "\n" + places.prefix(6).map { p in
+            "\(p.name) · \(p.area ?? "") · \(snapshot.listName(p))" + (AssistantEngine.kindNote(p, snapshot).map { " · \($0)" } ?? "")
+        }.joined(separator: "\n")
     }
 }
 
