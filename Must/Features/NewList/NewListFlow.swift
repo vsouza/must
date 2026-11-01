@@ -23,6 +23,7 @@ struct NewListView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
     @Environment(RegionStore.self) private var store
+    @Environment(Services.self) private var services
     @Query(sort: \MustList.order) private var lists: [MustList]
     @Query private var trips: [TripInfo]
 
@@ -32,6 +33,9 @@ struct NewListView: View {
     @State private var color: MustColor = .coffee
     @State private var showIcons = false
     @State private var createdId: String?
+    @State private var photos: [FlickrPhoto] = []
+    @State private var selectedPhoto: FlickrPhoto?
+    @State private var photoNote: String?
     /// Modelo fora do contexto só pra prévia.
     @State private var preview = MustList(id: "preview", name: "", icon: .cafe, color: .coffee)
 
@@ -56,7 +60,11 @@ struct NewListView: View {
                     .padding(.top, 16)
 
                     ListTile(list: preview, height: 170, previewCount: 0,
-                             previewSubtitle: "\(cityName) · prévia")
+                             previewSubtitle: "\(cityName) · prévia",
+                             photoURL: selectedPhoto.flatMap { URL(string: $0.largeURL ?? $0.url) })
+                        .overlay(alignment: .bottomTrailing) {
+                            if let selectedPhoto { Credit(selectedPhoto.credit, color: color.text).padding(10) }
+                        }
                         .shadow(color: Color(hex: 0x121316, opacity: 0.14), radius: 25, x: 0, y: 20)
                         .rotationEffect(.degrees(-1.2))
                         .padding(.top, 22)
@@ -92,6 +100,7 @@ struct NewListView: View {
         .onChange(of: icon) { _, v in preview.icon = v }
         .onChange(of: color) { _, v in preview.color = v }
         .onAppear { preview.name = name.isEmpty ? "…" : name }
+        .task(id: "\(name)|\(cityName)") { await loadPhotos() }
     }
 
     private var nameSection: some View {
@@ -178,20 +187,48 @@ struct NewListView: View {
                 Spacer()
                 Text("busca “\(name.isEmpty ? "…" : name) \(cityName.lowercased())”").mustMeta().lineLimit(1)
             }
-            HStack(spacing: 10) {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(color.gradient)
-                    .frame(width: 72, height: 56)
-                    .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.must.ink, lineWidth: 2))
-                    .overlay(Text("sem foto").font(.must.mono(9)).foregroundStyle(color.text))
-                ForEach(0..<3, id: \.self) { _ in
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(Color.must.surface)
-                        .frame(width: 72, height: 56)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    Button { selectedPhoto = nil } label: {
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(color.gradient)
+                            .frame(width: 84, height: 64)
+                            .overlay(Text("sem foto").font(.must.mono(9)).foregroundStyle(color.text))
+                            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.must.ink, lineWidth: selectedPhoto == nil ? 2 : 0))
+                    }
+                    ForEach(photos.prefix(4)) { photo in
+                        Button { selectedPhoto = photo } label: {
+                            TintedPhoto(url: URL(string: photo.url), color: color, tintOpacity: 0.35)
+                                .frame(width: 84, height: 64)
+                                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.must.ink, lineWidth: selectedPhoto == photo ? 2 : 0))
+                        }
+                        .accessibilityLabel("Foto de \(photo.owner)")
+                    }
+                    if photos.isEmpty {
+                        ForEach(0..<3, id: \.self) { _ in
+                            RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color.must.surface).frame(width: 84, height: 64)
+                        }
+                    }
                 }
+                .buttonStyle(MustPressStyle())
             }
-            Text("Só fotos com licença CC · crédito fica no card · as sugestões do Flickr chegam quando a chave estiver no Secrets.plist.")
-                .mustMeta()
+            Text(photoNote ?? "Só fotos com licença CC · crédito fica no card · ou sem foto, só a cor.").mustMeta()
+        }
+    }
+
+    private func loadPhotos() async {
+        let query = name.trimmingCharacters(in: .whitespaces)
+        guard !query.isEmpty else { photos = []; return }
+        guard services.flickr.isConfigured else { photoNote = "Fotos do Flickr aparecem quando a FLICKR_KEY estiver no Secrets.plist."; return }
+        try? await Task.sleep(for: .milliseconds(600)) // espera parar de digitar
+        guard !Task.isCancelled else { return }
+        do {
+            photos = try await services.flickr.search(text: "\(query) \(cityName)")
+            photoNote = photos.isEmpty ? "Nada com licença CC pra essa busca — fica só a cor." : nil
+            if let selectedPhoto, !photos.contains(selectedPhoto) { self.selectedPhoto = nil }
+        } catch {
+            photoNote = "Sem fotos agora: \(error.localizedDescription)"
         }
     }
 
@@ -203,10 +240,11 @@ struct NewListView: View {
             list.kanji = kanji.isEmpty ? nil : kanji
             list.icon = icon
             list.color = color
+            list.photo = selectedPhoto?.listPhoto
         } else {
             let id = Self.uniqueId(for: trimmed, existing: Set(lists.map(\.id)))
             let list = MustList(id: id, name: trimmed, kanji: kanji.isEmpty ? nil : kanji, icon: icon, color: color,
-                                order: (lists.map(\.order).max() ?? -1) + 1)
+                                photo: selectedPhoto?.listPhoto, order: (lists.map(\.order).max() ?? -1) + 1)
             context.insert(list)
             createdId = id
             Log.data.info("nova lista \(id, privacy: .public)")

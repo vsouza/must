@@ -44,6 +44,9 @@ final class DayPlanner {
 
     // MARK: Pedido
 
+    /// Previsão do dia (do `SyncCoordinator`), usada no subtítulo e na regra de tempo do solver.
+    var weather: DayWeather?
+
     func request(trip: TripInfo?, settings: Settings?, location: CLLocation?) -> DayRequest {
         let cal = region.calendar
         let city = trip?.city(on: date, calendar: cal)
@@ -57,7 +60,7 @@ final class DayPlanner {
         return DayRequest(date: date, timeZone: region.timeZone, kind: kind, budget: budget, walk: walk, lists: lists,
                           intent: intent, startAt: startAt, origin: origin, cityId: city?.id ?? region.rawValue,
                           daysLeftInCity: city.flatMap { trip?.daysLeft(in: $0, after: date, calendar: cal) },
-                          weather: nil, walkMaxKm: settings?.walkMaxKm ?? 1.5,
+                          weather: weather, walkMaxKm: settings?.walkMaxKm ?? 1.5,
                           oneMealPerWindow: settings?.oneMealPerWindow ?? true, seed: seed)
     }
 

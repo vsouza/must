@@ -12,6 +12,9 @@ struct PlaceView: View {
     @Environment(Services.self) private var services
     @Query private var matches: [Place]
     @Query private var trips: [TripInfo]
+    @Query private var settingsList: [Settings]
+
+    @State private var heroPhoto: FlickrPhoto?
 
 
     init(placeId: String) {
@@ -53,11 +56,38 @@ struct PlaceView: View {
         }
         .background(Color.must.bg.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
+        .onAppear { services.sync.refreshIfStale(place, region: region) }
+        .task(id: place.id) { await loadHero(place) }
+    }
+
+    /// Foto do Flickr perto do lugar (300 m), senão do bairro.
+    private func loadHero(_ place: Place) async {
+        let flickr = services.flickr
+        guard flickr.isConfigured, settingsList.first?.flickrPhotos ?? true, heroPhoto == nil else { return }
+        do {
+            var photos = try await flickr.search(near: place.coordinate, radiusKm: 0.3)
+            if photos.isEmpty, let area = place.area {
+                let city = trips.first?.city(id: place.cityId)?.name ?? region.displayName
+                photos = try await flickr.search(text: "\(area) \(city)")
+            }
+            heroPhoto = photos.first
+        } catch {
+            Log.network.error("hero \(place.id, privacy: .public): \(error.localizedDescription, privacy: .public)")
+        }
     }
 
     // MARK: Hero
 
-    private func photoURL(_ place: Place) -> URL? { place.list?.photo?.url.flatMap(URL.init(string:)) }
+    private func photoURL(_ place: Place) -> URL? {
+        if let heroPhoto { return URL(string: heroPhoto.largeURL ?? heroPhoto.url) }
+        return place.list?.photo?.url.flatMap(URL.init(string:))
+    }
+
+    private func credit(_ place: Place) -> (text: String, url: URL?)? {
+        if let heroPhoto { return (heroPhoto.credit, heroPhoto.pageURL) }
+        guard let photo = place.list?.photo, let text = photo.credit else { return nil }
+        return (text, photo.page.flatMap(URL.init(string:)))
+    }
 
     private func hero(_ place: Place, color: MustColor) -> some View {
         ZStack(alignment: .topLeading) {
@@ -90,8 +120,8 @@ struct PlaceView: View {
             .padding(.horizontal, 22)
             .padding(.top, 62)
 
-            if photoURL(place) != nil, let credit = place.list?.photo?.credit {
-                Credit(credit, color: color.text)
+            if photoURL(place) != nil, let credit = credit(place) {
+                Credit(credit.text, color: color.text, url: credit.url)
                     .padding(.trailing, 22)
                     .frame(maxWidth: .infinity, alignment: .trailing)
                     .padding(.top, 182)

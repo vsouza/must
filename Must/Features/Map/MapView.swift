@@ -315,9 +315,10 @@ struct MapView: View {
         }
         if let current = services.location.current {
             let leg = DaySolver.leg(current.coordinate, place.coordinate, walkMax: walkMaxKm)
-            pieces.append(Text(leg.mode == .walk ? "\(leg.minutes) min a pé" : "metrô ~\(leg.minutes) min"))
-            if let at, let time = region.calendar.date(byAdding: .minute, value: -(leg.minutes + 5), to: at), time > now {
-                leave = region.timeString(time)
+            let minutes = services.eta.minutes(from: current.coordinate, to: place.coordinate, transit: leg.mode == .metro) ?? leg.minutes
+            pieces.append(Text(leg.mode == .walk ? "\(minutes) min a pé" : "metrô ~\(minutes) min"))
+            if let at, RoutesService.leaveAt(at, travelMinutes: minutes) > now {
+                leave = region.timeString(RoutesService.leaveAt(at, travelMinutes: minutes))
             }
         }
         if case .closed(.none, let opensAt?) = place.openState(at: now, timeZone: region.timeZone),

@@ -383,6 +383,8 @@ struct AddLinkView: View {
                                   savedAt: today)
             place.notes = e.hint == "link do Maps" ? "" : "Achado \(e.hint)."
             context.insert(place)
+            // (d) Places Text Search perto da cidade: placeId, coordenada exata e horário, em segundo plano.
+            services.sync.resolveNew(place, candidate: nil, region: region, context: context)
             Log.data.info("link → \(place.id, privacy: .public) \(source.rawValue, privacy: .public)")
         }
         try? context.save()

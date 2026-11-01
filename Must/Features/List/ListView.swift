@@ -100,7 +100,7 @@ struct ListView: View {
             }
             .overlay(alignment: .bottomTrailing) {
                 if photoURL != nil, let credit = list?.photo?.credit {
-                    Credit(credit, color: color.text).offset(y: 30)
+                    Credit(credit, color: color.text, url: list?.photo?.page.flatMap(URL.init(string:))).offset(y: 30)
                 }
             }
 

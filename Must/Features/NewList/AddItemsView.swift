@@ -1,3 +1,4 @@
+import CoreLocation
 import SwiftData
 import SwiftUI
 import UniformTypeIdentifiers
@@ -26,6 +27,9 @@ struct AddItemsView: View {
     @State private var showManual = false
     @State private var showLink = false
     @State private var importNote: String?
+    @State private var candidates: [PlaceCandidate] = []
+    @State private var selectedCandidates: Set<String> = []
+    @State private var placesNote: String?
 
     private enum SourceFilter: Hashable { case places, board, city(String), saved }
 
@@ -53,7 +57,7 @@ struct AddItemsView: View {
         return saved.filter { q.isEmpty || $0.name.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: nil).contains(q) }
     }
 
-    private var selectionCount: Int { selectedBoard.count + selectedSaved.count }
+    private var selectionCount: Int { selectedBoard.count + selectedSaved.count + selectedCandidates.count }
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -76,6 +80,7 @@ struct AddItemsView: View {
             bottomBar
         }
         .background(Color.must.bg.ignoresSafeArea())
+        .task(id: "\(query)|\(source == .places)") { await searchPlaces() }
         .sheet(isPresented: $showManual) {
             EditPlaceView(newInListId: listId, prefillName: query.isEmpty ? nil : query)
         }
@@ -183,9 +188,19 @@ struct AddItemsView: View {
         VStack(spacing: 0) {
             switch source {
             case .places:
-                Text("A busca no Google Places entra com a chave do Secrets.plist (prompt 07). Por enquanto: do board, salvos no Maps, à mão ou por link.")
-                    .mustMeta()
-                    .padding(.vertical, 18)
+                if let placesNote {
+                    Text(placesNote).mustMeta().padding(.vertical, 18)
+                }
+                ForEach(Array(candidates.enumerated()), id: \.element.id) { i, c in
+                    if i > 0 { RowDivider() }
+                    let already = places.first { $0.placeId == c.id }
+                    checkRow(selected: selectedCandidates.contains(c.id), title: c.name, local: nil,
+                             meta: [c.address, already.map { "já está no board · \($0.list?.displayName ?? "")" }].compactMap { $0 }.joined(separator: " · "),
+                             badge: "Places") {
+                        if already == nil { toggle(&selectedCandidates, c.id) }
+                    }
+                    .opacity(already == nil ? 1 : 0.5)
+                }
             case .board, .city:
                 ForEach(Array(boardResults.enumerated()), id: \.element.id) { i, place in
                     if i > 0 { RowDivider() }
@@ -308,6 +323,23 @@ struct AddItemsView: View {
         if set.contains(id) { set.remove(id) } else { set.insert(id) }
     }
 
+    private func searchPlaces() async {
+        guard source == .places else { return }
+        let q = query.trimmingCharacters(in: .whitespaces)
+        guard services.places.isConfigured else { placesNote = "A busca no Google Places precisa da GOOGLE_PLACES_KEY no Secrets.plist."; return }
+        guard !q.isEmpty else { candidates = []; placesNote = "Digite o nome ou o tipo (ex.: kissaten) pra buscar em \(currentCity?.name ?? region.displayName)."; return }
+        try? await Task.sleep(for: .milliseconds(500))
+        guard !Task.isCancelled else { return }
+        let center = CLLocationCoordinate2D(latitude: currentCity?.lat ?? region.defaultCenter.latitude,
+                                            longitude: currentCity?.lng ?? region.defaultCenter.longitude)
+        do {
+            candidates = try await services.sync.search("\(q) \(currentCity?.name ?? "")", near: center)
+            placesNote = candidates.isEmpty ? "Nada no Places pra “\(q)”." : nil
+        } catch {
+            placesNote = error.localizedDescription
+        }
+    }
+
     private func loadSaved(_ result: Result<URL, any Error>) {
         do {
             let url = try result.get()
@@ -335,6 +367,15 @@ struct AddItemsView: View {
             place.notes = item.note ?? ""
             place.source = Source(kind: .maps, url: item.url, savedAt: today)
             context.insert(place)
+        }
+        for c in candidates where selectedCandidates.contains(c.id) {
+            let place = Place(id: "m-\(UUID().uuidString.prefix(8).lowercased())", name: c.name, cityId: cityId, lat: c.lat, lng: c.lng)
+            place.list = list
+            place.placeId = c.id
+            place.approx = false
+            place.source = Source(kind: .manual, url: nil, savedAt: today)
+            context.insert(place)
+            services.sync.resolveNew(place, candidate: c, region: region, context: context)
         }
         try? context.save()
         Log.data.info("adicionados \(selectionCount) a \(listId, privacy: .public)")

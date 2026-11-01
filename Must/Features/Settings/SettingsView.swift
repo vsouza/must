@@ -112,6 +112,9 @@ private struct SettingsSections: View {
     var onExport: () -> Void
     var onReimport: () -> Void
 
+    @Environment(Services.self) private var services
+    @Environment(\.modelContext) private var context
+
     @State private var editingBudget = false
     @State private var budgetText = ""
     @State private var editingFX = false
@@ -218,15 +221,32 @@ private struct SettingsSections: View {
 
     private var data: some View {
         FormSection("Dados") {
-            FormRow("Google Places", subtitle: "horários e preço · 1.000 grátis/mês") {
+            FormRow("Google Places", subtitle: placesSubtitle) {
                 HStack(spacing: 8) {
                     Circle().fill(Secrets.googlePlacesKey == nil ? Color(hex: 0xC5C9D0) : Color.must.green).frame(width: 8, height: 8)
                     MonoValue("\(PlacesUsage.thisMonth) usados")
                 }
             }
+            Button {
+                Task { await services.sync.syncPlaces(context: context, region: region) }
+            } label: {
+                HStack {
+                    if let progress = services.sync.placesProgress {
+                        ProgressView(value: Double(progress.done), total: Double(max(1, progress.total)))
+                            .tint(Color.must.green)
+                        Text("\(progress.done)/\(progress.total)").font(.must.mono(13)).foregroundStyle(Color.must.secondary)
+                    } else {
+                        Pill("Sincronizar horários e preço", style: .green, icon: .outraProposta)
+                        Spacer()
+                    }
+                }
+            }
+            .buttonStyle(MustPressStyle())
+            .disabled(services.sync.isSyncingPlaces)
+            .padding(.bottom, 14)
             RowDivider()
             FormRow("Tempo", subtitle: region == .jp ? "Open-Meteo + JMA" : "Open-Meteo") {
-                MonoValue(DevOverrides.liveData ? "ao vivo" : "só cache", color: Color.must.secondary)
+                MonoValue(weatherStatus, color: Color.must.secondary)
             }
             RowDivider()
             Toggle(isOn: $settings.flickrPhotos) {
@@ -258,6 +278,22 @@ private struct SettingsSections: View {
                 FormRow("Reimportar") { MustIconView(.avancar, size: 14).foregroundStyle(Color.must.secondary) }
             }
             .buttonStyle(.plain)
+        }
+    }
+
+    private var placesSubtitle: String {
+        if Secrets.googlePlacesKey == nil { return "sem chave no Secrets.plist · 1.000 grátis/mês" }
+        return services.sync.placesSummary ?? "horários e preço · 1.000 grátis/mês · até \(SyncCoordinator.placesBatch) por vez"
+    }
+
+    private var weatherStatus: String {
+        guard DevOverrides.liveData else { return "só cache" }
+        switch services.sync.status {
+        case .ok(let date): return "ok · \(region.timeString(date))"
+        case .syncing: return "atualizando"
+        case .failed: return "falhou"
+        case .offline: return "só cache"
+        case .idle: return "—"
         }
     }
 

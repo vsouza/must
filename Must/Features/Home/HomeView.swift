@@ -23,8 +23,11 @@ struct HomeView: View {
     private var budget: Double { settingsList.first?.perDayBudget ?? region.defaultBudget }
 
     var body: some View {
+        let tomorrow = region.calendar.date(byAdding: .day, value: 1, to: now) ?? now
         let model = HomeModel(places: places, expenses: expenses, days: days, trip: trips.first,
-                              region: region, now: now, location: services.location.current)
+                              region: region, now: now, location: services.location.current,
+                              tomorrowWeather: services.sync.weather(on: tomorrow, region: region, trip: trips.first),
+                              nowTemp: services.sync.now(region: region, trip: trips.first)?.temp)
         ScrollViewReader { proxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
@@ -91,6 +94,10 @@ struct HomeView: View {
         HStack {
             Text("Olá, Vinicius!").mustTitle()
             Spacer()
+            if services.sync.status.isProblem || !DevOverrides.liveData {
+                Tag("sem dados ao vivo", dot: Color(hex: 0xC5C9D0))
+                    .accessibilityHint("Mostrando só o que está em cache")
+            }
             // Toggle de tema: só visual (o app é sempre claro).
             Capsule()
                 .fill(.white)
@@ -308,6 +315,8 @@ struct HomeModel {
     var region: Region
     var now: Date
     var location: CLLocation?
+    var tomorrowWeather: DayWeather?
+    var nowTemp: Double?
 
     /// Raio do "Perto de você".
     static let nearbyRadius: Double = 1500
@@ -355,7 +364,7 @@ struct HomeModel {
         let nearest = places.filter { $0.area != nil }.min { $0.location.distance(from: location) < $1.location.distance(from: location) }
         let area = nearest.flatMap { $0.location.distance(from: location) < 3000 ? $0.area : nil }
             ?? trip?.city(on: now, calendar: region.calendar)?.name ?? region.displayName
-        return "\(area) · \(time)"
+        return [area, time, nowTemp.map { "\(Int($0.rounded()))°" }].compactMap { $0 }.joined(separator: " · ")
     }
 
     var tomorrowLine: String {
@@ -366,6 +375,6 @@ struct HomeModel {
         let weekday = tomorrow.formatted(style)
         let reservations = places.filter { $0.hasReservation(on: tomorrow, calendar: cal) }.count
         let reserved = reservations == 0 ? "nada reservado" : reservations == 1 ? "1 reserva" : "\(reservations) reservas"
-        return "\(weekday) · \(reserved)"
+        return [weekday, tomorrowWeather?.short, reserved].compactMap { $0 }.joined(separator: " · ")
     }
 }

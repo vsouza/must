@@ -154,13 +154,13 @@ struct TodayView: View {
                     row(stop, index: index, isLast: index == stops.count - 1)
                 }
             }
-            if let last = lastTrainLine {
+            if let last = lastTrain(after: stops.last) {
                 HStack(spacing: 14) {
                     Text("·").font(.must.mono(15)).foregroundStyle(Color.must.secondary)
                         .frame(width: 30, height: 30).background(Circle().fill(Color.must.surface))
-                    Text(last.label).font(.must.archivo(15)).foregroundStyle(Color.must.secondary)
+                    Text(last.label).font(.must.archivo(15)).foregroundStyle(Color.must.secondary).lineLimit(2)
                     Spacer()
-                    if let time = last.time { Text(time).font(.must.mono(15, .semibold)).foregroundStyle(Color.must.ink) }
+                    Text(last.time).font(.must.mono(15, .semibold)).foregroundStyle(Color.must.ink)
                 }
                 .padding(.vertical, 14)
             }
@@ -171,9 +171,9 @@ struct TodayView: View {
         .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(Color.must.line))
     }
 
-    /// BH: horário fixo do metrô. Japão: último trem chega com o serviço de rotas (prompt 07).
-    private var lastTrainLine: (label: String, time: String?)? {
-        region == .bh ? ("Metrô até", "23:00") : nil
+    /// BH: horário do metrô (bh-lines.geojson). Japão: tabela `last-trains.json` perto da última parada.
+    private func lastTrain(after stop: Stop?) -> LastTrain? {
+        LastTrains.home(region: region, near: stop?.place?.coordinate, transit: TransitLoader.load(region))
     }
 
     private func row(_ stop: Stop, index: Int, isLast: Bool) -> some View {
@@ -186,7 +186,7 @@ struct TodayView: View {
                     Text("\(index + 1)").font(.must.archivo(14, .semibold)).foregroundStyle(Color.must.secondary)
                         .frame(width: 30, height: 30).background(Circle().fill(Color.must.surface))
                 }
-                if !isLast || lastTrainLine != nil { Rectangle().fill(Color.must.line).frame(width: 2, height: 22) }
+                if !isLast || region == .bh { Rectangle().fill(Color.must.line).frame(width: 2, height: 22) }
             }
             VStack(alignment: .leading, spacing: 4) {
                 HStack(alignment: .firstTextBaseline) {
@@ -210,10 +210,11 @@ struct TodayView: View {
         if let place, let here = services.location.current {
             // Mesma regra do solver: acima do "andar máximo entre paradas", metrô.
             let leg = DaySolver.leg(here.coordinate, place.coordinate, walkMax: settingsList.first?.walkMaxKm ?? 1.5)
-            if let leave = region.calendar.date(byAdding: .minute, value: -(leg.minutes + 5), to: stop.at), leave > now {
-                parts.append("saia \(region.timeString(leave))")
-            }
-            parts.append(leg.mode == .walk ? "\(leg.minutes) min a pé" : "metrô ~\(leg.minutes) min")
+            // ETA do MapKit quando já chegou; até lá, a estimativa do solver.
+            let minutes = services.eta.minutes(from: here.coordinate, to: place.coordinate, transit: leg.mode == .metro) ?? leg.minutes
+            let leave = RoutesService.leaveAt(stop.at, travelMinutes: minutes)
+            if leave > now { parts.append("saia \(region.timeString(leave))") }
+            parts.append(leg.mode == .walk ? "\(minutes) min a pé" : "metrô ~\(minutes) min")
         }
         if stop.isException { parts.append("fora da meta") }
         if let sub = place?.sub { parts.append(sub.lowercased()) }

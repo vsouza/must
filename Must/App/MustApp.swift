@@ -6,6 +6,10 @@ struct MustApp: App {
     @State private var regionStore = RegionStore()
     @State private var services = Services()
 
+    init() {
+        HTTP.configureCache()
+    }
+
     var body: some Scene {
         WindowGroup {
             AppRoot()
@@ -42,8 +46,14 @@ struct AppRoot: View {
                 DebugLaunch.apply(to: router, context: context, region: store.region, location: services.location)
                 #endif
             }
+            .task { await services.sync.syncIfNeeded(context: context, region: store.region) }
             .onChange(of: scenePhase) { _, phase in
-                if phase == .active { services.location.start() } else if phase == .background { services.location.stop() }
+                if phase == .active {
+                    services.location.start()
+                    Task { await services.sync.syncIfNeeded(context: context, region: store.region) }
+                } else if phase == .background {
+                    services.location.stop()
+                }
             }
             .onOpenURL { router.handle(url: $0) }
     }

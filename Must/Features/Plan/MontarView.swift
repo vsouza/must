@@ -31,10 +31,14 @@ struct MontarView: View {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
+        .task(id: services.sync.forecasts.count) {
+            planner?.weather = planner.flatMap { services.sync.weather(on: $0.date, region: region, trip: trips.first) }
+        }
         .onAppear {
             if planner == nil {
                 let start = region.calendar.startOfDay(for: date)
                 planner = DayPlanner(date: date, region: region, settings: settingsList.first, existing: days.first { $0.date == start })
+                planner?.weather = services.sync.weather(on: start, region: region, trip: trips.first)
                 #if DEBUG
                 if let screen = UserDefaults.standard.string(forKey: "debugScreen"), ["proposta", "trocar"].contains(screen), let planner {
                     planner.build(catalog: places.solverCatalog, trip: trips.first, settings: settingsList.first, location: services.location.current)
@@ -136,6 +140,7 @@ struct MontarView: View {
     private func subtitle(_ planner: DayPlanner, preview: DayProposal) -> String {
         var parts: [String] = []
         let cal = region.calendar
+        if let weather = planner.weather { parts.append(weather.short) }
         if let trip = trips.first, let city = trip.city(on: planner.date, calendar: cal) {
             if let idx = trip.dayIndex(in: city, on: planner.date, calendar: cal) {
                 parts.append("dia \(idx.index) de \(idx.total) em \(city.name)")
