@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Must — Mapa (nada perto: zoom out até o próximo)</title>
+
+<link rel="stylesheet" href="must-light.css"><style>html,body{background:#EEF0F3}body{display:flex;justify-content:center;padding:24px 0}.app{box-shadow:0 30px 80px rgba(0,0,0,.18);border-radius:44px}</style>
+</head>
+<body>
+
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;family=Instrument+Serif:ital@0;1&amp;family=Geist+Mono:wght@400;600&amp;family=Zen+Kaku+Gothic+New:wght@500;700&amp;display=swap">
+<style>
+body{margin:0;background:#fff}
+.st{font-family:'Archivo',sans-serif;font-size:9.5px;font-weight:600;letter-spacing:.14em;fill:#A9AEB6;text-transform:uppercase}
+.mono-xs{font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.06em;fill:#121316}
+.pinT{font-family:'Geist Mono',monospace;font-size:12px;font-weight:600;fill:#fff}
+.pinB{font-family:'Geist Mono',monospace;font-size:11px;font-weight:600;fill:#2B7BFF}
+.lg{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#121316;background:rgba(255,255,255,.9);border-radius:999px;padding:6px 10px;box-shadow:0 4px 12px rgba(18,19,22,.08);border:1px solid #EEF0F3}
+.lg.off{color:#A9AEB6}
+</style>
+
+<div class="app" style="background:#E9EBEF">
+
+  <svg aria-hidden="true" viewBox="0 0 390 844" width="390" height="844" style="position:absolute;inset:0" fill="none">
+    <defs>
+      <pattern id="dots2" width="8" height="8" patternUnits="userSpaceOnUse"><circle cx="4" cy="4" r=".9" fill="#5FAE7E" opacity=".35"/></pattern>
+      <pattern id="blocks" width="34" height="34" patternUnits="userSpaceOnUse"><rect x="3" y="5" width="28" height="28" rx="4" fill="#121316" opacity=".10"/><rect x="3" y="3" width="28" height="28" rx="4" fill="#F7F8FA"/><path d="M6 3.5H28" stroke="#fff" stroke-width="1"/></pattern>
+      <filter id="sh2" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#121316" flood-opacity=".18"/></filter>
+      <radialGradient id="halo2"><stop offset="0" stop-color="#2B7BFF" stop-opacity=".25"/><stop offset="1" stop-color="#2B7BFF" stop-opacity="0"/></radialGradient>
+    </defs>
+    <rect width="390" height="844" fill="#E9EBEF"/>
+    <!-- escala de cidade: quadras viram textura, bairros ganham nome -->
+    <rect x="-20" y="-20" width="430" height="900" fill="url(#blocks)" opacity=".9"/>
+    <path d="M120 380 C 170 330, 260 330, 300 380 S 330 480, 260 500 S 120 470, 120 380 Z" fill="#E1EEE7"/>
+    <path d="M120 380 C 170 330, 260 330, 300 380 S 330 480, 260 500 S 120 470, 120 380 Z" fill="url(#dots2)"/>
+    <path d="M-10 640 C 100 600, 200 700, 410 620" stroke="#D9E4EF" stroke-width="14" stroke-linecap="round"/>
+    <!-- avenidas -->
+    <g stroke="#CFD3DB" stroke-width="7" stroke-linecap="round"><path d="M-10 260 L 410 180"/><path d="M60 -10 L 180 860"/><path d="M-10 560 L 410 520"/><path d="M300 -10 L 330 860"/></g>
+    <text x="190" y="140" class="st" style="fill:#A9AEB6;font-size:10px;letter-spacing:.22em;font-weight:700">SAVASSI</text><text x="28" y="420" class="st" style="fill:#A9AEB6;font-size:10px;letter-spacing:.22em;font-weight:700">LOURDES</text><text x="236" y="690" class="st" style="fill:#A9AEB6;font-size:10px;letter-spacing:.22em;font-weight:700">SANTO AGOSTINHO</text><text x="196" y="450" class="st" style="fill:#5FAE7E">PQ. MUNICIPAL</text>
+    <!-- metrô -->
+    <path d="M-10 700 L 410 560" stroke="#0C6DB2" stroke-width="2" opacity=".8"/>
+    <!-- você (embaixo) -->
+    <circle cx="110" cy="700" r="34" fill="url(#halo2)"/>
+    <circle cx="110" cy="700" r="7" fill="#2B7BFF" stroke="#fff" stroke-width="2.5"/>
+    <!-- linha de distância até o mais perto -->
+    <path d="M110 700 L 262 318" stroke="#121316" stroke-width="1.6" stroke-dasharray="4 6" stroke-linecap="round" opacity=".7"/>
+    <g><rect x="130" y="492" width="140" height="26" rx="13" fill="#121316"/><text x="200" y="509" text-anchor="middle" font-family="Geist Mono" font-size="11" font-weight="600" fill="#fff">2,1 km · 9 min de metrô</text></g>
+    <!-- pinos longe: amanhã, sem plano, hoje -->
+    <g filter="url(#sh2)"><circle cx="340" cy="120" r="11" fill="#22DD7E"/><text x="340" y="124.5" text-anchor="middle" font-family="Zen Kaku Gothic New" font-weight="700" font-size="11" fill="#0B2A18">食</text><circle cx="60" cy="150" r="11" fill="#fff" stroke="#C9CDD3" stroke-width="1.2"/><text x="60" y="154.5" text-anchor="middle" font-family="Zen Kaku Gothic New" font-weight="700" font-size="11" fill="#FFB020">買</text><circle cx="300" cy="420" r="11" fill="#fff" stroke="#C9CDD3" stroke-width="1.2"/><text x="300" y="424.5" text-anchor="middle" font-family="Zen Kaku Gothic New" font-weight="700" font-size="11" fill="#8B5CF6">観</text></g>
+    <g filter="url(#sh2)">
+      <circle cx="220" cy="190" r="13" fill="#fff" stroke="#2B7BFF" stroke-width="1.6" stroke-dasharray="3 2"/><text x="220" y="194" text-anchor="middle" class="pinB">1</text>
+      <circle cx="262" cy="318" r="17" fill="#121316"/><text x="262" y="322" text-anchor="middle" class="pinT">3</text>
+      <circle cx="356" cy="250" r="15" fill="#fff" stroke="#121316" stroke-width="1.6"/><text x="356" y="254" text-anchor="middle" class="pinT" style="fill:#121316">4</text>
+    </g>
+    <g><rect x="282" y="306" width="96" height="24" rx="12" fill="#121316"/><text x="330" y="322" text-anchor="middle" font-family="Archivo" font-size="11" font-weight="600" fill="#fff">Inimá · mais perto</text></g>
+    <path d="M24 790 L 24 798 L 104 798 L 104 790" stroke="#121316" stroke-width="1.4"/><text x="64" y="786" text-anchor="middle" class="mono-xs">1 km</text>
+  </svg>
+
+  <div style="position:absolute;left:22px;right:22px;top:58px;display:flex;gap:8px;align-items:center">
+    <label class="glass" style="flex:1;height:44px;border-radius:999px;display:flex;align-items:center;gap:8px;padding:0 14px;box-sizing:border-box;cursor:text"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7A7F87" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg><input type="text" placeholder="Santo Agostinho · nada a 500 m" style="flex:1;background:transparent;border:0;outline:0;font-family:'Archivo',sans-serif;font-size:14px;color:#121316;min-width:0"></label>
+    <button class="ic ic-dark" aria-label="Assistente"><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4z"/></svg></button>
+  </div>
+  <div style="position:absolute;left:22px;right:22px;top:112px;display:flex;gap:6px;flex-wrap:wrap">
+    <button class="lg"><span style="width:12px;height:12px;border-radius:50%;background:#121316"></span>Hoje</button>
+    <button class="lg"><span style="width:12px;height:12px;border-radius:50%;border:1.5px dashed #2B7BFF;box-sizing:border-box"></span>Amanhã</button>
+    <button class="lg"><span style="font-family:'Zen Kaku Gothic New';font-weight:700;font-size:10px;color:#22DD7E">食</span>Sem plano</button>
+    <button class="lg off">済 Feitos</button>
+  </div>
+
+  <!-- aviso de abertura -->
+  <div class="card glass" style="position:absolute;left:22px;right:22px;top:166px;padding:12px 14px;display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.95)">
+    <span style="width:30px;height:30px;border-radius:50%;background:#F1F2F4;display:flex;align-items:center;justify-content:center"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#121316" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg></span>
+    <span class="serif" style="font-size:15px;line-height:1.3;flex:1">Nada a menos de 500 m. Abri o mapa até o mais perto: <b style="font-family:'Archivo';font-style:normal;font-weight:600">Inimá de Paula</b>, parada 3 de hoje.</span>
+  </div>
+
+  <div style="position:absolute;right:22px;bottom:214px;display:flex;flex-direction:column;gap:8px">
+    <button class="ic glass" aria-label="Centralizar em mim"><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="8"/></svg></button>
+    <button class="ic glass" aria-label="Escala de bairro"><span class="mono" style="font-size:10px;font-weight:600">300</span></button>
+  </div>
+
+  <a href="Lugar.html" class="card glass" style="position:absolute;left:22px;right:22px;bottom:96px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;text-decoration:none;color:#121316;background:rgba(255,255,255,.92)">
+    <div style="display:flex;align-items:center;gap:12px">
+      <span style="width:34px;height:34px;border-radius:50%;background:#121316;color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Geist Mono',monospace;font-size:13px;font-weight:600">3</span>
+      <div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:17px;font-weight:600;letter-spacing:-.01em">Museu Inimá de Paula</span><span style="font-size:12.5px;color:#7A7F87"><span class="mono" style="color:#121316;font-weight:600">2,1 km</span> · 9 min de metrô · 26 a pé · <span class="mono" style="color:#121316;font-weight:600">14:30</span></span></div>
+      <span class="pill pill-green" style="padding:7px 11px">saia 14:05</span>
+    </div>
+    <div style="display:flex;gap:8px">
+      <span class="ghost" style="flex:1;height:42px;font-size:13px">Apple Maps</span><span class="ghost" style="flex:1;height:42px;font-size:13px">Google Maps</span><span class="ghost" style="flex:1;height:42px;font-size:13px;background:#F1F2F4;border:0">Ver o dia</span>
+    </div>
+  </a>
+
+  <nav class="tabs">
+    <a href="HomeClaro.html" class="tab"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7v9H4z"/></svg>Início</a>
+    <a href="Hoje.html" class="tab"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>Hoje</a>
+    <a href="Mapa.html" class="tab tab-on"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg>Mapa</a>
+    <a href="Musts.html" class="tab"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6h14M5 12h14M5 18h9"/></svg>Musts</a>
+  </nav>
+</div>
+
+</body>
+</html>

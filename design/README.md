@@ -17,7 +17,9 @@
 | Trocar parada (sheet) | Trocar | Proposta ⇅ | 05 |
 | Hoje | Hoje | tab Hoje, Proposta → aceitar | 05 |
 | Registrar gasto | Gasto | Hoje "+ gasto", Lugar "Feito" | 05 |
-| Mapa | Mapa | tab Mapa, Início "Perto de você" | 06 |
+| Mapa (papel em relevo) | Mapa | tab Mapa, Início "Perto de você" | 12 (base) · 11 (abertura) |
+| Mapa — nada perto | MapaLonge | abertura sem nada a 500 m | 11 |
+| Lugar › Dicas de quem foi | Dicas | fim da tela do Lugar | 11 |
 | Assistente (vazio) | Assistente | Início +, FAB do Hoje | 08 |
 | Assistente respondendo | Chat | Assistente → pergunta | 08 |
 | Viagem | Viagem | Início aba Viagem | 09 |
