@@ -61,6 +61,8 @@ enum DaySolver {
         /// Papéis aceitos, em ordem de preferência.
         var roles: [StopRole]
         var optional = false
+        /// Horário pela luz (golden, azul, sol alto) ou pela janela boa de esporte, em vez da janela fixa.
+        var timing: Timing? = nil
     }
 
     struct Plan {
@@ -76,8 +78,9 @@ enum DaySolver {
     static func plan(for kind: DayKind) -> Plan {
         switch kind {
         case .free:
-            Plan(slots: [Slot(window: .morning, roles: [.see, .drink, .shop]), Slot(window: .lunch, roles: [.eat]),
-                         Slot(window: .afternoon, roles: [.see, .drink]),
+            Plan(slots: [Slot(window: .morning, roles: [.sport], optional: true, timing: .sport),
+                         Slot(window: .morning, roles: [.see, .drink, .shop]), Slot(window: .lunch, roles: [.eat]),
+                         Slot(window: .afternoon, roles: [.see, .drink, .photo]),
                          Slot(window: .night, roles: [.listen, .drink], optional: true),
                          Slot(window: .dinner, roles: [.eat], optional: true)],
                  required: [.see, .eat, .drink], maxStops: 4)
@@ -92,9 +95,14 @@ enum DaySolver {
                          Slot(window: .night, roles: [.drink, .listen], optional: true)],
                  required: [.eat, .listen], maxStops: 5, startMinute: 12 * 60)
         case .photo:
-            Plan(slots: [Slot(window: .morning, roles: [.see]), Slot(window: .lunch, roles: [.eat]),
-                         Slot(window: .afternoon, roles: [.see]), Slot(window: .afternoon, roles: [.drink], optional: true)],
-                 required: [.see, .eat], maxStops: 4)
+            // Golden da manhã → sol alto no museu → almoço → golden da tarde → hora azul.
+            Plan(slots: [Slot(window: .morning, roles: [.photo, .see], timing: .goldenAM),
+                         Slot(window: .lunch, roles: [.see], optional: true, timing: .sunHigh),
+                         Slot(window: .lunch, roles: [.eat]),
+                         Slot(window: .afternoon, roles: [.photo, .see], timing: .goldenPM),
+                         Slot(window: .night, roles: [.photo], optional: true, timing: .blue),
+                         Slot(window: .dinner, roles: [.eat], optional: true)],
+                 required: [.photo, .eat], maxStops: 6)
         case .temples:
             Plan(slots: [Slot(window: .morning, roles: [.see]), Slot(window: .lunch, roles: [.eat]),
                          Slot(window: .afternoon, roles: [.see, .drink]), Slot(window: .afternoon, roles: [.drink], optional: true)],
@@ -117,9 +125,12 @@ enum DaySolver {
         var plan: Plan
         var mustInclude: Set<String>
         var mustExclude: Set<String>
+        /// Luz do dia na cidade (sem rede).
+        var sun: SunDay
 
         init(_ request: DayRequest, catalog: [SolverPlace]) {
             self.request = request
+            sun = SunService.day(request.date.addingTimeInterval(12 * 3600), request.cityCenter ?? request.origin, timeZone: request.timeZone)
             let intent = request.intent
             kind = intent.kind ?? request.kind
             budget = intent.budget ?? request.budget
@@ -175,6 +186,14 @@ enum DaySolver {
             if !weather.isClear { return ("só com céu limpo", false) }
         }
         if p.rules.outdoor, req.weather?.isHeavyRain == true { return ("chuva forte", false) }
+        if let art = p.extra?.art, !art.isRunning(on: req.date, calendar: req.calendar) {
+            if let until = art.runsUntil, ArtEvent.localDay(until, calendar: req.calendar) < req.date { return ("temporada acabou", false) }
+            return ("temporada ainda não começou", false)
+        }
+        if p.role == .sport {
+            if p.extra?.sport?.activity == .watch { return ("jogo: só com ingresso comprado", true) }
+            if (req.weather?.hours ?? []).isEmpty && !forced { return ("sem previsão hora a hora", true) }
+        }
         if let hours = p.hours, hours.hasPeriods {
             let opensToday = (hours.periods ?? []).contains { $0.open.day == req.weekday }
             let openFromYesterday = (hours.periods ?? []).contains { $0.open.day == (req.weekday + 6) % 7 && ($0.close?.day ?? -1) == req.weekday }
@@ -213,6 +232,7 @@ enum DaySolver {
             anchors.append(ProposedStop(place: p, at: r.at, end: ctx.date(minute + duration), window: window(at: minute),
                                         reason: "reserva", isAnchor: true, isException: exception, legFromPrevious: nil))
         }
+        anchors += ticketAnchors(catalog, ctx: ctx).filter { t in !anchors.contains { $0.place.id == t.place.id } }
         anchors.sort { $0.at < $1.at }
 
         // 2–9. Candidatos elegíveis.
@@ -233,6 +253,10 @@ enum DaySolver {
 
         var departure = ctx.minute(req.startAt)
         if req.intent.startEarly == true { departure = min(departure, 8 * 60) }
+        // Dia de fotografia começa no golden da manhã (salvo "sem acordar cedo").
+        if ctx.kind == .photo, req.intent.startEarly != false, let golden = range(.goldenAM, sun: ctx.sun, ctx: ctx) {
+            departure = min(departure, golden.lowerBound - 30)
+        }
         let startMinute = max(departure, ctx.plan.startMinute ?? 0)
         let walkMax = effectiveWalkMax(req, walk: ctx.walk)
         var chosen: [ProposedStop] = []
@@ -259,23 +283,37 @@ enum DaySolver {
                 slots.append(Slot(window: w, roles: [p.role]))
             }
         }
+        func slotStart(_ slot: Slot) -> Int {
+            if let t = slot.timing { return range(t, sun: ctx.sun, ctx: ctx)?.lowerBound ?? range(slot.window).lowerBound }
+            return range(slot.window).lowerBound
+        }
         slots = slots.enumerated().sorted { a, b in
-            let ra = range(a.element.window).lowerBound, rb = range(b.element.window).lowerBound
+            let ra = slotStart(a.element), rb = slotStart(b.element)
             return ra == rb ? a.offset < b.offset : ra < rb
         }.map(\.element)
+        var usedLights: Set<LightKind> = Set(anchors.compactMap { lightAt($0, ctx: ctx) })
+        let hourly = req.weather?.hours ?? []
 
         let totalLimit = ctx.plan.maxStops + (req.intent.mealsException ? 1 : 0)
             + candidates.filter { $0.rules.isRareToday(weekday: req.weekday) }.count
 
         for slot in slots {
-            let count = chosen.count + anchors.count
+            // Esporte é extra: não ocupa vaga do dia.
+            let count = chosen.filter { $0.place.role != .sport }.count + anchors.count
             if slot.optional && count >= ctx.plan.maxStops { continue }
             if count >= totalLimit { break }
             if slot.window.isMeal && mealUsed.contains(slot.window) && req.oneMealPerWindow
                 && !(req.intent.mealsException && slot.window == .lunch && chosen.filter({ $0.window == .lunch && $0.place.role == .eat }).count < 2) {
                 continue
             }
-            let w = range(slot.window, startEarly: ctx.startEarly)
+            let w: Range<Int>
+            if let timing = slot.timing {
+                guard let r = range(timing, sun: ctx.sun, ctx: ctx) else { continue }
+                if let light = timing.light, light != .hard, usedLights.contains(light) { continue }
+                w = r
+            } else {
+                w = range(slot.window, startEarly: ctx.startEarly)
+            }
             if w.upperBound <= startMinute { continue }
 
             // Tenta antes e depois da próxima âncora.
@@ -287,17 +325,79 @@ enum DaySolver {
                 }
                 let nextAnchor = anchorIndex < anchors.count ? anchors[anchorIndex] : nil
                 for p in candidates where !chosen.contains(where: { $0.place.id == p.id }) && slot.roles.contains(p.role) {
-                    if !p.windows.isEmpty && !p.windows.contains(slot.window) { continue }
-                    if let only = p.rules.onlyWindows, !only.contains(slot.window) { continue }
+                    if slot.timing == nil {
+                        if !p.windows.isEmpty && !p.windows.contains(slot.window) { continue }
+                        if let only = p.rules.onlyWindows, !only.contains(slot.window) { continue }
+                    } else if p.role == .see && slot.timing != .sunHigh && !isOutdoorSee(p) {
+                        continue
+                    }
                     let here = CLLocationCoordinate2D(latitude: p.lat, longitude: p.lng)
                     let legIn = leg(cursorLocation, here, walkMax: walkMax)
-                    let start = max(w.lowerBound, cursorMinute + legIn.minutes, startMinute)
+                    var start = max(w.lowerBound, cursorMinute + legIn.minutes, startMinute)
+                    var length = duration(p) + (p.queueMinutes ?? 0)
+                    var light: LightKind?
+
+                    // photo: só na luz que o spot pede; uma vez por faixa; nuvens > 60% derrubam o golden.
+                    if p.role == .photo {
+                        let wants = p.extra?.photo?.bestLight ?? []
+                        let options: [(LightKind, Range<Int>)]
+                        if let timing = slot.timing, let l = timing.light, let r = range(timing, sun: ctx.sun, ctx: ctx) {
+                            let ok = wants.isEmpty || wants.contains(l) || (l == .blue && wants.contains(.night))
+                            options = ok ? [(l, r)] : []
+                        } else {
+                            let pool: [LightKind] = wants.isEmpty ? [.goldenPM, .goldenAM, .blue] : wants
+                            options = pool.compactMap { l in
+                                let t: Timing? = switch l { case .goldenAM: .goldenAM; case .goldenPM: .goldenPM; case .blue, .night: .blue; case .hard: nil }
+                                guard let t, let r = range(t, sun: ctx.sun, ctx: ctx), w.overlaps(r) else { return nil }
+                                return (l == .night ? .blue : l, r)
+                            }
+                        }
+                        let cursorStart = max(cursorMinute + legIn.minutes, startMinute)
+                        guard let pick = options.first(where: { !usedLights.contains($0.0) && max($0.1.lowerBound, cursorStart) <= $0.1.upperBound - 15 }) else {
+                            rejection[p.id] = rejection[p.id] ?? "fora da luz boa"
+                            continue
+                        }
+                        if pick.0 == .goldenPM || pick.0 == .goldenAM,
+                           let cloud = req.weather?.hour(at: ctx.date(pick.1.lowerBound))?.cloud, cloud > 60 {
+                            rejection[p.id] = "nublado no golden (\(cloud)%)"
+                            continue
+                        }
+                        light = pick.0
+                        start = max(pick.1.lowerBound, cursorStart)
+                        length = max(15, min(45, pick.1.upperBound - start))
+                    }
+
+                    // sport: só em horas verdes (temperatura, UV, chuva, ar).
+                    if p.role == .sport, let spot = p.extra?.sport {
+                        var found: Int?
+                        var m = start
+                        while m + length <= max(w.upperBound, start + length) && m < w.upperBound {
+                            let a = req.weather?.hour(at: ctx.date(m)), b = req.weather?.hour(at: ctx.date(m + length))
+                            if let a, SportScore.isGood(a, spot: spot), b.map({ SportScore.isGood($0, spot: spot) }) ?? true { found = m; break }
+                            m += 15
+                        }
+                        guard let found else {
+                            rejection[p.id] = sportRejection(spot, at: ctx.date(start), hourly: hourly) ?? "fora da janela boa"
+                            continue
+                        }
+                        start = found
+                    }
+
                     guard start < w.upperBound else { rejection[p.id] = rejection[p.id] ?? "não cabe no horário"; continue }
                     if let open = p.hours?.isOpen(at: ctx.date(start), timeZone: req.timeZone), !open {
                         rejection[p.id] = "fechado às \(String(format: "%02d:%02d", (start / 60) % 24, start % 60))"
                         continue
                     }
-                    let end = start + p.role.duration + (p.queueMinutes ?? 0)
+                    // art: última entrada e duração antes de fechar.
+                    if p.kind == .art, let close = closingMinute(p, ctx: ctx) {
+                        let lastEntry = close - (p.extra?.art?.lastEntryMinutes ?? 0)
+                        if start > lastEntry || start + min(length, 45) > close {
+                            rejection[p.id] = "última entrada \(String(format: "%02d:%02d", (lastEntry / 60) % 24, lastEntry % 60))"
+                            continue
+                        }
+                        length = min(length, close - start)
+                    }
+                    let end = start + length
                     if let a = nextAnchor {
                         let toAnchor = leg(here, CLLocationCoordinate2D(latitude: a.place.lat, longitude: a.place.lng), walkMax: walkMax)
                         if end + toAnchor.minutes + 10 > ctx.minute(a.at) && start < ctx.minute(a.end) {
@@ -325,6 +425,9 @@ enum DaySolver {
                     if needed.contains(p.role) { score -= 40 }
                     if ctx.kind == .temples, p.sub == "Templos" || p.listColor == .temple { score -= 50 }
                     if ctx.kind == .photo, p.sub == "Mirante" || p.sub == "Arquitetura" || p.rules.outdoor { score -= 40 }
+                    if light != nil { score -= 30 }
+                    if slot.timing == .sunHigh, p.kind == .art { score -= 40 }
+                    if let left = daysLeft(p, ctx: ctx), left <= 7 { score -= 80 - Double(left) * 5 }
                     score += tieBreak(p.id, seed: req.seed)
                     if best == nil || score < best!.score {
                         best = (ProposedStop(place: p, at: ctx.date(start), end: ctx.date(end), window: slot.window,
@@ -342,6 +445,7 @@ enum DaySolver {
                 spend += pick.place.cost
             }
             chosen.append(pick)
+            if let l = lightAt(pick, ctx: ctx) { usedLights.insert(l) }
             if let i = needed.firstIndex(of: pick.place.role) { needed.remove(at: i) }
             if pick.place.role == .eat, pick.window.isMeal { mealUsed.insert(pick.window) }
             cursorMinute = ctx.minute(pick.end)
@@ -405,6 +509,14 @@ enum DaySolver {
         let p = stop.place
         let notes = p.notes.lowercased()
         if stop.isException { return "fora da meta do dia" }
+        if p.role == .photo, let l = lightAt(stop, ctx: ctx) {
+            return l == .blue ? "hora azul" : (l == .goldenAM ? "golden da manhã" : "golden")
+        }
+        if let left = daysLeft(p, ctx: ctx), left <= 7 { return endsText(left) }
+        if p.kind == .art, ctx.kind == .photo, let r = range(.sunHigh, sun: ctx.sun, ctx: ctx), r.contains(ctx.minute(stop.at)) {
+            return "hora do sol alto = museu"
+        }
+        if p.role == .sport, let h = ctx.request.weather?.hour(at: stop.at) { return "janela boa · \(Int(h.temp.rounded()))°" }
         if p.rules.isRareToday(weekday: ctx.request.weekday) { return "só hoje" }
         if ctx.mustInclude.contains(p.id) { return "você pediu" }
         if stop.window == .morning, notes.contains("antes da multidão") || notes.contains("cedo") { return "antes da multidão" }
@@ -429,10 +541,51 @@ enum DaySolver {
         if let exception = stops.first(where: \.isException) {
             parts.append("\(exception.place.name) fica fora da meta do dia.")
         }
+        // Temporada acabando (art): "quase âncora".
+        let cal = request.calendar
+        for stop in stops {
+            if let left = stop.place.extra?.art?.daysLeft(from: request.date, calendar: cal), (0...7).contains(left) {
+                parts.append("\(stop.place.name) \(endsText(left)) — entrou no dia.")
+                break
+            }
+        }
+        if let urgent = leftOut.first(where: { ($0.place.extra?.art?.daysLeft(from: request.date, calendar: cal)).map { (0...7).contains($0) } ?? false }),
+           let left = urgent.place.extra?.art?.daysLeft(from: request.date, calendar: cal) {
+            parts.append("\(urgent.place.name) \(endsText(left)) e não coube hoje (\(urgent.reason)).")
+        }
         if parts.isEmpty {
             parts.append(stops.isEmpty ? "Não achei nada aberto que coubesse hoje — tenta outro tipo de dia." : "Tudo que fazia sentido hoje coube no dia.")
         }
         return parts.joined(separator: " ")
+    }
+
+    /// Faixa de luz em que a parada cai (só pra photo e âncoras).
+    static func lightAt(_ stop: ProposedStop, ctx: Context) -> LightKind? {
+        guard stop.place.role == .photo else { return nil }
+        let m = ctx.minute(stop.at)
+        for (l, t) in [(LightKind.goldenAM, Timing.goldenAM), (.goldenPM, .goldenPM), (.blue, .blue)] {
+            if let r = range(t, sun: ctx.sun, ctx: ctx), (r.lowerBound - 5)..<r.upperBound ~= m { return l }
+        }
+        return nil
+    }
+
+    /// "see" que funciona com luz baixa: templo, mirante, arquitetura, parque, ao ar livre.
+    static func isOutdoorSee(_ p: SolverPlace) -> Bool {
+        if p.kind == .art { return false }
+        if p.listColor == .temple { return true }
+        if let sub = p.sub, ["Templos", "Mirante", "Arquitetura", "Parque"].contains(sub) { return true }
+        return p.rules.outdoor
+    }
+
+    /// "quente · 31°", "UV 9", "chuva 60%", "ar ruim · AQI 140".
+    static func sportRejection(_ spot: SportSpot, at date: Date, hourly: [HourWeather]) -> String? {
+        guard let h = hourly.min(by: { abs($0.time.timeIntervalSince(date)) < abs($1.time.timeIntervalSince(date)) }) else { return nil }
+        let temp = h.apparent.map { max($0, h.temp) } ?? h.temp
+        if temp > Double(spot.tempMax) { return "quente · \(Int(h.temp.rounded()))°" }
+        if let uv = h.uv, uv > Double(spot.uvMax) { return "UV \(Int(uv.rounded())) alto" }
+        if let rain = h.precipProb, rain >= 30 { return "chuva \(rain)%" }
+        if let aqi = h.aqi, aqi >= 100 { return "ar ruim · AQI \(aqi)" }
+        return nil
     }
 
     // MARK: Trocar

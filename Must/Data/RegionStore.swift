@@ -97,6 +97,7 @@ final class RegionStore {
         let count = try context.fetchCount(FetchDescriptor<MustList>())
         _ = context.settings(for: region)
         guard count == 0 else {
+            try addNewKinds(context, region: region, bundle: bundle)
             try context.save()
             return
         }
@@ -108,5 +109,26 @@ final class RegionStore {
         let board = try BoardCodec.decode(Data(contentsOf: url))
         let summary = try BoardCodec(context: context, region: region).import(board: board)
         Log.data.info("seed \(region.rawValue, privacy: .public): \(summary.description, privacy: .public)")
+    }
+
+    /// Board de antes do prompt 13: acrescenta as listas photo/art/sport do seed e os lugares delas
+    /// (só o que não existe — nada do usuário é sobrescrito). Roda uma vez por região.
+    static func addNewKinds(_ context: ModelContext, region: Region, bundle: Bundle) throws {
+        let lists = try context.fetch(FetchDescriptor<MustList>())
+        guard !lists.contains(where: { $0.kind != .place }), let url = region.seedURL(in: bundle) else { return }
+        let seed = try BoardCodec.decode(Data(contentsOf: url))
+        let kinds = seed.lists.filter { ($0.kind ?? .place) != .place }
+        let ids = Set(kinds.map(\.id))
+        // Uma lista do usuário com o mesmo id ganha o tipo; nenhuma lista nova se ela já existir.
+        for list in lists where ids.contains(list.id) { list.kind = kinds.first { $0.id == list.id }?.kind ?? .place }
+        let existing = Set(lists.map(\.id))
+        let knownPlaces = Set(try context.fetch(FetchDescriptor<Place>()).map(\.id))
+        let board = Board(version: seed.version, region: seed.region, trip: nil, budget: nil,
+                          lists: kinds.filter { !existing.contains($0.id) },
+                          places: seed.places.filter { ids.contains($0.listId) && !knownPlaces.contains($0.id) },
+                          expenses: nil, days: nil, events: nil)
+        guard !board.lists.isEmpty || !board.places.isEmpty else { return }
+        let summary = try BoardCodec(context: context, region: region).import(board: board)
+        Log.data.info("tipos novos \(region.rawValue, privacy: .public): \(summary.description, privacy: .public)")
     }
 }

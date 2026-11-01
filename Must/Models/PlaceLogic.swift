@@ -245,7 +245,7 @@ extension Place {
         case .eat: .food
         case .drink, .coffee: sub?.lowercased().contains("café") == true || list?.color == .coffee ? .coffee : .food
         case .shop: .shop
-        case .see, .temple: .ticket
+        case .see, .temple, .art: .ticket
         default: .other
         }
     }

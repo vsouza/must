@@ -58,6 +58,8 @@ struct BoardList: Codable, Equatable, Sendable {
     var color: MustColor
     var photo: ListPhoto?
     var sub: [String]?
+    /// photo / art / sport (ausente = place).
+    var kind: ListKind?
 }
 
 struct BoardPlace: Codable, Equatable, Sendable {
@@ -83,6 +85,8 @@ struct BoardPlace: Codable, Equatable, Sendable {
     var notes: String?
     var source: Source?
     var done: DoneMark?
+    /// Dados do tipo: `{ photo | art | sport }`.
+    var extra: PlaceExtra?
 }
 
 struct BoardExpense: Codable, Equatable, Sendable {

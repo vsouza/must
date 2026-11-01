@@ -1,6 +1,26 @@
 import CoreLocation
 import Foundation
 
+/// Uma hora da previsão (Open-Meteo `hourly` + `us_aqi` da Air Quality API).
+struct HourWeather: Sendable, Codable, Hashable {
+    var time: Date
+    var temp: Double
+    var apparent: Double?
+    var humidity: Int?
+    /// %
+    var cloud: Int?
+    /// metros
+    var visibility: Double?
+    var precipProb: Int?
+    /// km/h
+    var wind: Double?
+    /// graus (de onde vem)
+    var windDir: Double?
+    var uv: Double?
+    /// US AQI (ar bom < 50; evitar ≥ 100).
+    var aqi: Int?
+}
+
 /// Previsão de uma região: dias (meia-noite local → tempo) + agora.
 struct Forecast: Sendable, Codable {
     struct Now: Sendable, Codable { var temp: Double; var code: Int }
@@ -9,6 +29,17 @@ struct Forecast: Sendable, Codable {
     var fetchedAt: Date
 
     func day(_ date: Date, calendar: Calendar) -> DayWeather? { days[calendar.startOfDay(for: date)] }
+
+    /// A hora da previsão que contém `date`.
+    func hour(at date: Date, calendar: Calendar) -> HourWeather? { day(date, calendar: calendar)?.hour(at: date) }
+
+    mutating func mergeAQI(_ aqi: [Date: Int]) {
+        for key in days.keys {
+            guard var day = days[key] else { continue }
+            for i in day.hours.indices { day.hours[i].aqi = aqi[day.hours[i].time] }
+            days[key] = day
+        }
+    }
 }
 
 protocol WeatherProviding: Sendable {
@@ -31,13 +62,16 @@ struct WeatherService: WeatherProviding {
             URLQueryItem(name: "longitude", value: String(format: "%.4f", c.longitude)),
             URLQueryItem(name: "daily", value: "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset"),
             URLQueryItem(name: "current", value: "temperature_2m,weather_code"),
+            URLQueryItem(name: "hourly", value: Self.hourlyVariables),
             URLQueryItem(name: "timezone", value: region.timeZone.identifier),
             URLQueryItem(name: "forecast_days", value: "16"),
         ]
         if region == .jp { comps.queryItems?.append(URLQueryItem(name: "models", value: "jma_seamless,best_match")) }
         do {
             let data = try await http.get(comps.url!, service: "weather")
-            let forecast = try Self.parse(data, timeZone: region.timeZone)
+            var forecast = try Self.parse(data, timeZone: region.timeZone)
+            // Qualidade do ar é extra: sem ela, a previsão vale igual.
+            if let aqi = try? await airQuality(at: c, region: region) { forecast.mergeAQI(aqi) }
             if let encoded = try? JSONEncoder().encode(forecast) { await DiskCache.shared.store(encoded, for: key) }
             return forecast
         } catch {
@@ -45,6 +79,40 @@ struct WeatherService: WeatherProviding {
             if let stale = await DiskCache.shared.stale(key), let f = try? JSONDecoder().decode(Forecast.self, from: stale) { return f }
             throw error
         }
+    }
+
+    static let hourlyVariables = "temperature_2m,apparent_temperature,relative_humidity_2m,cloud_cover,visibility,precipitation_probability,wind_speed_10m,wind_direction_10m,uv_index"
+
+    /// US AQI por hora ("yyyy-MM-ddTHH:mm" local → índice).
+    func airQuality(at c: CLLocationCoordinate2D, region: Region) async throws -> [Date: Int] {
+        var comps = URLComponents(string: "https://air-quality-api.open-meteo.com/v1/air-quality")!
+        comps.queryItems = [
+            URLQueryItem(name: "latitude", value: String(format: "%.4f", c.latitude)),
+            URLQueryItem(name: "longitude", value: String(format: "%.4f", c.longitude)),
+            URLQueryItem(name: "hourly", value: "us_aqi"),
+            URLQueryItem(name: "timezone", value: region.timeZone.identifier),
+            URLQueryItem(name: "forecast_days", value: "5"),
+        ]
+        let data = try await http.get(comps.url!, service: "air-quality")
+        return try Self.parseAQI(data, timeZone: region.timeZone)
+    }
+
+    static func parseAQI(_ data: Data, timeZone: TimeZone) throws -> [Date: Int] {
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let hourly = json["hourly"] as? [String: Any], let times = hourly["time"] as? [String],
+              let values = hourly["us_aqi"] as? [Any] else { throw ServiceError.decoding("air-quality") }
+        var out: [Date: Int] = [:]
+        for (i, t) in times.enumerated() where values.indices.contains(i) {
+            if let date = localTime(t, timeZone: timeZone), let v = (values[i] as? NSNumber)?.intValue { out[date] = v }
+        }
+        return out
+    }
+
+    /// "2026-11-15T15:00" no fuso → instante.
+    static func localTime(_ s: String, timeZone: TimeZone) -> Date? {
+        let dates = BoardDates(timeZone: timeZone)
+        guard s.count >= 16, let day = dates.day(from: String(s.prefix(10))) else { return nil }
+        return dates.time(String(s.suffix(5)), on: day)
     }
 
     /// Lê variáveis com ou sem sufixo de modelo (`_jma_seamless`, `_best_match`), preferindo a JMA.
@@ -74,6 +142,27 @@ struct WeatherService: WeatherProviding {
             days[day] = DayWeather(tempMin: (minT[i] as? NSNumber)?.doubleValue ?? 0, tempMax: (maxT[i] as? NSNumber)?.doubleValue ?? 0,
                                    code: code, precipProb: (precip[i] as? NSNumber)?.intValue ?? (rainy ? 70 : 10),
                                    sunrise: localTime(rise[i]), sunset: localTime(set[i]))
+        }
+        // Hora a hora, agrupado no dia local.
+        if let hourly = json["hourly"] as? [String: Any], let hourTimes = hourly["time"] as? [String] {
+            func hseries(_ name: String) -> [Double?] {
+                let arrays = ["\(name)_jma_seamless", name, "\(name)_best_match"].compactMap { hourly[$0] as? [Any] }
+                return hourTimes.indices.map { i in
+                    arrays.lazy.compactMap { $0.indices.contains(i) ? ($0[i] as? NSNumber)?.doubleValue : nil }.first
+                }
+            }
+            let temp = hseries("temperature_2m"), apparent = hseries("apparent_temperature"), humidity = hseries("relative_humidity_2m")
+            let cloud = hseries("cloud_cover"), visibility = hseries("visibility"), precipH = hseries("precipitation_probability")
+            let wind = hseries("wind_speed_10m"), windDir = hseries("wind_direction_10m"), uv = hseries("uv_index")
+            for (i, t) in hourTimes.enumerated() {
+                guard let time = Self.localTime(t, timeZone: timeZone), let tc = temp[i] else { continue }
+                let day = dates.startOfDay(time)
+                guard days[day] != nil else { continue }
+                days[day]?.hours.append(HourWeather(time: time, temp: tc, apparent: apparent[i], humidity: humidity[i].map { Int($0.rounded()) },
+                                                    cloud: cloud[i].map { Int($0.rounded()) }, visibility: visibility[i],
+                                                    precipProb: precipH[i].map { Int($0.rounded()) }, wind: wind[i], windDir: windDir[i],
+                                                    uv: uv[i], aqi: nil))
+            }
         }
         var now: Forecast.Now?
         if let current = json["current"] as? [String: Any] {

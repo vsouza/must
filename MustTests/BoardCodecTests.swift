@@ -50,7 +50,7 @@ struct BoardCodecTests {
 
     // MARK: Decodificação
 
-    @Test(arguments: [(Region.bh, 23, 5), (Region.jp, 17, 5)])
+    @Test(arguments: [(Region.bh, 28, 8), (Region.jp, 22, 8)])
     func decodesSeeds(region: Region, places: Int, lists: Int) throws {
         let board = try Self.seed(region)
         #expect(board.version == 1)
@@ -77,7 +77,7 @@ struct BoardCodecTests {
 
     // MARK: Import
 
-    @Test(arguments: [(Region.bh, 23, 5), (Region.jp, 17, 5)])
+    @Test(arguments: [(Region.bh, 28, 8), (Region.jp, 22, 8)])
     func importsSeed(region: Region, places: Int, lists: Int) throws {
         let codec = try Self.makeCodec(region)
         let summary = try codec.import(board: Self.seed(region))
@@ -295,8 +295,8 @@ struct RegionStoreTests {
         let store = RegionStore(directory: dir, defaults: defaults, seedBundle: Bundle(for: Token.self))
         #expect(store.region == .bh)
         #expect(store.lastError == nil)
-        #expect(try store.container.mainContext.fetchCount(FetchDescriptor<Place>()) == 23)
-        #expect(try store.container.mainContext.fetchCount(FetchDescriptor<MustList>()) == 5)
+        #expect(try store.container.mainContext.fetchCount(FetchDescriptor<Place>()) == 28)
+        #expect(try store.container.mainContext.fetchCount(FetchDescriptor<MustList>()) == 8)
 
         // Um gasto em BH.
         store.container.mainContext.insert(Expense(at: .now, amount: 42, category: .coffee))
@@ -305,18 +305,18 @@ struct RegionStoreTests {
         store.switchTo(.jp)
         #expect(store.region == .jp)
         #expect(defaults.string(forKey: RegionStore.regionKey) == "jp")
-        #expect(try store.container.mainContext.fetchCount(FetchDescriptor<Place>()) == 17)
+        #expect(try store.container.mainContext.fetchCount(FetchDescriptor<Place>()) == 22)
         #expect(try store.container.mainContext.fetchCount(FetchDescriptor<Expense>()) == 0)
 
         store.switchTo(.bh)
-        #expect(try store.container.mainContext.fetchCount(FetchDescriptor<Place>()) == 23)
+        #expect(try store.container.mainContext.fetchCount(FetchDescriptor<Place>()) == 28)
         #expect(try store.container.mainContext.fetchCount(FetchDescriptor<Expense>()) == 1)
 
         // Uma nova instância lembra da região e lê o mesmo arquivo.
         store.switchTo(.jp)
         let reopened = RegionStore(directory: dir, defaults: defaults, seedBundle: Bundle(for: Token.self))
         #expect(reopened.region == .jp)
-        #expect(try reopened.container.mainContext.fetchCount(FetchDescriptor<Place>()) == 17)
+        #expect(try reopened.container.mainContext.fetchCount(FetchDescriptor<Place>()) == 22)
     }
 
     @Test func resetBoardReseedsOnlyThatRegion() throws {
@@ -334,7 +334,7 @@ struct RegionStoreTests {
         let extra = Place(id: "x1", name: "Extra", cityId: "bh")
         ctx.insert(extra)
         try ctx.save()
-        #expect(try ctx.fetchCount(FetchDescriptor<Place>()) == 24)
+        #expect(try ctx.fetchCount(FetchDescriptor<Place>()) == 29)
 
         store.switchTo(.jp)
         store.container.mainContext.insert(Expense(at: .now, amount: 1000))
@@ -342,7 +342,7 @@ struct RegionStoreTests {
         store.switchTo(.bh)
 
         store.resetBoard()
-        #expect(try store.container.mainContext.fetchCount(FetchDescriptor<Place>()) == 23)
+        #expect(try store.container.mainContext.fetchCount(FetchDescriptor<Place>()) == 28)
         #expect(try store.container.mainContext.fetchCount(FetchDescriptor<Expense>()) == 0)
 
         store.switchTo(.jp)

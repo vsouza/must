@@ -16,13 +16,16 @@ final class MustList {
     var photo: ListPhoto?
     var subs: [String]
     var order: Int
+    /// `ListKind` (photo, art, sport têm painel próprio no Lugar).
+    var kindRaw: String = ListKind.place.rawValue
 
     @Relationship(deleteRule: .cascade, inverse: \Place.list)
     var places: [Place] = []
 
     init(id: String, name: String, kanji: String? = nil, icon: MustIcon, color: MustColor,
-         photo: ListPhoto? = nil, subs: [String] = [], order: Int = 0) {
+         photo: ListPhoto? = nil, subs: [String] = [], order: Int = 0, kind: ListKind = .place) {
         self.id = id
+        self.kindRaw = kind.rawValue
         self.name = name
         self.kanji = kanji
         self.iconRaw = icon.rawValue
@@ -40,6 +43,11 @@ final class MustList {
     var color: MustColor {
         get { MustColor(rawValue: colorRaw) ?? .eat }
         set { colorRaw = newValue.rawValue }
+    }
+
+    var kind: ListKind {
+        get { ListKind(rawValue: kindRaw) ?? .place }
+        set { kindRaw = newValue.rawValue }
     }
 
     /// "Must eat"
@@ -75,6 +83,8 @@ final class Place {
     var done: DoneMark?
     /// `fsq_place_id` do Foursquare (match feito uma vez pras Dicas).
     var fsqId: String?
+    /// JSON de `PlaceExtra` (photo / art / sport).
+    var extraData: Data?
 
     @Relationship(deleteRule: .nullify, inverse: \Expense.place)
     var expenses: [Expense] = []
@@ -106,6 +116,14 @@ final class Place {
     }
 
     var isDone: Bool { done != nil }
+
+    var extra: PlaceExtra? {
+        get { extraData.flatMap { try? JSONDecoder.board.decode(PlaceExtra.self, from: $0) } }
+        set { extraData = newValue.flatMap { $0.isEmpty ? nil : try? JSONEncoder.board(timeZone: .gmt).encode($0) } }
+    }
+
+    /// Tipo vindo da lista.
+    var kind: ListKind { list?.kind ?? .place }
 }
 
 @Model

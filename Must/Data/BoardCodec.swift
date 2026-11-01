@@ -113,10 +113,12 @@ struct BoardCodec {
                 if item.kanji != nil || !merge { list.kanji = item.kanji }
                 if item.photo != nil || !merge { list.photo = item.photo }
                 if item.sub != nil || !merge { list.subs = item.sub ?? [] }
+                if item.kind != nil || !merge { list.kind = item.kind ?? .place }
                 summary.listsUpdated += 1
             } else {
                 let list = MustList(id: item.id, name: item.name, kanji: item.kanji, icon: icon, color: item.color,
-                                    photo: item.photo, subs: item.sub ?? [], order: existingLists.isEmpty ? index : nextOrder + index)
+                                    photo: item.photo, subs: item.sub ?? [], order: existingLists.isEmpty ? index : nextOrder + index,
+                                    kind: item.kind ?? .place)
                 context.insert(list)
                 lists[item.id] = list
                 summary.listsInserted += 1
@@ -181,6 +183,7 @@ struct BoardCodec {
         place.done = pick(item.done, place.done)
         place.placeId = pick(item.placeId, place.placeId)
         if item.hours != nil || !merge { place.hours = item.hours }
+        if item.extra != nil || !merge { place.extra = item.extra }
 
         // Coordenada resolvida no aparelho não volta a ser chute.
         let localIsResolved = !place.approx && place.placeId != nil
@@ -318,14 +321,14 @@ struct BoardCodec {
                                 walkMaxKm: settings.walkMaxKm, dayStart: settings.dayStart),
             lists: lists.map { l in
                 BoardList(id: l.id, name: l.name, kanji: l.kanji, icon: l.iconRaw, color: l.color, photo: l.photo,
-                          sub: l.subs.isEmpty ? nil : l.subs)
+                          sub: l.subs.isEmpty ? nil : l.subs, kind: l.kind == .place ? nil : l.kind)
             },
             places: places.map { p in
                 BoardPlace(id: p.id, name: p.name, nameLocal: p.nameLocal, listId: p.list?.id ?? "", sub: p.sub,
                            cityId: p.cityId, area: p.area, lat: p.lat, lng: p.lng, approx: p.approx, placeId: p.placeId,
                            price: p.price, priceLevel: p.priceLevel, hours: p.hours, window: p.windows,
                            reservation: p.reservation, saveForEnd: p.saveForEnd, allowBudgetException: p.allowBudgetException,
-                           queueMinutes: p.queueMinutes, notes: p.notes, source: p.source, done: p.done)
+                           queueMinutes: p.queueMinutes, notes: p.notes, source: p.source, done: p.done, extra: p.extra)
             },
             expenses: expenses.map { e in
                 BoardExpense(at: e.at, amount: e.amount, category: e.category, placeId: e.place?.id, method: e.method)

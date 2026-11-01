@@ -36,7 +36,7 @@ struct MustPalette: Sendable {
 
 /// Cor de cada Must: claro → forte, com texto escuro por cima.
 enum MustColor: String, Codable, CaseIterable, Sendable, Identifiable {
-    case eat, drink, coffee, see, temple, listen, shop, night
+    case eat, drink, coffee, see, temple, listen, shop, night, photo, art, sport
 
     var id: String { rawValue }
 
@@ -50,6 +50,9 @@ enum MustColor: String, Codable, CaseIterable, Sendable, Identifiable {
         case .listen: Color(hex: 0xFFC6DA)
         case .shop: Color(hex: 0xFFE3A3)
         case .night: Color(hex: 0xC9D2FF)
+        case .photo: Color(hex: 0xE9EBEF)
+        case .art: Color(hex: 0xDCCFFF)
+        case .sport: Color(hex: 0xFFD1C7)
         }
     }
 
@@ -63,6 +66,9 @@ enum MustColor: String, Codable, CaseIterable, Sendable, Identifiable {
         case .listen: Color(hex: 0xFF4D8D)
         case .shop: Color(hex: 0xFFB020)
         case .night: Color(hex: 0x5B6CFF)
+        case .photo: Color(hex: 0x8A94A6)
+        case .art: Color(hex: 0x8B5CF6)
+        case .sport: Color(hex: 0xFF5A3C)
         }
     }
 
@@ -76,6 +82,9 @@ enum MustColor: String, Codable, CaseIterable, Sendable, Identifiable {
         case .listen: Color(hex: 0x5A0F2E)
         case .shop: Color(hex: 0x4A2E00)
         case .night: Color(hex: 0x161C66)
+        case .photo: Color(hex: 0x121316)
+        case .art: Color(hex: 0x2E1065)
+        case .sport: Color(hex: 0x5A1A0E)
         }
     }
 
@@ -100,6 +109,9 @@ enum MustColor: String, Codable, CaseIterable, Sendable, Identifiable {
         case .listen: "listen"
         case .shop: "shop"
         case .night: "night"
+        case .photo: "photo"
+        case .art: "art"
+        case .sport: "sport"
         }
     }
 }
@@ -124,6 +136,24 @@ enum MustGradient {
         let p = UnitPoint.cssGradient(160)
         return LinearGradient(colors: [Color(hex: 0xEAF4FF).opacity(opacity.0), Color(hex: 0x9CCBFF).opacity(opacity.1)],
                               startPoint: p.start, endPoint: p.end)
+    }
+
+    /// Golden hour (chip "golden em 1h18", card Sol hoje): claro → forte, texto `goldText`.
+    static let goldLight = Color(hex: 0xFFE9C2)
+    static let goldStrong = Color(hex: 0xFFB347)
+    static let goldText = Color(hex: 0x4A2E00)
+    /// Laranja do trecho golden no arco.
+    static let goldArc = Color(hex: 0xFF8A00)
+    static var gold: LinearGradient {
+        LinearGradient(colors: [goldLight, goldStrong], startPoint: .topLeading, endPoint: .bottomTrailing)
+    }
+
+    /// Hora azul / crepúsculo.
+    static let duskLight = Color(hex: 0xC9D2FF)
+    static let duskStrong = Color(hex: 0x5B6CFF)
+    static let duskText = Color(hex: 0x161C66)
+    static var dusk: LinearGradient {
+        LinearGradient(colors: [duskLight, duskStrong], startPoint: .topLeading, endPoint: .bottomTrailing)
     }
 
     /// Avatar "V": azul → verde.

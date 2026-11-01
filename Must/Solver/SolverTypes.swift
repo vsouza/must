@@ -5,15 +5,27 @@ import Foundation
 
 /// Papel de um lugar no dia (derivado da cor da lista).
 enum StopRole: String, Sendable, Hashable, CaseIterable {
-    case eat, drink, see, listen, shop
+    case eat, drink, see, listen, shop, photo, sport
 
     init(color: MustColor) {
         switch color {
         case .eat: self = .eat
         case .drink, .coffee: self = .drink
-        case .see, .temple: self = .see
+        case .see, .temple, .art: self = .see
         case .listen, .night: self = .listen
         case .shop: self = .shop
+        case .photo: self = .photo
+        case .sport: self = .sport
+        }
+    }
+
+    /// O tipo da lista manda (art é um "see" com regras próprias); senão, a cor.
+    init(kind: ListKind, color: MustColor) {
+        switch kind {
+        case .photo: self = .photo
+        case .sport: self = .sport
+        case .art: self = .see
+        case .place: self.init(color: color)
         }
     }
 
@@ -25,6 +37,8 @@ enum StopRole: String, Sendable, Hashable, CaseIterable {
         case .see: 90
         case .listen: 90
         case .shop: 75
+        case .photo: 50
+        case .sport: 60
         }
     }
 }
@@ -43,6 +57,14 @@ struct DayWeather: Sendable, Hashable, Codable {
     var precipProb: Int
     var sunrise: Date?
     var sunset: Date?
+    /// Previsão hora a hora (Open-Meteo `hourly` + qualidade do ar). Vazio = sem detalhe.
+    var hours: [HourWeather] = []
+
+    /// A hora que contém `date` (ou a mais próxima, até 90 min).
+    func hour(at date: Date) -> HourWeather? {
+        hours.min { abs($0.time.timeIntervalSince(date)) < abs($1.time.timeIntervalSince(date)) }
+            .flatMap { abs($0.time.timeIntervalSince(date)) <= 90 * 60 ? $0 : nil }
+    }
 
     /// Céu limpo ou quase (WMO 0–2) e pouca chance de chuva.
     var isClear: Bool { code <= 2 && precipProb < 30 }
@@ -72,8 +94,10 @@ struct SolverPlace: Sendable, Hashable, Identifiable {
     var notes: String
     var sourceKind: SourceKind?
     var done: Bool
+    var kind: ListKind = .place
+    var extra: PlaceExtra?
 
-    var role: StopRole { StopRole(color: listColor) }
+    var role: StopRole { StopRole(kind: kind, color: listColor) }
     var rules: NotesRules { NotesRules(notes: notes) }
     var location: CLLocation { CLLocation(latitude: lat, longitude: lng) }
     var cost: Double { price ?? 0 }
@@ -86,14 +110,15 @@ extension SolverPlace {
                   sub: place.sub, cityId: place.cityId, area: place.area, lat: place.lat, lng: place.lng, price: place.price,
                   windows: place.windows, hours: place.hours, reservation: place.reservation, saveForEnd: place.saveForEnd,
                   allowBudgetException: place.allowBudgetException, queueMinutes: place.queueMinutes, notes: place.notes,
-                  sourceKind: place.source?.kind, done: place.isDone)
+                  sourceKind: place.source?.kind, done: place.isDone, kind: place.kind, extra: place.extra)
     }
 
-    init(_ p: BoardPlace, color: MustColor) {
+    init(_ p: BoardPlace, color: MustColor, kind: ListKind = .place) {
         self.init(id: p.id, name: p.name, nameLocal: p.nameLocal, listId: p.listId, listColor: color, sub: p.sub, cityId: p.cityId, area: p.area,
                   lat: p.lat ?? 0, lng: p.lng ?? 0, price: p.price, windows: p.window ?? [], hours: p.hours,
                   reservation: p.reservation, saveForEnd: p.saveForEnd ?? false, allowBudgetException: p.allowBudgetException ?? false,
-                  queueMinutes: p.queueMinutes, notes: p.notes ?? "", sourceKind: p.source?.kind, done: p.done != nil)
+                  queueMinutes: p.queueMinutes, notes: p.notes ?? "", sourceKind: p.source?.kind, done: p.done != nil,
+                  kind: kind, extra: p.extra)
     }
 }
 
@@ -140,6 +165,8 @@ struct DayRequest: Sendable {
     var weather: DayWeather?
     var walkMaxKm: Double = 1.5
     var oneMealPerWindow = true
+    /// Centro da cidade do dia (posição do sol). `nil` = usa a origem.
+    var cityCenter: CLLocationCoordinate2D?
     /// Desempate (↻ "outra proposta").
     var seed = 0
 
