@@ -80,14 +80,13 @@ final class DayPlanner {
 
     /// "ou diga: …" → intenção; reflete na tela (tipo, andar, orçamento, listas) antes de montar.
     /// Texto já virou intenção (Foundation Models ou palavras-chave): reflete na tela.
-    func apply(_ parsed: DayIntent, lists allLists: [MustList]) {
+    func apply(_ parsed: DayIntent) {
         intent = parsed
         if let k = parsed.kind { kind = k }
         if let w = parsed.walk { walk = w }
         if let b = parsed.budget { budget = b }
-        for list in allLists {
-            if let mode = parsed.roles[StopRole(color: list.color)] { lists[list.id] = mode }
-        }
+        // O texto liga/desliga listas só pela intenção (o solver lê `intent.roles` nas listas em auto).
+        // Não vira toque explícito: "fica pro fim" em BH continua pedindo o toggle de verdade.
     }
 
     // MARK: Trocar

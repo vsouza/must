@@ -27,7 +27,7 @@ struct MontarView: View {
         defer { parsing = false }
         let text = planner.text
         let intent = await IntentParser.parse(text, placeNames: places.map(\.name), useModel: settingsList.first?.onDeviceAI ?? true)
-        planner.apply(intent, lists: lists)
+        planner.apply(intent)
         parsedText = text
     }
     @FocusState private var textFocused: Bool
@@ -208,6 +208,7 @@ struct MontarView: View {
         case .on: return true
         case .off: return false
         case .auto:
+            if let fromText = planner.intent.roles[StopRole(color: list.color)] { return fromText == .on }
             if preview.stops.contains(where: { $0.place.listId == list.id }) { return true }
             return DaySolver.plan(for: planner.intent.kind ?? planner.kind).required.contains(StopRole(color: list.color))
         }
