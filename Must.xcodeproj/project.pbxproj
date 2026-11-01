@@ -33,16 +33,20 @@
 		24272338F7D1250862BDEE12 /* PlaceLogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CD1E440AD926B55E75952EB /* PlaceLogicTests.swift */; };
 		25F1D69D524D1DB8234C3152 /* MustTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9E45EB741EE7A4B0C62B1E9 /* MustTests.swift */; };
 		2F61642C63CD0B2F85023063 /* NotesRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC9FD34E64012CFB56E93D7 /* NotesRules.swift */; };
+		3113BDAF386AE5E23205A463 /* MapStyleLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8ABA50ADA5CB704BF467CFA /* MapStyleLoader.swift */; };
 		34D24804DAFF68EE0520CCB8 /* RegionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8E14B85DA86388832F3C18B /* RegionSheet.swift */; };
 		34D6081A5CB2767A55D164EE /* DayFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF11D40BC1FD6464D2737BB /* DayFlowTests.swift */; };
 		39B2257026FA7AEBB083FA2F /* Board.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D95D7682A4AE8EC7C64CFBE /* Board.swift */; };
 		3D9F337FE572341152D2EF55 /* ServiceParsingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E884E5C34972411E3851FCFF /* ServiceParsingTests.swift */; };
+		3E30C46610688819D69EF835 /* MapLibre in Frameworks */ = {isa = PBXBuildFile; productRef = 30987A7E19D256D9E25A36C6 /* MapLibre */; };
 		403322E17FFB7E87AA7A2809 /* seed-jp.json in Resources */ = {isa = PBXBuildFile; fileRef = 9249901293C5FA229AFF4AC2 /* seed-jp.json */; };
 		44A6CFBDC75FAD9AF6D5199D /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7F254E195A33BA760DE16C3A /* WidgetKit.framework */; };
 		486C94238E5229A67D788E4A /* seed-bh.json in Resources */ = {isa = PBXBuildFile; fileRef = 50B7B2806BAB98E03649662B /* seed-bh.json */; };
 		48AA788A7B981CC9E7AECA9D /* Values.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A1B075763A86D919443CA48 /* Values.swift */; };
 		494A874D8E4AEE61CFDA0A51 /* MustWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = DC4442205EBAF11DB237C5A7 /* MustWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		4D94C5CC7CFC1C46929A5AD9 /* FallbackAssistant.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0587B780E1391484184097EA /* FallbackAssistant.swift */; };
+		4F883441F30A6B37B80B25AE /* MapStyle in Resources */ = {isa = PBXBuildFile; fileRef = D99E300E5DA343D4F2D8B213 /* MapStyle */; };
+		5489E57875D5A3A90E3410EF /* MapPins.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84A3772999467B2DD84F0755 /* MapPins.swift */; };
 		557573511C2BA71F587A0011 /* RouteGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81C441C4CF94405A51158D55 /* RouteGeometry.swift */; };
 		564FEC9F3F1D7592641B2DB1 /* last-trains.json in Resources */ = {isa = PBXBuildFile; fileRef = 073EE5D0C62BCB42F2F0FB7C /* last-trains.json */; };
 		573A8C6B428AE9DF2820EFF2 /* InstrumentSerif-Italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 21F59305A744CEF4BA26807A /* InstrumentSerif-Italic.ttf */; };
@@ -118,6 +122,7 @@
 		EC51575A58E0DD54C67CB9DE /* CaptionFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3179781E81E77B5D303D63F /* CaptionFetcher.swift */; };
 		EC5C18C548CABCD692B91098 /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23249DD22EE3CC5D75564551 /* Log.swift */; };
 		ED12BECCA5AC6F9B3E206342 /* MustShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F5D9962BB74EFE458C08ABD /* MustShared.swift */; };
+		EF70CD60DFBE8BCECCFFDF76 /* MapLibreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D5285288E86B22BBED506EB /* MapLibreView.swift */; };
 		F3B861BD48945EB4A0FC2209 /* ReservationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 361BB6DBEF0297F500E175DB /* ReservationsView.swift */; };
 		FE391B26F92D6E130D85E84F /* OutsideBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2A8FAEF80A8121A587A860A /* OutsideBridge.swift */; };
 /* End PBXBuildFile section */
@@ -203,11 +208,13 @@
 		7BC23CD2D9B7A3D345E2FA14 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
 		7BCA759B67391FBACD605A54 /* ListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListView.swift; sourceTree = "<group>"; };
 		7CD1E440AD926B55E75952EB /* PlaceLogicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceLogicTests.swift; sourceTree = "<group>"; };
+		7D5285288E86B22BBED506EB /* MapLibreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapLibreView.swift; sourceTree = "<group>"; };
 		7D95D7682A4AE8EC7C64CFBE /* Board.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Board.swift; sourceTree = "<group>"; };
 		7F254E195A33BA760DE16C3A /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		80374DD7C366832956DAD9EC /* FlowLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowLayout.swift; sourceTree = "<group>"; };
 		80AB3193D4A8D68E8A7C7975 /* Archivo.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Archivo.ttf; sourceTree = "<group>"; };
 		81C441C4CF94405A51158D55 /* RouteGeometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteGeometry.swift; sourceTree = "<group>"; };
+		84A3772999467B2DD84F0755 /* MapPins.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapPins.swift; sourceTree = "<group>"; };
 		857547316EC7074891DD51AD /* Colors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Colors.swift; sourceTree = "<group>"; };
 		873F50CBBAED2C9EB558BCDD /* RegexIntentParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegexIntentParser.swift; sourceTree = "<group>"; };
 		87D1D2A66B5AA23C5106223F /* Must.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Must.entitlements; sourceTree = "<group>"; };
@@ -247,6 +254,7 @@
 		D4380F8F09B4251F1DECE96C /* ZenKakuGothicNew-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ZenKakuGothicNew-Bold.ttf"; sourceTree = "<group>"; };
 		D5D887EFA3C6F445E5F8EB35 /* WeatherService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherService.swift; sourceTree = "<group>"; };
 		D73F931FF893BEA99CFC8E94 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		D99E300E5DA343D4F2D8B213 /* MapStyle */ = {isa = PBXFileReference; lastKnownFileType = folder; name = MapStyle; path = Must/DesignSystem/MapStyle; sourceTree = SOURCE_ROOT; };
 		D9E45EB741EE7A4B0C62B1E9 /* MustTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MustTests.swift; sourceTree = "<group>"; };
 		DA6E59F40F1B2D3D5518007E /* Region.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Region.swift; sourceTree = "<group>"; };
 		DC4442205EBAF11DB237C5A7 /* MustWidgets.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = MustWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -261,11 +269,20 @@
 		F4F154F0FA0C43621F70D409 /* Formatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Formatting.swift; sourceTree = "<group>"; };
 		F6C9781C95F5102BF62B994C /* MustIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MustIcon.swift; sourceTree = "<group>"; };
 		F73465FDB27FA97ECEDBBB81 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		F8ABA50ADA5CB704BF467CFA /* MapStyleLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapStyleLoader.swift; sourceTree = "<group>"; };
 		FE11D8C2ED0A877468648D71 /* tokyo-lines.geojson */ = {isa = PBXFileReference; path = "tokyo-lines.geojson"; sourceTree = "<group>"; };
 		FED236518F13E68EAEBCC987 /* MustApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MustApp.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		0A2AAAB04FDABB3B75DCD049 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3E30C46610688819D69EF835 /* MapLibre in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		F6EDBCD9D63F076399ED0624 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -306,6 +323,9 @@
 		09F500CD5EA3D252AE1778C1 /* Map */ = {
 			isa = PBXGroup;
 			children = (
+				7D5285288E86B22BBED506EB /* MapLibreView.swift */,
+				84A3772999467B2DD84F0755 /* MapPins.swift */,
+				F8ABA50ADA5CB704BF467CFA /* MapStyleLoader.swift */,
 				BE3E6D8F34B608E1137D706F /* MapView.swift */,
 			);
 			path = Map;
@@ -363,6 +383,7 @@
 				C7973C051E70A6B3219E5B91 /* FormRows.swift */,
 				BF9EDF96B7E35C8B90CD7648 /* Glass.swift */,
 				510AFA185D11B399A89AD9EF /* Icons.swift */,
+				D99E300E5DA343D4F2D8B213 /* MapStyle */,
 				F6C9781C95F5102BF62B994C /* MustIcon.swift */,
 				CEA9433C369F5E569448A38F /* Typography.swift */,
 			);
@@ -721,8 +742,10 @@
 			buildPhases = (
 				F090CD6A9771D1FF6F666301 /* Sources */,
 				E28B6E6A4FE7C2863A639FE9 /* Resources */,
+				0A2AAAB04FDABB3B75DCD049 /* Frameworks */,
 				393063EECD9CF52CC4F87A21 /* Embed Foundation Extensions */,
 				7B5F9D1E9ECD837C2A9EDDA4 /* Copiar Secrets.plist (se existir) */,
+				C63125760C00772012FC4456 /* Copiar tiles do mapa (se existirem) */,
 			);
 			buildRules = (
 			);
@@ -731,6 +754,7 @@
 			);
 			name = Must;
 			packageProductDependencies = (
+				30987A7E19D256D9E25A36C6 /* MapLibre */,
 			);
 			productName = Must;
 			productReference = 56B2448E220317CEA9B0A97A /* Must.app */;
@@ -768,6 +792,9 @@
 			);
 			mainGroup = 27178B7214EDB7862C1E264A;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				73832C7347E1E4BBC9FC02D7 /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 030295A95B79B164BB72172D /* Products */;
 			projectDirPath = "";
@@ -813,6 +840,7 @@
 				B4E539D7E96122AB1C48E8CC /* GeistMono.ttf in Resources */,
 				D2DF4AE8A734205DC139C0A9 /* InstrumentSerif-Italic.ttf in Resources */,
 				60C3CD2375C9AEAB8EE16837 /* InstrumentSerif-Regular.ttf in Resources */,
+				4F883441F30A6B37B80B25AE /* MapStyle in Resources */,
 				0420DD8F9172BEA3EA7E9237 /* README.md in Resources */,
 				1997D8E9BAE575BD34F4F001 /* ZenKakuGothicNew-Bold.ttf in Resources */,
 				143F8A8613A4C8CB8860CD11 /* ZenKakuGothicNew-Medium.ttf in Resources */,
@@ -845,6 +873,25 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "SRC=\"${SRCROOT}/Secrets.plist\"\nDST=\"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/Secrets.plist\"\nif [ -f \"$SRC\" ]; then\n  cp \"$SRC\" \"$DST\"\n  echo \"Secrets.plist copiado\"\nelse\n  rm -f \"$DST\"\n  echo \"warning: Secrets.plist ausente — serviços ao vivo ficam desligados (ver Secrets.example.plist)\"\nfi\n";
+		};
+		C63125760C00772012FC4456 /* Copiar tiles do mapa (se existirem) */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Copiar tiles do mapa (se existirem)";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "SRC=\"${SRCROOT}/Must/Data/tiles\"\nDST=\"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/tiles\"\nmkdir -p \"$DST\"\nfound=0\nfor f in \"$SRC\"/*.pmtiles; do\n  [ -f \"$f\" ] || continue\n  found=1\n  if [ ! -f \"$DST/$(basename \"$f\")\" ] || [ \"$f\" -nt \"$DST/$(basename \"$f\")\" ]; then cp \"$f\" \"$DST/\"; fi\ndone\nif [ $found = 0 ]; then echo \"warning: sem tiles em Must/Data/tiles — o mapa usa o Protomaps hospedado (PROTOMAPS_KEY). Rode scripts/tiles.sh\"; fi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -911,6 +958,9 @@
 				5E280721697733309D36E7A5 /* ListView.swift in Sources */,
 				C746B3886460D56AD5A787F8 /* LocationService.swift in Sources */,
 				EC5C18C548CABCD692B91098 /* Log.swift in Sources */,
+				EF70CD60DFBE8BCECCFFDF76 /* MapLibreView.swift in Sources */,
+				5489E57875D5A3A90E3410EF /* MapPins.swift in Sources */,
+				3113BDAF386AE5E23205A463 /* MapStyleLoader.swift in Sources */,
 				DD5E6D8A757E93CC8EC8EBD3 /* MapView.swift in Sources */,
 				12EA9BA58876503AD27F40B9 /* MapsLinks.swift in Sources */,
 				9CD2200A8546E3B5F71FEF4D /* Models.swift in Sources */,
@@ -1258,6 +1308,25 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		73832C7347E1E4BBC9FC02D7 /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/maplibre/maplibre-gl-native-distribution";
+			requirement = {
+				kind = exactVersion;
+				version = 7.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		30987A7E19D256D9E25A36C6 /* MapLibre */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 73832C7347E1E4BBC9FC02D7 /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */;
+			productName = MapLibre;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = C973164D0CE54A211B6F0A05 /* Project object */;
 }

@@ -115,15 +115,15 @@ enum DebugLaunch {
         case "montar", "proposta", "trocar": router.push(.montar(date: region.calendar.startOfDay(for: AppClock.now)), on: .hoje)
         case "gasto": router.select(.hoje); router.sheet = .expense(placeId: nil)
         case "aceitar":
-            // Monta e aceita o dia de hoje com os padrões (prints da tela Hoje).
-            let settings = try? context.fetch(FetchDescriptor<Settings>()).first
-            let trip = try? context.fetch(FetchDescriptor<TripInfo>()).first
-            let places = (try? context.fetch(FetchDescriptor<Place>())) ?? []
-            let planner = DayPlanner(date: AppClock.now, region: region, settings: settings, existing: nil)
-            planner.build(catalog: places.solverCatalog, trip: trip, settings: settings, location: location.current)
-            try? planner.accept(context: context)
+            acceptToday(context: context, region: region, location: location)
             router.select(.hoje)
-        case "mapa": router.select(.mapa)
+        case "mapa":
+            // mapa:aceitar monta e aceita hoje e amanhã antes (rota e pinos numerados).
+            if arg == "aceitar" {
+                acceptToday(context: context, region: region, location: location)
+                acceptToday(context: context, region: region, location: location, offset: 1)
+            }
+            router.select(.mapa)
         case "assistente": router.sheet = .assistant
         case "viagem": router.push(.trip, on: .inicio)
         case "reservas": router.push(.reservations, on: .inicio)
@@ -132,6 +132,17 @@ enum DebugLaunch {
             Task { await services.sync.syncPlaces(context: context, region: region) }
         default: break
         }
+    }
+
+    /// Monta e aceita um dia (hoje + `offset`) com os padrões (prints da tela Hoje e do Mapa).
+    private static func acceptToday(context: ModelContext, region: Region, location: LocationService, offset: Int = 0) {
+        let settings = try? context.fetch(FetchDescriptor<Settings>()).first
+        let trip = try? context.fetch(FetchDescriptor<TripInfo>()).first
+        let places = (try? context.fetch(FetchDescriptor<Place>())) ?? []
+        let date = region.calendar.date(byAdding: .day, value: offset, to: AppClock.now) ?? AppClock.now
+        let planner = DayPlanner(date: date, region: region, settings: settings, existing: nil)
+        planner.build(catalog: places.solverCatalog, trip: trip, settings: settings, location: offset == 0 ? location.current : nil)
+        try? planner.accept(context: context)
     }
 }
 #endif

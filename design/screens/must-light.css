@@ -43,3 +43,9 @@ a{color:#1E73FF}a:hover{color:#0F5AD6}
 .photo{position:absolute;inset:0;background-size:cover;background-position:center;filter:saturate(.7)}
 .tint{position:absolute;inset:0;background:linear-gradient(135deg,var(--c1),var(--c2));opacity:.82}
 .credit{position:absolute;right:10px;bottom:8px;font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--ct);background:rgba(255,255,255,.55);border-radius:999px;padding:3px 7px}
+/* tipos novos */
+.m-photo{--c1:#E9EBEF;--c2:#8A94A6;--ct:#121316}
+.m-art{--c1:#DCCFFF;--c2:#8B5CF6;--ct:#2E1065}
+.m-sport{--c1:#FFD1C7;--c2:#FF5A3C;--ct:#5A1A0E}
+.gold{background:linear-gradient(135deg,#FFE9C2,#FFB347);color:#4A2E00}
+.dusk{background:linear-gradient(135deg,#C9D2FF,#5B6CFF);color:#161C66}

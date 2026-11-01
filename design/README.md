@@ -5,7 +5,7 @@
 | Tela | Arquivo | Abre a partir de | Prompt |
 |---|---|---|---|
 | Início | HomeClaro | tab bar / launch | 04 |
-| Musts (hub) | Musts | tab Musts | 04 |
+| Musts (hub, 8 tipos) | Musts | tab Musts | 04 · 13 |
 | Lista (Must eat › Sushi) | Lista | tile do hub | 04 |
 | Lugar | Lugar | Lista, Hoje, Mapa | 04 |
 | Nova lista | NovaLista | hub → "Nova lista" | 04 |
@@ -20,6 +20,10 @@
 | Mapa (papel em relevo) | Mapa | tab Mapa, Início "Perto de você" | 12 (base) · 11 (abertura) |
 | Mapa — nada perto | MapaLonge | abertura sem nada a 500 m | 11 |
 | Lugar › Dicas de quem foi | Dicas | fim da tela do Lugar | 11 |
+| Lugar › Must photo — luz e sol | Foto | Lista photo, Luz de hoje | 13 |
+| Luz de hoje — dia de fotografia | Luz | Hoje (dia fotografia), Lugar photo | 13 |
+| Lugar › Must art — entrada e temporada | Arte | Lista art | 13 |
+| Lugar › Must sport — condições | Esporte | Lista sport | 13 |
 | Assistente (vazio) | Assistente | Início +, FAB do Hoje | 08 |
 | Assistente respondendo | Chat | Assistente → pergunta | 08 |
 | Viagem | Viagem | Início aba Viagem | 09 |

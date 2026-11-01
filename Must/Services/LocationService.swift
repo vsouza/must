@@ -10,6 +10,8 @@ final class LocationService: NSObject {
     private(set) var device: CLLocation?
     /// Posição simulada (menu escondido), se ligada.
     private(set) var simulated: CLLocation?
+    /// Direção pra onde o aparelho aponta (graus, norte = 0), pro cone do "você" no mapa.
+    private(set) var heading: CLLocationDirection?
 
     @ObservationIgnored private let manager = CLLocationManager()
     @ObservationIgnored private var isUpdating = false
@@ -47,6 +49,10 @@ final class LocationService: NSObject {
         guard isAuthorized, !isUpdating else { return }
         isUpdating = true
         manager.startUpdatingLocation()
+        if CLLocationManager.headingAvailable() {
+            manager.headingFilter = 8
+            manager.startUpdatingHeading()
+        }
         Log.location.info("GPS ligado")
     }
 
@@ -54,6 +60,7 @@ final class LocationService: NSObject {
         guard isUpdating else { return }
         isUpdating = false
         manager.stopUpdatingLocation()
+        manager.stopUpdatingHeading()
         Log.location.info("GPS desligado")
     }
 
@@ -85,6 +92,11 @@ extension LocationService: CLLocationManagerDelegate {
 
     nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         MainActor.assumeIsolated { handle(locations: locations) }
+    }
+
+    nonisolated func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
+        let value = newHeading.trueHeading >= 0 ? newHeading.trueHeading : newHeading.magneticHeading
+        MainActor.assumeIsolated { heading = value }
     }
 
     nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: any Error) {

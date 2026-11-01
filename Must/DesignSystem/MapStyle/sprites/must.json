@@ -1,0 +1,16 @@
+{
+ "dots-green": {
+  "x": 0,
+  "y": 0,
+  "width": 8,
+  "height": 8,
+  "pixelRatio": 1
+ },
+ "station": {
+  "x": 8,
+  "y": 0,
+  "width": 12,
+  "height": 12,
+  "pixelRatio": 1
+ }
+}

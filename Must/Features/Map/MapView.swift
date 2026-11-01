@@ -1,26 +1,9 @@
 import CoreLocation
-import MapKit
 import SwiftData
 import SwiftUI
 
-/// Camadas do mapa.
-enum MapLayer: String, CaseIterable, Identifiable {
-    case route, openNow, metro, allMusts
-
-    var id: String { rawValue }
-
-    var label: String {
-        switch self {
-        case .route: "Roteiro"
-        case .openNow: "Abertos agora"
-        case .metro: "Metrô"
-        case .allMusts: "Todos os musts"
-        }
-    }
-}
-
-/// Mapa do Must: base clara e vazia, metrô nas cores oficiais, rota azul do dia, pinos 済/número,
-/// musts abertos em anel azul, escala fixa e card da próxima parada.
+/// Mapa do Must: base "papel em relevo" (MapLibre + PMTiles), metrô, rota de hoje (feito em linha, por fazer em
+/// contas), rota de amanhã tracejada, carimbos dos musts sem plano e a sheet "Perto de você".
 struct MapView: View {
     @Environment(AppRouter.self) private var router
     @Environment(RegionStore.self) private var store
@@ -31,37 +14,48 @@ struct MapView: View {
     @Query private var settingsList: [Settings]
     @Query private var trips: [TripInfo]
 
-    @State private var position: MapCameraPosition = .automatic
-    @State private var layers: Set<MapLayer> = [.route, .metro]
-    @State private var locked = true
-    @State private var span: MKCoordinateSpan?
-    @State private var center: CLLocationCoordinate2D?
-    @State private var mapHeight: CGFloat = 800
+    @State private var layers: Set<MapLayer> = [.today, .tomorrow, .unplanned, .metro]
+    @State private var camera: MapCameraState?
+    @State private var command: MapCameraCommand?
     @State private var routes = RouteGeometry()
     @State private var selectedId: String?
     @State private var query = ""
     @State private var didCenter = false
 
-    /// Distância da câmera na escala de bairro (~1,4 km de largura na tela).
-    static let neighborhoodDistance: CLLocationDistance = 2600
+    /// Escala de bairro: ~900 m de largura de tela (a barra mostra "300 m").
+    static let neighborhoodWidth: Double = 900
+    /// "Perto de você".
+    static let nearRadius: CLLocationDistance = 500
 
     private var region: Region { store.region }
     private var now: Date { AppClock.now }
     private var transit: TransitMap { TransitLoader.load(region) }
     private var walkMaxKm: Double { settingsList.first?.walkMaxKm ?? 1.5 }
+    private var here: CLLocation? { services.location.current }
 
-    private var today: PlannedDay? {
+    private func accepted(_ offset: Int) -> PlannedDay? {
         let start = region.calendar.startOfDay(for: now)
-        return days.first { $0.date == start && $0.accepted }
+        guard let day = region.calendar.date(byAdding: .day, value: offset, to: start) else { return nil }
+        return days.first { $0.date == day && $0.accepted }
     }
 
-    private var stops: [Stop] { today?.orderedStops.filter { $0.place != nil } ?? [] }
+    private var stops: [Stop] { accepted(0)?.orderedStops.filter { $0.place != nil } ?? [] }
+    private var tomorrowStops: [Stop] { accepted(1)?.orderedStops.filter { $0.place != nil } ?? [] }
     private var nextStop: Stop? { stops.first { !$0.done } }
 
-    private var here: CLLocationCoordinate2D? { services.location.current?.coordinate }
+    private var currentCityName: String? { trips.first?.city(on: now, calendar: region.calendar)?.name }
+
+    /// Musts da cidade de hoje que não estão no roteiro de hoje nem de amanhã.
+    private var unplannedPlaces: [Place] {
+        let planned = Set((stops + tomorrowStops).compactMap { $0.place?.id })
+        return places.filter { p in
+            !planned.contains(p.id) && !p.isDone
+                && (currentCityName == nil || trips.first?.city(id: p.cityId)?.name == currentCityName)
+        }
+    }
 
     private var fallbackCenter: CLLocationCoordinate2D {
-        if let here { return here }
+        if let here { return here.coordinate }
         if let next = nextStop?.place { return next.coordinate }
         if let city = trips.first?.city(on: now, calendar: region.calendar) {
             return CLLocationCoordinate2D(latitude: city.lat, longitude: city.lng)
@@ -71,463 +65,553 @@ struct MapView: View {
 
     var body: some View {
         ZStack {
-            Color.must.surface2.ignoresSafeArea()
-            GeometryReader { geo in
-                map.onAppear { mapHeight = geo.size.height }
-            }
-            .ignoresSafeArea()
+            Color(hex: 0xE9EBEF).ignoresSafeArea()
+            MapLibreView(scene: scene, command: command,
+                         onCamera: { camera = $0 },
+                         onSelect: select)
+                .ignoresSafeArea()
             overlays
         }
         .onAppear(perform: appear)
         .onChange(of: router.mapShowsOpenNow) { _, open in if open { consumeOpenNow() } }
-        .onChange(of: stops.map(\.id)) { _, _ in requestRoutes() }
+        .onChange(of: (stops + tomorrowStops).map(\.id)) { _, _ in requestRoutes() }
     }
 
-    // MARK: Mapa
+    // MARK: Cena
 
-    private var map: some View {
-        Map(position: $position, bounds: locked ? MapCameraBounds(maximumDistance: Self.neighborhoodDistance * 1.6) : nil) {
-            if layers.contains(.metro) { metroContent }
-            if layers.contains(.route) { routeContent }
-            if layers.contains(.openNow) || layers.contains(.allMusts) { ringsContent }
-            if let here {
-                Annotation("Você", coordinate: here, anchor: .center) { YouDot() }
-                    .annotationTitles(.hidden)
-            }
+    private var scene: MapScene {
+        var scene = MapScene(region: region, layers: layers, pins: pins, metro: transit)
+        let legs = Array(zip(stops, stops.dropFirst()))
+        for (a, b) in legs {
+            guard let pa = a.place, let pb = b.place else { continue }
+            let path = routes.path(from: pa, to: pb)
+            if b.done { scene.routeDone.append(path) } else { scene.routeFuture.append(path) }
         }
-        .mapStyle(.standard(elevation: .flat, emphasis: .muted, pointsOfInterest: .excludingAll, showsTraffic: false))
-        .mapControls {}
-        .onMapCameraChange(frequency: .continuous) { context in
-            span = context.region.span
-            center = context.region.center
+        for (a, b) in zip(tomorrowStops, tomorrowStops.dropFirst()) {
+            if let pa = a.place, let pb = b.place { scene.routeTomorrow.append(routes.path(from: pa, to: pb)) }
         }
+        scene.you = here?.coordinate
+        scene.heading = services.location.heading
+        return scene
     }
 
-    @MapContentBuilder private var metroContent: some MapContent {
-        ForEach(transit.lines) { line in
-            ForEach(Array(line.paths.enumerated()), id: \.offset) { _, path in
-                MapPolyline(coordinates: path).stroke(line.color, lineWidth: 3)
-            }
+    private var pins: [MapPin] {
+        var pins: [MapPin] = []
+        let next = nextStop
+        for (i, stop) in stops.enumerated() {
+            guard let place = stop.place else { continue }
+            let status: MapPin.TodayStatus = stop.done ? .done : (stop.id == next?.id ? .next : .future)
+            let caption = status == .next ? nextCaption(place) : nil
+            pins.append(MapPin(id: "today-\(place.id)", coordinate: place.coordinate,
+                               kind: .today(number: i + 1, status: status, label: caption), placeId: place.id, layer: .today))
         }
-        let zoom = span?.latitudeDelta ?? 1
-        if zoom < 0.06 {
-            ForEach(visibleStations) { station in
-                Annotation(station.name, coordinate: station.coordinate, anchor: .center) {
-                    StationDot(name: station.name, showsLabel: zoom < 0.025, isJapanese: region == .jp)
-                }
-                .annotationTitles(.hidden)
-            }
+        for (i, stop) in tomorrowStops.enumerated() {
+            guard let place = stop.place, !stops.contains(where: { $0.place?.id == place.id }) else { continue }
+            pins.append(MapPin(id: "tomorrow-\(place.id)", coordinate: place.coordinate,
+                               kind: .tomorrow(number: i + 1), placeId: place.id, layer: .tomorrow))
         }
-    }
-
-    private var visibleStations: [TransitStation] {
-        guard let center, let span else { return [] }
-        return transit.stations.filter {
-            abs($0.coordinate.latitude - center.latitude) < span.latitudeDelta * 0.7
-                && abs($0.coordinate.longitude - center.longitude) < span.longitudeDelta * 0.7
+        for place in unplannedPlaces {
+            pins.append(MapPin(id: "must-\(place.id)", coordinate: place.coordinate,
+                               kind: .unplanned(kanji: kanji(place), color: place.list?.color ?? .eat, open: openState(place)),
+                               placeId: place.id, layer: .unplanned))
         }
-    }
-
-    @MapContentBuilder private var routeContent: some MapContent {
-        let route = stops
-        ForEach(Array(zip(route, route.dropFirst()).enumerated()), id: \.offset) { _, pair in
-            if let a = pair.0.place, let b = pair.1.place {
-                let done = pair.1.done
-                MapPolyline(coordinates: routes.path(from: a, to: b))
-                    .stroke(Color.must.blue.opacity(0.95),
-                            style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round, dash: done ? [] : [2, 9]))
-            }
-        }
-        ForEach(Array(route.enumerated()), id: \.element.id) { index, stop in
-            if let place = stop.place {
-                Annotation(place.name, coordinate: place.coordinate, anchor: .center) {
-                    Button { selectedId = place.id } label: {
-                        StopPin(number: index + 1, done: stop.done, isNext: stop.id == nextStop?.id)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("\(index + 1). \(place.name)\(stop.done ? ", feito" : "")")
-                }
-                .annotationTitles(.hidden)
-            }
-        }
-    }
-
-    /// Musts fora do roteiro: abertos agora (ou todos), como anel azul.
-    @MapContentBuilder private var ringsContent: some MapContent {
         let inRoute = Set(stops.compactMap { $0.place?.id })
-        let cityName = trips.first?.city(on: now, calendar: region.calendar)?.name
-        let showAll = layers.contains(.allMusts)
-        let rings = places.filter { p in
-            let sameCity = cityName == nil || trips.first?.city(id: p.cityId)?.name == cityName
-            return !inRoute.contains(p.id) && !p.isDone && sameCity
-                && (showAll || p.openState(at: now, timeZone: region.timeZone).isOpen)
+        for place in places where place.isDone && !inRoute.contains(place.id) {
+            pins.append(MapPin(id: "done-\(place.id)", coordinate: place.coordinate,
+                               kind: .today(number: 0, status: .done, label: nil), placeId: place.id, layer: .done))
         }
-        ForEach(rings) { place in
-            Annotation(place.name, coordinate: place.coordinate, anchor: .center) {
-                Button { router.push(.place(id: place.id), on: .mapa) } label: { OpenRing(selected: selectedId == place.id) }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(place.name)
-            }
-            .annotationTitles(.hidden)
-        }
+        return pins
     }
 
-    // MARK: Por cima
+    private func kanji(_ place: Place) -> String {
+        if let k = place.list?.kanji, !k.isEmpty { return String(k.prefix(1)) }
+        return String((place.list?.name ?? place.name).prefix(1)).uppercased()
+    }
 
-    private var overlays: some View {
-        VStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack(spacing: 8) {
-                    searchField
-                    layersMenu
-                }
-                HStack(spacing: 6) {
-                    ForEach([MapLayer.route, .openNow, .metro]) { layer in
-                        Button { toggle(layer) } label: { layerPill(layer) }
-                            .buttonStyle(MustPressStyle())
-                    }
-                }
-            }
-            .padding(.horizontal, 22)
-            .padding(.top, 8)
-
-            Spacer()
-
-            HStack(alignment: .bottom) {
-                ScaleBar(metersPerPoint: metersPerPoint)
-                Spacer()
-                VStack(spacing: 8) {
-                    IconButton(.voceGps, style: .glass, label: "Centralizar em mim") { centerOn(fallbackCenter) }
-                    Button { toggleLock() } label: {
-                        Text("300").font(.must.mono(11, .semibold))
-                            .foregroundStyle(locked ? .white : Color.must.ink)
-                            .frame(width: 40, height: 40)
-                            .background { if locked { Circle().fill(Color.must.ink) } else { Color.clear.glass(cornerRadius: 20) } }
-                    }
-                    .buttonStyle(MustPressStyle())
-                    .accessibilityLabel(locked ? "Destravar zoom" : "Travar zoom no bairro")
-                }
-            }
-            .padding(.horizontal, 22)
-            .padding(.bottom, 12)
-
-            bottomCard
-                .padding(.horizontal, 22)
-                .padding(.bottom, 92)
+    private func openState(_ place: Place) -> PinOpenState {
+        #if DEBUG
+        if UserDefaults.standard.bool(forKey: "debugPinsOpen") { // -debugPinsOpen YES: aberto / fechando / fechado
+            return [PinOpenState.open, .closingSoon(remaining: 0.4), .closed][abs(place.id.hashValue) % 3]
+        }
+        #endif
+        switch place.openState(at: now, timeZone: region.timeZone) {
+        case .open(let until):
+            guard let until, let close = Settings.minutes(from: until) else { return .open }
+            var left = close - minutesNow
+            if left < 0 { left += 1440 }
+            return left <= 30 ? .closingSoon(remaining: Double(left) / 30) : .open
+        case .closed: return .closed
+        case .unknown: return .unknown
         }
     }
 
-    private var openNearby: [Place] {
-        guard let location = services.location.current else { return [] }
-        return places.filter { !$0.isDone && $0.openState(at: now, timeZone: region.timeZone).isOpen && $0.location.distance(from: location) <= 1500 }
+    private var minutesNow: Int {
+        region.calendar.component(.hour, from: now) * 60 + region.calendar.component(.minute, from: now)
     }
+
+    /// "Inimá · 14 min a pé"
+    private func nextCaption(_ place: Place) -> String {
+        guard let leg = legFromHere(to: place) else { return Self.shortName(place.name) }
+        return "\(Self.shortName(place.name)) · \(leg.text)"
+    }
+
+    private func legFromHere(to place: Place) -> (minutes: Int, text: String, mode: LegMode)? {
+        guard let here else { return nil }
+        let leg = DaySolver.leg(here.coordinate, place.coordinate, walkMax: walkMaxKm)
+        let minutes = services.eta.minutes(from: here.coordinate, to: place.coordinate, transit: leg.mode == .metro) ?? leg.minutes
+        return (minutes, leg.mode == .walk ? "\(minutes) min a pé" : "\(minutes) min de metrô", leg.mode)
+    }
+
+    /// "Museu Inimá de Paula" → "Inimá"; nomes curtos ficam inteiros.
+    static func shortName(_ name: String) -> String {
+        let generic: Set<String> = ["museu", "mercado", "igreja", "praça", "parque", "templo", "santuário", "restaurante", "casa", "centro"]
+        let words = name.split(separator: " ").map(String.init)
+        guard words.count >= 3, generic.contains(words[0].lowercased()) else { return name }
+        return words[1]
+    }
+
+    // MARK: Perto de você
+
+    private struct Near: Identifiable {
+        var place: Place
+        var meters: CLLocationDistance
+        var id: String { place.id }
+    }
+
+    private var nearby: [Near] {
+        guard let here else { return [] }
+        let visible = Set(pins.filter { layers.contains($0.layer) }.compactMap(\.placeId))
+        return places.filter { visible.contains($0.id) && !$0.isDone }
+            .map { Near(place: $0, meters: $0.location.distance(from: here)) }
+            .filter { $0.meters <= Self.nearRadius }
+            .sorted { $0.meters < $1.meters }
+    }
+
+    private func isOpen(_ place: Place) -> Bool { place.openState(at: now, timeZone: region.timeZone).isOpen }
 
     private var areaName: String {
         let c = fallbackCenter
         let location = CLLocation(latitude: c.latitude, longitude: c.longitude)
         let nearest = places.filter { $0.area != nil }.min { $0.location.distance(from: location) < $1.location.distance(from: location) }
         if let nearest, nearest.location.distance(from: location) < 2500, let area = nearest.area { return area }
-        return trips.first?.city(on: now, calendar: region.calendar)?.name ?? region.displayName
+        return currentCityName ?? region.displayName
     }
 
-    private var searchField: some View {
-        HStack(spacing: 8) {
-            MustIconView(.buscar, size: 16).foregroundStyle(Color.must.secondary)
-            TextField("\(areaName) · \(openNearby.count) musts abertos", text: $query)
-                .font(.must.archivo(14))
+    // MARK: Por cima
+
+    private var overlays: some View {
+        let near = nearby
+        return VStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 10) {
+                    searchField(near)
+                    Button { router.sheet = .assistant } label: {
+                        MustIconView(.assistente, size: 20)
+                            .foregroundStyle(near.isEmpty ? .white : Color.must.greenText)
+                            .frame(width: 52, height: 52)
+                            .background(Circle().fill(near.isEmpty ? Color.must.ink : Color.must.green))
+                            .shadow(color: Color(hex: 0x121316, opacity: 0.16), radius: 10, y: 6)
+                    }
+                    .buttonStyle(MustPressStyle())
+                    .accessibilityLabel("Assistente")
+                }
+                .padding(.horizontal, 22)
+                legend
+            }
+            .padding(.top, 8)
+
+            Spacer()
+
+            HStack(alignment: .bottom) {
+                ScaleBar(metersPerPoint: camera?.metersPerPoint)
+                Spacer()
+                VStack(spacing: 10) {
+                    roundButton(label: "Centralizar em mim") {
+                        MustIconView(.voceGps, size: 20).foregroundStyle(Color.must.ink)
+                    } action: { centerOnMe() }
+                    roundButton(label: "Escala de bairro") {
+                        Text("300").font(.must.mono(13, .semibold)).foregroundStyle(Color.must.ink)
+                    } action: { centerOnMe() }
+                }
+            }
+            .padding(.horizontal, 22)
+            .padding(.bottom, 10)
+
+            sheet(near)
+                .padding(.horizontal, 22)
+                .overlay(alignment: .bottomTrailing) {
+                    Text("© OpenStreetMap · Protomaps")
+                        .font(.must.archivo(9))
+                        .foregroundStyle(Color.must.secondary.opacity(0.9))
+                        .padding(.trailing, 26)
+                        .offset(y: 14)
+                }
+                .padding(.bottom, 96)
+        }
+    }
+
+    private func searchField(_ near: [Near]) -> some View {
+        let open = near.filter { isOpen($0.place) }.count
+        let summary = near.isEmpty ? "nada a 500 m" : "\(near.count) \(near.count == 1 ? "must" : "musts") a 500 m · \(open) \(open == 1 ? "aberto" : "abertos")"
+        return HStack(spacing: 10) {
+            MustIconView(.buscar, size: 18).foregroundStyle(Color.must.secondary)
+            TextField("\(areaName) · \(summary)", text: $query)
+                .font(.must.archivo(15))
+                .minimumScaleFactor(0.8)
                 .submitLabel(.search)
                 .onSubmit(search)
                 .autocorrectionDisabled()
         }
-        .padding(.horizontal, 14)
-        .frame(height: 40)
-        .glass(cornerRadius: 20)
-    }
-
-    private var layersMenu: some View {
-        Menu {
-            ForEach(MapLayer.allCases) { layer in
-                Button { toggle(layer) } label: {
-                    Label(layer.label, systemImage: layers.contains(layer) ? "checkmark.circle.fill" : "circle")
-                }
-            }
-            if let attribution = transit.attribution {
-                Section { Text("metrô: \(attribution)") }
-            }
-        } label: {
-            MustIconView(.camadas, size: 17)
-                .foregroundStyle(Color.must.ink)
-                .frame(width: 40, height: 40)
-                .background(Color.clear.glass(cornerRadius: 20))
-        }
-        .accessibilityLabel("Camadas")
-    }
-
-    private func layerPill(_ layer: MapLayer) -> some View {
-        let on = layers.contains(layer)
-        return Text(layer.label)
-            .font(.must.archivo(13, .semibold))
-            .foregroundStyle(on ? .white : Color.must.ink)
-            .padding(.vertical, 9)
-            .padding(.horizontal, 13)
-            .background {
-                if on { Capsule().fill(Color.must.ink).shadow(color: Color(hex: 0x121316, opacity: 0.14), radius: 8, y: 6) }
-                else { Color.clear.glass(cornerRadius: 18) }
-            }
-    }
-
-    // MARK: Card inferior
-
-    @ViewBuilder private var bottomCard: some View {
-        let selected = selectedId.flatMap { id in places.first { $0.id == id } }
-        if let place = selected ?? nextStop?.place {
-            let index = stops.firstIndex { $0.place?.id == place.id }
-            placeCard(place, number: index.map { $0 + 1 }, stop: index.map { stops[$0] })
-        } else {
-            VStack(alignment: .leading, spacing: 12) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(today == nil ? "Nenhum dia montado hoje" : "Dia feito 済").mustPlace()
-                    Text(today == nil ? "monte o dia pra ver a rota e as paradas no mapa" : "todas as paradas de hoje têm 済").mustMeta()
-                }
-                if today == nil {
-                    PrimaryButton("Montar o dia", icon: .montarAjustar, style: .dark) {
-                        router.push(.montar(date: region.calendar.startOfDay(for: now)), on: .hoje)
-                    }
-                }
-            }
-            .padding(18)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-            .glass(cornerRadius: 22)
-        }
-    }
-
-    private func placeCard(_ place: Place, number: Int?, stop: Stop?) -> some View {
-        let at = stop?.at ?? place.reservation?.at
-        var meta = Text("")
-        var leave: String?
-        var pieces: [Text] = []
-        if place.hasReservation(on: now, calendar: region.calendar), let r = place.reservation {
-            let time = Text(region.timeString(r.at)).font(.must.mono(14, .semibold)).foregroundStyle(Color.must.ink)
-            pieces.append(Text("reserva \(time)"))
-        } else if let at {
-            pieces.append(Text(region.timeString(at)).font(.must.mono(14, .semibold)).foregroundStyle(Color.must.ink))
-        }
-        if let current = services.location.current {
-            let leg = DaySolver.leg(current.coordinate, place.coordinate, walkMax: walkMaxKm)
-            let minutes = services.eta.minutes(from: current.coordinate, to: place.coordinate, transit: leg.mode == .metro) ?? leg.minutes
-            pieces.append(Text(leg.mode == .walk ? "\(minutes) min a pé" : "metrô ~\(minutes) min"))
-            if let at, RoutesService.leaveAt(at, travelMinutes: minutes) > now {
-                leave = region.timeString(RoutesService.leaveAt(at, travelMinutes: minutes))
-            }
-        }
-        if case .closed(.none, let opensAt?) = place.openState(at: now, timeZone: region.timeZone),
-           let minutes = Settings.minutes(from: opensAt) {
-            let nowMinutes = region.calendar.component(.hour, from: now) * 60 + region.calendar.component(.minute, from: now)
-            let delta = minutes - nowMinutes
-            pieces.append(Text(delta < 60 ? "abre em \(max(1, delta)) min" : "abre \(opensAt)"))
-        }
-        for (i, piece) in pieces.enumerated() { meta = i == 0 ? piece : Text("\(meta) · \(piece)") }
-
-        return VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .center, spacing: 12) {
-                if let number {
-                    Text("\(number)").font(.must.mono(13, .semibold)).foregroundStyle(.white)
-                        .frame(width: 34, height: 34).background(Circle().fill(stop?.done == true ? Color.must.green : Color.must.ink))
-                }
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Text(place.name).font(.must.archivo(19, .semibold)).tracking(-0.2).foregroundStyle(Color.must.ink).lineLimit(1)
-                        if let local = place.nameLocal {
-                            Text(local).font(.must.kanji(12, bold: false)).foregroundStyle(Color.must.secondary).lineLimit(1)
-                        }
-                    }
-                    meta.font(.must.archivo(13)).foregroundStyle(Color.must.secondary).lineLimit(2)
-                }
-                Spacer(minLength: 6)
-                if let leave {
-                    Text("saia \(leave)").font(.must.archivo(14, .semibold)).foregroundStyle(Color.must.greenText)
-                        .padding(.horizontal, 12).frame(height: 32).background(Capsule().fill(Color.must.green))
-                }
-            }
-            HStack(spacing: 8) {
-                Button { MapsLinks.openApple(to: place.coordinate, name: place.name, mode: .transit) } label: {
-                    HStack(spacing: 7) { MustIconView(.rota, size: 15); Text("Apple Maps") }
-                        .font(.must.archivo(14, .semibold)).foregroundStyle(Color.must.ink)
-                        .frame(maxWidth: .infinity).frame(height: 42)
-                        .overlay(Capsule().strokeBorder(Color.must.lineStrong))
-                }
-                Button { MapsLinks.openGoogle(to: place.coordinate, mode: .transit) } label: {
-                    Text("Google Maps").font(.must.archivo(14, .semibold)).foregroundStyle(Color.must.ink)
-                        .frame(maxWidth: .infinity).frame(height: 42)
-                        .overlay(Capsule().strokeBorder(Color.must.lineStrong))
-                }
-                IconButton(.avancar, style: .dark, size: 42, label: "Abrir \(place.name)") {
-                    router.push(.place(id: place.id), on: .mapa)
-                }
-            }
-            .buttonStyle(MustPressStyle())
-        }
         .padding(.horizontal, 18)
-        .padding(.vertical, 16)
-        .background(Color.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .glass(cornerRadius: 22)
-        .onTapGesture { router.push(.place(id: place.id), on: .mapa) }
+        .frame(height: 52)
+        .glass(cornerRadius: 26)
+    }
+
+    private var legend: some View {
+        ScrollView(.horizontal) {
+            HStack(spacing: 8) {
+                ForEach(MapLayer.allCases) { layer in
+                    Button { toggle(layer) } label: { chip(layer) }
+                        .buttonStyle(MustPressStyle())
+                        .accessibilityAddTraits(layers.contains(layer) ? .isSelected : [])
+                }
+            }
+            .padding(.horizontal, 22)
+            .padding(.vertical, 4)
+        }
+        .scrollIndicators(.hidden)
+    }
+
+    private func chip(_ layer: MapLayer) -> some View {
+        let on = layers.contains(layer)
+        return HStack(spacing: 7) {
+            switch layer {
+            case .today:
+                Text("\(stops.filter { !$0.done }.count)").font(.must.mono(10, .semibold)).foregroundStyle(.white)
+                    .frame(width: 18, height: 18).background(Circle().fill(Color.must.ink))
+            case .tomorrow:
+                Circle().strokeBorder(Color.must.blue, style: StrokeStyle(lineWidth: 1.5, dash: [3, 2])).frame(width: 16, height: 16)
+            case .unplanned:
+                Text("食").font(.must.kanji(13)).foregroundStyle(MustColor.eat.strong)
+            case .done:
+                Text("済").font(.must.kanji(14)).foregroundStyle(Color.must.ink)
+            case .metro:
+                Capsule().fill(transit.lines.first?.color ?? Color.must.blue).frame(width: 14, height: 4)
+            }
+            Text(layer.label).font(.must.archivo(15, .semibold)).foregroundStyle(Color.must.ink)
+        }
+        .padding(.horizontal, 14)
+        .frame(height: 42)
+        .background(Capsule().fill(Color.white.opacity(on ? 0.96 : 0.6)))
+        .overlay(Capsule().strokeBorder(Color.must.line))
+        .shadow(color: Color(hex: 0x121316, opacity: on ? 0.08 : 0), radius: 8, y: 4)
+        .opacity(on ? 1 : 0.45)
+    }
+
+    private func roundButton<Label: View>(label: String, @ViewBuilder content: () -> Label, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            content()
+                .frame(width: 52, height: 52)
+                .background(Circle().fill(.white))
+                .overlay(Circle().strokeBorder(Color.must.line))
+                .shadow(color: Color(hex: 0x121316, opacity: 0.12), radius: 8, y: 4)
+        }
+        .buttonStyle(MustPressStyle())
+        .accessibilityLabel(label)
+    }
+
+    // MARK: Sheet
+
+    @ViewBuilder private func sheet(_ near: [Near]) -> some View {
+        if let id = selectedId, let place = places.first(where: { $0.id == id }) {
+            let index = stops.firstIndex { $0.place?.id == place.id }
+            PlaceSheetCard(place: place, number: index.map { $0 + 1 }, stop: index.map { stops[$0] },
+                           leg: legFromHere(to: place), region: region, now: now,
+                           onClose: { selectedId = nil },
+                           onOpen: { router.push(.place(id: place.id), on: .mapa) },
+                           onDay: { router.select(.hoje) })
+        } else if !near.isEmpty || nextStop != nil {
+            VStack(alignment: .leading, spacing: 0) {
+                if !near.isEmpty {
+                    HStack {
+                        Micro("perto de você · 500 m")
+                        Spacer()
+                        let open = near.filter { isOpen($0.place) }.count
+                        Text("\(open) \(open == 1 ? "aberto" : "abertos")").font(.must.archivo(13)).foregroundStyle(Color.must.secondary)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 18)
+                    ScrollView(.horizontal) {
+                        HStack(spacing: 10) {
+                            ForEach(near.prefix(3)) { item in
+                                Button { selectedId = item.place.id } label: { miniCard(item) }.buttonStyle(MustPressStyle())
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                    }
+                    .scrollIndicators(.hidden)
+                    .padding(.top, 12)
+                    .padding(.bottom, nextStop == nil ? 16 : 0)
+                }
+                if let stop = nextStop, let place = stop.place {
+                    if !near.isEmpty { RowDivider().padding(.horizontal, 20).padding(.top, 14) }
+                    nextRow(stop: stop, place: place)
+                }
+            }
+            .background(Color.white, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
+            .shadow(color: Color(hex: 0x121316, opacity: 0.10), radius: 18, y: 8)
+        } else {
+            emptyCard
+        }
+    }
+
+    private func miniCard(_ item: Near) -> some View {
+        let place = item.place
+        let state = place.openState(at: now, timeZone: region.timeZone)
+        let color = place.list?.color ?? .eat
+        return VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 7) {
+                Text(kanji(place)).font(.must.kanji(14)).foregroundStyle(color.strong)
+                Text(place.name).font(.must.archivo(16, .semibold)).foregroundStyle(Color.must.ink).lineLimit(1)
+            }
+            HStack(spacing: 4) {
+                switch state {
+                case .open: Text("aberto").font(.must.archivo(13, .semibold)).foregroundStyle(Color.must.greenText)
+                case .closed(_, let opensAt): Text(opensAt.map { "abre \($0)" } ?? "fechado").font(.must.archivo(13)).foregroundStyle(Color.must.secondary)
+                case .unknown: Text(place.list?.displayName ?? "").font(.must.archivo(13)).foregroundStyle(Color.must.secondary)
+                }
+                Text("· \(Self.meters(item.meters))").font(.must.archivo(13)).foregroundStyle(Color.must.secondary)
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .frame(minWidth: 150, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(Color.must.line))
+    }
+
+    private func nextRow(stop: Stop, place: Place) -> some View {
+        let number = (stops.firstIndex { $0.id == stop.id } ?? 0) + 1
+        let leg = legFromHere(to: place)
+        var parts: [String] = []
+        if let leg { parts.append(leg.text) }
+        if case .closed(.none, let opensAt?) = place.openState(at: now, timeZone: region.timeZone), let open = Settings.minutes(from: opensAt) {
+            let delta = open - minutesNow
+            if delta > 0 { parts.append(delta < 60 ? "abre em \(delta) min" : "abre em \(delta / 60)h\(String(format: "%02d", delta % 60))") }
+        }
+        let leave = leg.map { RoutesService.leaveAt(stop.at, travelMinutes: $0.minutes) }
+        return Button { selectedId = place.id } label: {
+            HStack(spacing: 14) {
+                Text("\(number)").font(.must.mono(15, .semibold)).foregroundStyle(.white)
+                    .frame(width: 44, height: 44).background(Circle().fill(Color.must.ink))
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(place.name).font(.must.archivo(19, .semibold)).tracking(-0.2).foregroundStyle(Color.must.ink).lineLimit(1)
+                    (Text(region.timeString(stop.at)).font(.must.mono(14, .semibold)).foregroundStyle(Color.must.ink)
+                        + Text(parts.isEmpty ? "" : " · " + parts.joined(separator: " · ")))
+                        .font(.must.archivo(14)).foregroundStyle(Color.must.secondary).lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                }
+                Spacer(minLength: 4)
+                if let leave, leave > now {
+                    Text("saia \(region.timeString(leave))").font(.must.archivo(15, .semibold)).foregroundStyle(Color.must.greenText)
+                        .padding(.horizontal, 14).frame(height: 38).background(Capsule().fill(Color.must.green))
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var emptyCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(accepted(0) == nil ? "Nenhum dia montado hoje" : "Dia feito 済").mustPlace()
+                Text(accepted(0) == nil ? "monte o dia pra ver a rota e as paradas no mapa" : "todas as paradas de hoje têm 済").mustMeta()
+            }
+            if accepted(0) == nil {
+                PrimaryButton("Montar o dia", icon: .montarAjustar, style: .dark) {
+                    router.push(.montar(date: region.calendar.startOfDay(for: now)), on: .hoje)
+                }
+            }
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.white, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
+        .shadow(color: Color(hex: 0x121316, opacity: 0.10), radius: 18, y: 8)
+    }
+
+    static func meters(_ m: CLLocationDistance) -> String {
+        m < 1000 ? "\(Int((m / 10).rounded()) * 10) m" : String(format: "%.1f km", m / 1000).replacingOccurrences(of: ".", with: ",")
     }
 
     // MARK: Ações
-
-    private var metersPerPoint: Double? {
-        guard let span, mapHeight > 0 else { return nil }
-        return span.latitudeDelta * 111_000 / Double(mapHeight)
-    }
 
     private func appear() {
         consumeOpenNow()
         requestRoutes()
         guard !didCenter else { return }
         didCenter = true
-        centerOn(fallbackCenter, animated: false)
+        var width = Self.neighborhoodWidth
+        #if DEBUG
+        let debugWidth = UserDefaults.standard.double(forKey: "debugMapWidth") // -debugMapWidth 450 (prints)
+        if debugWidth > 0 { width = debugWidth }
+        #endif
+        command = MapCameraCommand(target: .center(lat: fallbackCenter.latitude, lng: fallbackCenter.longitude,
+                                                    widthMeters: width), animated: false)
+    }
+
+    private func centerOnMe() {
+        selectedId = nil
+        command = MapCameraCommand(target: .center(lat: fallbackCenter.latitude, lng: fallbackCenter.longitude,
+                                                    widthMeters: Self.neighborhoodWidth))
     }
 
     private func consumeOpenNow() {
         guard router.mapShowsOpenNow else { return }
         router.mapShowsOpenNow = false
-        layers.insert(.openNow)
-        selectedId = nil
-        centerOn(here ?? fallbackCenter)
+        layers.insert(.unplanned)
+        centerOnMe()
     }
 
     private func requestRoutes() {
         routes.request(stops: stops.compactMap(\.place), walkMaxKm: walkMaxKm)
+        routes.request(stops: tomorrowStops.compactMap(\.place), walkMaxKm: walkMaxKm)
     }
 
     private func toggle(_ layer: MapLayer) {
         if layers.contains(layer) { layers.remove(layer) } else { layers.insert(layer) }
     }
 
-    private func toggleLock() {
-        locked.toggle()
-        if locked { centerOn(center ?? fallbackCenter) }
-    }
-
-    private func centerOn(_ coordinate: CLLocationCoordinate2D, animated: Bool = true) {
-        let camera = MapCameraPosition.camera(MapCamera(centerCoordinate: coordinate, distance: Self.neighborhoodDistance))
-        if animated { withAnimation(.snappy) { position = camera } } else { position = camera }
+    private func select(_ pin: MapPin) {
+        guard let id = pin.placeId else { return }
+        if selectedId == id { router.push(.place(id: id), on: .mapa) } else { selectedId = id }
     }
 
     private func search() {
-        let found = places.filter { $0.matches(query) }
-        guard let first = found.first else { return }
+        guard let first = places.first(where: { $0.matches(query) }) else { return }
         selectedId = first.id
-        centerOn(first.coordinate)
+        command = MapCameraCommand(target: .center(lat: first.lat, lng: first.lng, widthMeters: Self.neighborhoodWidth))
     }
 }
 
-// MARK: - Peças
+// MARK: - Card do lugar (pino tocado / mais perto)
 
-/// Parada: feita = 済 verde; próxima = preta com número; futura = branca com borda.
-struct StopPin: View {
-    var number: Int
-    var done: Bool
-    var isNext: Bool
-
-    var body: some View {
-        ZStack {
-            if done {
-                Circle().fill(Color.must.green)
-                Text("済").font(.must.kanji(14)).foregroundStyle(Color.must.greenText)
-            } else if isNext {
-                Circle().fill(Color.must.ink)
-                Text("\(number)").font(.must.mono(13, .semibold)).foregroundStyle(.white)
-            } else {
-                Circle().fill(.white)
-                Circle().strokeBorder(Color.must.ink, lineWidth: 1.6)
-                Text("\(number)").font(.must.mono(13, .semibold)).foregroundStyle(Color.must.ink)
-            }
-        }
-        .frame(width: isNext ? 32 : 30, height: isNext ? 32 : 30)
-        .shadow(color: Color(hex: 0x121316, opacity: 0.18), radius: 6, x: 0, y: 6)
-    }
-}
-
-/// Must aberto fora do roteiro: anel azul 12 pt.
-struct OpenRing: View {
-    var selected = false
+struct PlaceSheetCard: View {
+    var place: Place
+    var number: Int?
+    var stop: Stop?
+    var leg: (minutes: Int, text: String, mode: LegMode)?
+    var region: Region
+    var now: Date
+    var distance: CLLocationDistance?
+    var onClose: () -> Void
+    var onOpen: () -> Void
+    var onDay: () -> Void
 
     var body: some View {
-        Circle()
-            .fill(.white)
-            .overlay(Circle().strokeBorder(Color.must.blue, lineWidth: 1.6))
-            .frame(width: selected ? 16 : 12, height: selected ? 16 : 12)
-            .padding(10) // área de toque
-            .contentShape(Circle())
-            .shadow(color: Color(hex: 0x121316, opacity: 0.18), radius: 6, x: 0, y: 6)
-    }
-}
-
-/// Você: ponto azul com halo.
-struct YouDot: View {
-    var body: some View {
-        ZStack {
-            Circle().fill(Color.must.blue.opacity(0.18)).frame(width: 34, height: 34)
-            Circle().fill(Color.must.blue).frame(width: 14, height: 14)
-                .overlay(Circle().strokeBorder(.white, lineWidth: 2.5))
-        }
-        .accessibilityLabel("Você")
-    }
-}
-
-/// Estação: círculo branco com borda preta + nome.
-struct StationDot: View {
-    var name: String
-    var showsLabel: Bool
-    var isJapanese: Bool
-
-    var body: some View {
-        Circle()
-            .fill(.white)
-            .overlay(Circle().strokeBorder(Color.must.ink, lineWidth: 1.6))
-            .frame(width: 9, height: 9)
-            .overlay(alignment: .leading) {
-                if showsLabel {
-                    Text(name)
-                        .font(isJapanese ? .must.kanji(11, bold: false) : .must.archivo(11))
-                        .foregroundStyle(Color.must.secondary)
-                        .fixedSize()
-                        .padding(.horizontal, 4)
-                        .background(Capsule().fill(Color.white.opacity(0.7)))
-                        .offset(x: 10, y: -10)
+        let at = stop?.at ?? (place.hasReservation(on: now, calendar: region.calendar) ? place.reservation?.at : nil)
+        let leave = at.flatMap { at in leg.map { RoutesService.leaveAt(at, travelMinutes: $0.minutes) } }
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .center, spacing: 14) {
+                if let number {
+                    Text("\(number)").font(.must.mono(15, .semibold)).foregroundStyle(.white)
+                        .frame(width: 44, height: 44).background(Circle().fill(stop?.done == true ? Color.must.green : Color.must.ink))
+                } else {
+                    Text(place.list?.kanji.map { String($0.prefix(1)) } ?? "•").font(.must.kanji(18))
+                        .foregroundStyle((place.list?.color ?? .eat).text)
+                        .frame(width: 44, height: 44).background(Circle().fill((place.list?.color ?? .eat).light))
+                }
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        Text(place.name).font(.must.archivo(19, .semibold)).tracking(-0.2).foregroundStyle(Color.must.ink).lineLimit(1)
+                        if let local = place.nameLocal {
+                            Text(local).font(.must.kanji(12, bold: false)).foregroundStyle(Color.must.secondary).lineLimit(1)
+                        }
+                    }
+                    meta(at: at).lineLimit(2).multilineTextAlignment(.leading)
+                }
+                Spacer(minLength: 4)
+                if let leave, leave > now {
+                    Text("saia \(region.timeString(leave))").font(.must.archivo(15, .semibold)).foregroundStyle(Color.must.greenText)
+                        .padding(.horizontal, 14).frame(height: 38).background(Capsule().fill(Color.must.green))
+                } else {
+                    Button(action: onClose) {
+                        MustIconView(.fechar, size: 14).foregroundStyle(Color.must.secondary).frame(width: 32, height: 32)
+                    }
+                    .accessibilityLabel("Fechar")
                 }
             }
-            .accessibilityLabel("Estação \(name)")
+            HStack(spacing: 10) {
+                Button { MapsLinks.openApple(to: place.coordinate, name: place.name, mode: leg?.mode == .walk ? .walking : .transit) } label: {
+                    Text("Apple Maps").sheetButton()
+                }
+                Button { MapsLinks.openGoogle(to: place.coordinate, mode: leg?.mode == .walk ? .walking : .transit) } label: {
+                    Text("Google Maps").sheetButton()
+                }
+                Button(action: number != nil ? onDay : onOpen) {
+                    Text(number != nil ? "Ver o dia" : "Abrir").font(.must.archivo(16, .semibold)).foregroundStyle(Color.must.ink)
+                        .frame(maxWidth: .infinity).frame(height: 50)
+                        .background(Capsule().fill(Color.must.surface))
+                }
+            }
+            .buttonStyle(MustPressStyle())
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 18)
+        .background(Color.white, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
+        .shadow(color: Color(hex: 0x121316, opacity: 0.10), radius: 18, y: 8)
+        .contentShape(Rectangle())
+        .onTapGesture(perform: onOpen)
+    }
+
+    private func meta(at: Date?) -> Text {
+        var pieces: [Text] = []
+        if let distance {
+            pieces.append(Text(MapView.meters(distance)).font(.must.mono(15, .semibold)).foregroundStyle(Color.must.ink))
+        }
+        if let leg { pieces.append(Text(leg.text)) }
+        if let at { pieces.append(Text(region.timeString(at)).font(.must.mono(15, .semibold)).foregroundStyle(Color.must.ink)) }
+        if pieces.isEmpty, let list = place.list { pieces.append(Text(list.displayName)) }
+        var out = Text("")
+        for (i, p) in pieces.enumerated() { out = i == 0 ? p : Text("\(out) · \(p)") }
+        return out.font(.must.archivo(14)).foregroundStyle(Color.must.secondary)
     }
 }
 
-/// Escala fixa no canto: escolhe 300 m (ou o valor redondo mais perto) pro zoom atual.
+private extension Text {
+    func sheetButton() -> some View {
+        font(.must.archivo(16, .semibold)).foregroundStyle(Color.must.ink)
+            .frame(maxWidth: .infinity).frame(height: 50)
+            .overlay(Capsule().strokeBorder(Color.must.lineStrong))
+    }
+}
+
+// MARK: - Escala
+
+/// Escala no canto: escolhe 300 m (ou o valor redondo mais perto) pro zoom atual.
 struct ScaleBar: View {
     var metersPerPoint: Double?
 
-    private static let steps: [Double] = [50, 100, 200, 300, 500, 1000, 2000, 5000, 10_000]
+    private static let steps: [Double] = [50, 100, 200, 300, 500, 1000, 2000, 5000, 10_000, 20_000]
 
     var body: some View {
         if let mpp = metersPerPoint, mpp > 0 {
-            let meters = Self.steps.min { abs($0 / mpp - 80) < abs($1 / mpp - 80) } ?? 300
-            let width = min(160, max(24, meters / mpp))
-            VStack(spacing: 2) {
+            let meters = Self.steps.min { abs($0 / mpp - 70) < abs($1 / mpp - 70) } ?? 300
+            let width = min(140, max(24, meters / mpp))
+            VStack(alignment: .leading, spacing: 2) {
                 Text(meters >= 1000 ? "\(Int(meters / 1000)) km" : "\(Int(meters)) m")
                     .font(.must.mono(10, .semibold))
                     .foregroundStyle(Color.must.ink)
                 Path { p in
-                    p.move(to: CGPoint(x: 0, y: 0)); p.addLine(to: CGPoint(x: 0, y: 8))
-                    p.addLine(to: CGPoint(x: width, y: 8)); p.addLine(to: CGPoint(x: width, y: 0))
+                    p.move(to: CGPoint(x: 0, y: 0)); p.addLine(to: CGPoint(x: 0, y: 6))
+                    p.addLine(to: CGPoint(x: width, y: 6)); p.addLine(to: CGPoint(x: width, y: 0))
                 }
                 .stroke(Color.must.ink, lineWidth: 1.4)
-                .frame(width: width, height: 8)
+                .frame(width: width, height: 6)
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 6)
-            .background(Capsule().fill(Color.white.opacity(0.7)))
+            .background(Capsule().fill(Color.white.opacity(0.75)))
             .accessibilityLabel("Escala: \(Int(meters)) metros")
         }
     }

@@ -7,6 +7,11 @@ options:
   createIntermediateGroups: true
   groupSortPosition: top
 
+packages:
+  MapLibre:
+    url: https://github.com/maplibre/maplibre-gl-native-distribution
+    exactVersion: 7.0.0
+
 settings:
   base:
     SWIFT_VERSION: "6.0"
@@ -28,6 +33,11 @@ targets:
         excludes:
           - "Widgets/**"
           - "Resources/Fonts/licenses/**"
+          - "DesignSystem/MapStyle/**"
+          - "Data/tiles/**"
+      - path: Must/DesignSystem/MapStyle
+        type: folder
+        buildPhase: resources
       - path: data/seed-bh.json
         buildPhase: resources
       - path: data/seed-jp.json
@@ -35,6 +45,7 @@ targets:
     dependencies:
       - target: MustWidgets
         embed: true
+      - package: MapLibre
     postBuildScripts:
       - name: Copiar Secrets.plist (se existir)
         basedOnDependencyAnalysis: false
@@ -48,6 +59,19 @@ targets:
             rm -f "$DST"
             echo "warning: Secrets.plist ausente — serviços ao vivo ficam desligados (ver Secrets.example.plist)"
           fi
+      - name: Copiar tiles do mapa (se existirem)
+        basedOnDependencyAnalysis: false
+        script: |
+          SRC="${SRCROOT}/Must/Data/tiles"
+          DST="${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/tiles"
+          mkdir -p "$DST"
+          found=0
+          for f in "$SRC"/*.pmtiles; do
+            [ -f "$f" ] || continue
+            found=1
+            if [ ! -f "$DST/$(basename "$f")" ] || [ "$f" -nt "$DST/$(basename "$f")" ]; then cp "$f" "$DST/"; fi
+          done
+          if [ $found = 0 ]; then echo "warning: sem tiles em Must/Data/tiles — o mapa usa o Protomaps hospedado (PROTOMAPS_KEY). Rode scripts/tiles.sh"; fi
     entitlements:
       path: Must/Must.entitlements
       properties:
@@ -74,6 +98,7 @@ targets:
           UIApplicationSupportsMultipleScenes: false
         NSLocationWhenInUseUsageDescription: Pra mostrar o que está aberto perto de você
         NSSupportsLiveActivities: true
+        MLNIdeographicFontFamilyName: Zen Kaku Gothic New
         UIAppFonts:
           - Archivo.ttf
           - InstrumentSerif-Regular.ttf

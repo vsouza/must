@@ -6,6 +6,9 @@ enum Secrets {
     enum Key: String, CaseIterable {
         case googlePlaces = "GOOGLE_PLACES_KEY"
         case anthropic = "ANTHROPIC_KEY"
+        case protomaps = "PROTOMAPS_KEY"
+        case foursquare = "FOURSQUARE_KEY"
+        case redditClientId = "REDDIT_CLIENT_ID"
     }
 
     static subscript(key: Key) -> String? {
@@ -16,6 +19,10 @@ enum Secrets {
 
     static var googlePlacesKey: String? { self[.googlePlaces] }
     static var anthropicKey: String? { self[.anthropic] }
+    /// Tiles hospedados, só quando faltam os PMTiles no bundle.
+    static var protomapsKey: String? { self[.protomaps] }
+    static var foursquareKey: String? { self[.foursquare] }
+    static var redditClientId: String? { self[.redditClientId] }
 
     private static let values: [String: String] = load(from: .main)
 

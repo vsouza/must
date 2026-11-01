@@ -1,0 +1,381 @@
+{
+ "version": 8,
+ "name": "Must · papel em relevo",
+ "glyphs": "asset://MapStyle/glyphs/{fontstack}/{range}.pbf",
+ "sprite": "asset://MapStyle/sprites/must",
+ "sources": {
+  "pm": {
+   "type": "vector",
+   "url": "pmtiles://{{TILES}}",
+   "attribution": "© OpenStreetMap · Protomaps"
+  }
+ },
+ "layers": [
+  {
+   "id": "bg",
+   "type": "background",
+   "paint": {
+    "background-color": "#E9EBEF"
+   }
+  },
+  {
+   "id": "park",
+   "type": "fill",
+   "source": "pm",
+   "source-layer": "landuse",
+   "filter": [
+    "in",
+    "kind",
+    "park",
+    "garden",
+    "grass",
+    "cemetery",
+    "golf_course",
+    "nature_reserve",
+    "wood",
+    "forest"
+   ],
+   "paint": {
+    "fill-color": "#E1EEE7"
+   }
+  },
+  {
+   "id": "park-dots",
+   "type": "fill",
+   "source": "pm",
+   "source-layer": "landuse",
+   "minzoom": 14,
+   "filter": [
+    "in",
+    "kind",
+    "park",
+    "garden",
+    "grass",
+    "wood",
+    "forest"
+   ],
+   "paint": {
+    "fill-pattern": "dots-green",
+    "fill-opacity": 0.45
+   }
+  },
+  {
+   "id": "water",
+   "type": "fill",
+   "source": "pm",
+   "source-layer": "water",
+   "paint": {
+    "fill-color": "#D9E4EF"
+   },
+   "filter": [
+    "==",
+    "$type",
+    "Polygon"
+   ]
+  },
+  {
+   "id": "water-line",
+   "type": "line",
+   "source": "pm",
+   "source-layer": "water",
+   "paint": {
+    "line-color": "#D9E4EF",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     12,
+     1,
+     16,
+     10
+    ]
+   },
+   "filter": [
+    "==",
+    "$type",
+    "LineString"
+   ]
+  },
+  {
+   "id": "roads-minor-dots",
+   "type": "line",
+   "source": "pm",
+   "source-layer": "roads",
+   "minzoom": 15,
+   "filter": [
+    "in",
+    "kind",
+    "minor_road",
+    "path",
+    "other"
+   ],
+   "layout": {
+    "line-cap": "round"
+   },
+   "paint": {
+    "line-color": "#C9CDD3",
+    "line-width": 2,
+    "line-dasharray": [
+     0.1,
+     2.5
+    ]
+   }
+  },
+  {
+   "id": "roads-medium",
+   "type": "line",
+   "source": "pm",
+   "source-layer": "roads",
+   "filter": [
+    "==",
+    "kind",
+    "medium_road"
+   ],
+   "layout": {
+    "line-cap": "round",
+    "line-join": "round"
+   },
+   "paint": {
+    "line-color": "#DADDE3",
+    "line-width": [
+     "interpolate",
+     [
+      "exponential",
+      1.4
+     ],
+     [
+      "zoom"
+     ],
+     13,
+     1.5,
+     16,
+     5,
+     18,
+     9
+    ]
+   }
+  },
+  {
+   "id": "roads-major",
+   "type": "line",
+   "source": "pm",
+   "source-layer": "roads",
+   "filter": [
+    "in",
+    "kind",
+    "major_road",
+    "highway"
+   ],
+   "layout": {
+    "line-cap": "round",
+    "line-join": "round"
+   },
+   "paint": {
+    "line-color": "#CFD3DB",
+    "line-width": [
+     "interpolate",
+     [
+      "exponential",
+      1.4
+     ],
+     [
+      "zoom"
+     ],
+     12,
+     2,
+     16,
+     9,
+     18,
+     16
+    ]
+   }
+  },
+  {
+   "id": "block-shadow",
+   "type": "fill",
+   "source": "pm",
+   "source-layer": "buildings",
+   "minzoom": 14,
+   "paint": {
+    "fill-color": "#121316",
+    "fill-opacity": 0.14,
+    "fill-translate": [
+     0,
+     2.5
+    ],
+    "fill-translate-anchor": "viewport"
+   }
+  },
+  {
+   "id": "block",
+   "type": "fill",
+   "source": "pm",
+   "source-layer": "buildings",
+   "minzoom": 14,
+   "paint": {
+    "fill-color": "#F7F8FA"
+   }
+  },
+  {
+   "id": "block-highlight",
+   "type": "line",
+   "source": "pm",
+   "source-layer": "buildings",
+   "minzoom": 15,
+   "paint": {
+    "line-color": "#FFFFFF",
+    "line-opacity": 0.9,
+    "line-width": 1,
+    "line-translate": [
+     0,
+     -0.8
+    ],
+    "line-translate-anchor": "viewport"
+   }
+  },
+  {
+   "id": "block-lowzoom",
+   "type": "fill",
+   "source": "pm",
+   "source-layer": "landuse",
+   "maxzoom": 14,
+   "filter": [
+    "in",
+    "kind",
+    "residential",
+    "commercial",
+    "industrial",
+    "retail"
+   ],
+   "paint": {
+    "fill-color": "#F3F4F6"
+   }
+  },
+  {
+   "id": "road-labels",
+   "type": "symbol",
+   "source": "pm",
+   "source-layer": "roads",
+   "minzoom": 15,
+   "filter": [
+    "in",
+    "kind",
+    "major_road",
+    "medium_road"
+   ],
+   "layout": {
+    "symbol-placement": "line",
+    "text-field": [
+     "upcase",
+     [
+      "get",
+      "name"
+     ]
+    ],
+    "text-font": [
+     "Archivo SemiBold"
+    ],
+    "text-size": 9.5,
+    "text-letter-spacing": 0.16,
+    "symbol-spacing": 420,
+    "text-max-angle": 20
+   },
+   "paint": {
+    "text-color": "#9AA0A8",
+    "text-halo-color": "#E9EBEF",
+    "text-halo-width": 1.2
+   }
+  },
+  {
+   "id": "park-labels",
+   "type": "symbol",
+   "source": "pm",
+   "source-layer": "pois",
+   "minzoom": 14,
+   "filter": [
+    "in",
+    "kind",
+    "park",
+    "garden"
+   ],
+   "layout": {
+    "text-field": [
+     "upcase",
+     [
+      "get",
+      "name"
+     ]
+    ],
+    "text-font": [
+     "Archivo SemiBold"
+    ],
+    "text-size": 9,
+    "text-letter-spacing": 0.14
+   },
+   "paint": {
+    "text-color": "#5FAE7E"
+   }
+  },
+  {
+   "id": "district-labels",
+   "type": "symbol",
+   "source": "pm",
+   "source-layer": "places",
+   "maxzoom": 15,
+   "filter": [
+    "in",
+    "kind",
+    "neighbourhood",
+    "macrohood",
+    "suburb",
+    "quarter"
+   ],
+   "layout": {
+    "text-field": [
+     "upcase",
+     [
+      "get",
+      "name"
+     ]
+    ],
+    "text-font": [
+     "Archivo Bold"
+    ],
+    "text-size": 10,
+    "text-letter-spacing": 0.22
+   },
+   "paint": {
+    "text-color": "#A9AEB6"
+   }
+  },
+  {
+   "id": "city-labels",
+   "type": "symbol",
+   "source": "pm",
+   "source-layer": "places",
+   "maxzoom": 12,
+   "filter": [
+    "==",
+    "kind",
+    "locality"
+   ],
+   "layout": {
+    "text-field": [
+     "get",
+     "name"
+    ],
+    "text-font": [
+     "Archivo SemiBold"
+    ],
+    "text-size": 13
+   },
+   "paint": {
+    "text-color": "#121316"
+   }
+  }
+ ]
+}

@@ -8,7 +8,7 @@ App iOS pessoal (um usuário: Vinicius) que transforma um board de "Musts" (Must
 - **Menu escondido:** em Ajustes, 5 toques no rótulo de versão abrem a sheet "Região" (BH / Japão + simular data/GPS + dados ao vivo on/off + zerar board). Nada disso aparece na UI normal.
 - **Solver determinístico** monta o dia (regras abaixo). O modelo de linguagem só interpreta pedido em texto/voz → parâmetros, e conversa no Assistente. Nunca inventa lugares: só escolhe entre os do board.
 - **IA no aparelho primeiro:** Apple Foundation Models (`FoundationModels` framework, iOS 26) com *tool calling* sobre o catálogo. Fallback opcional na nuvem: Claude Haiku (structured outputs) só pra links difíceis — chave em `Secrets.plist` (gitignored), e desligável em Ajustes.
-- **Dados vivos:** Google Places API (New) só pra horários/preço/placeId (snapshot em cache, 1.000 chamadas grátis/mês — pedir `id`-only quando não precisar de detalhes); Open-Meteo pro tempo (JMA no Japão); rotas por deep link (Apple Maps / Google Maps) + MapKit ETA; **Wikimedia Commons** (API sem chave; só CC BY/BY-SA, CC0, domínio público) pra foto de fundo das listas e heroes, sempre com crédito visível. (Era Flickr, mas o Flickr parou de dar chave de API pra conta grátis — decidido em 01/11/2026.)
+- **Dados vivos:** Google Places API (New) só pra horários/preço/placeId (snapshot em cache, 1.000 chamadas grátis/mês — pedir `id`-only quando não precisar de detalhes); Open-Meteo pro tempo (JMA no Japão); rotas por deep link (Apple Maps / Google Maps) + MapKit ETA; **mapa em MapLibre Native** (SwiftPM, único pacote externo) com style "papel em relevo" (`Must/DesignSystem/MapStyle/`) e Protomaps PMTiles offline no bundle (`Must/Data/tiles/`, gitignored, gerar com `scripts/tiles.sh`; fallback hospedado com `PROTOMAPS_KEY`) — decidido no prompt 12; **Wikimedia Commons** (API sem chave; só CC BY/BY-SA, CC0, domínio público) pra foto de fundo das listas e heroes, sempre com crédito visível. (Era Flickr, mas o Flickr parou de dar chave de API pra conta grátis — decidido em 01/11/2026.)
 - **Regras do dia** (ver `prompts/05-dia.md`): uma refeição por janela (almoço, jantar) salvo exceção explícita; reservas são âncoras fixas; "fica pro fim" só entra nos últimos dias da cidade; orçamento diário com exceções marcadas por lugar; lugar de outra cidade nunca entra; respeita tipo de dia (livre, compras, noite, fotografia, templos, descanso) e quanto andar.
 - **Importação/exportação** pelo JSON em `data/board.schema.json`. Seeds em `data/seed-bh.json` e `data/seed-jp.json` (coordenadas `approx: true` são chute — resolver no Places na primeira sincronização).
 
@@ -26,8 +26,8 @@ App iOS pessoal (um usuário: Vinicius) que transforma um board de "Musts" (Must
 - Projeto gerado por **xcodegen**: edite `project.yml` e rode `xcodegen generate` (nunca edite o `.pbxproj` à mão). Arquivo novo dentro de `Must/` entra sozinho no target do app; `Must/Widgets/` é só da extensão. Team `BS5ZUHVH99` (Personal Team).
 - Views pequenas; estado em `@Observable` por feature; nada de singletons globais além de `RegionStore` e `Services`.
 - Tudo em pt-BR na UI. Datas e moeda via `FormatStyle` com o locale/currency da região.
-- Sem dependências externas de UI. Pacotes permitidos: nenhum obrigatório; se precisar de Markdown no chat, usar o nativo.
-- Chaves: `Secrets.plist` (não commitado) com `GOOGLE_PLACES_KEY` e `ANTHROPIC_KEY` (opcional). `Secrets.example.plist` commitado.
+- Sem dependências externas de UI além do MapLibre (mapa). Se precisar de Markdown no chat, usar o nativo.
+- Chaves: `Secrets.plist` (não commitado) com `GOOGLE_PLACES_KEY` e, opcionais, `ANTHROPIC_KEY`, `PROTOMAPS_KEY`, `FOURSQUARE_KEY`, `REDDIT_CLIENT_ID`. `Secrets.example.plist` commitado.
 - Testes: unitários do Solver e do parser de JSON obrigatórios; UI tests não.
 - Commits pequenos, mensagem em português, um prompt = um ou mais commits.
 
