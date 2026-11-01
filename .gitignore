@@ -22,3 +22,6 @@ Secrets.plist
 *.store
 *.store-shm
 *.store-wal
+
+# Prints de revisão (scripts/qa-screens.sh)
+qa-screens/

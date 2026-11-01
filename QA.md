@@ -1,0 +1,76 @@
+# QA do Must — Belo Horizonte, antes de usar de verdade
+
+Legenda: **[x] auto** = coberto por teste automático (`MustTests`, 107 testes) · **[x] sim** = visto no simulador
+(prints em `scripts/qa-screens.sh`) · **[ ] iPhone** = precisa do aparelho/GPS real · **[!]** = bloqueado (motivo ao lado).
+
+Rodar tudo que é automático:
+
+```sh
+xcodebuild -project Must.xcodeproj -scheme Must -destination 'platform=iOS Simulator,name=iPhone 17' test
+./scripts/qa-screens.sh          # prints de BH (sáb 31 out, Savassi) e Japão (15 nov, Naka-Meguro) em qa-screens/
+```
+
+## 1. Primeira abertura
+- [x] auto — seed BH carregado: 23 lugares, 5 listas, meta R$ 200 (`QAScenarioTests.firstOpenLoadsBHSeed`, `RegionStoreTests`).
+- [x] sim — tela Importar aparece na 1ª abertura da região, com contagens, viagem/cidades e "Permitir" localização.
+- [ ] iPhone — o pedido de localização do iOS aparece ao tocar "Permitir" e a Início mostra "Perto de você" com GPS real.
+
+## 2. Sincronizar Places (Ajustes → Sincronizar horários e preço)
+- [x] auto — resolve os approx em lote de 50, preço do board não é sobrescrito, nome exato tem prioridade (`PlacesSyncTests`).
+- [!] — **a chave atual volta HTTP 403 PERMISSION_DENIED** em todas as chamadas. No Google Cloud: ativar **Places API (New)**,
+  liberar a chave pra essa API (Restrições de API) e, se a restrição de app for "iOS", o bundle `dev.viniso.must`.
+  Depois: os 23 lugares ganham horário e a Lista passa a mostrar "aberto até…". Conferir o contador "N usados" (≈ 46 na 1ª vez).
+
+## 3. Sábado de manhã — o fluxo completo
+- [x] auto — Montar "livre", R$ 200, Savassi 09:30 → 1 see + 1 eat + 1 drink, sem Inhotim, sem exceção (`DaySolverBHTests`).
+- [x] auto — aceitar grava o dia (e substitui, não duplica); registrar gasto marca 済 no lugar e na parada (`DayFlowTests`).
+- [x] sim — Proposta → Trocar o almoço (alternativas na janela) → Aceitar → Hoje → Mapa com rota e pinos.
+- [x] sim — Live Activity inicia ao aceitar o dia (log `Live Activity iniciada: …`).
+- [ ] iPhone — "Ir agora" abre o Apple Maps; Registrar gasto marca 済 e a Live Activity avança pra próxima parada;
+  no fim do dia (tudo 済) ela some.
+
+## 4. Domingo de compras
+- [x] auto — Montar "compras" no domingo → Feira Hippie entra de manhã, sem Must listen (`QAScenarioTests.sundayShoppingPullsFeiraHippieInTheMorning`).
+
+## 5. Orçamento R$ 100
+- [x] auto — Glouton/Trindade não entram; com "vale a exceção" (já marcado no seed) + "jantar bom" no texto, entra um deles fora da meta (`QAScenarioTests.budget100WithSplurge`, `DaySolverBHTests.tightBudgetKeepsFineDiningOutUnlessAsked`).
+
+## 6. Nova lista "kissaten"
+- [x] sim — prévia ao vivo, ícone/cor, fotos CC do **Wikimedia Commons** (o Flickr não dá mais chave pra conta grátis).
+- [!] — "2 lugares pelo Places" depende do item 2. Sem a chave funcionando: adicionar pelo board, à mão ou por link.
+- [ ] iPhone — a lista aparece no hub com a cor e a foto.
+
+## 7. Adicionar por link
+- [x] auto — IG/TT/YT/Maps detectados; URL do Maps vira nome + coordenada; legenda com 📍/@/"no X" vira lugares; nada inventado (`LinkResolverTests`, `PlaceExtractorTests`, `PlaceExtractionAITests`).
+- [x] sim — link do Google Maps: lugar novo com sub sugerida ("Must eat · Ramen"); lugar existente: "já está no board".
+- [ ] iPhone — um Reel real (a legenda pública costuma falhar → o fluxo de colar o texto tem que funcionar).
+
+## 8. Assistente
+- [x] auto — "tô cansado, troca o bar de hoje por algo perto do jantar e me diz quanto já fui": gasto certo + até 2 trocas do board (`FallbackAssistantTests`).
+- [x] sim — com Apple Intelligence (o simulador tem): sugestões, troca e gasto; pergunta aberta vai pro modelo com ferramentas.
+- [x] auto — sem Apple Intelligence tudo responde por palavra-chave, sem crash.
+- [ ] iPhone — 3 perguntas das sugestões; tocar "Trocar" muda a parada no Hoje.
+
+## 9. Menu escondido e Japão
+- [x] auto — trocar pra Japão e voltar não perde gastos de BH (`RegionStoreTests.switchingRegionKeepsEachBoard`).
+- [x] auto — 15 nov 10:00 em Naka-Meguro → a Início mostra o Udatsu como "Próxima" (`QAScenarioTests.japanHomeShowsUdatsuAsNext`).
+- [ ] iPhone — fazer pelo menu: Ajustes → 5 toques na versão → Japão → simular data e GPS.
+
+## 10. Exportar → apagar → reinstalar → importar
+- [x] auto — export/import com 済, gasto, dias e eventos volta idêntico, sem duplicar (`QAScenarioTests.exportWipeImportRestoresEverything`, `BoardCodecTests`, `TripEventCodecTests`).
+- [ ] iPhone — fazer de verdade: Ajustes → Exportar board → apagar o app → instalar → Importar (Escolher .json).
+
+## 11. Sem rede
+- [x] auto — serviços respeitam "Dados ao vivo" desligado e devolvem cache (tempo, fotos) sem erro fatal.
+- [ ] iPhone — modo avião: app abre, listas e Hoje funcionam, a Início mostra o chip "sem dados ao vivo".
+
+## 12. Consumo
+- [x] revisado no código — GPS só em primeiro plano, a cada 50 m; rota a pé pedida uma vez por par de paradas;
+  ETA em cache de 10 min; widgets/Live Activity só atualizam quando algo muda.
+- [ ] iPhone — uma tarde com o mapa aberto: ≤ ~10% de bateria (Xcode → Debug Navigator → Energy).
+
+## Notas
+- O simulador "iPhone 17 Pro" ficou travando o test runner ("hung before establishing connection") depois de muitas
+  execuções; o "iPhone 17" roda limpo. Se acontecer: `xcrun simctl erase <udid>`.
+- Marcar 済 direto na Lista (sem passar pelo Lugar) ficou de fora: o toque longo da Lista é Editar. Hoje o 済 é pelo
+  Lugar → Feito ou pelo "+ gasto" do Hoje.
