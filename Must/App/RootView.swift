@@ -28,7 +28,7 @@ struct RootView: View {
             case .editPlace(let id): EditPlaceView(placeId: id)
             case .newPlace(let listId): EditPlaceView(newInListId: listId)
             case .expense(let placeId): ExpenseView(placeId: placeId)
-            case .assistant: AssistantPlaceholder()
+            case .assistant: AssistantView()
             }
         }
         .fullScreenCover(item: $router.cover) { cover in
@@ -60,24 +60,6 @@ struct TabBarSpacer: View {
 }
 
 // MARK: - Placeholders (prompts 05, 06, 08)
-
-struct AssistantPlaceholder: View {
-    @Environment(\.dismiss) private var dismiss
-    var body: some View {
-        ZStack(alignment: .topLeading) {
-            Color.must.bg.ignoresSafeArea()
-            BlobBackground(style: .assistente)
-            VStack(alignment: .leading, spacing: 10) {
-                IconButton(.fechar) { dismiss() }
-                Spacer()
-                Text("Como posso ajudar agora, Vinicius?").mustTitle()
-                Text("no aparelho · o Assistente chega no prompt 08").mustSerif(18).foregroundStyle(Color.must.secondary)
-                Spacer()
-            }
-            .padding(22)
-        }
-    }
-}
 
 private struct PlaceholderScreen: View {
     var title: String

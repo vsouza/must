@@ -24,6 +24,11 @@ final class AddLinkModel {
         return source.badge == nil ? nil : source
     }
 
+    /// Modelo no aparelho / reforço na nuvem (de Ajustes).
+    var extractorOptions = AIPlaceExtractor.Options(onDevice: true, cloudBoost: false, knownAreas: [])
+    /// Por onde a extração passou ("no aparelho", "reforço na nuvem", "palavras-chave").
+    var extractedVia: String?
+
     func run(places: [Place], lists: [MustList], city: City?, region: Region, knownAreas: [String]) async {
         let link = LinkResolver.resolve(input)
         guard !link.text.isEmpty || link.url != nil else { return }
@@ -32,7 +37,7 @@ final class AddLinkModel {
         matches = []
         do {
             let caption = try await CaptionFetcher().fetch(link)
-            finish(caption, places: places, lists: lists, city: city, region: region, knownAreas: knownAreas)
+            await finish(caption, places: places, lists: lists, city: city, region: region, knownAreas: knownAreas)
         } catch {
             Log.network.error("legenda falhou: \(error.localizedDescription, privacy: .public)")
             phase = .needsText((error as? LocalizedError)?.errorDescription ?? "Não consegui ler a legenda.")
@@ -40,15 +45,18 @@ final class AddLinkModel {
     }
 
     /// Fallback: o usuário cola o texto da legenda.
-    func runPasted(places: [Place], lists: [MustList], city: City?, region: Region, knownAreas: [String]) {
+    func runPasted(places: [Place], lists: [MustList], city: City?, region: Region, knownAreas: [String]) async {
         let source = resolved?.source ?? .text
         let caption = Caption(source: source, title: nil, text: String(pastedText.prefix(CaptionFetcher.maxLength)), url: resolved?.url)
-        finish(caption, places: places, lists: lists, city: city, region: region, knownAreas: knownAreas)
+        await finish(caption, places: places, lists: lists, city: city, region: region, knownAreas: knownAreas)
     }
 
-    private func finish(_ caption: Caption, places: [Place], lists: [MustList], city: City?, region: Region, knownAreas: [String]) {
+    private func finish(_ caption: Caption, places: [Place], lists: [MustList], city: City?, region: Region, knownAreas: [String]) async {
         self.caption = caption
-        let extracted = PlaceExtractor.extract(from: caption, knownAreas: knownAreas)
+        var options = extractorOptions
+        options.knownAreas = knownAreas
+        let (extracted, via) = await AIPlaceExtractor.extract(from: caption, options: options)
+        extractedVia = via
         matches = PlaceMatcher.match(extracted, caption: caption, places: places, lists: lists, city: city, region: region)
         listChoice = Dictionary(uniqueKeysWithValues: matches.compactMap { m in m.suggestedListId.map { (m.id, $0) } })
         included = Set(matches.prefix(1).filter { $0.existing == nil }.map(\.id))
@@ -67,7 +75,8 @@ final class AddLinkModel {
         }
         if caption != nil {
             let n = matches.count
-            lines.append((n > 0, n == 1 ? "1 lugar encontrado · confere antes de salvar" : "\(n) lugares encontrados · confere antes de salvar"))
+            let via = extractedVia.map { " · \($0)" } ?? ""
+            lines.append((n > 0, (n == 1 ? "1 lugar encontrado" : "\(n) lugares encontrados") + via))
         }
         return lines
     }
@@ -86,6 +95,7 @@ struct AddLinkView: View {
     @Query(sort: \MustList.order) private var lists: [MustList]
     @Query private var places: [Place]
     @Query private var trips: [TripInfo]
+    @Query private var settingsList: [Settings]
 
     @State private var model = AddLinkModel()
     @FocusState private var fieldFocused: Bool
@@ -123,7 +133,9 @@ struct AddLinkView: View {
                     badges.padding(.top, 14)
                     resultArea.padding(.top, 28)
 
-                    Text("Processado no aparelho · nada sai do seu iPhone sem você pedir")
+                    Text(settingsList.first?.cloudBoost == true && CloudBoost.isConfigured
+                         ? "Processado no aparelho · legendas difíceis vão pro Claude Haiku (só o texto)"
+                         : "Processado no aparelho · nada sai do seu iPhone sem você pedir")
                         .font(.must.meta)
                         .foregroundStyle(Color.must.secondary)
                         .multilineTextAlignment(.center)
@@ -224,7 +236,7 @@ struct AddLinkView: View {
                 .padding(14)
                 .background(Color.white, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             Button {
-                model.runPasted(places: places, lists: lists, city: city, region: region, knownAreas: knownAreas)
+                Task { await model.runPasted(places: places, lists: lists, city: city, region: region, knownAreas: knownAreas) }
             } label: { Pill("Ler texto", style: .green) }
                 .buttonStyle(MustPressStyle())
                 .disabled(model.pastedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -360,6 +372,8 @@ struct AddLinkView: View {
 
     private func run() async {
         fieldFocused = false
+        let settings = settingsList.first
+        model.extractorOptions = AIPlaceExtractor.Options(onDevice: settings?.onDeviceAI ?? true, cloudBoost: settings?.cloudBoost ?? false, knownAreas: [])
         await model.run(places: places, lists: lists, city: city, region: region, knownAreas: knownAreas)
         if let preferredListId {
             for m in model.matches where m.existing == nil { model.listChoice[m.id] = preferredListId }

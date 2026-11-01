@@ -18,6 +18,18 @@ struct MontarView: View {
     @State private var planner: DayPlanner?
     @State private var showProposal = false
     @State private var editingStart = false
+    @State private var parsing = false
+    @State private var parsedText = ""
+
+    /// "ou diga…" → intenção (no aparelho quando der), refletida nos controles antes de montar.
+    private func parse(_ planner: DayPlanner) async {
+        parsing = true
+        defer { parsing = false }
+        let text = planner.text
+        let intent = await IntentParser.parse(text, placeNames: places.map(\.name), useModel: settingsList.first?.onDeviceAI ?? true)
+        planner.apply(intent, lists: lists)
+        parsedText = text
+    }
     @FocusState private var textFocused: Bool
 
     private var region: Region { store.region }
@@ -69,12 +81,15 @@ struct MontarView: View {
             }
             .scrollDismissesKeyboard(.interactively)
 
-            PrimaryButton("Montar o dia", icon: .avancar, iconTrailing: true) {
+            PrimaryButton(parsing ? "Lendo o pedido…" : "Montar o dia", icon: .avancar, iconTrailing: true) {
                 textFocused = false
-                if !planner.text.isEmpty { planner.applyText(lists: lists, placeNames: places.map(\.name)) }
-                planner.build(catalog: catalog, trip: trips.first, settings: settingsList.first, location: services.location.current)
-                showProposal = true
+                Task {
+                    if !planner.text.isEmpty, parsedText != planner.text { await parse(planner) }
+                    planner.build(catalog: catalog, trip: trips.first, settings: settingsList.first, location: services.location.current)
+                    showProposal = true
+                }
             }
+            .disabled(parsing)
             .padding(.horizontal, 22)
             .padding(.top, 24)
             .padding(.bottom, 92)
@@ -275,9 +290,9 @@ struct MontarView: View {
                 .lineLimit(1...4)
                 .focused($textFocused)
                 .submitLabel(.done)
-                .onSubmit { planner.applyText(lists: lists, placeNames: places.map(\.name)) }
+                .onSubmit { Task { await parse(planner) } }
                 .onChange(of: textFocused) { _, focused in
-                    if !focused, !planner.text.isEmpty { planner.applyText(lists: lists, placeNames: places.map(\.name)) }
+                    if !focused, !planner.text.isEmpty, parsedText != planner.text { Task { await parse(planner) } }
                 }
             Button { textFocused = true } label: {
                 MustIconView(.falar, size: 18).foregroundStyle(.white)

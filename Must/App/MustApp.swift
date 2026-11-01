@@ -102,6 +102,7 @@ enum DebugLaunch {
             try? planner.accept(context: context)
             router.select(.hoje)
         case "mapa": router.select(.mapa)
+        case "assistente": router.sheet = .assistant
         case "sincronizar":
             router.push(.settings, on: .inicio)
             Task { await services.sync.syncPlaces(context: context, region: region) }

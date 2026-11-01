@@ -196,7 +196,8 @@ private struct SettingsSections: View {
     private var intelligence: some View {
         FormSection("Inteligência") {
             Toggle(isOn: $settings.onDeviceAI) {
-                FormRow("Modelo no aparelho", subtitle: "Apple Foundation Models · pt/ja · offline")
+                FormRow("Modelo no aparelho", subtitle: OnDeviceAI.unavailableReason.map { "modelo no aparelho indisponível · \($0) · usando palavras-chave" }
+                        ?? "Apple Foundation Models · pt/ja · offline")
             }
             .toggleStyle(.must)
             RowDivider()
@@ -208,6 +209,7 @@ private struct SettingsSections: View {
             .toggleStyle(.must)
             RowDivider()
             Toggle(isOn: $settings.transcribeVideos) {
+                // TODO: transcrição de vídeo (Gemini Flash, YouTube por URL) — fora do escopo desta versão.
                 FormRow("Transcrever vídeos", subtitle: "Gemini Flash · YouTube por URL · em breve")
             }
             .toggleStyle(.must)
@@ -269,6 +271,8 @@ private struct SettingsSections: View {
                 FormRow("Moeda", subtitle: "real · sem câmbio") { MonoValue("R$") }
             }
             RowDivider()
+            FormRow("O que sai do aparelho", subtitle: privacyLine)
+            RowDivider()
             Button(action: onExport) {
                 FormRow("Exportar board (.json)") { MustIconView(.exportar, size: 18).foregroundStyle(Color.must.ink) }
             }
@@ -279,6 +283,13 @@ private struct SettingsSections: View {
             }
             .buttonStyle(.plain)
         }
+    }
+
+    /// Só isto vai pra rede; o board, os gastos e a localização ficam no iPhone.
+    private var privacyLine: String {
+        var items = ["Google Places (nome e coordenada do lugar)", "Open-Meteo (coordenada da cidade)", "Wikimedia Commons (busca de foto)"]
+        if settings.cloudBoost { items.append("Claude Haiku (só o texto de legendas difíceis)") }
+        return items.joined(separator: " · ")
     }
 
     private var placesSubtitle: String {

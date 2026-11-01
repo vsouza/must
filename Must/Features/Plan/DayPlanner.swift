@@ -79,8 +79,8 @@ final class DayPlanner {
     }
 
     /// "ou diga: …" → intenção; reflete na tela (tipo, andar, orçamento, listas) antes de montar.
-    func applyText(lists allLists: [MustList], placeNames: [String]) {
-        let parsed = RegexIntentParser.parse(text, placeNames: placeNames)
+    /// Texto já virou intenção (Foundation Models ou palavras-chave): reflete na tela.
+    func apply(_ parsed: DayIntent, lists allLists: [MustList]) {
         intent = parsed
         if let k = parsed.kind { kind = k }
         if let w = parsed.walk { walk = w }
