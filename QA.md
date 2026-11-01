@@ -1,6 +1,6 @@
 # QA do Must — Belo Horizonte, antes de usar de verdade
 
-Legenda: **[x] auto** = coberto por teste automático (`MustTests`, 107 testes) · **[x] sim** = visto no simulador
+Legenda: **[x] auto** = coberto por teste automático (`MustTests`, 139 testes) · **[x] sim** = visto no simulador
 (prints em `scripts/qa-screens.sh`) · **[ ] iPhone** = precisa do aparelho/GPS real · **[!]** = bloqueado (motivo ao lado).
 
 Rodar tudo que é automático:
@@ -94,6 +94,32 @@ xcodebuild -project Must.xcodeproj -scheme Must -destination 'platform=iOS Simul
   `REDDIT_CLIENT_ID`. Sem elas a seção mostra só a legenda de origem.
 - [!] — o modelo do simulador recusou (guardrail) resumir as amostras de BH; as do Japão passaram. Conferir no iPhone com
   dicas reais; quando recusa, a tela diz "O modelo do aparelho não resumiu essas dicas".
+
+## 16. Tipos photo, art e sport (prompt 13)
+- [x] auto — sol (NOAA, sem rede): Tóquio 15/11 nasce 06:16 · põe 16:34 · golden 15:57–16:34 · azul até 17:01; BH 15/11
+  05:08 / 18:12 (bate com timeanddate). O prompt citava 16:38 e 18:16; os valores astronômicos são esses (`SunServiceTests`).
+- [x] auto — previsão hora a hora + AQI (`HourlyWeatherTests`); seeds com `kind`/`extra`; board antigo ganha as listas
+  novas uma vez sem sobrescrever nada (`ExtrasDataTests`).
+- [x] auto — Montar "fotografia" em Tóquio 15/11: golden da manhã (Senso-ji) → museu no sol alto → almoço → Yanaka no
+  golden → Nippori na hora azul; nuvens 80% no golden tiram o Yanaka ("nublado no golden") (`PhotoDayTests`).
+- [x] auto — art: "termina em 4 dias" prioriza e entra na explicação; temporada acabada fica de fora; última entrada;
+  ingresso comprado vira âncora (`ArtRulesTests`).
+- [x] auto — sport: domingo 07:00 a corrida entra; começando 12:00 (31°) não entra; janela "até as 10h" (`SportRulesTests`).
+- [x] auto — extrator de evento: página japonesa (2026.10.3〜2026.11.30, ¥1,400 / 学生 ¥1,120), link da Sympla
+  ("até 16/11", R$ 20 / meia R$ 10) (`EventExtractorTests`).
+- [x] sim — Lugar photo (Yanaka, GPS simulado, 15/11 15:20): arco do sol, golden/azul, sol a 242° "bate no eixo da rua",
+  Céu com Open-Meteo real, bússola "Contraluz no golden", chips, "Luz de hoje" + "Sair 15:45". Menu escondido →
+  Simular nuvens 20%/80% troca a frase ("céu limpo no pôr do sol — vale ir hoje" ↔ "nublado… melhor outro dia").
+- [x] sim — Luz de hoje: faixas azul/golden/dura/golden/azul, agora, chips, spots por hora (passados a 50%, próximo em
+  dourado), museu no sol alto, frase de amanhã.
+- [x] sim — Lugar art (Moriyama, 26/11): "termina em 4 dias" em terracota, aberto até 20:00 (qui), Entrada · temporada,
+  Estilo, Também aqui (Comprar / esgotado; toque longo marca ingresso comprado), "Ir agora · 10 min" + "Pôr no dia 13h".
+- [x] sim — Lugar sport (Pampulha, 01/11): Condições com métricas e AQI, Melhor janela por hora, percurso. Com a previsão
+  real de hoje (chuva 40% de manhã, sensação 30° ao meio-dia) não há janela verde — a tela diz isso.
+- [x] sim — hub com 8 tiles de 118 pt (photo "golden hoje 15:50", art "1 termina esta semana", sport "corrida 1",
+  see teal de templos/mirantes).
+- [ ] iPhone — "Começar" abre o Strava (`strava://record`) se estiver instalado; senão a rota a pé.
+- Nota — as exposições dos seeds (Moriyama no TOP Museum, mostras de BH) são exemplos do design: conferir as agendas.
 
 ## Notas
 - O simulador "iPhone 17 Pro" ficou travando o test runner ("hung before establishing connection") depois de muitas

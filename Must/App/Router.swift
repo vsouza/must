@@ -13,6 +13,8 @@ enum Route: Hashable {
     case reservations
     /// Um dia aceito que não é hoje.
     case day(date: Date)
+    /// Luz de hoje (dia de fotografia), meia-noite do dia.
+    case light(date: Date)
 }
 
 /// Navegação do app: aba atual, pilha de cada aba e o que está apresentado por cima.
@@ -112,6 +114,7 @@ extension View {
             case .trip: TripView()
             case .reservations: ReservationsView()
             case .day(let date): TodayView(date: date)
+            case .light(let date): LightDayView(date: date)
             }
         }
     }

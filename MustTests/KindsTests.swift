@@ -187,3 +187,36 @@ struct SportRulesTests {
         #expect(DaySolver.sportRejection(spot, at: hours[0].time.addingTimeInterval(7 * 3600), hourly: hours) == "quente · 31°")
     }
 }
+
+struct EventExtractorTests {
+    static let tokyo = TimeZone(identifier: "Asia/Tokyo")!
+    static let bh = TimeZone(identifier: "America/Sao_Paulo")!
+    static let now = BoardDates(timeZone: tokyo).time("10:00", on: BoardDates(timeZone: tokyo).day(from: "2026-11-01")!)!
+
+    @Test func japaneseMuseumPage() throws {
+        let text = "森山大道 回顧展 Daido Moriyama Retrospective 2026.10.3〜2026.11.30 東京都写真美術館 一般 ¥1,400 学生 ¥1,120 最終入場 30 min"
+        #expect(EventExtractor.looksLikeEvent(text, url: nil))
+        let art = EventExtractor.parse(text, url: nil, timeZone: Self.tokyo, now: Self.now)
+        #expect(art.priceAdult == 1400)
+        #expect(art.priceStudent == 1120)
+        let until = try #require(art.runsUntil)
+        #expect(BoardDates(timeZone: .gmt).dayString(until) == "2026-11-30")
+        #expect(art.daysLeft(from: BoardDates(timeZone: Self.tokyo).day(from: "2026-11-26")!, calendar: Region.jp.calendar) == 4)
+        #expect(art.lastEntryMinutes == 30)
+    }
+
+    @Test func symplaLinkInBH() throws {
+        let url = URL(string: "https://www.sympla.com.br/evento/mostra-fotografia/123")!
+        let text = "Mostra de fotografia em cartaz até 16/11. Inteira R$ 20, meia R$ 10."
+        #expect(EventExtractor.looksLikeEvent(text, url: url))
+        let art = EventExtractor.parse(text, url: url, timeZone: Self.bh, now: Self.now)
+        #expect(art.priceAdult == 20 && art.priceStudent == 10)
+        #expect(art.ticketURL == url && art.needsBooking)
+        #expect(BoardDates(timeZone: .gmt).dayString(try #require(art.runsUntil)) == "2026-11-16")
+    }
+
+    @Test func plainRestaurantIsNotAnEvent() {
+        #expect(!EventExtractor.looksLikeEvent("Melhor ramen de Nakano, fila de 20 min, vale cada minuto 🍜", url: nil))
+        #expect(EventExtractor.runsUntil(in: "〜12月7日まで", timeZone: Self.tokyo, now: Self.now).map { BoardDates(timeZone: .gmt).dayString($0) } == "2026-12-07")
+    }
+}

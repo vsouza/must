@@ -32,6 +32,8 @@ enum AIPlaceExtractor {
         var onDevice: Bool
         var cloudBoost: Bool
         var knownAreas: [String]
+        /// Fuso das sessões de evento ("19:00" de Tóquio).
+        var timeZone: TimeZone = .current
     }
 
     /// Legendas longas (> 1.200 caracteres) vão pro reforço na nuvem quando ligado.
@@ -41,6 +43,20 @@ enum AIPlaceExtractor {
         // Link do Maps já traz o nome.
         if caption.placeName != nil { return (PlaceExtractor.extract(from: caption, knownAreas: options.knownAreas), "link do Maps") }
         let text = String(caption.text.prefix(CaptionFetcher.maxLength))
+
+        // Página de museu/galeria/show ou link de ingresso: vira Must art com temporada e preço.
+        if EventExtractor.looksLikeEvent(text, url: caption.url) {
+            if options.onDevice, OnDeviceAI.isAvailable,
+               let event = try? await EventExtractor.onDevice(text, url: caption.url, timeZone: options.timeZone) {
+                return ([event], "evento · no aparelho")
+            }
+            var places = PlaceExtractor.extract(text: text, knownAreas: options.knownAreas)
+            if !places.isEmpty {
+                places[0].art = EventExtractor.parse(text, url: caption.url, timeZone: options.timeZone)
+                places[0].category = .art
+                return (places, "evento · palavras-chave")
+            }
+        }
 
         if options.onDevice, OnDeviceAI.isAvailable, text.count <= longCaption || !options.cloudBoost {
             if let places = try? await onDevice(text, knownAreas: options.knownAreas), !places.isEmpty {

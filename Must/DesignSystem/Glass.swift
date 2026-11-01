@@ -7,12 +7,19 @@ enum StackTint: Sendable, Hashable {
     case sky
     /// Vidro cinza (card de Horário/Distância/Preço no Lugar).
     case gray
+    /// Golden hour (card "Sol hoje").
+    case gold
+    /// Cinza mais fechado (terceiro card dos painéis photo/sport).
+    case slate
 
     var fill: AnyShapeStyle {
         switch self {
         case .must(let c): AnyShapeStyle(c.gradient(opacity: 0.9))
         case .sky: AnyShapeStyle(MustGradient.sky(opacity: (0.96, 0.9)))
-        case .gray: AnyShapeStyle(Color(hex: 0xF6F7F9, opacity: 0.92))
+        case .gray: AnyShapeStyle(Color(hex: 0xF6F7F9, opacity: 0.96))
+        case .gold: AnyShapeStyle(LinearGradient(colors: [MustGradient.goldLight.opacity(0.96), MustGradient.goldStrong.opacity(0.9)],
+                                                 startPoint: .topLeading, endPoint: .bottomTrailing))
+        case .slate: AnyShapeStyle(Color(hex: 0xE9EBEF, opacity: 0.96))
         }
     }
 
@@ -20,7 +27,8 @@ enum StackTint: Sendable, Hashable {
         switch self {
         case .must(let c): c.text
         case .sky: Color.must.blueText
-        case .gray: Color.must.ink
+        case .gray, .slate: Color.must.ink
+        case .gold: MustGradient.goldText
         }
     }
 }

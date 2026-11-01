@@ -18,6 +18,8 @@ struct PlaceView: View {
     @State private var tips = TipsModel()
     /// Header comprimido (nome + "Dicas de quem foi" + horário) quando o título sai da tela.
     @State private var compact = false
+    /// "Pôr no dia" já usado (art).
+    @State private var addedAt: Date?
 
 
     init(placeId: String) {
@@ -52,7 +54,11 @@ struct PlaceView: View {
                             .onScrollVisibilityChange(threshold: 0.95) { visible in
                                 withAnimation(.easeOut(duration: 0.2)) { compact = !visible }
                             }
-                        cards(place).padding(.horizontal, 22).padding(.top, 40)
+                        Group {
+                            if let panel = kindPanel(place) { panel } else { cards(place) }
+                        }
+                        .padding(.horizontal, 22).padding(.top, 40)
+                        .id("panel")
                         // Só busca as dicas quando a seção aparece (Google cobra SKU Atmosphere).
                         TipsSection(model: tips, region: region)
                             .padding(.horizontal, 22)
@@ -69,7 +75,13 @@ struct PlaceView: View {
                 #if DEBUG
                 .task {
                     // -debugScreen dicas:<id> rola direto pras Dicas (prints).
-                    guard UserDefaults.standard.string(forKey: "debugScreen")?.hasPrefix("dicas") == true else { return }
+                    let screen = UserDefaults.standard.string(forKey: "debugScreen") ?? ""
+                    if screen.hasPrefix("painel") {
+                        try? await Task.sleep(for: .milliseconds(600))
+                        withAnimation { proxy.scrollTo("panel", anchor: .top) }
+                        return
+                    }
+                    guard screen.hasPrefix("dicas") else { return }
                     try? await Task.sleep(for: .milliseconds(600))
                     let toEnd = UserDefaults.standard.string(forKey: "debugScreen")?.hasSuffix(":fim") == true
                     withAnimation { proxy.scrollTo(toEnd ? "tips-end" : "tips", anchor: toEnd ? .bottom : .top) }
@@ -120,7 +132,7 @@ struct PlaceView: View {
                     Micro("dicas de quem foi")
                 }
                 Spacer(minLength: 6)
-                statusTag(place)
+                if place.kind == .place || place.kind == .art || place.isDone { statusTag(place) } else { kindTags(place, compact: true) }
             }
             .padding(.horizontal, 22)
             .padding(.top, 6)
@@ -163,7 +175,9 @@ struct PlaceView: View {
         ZStack(alignment: .topLeading) {
             Group {
                 if let url = photoURL(place) {
-                    TintedPhoto(url: url, color: color)
+                    // photo: prata dessaturado; art/sport: tinta mais leve que a das listas.
+                    TintedPhoto(url: url, color: color, tintOpacity: place.kind == .photo ? 0.55 : (place.kind == .place ? 0.82 : 0.7))
+                        .saturation(place.kind == .photo ? 0.25 : 1)
                 } else {
                     ZStack {
                         MustGradient.sky(opacity: (1, 0.9))
@@ -216,25 +230,110 @@ struct PlaceView: View {
 
     private func titleBlock(_ place: Place) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
+            FlowLayout(spacing: 8) {
                 if let list = place.list {
-                    Tag([list.displayName, place.sub].compactMap { $0 }.joined(separator: " · "), style: .dark)
+                    Tag([list.displayName, place.sub ?? place.extra?.sport?.activity.label].compactMap { $0 }.joined(separator: " · "), style: .dark)
                 }
-                statusTag(place)
+                kindTags(place)
+                if place.kind == .place || place.kind == .art || place.isDone { statusTag(place) }
             }
             Text(place.name)
                 .font(.must.archivo(32, .semibold))
                 .tracking(-0.6)
                 .foregroundStyle(Color.must.ink)
                 .fixedSize(horizontal: false, vertical: true)
-            let local = [place.nameLocal, place.area].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
+            let local = subtitle(place)
             if !local.isEmpty {
                 Text(local).font(.must.kanji(17, bold: false)).foregroundStyle(Color.must.secondary)
             }
-            if let line = sourceLine(place) {
+            if let line = place.kind == .place ? sourceLine(place) : (quote(place) ?? sourceLine(place)) {
                 Text(line).mustSerif(19).foregroundStyle(Color.must.ink).padding(.top, 4)
             }
         }
+    }
+
+    // MARK: Tipos (photo / art / sport)
+
+    private var weather: DayWeather? { services.sync.weather(on: now, region: region, trip: trips.first) }
+
+    private func subtitle(_ place: Place) -> String {
+        var parts = [place.nameLocal, place.area]
+        if let sport = place.extra?.sport {
+            parts.append(sport.distanceKm.map { "\(sport.loop ? "circuito" : "trecho") \(KindLines.km($0)) km" })
+            if let e = sport.elevationM { parts.append(e <= 40 ? "plano" : "+\(e) m") }
+            parts.append(sport.surface)
+        }
+        return parts.compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
+    }
+
+    /// Nota do board como citação (Foto.png: “sol no eixo da rua — …”).
+    private func quote(_ place: Place) -> String? {
+        let n = place.notes.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !n.isEmpty else { return nil }
+        let first = n.split(separator: "(").first.map(String.init)?.trimmingCharacters(in: .whitespaces) ?? n
+        let text = first.hasSuffix(".") ? String(first.dropLast()) : first
+        return "“\(text.prefix(1).lowercased() + text.dropFirst())”"
+    }
+
+    @ViewBuilder private func kindTags(_ place: Place, compact: Bool = false) -> some View {
+        switch place.kind {
+        case .photo:
+            let sun = SunService.day(now, place.coordinate, timeZone: region.timeZone)
+            if let tag = KindLines.goldenTag(sun, now: now, region: region) {
+                TintTag(tag, bg: MustGradient.goldLight, fg: MustGradient.goldText, icon: .sol)
+                    .overlay(Capsule().strokeBorder(MustGradient.goldStrong.opacity(0.6)))
+            }
+        case .art:
+            if let art = place.extra?.art, let left = art.daysLeft(from: now, calendar: region.calendar) {
+                if left < 0 {
+                    TintTag("temporada acabou", bg: Color.must.surface, fg: Color.must.secondary)
+                } else {
+                    TintTag(DaySolver.endsText(left), bg: left <= 15 ? KindPalette.warnBg : Color.must.surface,
+                            fg: left <= 15 ? KindPalette.warnText : Color.must.ink)
+                }
+            }
+        case .sport:
+            if let spot = place.extra?.sport, spot.activity != .watch, let h = weather?.hour(at: now) {
+                let good = SportScore.isGood(h, spot: spot)
+                let temp = Int(h.temp.rounded())
+                TintTag(good ? "bom agora · \(temp)°" : "\(DaySolver.sportRejection(spot, at: now, hourly: weather?.hours ?? []) ?? "evitar")",
+                        bg: good ? MustColor.eat.light : KindPalette.warnBg, fg: good ? MustColor.eat.text : KindPalette.warnText)
+                if !compact, let uv = h.uv { Tag("UV \(Int(uv.rounded())) · \(KindLines.uvLabel(uv))") }
+            }
+        case .place:
+            EmptyView()
+        }
+    }
+
+    private func kindPanel(_ place: Place) -> AnyView? {
+        let extra = place.extra
+        switch place.kind {
+        case .photo:
+            return AnyView(PhotoPanel(place: place, spot: extra?.photo ?? PhotoSpot(), region: region, now: now, weather: weather,
+                                      fetchedAt: services.sync.weatherFetchedAt(on: now, region: region, trip: trips.first)))
+        case .art:
+            guard let art = extra?.art else { return nil }
+            return AnyView(ArtPanel(place: place, art: art, region: region, now: now) { toggleBought($0, place) })
+        case .sport:
+            guard let spot = extra?.sport else { return nil }
+            return AnyView(SportPanel(place: place, spot: spot, region: region, now: now, weather: weather) { toggleBought($0, place) })
+        case .place:
+            return nil
+        }
+    }
+
+    private func toggleBought(_ session: EventSession, _ place: Place) {
+        var extra = place.extra ?? PlaceExtra()
+        if let i = extra.art?.sessions.firstIndex(where: { $0.id == session.id }) { extra.art?.sessions[i].bought.toggle() }
+        if let i = extra.sport?.sessions.firstIndex(where: { $0.id == session.id }) { extra.sport?.sessions[i].bought.toggle() }
+        place.extra = extra
+        try? context.save()
+    }
+
+    /// Minutos até o lugar (metrô acima de 1,5 km).
+    private func travelMinutes(_ place: Place) -> Int? {
+        guard let here = services.location.current?.coordinate else { return nil }
+        return DaySolver.leg(here, place.coordinate, walkMax: settingsList.first?.walkMaxKm ?? 1.5).minutes
     }
 
     @ViewBuilder private func statusTag(_ place: Place) -> some View {
@@ -359,8 +458,91 @@ struct PlaceView: View {
 
     // MARK: Ações
 
+    private func darkButton(_ title: String, icon: MustIcon, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 9) {
+                MustIconView(icon, size: 18)
+                Text(title).lineLimit(1).minimumScaleFactor(0.8)
+            }
+            .font(.must.archivo(15, .bold))
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity)
+            .frame(height: 52)
+            .background(Capsule().fill(Color.must.ink))
+        }
+        .buttonStyle(MustPressStyle())
+    }
+
+    @ViewBuilder private func kindActions(_ place: Place) -> some View {
+        switch place.kind {
+        case .photo:
+            let sun = SunService.day(now, place.coordinate, timeZone: region.timeZone)
+            darkButton("Luz de hoje", icon: .sol) { router.push(.light(date: region.calendar.startOfDay(for: now))) }
+            if let g = sun.goldenPM, now < g.start {
+                let leave = g.start.addingTimeInterval(-Double((travelMinutes(place) ?? 15) + 3) * 60)
+                let rounded = Date(timeIntervalSince1970: (leave.timeIntervalSince1970 / 300).rounded(.down) * 300)
+                PrimaryButton(rounded > now ? "Sair \(region.timeString(rounded))" : "Sair agora") {
+                    MapsLinks.openApple(to: place.coordinate, name: place.name, mode: .transit)
+                }
+                .frame(width: 140)
+            } else {
+                PrimaryButton("Ir agora", icon: .rota) { MapsLinks.openApple(to: place.coordinate, name: place.name, mode: .transit) }
+                    .frame(width: 140)
+            }
+        case .art:
+            darkButton(travelMinutes(place).map { "Ir agora · \($0) min" } ?? "Ir agora", icon: .rota) {
+                MapsLinks.openApple(to: place.coordinate, name: place.name, mode: .transit)
+            }
+            let at = addedAt ?? DayInsert.suggestedTime(now: now, region: region, place: place)
+            let hour = region.calendar.component(.hour, from: at), minute = region.calendar.component(.minute, from: at)
+            let label = minute == 0 ? "\(hour)h" : region.timeString(at)
+            if addedAt != nil {
+                GhostButton("No dia \(label)") { router.select(.hoje) }.frame(width: 150)
+            } else {
+                PrimaryButton("Pôr no dia \(label)") {
+                    DayInsert.add(place, at: at, region: region, context: context)
+                    addedAt = at
+                }
+                .frame(width: 150)
+            }
+        case .sport:
+            let temp = weather?.hour(at: now).map { " · \(Int($0.temp.rounded()))°" } ?? ""
+            darkButton("Começar\(temp)", icon: .aPe) {
+                // Strava se estiver instalado; senão, a rota a pé.
+                if let strava = URL(string: "strava://record") {
+                    UIApplication.shared.open(strava) { ok in
+                        if !ok { Task { @MainActor in MapsLinks.openApple(to: place.coordinate, name: place.name) } }
+                    }
+                }
+            }
+            if place.isDone {
+                GhostButton("Desfazer 済") { PlaceActions.undoDone(place, context: context) }.frame(width: 150)
+            } else {
+                PrimaryButton("Feito", icon: .feito) { router.sheet = .expense(placeId: place.id) }.frame(width: 130)
+            }
+        case .place:
+            EmptyView()
+        }
+    }
+
     private func actions(_ place: Place) -> some View {
         HStack(spacing: 10) {
+            if place.kind != .place {
+                kindActions(place)
+            } else {
+                placeActions(place)
+            }
+        }
+        .padding(.horizontal, 22)
+        .padding(.top, 24)
+        .padding(.bottom, 92)
+        .background {
+            LinearGradient(colors: [.white.opacity(0), .white.opacity(0.95), .white], startPoint: .top, endPoint: .bottom)
+                .ignoresSafeArea()
+        }
+    }
+
+    @ViewBuilder private func placeActions(_ place: Place) -> some View {
             Button { MapsLinks.openApple(to: place.coordinate, name: place.name) } label: {
                 HStack(spacing: 9) {
                     MustIconView(.rota, size: 18)
@@ -386,13 +568,5 @@ struct PlaceView: View {
                 PrimaryButton("Feito", icon: .feito) { router.sheet = .expense(placeId: place.id) }
                 .frame(width: 130)
             }
-        }
-        .padding(.horizontal, 22)
-        .padding(.top, 24)
-        .padding(.bottom, 92)
-        .background {
-            LinearGradient(colors: [.white.opacity(0), .white.opacity(0.95), .white], startPoint: .top, endPoint: .bottom)
-                .ignoresSafeArea()
-        }
     }
 }

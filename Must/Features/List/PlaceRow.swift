@@ -51,6 +51,8 @@ struct PlaceListCard: View {
 
 /// Uma linha: nome + nome local, estado (reserva/aberto/fecha/fila/outra cidade), preço.
 struct PlaceRow: View {
+    @Environment(Services.self) private var services: Services?
+
     var place: Place
     var region: Region
     var trip: TripInfo?
@@ -133,6 +135,22 @@ struct PlaceRow: View {
         }
         if isOtherCity {
             return ("outra cidade", Color.must.secondary, false, [cityName(place.cityId) ?? place.cityId] + rest)
+        }
+        // photo: "golden 15:48 · 12 min"; art: "até 30 nov · ¥1.400"; sport: "23° agora · UV 4".
+        switch place.kind {
+        case .photo:
+            return (KindLines.photoMeta(place, region: region, now: now, location: location), Color.must.ink, false,
+                    place.area.map { [$0] } ?? [])
+        case .art:
+            if let line = KindLines.artMeta(place, region: region, now: now) {
+                let urgent = (place.extra?.art?.daysLeft(from: now, calendar: region.calendar)).map { (0...7).contains($0) } ?? false
+                return (line, urgent ? MustColor.coffee.text : Color.must.ink, urgent, rest)
+            }
+        case .sport:
+            let weather = services?.sync.weather(on: now, region: region, trip: trip)
+            if let line = KindLines.sportMeta(place, weather: weather, now: now) { return (line, Color.must.ink, false, rest) }
+        case .place:
+            break
         }
         switch state {
         case .open(let until):

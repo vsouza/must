@@ -50,7 +50,19 @@ final class SyncCoordinator {
     func weather(on date: Date, region: Region, trip: TripInfo?) -> DayWeather? {
         let city = trip?.city(on: date, calendar: region.calendar)
         let lat = city?.lat ?? region.defaultCenter.latitude, lng = city?.lng ?? region.defaultCenter.longitude
-        return forecasts[Self.key(lat, lng)]?.day(date, calendar: region.calendar)
+        guard var day = forecasts[Self.key(lat, lng)]?.day(date, calendar: region.calendar) else { return nil }
+        // Menu escondido: nuvens simuladas (frase do golden, solver de photo).
+        if let cloud = DevOverrides.simulatedCloud {
+            for i in day.hours.indices { day.hours[i].cloud = cloud }
+        }
+        return day
+    }
+
+    /// Quando a previsão da cidade do dia foi baixada ("atualizado 15:10").
+    func weatherFetchedAt(on date: Date, region: Region, trip: TripInfo?) -> Date? {
+        let city = trip?.city(on: date, calendar: region.calendar)
+        let lat = city?.lat ?? region.defaultCenter.latitude, lng = city?.lng ?? region.defaultCenter.longitude
+        return forecasts[Self.key(lat, lng)]?.fetchedAt
     }
 
     func now(region: Region, trip: TripInfo?) -> Forecast.Now? {
@@ -104,7 +116,14 @@ final class SyncCoordinator {
             let cityName = trip?.city(on: AppClock.now, calendar: region.calendar)?.name ?? region.displayName
             for list in (try? context.fetch(FetchDescriptor<MustList>())) ?? [] where list.photo == nil {
                 do {
-                    var photo = try await photos.search(text: "\(list.name) \(cityName)").first
+                    // Tipos novos: termo que acha foto boa no Commons (rua, museu, parque), não a palavra "photo".
+                    let term = switch list.kind {
+                    case .photo: "street"
+                    case .art: "art museum"
+                    case .sport: "park running"
+                    case .place: list.name
+                    }
+                    var photo = try await photos.search(text: "\(term) \(cityName)").first
                     if photo == nil { photo = try await photos.search(text: "\(list.name)").first }
                     if let photo { list.photo = photo.listPhoto }
                 } catch {
@@ -224,9 +243,11 @@ final class SyncCoordinator {
             do {
                 var chosen = candidate
                 if chosen == nil {
-                    let results = try await places.searchText([place.name, place.area].compactMap { $0 }.joined(separator: " "),
+                    // Exposição/show: quem está no Places é o museu (guardado em `nameLocal`), não o título.
+                    let target = place.kind == .art ? (place.nameLocal ?? place.name) : place.name
+                    let results = try await places.searchText([target, place.area].compactMap { $0 }.joined(separator: " "),
                                                               near: place.coordinate, radius: 20_000, languageCode: "pt-BR")
-                    chosen = Self.bestMatch(results, for: place.name, allowAny: false)
+                    chosen = Self.bestMatch(results, for: target, allowAny: false)
                 }
                 guard let chosen else { return }
                 place.placeId = chosen.id

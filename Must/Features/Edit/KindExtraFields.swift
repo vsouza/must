@@ -1,0 +1,171 @@
+import SwiftUI
+
+/// Editar › campos do tipo da lista (photo / art / sport) — o caminho "manual" do prompt 13.
+struct KindExtraFields: View {
+    var kind: ListKind
+    @Binding var extra: PlaceExtra
+    var region: Region
+
+    var body: some View {
+        switch kind {
+        case .photo: photo
+        case .art: art
+        case .sport: sport
+        case .place: EmptyView()
+        }
+    }
+
+    // MARK: photo
+
+    private var photoSpot: Binding<PhotoSpot> {
+        Binding { extra.photo ?? PhotoSpot() } set: { extra.photo = $0 }
+    }
+
+    private var photo: some View {
+        VStack(alignment: .leading, spacing: 22) {
+            field("eixo · pra onde a câmera aponta (graus, 0 = norte)") {
+                HStack {
+                    TextField("248", text: number(photoSpot.facing)).font(.must.mono(17)).keyboardType(.numberPad)
+                    if let f = photoSpot.wrappedValue.facing { Text(SunService.cardinal(f)).font(.must.mono(14)).foregroundStyle(Color.must.secondary) }
+                }
+            }
+            VStack(alignment: .leading, spacing: 10) {
+                Micro("melhor luz")
+                FlowLayout(spacing: 8) {
+                    ForEach(LightKind.allCases) { l in
+                        let on = photoSpot.wrappedValue.bestLight.contains(l)
+                        Button {
+                            var spot = photoSpot.wrappedValue
+                            if on { spot.bestLight.removeAll { $0 == l } } else { spot.bestLight.append(l) }
+                            photoSpot.wrappedValue = spot
+                        } label: { Pill(l.label, isOn: on) }
+                        .buttonStyle(MustPressStyle())
+                    }
+                }
+            }
+            field("equipamento") { TextField("35 mm · Portra 400", text: text(photoSpot.gear)).font(.must.archivo(17)) }
+            field("lotação") { TextField("lotado 16h+ sáb", text: text(photoSpot.crowdNote)).font(.must.archivo(17)) }
+            toggle("Tripé permitido", isOn: Binding { photoSpot.wrappedValue.tripodAllowed ?? false } set: { photoSpot.wrappedValue.tripodAllowed = $0 })
+        }
+    }
+
+    // MARK: art
+
+    private var artEvent: Binding<ArtEvent> {
+        Binding { extra.art ?? ArtEvent() } set: { extra.art = $0 }
+    }
+
+    private var art: some View {
+        VStack(alignment: .leading, spacing: 22) {
+            HStack(spacing: 12) {
+                field("inteira (\(region.currencySymbol))") { TextField("0", text: number(artEvent.priceAdult)).font(.must.mono(17)).keyboardType(.numberPad) }
+                field("estudante") { TextField("—", text: number(artEvent.priceStudent)).font(.must.mono(17)).keyboardType(.numberPad) }
+            }
+            field("grátis quando") { TextField("1ª quinta do mês", text: text(artEvent.freeNote)).font(.must.archivo(17)) }
+            VStack(alignment: .leading, spacing: 10) {
+                Micro("temporada até")
+                HStack {
+                    if let until = artEvent.wrappedValue.runsUntil {
+                        DatePicker("", selection: Binding { ArtEvent.localDay(until, calendar: region.calendar) } set: { artEvent.wrappedValue.runsUntil = $0 },
+                                   displayedComponents: .date)
+                            .labelsHidden()
+                            .environment(\.timeZone, region.timeZone)
+                            .environment(\.locale, region.locale)
+                        Spacer()
+                        Button { artEvent.wrappedValue.runsUntil = nil } label: { Pill("sem data") }.buttonStyle(MustPressStyle())
+                    } else {
+                        Button { artEvent.wrappedValue.runsUntil = region.calendar.startOfDay(for: AppClock.now).addingTimeInterval(30 * 86_400) } label: {
+                            Pill("marcar o fim da temporada", icon: .calendario)
+                        }
+                        .buttonStyle(MustPressStyle())
+                    }
+                }
+            }
+            HStack(spacing: 12) {
+                field("última entrada (min antes)") { TextField("30", text: int(artEvent.lastEntryMinutes)).font(.must.mono(17)).keyboardType(.numberPad) }
+                field("duração (min)") { TextField("90", text: int(artEvent.durationMinutes)).font(.must.mono(17)).keyboardType(.numberPad) }
+            }
+            field("estilo (separado por vírgula)") {
+                TextField("fotografia, pb, rua", text: Binding { artEvent.wrappedValue.style.joined(separator: ", ") } set: {
+                    artEvent.wrappedValue.style = $0.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+                })
+                .font(.must.archivo(17))
+            }
+            field("link do ingresso") {
+                TextField("https://…", text: Binding { artEvent.wrappedValue.ticketURL?.absoluteString ?? "" } set: {
+                    artEvent.wrappedValue.ticketURL = URL(string: $0.trimmingCharacters(in: .whitespaces)).flatMap { $0.scheme == nil ? nil : $0 }
+                })
+                .font(.must.archivo(15)).keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled()
+            }
+            toggle("Precisa reservar", isOn: Binding { artEvent.wrappedValue.needsBooking } set: { artEvent.wrappedValue.needsBooking = $0 })
+            toggle("Pode fotografar", isOn: Binding { artEvent.wrappedValue.photographyAllowed ?? false } set: { artEvent.wrappedValue.photographyAllowed = $0 })
+        }
+    }
+
+    // MARK: sport
+
+    private var sportSpot: Binding<SportSpot> {
+        Binding { extra.sport ?? SportSpot() } set: { extra.sport = $0 }
+    }
+
+    private var sport: some View {
+        VStack(alignment: .leading, spacing: 22) {
+            VStack(alignment: .leading, spacing: 10) {
+                Micro("atividade")
+                FlowLayout(spacing: 8) {
+                    ForEach(SportActivity.allCases) { a in
+                        Button { sportSpot.wrappedValue.activity = a } label: { Pill(a.label, isOn: sportSpot.wrappedValue.activity == a) }
+                            .buttonStyle(MustPressStyle())
+                    }
+                }
+            }
+            HStack(spacing: 12) {
+                field("distância (km)") { TextField("7", text: number(sportSpot.distanceKm, decimal: true)).font(.must.mono(17)).keyboardType(.decimalPad) }
+                field("subida (m)") { TextField("34", text: int(sportSpot.elevationM)).font(.must.mono(17)).keyboardType(.numberPad) }
+            }
+            field("piso") { TextField("asfalto e ciclovia", text: text(sportSpot.surface)).font(.must.archivo(17)) }
+            field("percurso") { TextField("começa na Igreja, água no km 3…", text: text(sportSpot.routeNote)).font(.must.archivo(15)) }
+            HStack(spacing: 12) {
+                field("temp. máx (padrão 28°)") { TextField("28", text: int(sportSpot.preferredTempMax)).font(.must.mono(17)).keyboardType(.numberPad) }
+                field("UV máx (padrão 6)") { TextField("6", text: int(sportSpot.preferredUVMax)).font(.must.mono(17)).keyboardType(.numberPad) }
+            }
+            toggle("Circuito (volta fechada)", isOn: Binding { sportSpot.wrappedValue.loop } set: { sportSpot.wrappedValue.loop = $0 })
+        }
+    }
+
+    // MARK: Peças
+
+    private func field<Content: View>(_ label: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Micro(label).lineLimit(1).minimumScaleFactor(0.8)
+            content()
+                .foregroundStyle(Color.must.ink)
+                .padding(.horizontal, 16)
+                .frame(height: 52)
+                .background(Color.must.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        }
+    }
+
+    private func toggle(_ title: String, isOn: Binding<Bool>) -> some View {
+        Toggle(title, isOn: isOn).font(.must.archivo(16)).tint(Color.must.green)
+    }
+
+    private func text(_ b: Binding<String?>) -> Binding<String> {
+        Binding { b.wrappedValue ?? "" } set: { b.wrappedValue = $0.isEmpty ? nil : $0 }
+    }
+
+    /// Preço: "1.400" é milhar. Distância (`decimal`): "7,5" e "7.5" são sete e meio.
+    private func number(_ b: Binding<Double?>, decimal: Bool = false) -> Binding<String> {
+        Binding {
+            b.wrappedValue.map { $0.truncatingRemainder(dividingBy: 1) == 0 ? String(Int($0)) : String($0) } ?? ""
+        } set: {
+            let s = decimal ? $0.replacingOccurrences(of: ",", with: ".")
+                : $0.replacingOccurrences(of: ".", with: "").replacingOccurrences(of: ",", with: ".")
+            b.wrappedValue = Double(s)
+        }
+    }
+
+    private func int(_ b: Binding<Int?>) -> Binding<String> {
+        Binding { b.wrappedValue.map(String.init) ?? "" } set: { b.wrappedValue = Int($0.filter(\.isNumber)) }
+    }
+}

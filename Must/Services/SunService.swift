@@ -193,10 +193,11 @@ struct LightDirection: Sendable, Hashable {
     var detail: String
 
     /// `facing` = pra onde a câmera aponta; `sunAzimuth` = sol no golden (ou agora).
+    /// `longShadow` = frase pronta ("Sombra longa às 16:20." / "Sombras já compridas.").
     static func describe(facing: Double, sunAzimuth: Double, when: String, longShadow: String?) -> LightDirection {
         let diff = SunService.angle(facing, sunAzimuth)
         let where_ = "Sol a \(SunService.cardinalName(sunAzimuth))"
-        let shadow = longShadow.map { " Sombra longa às \($0)." } ?? ""
+        let shadow = longShadow.map { " \($0)" } ?? ""
         if diff <= 45 {
             return LightDirection(kind: .backlight, title: "Contraluz \(when)",
                                   detail: "\(where_), alinhado com o eixo do lugar. Olhando pra lá: silhuetas; de costas pro sol: luz na cara.\(shadow)")

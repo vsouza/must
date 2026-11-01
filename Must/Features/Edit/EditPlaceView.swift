@@ -58,6 +58,9 @@ struct EditPlaceView: View {
                     areaField
                     placesCard
                     windowsPicker
+                    if let kind = lists.first(where: { $0.id == draft.listId })?.kind, kind != .place {
+                        KindExtraFields(kind: kind, extra: $draft.extra, region: region)
+                    }
                     notesField
                     sourcePicker
                     locationRow
@@ -391,6 +394,8 @@ struct PlaceDraft {
     var lat: Double = 0
     var lng: Double = 0
     var approx = true
+    /// photo / art / sport.
+    var extra = PlaceExtra()
 
     init() {}
 
@@ -416,6 +421,7 @@ struct PlaceDraft {
         lat = place.lat
         lng = place.lng
         approx = place.approx
+        extra = place.extra ?? PlaceExtra()
     }
 
     @MainActor
@@ -441,6 +447,15 @@ struct PlaceDraft {
         place.lat = lat
         place.lng = lng
         place.approx = approx
+        // Guarda só o bloco do tipo da lista escolhida.
+        var kept = PlaceExtra()
+        switch list.kind {
+        case .photo: kept.photo = extra.photo
+        case .art: kept.art = extra.art
+        case .sport: kept.sport = extra.sport
+        case .place: kept = extra
+        }
+        place.extra = kept
     }
 }
 

@@ -12,6 +12,8 @@ enum DevOverrides {
         static let simGPSOn = "dev.simGPSOn"
         static let simLat = "dev.simLat"
         static let simLng = "dev.simLng"
+        /// Nuvens simuladas em todas as horas (−1 = desligado).
+        static let simCloud = "dev.simCloud"
     }
 
     private static var defaults: UserDefaults { .standard }
@@ -44,6 +46,17 @@ enum DevOverrides {
         return Date(timeIntervalSince1970: base + max(0, elapsed))
     }
 
+    // MARK: Nuvens simuladas
+
+    /// % de nuvens forçado na previsão (pra ver a frase do golden mudar). `nil` = previsão real.
+    static var simulatedCloud: Int? {
+        get {
+            guard let v = defaults.object(forKey: Key.simCloud) as? Int, v >= 0 else { return nil }
+            return v
+        }
+        set { defaults.set(newValue ?? -1, forKey: Key.simCloud) }
+    }
+
     // MARK: GPS simulado
 
     static func simulate(coordinate: CLLocationCoordinate2D) {
@@ -68,6 +81,7 @@ enum DevOverrides {
         ("Savassi", CLLocationCoordinate2D(latitude: -19.9385, longitude: -43.9343)),
         ("Centro BH", CLLocationCoordinate2D(latitude: -19.9191, longitude: -43.9386)),
         ("Pampulha", CLLocationCoordinate2D(latitude: -19.8517, longitude: -43.9733)),
+        ("Yanaka", CLLocationCoordinate2D(latitude: 35.7270, longitude: 139.7700)),
         ("Naka-Meguro", CLLocationCoordinate2D(latitude: 35.6442, longitude: 139.6985)),
         ("Shibuya", CLLocationCoordinate2D(latitude: 35.6580, longitude: 139.7016)),
         ("Kyoto", CLLocationCoordinate2D(latitude: 35.0037, longitude: 135.7788)),

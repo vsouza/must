@@ -581,7 +581,10 @@ enum DaySolver {
     static func sportRejection(_ spot: SportSpot, at date: Date, hourly: [HourWeather]) -> String? {
         guard let h = hourly.min(by: { abs($0.time.timeIntervalSince(date)) < abs($1.time.timeIntervalSince(date)) }) else { return nil }
         let temp = h.apparent.map { max($0, h.temp) } ?? h.temp
-        if temp > Double(spot.tempMax) { return "quente · \(Int(h.temp.rounded()))°" }
+        if temp > Double(spot.tempMax) {
+            // A sensação que passou do limite aparece como sensação (o número grande é a temperatura).
+            return h.temp > Double(spot.tempMax) ? "quente · \(Int(h.temp.rounded()))°" : "quente · sensação \(Int(temp.rounded()))°"
+        }
         if let uv = h.uv, uv > Double(spot.uvMax) { return "UV \(Int(uv.rounded())) alto" }
         if let rain = h.precipProb, rain >= 30 { return "chuva \(rain)%" }
         if let aqi = h.aqi, aqi >= 100 { return "ar ruim · AQI \(aqi)" }

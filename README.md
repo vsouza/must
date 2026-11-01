@@ -36,7 +36,8 @@ bundle `dev.viniso.must`. O tempo (Open-Meteo) e as fotos (Wikimedia Commons) n�
 ## Trocar de região
 
 Ajustes (avatar "V" na Início, ou a engrenagem na Viagem) → **5 toques em "Must · 1.0 · só pra mim"** → sheet Região:
-Belo Horizonte / Japão, dados ao vivo on/off, simular data e hora, simular GPS, exportar logs, zerar o board da região.
+Belo Horizonte / Japão, dados ao vivo on/off, simular data e hora, simular GPS, simular nuvens (golden), exportar logs,
+zerar o board da região.
 Cada região tem o próprio arquivo (`must-bh.store`, `must-jp.store`): trocar não apaga nada.
 
 ## Importar o board do Japão antes da viagem
@@ -50,6 +51,10 @@ Cada região tem o próprio arquivo (`must-bh.store`, `must-jp.store`): trocar n
 4. Com a chave do Places funcionando: Ajustes → Sincronizar, pra resolver coordenadas e horários.
 
 Eventos sem lugar (Shinkansen, voo, "Nara · dia inteiro") entram pela tela Reservas (Viagem → calendário → +).
+
+Listas `photo`, `art` e `sport` (`"kind"` na lista) têm painel próprio no Lugar; os dados ficam em `extra` do lugar
+(`{ "photo": { "facing": 248, "bestLight": ["golden-pm"] } }`, `{ "art": { "runsUntil": "2026-11-30", "priceAdult": 1400 } }`,
+`{ "sport": { "activity": "run", "distanceKm": 7 } }`). Também dá pra preencher em Editar.
 
 ## Estrutura
 

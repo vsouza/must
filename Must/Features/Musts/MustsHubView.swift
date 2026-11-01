@@ -82,7 +82,7 @@ struct MustsHubView: View {
     private var grid: some View {
         LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible())], spacing: 10) {
             ForEach(lists) { list in
-                Button { router.push(.list(id: list.id), on: .musts) } label: { ListTile(list: list) }
+                Button { router.push(.list(id: list.id), on: .musts) } label: { ListTile(list: list, height: 118) }
                     .buttonStyle(MustPressStyle())
             }
             Button { router.cover = .newList } label: {
@@ -92,7 +92,7 @@ struct MustsHubView: View {
                 }
                 .foregroundStyle(Color.must.secondary)
                 .frame(maxWidth: .infinity)
-                .frame(height: 136)
+                .frame(height: 118)
                 .overlay(
                     RoundedRectangle(cornerRadius: 22, style: .continuous)
                         .strokeBorder(Color(hex: 0xD5D8DD), style: StrokeStyle(lineWidth: 1.2, dash: [5, 4]))
@@ -148,6 +148,9 @@ struct MustsHubView: View {
 
 /// Tile de uma lista no hub (136 pt): foto tingida ou gradiente, ícone, kanji, contagem.
 struct ListTile: View {
+    @Environment(Services.self) private var services: Services?
+    @Environment(RegionStore.self) private var store: RegionStore?
+
     var list: MustList
     var height: CGFloat = 136
     /// Prévia na Nova lista: força a contagem e o subtítulo.
@@ -166,7 +169,7 @@ struct ListTile: View {
                     .frame(width: 36, height: 36)
                     .background(Circle().fill(Color.white.opacity(0.55)))
                 Spacer(minLength: 0)
-                MonoNumber("\(previewCount ?? list.places.count)", size: 28)
+                MonoNumber("\(previewCount ?? list.places.count)", size: height < 130 ? 26 : 28)
                 Text(list.displayName).font(.must.archivo(17, .semibold)).lineLimit(1).minimumScaleFactor(0.8)
                 Text(previewSubtitle ?? subtitle).font(.must.archivo(11.5)).opacity(0.8).lineLimit(1)
                     .padding(.trailing, url != nil ? 30 : 0)
@@ -191,6 +194,39 @@ struct ListTile: View {
 
     private var subtitle: String {
         let done = list.places.filter(\.isDone).count
+        let doneText = done == 1 ? "1 feito" : "\(done) feitos"
+        let now = AppClock.now
+        switch list.kind {
+        case .photo:
+            // "golden hoje 15:48 · 4 feitos"
+            if let first = list.places.first {
+                let tz = store?.region.timeZone ?? .current
+                let sun = SunService.day(now, first.coordinate, timeZone: tz)
+                if let g = sun.goldenPM, let region = store?.region {
+                    return "golden \(now <= g.end ? "hoje" : "amanhã") \(region.timeString(g.start)) · \(doneText)"
+                }
+            }
+        case .art:
+            // "2 terminam esta semana"
+            if let region = store?.region {
+                let ending = list.places.filter { p in
+                    (p.extra?.art?.daysLeft(from: now, calendar: region.calendar)).map { (0...7).contains($0) } ?? false
+                }.count
+                if ending > 0 { return "\(ending) \(ending == 1 ? "termina" : "terminam") esta semana · \(doneText)" }
+            }
+        case .sport:
+            // "corrida 3 · jogo 2 · bom agora 23°"
+            var parts: [String] = []
+            let counts = Dictionary(grouping: list.places.compactMap { $0.extra?.sport?.activity }, by: { $0 })
+            for a in SportActivity.allCases { if let n = counts[a]?.count { parts.append("\(a.label.lowercased()) \(n)") } }
+            if let region = store?.region, let h = services?.sync.weather(on: now, region: region, trip: nil)?.hour(at: now),
+               let spot = list.places.compactMap({ $0.extra?.sport }).first(where: { $0.activity != .watch }) {
+                parts.append(SportScore.isGood(h, spot: spot) ? "bom agora \(Int(h.temp.rounded()))°" : "\(Int(h.temp.rounded()))° agora")
+            }
+            if !parts.isEmpty { return parts.joined(separator: " · ") }
+        case .place:
+            break
+        }
         var parts = list.subs.compactMap { sub -> String? in
             let n = list.places.filter { $0.sub == sub }.count
             return n > 0 ? "\(sub) \(n)" : nil

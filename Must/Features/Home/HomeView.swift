@@ -379,6 +379,15 @@ struct HomeModel {
         let weekday = tomorrow.formatted(style)
         let reservations = places.filter { $0.hasReservation(on: tomorrow, calendar: cal) }.count
         let reserved = reservations == 0 ? "nada reservado" : reservations == 1 ? "1 reserva" : "\(reservations) reservas"
+        // Dia de fotografia amanhã: a hora do golden no lugar das reservas.
+        let start = cal.startOfDay(for: tomorrow)
+        if days.contains(where: { $0.date == start && $0.kind == .photo }) {
+            let city = trip?.city(on: tomorrow, calendar: cal)
+            let c = CLLocationCoordinate2D(latitude: city?.lat ?? region.defaultCenter.latitude, longitude: city?.lng ?? region.defaultCenter.longitude)
+            if let g = SunService.day(start.addingTimeInterval(12 * 3600), c, timeZone: region.timeZone).goldenPM {
+                return [weekday, tomorrowWeather?.short, "golden \(region.timeString(g.start))"].compactMap { $0 }.joined(separator: " · ")
+            }
+        }
         return [weekday, tomorrowWeather?.short, reserved].compactMap { $0 }.joined(separator: " · ")
     }
 }

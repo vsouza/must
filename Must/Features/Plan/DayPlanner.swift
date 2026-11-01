@@ -61,7 +61,7 @@ final class DayPlanner {
                           intent: intent, startAt: startAt, origin: origin, cityId: city?.id ?? region.rawValue,
                           daysLeftInCity: city.flatMap { trip?.daysLeft(in: $0, after: date, calendar: cal) },
                           weather: weather, walkMaxKm: settings?.walkMaxKm ?? 1.5,
-                          oneMealPerWindow: settings?.oneMealPerWindow ?? true, seed: seed)
+                          oneMealPerWindow: settings?.oneMealPerWindow ?? true, cityCenter: center, seed: seed)
     }
 
     func solve(catalog: [SolverPlace], trip: TripInfo?, settings: Settings?, location: CLLocation?) -> DayProposal {

@@ -110,6 +110,21 @@ struct TodayView: View {
                 Text("dia \(day.kind.label) · \(done) de \(stops.count) feitos").mustSerif(18).foregroundStyle(Color.must.secondary)
             }
             .padding(.top, 22)
+            if day.kind == .photo {
+                // Dia de fotografia: a tela da luz (Luz.png).
+                Button { router.push(.light(date: day.date)) } label: {
+                    HStack(spacing: 10) {
+                        MustIconView(.sol, size: 18)
+                        Text("Luz de hoje").font(.must.archivo(15, .semibold))
+                        Spacer()
+                        MustIconView(.avancar, size: 14)
+                    }
+                    .foregroundStyle(MustGradient.goldText)
+                    .padding(.horizontal, 16).frame(height: 50)
+                    .background(MustGradient.gold, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                }
+                .buttonStyle(MustPressStyle())
+            }
             spendCard(day: day, now: now)
             timeline(stops, current: current, now: now)
         }

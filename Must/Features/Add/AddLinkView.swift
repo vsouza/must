@@ -373,7 +373,8 @@ struct AddLinkView: View {
     private func run() async {
         fieldFocused = false
         let settings = settingsList.first
-        model.extractorOptions = AIPlaceExtractor.Options(onDevice: settings?.onDeviceAI ?? true, cloudBoost: settings?.cloudBoost ?? false, knownAreas: [])
+        model.extractorOptions = AIPlaceExtractor.Options(onDevice: settings?.onDeviceAI ?? true, cloudBoost: settings?.cloudBoost ?? false,
+                                                          knownAreas: [], timeZone: region.timeZone)
         await model.run(places: places, lists: lists, city: city, region: region, knownAreas: knownAreas)
         if let preferredListId {
             for m in model.matches where m.existing == nil { model.listChoice[m.id] = preferredListId }
@@ -397,6 +398,11 @@ struct AddLinkView: View {
                                   savedAt: today, caption: model.caption?.text.isEmpty == false ? model.caption?.text : nil,
                                   author: model.caption?.title)
             place.notes = e.hint == "link do Maps" ? "" : "Achado \(e.hint)."
+            if let art = e.art {
+                place.extra = PlaceExtra(art: art)
+                if let p = art.priceAdult { place.price = p }
+                if let venue = e.venue { place.nameLocal = place.nameLocal ?? venue }
+            }
             context.insert(place)
             // (d) Places Text Search perto da cidade: placeId, coordenada exata e horário, em segundo plano.
             services.sync.resolveNew(place, candidate: nil, region: region, context: context)

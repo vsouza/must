@@ -10,6 +10,10 @@ struct ExtractedPlace: Equatable, Sendable, Identifiable {
     var sub: String?
     /// Por que achei (frase curta pra mostrar).
     var hint: String
+    /// Exposição/show/evento (prompt 13): temporada, preço, sessões.
+    var art: ArtEvent? = nil
+    /// Museu/casa do evento.
+    var venue: String? = nil
 
     var id: String { name.lowercased() }
 }

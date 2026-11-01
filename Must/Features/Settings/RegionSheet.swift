@@ -12,6 +12,7 @@ struct RegionSheet: View {
     @AppStorage(DevOverrides.Key.liveData) private var liveData = true
     @AppStorage(DevOverrides.Key.simDateOn) private var simDateOn = false
     @AppStorage(DevOverrides.Key.simGPSOn) private var simGPSOn = false
+    @AppStorage(DevOverrides.Key.simCloud) private var simCloud = -1
 
     @State private var expanded: Expanded?
     @State private var simDate = AppClock.now
@@ -56,6 +57,8 @@ struct RegionSheet: View {
                         dateRow
                         RowDivider()
                         gpsRow
+                        RowDivider()
+                        cloudRow
                         RowDivider()
                         Button(action: exportLogs) {
                             FormRow("Exportar logs", subtitle: "último dia · só esta abertura do app") {
@@ -175,6 +178,20 @@ struct RegionSheet: View {
                         .font(.must.meta).foregroundStyle(Color.must.secondary)
                 }
                 .padding(.bottom, 14)
+            }
+        }
+    }
+
+    // MARK: Nuvens simuladas
+
+    /// Força o % de nuvens da previsão (frase do golden no Lugar photo, solver de fotografia).
+    private var cloudRow: some View {
+        FormRow("Simular nuvens") {
+            HStack(spacing: 6) {
+                ForEach([-1, 20, 80], id: \.self) { v in
+                    Button { simCloud = v } label: { Pill(v < 0 ? "real" : "\(v)%", isOn: simCloud == v) }
+                        .buttonStyle(MustPressStyle())
+                }
             }
         }
     }
