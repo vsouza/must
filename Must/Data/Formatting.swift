@@ -48,6 +48,12 @@ extension Region {
         return date.formatted(style)
     }
 
+    /// "15 nov"
+    func shortDay(_ date: Date) -> String { "\(dayNumber(date)) \(monthShort(date))" }
+
+    /// "15 nov 19:00"
+    func shortDayTime(_ date: Date) -> String { "\(shortDay(date)) \(timeString(date))" }
+
     /// "13" (dia do mês)
     func dayNumber(_ date: Date) -> String { "\(calendar.component(.day, from: date))" }
 
