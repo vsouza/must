@@ -14,9 +14,12 @@ struct NearbyService: NearbyProviding {
 
     static let radius: Double = 600
     /// Só tipos que fazem sentido pro roteiro (SKU Pro com `rankPreference` POPULARITY).
-    static let includedTypes = ["restaurant", "cafe", "bar", "museum", "tourist_attraction", "park"]
+    static let includedTypes = ["restaurant", "cafe", "bar", "museum", "tourist_attraction", "park", "book_store", "shopping_mall"]
     /// Campos mínimos: id, nome, local, nota, contagem, aberto agora e tipo.
     static let nearbyMask = "places.id,places.displayName,places.location,places.rating,places.userRatingCount,places.currentOpeningHours.openNow,places.primaryType"
+    /// Wikipedia é contexto: no máximo esse tanto na lista, em pt, depois en, e só então ja.
+    static let wikiCap = 3
+    static let wikiLanguages = ["pt", "en", "ja"]
 
     func fetch(lat: Double, lng: Double, region: Region) async -> NearbyFetch {
         async let google = Self.attempt { try await self.googleNearby(lat: lat, lng: lng) }
@@ -69,31 +72,55 @@ struct NearbyService: NearbyProviding {
         }
     }
 
-    // MARK: Wikipedia geosearch (sem chave)
+    // MARK: Wikipedia geosearch (sem chave): contexto, não recomendação
 
-    /// Artigo em pt; sem nada, ja e en. Cada chamada é gratuita.
+    /// pt, depois en, depois ja; para quando já tem o teto. Cada chamada é gratuita.
     func wikipedia(lat: Double, lng: Double) async throws -> [NearbyPlace] {
-        for lang in ["pt", "ja", "en"] {
-            var comps = URLComponents(string: "https://\(lang).wikipedia.org/w/api.php")!
-            comps.queryItems = [
-                URLQueryItem(name: "action", value: "query"), URLQueryItem(name: "list", value: "geosearch"),
-                URLQueryItem(name: "gscoord", value: "\(lat)|\(lng)"), URLQueryItem(name: "gsradius", value: "\(Int(Self.radius))"),
-                URLQueryItem(name: "gslimit", value: "10"), URLQueryItem(name: "format", value: "json"),
-            ]
-            let data = try await http.get(comps.url!, headers: ["User-Agent": CommonsPhotoService.userAgent], service: "wiki.geosearch")
-            let places = try Self.parseWikipedia(data, lang: lang)
-            if !places.isEmpty { return places }
+        var out: [NearbyPlace] = []
+        for lang in Self.wikiLanguages {
+            out += try await wikiGeosearch(lang: lang, lat: lat, lng: lng)
+            if out.count >= Self.wikiCap { break }
         }
-        return []
+        return Array(out.prefix(Self.wikiCap))
+    }
+
+    private func wikiGeosearch(lang: String, lat: Double, lng: Double) async throws -> [NearbyPlace] {
+        var comps = URLComponents(string: "https://\(lang).wikipedia.org/w/api.php")!
+        comps.queryItems = [
+            URLQueryItem(name: "action", value: "query"), URLQueryItem(name: "generator", value: "geosearch"),
+            URLQueryItem(name: "ggscoord", value: "\(lat)|\(lng)"), URLQueryItem(name: "ggsradius", value: "\(Int(Self.radius))"),
+            URLQueryItem(name: "ggslimit", value: "10"), URLQueryItem(name: "prop", value: "coordinates|extracts"),
+            URLQueryItem(name: "colimit", value: "10"), URLQueryItem(name: "exintro", value: "1"),
+            URLQueryItem(name: "explaintext", value: "1"), URLQueryItem(name: "exchars", value: "200"),
+            URLQueryItem(name: "format", value: "json"),
+        ]
+        let data = try await http.get(comps.url!, headers: ["User-Agent": CommonsPhotoService.userAgent], service: "wiki.geosearch")
+        return try Self.parseWikipedia(data, lang: lang)
     }
 
     static func parseWikipedia(_ data: Data, lang: String) throws -> [NearbyPlace] {
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else { throw ServiceError.decoding("wikipedia") }
-        let items = (json["query"] as? [String: Any])?["geosearch"] as? [[String: Any]] ?? []
-        return items.compactMap { item in
-            guard let title = item["title"] as? String, let lat = item["lat"] as? Double, let lng = item["lon"] as? Double else { return nil }
-            return NearbyPlace(name: title, lat: lat, lng: lng, sources: [.wikipedia], articleLang: lang)
+        let pages = (json["query"] as? [String: Any])?["pages"] as? [String: [String: Any]] ?? [:]
+        let ordered = pages.values.sorted { ($0["index"] as? Int ?? 0) < ($1["index"] as? Int ?? 0) }
+        return ordered.compactMap { page in
+            guard let title = page["title"] as? String,
+                  let coord = (page["coordinates"] as? [[String: Any]])?.first,
+                  let lat = coord["lat"] as? Double, let lng = coord["lon"] as? Double else { return nil }
+            let extract = (page["extract"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !isContextNoise(title: title, extract: extract) else { return nil }
+            return NearbyPlace(name: title, lat: lat, lng: lng, sources: [.wikipedia], articleLang: lang,
+                               summary: extract.flatMap { $0.isEmpty ? nil : String($0.prefix(160)) })
         }
+    }
+
+    /// Estação, bairro/endereço, empresa ou prédio genérico não é "o que fazer aqui": fica fora.
+    static let contextNoiseTerms = ["駅", "station", "estação", "丁目", "chome", "ゲートタウン", "gate town", "株式会社", "corporation",
+                                    "company", "empresa", "edifício", "edifice", "building", "bairro", "neighbourhood", "neighborhood",
+                                    "distrito", "district", "rua ", "avenida"]
+
+    static func isContextNoise(title: String, extract: String?) -> Bool {
+        let haystack = (title + " " + String((extract ?? "").prefix(120))).lowercased()
+        return contextNoiseTerms.contains { haystack.contains($0) }
     }
 
     // MARK: Foursquare search (sem tips)
@@ -144,16 +171,21 @@ actor FakeNearbyProvider: NearbyProviding {
         return NearbyFetch(places: places, complete: complete)
     }
 
-    /// Naka-Meguro (18:42), do design Descobrir.png.
+    /// Naka-Meguro (18:42). Formato dos itens do Google igual ao da resposta real (primaryType, nota, contagem, aberto agora).
     static var samples: [NearbyPlace] {
         [
             NearbyPlace(name: "Starbucks Reserve Roastery Tokyo", lat: 35.6470, lng: 139.6960, sources: [.google], googlePlaceId: "fake-starbucks",
                         rating: 4.5, ratingCount: 23_000, openNow: true, category: "cafe"),
-            NearbyPlace(name: "Rio Meguro · passarela", lat: 35.6425, lng: 139.6990, sources: [.wikipedia], articleLang: "pt"),
+            NearbyPlace(name: "Tsutaya Books Daikanyama", lat: 35.6478, lng: 139.7018, sources: [.google], googlePlaceId: "fake-tsutaya",
+                        rating: 4.5, ratingCount: 10_013, openNow: false, category: "book_store"),
+            NearbyPlace(name: "Ivy Place", lat: 35.6440, lng: 139.6992, sources: [.google], googlePlaceId: "fake-ivy",
+                        rating: 4.2, ratingCount: 3_149, openNow: true, category: "restaurant"),
+            NearbyPlace(name: "DAIKANYAMA T-SITE", lat: 35.6486, lng: 139.7018, sources: [.google], googlePlaceId: "fake-tsite",
+                        rating: 4.3, ratingCount: 7_695, openNow: true, category: "shopping_mall"),
             NearbyPlace(name: "Blue Bottle Coffee Nakameguro", lat: 35.6436, lng: 139.6993, sources: [.google], googlePlaceId: "fake-bluebottle",
                         rating: 4.3, ratingCount: 2_100, openNow: true, category: "cafe"),
-            NearbyPlace(name: "Tsutaya Books Daikanyama", lat: 35.6490, lng: 139.7030, sources: [.foursquare], fsqId: "fake-tsutaya",
-                        rating: 4.4, openNow: true, category: "Bookstore", popularity: 0.95),
+            NearbyPlace(name: "Rio Meguro · passarela", lat: 35.6425, lng: 139.6990, sources: [.wikipedia], articleLang: "pt",
+                        summary: "Passarela sobre o Rio Meguro, com as cerejeiras nas margens."),
         ]
     }
 }

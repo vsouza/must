@@ -28,17 +28,40 @@ struct NearbyRankingTests {
     }
 
     @Test func boardWinsAnExactTie() {
-        // Board: popularidade 0,95 (+0,5) e artigo (+0,3) = 0,8.
+        // Board (distância 0): popularidade 0,95 (+0,5) + distância (+1,5) + see às 14h (+0,6) = 2,6.
         var boardTwin = Self.board("Jardim Botânico", role: .see)
         boardTwin.place.popularity = 0.95
-        boardTwin.place.articleLang = "pt"
-        // Fora do board: nota 3,6 (+0,2) e novidade (+0,6) = 0,8. Mesmo score, mesma distância, mesmo papel.
-        var outsideTwin = Self.external("Parque Jardim", rating: 3.6, category: "park")
-        outsideTwin.distance = boardTwin.distance
+        // Fora do board (240 m): nota 3,75 (+0,5) + distância (+0,9) + see (+0,6) + novidade (+0,6) = 2,6.
+        var outsideTwin = Self.external("Parque Jardim", rating: 3.75, category: "park")
+        outsideTwin.distance = 240
         outsideTwin.role = .see
         #expect(abs(NearbyRanker.score(boardTwin, hour: 14) - NearbyRanker.score(outsideTwin, hour: 14)) < 1e-9)
         let ranked = NearbyRanker.rank([outsideTwin, boardTwin], hour: 14)
         #expect(ranked.first?.candidate.isOnBoard == true)
+    }
+
+    @Test func contextLinksNeverLeadAndStayCapped() {
+        let google = Self.external("Ivy Place", meters: 100, source: .google, rating: 4.2, count: 3149, open: true, category: "restaurant")
+        let wikis = (1...5).map { i in
+            NearbyCandidate(place: NearbyPlace(name: "Artigo \(i)", lat: 35.6442, lng: 139.6985, sources: [.wikipedia],
+                                               articleLang: i % 2 == 0 ? "en" : "pt"),
+                            distance: Double(i), role: .see)
+        }
+        let ranked = NearbyRanker.rank(wikis + [google], hour: 12)
+        #expect(ranked.first?.candidate.place.name == "Ivy Place")
+        #expect(ranked.filter { $0.candidate.isContextOnly }.count == NearbyService.wikiCap)
+        #expect(ranked.first { $0.candidate.isContextOnly }?.candidate.place.articleLang == "pt")
+    }
+
+    @Test func fakeGoogleSamplesRankBeforeWikipedia() throws {
+        let candidates = NearbyCandidates.external(FakeNearbyProvider.samples, origin: Self.origin)
+        let ranked = NearbyRanker.rank(candidates, hour: 18)
+        #expect(ranked.first?.candidate.place.googlePlaceId == "fake-starbucks")
+        let names = Set(ranked.map(\.candidate.place.name))
+        #expect(names.isSuperset(of: ["Tsutaya Books Daikanyama", "Ivy Place", "DAIKANYAMA T-SITE"]))
+        let lastRecommended = try #require(ranked.lastIndex { !$0.candidate.isContextOnly })
+        let firstContext = try #require(ranked.firstIndex { $0.candidate.isContextOnly })
+        #expect(firstContext > lastRecommended)
     }
 
     @Test func openAndWellRatedBeatsClosedAndFarAway() {
@@ -88,6 +111,29 @@ struct NearbyRankingTests {
         #expect(NearbyRanker.role(for: NearbyPlace(name: "x", lat: 0, lng: 0, sources: [.google], category: "museum")) == .see)
         let coffee = NearbyPlace(name: "x", lat: 0, lng: 0, sources: [.google], category: "cafe")
         #expect(NearbyRanker.suggestedColor(coffee, role: .drink) == .coffee)
+    }
+
+    @Test func listSuggestionFollowsTheCategory() {
+        func place(_ category: String?, _ source: NearbySource = .google, _ name: String = "x") -> NearbyPlace {
+            NearbyPlace(name: name, lat: 0, lng: 0, sources: [source], category: category)
+        }
+        #expect(NearbyRanker.suggestedListId(place("restaurant")) == "eat")
+        #expect(NearbyRanker.suggestedListId(place("cafe")) == "drink")
+        #expect(NearbyRanker.suggestedListId(place("museum")) == "art")
+        #expect(NearbyRanker.suggestedListId(place("temple")) == "see")
+        #expect(NearbyRanker.suggestedListId(place("book_store")) == "shop")
+        #expect(NearbyRanker.suggestedListId(place("shopping_mall")) == "shop")
+        #expect(NearbyRanker.suggestedListId(place(nil)) == nil)
+        // Wikipedia: "see" só pra passarela/templo/parque; o resto fica sem lista sugerida.
+        #expect(NearbyRanker.suggestedListId(place(nil, .wikipedia, "Rio Meguro · passarela")) == "see")
+        #expect(NearbyRanker.suggestedListId(place(nil, .wikipedia, "Daikanyama Hills")) == nil)
+    }
+
+    @Test func labelsAreInPortugueseNotTheRawType() {
+        #expect(NearbyRanker.categoryLabel(NearbyPlace(name: "x", lat: 0, lng: 0, sources: [.google], category: "book_store")) == "livraria")
+        #expect(NearbyRanker.categoryLabel(NearbyPlace(name: "x", lat: 0, lng: 0, sources: [.google], category: "restaurant")) == "restaurante")
+        #expect(NearbyRanker.categoryLabel(NearbyPlace(name: "x", lat: 0, lng: 0, sources: [.wikipedia])) == "ponto histórico")
+        #expect(NearbyRanker.categoryLabel(NearbyPlace(name: "x", lat: 0, lng: 0, sources: [.google], category: "zzz")) == nil)
     }
 }
 
@@ -160,12 +206,31 @@ struct NearbyParserTests {
         #expect(p.sources == [.google])
     }
 
-    @Test func parsesWikipediaGeosearch() throws {
-        let json = #"{"query":{"geosearch":[{"pageid":123,"title":"Rio Meguro","lat":35.6425,"lon":139.6990,"dist":290}]}}"#
+    @Test func parsesWikipediaGeosearchWithItsSummary() throws {
+        let json = #"{"query":{"pages":{"123":{"pageid":123,"index":1,"title":"Rio Meguro","coordinates":[{"lat":35.6425,"lon":139.6990}],"extract":"O Rio Meguro é um curso d'água de Tóquio."}}}}"#
         let places = try NearbyService.parseWikipedia(Data(json.utf8), lang: "pt")
         #expect(places.map(\.name) == ["Rio Meguro"])
         #expect(places.first?.articleLang == "pt")
+        #expect(places.first?.summary?.hasPrefix("O Rio Meguro") == true)
         #expect(places.first?.sources == [.wikipedia])
+    }
+
+    @Test func dropsStationsNeighbourhoodsAndCompanies() throws {
+        let json = #"""
+        {"query":{"pages":{
+          "1":{"index":1,"title":"中目黒駅","coordinates":[{"lat":35.6442,"lon":139.6985}],"extract":"中目黒駅は東京都目黒区の駅"},
+          "2":{"index":2,"title":"Daikanyama","coordinates":[{"lat":35.6480,"lon":139.7030}],"extract":"Daikanyama é um bairro de Shibuya"},
+          "3":{"index":3,"title":"Rio Meguro","coordinates":[{"lat":35.6425,"lon":139.6990}],"extract":"Rio."}}}}
+        """#
+        let places = try NearbyService.parseWikipedia(Data(json.utf8), lang: "ja")
+        #expect(places.map(\.name) == ["Rio Meguro"])
+    }
+
+    @Test func noiseTermsAreCaughtInTitleOrIntro() {
+        #expect(NearbyService.isContextNoise(title: "Shibuya Station", extract: nil))
+        #expect(NearbyService.isContextNoise(title: "渋谷1丁目", extract: nil))
+        #expect(NearbyService.isContextNoise(title: "ABC", extract: "ABC é uma empresa de software"))
+        #expect(!NearbyService.isContextNoise(title: "Templo Tenryu-ji", extract: "Templo zen em Kyoto"))
     }
 
     @Test func parsesFoursquareWithTenPointRatingHalved() throws {

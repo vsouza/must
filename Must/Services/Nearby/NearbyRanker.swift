@@ -11,13 +11,15 @@ struct NearbyCandidate: Sendable, Hashable {
     var listId: String?
     var listName: String?
     var isDone: Bool = false
-    /// Papel do lugar: manda na hora boa e na lista sugerida.
+    /// Papel do lugar: manda na hora boa e na cor do destaque.
     var role: StopRole?
     /// Lista do tipo experiência (Must do).
     var isExperience: Bool = false
 
     var isOnBoard: Bool { boardPlaceId != nil }
     var id: String { boardPlaceId.map { "b:\($0)" } ?? place.id }
+    /// Só Wikipedia: contexto, não recomendação.
+    var isContextOnly: Bool { !isOnBoard && !place.sources.isEmpty && place.sources.allSatisfy { $0 == .wikipedia } }
 }
 
 struct NearbyScored: Sendable, Hashable, Identifiable {
@@ -26,7 +28,7 @@ struct NearbyScored: Sendable, Hashable, Identifiable {
     var id: String { candidate.id }
 }
 
-/// Ranking local (pura, testada): score = nota, popularidade, distância, aberto agora, hora do dia × tipo, novidade.
+/// Ranking local (pura, testada): score = nota, contagem, distância, aberto agora, hora do dia × tipo, novidade.
 enum NearbyRanker {
     static let radius: Double = NearbyService.radius
     /// Score a partir do qual um lugar de fora do board vira "Por perto" na Home.
@@ -34,15 +36,33 @@ enum NearbyRanker {
     /// Dois itens com o mesmo nome (parecido) a menos de 60 m são o mesmo lugar.
     static let dedupeMeters: Double = 60
 
-    /// Mais alto primeiro; empate → o do board; depois o mais perto. Fora do raio, nada.
+    /// Itens de recomendação primeiro (board, Google, Foursquare), por score; empate → o do board; depois o mais perto.
+    /// Wikipedia vem depois, em pt → en → ja, no máximo `NearbyService.wikiCap`.
     static func rank(_ candidates: [NearbyCandidate], hour: Int) -> [NearbyScored] {
-        dedupe(candidates.filter { $0.distance <= radius })
+        let scored = dedupe(candidates.filter { $0.distance <= radius })
             .map { NearbyScored(candidate: $0, score: score($0, hour: hour)) }
             .sorted { a, b in
                 if abs(a.score - b.score) > 1e-9 { return a.score > b.score }
                 if a.candidate.isOnBoard != b.candidate.isOnBoard { return a.candidate.isOnBoard }
                 return a.candidate.distance < b.candidate.distance
             }
+        let recommended = scored.filter { !$0.candidate.isContextOnly }
+        let context = scored.filter(\.candidate.isContextOnly)
+            .sorted { a, b in
+                let (x, y) = (langRank(a.candidate.place.articleLang), langRank(b.candidate.place.articleLang))
+                return x != y ? x < y : a.candidate.distance < b.candidate.distance
+            }
+            .prefix(NearbyService.wikiCap)
+        return recommended + context
+    }
+
+    static func langRank(_ lang: String?) -> Int {
+        switch lang {
+        case "pt": 0
+        case "en": 1
+        case "ja": 2
+        default: 3
+        }
     }
 
     static func score(_ c: NearbyCandidate, hour: Int) -> Double {
@@ -56,7 +76,6 @@ enum NearbyRanker {
         if !c.isOnBoard { s += 0.6 } // novidade pra você
         if c.isDone { s -= 2 }
         if let popularity = p.popularity, popularity > 0.9 { s += 0.5 }
-        if p.articleLang != nil { s += 0.3 }
         return s
     }
 
@@ -84,7 +103,42 @@ enum NearbyRanker {
         return .see
     }
 
-    /// Cor da lista sugerida no "+ Must": café vira coffee, templo vira temple.
+    /// Lista sugerida pelo tipo: restaurante → eat; café/bar → drink; museu/galeria → art; templo/parque/ponto → see;
+    /// livraria/shopping/loja → shop; balada → listen. Wikipedia só vira "see" se for ponto histórico, templo ou parque.
+    /// `nil` = sem categoria clara (aí a tela mostra "Outra lista" como principal).
+    static func suggestedListId(_ place: NearbyPlace) -> String? {
+        let c = (place.category ?? "").lowercased()
+        func has(_ words: [String]) -> Bool { words.contains { c.contains($0) } }
+        if has(["restaurant", "ramen", "sushi", "food", "bakery", "izakaya", "noodle", "bistro", "pizza", "steak"]) { return "eat" }
+        if has(["cafe", "coffee", "bar", "pub", "wine", "brew", "sake"]) { return "drink" }
+        if has(["museum", "art_gallery", "gallery"]) { return "art" }
+        if has(["temple", "shrine", "tourist", "park", "historical", "landmark"]) { return "see" }
+        if has(["book", "shopping", "store", "shop", "market", "mall", "boutique"]) { return "shop" }
+        if has(["night_club", "karaoke", "music"]) { return "listen" }
+        if place.sources == [.wikipedia] {
+            let t = place.name.lowercased()
+            if ["templo", "temple", "shrine", "jinja", "parque", "park", "ponte", "bridge", "passarela", "mirante", "histór", "神社", "寺"]
+                .contains(where: { t.contains($0) }) { return "see" }
+        }
+        return nil
+    }
+
+    /// Rótulo em pt da categoria (linha da lista). `nil` se não der pra dizer.
+    static func categoryLabel(_ place: NearbyPlace) -> String? {
+        let c = (place.category ?? "").lowercased()
+        let table: [(String, String)] = [
+            ("ramen", "ramen"), ("sushi", "sushi"), ("izakaya", "izakaya"), ("restaurant", "restaurante"), ("bakery", "padaria"),
+            ("cafe", "café"), ("coffee", "café"), ("bar", "bar"), ("pub", "bar"), ("museum", "museu"),
+            ("art_gallery", "galeria"), ("gallery", "galeria"), ("temple", "templo"), ("shrine", "santuário"), ("park", "parque"),
+            ("tourist", "ponto turístico"), ("book", "livraria"), ("shopping", "shopping"), ("mall", "shopping"),
+            ("store", "loja"), ("shop", "loja"), ("night_club", "balada"), ("karaoke", "karaokê"),
+        ]
+        if let hit = table.first(where: { c.contains($0.0) }) { return hit.1 }
+        if place.sources == [.wikipedia] { return "ponto histórico" }
+        return nil
+    }
+
+    /// Cor da faixa/miniatura (tom da lista sugerida).
     static func suggestedColor(_ place: NearbyPlace, role: StopRole) -> MustColor {
         let c = (place.category ?? "").lowercased()
         switch role {
@@ -131,6 +185,7 @@ enum NearbyRanker {
         p.category = p.category ?? o.category
         p.popularity = p.popularity ?? o.popularity
         p.articleLang = p.articleLang ?? o.articleLang
+        p.summary = p.summary ?? o.summary
         out.place = p
         out.distance = min(a.distance, b.distance)
         out.role = base.role ?? other.role

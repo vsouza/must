@@ -35,6 +35,8 @@ struct NearbyPlace: Codable, Hashable, Sendable {
     var popularity: Double? = nil
     /// Wikipedia: idioma do artigo ("pt", "ja", "en").
     var articleLang: String? = nil
+    /// Wikipedia: começo do extrato (uma frase). Só contexto, nunca recomendação.
+    var summary: String? = nil
 
     /// Chave estável dentro de uma busca (só pra listas e testes).
     var id: String { "\(googlePlaceId ?? fsqId ?? articleLang.map { "w\($0)-\(name)" } ?? name)" }

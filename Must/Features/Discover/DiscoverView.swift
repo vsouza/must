@@ -147,13 +147,16 @@ struct DiscoverView: View {
                 .font(.must.archivo(26, .bold))
                 .foregroundStyle(.white)
                 .lineLimit(2)
-            Text(heroMeta(c.place))
+            Text(heroMeta(c))
                 .font(.must.archivo(13))
                 .foregroundStyle(.white.opacity(0.85))
                 .lineLimit(2)
-            Text("“\(DiscoverBuilder.reason(for: c.place))”")
-                .mustSerif(19)
-                .foregroundStyle(Color(hex: 0xB9F5CF))
+            if let phrase = DiscoverBuilder.phrase(for: c.place) {
+                Text("“\(phrase)”")
+                    .mustSerif(19)
+                    .foregroundStyle(Color(hex: 0xB9F5CF))
+                    .lineLimit(3)
+            }
         }
         .padding(22)
         .frame(maxWidth: .infinity, minHeight: 250, alignment: .leading)
@@ -168,14 +171,15 @@ struct DiscoverView: View {
         .padding(.horizontal, 6)
     }
 
-    private func heroMeta(_ place: NearbyPlace) -> String {
+    /// "4,5 · 10 mil avaliações · fechado agora". Wikipedia não tem nota: só diz de onde veio.
+    private func heroMeta(_ c: NearbyCandidate) -> String {
+        if c.isContextOnly { return "contexto · Wikipedia · \(Walk.distanceText(c.distance))" }
         var parts: [String] = []
-        if let rating = place.rating {
+        if let rating = c.place.rating {
             parts.append(rating.formatted(.number.precision(.fractionLength(1)).locale(region.locale)))
         }
-        if let count = place.ratingCount { parts.append("\(compactCount(count)) avaliações") }
-        if place.openNow == true { parts.append("aberto agora") }
-        if place.sources.contains(.wikipedia) { parts.append("artigo em \(place.articleLang ?? "pt")") }
+        if let count = c.place.ratingCount { parts.append("\(compactCount(count)) avaliações") }
+        if let open = c.place.openNow { parts.append(open ? "aberto agora" : "fechado agora") }
         return parts.isEmpty ? "sem nota da fonte" : parts.joined(separator: " · ")
     }
 
@@ -198,7 +202,7 @@ struct DiscoverView: View {
                     .foregroundStyle(Color.must.ink)
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
-                    .background(Capsule().fill(Color.must.surface))
+                    .background(Capsule().fill(suggested == nil && !c.isOnBoard ? Color.must.green : Color.must.surface))
             }
             .disabled(c.isOnBoard)
             Button { MapsLinks.openApple(to: CLLocationCoordinate2D(latitude: c.place.lat, longitude: c.place.lng), name: c.place.name) } label: {
@@ -257,7 +261,7 @@ struct DiscoverView: View {
                     Text(c.place.name).font(.must.archivo(16, .semibold)).foregroundStyle(Color.must.ink).lineLimit(1)
                     if c.isOnBoard { Tag("no board") }
                 }
-                Text(rowMeta(c, color: color)).font(.must.meta).foregroundStyle(Color.must.secondary).lineLimit(1)
+                Text(rowMeta(c)).font(.must.meta).foregroundStyle(Color.must.secondary).lineLimit(1)
             }
             Spacer(minLength: 0)
             if let chip = c.place.sources.compactMap(\.chip).first { Tag(chip) }
@@ -274,15 +278,13 @@ struct DiscoverView: View {
         .buttonStyle(MustPressStyle()))
     }
 
-    /// "Must drink · aberto · 180 m · 4,6 · 3,1 mil"
-    private func rowMeta(_ c: NearbyCandidate, color: MustColor) -> String {
-        var parts: [String] = []
-        parts.append(c.listName ?? color.label)
+    /// Board: "Must drink · aberto · 180 m · 4,6 · 3,1 mil". De fora: a categoria em pt no lugar do nome da lista.
+    private func rowMeta(_ c: NearbyCandidate) -> String {
+        var parts: [String] = [c.listName ?? NearbyRanker.categoryLabel(c.place) ?? "lugar"]
         if c.place.openNow == true { parts.append("aberto") } else if c.place.openNow == false { parts.append("fechado") }
         parts.append(Walk.distanceText(c.distance))
         if let rating = c.place.rating { parts.append(rating.formatted(.number.precision(.fractionLength(1)).locale(region.locale))) }
         if let count = c.place.ratingCount { parts.append(compactCount(count)) }
-        if c.place.articleLang != nil, c.place.rating == nil { parts.append("artigo em \(c.place.articleLang ?? "")") }
         return parts.joined(separator: " · ")
     }
 

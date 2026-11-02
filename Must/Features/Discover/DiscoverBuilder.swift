@@ -35,11 +35,10 @@ enum DiscoverBuilder {
         }
     }
 
-    /// Lista sugerida pelo tipo do lugar (café → coffee, restaurante → eat…); cai na primeira que existir.
+    /// Lista sugerida pela categoria (restaurante → eat, café → drink, museu → art…). `nil` quando não há categoria clara.
     static func suggestedList(for candidate: NearbyCandidate, lists: [MustList]) -> MustList? {
-        let role = candidate.role ?? NearbyRanker.role(for: candidate.place)
-        let color = NearbyRanker.suggestedColor(candidate.place, role: role)
-        return lists.first { $0.color == color && $0.kind == .place } ?? lists.first { $0.color == color } ?? lists.first
+        guard let id = NearbyRanker.suggestedListId(candidate.place) else { return nil }
+        return lists.first { $0.id == id }
     }
 
     /// "+ Must": cria o lugar no board com o placeId que a fonte já deu.
@@ -59,13 +58,11 @@ enum DiscoverBuilder {
         return place
     }
 
-    /// Frase do porquê, sem modelo: só fatos que a fonte trouxe (até umas poucas palavras).
-    static func reason(for place: NearbyPlace) -> String {
-        var parts: [String] = []
-        if place.popularity.map({ $0 > 0.9 }) == true { parts.append("em alta neste horário") }
-        if let rating = place.rating, let count = place.ratingCount, rating >= 4.5, count >= 1000 { parts.append("muito bem avaliado") }
-        if let lang = place.articleLang { parts.append("tem artigo em \(lang)") }
-        if place.openNow == true { parts.append("aberto agora") }
-        return parts.first.map { $0.prefix(1).uppercased() + $0.dropFirst() } ?? "perto de você"
+    /// Frase do hero em serif, só quando há algo útil: o começo do extrato da Wikipedia, ou nota alta com muitas avaliações.
+    /// Sem nada útil, `nil` (a frase some).
+    static func phrase(for place: NearbyPlace) -> String? {
+        if let summary = place.summary, !summary.isEmpty { return summary }
+        if let rating = place.rating, let count = place.ratingCount, rating >= 4.5, count >= 1000 { return "muito bem avaliado aqui perto" }
+        return nil
     }
 }
