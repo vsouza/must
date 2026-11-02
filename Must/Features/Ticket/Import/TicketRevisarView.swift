@@ -1,8 +1,9 @@
 import SwiftData
 import SwiftUI
 
-/// TicketRevisar (`design/screens/TicketRevisar.png`): cada campo com a confiança e a origem, editável ali mesmo;
-/// "Vincular a" com o lugar do board; exceção de orçamento; "Salvar ingresso" (só aí grava).
+/// TicketRevisar (`design/screens/TicketRevisar.png`): linhas compactas "rótulo · ● valor · origem"; tocar numa linha
+/// abre o controle logo abaixo (um de cada vez). "Vincular a" com o lugar do board; exceção de orçamento e
+/// "Avisar saia às" (lembrete local). "Salvar ingresso" é o único que grava.
 struct TicketRevisarView: View {
     @Bindable var model: TicketImportModel
     var close: () -> Void
@@ -10,6 +11,8 @@ struct TicketRevisarView: View {
     @Environment(RegionStore.self) private var store
     @State private var choosing = false
     @State private var saveError: String?
+    /// Campo com o controle aberto (nil = todos fechados).
+    @State private var openField: TicketField?
 
     private var region: Region { store.region }
     private var amber: Color { Color(hex: 0xFFB020) }
@@ -45,7 +48,7 @@ struct TicketRevisarView: View {
                     }
                     .padding(.top, 12)
 
-                    budgetCard.padding(.top, 18)
+                    optionsCard.padding(.top, 18)
                 }
 
                 if let saveError { Text(saveError).font(.must.meta).foregroundStyle(Color(hex: 0xC2261D)).padding(.top, 12) }
@@ -110,52 +113,61 @@ struct TicketRevisarView: View {
     private var fieldsCard: some View {
         let d = model.draft
         return VStack(spacing: 0) {
-            row("Fornecedor", .supplier) {
-                TextField("—", text: text(\.supplier, .supplier), axis: .vertical).lineLimit(1...3).multilineTextAlignment(.trailing)
+            field(.supplier, "Fornecedor", value: nonEmpty(d?.supplier)) {
+                editorBox { TextField("—", text: text(\.supplier, .supplier), axis: .vertical).lineLimit(1...3) }
             }
             RowDivider()
-            row("Título", .title) {
-                TextField("nome da experiência", text: text(\.title, .title), axis: .vertical).lineLimit(1...3).multilineTextAlignment(.trailing)
+            field(.title, "Título", value: nonEmpty(d?.title, "—")) {
+                editorBox { TextField("nome da experiência", text: text(\.title, .title), axis: .vertical).lineLimit(1...3) }
             }
             RowDivider()
-            row("Quando", .when, stacked: true) {
-                DatePicker("Quando", selection: date(\.at, .when), displayedComponents: [.date, .hourAndMinute])
-                    .labelsHidden()
-                    .environment(\.timeZone, region.timeZone)
-                    .environment(\.locale, region.locale)
+            field(.when, "Quando", value: whenText, mono: true) {
+                editorBox {
+                    DatePicker("Quando", selection: date(\.at, .when), displayedComponents: [.date, .hourAndMinute])
+                        .labelsHidden()
+                        .datePickerStyle(.compact)
+                        .environment(\.timeZone, region.timeZone)
+                        .environment(\.locale, region.locale)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
             }
             if !model.isWalletKind && !model.isFlight {
                 RowDivider()
-                row("Pessoas", .people) {
-                    Stepper(value: integer(\.people, .people), in: 1...12) {
-                        Text("\(d?.people ?? 1)").font(.must.mono(15))
+                field(.people, "Pessoas", value: "\(d?.people ?? 1)", mono: true) {
+                    editorBox {
+                        Stepper(value: integer(\.people, .people), in: 1...12) {
+                            Text("\(d?.people ?? 1) \((d?.people ?? 1) == 1 ? "pessoa" : "pessoas")").font(.must.archivo(16))
+                        }
                     }
-                    .fixedSize()
                 }
             }
             RowDivider()
-            row("Pago (\(currencyMark))", .price) {
-                TextField("24.000", text: price()).keyboardType(.numberPad).font(.must.mono(15, .semibold))
-                    .multilineTextAlignment(.trailing)
+            field(.price, "Pago", value: d?.price.map { region.money($0) } ?? "—", mono: true) {
+                editorBox {
+                    TextField("24.000 (\(currencyMark))", text: price()).keyboardType(.numberPad).font(.must.mono(16, .semibold))
+                }
             }
             RowDivider()
-            row("Confirmação", .confirmation) {
-                TextField("código", text: text(\.confirmation, .confirmation)).font(.must.mono(15, .semibold)).lineLimit(1)
-                    .textInputAutocapitalization(.characters).multilineTextAlignment(.trailing)
+            field(.confirmation, "Confirmação", value: nonEmpty(d?.confirmation), mono: true) {
+                editorBox {
+                    TextField("código", text: text(\.confirmation, .confirmation))
+                        .font(.must.mono(16, .semibold))
+                        .textInputAutocapitalization(.characters)
+                }
             }
             if !model.isWalletKind && !model.isFlight {
                 RowDivider()
-                row("Encontro", .meeting) {
-                    TextField("ponto de encontro", text: text(\.meetingPoint, .meeting), axis: .vertical).lineLimit(1...3).multilineTextAlignment(.trailing)
+                field(.meeting, "Encontro", value: nonEmpty(d?.meetingPoint)) {
+                    editorBox { TextField("ponto de encontro", text: text(\.meetingPoint, .meeting), axis: .vertical).lineLimit(1...3) }
                 }
                 RowDivider()
-                row("Cancelamento", .cancel, stacked: true) {
-                    cancelControl
+                field(.cancel, "Cancelamento", value: cancelText) {
+                    editorBox { cancelControl }
                 }
             }
             RowDivider()
             HStack(spacing: 12) {
-                Text("Anexos").font(.must.archivo(14)).foregroundStyle(Color.must.secondary).frame(width: 104, alignment: .leading)
+                Text("Anexos").font(.must.archivo(14)).foregroundStyle(Color.must.secondary).frame(width: 96, alignment: .leading)
                 Spacer(minLength: 0)
                 if let attachment = d?.attachment {
                     Pill(attachmentLabel(attachment))
@@ -167,51 +179,71 @@ struct TicketRevisarView: View {
         .background(Color.must.surface2, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
     }
 
+    /// Linha compacta: rótulo · ● valor · origem. Tocar abre (ou fecha) o controle logo abaixo; abrir outro fecha este.
+    private func field<Editor: View>(_ target: TicketField, _ label: String, value: String, mono: Bool = false,
+                                     @ViewBuilder editor: () -> Editor) -> some View {
+        let meta = model.draft?.meta[target]
+        let isOpen = openField == target
+        return VStack(alignment: .leading, spacing: 0) {
+            Button {
+                withAnimation(.snappy(duration: 0.2)) { openField = isOpen ? nil : target }
+            } label: {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(label)
+                        .font(.must.archivo(14)).foregroundStyle(Color.must.secondary)
+                        .frame(width: 96, alignment: .leading)
+                    Spacer(minLength: 0)
+                    Circle().fill(dot(meta)).frame(width: 8, height: 8)
+                    Text(value)
+                        .font(mono ? .must.mono(15, .semibold) : .must.archivo(15, .semibold))
+                        .foregroundStyle(Color.must.ink)
+                        .multilineTextAlignment(.trailing)
+                        .lineLimit(2)
+                    if let origin = meta?.origin {
+                        Text(origin).font(.must.mono(11)).foregroundStyle(Color.must.secondary).lineLimit(1)
+                    }
+                }
+                .padding(.horizontal, 16).padding(.vertical, 14)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            if isOpen {
+                editor()
+                    .padding(.horizontal, 16).padding(.bottom, 14)
+            }
+        }
+    }
+
+    /// Caixa do controle aberto (texto, data, passo, preço).
+    private func editorBox<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        content()
+            .font(.must.archivo(16))
+            .foregroundStyle(Color.must.ink)
+            .padding(.horizontal, 14).padding(.vertical, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.white, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(Color.must.line))
+    }
+
+    private func nonEmpty(_ value: String?, _ placeholder: String = "—") -> String {
+        guard let value, !value.trimmingCharacters(in: .whitespaces).isEmpty else { return placeholder }
+        return value
+    }
+
+    private var whenText: String {
+        let at = model.draft?.at ?? AppClock.now
+        return "\(FlightFormat.day(at, zone: region.timeZone)) · \(FlightFormat.time(at, zone: region.timeZone))"
+    }
+
+    private var cancelText: String {
+        guard let until = model.draft?.cancelUntil else { return "sem cancelamento grátis" }
+        return "grátis até \(FlightFormat.day(until, zone: region.timeZone)) · \(FlightFormat.time(until, zone: region.timeZone))"
+    }
+
     /// "¥" quando a moeda do ingresso é a da região; senão o código ("USD").
     private var currencyMark: String {
         guard let currency = model.draft?.currency, currency != region.currency else { return region.currencySymbol }
         return currency
-    }
-
-    /// Uma linha da conferência: rótulo e origem à esquerda, controle à direita. `stacked` põe o controle embaixo
-    /// (datas e cancelamento são largos demais pra dividir a linha).
-    private func row<Control: View>(_ label: String, _ field: TicketField, stacked: Bool = false,
-                                    @ViewBuilder control: () -> Control) -> some View {
-        let meta = model.draft?.meta[field]
-        let labelColumn = VStack(alignment: .leading, spacing: 3) {
-            Text(label).font(.must.archivo(14)).foregroundStyle(Color.must.secondary)
-            if let origin = meta?.origin {
-                Text(origin).font(.must.mono(11)).foregroundStyle(Color.must.secondary)
-            }
-        }
-        let indicator = Circle().fill(dot(meta)).frame(width: 8, height: 8)
-        return Group {
-            if stacked {
-                VStack(alignment: .leading, spacing: 10) {
-                    HStack(alignment: .center, spacing: 10) {
-                        labelColumn
-                        Spacer(minLength: 0)
-                        indicator
-                    }
-                    control()
-                        .font(.must.archivo(15, .semibold))
-                        .foregroundStyle(Color.must.ink)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-            } else {
-                HStack(alignment: .center, spacing: 12) {
-                    labelColumn.frame(width: 96, alignment: .leading)
-                    control()
-                        .font(.must.archivo(15, .semibold))
-                        .foregroundStyle(Color.must.ink)
-                        .frame(maxWidth: .infinity, alignment: .trailing)
-                        .layoutPriority(1)
-                    indicator
-                }
-            }
-        }
-        .padding(.horizontal, 16).padding(.vertical, 14)
-        .frame(maxWidth: .infinity)
     }
 
     private func dot(_ meta: FieldMeta?) -> Color {
@@ -306,17 +338,37 @@ struct TicketRevisarView: View {
                     in: RoundedRectangle(cornerRadius: 22, style: .continuous))
     }
 
-    private var budgetCard: some View {
-        let on = Binding(get: { model.draft?.budgetException ?? false },
-                         set: { value in model.draft?.budgetException = value })
+    /// Exceção de orçamento e aviso "saia às" (lembrete local; sem Live Activity).
+    private var optionsCard: some View {
+        let budget = Binding(get: { model.draft?.budgetException ?? false },
+                             set: { value in model.draft?.budgetException = value })
+        let remind = Binding(get: { model.draft?.remindLeave ?? false },
+                             set: { value in model.draft?.remindLeave = value })
         let price = model.draft?.price.map { region.money($0) } ?? "—"
-        return Toggle(isOn: on) {
-            FormRow("Vale a exceção de orçamento", subtitle: "\(price) fica fora da meta do dia")
+        return VStack(spacing: 0) {
+            Toggle(isOn: budget) {
+                FormRow("Vale a exceção de orçamento", subtitle: "\(price) fica fora da meta do dia")
+            }
+            .toggleStyle(.must)
+            .padding(16)
+            RowDivider()
+            Toggle(isOn: remind) {
+                FormRow("Avisar \"saia às\"", subtitle: leaveText)
+            }
+            .toggleStyle(.must)
+            .padding(16)
         }
-        .toggleStyle(.must)
-        .padding(16)
         .background(Color.white, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(Color.must.line))
+    }
+
+    /// Hora de sair: a visita menos 40 min de deslocamento (estimativa), no fuso da região.
+    private var leaveAt: Date {
+        RoutesService.leaveAt(model.draft?.at ?? AppClock.now, travelMinutes: 40)
+    }
+
+    private var leaveText: String {
+        "saia às \(FlightFormat.time(leaveAt, zone: region.timeZone)) · estimativa de 40 min"
     }
 
     /// Trem e QR de entrada: vão pra Carteira, não pra um lugar do board.
@@ -340,8 +392,14 @@ struct TicketRevisarView: View {
     }
 
     private func save() {
+        let remind = model.draft?.remindLeave == true && !model.isFlight && !model.isWalletKind
+        let title = model.draft?.title ?? ""
+        let leave = leaveAt
         do {
             try model.save()
+            if remind {
+                Task { _ = await TicketLeaveReminder.schedule(title: title, leaveAt: leave) }
+            }
             close()
         } catch {
             saveError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription

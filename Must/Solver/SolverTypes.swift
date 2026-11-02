@@ -201,6 +201,8 @@ struct DayFlight: Sendable, Hashable {
     var number: String
     var departs: Date
     var leaveAt: Date
+    /// Aeroporto de origem (IATA): as horas são mostradas no fuso dele, não no da região.
+    var from: String = ""
 }
 
 enum LegMode: String, Sendable, Hashable { case walk, metro }

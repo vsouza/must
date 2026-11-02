@@ -235,13 +235,15 @@ struct TodayView: View {
         if !today.isEmpty {
             VStack(alignment: .leading, spacing: 10) {
                 ForEach(today, id: \.number) { flight in
+                    // Mesmo cálculo e fuso do card de Voos: a hora é a do aeroporto de origem.
+                    let zone = FlightFormat.zone(flight.from, fallback: region.timeZone)
                     HStack(alignment: .firstTextBaseline, spacing: 10) {
                         MustIconView(.rota, size: 16)
                         VStack(alignment: .leading, spacing: 3) {
-                            Text("voo \(flight.number) · \(region.timeString(flight.departs))")
+                            Text("voo \(flight.number) · \(FlightFormat.time(flight.departs, zone: zone))")
                                 .font(.must.archivo(15, .semibold)).foregroundStyle(Color.must.ink)
                             Text(flight.leaveAt > now
-                                 ? "saia pro aeroporto às \(region.timeString(flight.leaveAt)) · estimativa"
+                                 ? "saia pro aeroporto às \(FlightFormat.time(flight.leaveAt, zone: zone)) · estimativa"
                                  : "hora de ir pro aeroporto · estimativa")
                                 .mustMeta()
                         }

@@ -295,7 +295,8 @@ enum FlightRules {
         return flights.flatMap { flight in
             flight.legs.filter { localDayString($0.departsNow, iata: $0.from, fallback: region.timeZone) == key }.map { leg in
                 DayFlight(number: leg.number, departs: leg.departsNow,
-                          leaveAt: leaveForAirport(departs: leg.departsNow, international: isInternational(leg)))
+                          leaveAt: leaveForAirport(departs: leg.departsNow, international: isInternational(leg)),
+                          from: leg.from)
             }
         }.sorted { $0.departs < $1.departs }
     }

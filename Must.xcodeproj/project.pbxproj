@@ -195,6 +195,7 @@
 		D008E59938102E6875832BE3 /* PlaceResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A108F02F9AAFC162F9B73BEF /* PlaceResolverTests.swift */; };
 		D0981A28EC0EAE4A6BC81105 /* PlaceMatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEEEB2224A2D1E0E55462753 /* PlaceMatcher.swift */; };
 		D2DF4AE8A734205DC139C0A9 /* InstrumentSerif-Italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 21F59305A744CEF4BA26807A /* InstrumentSerif-Italic.ttf */; };
+		D3A579AEC4FC44D334EF3D4F /* TicketLeaveReminder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BB210A83EBD126A299726C3 /* TicketLeaveReminder.swift */; };
 		D460975DE94DE0127A234DAA /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE8D645E4788CC466551C27A /* ShareViewController.swift */; };
 		D6C8A98A1AE102D60705D9F8 /* BoardCodecTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3847B720AFE775247C5B85A9 /* BoardCodecTests.swift */; };
 		D6CC08448AD770BB98B95B92 /* Archivo.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 80AB3193D4A8D68E8A7C7975 /* Archivo.ttf */; };
@@ -375,6 +376,7 @@
 		873F50CBBAED2C9EB558BCDD /* RegexIntentParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegexIntentParser.swift; sourceTree = "<group>"; };
 		87D1D2A66B5AA23C5106223F /* Must.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Must.entitlements; sourceTree = "<group>"; };
 		888774E525344E91000A78D6 /* SolverTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolverTypes.swift; sourceTree = "<group>"; };
+		8BB210A83EBD126A299726C3 /* TicketLeaveReminder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketLeaveReminder.swift; sourceTree = "<group>"; };
 		8CC9FD34E64012CFB56E93D7 /* NotesRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesRules.swift; sourceTree = "<group>"; };
 		8D2B8CFB97415187722CE54D /* WalletEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletEditor.swift; sourceTree = "<group>"; };
 		8DAE4E5A94DC47A124F16E29 /* FlightFromTicket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightFromTicket.swift; sourceTree = "<group>"; };
@@ -1103,6 +1105,7 @@
 				0C832B556BB2DF99EF2A23CD /* ExtractedTicket.swift */,
 				D5E3F65868D18050715124E1 /* PKPassReader.swift */,
 				B982B5C9A85023A0BF2D3B2E /* ShareInbox.swift */,
+				8BB210A83EBD126A299726C3 /* TicketLeaveReminder.swift */,
 				A0CDF92BF817A26184F4637E /* TicketMatcher.swift */,
 				CAF874CE82AC9FC5CC550BC2 /* TicketModelExtractor.swift */,
 				D864E1B49CCD1C49891750C2 /* TicketQR.swift */,
@@ -1532,6 +1535,7 @@
 				682E2C00BD69F88552577F8E /* TicketFiles.swift in Sources */,
 				8C7BADBAFB9DC29FEA639206 /* TicketImportFlow.swift in Sources */,
 				B7AC5192D9B2C12006645647 /* TicketImportModel.swift in Sources */,
+				D3A579AEC4FC44D334EF3D4F /* TicketLeaveReminder.swift in Sources */,
 				4F72C046EF82302144C0E84B /* TicketMatcher.swift in Sources */,
 				4538C644C2CC9C45E20DE6FA /* TicketModelExtractor.swift in Sources */,
 				AECAA7B9898D40D2B927ACEC /* TicketQR.swift in Sources */,

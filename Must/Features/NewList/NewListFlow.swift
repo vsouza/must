@@ -224,20 +224,23 @@ struct NewListView: View {
     private var colorSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Micro("cor")
-            HStack(spacing: 0) {
-                ForEach(MustColor.allCases) { c in
-                    Button { color = c } label: {
-                        Circle()
-                            .fill(c.gradient)
-                            .frame(width: 34, height: 34)
-                            .padding(3)
-                            .overlay(Circle().strokeBorder(Color.must.ink, lineWidth: color == c ? 2 : 0))
-                            .frame(maxWidth: .infinity)
+            // 12 cores em linha: rolagem horizontal (sem ela o HStack exige ~480 pt e empurra a tela inteira).
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(MustColor.allCases) { c in
+                        Button { color = c } label: {
+                            Circle()
+                                .fill(c.gradient)
+                                .frame(width: 34, height: 34)
+                                .padding(3)
+                                .overlay(Circle().strokeBorder(Color.must.ink, lineWidth: color == c ? 2 : 0))
+                        }
+                        .buttonStyle(MustPressStyle())
+                        .accessibilityLabel(c.label)
+                        .accessibilityAddTraits(color == c ? .isSelected : [])
                     }
-                    .buttonStyle(MustPressStyle())
-                    .accessibilityLabel(c.label)
-                    .accessibilityAddTraits(color == c ? .isSelected : [])
                 }
+                .padding(.vertical, 2)
             }
         }
     }
@@ -270,11 +273,18 @@ struct NewListView: View {
 
     private var photoOptions: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack {
+            HStack(spacing: 8) {
                 Micro("foto de fundo · Wikimedia CC")
-                Spacer()
-                Text("busca “\(name.isEmpty ? "…" : name) \(cityName.lowercased())”").mustMeta().lineLimit(1)
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
+                Spacer(minLength: 0)
+                Text("busca “\(name.isEmpty ? "…" : name) \(cityName.lowercased())”")
+                    .mustMeta()
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .frame(maxWidth: 180, alignment: .trailing)
             }
+            .frame(maxWidth: .infinity)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
                     Button { selectedPhoto = nil; photoChanged = true } label: {

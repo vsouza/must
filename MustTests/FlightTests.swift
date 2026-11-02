@@ -407,6 +407,19 @@ struct FlightRulesTests {
         #expect(FlightRules.dayFlights([flight], on: other, region: .jp).isEmpty)
     }
 
+    /// Hoje (região JP) mostra a partida e a saída no fuso do aeroporto de origem (GRU, −03:00), não no do Japão.
+    @Test func dayFlightCarriesOriginAirportForZoneFormatting() {
+        let flight = Flight(pnr: "X", legs: F.gruToHnd(), checklist: [])
+        let day = BoardDates(timeZone: Region.jp.timeZone).day(from: "2026-11-14")!
+        let found = FlightRules.dayFlights([flight], on: day, region: .jp)
+        #expect(found.first?.from == "GRU")
+        let zone = FlightFormat.zone(found.first?.from ?? "", fallback: Region.jp.timeZone)
+        #expect(FlightFormat.time(found.first!.departs, zone: zone) == "23:55")
+        // Saída pro aeroporto: 3 h antes (internacional) + 60 min de deslocamento = 19:55 em GRU.
+        #expect(FlightFormat.time(found.first!.leaveAt, zone: zone) == "19:55")
+        #expect(FlightFormat.time(found.first!.departs, zone: Region.jp.timeZone) != "23:55")
+    }
+
     @Test func flightIsOverAfterLanding() {
         let flight = Flight(pnr: "X", legs: F.gruToHnd(), checklist: [])
         #expect(flight.isOver(now: F.iso("2026-11-14T12:00:00-03:00")) == false)

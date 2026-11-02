@@ -39,6 +39,8 @@ struct TicketDraft: Equatable, Sendable {
     var meta: [TicketField: FieldMeta] = [:]
     var sourceLabel = ""
     var budgetException = false
+    /// "Avisar saia às": lembrete local no horário de sair (só ingresso de lugar, não voo nem Carteira).
+    var remindLeave = false
 
     init(at: Date) { self.at = at }
 
