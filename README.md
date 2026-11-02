@@ -25,11 +25,15 @@ Copie `Secrets.example.plist` para `Secrets.plist` (na raiz; fica fora do git) e
 
 | Chave | Pra quê | Obrigatória? |
 |---|---|---|
-| `GOOGLE_PLACES_KEY` | horários, preço e placeId (Places API **New**) | não — sem ela o app usa só o board |
-| `ANTHROPIC_KEY` | "Reforço na nuvem" (Claude Haiku) pra extrair lugar de legenda difícil | não — desligado por padrão |
-| `PROTOMAPS_KEY` | tiles hospedados quando faltam os PMTiles no bundle | não |
+| `GOOGLE_PLACES_KEY` | Places API (New): horários, preço e placeId, e o Por perto (Nearby) | não — sem ela o app usa só o board |
+| `AERODATABOX_KEY` | status de voo (AeroDataBox, 400 unidades/mês) | não — sem ela, só o horário programado |
 | `FOURSQUARE_KEY` | Dicas de quem foi · Foursquare (tier grátis) | não |
+| `MAP_TILES_URL` | servidor de mapas offline (bucket R2 com os PMTiles), pra baixar mapa de cidade | não — sem ele, só os mapas já baixados |
+| `ANTHROPIC_KEY` | "Reforço na nuvem" só com Claude Haiku (effort low, sem thinking) pra lugar de link difícil | não — desligado por padrão |
+| `PROTOMAPS_KEY` | tiles hospedados quando faltam os PMTiles no bundle | não |
 | `REDDIT_CLIENT_ID` | Dicas de quem foi · Reddit (app "installed", sem segredo) | não |
+
+Não usados nesta rodada (decisão de 02/11): Viator, GetYourGuide e aviationstack. Experiências entram por link, e o status de voo é só AeroDataBox.
 
 Na chave do Google: ative a **Places API (New)**, inclua-a nas restrições de API da chave e, se restringir por app iOS, use o
 bundle `dev.viniso.must`. O tempo (Open-Meteo) e as fotos (Wikimedia Commons) não precisam de chave.

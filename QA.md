@@ -162,3 +162,35 @@ xcodebuild -project Must.xcodeproj -scheme Must -destination 'platform=iOS Simul
 - No simulador, Vision de código de barras não funciona ("Could not create inference context"); o QR cai no `CIDetector`. Verificar o Vision no aparelho.
 - Telas: `ingresso-entrada` e `ingresso-revisar` (PDF de exemplo na caixa) no `qa-screens.sh`, região JP. Conferir o print contra `design/screens/TicketRevisar.png`.
 - Pendente: Escanear com câmera real (DataScanner), Voo e Trem (fatias 5 e 6, TODO explícito na tela), "Avisar saia às + Live Activity" (sem campo no modelo ainda).
+
+## Rodada 14–16 (fatia 7) · o que só dá pra testar no iPhone
+
+Os prints do `scripts/qa-screens.sh` cobrem a aparência. Esta lista cobre o que o simulador não cobre (câmera, Share, Mail, Arquivos, `shoebox://`, proteção de arquivo, lembretes, arrastar no Board, AeroDataBox real). Nenhum item usa API paga além da cota já combinada (AeroDataBox: 400 unidades/mês).
+
+### Prompt 14 · Board, Por perto, experiências, ingresso
+- **Board:** selecionar 3 em Must eat, mover pra Must drink, marcar "fica pro fim", apagar 1 com confirmação. Arrastar reordena e persiste (fechar o app e reabrir). Busca por "Reel" acha os que vieram de link.
+- **Por perto** (GPS real em Naka-Meguro, 18:42): destaque fora do board com nota e frase; "+ Must drink" cria o lugar com placeId; a Home mostra a linha "Por perto:" ao reabrir.
+- **Experiências:** nesta rodada não há API de experiências (decisão de 02/11): só o card de colar link. Colar um link do Klook preenche título, preço e duração.
+- **Ingresso:** criar um ingresso manual com código → QR gerado, aparece em Reservas como âncora e no Hoje do dia; conflito com Udatsu 19:00 aparece no card de experiências.
+
+### Prompt 15 · importar ingresso, Carteira, voos
+- **Share (Mail → Must):** compartilhar um PDF de reserva do Mail pro Must → o fluxo lê QR e campos, sugere o lugar certo, salva, aparece em Reservas e no Hoje do dia (Live Activity fica pra depois; hoje é só lembrete).
+- **Scanner (VisionKit):** escanear a tela de outro app com QR → "Encontrei" com código e data. Testar com a câmera de verdade (o simulador não tem).
+- **`.pkpass`:** abrir um `.pkpass` de teste (Arquivos → Compartilhar → Must) → campos de `pass.json` preenchidos, QR gerado igual ao do passe.
+- **Carteira:** Suica com saldo anotado e aviso abaixo de ¥1.000; "Abrir no Wallet" abre o Wallet (`shoebox://`).
+- **Proteção:** os arquivos de ingresso e Carteira são gravados com `FileProtectionType.complete` (`TicketFiles`). Bloquear o iPhone e abrir o item pela Carteira: o arquivo só abre com o aparelho desbloqueado.
+- **Voo GRU→HND de PDF LATAM:** PNR, 2 pernas, checklist com 12 itens. Marcar "Visit Japan Web" na Carteira marca o item sozinho.
+- **Status de voo (AeroDataBox real, cota):** com `AERODATABOX_KEY`, status e portão atualizam ao abrir Voos. Conferir que uma atualização gasta 1 unidade e que, sem a chave, o card mostra só o horário programado.
+- **Lembretes:** ligar "Lembrar no horário" em Voos (pede permissão) e conferir que o item com `dueAt` chega no horário. Ligar "Avisar saia às" na conferência do ingresso (pede permissão) e conferir o aviso no horário de sair (visita − 40 min, estimativa).
+- **Arrastar no Board:** arrastar um lugar pra outra lista (soltar sobre o cartão da lista de destino) e conferir que a troca persiste ao reabrir o app.
+
+### Prompt 16 · Adicionar por link com mapa
+- Não há bloco "Verificar" no prompt 16. Conferir, no aparelho: colar um link do Maps com nome, colar uma legenda com 3 lugares (Places real, com cota), e o mapa com os pinos numerados.
+
+### Diferenças do design que ficaram (por tela, curto)
+- **Editar lista / Nova lista:** conferido no print. Sem deslocamento. Cores em linha com rolagem horizontal, cortada na borda direita como no design. A busca de foto trunca ("busca “… belo horiz…”") em vez de quebrar.
+- **Conferir (TicketRevisar):** conferido no print. Linha compacta "rótulo · ● valor · origem" como no design. "Pessoas" e "Pago" ficam em linhas separadas (o design junta em "Pessoas · pago"). As opções ("Vale a exceção", "Avisar saia às") ficam abaixo da dobra e não foram vistas no print.
+- **Conferir, "Avisar saia às":** lembrete local só, sem Live Activity. A hora de sair é visita − 40 min (estimativa fixa), não a rota real.
+- **Voos:** conferido no print. O cartão mostra CNF→HND com "saia às 15:25 pro aeroporto", que é o cálculo de voo doméstico (2 h + 1 h antes de 18:25). Os status são de mentira (`-debugFlight fake`).
+- **Hoje · voo:** a hora do voo e a de sair pro aeroporto saem no fuso do aeroporto de origem. Coberto por teste unitário (FlightTests), não por print.
+- **Não comparados por completo nesta rodada:** Board, Ingresso, TicketEntrada, Experiências, Descobrir, Carteira, Viagem, AdicionarMapa e Lugar › 3D. Os prints foram gerados (`scripts/qa-screens.sh`) mas a comparação visual não terminou; conferir na próxima passada.
