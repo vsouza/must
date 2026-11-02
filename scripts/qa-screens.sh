@@ -16,7 +16,9 @@ xcrun simctl boot "$UDID" 2>/dev/null || true
 xcrun simctl bootstatus "$UDID" -b >/dev/null
 xcrun simctl install "$UDID" "$DD/Build/Products/Debug-iphonesimulator/Must.app"
 
-W="xcrun simctl spawn $UDID defaults write dev.viniso.must"
+# Preferências do app ficam no container dele (gravar no domínio global do simulador não chega no app).
+PREFS="$(xcrun simctl get_app_container "$UDID" dev.viniso.must data)/Library/Preferences/dev.viniso.must"
+W="xcrun simctl spawn $UDID defaults write $PREFS"
 shot() {
   local name=$1; shift
   xcrun simctl terminate "$UDID" dev.viniso.must 2>/dev/null || true
@@ -93,7 +95,7 @@ shot jp-adicionar-mapa -debugScreen "adicionar:📍 Tsukiji Outer Market | 📍 
 
 echo "→ limpando simulações"
 for k in dev.simDateOn dev.simDate dev.simSetAt dev.simGPSOn dev.simLat dev.simLng dev.simCloud skipOnboarding debugPlaces; do
-  xcrun simctl spawn "$UDID" defaults delete dev.viniso.must $k 2>/dev/null || true
+  xcrun simctl spawn "$UDID" defaults delete $PREFS $k 2>/dev/null || true
 done
 ${=W} region bh
 echo "pronto: $OUT/"
