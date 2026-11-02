@@ -164,6 +164,8 @@ enum DaySolver {
         if p.done { return ("já feito", true) }
         if ctx.mustExclude.contains(p.id) { return ("você pediu pra tirar", false) }
         if !req.isInCity(p.cityId) { return ("outra cidade", true) }
+        // Experiência só entra com ingresso (âncora) ou pedido explícito.
+        if p.kind == .experience && !forced { return ("experiência: entra com ingresso ou pedido", true) }
         let mode = ctx.mode(p)
         let rare = p.rules.isRareToday(weekday: req.weekday)
         if mode == .off && !forced { return ("lista desligada", true) }
@@ -490,10 +492,29 @@ enum DaySolver {
         let exception = stops.filter(\.isException).reduce(0) { $0 + $1.place.cost }
         let chosenIds = Set(stops.map(\.place.id))
         let left = dedupe(leftOut.filter { !chosenIds.contains($0.place.id) })
+        let warnings = overlapWarnings(stops, ctx: ctx)
+        let text = explanation(stops: stops, leftOut: left, request: request)
         return DayProposal(request: request, stops: stops, predictedSpend: spend, exceptionSpend: exception,
                            walkKm: legs.filter { $0.mode == .walk }.reduce(0) { $0 + $1.km },
                            transitLegs: legs.filter { $0.mode == .metro }.count,
-                           leftOut: left, explanation: explanation(stops: stops, leftOut: left, request: request))
+                           leftOut: left, explanation: (warnings.map { "Atenção: \($0)." } + [text]).joined(separator: " "),
+                           warnings: warnings)
+    }
+
+    /// Âncoras que se sobrepõem no tempo (reserva × ingresso, ingresso × ingresso): o usuário decide.
+    static func overlapWarnings(_ stops: [ProposedStop], ctx: Context) -> [String] {
+        let anchors = stops.filter(\.isAnchor).sorted { $0.at < $1.at }
+        var out: [String] = []
+        for (i, a) in anchors.enumerated() {
+            for b in anchors[(i + 1)...] where b.at < a.end {
+                out.append("\(a.place.name) \(hhmm(ctx.minute(a.at))) e \(b.place.name) \(hhmm(ctx.minute(b.at))) se sobrepõem")
+            }
+        }
+        return out
+    }
+
+    private static func hhmm(_ minute: Int) -> String {
+        String(format: "%02d:%02d", (minute / 60) % 24, minute % 60)
     }
 
     private static func dedupe(_ items: [LeftOut]) -> [LeftOut] {

@@ -11,6 +11,7 @@ struct KindExtraFields: View {
         case .photo: photo
         case .art: art
         case .sport: sport
+        case .experience: experience
         case .place: EmptyView()
         }
     }
@@ -133,6 +134,46 @@ struct KindExtraFields: View {
         }
     }
 
+    // MARK: experience
+
+    private var experienceInfo: Binding<ExperienceInfo> {
+        Binding { extra.experience ?? ExperienceInfo() } set: { extra.experience = $0 }
+    }
+
+    /// Fornecedor, link, duração, preço, ponto de encontro. Sessões entram pelo ingresso (ou pelo board).
+    private var experience: some View {
+        VStack(alignment: .leading, spacing: 22) {
+            VStack(alignment: .leading, spacing: 10) {
+                Micro("fornecedor")
+                FlowLayout(spacing: 8) {
+                    ForEach(ExperienceSupplier.allCases) { s in
+                        Button { experienceInfo.wrappedValue.supplier = s } label: { Pill(s.label, isOn: experienceInfo.wrappedValue.supplier == s) }
+                            .buttonStyle(MustPressStyle())
+                    }
+                }
+            }
+            field("link do produto (colar)") {
+                TextField("https://www.viator.com/…", text: urlText(experienceInfo.url)).font(.must.archivo(15))
+                    .keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled()
+            }
+            HStack(spacing: 12) {
+                field("duração (min)") { TextField("180", text: int(experienceInfo.durationMinutes)).font(.must.mono(17)).keyboardType(.numberPad) }
+                field("grupo até") { TextField("8", text: int(experienceInfo.groupMax)).font(.must.mono(17)).keyboardType(.numberPad) }
+            }
+            HStack(spacing: 12) {
+                field("a partir de (\(region.currencySymbol))") { TextField("0", text: number(experienceInfo.priceFrom)).font(.must.mono(17)).keyboardType(.numberPad) }
+                field("cancela grátis (h antes)") { TextField("24", text: int(experienceInfo.freeCancellationHours)).font(.must.mono(17)).keyboardType(.numberPad) }
+            }
+            field("ponto de encontro") { TextField("Portão 1 do mercado externo", text: text(experienceInfo.meetingPoint)).font(.must.archivo(17)) }
+            field("idiomas") {
+                TextField("inglês, japonês", text: Binding { experienceInfo.wrappedValue.languages.joined(separator: ", ") } set: {
+                    experienceInfo.wrappedValue.languages = $0.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+                })
+                .font(.must.archivo(17))
+            }
+        }
+    }
+
     // MARK: Peças
 
     private func field<Content: View>(_ label: String, @ViewBuilder content: () -> Content) -> some View {
@@ -163,6 +204,10 @@ struct KindExtraFields: View {
                 : $0.replacingOccurrences(of: ".", with: "").replacingOccurrences(of: ",", with: ".")
             b.wrappedValue = Double(s)
         }
+    }
+
+    private func urlText(_ b: Binding<URL?>) -> Binding<String> {
+        Binding { b.wrappedValue?.absoluteString ?? "" } set: { b.wrappedValue = $0.isEmpty ? nil : URL(string: $0.trimmingCharacters(in: .whitespaces)) }
     }
 
     private func int(_ b: Binding<Int?>) -> Binding<String> {

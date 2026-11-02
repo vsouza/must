@@ -21,6 +21,7 @@ struct EditPlaceView: View {
     @State private var draft = PlaceDraft()
     @State private var loaded = false
     @State private var editingReservation = false
+    @State private var editingTickets = false
     @State private var confirmDelete = false
     @State private var error: String?
 
@@ -89,6 +90,9 @@ struct EditPlaceView: View {
         .sheet(isPresented: $editingReservation) {
             ReservationEditor(reservation: $draft.reservation, region: region)
                 .presentationDetents([.medium, .large])
+        }
+        .sheet(isPresented: $editingTickets) {
+            TicketsEditor(tickets: $draft.tickets, sessions: draft.extra.sessions, region: region, placeName: draft.name)
         }
         .confirmationDialog("Remover \(draft.name) do board?", isPresented: $confirmDelete, titleVisibility: .visible) {
             Button("Remover", role: .destructive, action: delete)
@@ -207,6 +211,13 @@ struct EditPlaceView: View {
                     MonoValue(draft.reservation.map {
                         "\(region.shortDay($0.at)) \(region.timeString($0.at))"
                     } ?? "nenhuma", chevron: true)
+                }
+            }
+            .buttonStyle(.plain)
+            RowDivider()
+            Button { editingTickets = true } label: {
+                FormRow("Ingresso", subtitle: "PDF, QR ou código · vira âncora do dia") {
+                    MonoValue(draft.tickets.isEmpty ? "nenhum" : "\(draft.tickets.count)", chevron: true)
                 }
             }
             .buttonStyle(.plain)
@@ -394,8 +405,10 @@ struct PlaceDraft {
     var lat: Double = 0
     var lng: Double = 0
     var approx = true
-    /// photo / art / sport.
+    /// photo / art / sport / experience.
     var extra = PlaceExtra()
+    /// Ingressos anexados (Editar lugar › Ingresso).
+    var tickets: [Ticket] = []
 
     init() {}
 
@@ -422,6 +435,7 @@ struct PlaceDraft {
         lng = place.lng
         approx = place.approx
         extra = place.extra ?? PlaceExtra()
+        tickets = place.tickets
     }
 
     @MainActor
@@ -453,9 +467,13 @@ struct PlaceDraft {
         case .photo: kept.photo = extra.photo
         case .art: kept.art = extra.art
         case .sport: kept.sport = extra.sport
+        case .experience: kept.experience = extra.experience
         case .place: kept = extra
         }
         place.extra = kept
+        // Ingresso anexado a uma sessão marca a sessão como comprada (âncora).
+        place.tickets = tickets
+        place.syncBoughtSessions()
     }
 }
 

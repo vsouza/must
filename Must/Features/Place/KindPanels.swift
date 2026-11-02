@@ -2,7 +2,7 @@ import CoreLocation
 import SwiftData
 import SwiftUI
 
-// Painéis do Lugar por tipo: photo (Foto.png), art (Arte.png), sport (Esporte.png).
+// Painéis do Lugar por tipo: photo (Foto.png), art (Arte.png), sport (Esporte.png), experience (Experiencias.png).
 
 private struct ChipRow: View {
     var items: [String]
@@ -465,3 +465,98 @@ struct SportPanel: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
+
+// MARK: - experience
+
+struct ExperiencePanel: View {
+    var place: Place
+    var info: ExperienceInfo
+    var tickets: [Ticket]
+    var region: Region
+    var now: Date
+    var onToggleBought: (EventSession) -> Void
+    var onOpenTicket: (Ticket) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            VStack(spacing: -22) {
+                entryCard.stackCard(color: .night, rotation: -1.2).zIndex(0)
+                if !info.sessions.isEmpty {
+                    SessionsCard(sessions: info.sessions, region: region, fallbackURL: info.url, onToggleBought: onToggleBought)
+                        .stackCard(tint: .gray, rotation: 1.4)
+                        .padding(.leading, 34).padding(.trailing, -28)
+                        .zIndex(1)
+                }
+                ticketsCard.stackCard(tint: .slate).zIndex(2)
+            }
+            ChipRow(items: footer)
+        }
+    }
+
+    private var entryCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Micro("Experiência · \(info.supplier.label)", color: MustColor.night.text)
+                Spacer()
+                if let rating = info.rating {
+                    let text = rating.formatted(.number.precision(.fractionLength(1)).locale(region.locale))
+                    Text("★ \(text)\(info.reviewCount.map { " · \($0)" } ?? "")").font(.must.mono(12, .semibold))
+                }
+            }
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                MonoNumber(info.priceFrom.map { region.money($0) } ?? "—", size: 30)
+                    .foregroundStyle(Color.must.ink)
+                    .fixedSize()
+                Text("por pessoa").font(.must.archivo(13)).foregroundStyle(Color.must.secondary)
+            }
+            let meta = [info.durationMinutes.map(KindLines.duration), info.groupMax.map { "grupo até \($0)" },
+                        info.languages.isEmpty ? nil : info.languages.joined(separator: ", ")].compactMap { $0 }
+            if !meta.isEmpty { Text(meta.joined(separator: " · ")).font(.must.archivo(13)).foregroundStyle(Color.must.ink) }
+            if let hours = info.freeCancellationHours {
+                Text("cancela grátis até \(hours) h antes").font(.must.archivo(12.5)).foregroundStyle(Color.must.secondary)
+            }
+        }
+        .padding(.horizontal, 20).padding(.top, 18).padding(.bottom, 40)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var ticketsCard: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Micro("Meus ingressos")
+                Spacer()
+                Text(tickets.isEmpty ? "nenhum" : "\(tickets.count)").font(.must.mono(12, .semibold))
+            }
+            .padding(.bottom, 8)
+            if tickets.isEmpty {
+                Text("Quando comprar, anexe o PDF ou o código: vira âncora do dia.").font(.must.archivo(13)).foregroundStyle(Color.must.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            ForEach(tickets.sorted { $0.at < $1.at }) { ticket in
+                RowDivider()
+                Button { onOpenTicket(ticket) } label: {
+                    HStack(spacing: 12) {
+                        Text("\(KindLines.weekdayDay(ticket.at, region: region)) · \(region.timeString(ticket.at))")
+                            .font(.must.mono(13, .semibold)).foregroundStyle(Color.must.ink)
+                        Spacer(minLength: 6)
+                        if let code = ticket.confirmation { Text(code).font(.must.mono(12)).foregroundStyle(Color.must.secondary).lineLimit(1) }
+                        MustIconView(.avancar, size: 14).foregroundStyle(Color.must.secondary)
+                    }
+                    .padding(.vertical, 10)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var footer: [String] {
+        var out: [String] = []
+        if let point = info.meetingPoint { out.append("ponto: \(point)") }
+        if info.url != nil { out.append("ver no \(info.supplier.label)") }
+        return out
+    }
+}
+

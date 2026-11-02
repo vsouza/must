@@ -38,12 +38,16 @@
 		24272338F7D1250862BDEE12 /* PlaceLogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CD1E440AD926B55E75952EB /* PlaceLogicTests.swift */; };
 		25F1D69D524D1DB8234C3152 /* MustTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9E45EB741EE7A4B0C62B1E9 /* MustTests.swift */; };
 		28ABC4E7570FC6797BE3C327 /* Extras.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03253802B39EE1C2C9B2E6D4 /* Extras.swift */; };
+		2BBE5013A361E4C3286625EE /* TicketEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3840ECE0F90F2549AFD6169B /* TicketEditor.swift */; };
+		2EC1D6DAF56A4216102680B4 /* SolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E86FF33437EA2C4CD1E9745 /* SolverTests.swift */; };
 		2F61642C63CD0B2F85023063 /* NotesRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC9FD34E64012CFB56E93D7 /* NotesRules.swift */; };
 		2FC4BF9D806E3E47C9084059 /* TipsSources.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15EAB5484E9E593810CF42F8 /* TipsSources.swift */; };
+		304931CC76265A963B70CDB0 /* TicketDemo.swift in Sources */ = {isa = PBXBuildFile; fileRef = B88C140CE0E8694D9DEC46D0 /* TicketDemo.swift */; };
 		3113BDAF386AE5E23205A463 /* MapStyleLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8ABA50ADA5CB704BF467CFA /* MapStyleLoader.swift */; };
 		34D24804DAFF68EE0520CCB8 /* RegionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8E14B85DA86388832F3C18B /* RegionSheet.swift */; };
 		34D6081A5CB2767A55D164EE /* DayFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF11D40BC1FD6464D2737BB /* DayFlowTests.swift */; };
 		39B2257026FA7AEBB083FA2F /* Board.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D95D7682A4AE8EC7C64CFBE /* Board.swift */; };
+		3C61E0B9BE4FB4FD3D1D7EB0 /* TicketView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E926F5C8871767F5183C44EB /* TicketView.swift */; };
 		3D42EA7CF1194F6D3A4315F0 /* MapPacks.swift in Sources */ = {isa = PBXBuildFile; fileRef = F89EE24137D29930396E7AFE /* MapPacks.swift */; };
 		3D9F337FE572341152D2EF55 /* ServiceParsingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E884E5C34972411E3851FCFF /* ServiceParsingTests.swift */; };
 		3E30C46610688819D69EF835 /* MapLibre in Frameworks */ = {isa = PBXBuildFile; productRef = 30987A7E19D256D9E25A36C6 /* MapLibre */; };
@@ -71,6 +75,7 @@
 		653ECD5648D7971D676140D3 /* ZenKakuGothicNew-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 2747800937ED98FA8B3C274D /* ZenKakuGothicNew-Medium.ttf */; };
 		65557E5EAA15A5973E535155 /* LightRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18B098156A055B3876CFAC44 /* LightRules.swift */; };
 		67BEEE9773A82874943B84D4 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10E1AAF40DE6541D6FB3D78D /* RootView.swift */; };
+		682E2C00BD69F88552577F8E /* TicketFiles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F12ADC96D7618625F1CFDF3 /* TicketFiles.swift */; };
 		6B1D76E59DB26263796CFB33 /* PlaceExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EC31260FFD7C170271ED2A1 /* PlaceExtractor.swift */; };
 		6B3A9B753F8DDA7395A53C4C /* Region.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA6E59F40F1B2D3D5518007E /* Region.swift */; };
 		6B9F6C927AC6F89623638391 /* FlowLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80374DD7C366832956DAD9EC /* FlowLayout.swift */; };
@@ -112,6 +117,7 @@
 		A653778BB8318C9B046608E9 /* MustsHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C42FCB610CD3F0DCA2D3DAF /* MustsHubView.swift */; };
 		A6E54DD819864C777D940C51 /* tokyo-lines.geojson in Resources */ = {isa = PBXBuildFile; fileRef = FE11D8C2ED0A877468648D71 /* tokyo-lines.geojson */; };
 		A75DBF72261F35941206EFF2 /* AssistantTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E274CE97AE647FC0BF84F38E /* AssistantTests.swift */; };
+		A777A68FE9DB9C6ACE0B1C64 /* Ticket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95A3D3C984F41EDDC4BFE7CD /* Ticket.swift */; };
 		A86517F1E14EC151CADEB22C /* Blobs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01C978BEB3995473BF8B3039 /* Blobs.swift */; };
 		A8C5CE7DA792FB7AF07C8A9E /* Icons.swift in Sources */ = {isa = PBXBuildFile; fileRef = 510AFA185D11B399A89AD9EF /* Icons.swift */; };
 		A91E9EAB66133760DAF239C8 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F73465FDB27FA97ECEDBBB81 /* SwiftUI.framework */; };
@@ -121,6 +127,7 @@
 		ADE9A44DD49A3B092599D163 /* FormRows.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7973C051E70A6B3219E5B91 /* FormRows.swift */; };
 		AE75462BE18656337F0D8996 /* DaySolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CA98508D4D7D365FAFD549B /* DaySolverTests.swift */; };
 		AE9AB758A0F0F8E6774BEFB8 /* ProposalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A53EF3E304761D067B014383 /* ProposalView.swift */; };
+		AECAA7B9898D40D2B927ACEC /* TicketQR.swift in Sources */ = {isa = PBXBuildFile; fileRef = D864E1B49CCD1C49891750C2 /* TicketQR.swift */; };
 		B09AB4744C714F4C31A08095 /* Gallery.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8DF958C7A3147E7A4671A15 /* Gallery.swift */; };
 		B10CDC96A29FED4AEC51643A /* AssistantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 451CE3D61A18701D27DE164B /* AssistantView.swift */; };
 		B1B94E1AB95A06BFEACB8499 /* KindExtraFields.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20A9F66DF0EFB2CF99A7AAAB /* KindExtraFields.swift */; };
@@ -162,6 +169,7 @@
 		F336F8A25F24267E7720B969 /* TipsModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 158DBD6828FAD7F280C029D6 /* TipsModel.swift */; };
 		F3B861BD48945EB4A0FC2209 /* ReservationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 361BB6DBEF0297F500E175DB /* ReservationsView.swift */; };
 		FE391B26F92D6E130D85E84F /* OutsideBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2A8FAEF80A8121A587A860A /* OutsideBridge.swift */; };
+		FFA15BA3DF0A181F252A3D4A /* TicketTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC71475B7DB916C20DF808A1 /* TicketTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -223,7 +231,9 @@
 		27618FF94A526CC1D58D3E7D /* AddLinkModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddLinkModel.swift; sourceTree = "<group>"; };
 		285FD848392F6AFEB450AFE3 /* Services.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services.swift; sourceTree = "<group>"; };
 		2C3FA1BBED3FFB04BDE12D5F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		2F12ADC96D7618625F1CFDF3 /* TicketFiles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketFiles.swift; sourceTree = "<group>"; };
 		361BB6DBEF0297F500E175DB /* ReservationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservationsView.swift; sourceTree = "<group>"; };
+		3840ECE0F90F2549AFD6169B /* TicketEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketEditor.swift; sourceTree = "<group>"; };
 		3847B720AFE775247C5B85A9 /* BoardCodecTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardCodecTests.swift; sourceTree = "<group>"; };
 		3A5C5943257B1D5B2724BAFF /* ChatModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatModel.swift; sourceTree = "<group>"; };
 		3A7F51EA8B63130EF27E29DC /* Tools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tools.swift; sourceTree = "<group>"; };
@@ -250,6 +260,7 @@
 		56C3EA6D3C29FD87F4AC83FE /* KindPanels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KindPanels.swift; sourceTree = "<group>"; };
 		59C0F2D3F8FD625357FE147C /* BoardCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardCodec.swift; sourceTree = "<group>"; };
 		5A1B075763A86D919443CA48 /* Values.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Values.swift; sourceTree = "<group>"; };
+		5E86FF33437EA2C4CD1E9745 /* SolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolverTests.swift; sourceTree = "<group>"; };
 		6221CDECA41AE4E770C02080 /* Secrets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Secrets.swift; sourceTree = "<group>"; };
 		641406D94759EFD74130F34E /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
 		6520EC9BC1F8EF500D501D86 /* TripStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripStats.swift; sourceTree = "<group>"; };
@@ -281,6 +292,7 @@
 		9249901293C5FA229AFF4AC2 /* seed-jp.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "seed-jp.json"; sourceTree = "<group>"; };
 		9278CE4A9CF30F816B6DC2F7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		9402F5580C133734764AAAE2 /* MontarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MontarView.swift; sourceTree = "<group>"; };
+		95A3D3C984F41EDDC4BFE7CD /* Ticket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Ticket.swift; sourceTree = "<group>"; };
 		972BE7D900669A53822A7176 /* RoutesService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutesService.swift; sourceTree = "<group>"; };
 		988D5ED4FA848499B21CF6FD /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		9910B338CBCFBBEB3855A06A /* KindGraphics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KindGraphics.swift; sourceTree = "<group>"; };
@@ -295,6 +307,7 @@
 		A68D631FD82CB44E32D3116B /* KindsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KindsTests.swift; sourceTree = "<group>"; };
 		A7FBEB4202ADD7DA375DEE4B /* RegionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegionStore.swift; sourceTree = "<group>"; };
 		AA488548E5855C26BB4C1C3C /* QAScenarioTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QAScenarioTests.swift; sourceTree = "<group>"; };
+		AC71475B7DB916C20DF808A1 /* TicketTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketTests.swift; sourceTree = "<group>"; };
 		B44D19A8E9A8BD3390835C32 /* SearchPill.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchPill.swift; sourceTree = "<group>"; };
 		B5A5854F219D8EFFC8F94DE0 /* AssistantSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantSnapshot.swift; sourceTree = "<group>"; };
 		B64501536181B0AE5A3EEEB6 /* Transit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Transit.swift; sourceTree = "<group>"; };
@@ -302,6 +315,7 @@
 		B74D63E1FC2830947EF080AD /* ExpenseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExpenseView.swift; sourceTree = "<group>"; };
 		B835205B427F746058E51145 /* MustTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = MustTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B87C890E291B6A952E078034 /* RegionPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegionPicker.swift; sourceTree = "<group>"; };
+		B88C140CE0E8694D9DEC46D0 /* TicketDemo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketDemo.swift; sourceTree = "<group>"; };
 		BA84783523E1CAF2DB54207B /* NewListFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewListFlow.swift; sourceTree = "<group>"; };
 		BE3E6D8F34B608E1137D706F /* MapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapView.swift; sourceTree = "<group>"; };
 		BF9EDF96B7E35C8B90CD7648 /* Glass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Glass.swift; sourceTree = "<group>"; };
@@ -321,6 +335,7 @@
 		D4380F8F09B4251F1DECE96C /* ZenKakuGothicNew-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ZenKakuGothicNew-Bold.ttf"; sourceTree = "<group>"; };
 		D5D887EFA3C6F445E5F8EB35 /* WeatherService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherService.swift; sourceTree = "<group>"; };
 		D73F931FF893BEA99CFC8E94 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		D864E1B49CCD1C49891750C2 /* TicketQR.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketQR.swift; sourceTree = "<group>"; };
 		D99E300E5DA343D4F2D8B213 /* MapStyle */ = {isa = PBXFileReference; lastKnownFileType = folder; name = MapStyle; path = Must/DesignSystem/MapStyle; sourceTree = SOURCE_ROOT; };
 		D9E45EB741EE7A4B0C62B1E9 /* MustTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MustTests.swift; sourceTree = "<group>"; };
 		DA6E59F40F1B2D3D5518007E /* Region.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Region.swift; sourceTree = "<group>"; };
@@ -334,6 +349,7 @@
 		E2F0E7CAB62A868911308C5F /* Fonts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Fonts.swift; sourceTree = "<group>"; };
 		E884E5C34972411E3851FCFF /* ServiceParsingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceParsingTests.swift; sourceTree = "<group>"; };
 		E8DF958C7A3147E7A4671A15 /* Gallery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gallery.swift; sourceTree = "<group>"; };
+		E926F5C8871767F5183C44EB /* TicketView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketView.swift; sourceTree = "<group>"; };
 		EA24FAA24E3A5A5FC3CB14EC /* TipsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipsSection.swift; sourceTree = "<group>"; };
 		EB72F5E89393DFD046BC52D8 /* IntentParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntentParser.swift; sourceTree = "<group>"; };
 		F3C575A126CAA351D0D5198A /* LinkPlacesMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkPlacesMap.swift; sourceTree = "<group>"; };
@@ -429,6 +445,7 @@
 			children = (
 				7C9AC26060BA3518B7B154B8 /* Ingest */,
 				45046294FBAA4EBC8D2681AD /* Intelligence */,
+				EDBAF9BFB9A999B482C35179 /* Tickets */,
 				E2EBDC5EC0A857E67E65452B /* Tips */,
 				7BC23CD2D9B7A3D345E2FA14 /* LocationService.swift */,
 				23249DD22EE3CC5D75564551 /* Log.swift */,
@@ -542,7 +559,9 @@
 				A108F02F9AAFC162F9B73BEF /* PlaceResolverTests.swift */,
 				AA488548E5855C26BB4C1C3C /* QAScenarioTests.swift */,
 				E884E5C34972411E3851FCFF /* ServiceParsingTests.swift */,
+				5E86FF33437EA2C4CD1E9745 /* SolverTests.swift */,
 				7B514A86BB604B08856786EA /* SunServiceTests.swift */,
+				AC71475B7DB916C20DF808A1 /* TicketTests.swift */,
 				E02237E72F8D1584EB69BA1E /* TipsTests.swift */,
 			);
 			path = MustTests;
@@ -629,6 +648,7 @@
 				F4F154F0FA0C43621F70D409 /* Formatting.swift */,
 				DA6E59F40F1B2D3D5518007E /* Region.swift */,
 				A7FBEB4202ADD7DA375DEE4B /* RegionStore.swift */,
+				2F12ADC96D7618625F1CFDF3 /* TicketFiles.swift */,
 				B64501536181B0AE5A3EEEB6 /* Transit.swift */,
 			);
 			path = Data;
@@ -670,6 +690,7 @@
 				B796295EF3113E3572446502 /* Place */,
 				DFEE2B36A35E159B693A08F0 /* Plan */,
 				C1481F368CBA77F5F1961CEE /* Settings */,
+				EADBCFE56648516B93AA277C /* Ticket */,
 				FEDF3038C50A9EEE9A79400A /* Today */,
 				0BDA7F3D6411A1894960C162 /* Trip */,
 				CD003A9FD001A3033A4A1DBF /* Features.swift */,
@@ -704,6 +725,7 @@
 				03253802B39EE1C2C9B2E6D4 /* Extras.swift */,
 				4574509CFEC4FC14741A8455 /* Models.swift */,
 				E2B4261F91283A6EA19AB1FF /* PlaceLogic.swift */,
+				95A3D3C984F41EDDC4BFE7CD /* Ticket.swift */,
 				6520EC9BC1F8EF500D501D86 /* TripStats.swift */,
 				5A1B075763A86D919443CA48 /* Values.swift */,
 			);
@@ -800,6 +822,24 @@
 				15EAB5484E9E593810CF42F8 /* TipsSources.swift */,
 			);
 			path = Tips;
+			sourceTree = "<group>";
+		};
+		EADBCFE56648516B93AA277C /* Ticket */ = {
+			isa = PBXGroup;
+			children = (
+				B88C140CE0E8694D9DEC46D0 /* TicketDemo.swift */,
+				3840ECE0F90F2549AFD6169B /* TicketEditor.swift */,
+				E926F5C8871767F5183C44EB /* TicketView.swift */,
+			);
+			path = Ticket;
+			sourceTree = "<group>";
+		};
+		EDBAF9BFB9A999B482C35179 /* Tickets */ = {
+			isa = PBXGroup;
+			children = (
+				D864E1B49CCD1C49891750C2 /* TicketQR.swift */,
+			);
+			path = Tickets;
 			sourceTree = "<group>";
 		};
 		EEE5387D4F20FACB75F4F6F5 /* Expense */ = {
@@ -1027,7 +1067,9 @@
 				D008E59938102E6875832BE3 /* PlaceResolverTests.swift in Sources */,
 				74A382295FB822CD3957318E /* QAScenarioTests.swift in Sources */,
 				3D9F337FE572341152D2EF55 /* ServiceParsingTests.swift in Sources */,
+				2EC1D6DAF56A4216102680B4 /* SolverTests.swift in Sources */,
 				D96A8AC25C1AEEACBBD1E5AB /* SunServiceTests.swift in Sources */,
+				FFA15BA3DF0A181F252A3D4A /* TicketTests.swift in Sources */,
 				E1BF5C2C5E118C7D6B223CE5 /* TipsTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1142,6 +1184,12 @@
 				037A42A0D37EEDD3EEA3C0A0 /* SolverTypes.swift in Sources */,
 				8B37B3D68127F8BF77080F91 /* SunService.swift in Sources */,
 				1C6EE2A4E4AFBF73C4778C2D /* SyncCoordinator.swift in Sources */,
+				A777A68FE9DB9C6ACE0B1C64 /* Ticket.swift in Sources */,
+				304931CC76265A963B70CDB0 /* TicketDemo.swift in Sources */,
+				2BBE5013A361E4C3286625EE /* TicketEditor.swift in Sources */,
+				682E2C00BD69F88552577F8E /* TicketFiles.swift in Sources */,
+				AECAA7B9898D40D2B927ACEC /* TicketQR.swift in Sources */,
+				3C61E0B9BE4FB4FD3D1D7EB0 /* TicketView.swift in Sources */,
 				A4ABDFDB23B8DB772156E82D /* Tips.swift in Sources */,
 				F336F8A25F24267E7720B969 /* TipsModel.swift in Sources */,
 				162916E82CC805790AA86B70 /* TipsSection.swift in Sources */,

@@ -1,7 +1,7 @@
 import SwiftData
 import SwiftUI
 
-/// Reservas: as âncoras da viagem — reservas dos lugares e eventos sem lugar (trem, voo, dia inteiro).
+/// Reservas: as âncoras da viagem — reservas e ingressos dos lugares e eventos sem lugar (trem, voo, dia inteiro).
 struct ReservationsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppRouter.self) private var router
@@ -33,6 +33,8 @@ struct ReservationsView: View {
         var allDay: Bool
         var weatherDependent: Bool
         var cityId: String?
+        /// Ingresso anexado ao lugar (abre o Ingresso).
+        var ticket: Ticket? = nil
     }
 
     private var region: Region { store.region }
@@ -46,13 +48,21 @@ struct ReservationsView: View {
             return Item(id: p.id, at: r.at, title: p.name, meta: meta, place: p, event: nil, done: p.isDone, allDay: false,
                         weatherDependent: NotesRules(notes: p.notes).weatherDependent, cityId: p.cityId)
         }
+        let ticketed = places.flatMap { p in
+            p.tickets.map { t -> Item in
+                let meta = [p.area, region.timeString(t.at), t.confirmation.map { "conf. \($0)" }].compactMap { $0 }.joined(separator: " · ")
+                return Item(id: "\(p.id)#\(t.id)", at: t.at, title: p.name, meta: meta, place: p, event: nil,
+                            done: t.at < region.calendar.startOfDay(for: now), allDay: false, weatherDependent: false,
+                            cityId: p.cityId, ticket: t)
+            }
+        }
         let evs = events.map { e in
             Item(id: e.id.uuidString, at: e.at, title: e.title,
                  meta: [e.allDay ? "sem hora" : region.timeString(e.at), e.note.isEmpty ? nil : e.note].compactMap { $0 }.joined(separator: " · "),
                  place: nil, event: e, done: e.at < region.calendar.startOfDay(for: now), allDay: e.allDay,
                  weatherDependent: e.weatherDependent, cityId: trips.first?.city(on: e.at, calendar: region.calendar)?.id)
         }
-        return (reserved + evs).sorted { $0.at < $1.at }
+        return (reserved + ticketed + evs).sorted { $0.at < $1.at }
     }
 
     var body: some View {
@@ -173,6 +183,8 @@ struct ReservationsView: View {
             KanjiSeal(done: true, size: 30, look: .soft)
         } else if cal.isDate(item.at, inSameDayAs: now) {
             Tag("hoje", style: .dark)
+        } else if item.ticket != nil {
+            Tag("ingresso")
         } else if item.weatherDependent {
             Tag("tempo", dot: Color.must.blue)
         } else if let event = item.event {
@@ -185,7 +197,8 @@ struct ReservationsView: View {
     }
 
     private func open(_ item: Item) {
-        if let place = item.place { router.push(.place(id: place.id), on: router.tab) }
+        if let place = item.place, let ticket = item.ticket { router.push(.ticket(placeId: place.id, ticketId: ticket.id), on: router.tab) }
+        else if let place = item.place { router.push(.place(id: place.id), on: router.tab) }
         else if let event = item.event { editing = .event(event) }
     }
 }

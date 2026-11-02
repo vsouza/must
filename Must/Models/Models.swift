@@ -83,8 +83,10 @@ final class Place {
     var done: DoneMark?
     /// `fsq_place_id` do Foursquare (match feito uma vez pras Dicas).
     var fsqId: String?
-    /// JSON de `PlaceExtra` (photo / art / sport).
+    /// JSON de `PlaceExtra` (photo / art / sport / experience).
     var extraData: Data?
+    /// JSON de `[Ticket]` (ingressos anexados; âncoras do dia). Opcional: lugar sem ingresso = nil.
+    var ticketsData: Data?
     /// Ordem dentro da lista (Board, arrastar). Lugar sem ordem segue o nome.
     var order: Int = 0
     /// Pedido de "Resolver no Places" (Board): a próxima sincronização olha este primeiro.

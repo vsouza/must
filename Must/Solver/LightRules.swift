@@ -102,6 +102,7 @@ extension DaySolver {
         case .art: p.extra?.art?.durationMinutes ?? 90
         case .photo: 45
         case .sport: (p.extra?.sport?.estimatedMinutes).map { $0 + 15 } ?? 60
+        case .experience: p.extra?.experience?.durationMinutes ?? 120
         case .place: p.role.duration
         }
     }
@@ -131,17 +132,25 @@ extension DaySolver {
         }
     }
 
-    /// Sessões com ingresso comprado no dia viram âncoras (art e jogos).
+    /// Ingressos do dia viram âncoras: anexados ao lugar (`Place.tickets`) e sessões compradas
+    /// (art, jogo, experiência). Um lugar com a mesma hora nos dois conta uma vez.
     static func ticketAnchors(_ catalog: [SolverPlace], ctx: Context) -> [ProposedStop] {
         let req = ctx.request
         var out: [ProposedStop] = []
         for p in catalog where !p.done && req.isInCity(p.cityId) && !ctx.mustExclude.contains(p.id) {
-            for s in p.extra?.sessions ?? [] where s.bought && req.calendar.isDate(s.at, inSameDayAs: req.date) {
-                let minute = ctx.minute(s.at)
-                let length = p.extra?.art?.durationMinutes ?? (p.kind == .sport ? 150 : 120)
-                out.append(ProposedStop(place: p, at: s.at, end: ctx.date(minute + length), window: window(at: minute),
-                                        reason: "ingresso · \(s.title)", isAnchor: true, isException: false, legFromPrevious: nil))
-                break
+            var seen: Set<Int> = []
+            var found: [(at: Date, reason: String)] = p.tickets
+                .filter { req.calendar.isDate($0.at, inSameDayAs: req.date) }
+                .map { (at: $0.at, reason: "ingresso") }
+            found += (p.extra?.sessions ?? [])
+                .filter { $0.bought && req.calendar.isDate($0.at, inSameDayAs: req.date) }
+                .map { (at: $0.at, reason: "ingresso · \($0.title)") }
+            for item in found.sorted(by: { $0.at < $1.at }) {
+                let minute = ctx.minute(item.at)
+                guard seen.insert(minute).inserted else { continue }
+                let length = p.extra?.art?.durationMinutes ?? p.extra?.experience?.durationMinutes ?? (p.kind == .sport ? 150 : 120)
+                out.append(ProposedStop(place: p, at: item.at, end: ctx.date(minute + length), window: window(at: minute),
+                                        reason: item.reason, isAnchor: true, isException: false, legFromPrevious: nil))
             }
         }
         return out

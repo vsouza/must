@@ -78,6 +78,14 @@ ${=W} region bh
 ${=W} dev.simDate -float $(epoch 2026-11-01T07:40:00-03:00)
 ${=W} dev.simLat -float -19.8517; ${=W} dev.simLng -float -43.9733
 shot bh-esporte -debugScreen lugar:p28
+
+echo "→ Japão · ingresso e experiência (prompt 14 · C) · Naka-Meguro 15 nov 09:00"
+${=W} region jp
+${=W} dev.simDate -float $(epoch 2026-11-15T09:00:00+09:00)
+${=W} dev.simLat -float 35.6442; ${=W} dev.simLng -float 139.6985
+shot jp-ingresso -debugScreen ingresso
+shot jp-experiencia -debugScreen painel:demo-sushi-tsukiji
+shot jp-reservas-ingresso -debugScreen reservas
 shot bh-esporte-painel -debugScreen painel:p28
 
 echo "→ Board completo (fatia 1 · prompt 14 A) · BH"

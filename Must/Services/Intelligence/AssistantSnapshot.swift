@@ -146,6 +146,10 @@ enum AssistantEngine {
             let why = DaySolver.sportRejection(spot, at: s.now, hourly: s.weatherToday?.hours ?? []) ?? "fora da janela boa"
             let next = SportScore.nextGood(s.weatherToday?.hours ?? [], after: s.now, spot: spot).map { " · melhor às \(r.timeString($0))" } ?? ""
             return "evitar agora (\(why))\(next)"
+        case .experience:
+            // Ingresso marcado: a próxima hora (o assistente sabe quando é).
+            guard let t = p.tickets.filter({ $0.at > s.now }).min(by: { $0.at < $1.at }) else { return nil }
+            return "ingresso \(r.shortDayTime(t.at))"
         case .place:
             return nil
         }

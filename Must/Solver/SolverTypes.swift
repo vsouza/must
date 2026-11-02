@@ -25,6 +25,8 @@ enum StopRole: String, Sendable, Hashable, CaseIterable {
         case .photo: self = .photo
         case .sport: self = .sport
         case .art: self = .see
+        // Experiência entra no dia só com ingresso ou pedido: papel de "ver" (a atividade).
+        case .experience: self = .see
         case .place: self.init(color: color)
         }
     }
@@ -96,6 +98,8 @@ struct SolverPlace: Sendable, Hashable, Identifiable {
     var done: Bool
     var kind: ListKind = .place
     var extra: PlaceExtra?
+    /// Ingressos anexados: âncoras do dia (como a reserva).
+    var tickets: [Ticket] = []
 
     var role: StopRole { StopRole(kind: kind, color: listColor) }
     var rules: NotesRules { NotesRules(notes: notes) }
@@ -110,7 +114,7 @@ extension SolverPlace {
                   sub: place.sub, cityId: place.cityId, area: place.area, lat: place.lat, lng: place.lng, price: place.price,
                   windows: place.windows, hours: place.hours, reservation: place.reservation, saveForEnd: place.saveForEnd,
                   allowBudgetException: place.allowBudgetException, queueMinutes: place.queueMinutes, notes: place.notes,
-                  sourceKind: place.source?.kind, done: place.isDone, kind: place.kind, extra: place.extra)
+                  sourceKind: place.source?.kind, done: place.isDone, kind: place.kind, extra: place.extra, tickets: place.tickets)
     }
 
     init(_ p: BoardPlace, color: MustColor, kind: ListKind = .place) {
@@ -118,7 +122,7 @@ extension SolverPlace {
                   lat: p.lat ?? 0, lng: p.lng ?? 0, price: p.price, windows: p.window ?? [], hours: p.hours,
                   reservation: p.reservation, saveForEnd: p.saveForEnd ?? false, allowBudgetException: p.allowBudgetException ?? false,
                   queueMinutes: p.queueMinutes, notes: p.notes ?? "", sourceKind: p.source?.kind, done: p.done != nil,
-                  kind: kind, extra: p.extra)
+                  kind: kind, extra: p.extra, tickets: p.tickets ?? [])
     }
 }
 
@@ -224,6 +228,8 @@ struct DayProposal: Sendable {
     var transitLegs: Int
     var leftOut: [LeftOut]
     var explanation: String
+    /// Avisos do dia: âncoras que se sobrepõem ("Udatsu 19:00 e … 19:00 se sobrepõem").
+    var warnings: [String] = []
 
     func reason(for placeId: String) -> String? { leftOut.first { $0.place.id == placeId }?.reason }
 }

@@ -21,6 +21,8 @@ struct PlaceView: View {
     /// "Pôr no dia" já usado (art).
     @State private var addedAt: Date?
     @State private var show3D = false
+    /// Ingressos do lugar (Lugar › Anexar ingresso).
+    @State private var editingTickets = false
 
 
     init(placeId: String) {
@@ -101,6 +103,10 @@ struct PlaceView: View {
         .task(id: place.id) { await loadHero(place) }
         .fullScreenCover(isPresented: $show3D) {
             Place3DView(name: place.name, coordinate: place.coordinate, heading: place.extra?.photo?.facing)
+        }
+        .sheet(isPresented: $editingTickets) {
+            TicketsEditor(tickets: Binding(get: { place.tickets }, set: { place.tickets = $0; place.syncBoughtSessions(); try? context.save() }),
+                          sessions: place.extra?.sessions ?? [], region: region, placeName: place.name)
         }
     }
 
@@ -312,6 +318,10 @@ struct PlaceView: View {
                         bg: good ? MustColor.eat.light : KindPalette.warnBg, fg: good ? MustColor.eat.text : KindPalette.warnText)
                 if !compact, let uv = h.uv { Tag("UV \(Int(uv.rounded())) · \(KindLines.uvLabel(uv))") }
             }
+        case .experience:
+            if let supplier = place.extra?.experience?.supplier, supplier != .other {
+                TintTag(supplier.label, bg: .white.opacity(0.6), fg: MustColor.night.text)
+            }
         case .place:
             EmptyView()
         }
@@ -329,6 +339,11 @@ struct PlaceView: View {
         case .sport:
             guard let spot = extra?.sport else { return nil }
             return AnyView(SportPanel(place: place, spot: spot, region: region, now: now, weather: weather) { toggleBought($0, place) })
+        case .experience:
+            guard let info = extra?.experience else { return nil }
+            return AnyView(ExperiencePanel(place: place, info: info, tickets: place.tickets, region: region, now: now,
+                                           onToggleBought: { toggleBought($0, place) },
+                                           onOpenTicket: { router.push(.ticket(placeId: place.id, ticketId: $0.id), on: router.tab) }))
         case .place:
             return nil
         }
@@ -338,8 +353,15 @@ struct PlaceView: View {
         var extra = place.extra ?? PlaceExtra()
         if let i = extra.art?.sessions.firstIndex(where: { $0.id == session.id }) { extra.art?.sessions[i].bought.toggle() }
         if let i = extra.sport?.sessions.firstIndex(where: { $0.id == session.id }) { extra.sport?.sessions[i].bought.toggle() }
+        if let i = extra.experience?.sessions.firstIndex(where: { $0.id == session.id }) { extra.experience?.sessions[i].bought.toggle() }
         place.extra = extra
         try? context.save()
+    }
+
+    /// Ingresso do lugar mais próximo de hoje (o de hoje ou o próximo).
+    private func nextTicket(_ place: Place) -> Ticket? {
+        let start = region.calendar.startOfDay(for: now)
+        return place.tickets.filter { $0.at >= start }.min { $0.at < $1.at } ?? place.tickets.min { $0.at < $1.at }
     }
 
     /// Minutos até o lugar (metrô acima de 1,5 km).
@@ -516,6 +538,15 @@ struct PlaceView: View {
                     addedAt = at
                 }
                 .frame(width: 150)
+            }
+        case .experience:
+            if let ticket = nextTicket(place) {
+                darkButton("Ingresso", icon: .reservaAncora) { router.push(.ticket(placeId: place.id, ticketId: ticket.id)) }
+            } else {
+                darkButton("Anexar ingresso", icon: .colarLink) { editingTickets = true }
+            }
+            if let info = place.extra?.experience, let url = info.url {
+                GhostButton("\(info.supplier.label)") { UIApplication.shared.open(url) }.frame(width: 130)
             }
         case .sport:
             let temp = weather?.hour(at: now).map { " · \(Int($0.temp.rounded()))°" } ?? ""

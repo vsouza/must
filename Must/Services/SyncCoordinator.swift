@@ -124,6 +124,7 @@ final class SyncCoordinator {
                     case .photo: "street"
                     case .art: "art museum"
                     case .sport: "park running"
+                    case .experience: "tour"
                     case .place: list.name
                     }
                     var photo = try await photos.search(text: "\(term) \(cityName)").first

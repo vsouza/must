@@ -1,11 +1,13 @@
 import Foundation
 
-// Tipos de Must com painel próprio no Lugar (prompt 13): photo, art, sport.
-// Os dados ficam num `PlaceExtra` (JSON no `Place`), espelhado no board como `extra: { photo | art | sport }`.
+// Tipos de Must com painel próprio no Lugar (prompt 13): photo, art, sport; e experiência (prompt 14 · C).
+// Os dados ficam num `PlaceExtra` (JSON no `Place`), espelhado no board como `extra: { photo | art | sport | experience }`.
 
 /// Tipo da lista. `.place` é o padrão (comer, beber, ver…).
 enum ListKind: String, Codable, CaseIterable, Sendable, Identifiable {
     case place, photo, art, sport
+    /// "Must do": aula, tour, ingresso com hora (Viator, Klook, Airbnb…). Cor `night`.
+    case experience
 
     var id: String { rawValue }
 
@@ -15,6 +17,7 @@ enum ListKind: String, Codable, CaseIterable, Sendable, Identifiable {
         case .photo: "photo"
         case .art: "art"
         case .sport: "sport"
+        case .experience: "experiência"
         }
     }
 }
@@ -284,14 +287,113 @@ struct SportSpot: Codable, Hashable, Sendable {
     }
 }
 
+/// Fornecedor de uma experiência. A integração por API (fatia 4, `ExperienceSource`) não existe ainda:
+/// hoje a experiência entra por link colado ou à mão.
+enum ExperienceSupplier: String, Codable, CaseIterable, Sendable, Identifiable {
+    case viator, getYourGuide, klook, airbnb, other
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .viator: "Viator"
+        case .getYourGuide: "GetYourGuide"
+        case .klook: "Klook"
+        case .airbnb: "Airbnb"
+        case .other: "outro"
+        }
+    }
+}
+
+/// Experiência com hora marcada (aula, tour, show com ingresso). As sessões são `EventSession`
+/// (mesmo formato de art e jogos: `bought` vira âncora do dia).
+struct ExperienceInfo: Codable, Hashable, Sendable {
+    var supplier: ExperienceSupplier
+    var productCode: String?
+    /// Página do produto no fornecedor ("Ver no Viator").
+    var url: URL?
+    var durationMinutes: Int?
+    var priceFrom: Double?
+    /// Moeda do preço (ISO). `nil` = a da região.
+    var currency: String?
+    var rating: Double?
+    var reviewCount: Int?
+    var meetingPoint: String?
+    var meetingLat: Double?
+    var meetingLng: Double?
+    var languages: [String]
+    var groupMax: Int?
+    /// Cancelamento grátis até N horas antes.
+    var freeCancellationHours: Int?
+    var sessions: [EventSession]
+
+    init(supplier: ExperienceSupplier = .other, productCode: String? = nil, url: URL? = nil, durationMinutes: Int? = nil,
+         priceFrom: Double? = nil, currency: String? = nil, rating: Double? = nil, reviewCount: Int? = nil,
+         meetingPoint: String? = nil, meetingLat: Double? = nil, meetingLng: Double? = nil, languages: [String] = [],
+         groupMax: Int? = nil, freeCancellationHours: Int? = nil, sessions: [EventSession] = []) {
+        self.supplier = supplier
+        self.productCode = productCode
+        self.url = url
+        self.durationMinutes = durationMinutes
+        self.priceFrom = priceFrom
+        self.currency = currency
+        self.rating = rating
+        self.reviewCount = reviewCount
+        self.meetingPoint = meetingPoint
+        self.meetingLat = meetingLat
+        self.meetingLng = meetingLng
+        self.languages = languages
+        self.groupMax = groupMax
+        self.freeCancellationHours = freeCancellationHours
+        self.sessions = sessions
+    }
+
+    init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        supplier = try c.decodeIfPresent(ExperienceSupplier.self, forKey: .supplier) ?? .other
+        productCode = try c.decodeIfPresent(String.self, forKey: .productCode)
+        url = try c.decodeIfPresent(URL.self, forKey: .url)
+        durationMinutes = try c.decodeIfPresent(Int.self, forKey: .durationMinutes)
+        priceFrom = try c.decodeIfPresent(Double.self, forKey: .priceFrom)
+        currency = try c.decodeIfPresent(String.self, forKey: .currency)
+        rating = try c.decodeIfPresent(Double.self, forKey: .rating)
+        reviewCount = try c.decodeIfPresent(Int.self, forKey: .reviewCount)
+        meetingPoint = try c.decodeIfPresent(String.self, forKey: .meetingPoint)
+        meetingLat = try c.decodeIfPresent(Double.self, forKey: .meetingLat)
+        meetingLng = try c.decodeIfPresent(Double.self, forKey: .meetingLng)
+        languages = try c.decodeIfPresent([String].self, forKey: .languages) ?? []
+        groupMax = try c.decodeIfPresent(Int.self, forKey: .groupMax)
+        freeCancellationHours = try c.decodeIfPresent(Int.self, forKey: .freeCancellationHours)
+        sessions = try c.decodeIfPresent([EventSession].self, forKey: .sessions) ?? []
+    }
+
+    /// Coordenada do ponto de encontro, se houver.
+    var meetingCoordinate: (lat: Double, lng: Double)? {
+        guard let meetingLat, let meetingLng else { return nil }
+        return (meetingLat, meetingLng)
+    }
+}
+
 /// `extra` do lugar: no máximo um por tipo (o da lista manda).
 struct PlaceExtra: Codable, Hashable, Sendable {
     var photo: PhotoSpot?
     var art: ArtEvent?
     var sport: SportSpot?
+    var experience: ExperienceInfo?
 
-    var isEmpty: Bool { photo == nil && art == nil && sport == nil }
+    var isEmpty: Bool { photo == nil && art == nil && sport == nil && experience == nil }
 
-    /// Sessões com ingresso (art ou jogo).
-    var sessions: [EventSession] { (art?.sessions ?? []) + (sport?.sessions ?? []) }
+    /// Sessões com ingresso (art, jogo ou experiência).
+    var sessions: [EventSession] { (art?.sessions ?? []) + (sport?.sessions ?? []) + (experience?.sessions ?? []) }
+
+    /// Marca como comprada cada sessão cujo id está em `ids` (ingresso anexado a uma sessão).
+    mutating func markBought(_ ids: Set<String>) {
+        guard !ids.isEmpty else { return }
+        func mark(_ list: inout [EventSession]) {
+            for i in list.indices where ids.contains(list[i].id) { list[i].bought = true }
+        }
+        if var a = art { mark(&a.sessions); art = a }
+        if var s = sport { mark(&s.sessions); sport = s }
+        if var e = experience { mark(&e.sessions); experience = e }
+    }
 }

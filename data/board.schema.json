@@ -23,7 +23,7 @@
       "id": {"type": "string"}, "name": {"type": "string", "description": "sem o prefixo 'Must'"}, "kanji": {"type": "string", "maxLength": 1},
       "icon": {"type": "string", "description": "nome do arquivo em design/icons sem .svg"},
       "color": {"enum": ["eat", "drink", "coffee", "see", "temple", "listen", "shop", "night", "photo", "art", "sport"]},
-      "kind": {"enum": ["place", "photo", "art", "sport"], "description": "tipo da lista; photo/art/sport têm painel próprio no Lugar (ausente = place)"},
+      "kind": {"enum": ["place", "photo", "art", "sport", "experience"], "description": "tipo da lista; photo/art/sport/experience têm painel próprio no Lugar (ausente = place)"},
       "photo": {"type": ["object", "null"], "properties": {"flickrId": {"type": "string"}, "url": {"type": "string"}, "credit": {"type": "string"}, "license": {"type": "string"}}},
       "sub": {"type": "array", "items": {"type": "string"}, "description": "sub-listas como Ramen, Sushi"}}}},
     "places": {"type": "array", "items": {"type": "object", "required": ["id", "name", "listId", "cityId"], "properties": {
@@ -39,7 +39,17 @@
       "order": {"type": "integer", "description": "ordem dentro da lista (Board, arrastar); ausente = 0"},
       "source": {"type": ["object", "null"], "properties": {"kind": {"enum": ["instagram", "tiktok", "youtube", "maps", "manual", "board"]}, "url": {"type": "string"}, "savedAt": {"type": "string", "format": "date"}, "caption": {"type": "string"}, "author": {"type": "string"}}},
       "done": {"type": ["object", "null"], "properties": {"at": {"type": "string", "format": "date-time"}, "spent": {"type": "number"}}},
-      "extra": {"type": ["object", "null"], "description": "dados do tipo da lista (photo, art ou sport)", "properties": {
+      "tickets": {"type": "array", "description": "ingressos anexados: âncoras do dia (como reserva). O PDF não vai no arquivo.", "items": {"type": "object", "required": ["id", "at"], "properties": {
+        "id": {"type": "string"}, "at": {"type": "string", "format": "date-time"}, "sessionId": {"type": "string", "description": "id da sessão ligada (EventSession)"},
+        "confirmation": {"type": "string"}, "qrPayload": {"type": "string"}, "pdfName": {"type": "string", "description": "nome do arquivo no aparelho; não é exportado como arquivo"},
+        "paid": {"type": "number"}, "people": {"type": "integer"}, "cancelUntil": {"type": "string", "format": "date-time"}, "walletPassURL": {"type": "string", "format": "uri"}}}},
+      "extra": {"type": ["object", "null"], "description": "dados do tipo da lista (photo, art, sport ou experience)", "properties": {
+        "experience": {"type": "object", "description": "experiência com hora marcada; sessions usam o mesmo formato de art/sport", "properties": {
+          "supplier": {"enum": ["viator", "getYourGuide", "klook", "airbnb", "other"]}, "productCode": {"type": "string"}, "url": {"type": "string", "format": "uri"},
+          "durationMinutes": {"type": "integer"}, "priceFrom": {"type": "number"}, "currency": {"enum": ["BRL", "JPY", "USD"]}, "rating": {"type": "number"}, "reviewCount": {"type": "integer"},
+          "meetingPoint": {"type": "string"}, "meetingLat": {"type": "number"}, "meetingLng": {"type": "number"}, "languages": {"type": "array", "items": {"type": "string"}},
+          "groupMax": {"type": "integer"}, "freeCancellationHours": {"type": "integer"},
+          "sessions": {"type": "array", "items": {"type": "object", "required": ["at", "title"], "properties": {"at": {"type": "string", "format": "date-time"}, "title": {"type": "string"}, "price": {"type": "number"}, "soldOut": {"type": "boolean"}, "url": {"type": "string", "format": "uri"}, "bought": {"type": "boolean"}, "note": {"type": "string"}}}}}},
         "photo": {"type": "object", "properties": {"facing": {"type": "number", "minimum": 0, "maximum": 360, "description": "azimute do eixo/vista, graus"}, "bestLight": {"type": "array", "items": {"enum": ["golden-am", "golden-pm", "blue", "hard", "night"]}}, "gear": {"type": "string"}, "tripodAllowed": {"type": "boolean"}, "crowdNote": {"type": "string"}}},
         "art": {"type": "object", "properties": {"style": {"type": "array", "items": {"type": "string"}}, "priceAdult": {"type": "number"}, "priceStudent": {"type": "number"}, "freeNote": {"type": "string"}, "runsFrom": {"type": "string", "format": "date"}, "runsUntil": {"type": "string", "format": "date"}, "lastEntryMinutes": {"type": "integer", "description": "última entrada: minutos antes de fechar"}, "needsBooking": {"type": "boolean"}, "ticketURL": {"type": "string", "format": "uri"}, "durationMinutes": {"type": "integer"}, "photographyAllowed": {"type": "boolean"}, "floors": {"type": "integer"}, "note": {"type": "string"},
           "sessions": {"type": "array", "items": {"type": "object", "required": ["at", "title"], "properties": {"at": {"type": "string", "format": "date-time"}, "title": {"type": "string"}, "price": {"type": "number"}, "soldOut": {"type": "boolean"}, "url": {"type": "string", "format": "uri"}, "bought": {"type": "boolean", "description": "ingresso comprado: vira âncora do dia"}, "note": {"type": "string"}}}}}},

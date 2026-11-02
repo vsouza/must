@@ -218,7 +218,7 @@ struct ListTile: View {
                 parts.append(SportScore.isGood(h, spot: spot) ? "bom agora \(Int(h.temp.rounded()))°" : "\(Int(h.temp.rounded()))° agora")
             }
             if !parts.isEmpty { return parts.joined(separator: " · ") }
-        case .place:
+        case .place, .experience:
             break
         }
         var parts = list.subs.compactMap { sub -> String? in

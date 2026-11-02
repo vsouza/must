@@ -149,7 +149,7 @@ struct PlaceRow: View {
         case .sport:
             let weather = services?.sync.weather(on: now, region: region, trip: trip)
             if let line = KindLines.sportMeta(place, weather: weather, now: now) { return (line, Color.must.ink, false, rest) }
-        case .place:
+        case .place, .experience:
             break
         }
         switch state {

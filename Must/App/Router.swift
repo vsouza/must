@@ -18,6 +18,8 @@ enum Route: Hashable {
     case light(date: Date)
     /// Board completo (Musts › Ver tudo · editar). `edit` abre já em modo edição (prints de QA).
     case board(edit: Bool = false)
+    /// Ingresso de um lugar (Reservas, Lugar › Ingresso).
+    case ticket(placeId: String, ticketId: String)
 }
 
 /// Navegação do app: aba atual, pilha de cada aba e o que está apresentado por cima.
@@ -122,6 +124,7 @@ extension View {
             case .day(let date): TodayView(date: date)
             case .light(let date): LightDayView(date: date)
             case .board(let edit): BoardView(startEditing: edit)
+            case .ticket(let placeId, let ticketId): TicketView(placeId: placeId, ticketId: ticketId)
             }
         }
     }

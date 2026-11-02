@@ -106,7 +106,7 @@ struct AppRoot: View {
 /// `-debugScreen <tela>` abre uma tela direto (simulador/prints):
 /// ajustes, regiao, mapas-offline, musts, lista:<id>, fim, lugar:<id>, editar:<id>, nova-lista, adicionar[:url], hoje, mapa,
 /// board, board:editar (2 selecionados), editar-lista:<id>.
-/// `-gallery` abre a Gallery.
+/// `ingresso` abre um ingresso de exemplo (TicketDemo). `-gallery` abre a Gallery.
 @MainActor
 enum DebugLaunch {
     static func apply(to router: AppRouter, context: ModelContext, region: Region, services: Services) {
@@ -150,6 +150,9 @@ enum DebugLaunch {
         case "assistente": router.sheet = .assistant
         case "viagem": router.push(.trip, on: .inicio)
         case "reservas": router.push(.reservations, on: .inicio)
+        case "ingresso": // ingresso: cria a experiência de exemplo (Tsukiji) e abre o Ingresso
+            TicketDemo.ensure(context: context, region: region)
+            router.push(.ticket(placeId: TicketDemo.placeId, ticketId: TicketDemo.ticketId), on: .inicio)
         case "sincronizar":
             router.push(.settings, on: .inicio)
             Task { await services.sync.syncPlaces(context: context, region: region) }
