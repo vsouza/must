@@ -38,5 +38,9 @@
 | Importar board | Importar | primeira abertura; Ajustes → Reimportar | 03 |
 | Live Activity e widgets | Widgets | fora do app | 09 |
 | Ícones | Icones | — (folha de referência; SVGs em `icons/`) | 02 |
+| Como chegar (Routes + Street View) | ComoChegar | Lugar "Ir agora", Ingresso, Hoje | 17 |
+| Adicionar por nome | BuscarNome | Adicionar, Board "+" | 17 |
+| Compras da viagem | Compras | Viagem, Carteira | 17 |
+| Regras da volta | ComprasRegras | Compras | 17 |
 
 Fluxo principal: Início → Montar → Proposta → (Trocar) → Hoje → Lugar → Gasto (済) → Hoje. Mapa acompanha o Hoje. Musts → Lista → Lugar é o lado "catálogo". Nova lista → Adicionar lugares e Adicionar por link alimentam o board.
