@@ -188,7 +188,7 @@ struct MapView: View {
 
     private func openState(_ place: Place) -> PinOpenState {
         #if DEBUG
-        if UserDefaults.standard.bool(forKey: "debugPinsOpen") { // -debugPinsOpen YES: aberto / fechando / fechado
+        if DebugFlags.bool("debugPinsOpen") { // -debugPinsOpen YES: aberto / fechando / fechado
             return [PinOpenState.open, .closingSoon(remaining: 0.4), .closed][abs(place.id.hashValue) % 3]
         }
         #endif
@@ -547,7 +547,7 @@ struct MapView: View {
         guard !didCenter else { reevaluate(force: true); return }
         didCenter = true
         #if DEBUG
-        let debugWidth = UserDefaults.standard.double(forKey: "debugMapWidth") // -debugMapWidth 450 (prints)
+        let debugWidth = DebugFlags.double("debugMapWidth") // -debugMapWidth 450 (prints)
         if debugWidth > 0 { cam.show(fallbackCenter, widthMeters: debugWidth, animated: false); return }
         #endif
         reevaluate(force: true, animated: false)

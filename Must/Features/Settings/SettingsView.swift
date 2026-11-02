@@ -61,7 +61,7 @@ struct SettingsView: View {
         }
         #if DEBUG
         .onAppear {
-            if UserDefaults.standard.string(forKey: "debugScreen") == "regiao" { showRegion = true }
+            if DebugFlags.string("debugScreen") == "regiao" { showRegion = true }
         }
         #endif
     }

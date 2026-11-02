@@ -191,7 +191,7 @@ enum FlightStatusUpdater {
     /// Fonte ativa: a fake no `-debugFlight fake`; a real com chave; nil sem chave (só o programado).
     static func activeSource() -> (any FlightStatusProviding)? {
         #if DEBUG
-        if UserDefaults.standard.string(forKey: "debugFlight") == "fake" { return FakeFlightStatusService() }
+        if DebugFlags.string("debugFlight") == "fake" { return FakeFlightStatusService() }
         #endif
         return Secrets.aerodataboxKey == nil ? nil : AeroDataBoxService()
     }

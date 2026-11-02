@@ -16,6 +16,7 @@ struct GoogleParsersTests {
           "mainText": {"text": "KOFFEE MAMEYA", "matches": [{"startOffset": 0, "endOffset": 10}]},
           "secondaryText": {"text": "Japan, Tokyo, Shibuya, Jingumae"}
         },
+        "distanceMeters": 1240,
         "types": ["cafe", "establishment"]
       }},
       {"placePrediction": {
@@ -44,6 +45,8 @@ struct GoogleParsersTests {
         #expect(suggestions[0].name == "KOFFEE MAMEYA")
         #expect(suggestions[0].secondary == "Japan, Tokyo, Shibuya, Jingumae")
         #expect(suggestions[0].primaryType == "cafe")
+        #expect(suggestions[0].distanceMeters == 1240)
+        #expect(suggestions[1].distanceMeters == nil)
         // Sem structuredFormat, o nome é o texto inteiro.
         #expect(suggestions[2].name == "KOFFEE MAMEYA, Victoria Dockside")
     }

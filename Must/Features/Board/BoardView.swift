@@ -75,7 +75,7 @@ struct BoardView: View {
             editMode = .active
             #if DEBUG
             // QA (`board:editar`): já com dois selecionados, pros prints.
-            if UserDefaults.standard.string(forKey: "debugScreen") == "board:editar" {
+            if DebugFlags.string("debugScreen") == "board:editar" {
                 model.selection = Set((groups.first?.places ?? []).prefix(2).map(\.id))
             }
             #endif

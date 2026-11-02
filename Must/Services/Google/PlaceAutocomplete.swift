@@ -15,6 +15,8 @@ struct PlaceSuggestion: Sendable, Hashable, Identifiable {
     var secondary: String?
     var segments: [Segment]
     var types: [String]
+    /// Metros da origem (posição atual) até o lugar, como o Autocomplete devolve com `origin`.
+    var distanceMeters: Int? = nil
 
     /// Tipo principal pra lista sugerida: o primeiro dos `types` (Autocomplete não manda `primaryType`).
     var primaryType: String? { types.first }
@@ -22,7 +24,7 @@ struct PlaceSuggestion: Sendable, Hashable, Identifiable {
 
 protocol AutocompleteProviding: Sendable {
     var isConfigured: Bool { get }
-    func suggest(_ input: String, sessionToken: String, near: CLLocationCoordinate2D, radius: Double) async throws -> [PlaceSuggestion]
+    func suggest(_ input: String, sessionToken: String, near: CLLocationCoordinate2D, origin: CLLocationCoordinate2D?, radius: Double) async throws -> [PlaceSuggestion]
 }
 
 /// Places Autocomplete (New) com session token. Cada pedido conta como `autocomplete` no `ApiBudget`.
@@ -34,15 +36,18 @@ struct PlaceAutocomplete: AutocompleteProviding, Sendable {
     var isConfigured: Bool { apiKey != nil }
 
     /// Viés pela cidade/bairro atual (raio de 3 km, como o design).
-    func suggest(_ input: String, sessionToken: String, near: CLLocationCoordinate2D, radius: Double = 3_000) async throws -> [PlaceSuggestion] {
+    func suggest(_ input: String, sessionToken: String, near: CLLocationCoordinate2D, origin: CLLocationCoordinate2D? = nil,
+                 radius: Double = 3_000) async throws -> [PlaceSuggestion] {
         guard let apiKey else { throw ServiceError.missingKey("GOOGLE_PLACES_KEY") }
-        let body: [String: Any] = [
+        var body: [String: Any] = [
             "input": input,
             "sessionToken": sessionToken,
             "languageCode": "pt-BR",
             "includeQueryPredictions": false,
             "locationBias": ["circle": ["center": ["latitude": near.latitude, "longitude": near.longitude], "radius": radius]],
         ]
+        // Com `origin`, cada sugestão volta com `distanceMeters` (a distância a pé do card).
+        if let origin { body["origin"] = ["latitude": origin.latitude, "longitude": origin.longitude] }
         let data = try await GoogleAPI.run(.autocomplete) {
             try await http.post(URL(string: "https://places.googleapis.com/v1/places:autocomplete")!, json: body,
                                 headers: GoogleAPI.headers(key: apiKey), service: "places.autocomplete")
@@ -65,7 +70,7 @@ struct PlaceAutocomplete: AutocompleteProviding, Sendable {
             let mainMatches = matches(in: mainNode)
             let segments = segmentize(main: main, full: full, fullMatches: fullMatches, mainMatches: mainMatches)
             return PlaceSuggestion(placeId: placeId, name: main, secondary: secondary, segments: segments,
-                                   types: p["types"] as? [String] ?? [])
+                                   types: p["types"] as? [String] ?? [], distanceMeters: p["distanceMeters"] as? Int)
         }
     }
 
@@ -119,22 +124,30 @@ struct PlaceAutocomplete: AutocompleteProviding, Sendable {
 
 #if DEBUG
 /// `-debugAutocomplete fake` (prints): as sugestões do design pra "koffee mam", sem gastar cota.
+/// As distâncias saem da origem de verdade (como o Google faria) até os pontos de mentira.
 struct FakeAutocomplete: AutocompleteProviding {
     var isConfigured = true
 
-    func suggest(_ input: String, sessionToken: String, near: CLLocationCoordinate2D, radius: Double) async throws -> [PlaceSuggestion] {
+    /// Coordenadas de mentira: a do board (Koffee Mameya, j09) e a da torrefação.
+    static let spots: [(id: String, name: String, secondary: String, lat: Double, lng: Double, types: [String])] = [
+        ("fake-koffee-mameya", "Koffee Mameya", "Omotesando, Shibuya", 35.668368, 139.710888, ["cafe", "establishment"]),
+        ("fake-koffee-kakeru", "Koffee Mameya Kakeru", "Kiyosumi, Koto", 35.6843, 139.7968, ["cafe"]),
+        ("fake-koffee-roastery", "Koffee Mameya Roastery", "Shibuya", 35.6683, 139.7070, ["store", "cafe"]),
+    ]
+
+    func suggest(_ input: String, sessionToken: String, near: CLLocationCoordinate2D, origin: CLLocationCoordinate2D?, radius: Double) async throws -> [PlaceSuggestion] {
         guard input.lowercased().hasPrefix("koffee") else { return [] }
-        func seg(_ before: String, _ hit: String, _ after: String) -> [PlaceSuggestion.Segment] {
-            [.init(text: before, highlighted: true), .init(text: hit, highlighted: false)].filter { !$0.text.isEmpty } + (after.isEmpty ? [] : [.init(text: after, highlighted: false)])
+        let from = origin ?? near
+        return Self.spots.map { spot in
+            let meters = CLLocation(latitude: from.latitude, longitude: from.longitude)
+                .distance(from: CLLocation(latitude: spot.lat, longitude: spot.lng))
+            // Destaque: "Koffee Mam" (o que foi digitado), o resto sem destaque.
+            let typed = "Koffee Mam"
+            let rest = String(spot.name.dropFirst(typed.count))
+            return PlaceSuggestion(placeId: spot.id, name: spot.name, secondary: spot.secondary,
+                                   segments: [.init(text: typed, highlighted: true), .init(text: rest, highlighted: false)],
+                                   types: spot.types, distanceMeters: Int(meters.rounded()))
         }
-        return [
-            PlaceSuggestion(placeId: "fake-koffee-mameya", name: "Koffee Mameya", secondary: "Omotesando, Shibuya",
-                            segments: [.init(text: "Koffee Mam", highlighted: true), .init(text: "eya", highlighted: false)], types: ["cafe"]),
-            PlaceSuggestion(placeId: "fake-koffee-kakeru", name: "Koffee Mameya Kakeru", secondary: "Kiyosumi, Koto",
-                            segments: seg("Koffee Mam", "", "eya Kakeru"), types: ["cafe"]),
-            PlaceSuggestion(placeId: "fake-koffee-roastery", name: "Koffee Mameya Roastery", secondary: "Shibuya",
-                            segments: seg("Koffee Mam", "", "eya Roastery"), types: ["store", "cafe"]),
-        ]
     }
 }
 
@@ -148,7 +161,7 @@ extension FakePlacesService {
                                     name: "Koffee Mameya Roastery", address: "4-15-3 Jingumae, Shibuya", lat: 35.6683, lng: 139.7070,
                                     primaryType: "cafe")
         let mameya = PlaceDetails(id: "fake-koffee-mameya", hours: hours, priceLevel: 2, rating: 4.5, ratingCount: 980,
-                                  name: "Koffee Mameya", address: "Omotesando, Shibuya", lat: 35.6655, lng: 139.7115, primaryType: "cafe")
+                                  name: "Koffee Mameya", address: "Omotesando, Shibuya", lat: 35.668368, lng: 139.710888, primaryType: "cafe")
         return FakePlacesService(candidates: [], detailsById: ["fake-koffee-roastery": roastery, "fake-koffee-mameya": mameya])
     }
 }

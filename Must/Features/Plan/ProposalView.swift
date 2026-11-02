@@ -56,7 +56,7 @@ struct ProposalView: View {
         }
         #if DEBUG
         .onAppear {
-            if UserDefaults.standard.string(forKey: "debugScreen") == "trocar" {
+            if DebugFlags.string("debugScreen") == "trocar" {
                 swapping = planner.proposal?.stops.first { $0.place.role == .eat && !$0.isAnchor }
             }
         }

@@ -3,8 +3,8 @@ import SwiftData
 import SwiftUI
 
 /// Buscar por nome (prompt 17 · A, `BuscarNome.png`): campo com viés da cidade, sugestões com o trecho em verde,
-/// e o card do lugar escolhido (fotos do Google com crédito, nota, preço, horário, endereço, distância a pé).
-/// Entradas: "ou um nome" do Adicionar e o "+" do Board.
+/// e o card do lugar escolhido (fotos do Google com crédito, ou a cor da lista; nota, preço, horário, endereço, distância).
+/// Entradas: "ou um nome" do Adicionar e o "+" do Board. Apresentada como sheet (cobre a tab bar).
 struct BuscarNomeView: View {
     var initialQuery = ""
     var preferredListId: String?
@@ -23,14 +23,14 @@ struct BuscarNomeView: View {
     private var region: Region { store.region }
 
     var body: some View {
-        ZStack(alignment: .bottom) {
+        ZStack {
             Color.must.bg.ignoresSafeArea()
             BlobBackground(style: .custom([
                 Blob(cx: 380, cy: 150, rx: 74, ry: 80, rotation: 8, fill: .green, opacity: 0.6),
                 Blob(cx: 10, cy: 600, rx: 60, ry: 70, rotation: 0, fill: .blue, opacity: 0.5),
             ]))
-            ScrollView {
-                if let model {
+            if let model {
+                ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
                         topBar
                         searchField(model)
@@ -41,41 +41,44 @@ struct BuscarNomeView: View {
                                 .font(.must.meta).foregroundStyle(Color.must.secondary)
                                 .multilineTextAlignment(.center).frame(maxWidth: .infinity)
                         }
-                        Color.clear.frame(height: 110)
                     }
                     .padding(.horizontal, 22)
                     .padding(.top, 8)
+                    .padding(.bottom, 16)
                 }
+                .scrollDismissesKeyboard(.interactively)
+                .safeAreaInset(edge: .bottom, spacing: 0) { footer(model) }
             }
-            .scrollDismissesKeyboard(.interactively)
-            if let model { footer(model) }
         }
         .toolbar(.hidden, for: .navigationBar)
         .onAppear {
-            if model == nil {
-                model = BuscarNomeModel(query: initialQuery.replacingOccurrences(of: ":escolher", with: ""))
-                if !initialQuery.isEmpty, let model { model.typed(initialQuery, near: biasCenter, provider: services.autocomplete) }
-            }
-            focused = true
+            guard model == nil else { return }
+            let autoChoose = DebugFlags.string("debugScreen")?.hasSuffix(":escolher") == true
+            let location = services.location
+            let m = BuscarNomeModel(query: initialQuery.replacingOccurrences(of: ":escolher", with: ""), places: services.places,
+                                    photos: services.placePhotos, autocomplete: services.autocomplete,
+                                    origin: { location.current?.coordinate }, autoChooseFirst: autoChoose)
+            model = m
+            if !m.query.isEmpty { m.typed(m.query, near: biasCenter) }
+            focused = !autoChoose
         }
-        #if DEBUG
-        // Print de QA: `buscar-nome:<texto>:escolher` já escolhe a primeira sugestão (abre o card).
-        .task(id: model?.suggestions.count ?? 0) {
-            guard UserDefaults.standard.string(forKey: "debugScreen")?.hasSuffix(":escolher") == true,
-                  let model, model.selected == nil, let first = model.suggestions.first else { return }
-            focused = false
-            await model.choose(first, places: services.places, photoProvider: services.placePhotos)
-        }
-        #endif
     }
 
-    // MARK: Viés e distância
+    // MARK: Viés, origem e distância
 
-    /// Onde estou (ou o centro da cidade do dia): o viés do Autocomplete e a distância a pé.
+    /// Onde estou (GPS ou a posição simulada); sem GPS, o centro da cidade do dia.
+    private var originPoint: CLLocationCoordinate2D? { services.location.current?.coordinate }
+
     private var biasCenter: CLLocationCoordinate2D {
-        if let here = services.location.current?.coordinate { return here }
+        if let here = originPoint { return here }
         let city = trips.first?.city(on: AppClock.now, calendar: region.calendar)
         return city.map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lng) } ?? region.defaultCenter
+    }
+
+    /// Distância de pé de uma sugestão: a do Autocomplete (com origem), senão nada.
+    private func walkText(_ meters: Int?) -> String? {
+        guard let meters else { return nil }
+        return "\(Walk.distanceText(Double(meters))) · \(Walk.minutes(Double(meters))) min a pé"
     }
 
     private var areaLabel: String? {
@@ -99,7 +102,7 @@ struct BuscarNomeView: View {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(Color.must.ink)
-            TextField("nome do lugar", text: Binding(get: { model.query }, set: { model.typed($0, near: biasCenter, provider: services.autocomplete) }))
+            TextField("nome do lugar", text: Binding(get: { model.query }, set: { model.typed($0, near: biasCenter) }))
                 .font(.must.archivo(20))
                 .focused($focused)
                 .submitLabel(.search)
@@ -139,21 +142,29 @@ struct BuscarNomeView: View {
     }
 
     private func suggestionRow(_ suggestion: PlaceSuggestion, model: BuscarNomeModel) -> some View {
-        let onBoard = places.contains { $0.placeId == suggestion.placeId }
+        let chosen = model.selected?.placeId == suggestion.placeId
+        let onBoard = BuscarNomeModel.boardMatch(for: suggestion, coordinate: nil, origin: originPoint, places: places) != nil
+        let subtitle = [suggestion.subtitle, walkText(suggestion.distanceMeters)].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
         return Button {
-            Task { await model.choose(suggestion, places: services.places, photoProvider: services.placePhotos) }
+            Task { await model.choose(suggestion) }
         } label: {
             HStack(alignment: .center, spacing: 12) {
-                Circle().fill(model.selected?.placeId == suggestion.placeId ? Color.must.ink : Color.must.surface)
+                Circle().fill(chosen ? Color.must.ink : Color.must.surface)
                     .frame(width: 44, height: 44)
-                    .overlay(Image(systemName: "mappin").font(.system(size: 15)).foregroundStyle(model.selected?.placeId == suggestion.placeId ? .white : Color.must.ink))
+                    .overlay {
+                        if suggestion.isCafe {
+                            MustIconView(.cafe, size: 18).foregroundStyle(chosen ? .white : Color.must.ink)
+                        } else {
+                            MustIconView(.pino, size: 18).foregroundStyle(chosen ? .white : Color.must.ink)
+                        }
+                    }
                 VStack(alignment: .leading, spacing: 3) {
                     Text(highlighted(suggestion))
                         .font(.must.archivo(17, .semibold))
                         .foregroundStyle(Color.must.ink)
                         .lineLimit(2)
-                    if !suggestion.subtitle.isEmpty {
-                        Text(suggestion.subtitle).font(.must.meta).foregroundStyle(Color.must.secondary).lineLimit(1)
+                    if !subtitle.isEmpty {
+                        Text(subtitle).font(.must.meta).foregroundStyle(Color.must.secondary).lineLimit(2)
                     }
                 }
                 Spacer(minLength: 0)
@@ -182,13 +193,13 @@ struct BuscarNomeView: View {
 
     @ViewBuilder private func card(_ model: BuscarNomeModel, selected: PlaceSuggestion) -> some View {
         let name = model.details?.name ?? selected.name
-        let listName = lists.first { $0.id == model.listId(for: selected) }?.name
+        let listName = lists.first { $0.id == model.listId(for: selected) }?.displayName
         VStack(alignment: .leading, spacing: 12) {
             photos(model, selected: selected)
             Text(name).font(.must.archivo(26, .semibold)).foregroundStyle(Color.must.ink).fixedSize(horizontal: false, vertical: true)
-            metaLine(model)
+            metaLine(model, selected: selected)
             if let address = model.details?.address {
-                Text(addressLine(address, model: model)).font(.must.meta).foregroundStyle(Color.must.secondary)
+                Text(addressLine(address, model: model, selected: selected)).font(.must.meta).foregroundStyle(Color.must.secondary)
             }
             if model.loadingCard { Micro("buscando o card…") }
             HStack(spacing: 8) {
@@ -207,7 +218,7 @@ struct BuscarNomeView: View {
         .rotationEffect(.degrees(-0.8))
     }
 
-    /// Três fotos (uma grande e duas menores) com o crédito "FOTOS · GOOGLE · @AUTOR"; sem foto, a cor da lista.
+    /// Até três fotos (uma grande, duas menores) com o crédito; sem foto, a cor da lista (o card não some).
     @ViewBuilder private func photos(_ model: BuscarNomeModel, selected: PlaceSuggestion) -> some View {
         let listId = model.listId(for: selected)
         let color: MustColor = lists.first(where: { $0.id == listId })?.color ?? .drink
@@ -242,11 +253,12 @@ struct BuscarNomeView: View {
         .clipped()
     }
 
-    private func metaLine(_ model: BuscarNomeModel) -> some View {
+    /// "café · 4,6 · 2,1 mil · ¥¥ · aberto até 18:00" (o horário fecha em verde).
+    private func metaLine(_ model: BuscarNomeModel, selected: PlaceSuggestion) -> some View {
         let details = model.details
         let locale = Locale(identifier: "pt_BR")
         var pieces: [String] = []
-        if let type = model.selected?.subtitle.split(separator: "·").first.map({ String($0).trimmingCharacters(in: .whitespaces) }), !type.isEmpty {
+        if !selected.subtitle.isEmpty, let type = selected.subtitle.split(separator: "·").first.map({ String($0).trimmingCharacters(in: .whitespaces) }) {
             pieces.append(type)
         }
         if let rating = details?.rating {
@@ -266,10 +278,11 @@ struct BuscarNomeView: View {
         return line.font(.must.meta).foregroundStyle(Color.must.secondary)
     }
 
-    private func addressLine(_ address: String, model: BuscarNomeModel) -> String {
-        guard let lat = model.details?.lat, let lng = model.details?.lng else { return address }
-        let km = DaySolver.streetKm(biasCenter, CLLocationCoordinate2D(latitude: lat, longitude: lng))
-        let meters = km * 1000 / 1.25
+    /// "Endereço · 0,9 km · 12 min a pé" (distância do Autocomplete; sem ela, a da coordenada do Details).
+    private func addressLine(_ address: String, model: BuscarNomeModel, selected: PlaceSuggestion) -> String {
+        if let walk = walkText(selected.distanceMeters) { return "\(address) · \(walk)" }
+        guard let lat = model.details?.lat, let lng = model.details?.lng, let origin = originPoint else { return address }
+        let meters = BuscarNomeModel.distance(origin, CLLocationCoordinate2D(latitude: lat, longitude: lng))
         return "\(address) · \(Walk.distanceText(meters)) · \(Walk.minutes(meters)) min a pé"
     }
 
@@ -278,10 +291,14 @@ struct BuscarNomeView: View {
     private func footer(_ model: BuscarNomeModel) -> some View {
         let selected = model.selected
         let list = selected.flatMap { model.listId(for: $0) }.flatMap { id in lists.first { $0.id == id } }
-        let onBoard = selected.map { s in places.contains { $0.placeId == s.placeId } } ?? false
+        let onBoard = selected.map { s in
+            BuscarNomeModel.boardMatch(for: s, coordinate: model.details.flatMap { d in
+                d.lat.flatMap { lat in d.lng.map { CLLocationCoordinate2D(latitude: lat, longitude: $0) } }
+            }, origin: originPoint, places: places) != nil
+        } ?? false
         return VStack {
             if let selected, let list, model.details != nil {
-                PrimaryButton(onBoard ? "Já está no board" : "Adicionar ao \(list.name)", style: .green) {
+                PrimaryButton(onBoard ? "Já está no board" : "Adicionar ao \(list.displayName)", style: .green) {
                     if model.add(to: list, suggestion: selected, details: model.details, region: region, now: AppClock.now, context: context) != nil {
                         dismiss()
                     }
@@ -293,7 +310,7 @@ struct BuscarNomeView: View {
         }
         .padding(.horizontal, 22)
         .padding(.top, 14)
-        .padding(.bottom, 26)
+        .padding(.bottom, 14)
         .background(Color.must.bg.opacity(0.96))
     }
 }

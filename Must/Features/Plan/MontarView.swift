@@ -59,7 +59,7 @@ struct MontarView: View {
                                                         flights: FlightRules.dayFlights(flights, on: planner.date, region: region)) }
                 }
                 #if DEBUG
-                if let screen = UserDefaults.standard.string(forKey: "debugScreen"), ["proposta", "trocar"].contains(screen), let planner {
+                if let screen = DebugFlags.string("debugScreen"), ["proposta", "trocar"].contains(screen), let planner {
                     planner.build(catalog: places.solverCatalog, trip: trips.first, settings: settingsList.first, location: services.location.current,
                               flights: FlightRules.dayFlights(flights, on: planner.date, region: region))
                     showProposal = true

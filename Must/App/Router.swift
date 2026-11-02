@@ -32,8 +32,6 @@ enum Route: Hashable {
     case googleUsage
     /// Como chegar (prompt 17 · A): a rota de transporte até o lugar (ou ao ponto de encontro do ingresso).
     case comoChegar(placeId: String, meeting: Bool = false)
-    /// Buscar por nome (Autocomplete + card com fotos do Google). `query` pré-preenche o campo.
-    case buscarNome(query: String, listId: String?)
 }
 
 /// Navegação do app: aba atual, pilha de cada aba e o que está apresentado por cima.
@@ -48,6 +46,8 @@ final class AppRouter {
         case assistant
         /// Trazer ingresso (prompt 15 · A). `inboxId`: item da caixa do Share Extension, se veio por `must://import`.
         case ticketImport(inboxId: String?)
+        /// Buscar por nome (prompt 17 · A): sheet, cobre a tab bar. `query` pré-preenche o campo.
+        case buscarNome(query: String, listId: String?)
 
         var id: String {
             switch self {
@@ -57,6 +57,7 @@ final class AppRouter {
             case .expense(let id): "expense-\(id ?? "")"
             case .assistant: "assistant"
             case .ticketImport(let id): "import-\(id ?? "")"
+            case .buscarNome(let query, let list): "buscar-\(query)-\(list ?? "")"
             }
         }
     }
@@ -151,7 +152,6 @@ extension View {
             case .schedule(let tab): ScheduleView(tab: tab)
             case .googleUsage: GoogleUsageView()
             case .comoChegar(let placeId, let meeting): ComoChegarView(placeId: placeId, meeting: meeting)
-            case .buscarNome(let query, let listId): BuscarNomeView(initialQuery: query, preferredListId: listId)
             }
         }
     }

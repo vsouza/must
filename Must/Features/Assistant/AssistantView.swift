@@ -29,7 +29,7 @@ struct AssistantView: View {
         .background(Color.must.bg.ignoresSafeArea())
         #if DEBUG
         .onAppear {
-            if let q = UserDefaults.standard.string(forKey: "debugAsk"), chat.messages.isEmpty { ask(q) }
+            if let q = DebugFlags.string("debugAsk"), chat.messages.isEmpty { ask(q) }
         }
         #endif
         .sheet(item: Binding(get: { markingDone.map { IdentifiedString(id: $0) } }, set: { markingDone = $0?.id })) { item in

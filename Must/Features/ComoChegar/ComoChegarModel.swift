@@ -72,7 +72,7 @@ final class ComoChegarModel {
     /// A porta: com o Google sem orçamento ou sem chave, `nil` e o card some.
     static func streetCard(for destination: CLLocationCoordinate2D, caption: String?) async throws -> StreetViewCard? {
         #if DEBUG
-        if UserDefaults.standard.string(forKey: "debugRoutes") == "fake" {
+        if DebugFlags.string("debugRoutes") == "fake" {
             return StreetViewCard(panoId: "fake", date: "2025-03", copyright: "© Google", heading: 120,
                                   imageFile: URL.temporaryDirectory.appending(path: "fake-streetview.jpg"), caption: caption)
         }

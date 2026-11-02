@@ -40,7 +40,7 @@ final class Services {
     /// `-debugNearby fake` (prints/simulador): fontes de mentira e um cache próprio, pra não misturar com o real.
     private static func launchNearby(_ live: any NearbyProviding) -> NearbyLoader {
         #if DEBUG
-        if UserDefaults.standard.string(forKey: "debugNearby") == "fake" {
+        if DebugFlags.string("debugNearby") == "fake" {
             let cache = NearbyCache(directory: URL.temporaryDirectory.appending(path: "must-nearby-fake", directoryHint: .isDirectory))
             return NearbyLoader(provider: FakeNearbyProvider(places: FakeNearbyProvider.samples), cache: cache)
         }
@@ -51,8 +51,8 @@ final class Services {
     /// `-debugPlaces fake` (simulador/prints): Places de mentira pro Adicionar por link.
     private static func launchPlaces(_ live: any PlacesProviding) -> any PlacesProviding {
         #if DEBUG
-        if UserDefaults.standard.string(forKey: "debugPlaces") == "fake" { return FakePlacesService.linkSamples }
-        if UserDefaults.standard.string(forKey: "debugAutocomplete") == "fake" { return FakePlacesService.koffeeSamples }
+        if DebugFlags.string("debugAutocomplete") == "fake" { return FakePlacesService.koffeeSamples }
+        if DebugFlags.string("debugPlaces") == "fake" { return FakePlacesService.linkSamples }
         #endif
         return live
     }
@@ -60,7 +60,7 @@ final class Services {
     /// `-debugAutocomplete fake`: fotos de mentira (sem cota).
     private static func launchPhotos(_ live: any PlacePhotosProviding) -> any PlacePhotosProviding {
         #if DEBUG
-        if UserDefaults.standard.string(forKey: "debugAutocomplete") == "fake" { return FakePlacePhotos() }
+        if DebugFlags.string("debugAutocomplete") == "fake" { return FakePlacePhotos() }
         #endif
         return live
     }
@@ -68,7 +68,7 @@ final class Services {
     /// `-debugAutocomplete fake` (prints): sugestões de mentira pra Buscar por nome.
     private static func launchAutocomplete(_ live: any AutocompleteProviding) -> any AutocompleteProviding {
         #if DEBUG
-        if UserDefaults.standard.string(forKey: "debugAutocomplete") == "fake" { return FakeAutocomplete() }
+        if DebugFlags.string("debugAutocomplete") == "fake" { return FakeAutocomplete() }
         #endif
         return live
     }
@@ -76,7 +76,7 @@ final class Services {
     /// Fontes das "Dicas de quem foi" (prompt 11). `-debugTips fake` usa amostras (prints/simulador).
     func tipsProviders(for query: TipsQuery) -> [any TipsProviding] {
         #if DEBUG
-        if UserDefaults.standard.string(forKey: "debugTips") == "fake" {
+        if DebugFlags.string("debugTips") == "fake" {
             return [SourceCaptionTips()] + FakeTipsProvider.samples(for: query)
         }
         #endif

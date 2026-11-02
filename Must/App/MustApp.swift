@@ -99,8 +99,8 @@ struct AppRoot: View {
     private static func shouldShowOnboarding(onboarded: Bool) -> Bool {
         #if DEBUG
         let defaults = UserDefaults.standard
-        if defaults.string(forKey: "debugScreen") == "importar" { return true }
-        if defaults.bool(forKey: "skipOnboarding") || defaults.string(forKey: "debugScreen") != nil { return false }
+        if DebugFlags.string("debugScreen") == "importar" { return true }
+        if DebugFlags.bool("skipOnboarding") || DebugFlags.string("debugScreen") != nil { return false }
         #endif
         return !onboarded
     }
@@ -121,8 +121,8 @@ struct AppRoot: View {
 enum DebugLaunch {
     static func apply(to router: AppRouter, context: ModelContext, region: Region, services: Services) {
         let location = services.location
-        if ProcessInfo.processInfo.arguments.contains("-gallery") { router.cover = .gallery }
-        guard let screen = UserDefaults.standard.string(forKey: "debugScreen") else { return }
+        if DebugFlags.has("-gallery") { router.cover = .gallery }
+        guard let screen = DebugFlags.string("debugScreen") else { return }
         let parts = screen.split(separator: ":", maxSplits: 1).map(String.init)
         let arg = parts.count > 1 ? parts[1] : nil
         switch parts[0] {
@@ -183,7 +183,7 @@ enum DebugLaunch {
             router.push(.comoChegar(placeId: TicketDemo.placeId, meeting: true), on: .inicio)
         case "uso-google": router.push(.googleUsage, on: .inicio)
         case "buscar-nome": // buscar-nome:koffee mam (com -debugAutocomplete fake); buscar-nome:koffee mam:escolher já escolhe a 1ª
-            router.push(.buscarNome(query: (arg ?? "").replacingOccurrences(of: ":escolher", with: ""), listId: nil), on: .musts)
+            router.sheet = .buscarNome(query: (arg ?? "").replacingOccurrences(of: ":escolher", with: ""), listId: nil)
         case "sincronizar":
             router.push(.settings, on: .inicio)
             Task { await services.sync.syncPlaces(context: context, region: region) }

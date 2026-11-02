@@ -164,6 +164,7 @@
 		A8C5CE7DA792FB7AF07C8A9E /* Icons.swift in Sources */ = {isa = PBXBuildFile; fileRef = 510AFA185D11B399A89AD9EF /* Icons.swift */; };
 		A9125BC4F25FF5EE2D867387 /* ExperienceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F209E1793AF9869B3B5D861 /* ExperienceStore.swift */; };
 		A91E9EAB66133760DAF239C8 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F73465FDB27FA97ECEDBBB81 /* SwiftUI.framework */; };
+		A999915102AAED04C3E982A4 /* DebugFlags.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A65495A52E0B006233D513B /* DebugFlags.swift */; };
 		A9FB76DF08D72428A3D11407 /* BoardBatchBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC6D754D2886CDC8009499B2 /* BoardBatchBar.swift */; };
 		AA2097BF2E92929E0460AEC7 /* PKPassReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E3F65868D18050715124E1 /* PKPassReader.swift */; };
 		AA244140B24B6A2E8F605DF4 /* BoardModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AC3CBA2A9F2C12CC697A0D5 /* BoardModel.swift */; };
@@ -181,6 +182,7 @@
 		B23B6254E346449B432FB1C9 /* TravelMatrix.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26530EFFE4125A5BE2DEA5EB /* TravelMatrix.swift */; };
 		B2893949E814A8D6C3D61599 /* map-packs.json in Resources */ = {isa = PBXBuildFile; fileRef = 7BA25CA47124E3E6E046ED06 /* map-packs.json */; };
 		B369709BE73796C1EF00ABCA /* EditPlaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC25B14DB4001E11FC55A852 /* EditPlaceView.swift */; };
+		B4961DBFF091160A910EB743 /* BuscarNomeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34B77A2A3A62BB77CAE9126D /* BuscarNomeTests.swift */; };
 		B4E539D7E96122AB1C48E8CC /* GeistMono.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 3BC65B4FB2BD086753184D88 /* GeistMono.ttf */; };
 		B552F06B9A8678A705988367 /* seed-bh.json in Resources */ = {isa = PBXBuildFile; fileRef = 50B7B2806BAB98E03649662B /* seed-bh.json */; };
 		B6CBBAED191C9ED0014DC878 /* ExtractedTicket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C832B556BB2DF99EF2A23CD /* ExtractedTicket.swift */; };
@@ -331,6 +333,7 @@
 		2F12ADC96D7618625F1CFDF3 /* TicketFiles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketFiles.swift; sourceTree = "<group>"; };
 		2F209E1793AF9869B3B5D861 /* ExperienceStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperienceStore.swift; sourceTree = "<group>"; };
 		32C5A3C526057B2F0A5A397C /* MustShare.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = MustShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		34B77A2A3A62BB77CAE9126D /* BuscarNomeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuscarNomeTests.swift; sourceTree = "<group>"; };
 		361BB6DBEF0297F500E175DB /* ReservationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservationsView.swift; sourceTree = "<group>"; };
 		3840ECE0F90F2549AFD6169B /* TicketEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketEditor.swift; sourceTree = "<group>"; };
 		3847B720AFE775247C5B85A9 /* BoardCodecTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardCodecTests.swift; sourceTree = "<group>"; };
@@ -375,6 +378,7 @@
 		6675C1F44B4037B9EE207B20 /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
 		67244091AE5914D81634B15B /* TripView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripView.swift; sourceTree = "<group>"; };
 		69DF2AD74C904D34D8A23995 /* NearbyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearbyService.swift; sourceTree = "<group>"; };
+		6A65495A52E0B006233D513B /* DebugFlags.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugFlags.swift; sourceTree = "<group>"; };
 		6CE017A72A1FB6FBBC0A7C46 /* SavedPlacesImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedPlacesImporter.swift; sourceTree = "<group>"; };
 		6FF43B0D7C49597680F405C1 /* BuscarNomeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuscarNomeModel.swift; sourceTree = "<group>"; };
 		738D9F8A60A1F3592E89ABFB /* InstrumentSerif-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "InstrumentSerif-Regular.ttf"; sourceTree = "<group>"; };
@@ -770,6 +774,7 @@
 				E274CE97AE647FC0BF84F38E /* AssistantTests.swift */,
 				3847B720AFE775247C5B85A9 /* BoardCodecTests.swift */,
 				4057F13FC1B1224A5960AEE0 /* BoardEditsTests.swift */,
+				34B77A2A3A62BB77CAE9126D /* BuscarNomeTests.swift */,
 				0FF11D40BC1FD6464D2737BB /* DayFlowTests.swift */,
 				3CA98508D4D7D365FAFD549B /* DaySolverTests.swift */,
 				D87ABAC6821287A24AB7EF71 /* ExperienceTests.swift */,
@@ -911,6 +916,7 @@
 		9597A277F76334EA20B8D3E3 /* App */ = {
 			isa = PBXGroup;
 			children = (
+				6A65495A52E0B006233D513B /* DebugFlags.swift */,
 				FED236518F13E68EAEBCC987 /* MustApp.swift */,
 				10E1AAF40DE6541D6FB3D78D /* RootView.swift */,
 				5621525C6CB7D37030B2A19B /* Router.swift */,
@@ -1447,6 +1453,7 @@
 				A75DBF72261F35941206EFF2 /* AssistantTests.swift in Sources */,
 				D6C8A98A1AE102D60705D9F8 /* BoardCodecTests.swift in Sources */,
 				78181CEF9BEEFB6917B6775B /* BoardEditsTests.swift in Sources */,
+				B4961DBFF091160A910EB743 /* BuscarNomeTests.swift in Sources */,
 				34D6081A5CB2767A55D164EE /* DayFlowTests.swift in Sources */,
 				AE75462BE18656337F0D8996 /* DaySolverTests.swift in Sources */,
 				C873A054C109C6743931A96E /* ExperienceTests.swift in Sources */,
@@ -1514,6 +1521,7 @@
 				7991783AFD37AA9A273508C9 /* Components.swift in Sources */,
 				08762FC7D78835A8A4A998F7 /* DayPlanner.swift in Sources */,
 				C826618BD1B4AD4D059647D9 /* DaySolver.swift in Sources */,
+				A999915102AAED04C3E982A4 /* DebugFlags.swift in Sources */,
 				0182C5E8F51876880442D3B8 /* DevOverrides.swift in Sources */,
 				77730129651176A26E27C869 /* DiscoverBuilder.swift in Sources */,
 				11A7C5BCF25E152D9C531951 /* DiscoverView.swift in Sources */,

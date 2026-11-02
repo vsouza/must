@@ -30,6 +30,7 @@ struct RootView: View {
             case .expense(let placeId): ExpenseView(placeId: placeId)
             case .assistant: AssistantView()
             case .ticketImport(let inboxId): TicketImportFlow(inboxId: inboxId)
+            case .buscarNome(let query, let listId): BuscarNomeView(initialQuery: query, preferredListId: listId)
             }
         }
         .fullScreenCover(item: $router.cover) { cover in

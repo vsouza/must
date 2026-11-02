@@ -38,7 +38,8 @@ enum DevOverrides {
     }
 
     static var simulatedNow: Date? {
-        guard defaults.bool(forKey: Key.simDateOn) else { return nil }
+        // Host de testes: a data e o GPS simulados (menu escondido) não valem (ver `DebugFlags`).
+        guard !DebugFlags.isTestHost, defaults.bool(forKey: Key.simDateOn) else { return nil }
         let base = defaults.double(forKey: Key.simDate)
         let setAt = defaults.double(forKey: Key.simSetAt)
         guard base > 0 else { return nil }
@@ -70,7 +71,7 @@ enum DevOverrides {
     }
 
     static var simulatedCoordinate: CLLocationCoordinate2D? {
-        guard defaults.bool(forKey: Key.simGPSOn) else { return nil }
+        guard !DebugFlags.isTestHost, defaults.bool(forKey: Key.simGPSOn) else { return nil }
         let c = CLLocationCoordinate2D(latitude: defaults.double(forKey: Key.simLat),
                                        longitude: defaults.double(forKey: Key.simLng))
         return CLLocationCoordinate2DIsValid(c) ? c : nil

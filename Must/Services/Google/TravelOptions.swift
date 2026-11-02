@@ -7,7 +7,7 @@ enum TravelOptions {
     static func build(from: CLLocationCoordinate2D, to: CLLocationCoordinate2D, departAt: Date, region: Region,
                       routes: any RoutesProviding, apiKey: String? = Secrets.googlePlacesKey, http: HTTP = HTTP()) async -> [TravelOption] {
         #if DEBUG
-        if UserDefaults.standard.string(forKey: "debugRoutes") == "fake" { return samples(region: region, from: from, to: to) }
+        if DebugFlags.string("debugRoutes") == "fake" { return samples(region: region, from: from, to: to) }
         #endif
         let meters = DaySolver.streetKm(from, to) * 1000
         var out: [TravelOption] = []

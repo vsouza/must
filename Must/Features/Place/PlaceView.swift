@@ -78,7 +78,7 @@ struct PlaceView: View {
                 #if DEBUG
                 .task {
                     // -debugScreen dicas:<id> rola direto pras Dicas (prints).
-                    let screen = UserDefaults.standard.string(forKey: "debugScreen") ?? ""
+                    let screen = DebugFlags.string("debugScreen") ?? ""
                     if screen.hasPrefix("3d") { show3D = true; return }
                     if screen.hasPrefix("painel") {
                         try? await Task.sleep(for: .milliseconds(600))
@@ -87,7 +87,7 @@ struct PlaceView: View {
                     }
                     guard screen.hasPrefix("dicas") else { return }
                     try? await Task.sleep(for: .milliseconds(600))
-                    let toEnd = UserDefaults.standard.string(forKey: "debugScreen")?.hasSuffix(":fim") == true
+                    let toEnd = DebugFlags.string("debugScreen")?.hasSuffix(":fim") == true
                     withAnimation { proxy.scrollTo(toEnd ? "tips-end" : "tips", anchor: toEnd ? .bottom : .top) }
                 }
                 #endif
