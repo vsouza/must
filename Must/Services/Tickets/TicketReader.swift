@@ -74,22 +74,25 @@ enum TicketReader {
         }
     }
 
-    /// Item da caixa do Share Extension.
-    static func read(_ item: ShareInbox.Item) async throws -> TicketReading {
+    /// Item da caixa do Share Extension, em bytes (o mesmo arquivo serve pra ler e pra guardar).
+    static func source(for item: ShareInbox.Item) throws -> TicketSource {
         switch item.kind {
         case .pdf, .image, .pkpass:
             guard let url = ShareInbox.fileURL(for: item), let data = try? Data(contentsOf: url) else {
                 throw TicketReaderError.unreadablePDF
             }
-            let source: TicketSource = switch item.kind {
-            case .pdf: .pdf(data)
-            case .image: .image(data)
-            default: .pkpass(data)
+            switch item.kind {
+            case .pdf: return .pdf(data)
+            case .image: return .image(data)
+            default: return .pkpass(data)
             }
-            return try await read(source)
         case .url, .text:
-            return readText(item.text ?? "")
+            return .text(item.text ?? "")
         }
+    }
+
+    static func read(_ item: ShareInbox.Item) async throws -> TicketReading {
+        try await read(try source(for: item))
     }
 
     // MARK: PDF

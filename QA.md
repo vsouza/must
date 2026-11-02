@@ -155,3 +155,10 @@ xcodebuild -project Must.xcodeproj -scheme Must -destination 'platform=iOS Simul
 - [ ] iPhone — arrastar entre listas (drop no cabeçalho) e arrastar pra reordenar: só dá pra confirmar tocando.
 - [ ] sim — o store do BH no simulador tem os 103 lugares do Japão (dado antigo do aparelho de teste); os prints de BH
   mostram o Japão até apagar/reimportar o board.
+
+## Fatia 3 (prompt 15 · A): importar ingresso
+- Share Extension `MustShare` (dev.viniso.must.share) embutida no app e no esquema; grava em `Inbox/<uuid>` no App Group e abre `must://import?id=`. Verificado: build e embed. Não verificado: compartilhar de verdade pelo Mail/Arquivos (precisa de aparelho; no simulador não dá pra disparar a folha de compartilhar).
+- Leitura no aparelho: PDF com texto e QR, foto, `.pkpass` stored e deflate, link (só com "Ler a página"). 17 testes novos (`TicketReaderTests`, `TicketMatcherTests`), suíte inteira verde.
+- No simulador, Vision de código de barras não funciona ("Could not create inference context"); o QR cai no `CIDetector`. Verificar o Vision no aparelho.
+- Telas: `ingresso-entrada` e `ingresso-revisar` (PDF de exemplo na caixa) no `qa-screens.sh`, região JP. Conferir o print contra `design/screens/TicketRevisar.png`.
+- Pendente: Escanear com câmera real (DataScanner), Voo e Trem (fatias 5 e 6, TODO explícito na tela), "Avisar saia às + Live Activity" (sem campo no modelo ainda).

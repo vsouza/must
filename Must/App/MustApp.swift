@@ -55,6 +55,10 @@ struct AppRoot: View {
                 if phase == .active {
                     services.location.start()
                     Task { await syncThenRefresh() }
+                    // Ingresso compartilhado que o Share Extension não conseguiu abrir: pega aqui.
+                    if router.sheet == nil, let waiting = ShareInbox.pending().first {
+                        router.sheet = .ticketImport(inboxId: waiting.id)
+                    }
                 } else if phase == .background {
                     services.location.stop()
                 }
@@ -106,7 +110,8 @@ struct AppRoot: View {
 /// `-debugScreen <tela>` abre uma tela direto (simulador/prints):
 /// ajustes, regiao, mapas-offline, musts, lista:<id>, fim, lugar:<id>, editar:<id>, nova-lista, adicionar[:url], hoje, mapa,
 /// board, board:editar (2 selecionados), editar-lista:<id>.
-/// `ingresso` abre um ingresso de exemplo (TicketDemo). `-gallery` abre a Gallery.
+/// `ingresso` abre um ingresso de exemplo (TicketDemo). `ingresso-entrada` e `ingresso-revisar` abrem Trazer ingresso
+/// (o segundo com um PDF de exemplo na caixa). `-gallery` abre a Gallery.
 @MainActor
 enum DebugLaunch {
     static func apply(to router: AppRouter, context: ModelContext, region: Region, services: Services) {
@@ -150,6 +155,9 @@ enum DebugLaunch {
         case "assistente": router.sheet = .assistant
         case "viagem": router.push(.trip, on: .inicio)
         case "reservas": router.push(.reservations, on: .inicio)
+        case "ingresso-entrada": router.sheet = .ticketImport(inboxId: nil)
+        case "ingresso-revisar": // PDF de exemplo na caixa (como o Share Extension faria) e a conferência
+            router.sheet = .ticketImport(inboxId: TicketSamples.stashSamplePDF())
         case "ingresso": // ingresso: cria a experiência de exemplo (Tsukiji) e abre o Ingresso
             TicketDemo.ensure(context: context, region: region)
             router.push(.ticket(placeId: TicketDemo.placeId, ticketId: TicketDemo.ticketId), on: .inicio)

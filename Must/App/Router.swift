@@ -32,6 +32,8 @@ final class AppRouter {
         case newPlace(listId: String?)
         case expense(placeId: String?)
         case assistant
+        /// Trazer ingresso (prompt 15 · A). `inboxId`: item da caixa do Share Extension, se veio por `must://import`.
+        case ticketImport(inboxId: String?)
 
         var id: String {
             switch self {
@@ -40,6 +42,7 @@ final class AppRouter {
             case .newPlace(let list): "new-\(list ?? "")"
             case .expense(let id): "expense-\(id ?? "")"
             case .assistant: "assistant"
+            case .ticketImport(let id): "import-\(id ?? "")"
             }
         }
     }
@@ -102,6 +105,9 @@ final class AppRouter {
             sheet = nil
             let id = url.pathComponents.dropFirst().first
             if let id { push(.place(id: id), on: .musts) }
+        case "import":
+            // Caixa do Share Extension: o id é o nome da pasta (UUID); a tela confere se ainda existe.
+            sheet = .ticketImport(inboxId: items.first { $0.name == "id" }?.value)
         default:
             Log.app.info("link desconhecido: \(url.absoluteString, privacy: .public)")
         }

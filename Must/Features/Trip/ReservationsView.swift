@@ -85,6 +85,9 @@ struct ReservationsView: View {
                 }
                 .padding(.top, 22)
 
+                GhostButton("Trazer ingresso", icon: .colarLink) { router.sheet = .ticketImport(inboxId: nil) }
+                    .padding(.top, 18)
+
                 if let next { nextCard(next).padding(.top, 22) }
                 list(all).padding(.top, next == nil ? 22 : -14)
                 if all.isEmpty {
