@@ -88,6 +88,10 @@ ${=W} dev.simLat -float 35.6442; ${=W} dev.simLng -float 139.6985
 shot jp-ingresso -debugScreen ingresso
 shot jp-experiencia -debugScreen painel:demo-sushi-tsukiji
 shot jp-reservas-ingresso -debugScreen reservas
+
+echo "→ Japão · Carteira (prompt 15 · B) · Naka-Meguro 15 nov 09:00"
+${=W} region jp
+shot jp-carteira -debugScreen carteira
 shot bh-esporte-painel -debugScreen painel:p28
 
 echo "→ Board completo (fatia 1 · prompt 14 A) · BH"

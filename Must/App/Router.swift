@@ -24,6 +24,8 @@ enum Route: Hashable {
     case experiences
     /// Por perto, agora (prompt 14 · B). Só da Home e daqui: nunca push.
     case discover
+    /// Carteira da viagem: cartões, passes, eSIM, QR de entrada e documentos (prompt 15 · B).
+    case carteira
 }
 
 /// Navegação do app: aba atual, pilha de cada aba e o que está apresentado por cima.
@@ -137,6 +139,7 @@ extension View {
             case .ticket(let placeId, let ticketId): TicketView(placeId: placeId, ticketId: ticketId)
             case .experiences: ExperiencesView()
             case .discover: DiscoverView()
+            case .carteira: WalletView()
             }
         }
     }

@@ -31,15 +31,19 @@ struct TicketRevisarView: View {
 
                 fieldsCard.padding(.top, 20)
 
-                Micro("vincular a").padding(.top, 26)
-                matchCard.padding(.top, 10)
-                HStack(spacing: 10) {
-                    GhostButton("Outro lugar do board") { choosing = true }
-                    GhostButton("Criar novo") { model.target = .new }
-                }
-                .padding(.top, 12)
+                if model.isWalletKind {
+                    walletCard.padding(.top, 26)
+                } else {
+                    Micro("vincular a").padding(.top, 26)
+                    matchCard.padding(.top, 10)
+                    HStack(spacing: 10) {
+                        GhostButton("Outro lugar do board") { choosing = true }
+                        GhostButton("Criar novo") { model.target = .new }
+                    }
+                    .padding(.top, 12)
 
-                budgetCard.padding(.top, 18)
+                    budgetCard.padding(.top, 18)
+                }
 
                 if let note = model.notYetMessage {
                     Text(note).font(.must.archivo(14, .semibold)).foregroundStyle(Color(hex: 0x8A5A00))
@@ -49,7 +53,7 @@ struct TicketRevisarView: View {
                 }
                 if let saveError { Text(saveError).font(.must.meta).foregroundStyle(Color(hex: 0xC2261D)).padding(.top, 12) }
 
-                PrimaryButton("Salvar ingresso", icon: .ok, iconTrailing: true) { save() }
+                PrimaryButton(model.isWalletKind ? "Salvar na Carteira" : "Salvar ingresso", icon: .ok, iconTrailing: true) { save() }
                     .disabled(!model.canSave)
                     .padding(.top, 18)
                 Color.clear.frame(height: 40)
@@ -95,12 +99,14 @@ struct TicketRevisarView: View {
                     .environment(\.timeZone, region.timeZone)
                     .environment(\.locale, region.locale)
             }
-            RowDivider()
-            row("Pessoas", .people) {
-                Stepper(value: integer(\.people, .people), in: 1...12) {
-                    Text("\(d?.people ?? 1)").font(.must.mono(15))
+            if !model.isWalletKind {
+                RowDivider()
+                row("Pessoas", .people) {
+                    Stepper(value: integer(\.people, .people), in: 1...12) {
+                        Text("\(d?.people ?? 1)").font(.must.mono(15))
+                    }
+                    .fixedSize()
                 }
-                .fixedSize()
             }
             RowDivider()
             row("Pago (\(currencyMark))", .price) {
@@ -112,13 +118,15 @@ struct TicketRevisarView: View {
                 TextField("código", text: text(\.confirmation, .confirmation)).font(.must.mono(15, .semibold)).lineLimit(1)
                     .textInputAutocapitalization(.characters).multilineTextAlignment(.trailing)
             }
-            RowDivider()
-            row("Encontro", .meeting) {
-                TextField("ponto de encontro", text: text(\.meetingPoint, .meeting), axis: .vertical).lineLimit(1...3).multilineTextAlignment(.trailing)
-            }
-            RowDivider()
-            row("Cancelamento", .cancel, stacked: true) {
-                cancelControl
+            if !model.isWalletKind {
+                RowDivider()
+                row("Encontro", .meeting) {
+                    TextField("ponto de encontro", text: text(\.meetingPoint, .meeting), axis: .vertical).lineLimit(1...3).multilineTextAlignment(.trailing)
+                }
+                RowDivider()
+                row("Cancelamento", .cancel, stacked: true) {
+                    cancelControl
+                }
             }
             RowDivider()
             HStack(spacing: 12) {
@@ -283,6 +291,26 @@ struct TicketRevisarView: View {
         .toggleStyle(.must)
         .padding(16)
         .background(Color.white, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(Color.must.line))
+    }
+
+    /// Trem e QR de entrada: vão pra Carteira, não pra um lugar do board.
+    private var walletCard: some View {
+        let kind = WalletFromTicket.kind(for: model.draft?.kind ?? .other) ?? .other
+        return HStack(spacing: 14) {
+            MustIconView(kind == .entryQR ? .colarLink : .shinkansenTrem, size: 16)
+                .foregroundStyle(.white)
+                .frame(width: 34, height: 34)
+                .background(Color.must.ink, in: Circle())
+            VStack(alignment: .leading, spacing: 4) {
+                Text("vai pra Carteira").font(.must.archivo(16, .semibold)).foregroundStyle(Color.must.ink)
+                Text("\(kind.label) · não vira lugar do board").font(.must.archivo(13)).foregroundStyle(Color.must.secondary)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.must.surface2, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(Color.must.line))
     }
 

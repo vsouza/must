@@ -1,8 +1,9 @@
 import Foundation
 
-/// Tipo do ingresso (prompt 15 · A). Experiência e evento viram lugar com sessão; voo e trem vão pra Voos e Carteira.
+/// Tipo do ingresso (prompt 15 · A). Experiência e evento viram lugar com sessão; voo vai pra Voos (fatia 6);
+/// trem e QR de entrada (Visit Japan Web) vão pra Carteira (fatia 5).
 enum TicketKind: String, Codable, Sendable, CaseIterable {
-    case experience, event, flight, rail, other
+    case experience, event, flight, rail, entry, other
 
     var label: String {
         switch self {
@@ -10,6 +11,7 @@ enum TicketKind: String, Codable, Sendable, CaseIterable {
         case .event: "evento"
         case .flight: "voo"
         case .rail: "trem"
+        case .entry: "entrada"
         case .other: "outro"
         }
     }
@@ -129,7 +131,10 @@ enum TicketExtractor {
             out.cancelUntil = cancel
         }
 
-        out.kind = kind(text: text, supplier: out.supplier?.value, legs: out.legs)
+        out.kind = kind(text: text, supplier: out.supplier?.value, legs: out.legs, codes: reading.codes)
+        if out.kind == .entry {
+            out.title = Extracted(value: entryName(text: text), confidence: 0.9, origin: "lido do texto")
+        }
         return out
     }
 
@@ -219,8 +224,9 @@ enum TicketExtractor {
     }
 
     /// Tipo pela leitura: pernas de voo mandam; depois trem; depois experiência (fornecedor ou palavras) ou evento.
-    static func kind(text: String, supplier: String?, legs: [FlightLeg]) -> TicketKind {
+    static func kind(text: String, supplier: String?, legs: [FlightLeg], codes: [String] = []) -> TicketKind {
         if !legs.isEmpty { return .flight }
+        if isEntryQR(text: text, codes: codes) { return .entry }
         if TicketText.matches(#"(?i)\b(shinkansen|nozomi|hikari|japan rail|jr pass|suica|trem|train|rail ?pass)\b"#, in: text).isEmpty == false {
             return .rail
         }
@@ -234,6 +240,24 @@ enum TicketExtractor {
             return .event
         }
         return .other
+    }
+
+    /// QR de entrada no Japão (Visit Japan Web): o texto ou o QR apontam pro site/app do governo.
+    static func isEntryQR(text: String, codes: [String]) -> Bool {
+        let pattern = #"(?i)visit\s?japan|digital\.go\.jp|\bvjw\b"#
+        if !TicketText.matches(pattern, in: text).isEmpty { return true }
+        return codes.contains { !TicketText.matches(pattern, in: $0).isEmpty }
+    }
+
+    /// "Visit Japan Web · imigração" / "· alfândega": o texto diz qual dos dois QRs é. Sem pista (ou com as duas), só o nome.
+    static func entryName(text: String) -> String {
+        let immigration = !TicketText.matches(#"(?i)imigra[çc][aã]o|immigration"#, in: text).isEmpty
+        let customs = !TicketText.matches(#"(?i)alf[aâ]nde(ga)?|customs"#, in: text).isEmpty
+        switch (immigration, customs) {
+        case (true, false): return "Visit Japan Web · imigração"
+        case (false, true): return "Visit Japan Web · alfândega"
+        default: return "Visit Japan Web"
+        }
     }
 
     // MARK: Auxiliares

@@ -14,7 +14,7 @@ struct GeneratedTicket {
     var confirmation: String
     @Guide(description: "Número de pessoas, ou 0")
     var people: Int
-    @Guide(description: "Tipo do ingresso", .anyOf(["experience", "event", "flight", "rail", "other"]))
+    @Guide(description: "Tipo do ingresso", .anyOf(["experience", "event", "flight", "rail", "entry", "other"]))
     var kind: String
 }
 

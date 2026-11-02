@@ -112,7 +112,8 @@ struct AppRoot: View {
 /// board, board:editar (2 selecionados), editar-lista:<id>.
 /// `ingresso` abre um ingresso de exemplo (TicketDemo). `ingresso-entrada` e `ingresso-revisar` abrem Trazer ingresso
 /// (o segundo com um PDF de exemplo na caixa). `experiencias` abre Experiências (com exemplos); `descobrir` abre Por perto
-/// (use `-debugNearby fake` pra não gastar Google). `-gallery` abre a Gallery.
+/// (use `-debugNearby fake` pra não gastar Google). `carteira` põe itens de exemplo na Carteira e abre a tela.
+/// `-gallery` abre a Gallery.
 @MainActor
 enum DebugLaunch {
     static func apply(to router: AppRouter, context: ModelContext, region: Region, services: Services) {
@@ -160,6 +161,9 @@ enum DebugLaunch {
             ExperienceDemo.ensure(context: context, region: region)
             router.push(.experiences, on: .musts)
         case "descobrir": router.push(.discover, on: .inicio)
+        case "carteira": // itens de exemplo (Suica, JR Pass, eSIM, Visit Japan Web com QR) e a Carteira
+            WalletDemo.ensure(context: context, region: region)
+            router.push(.carteira, on: .inicio)
         case "ingresso-entrada": router.sheet = .ticketImport(inboxId: nil)
         case "ingresso-revisar": // PDF de exemplo na caixa (como o Share Extension faria) e a conferência
             router.sheet = .ticketImport(inboxId: TicketSamples.stashSamplePDF())

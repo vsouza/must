@@ -15,6 +15,7 @@ struct TripView: View {
     @Query private var trips: [TripInfo]
     @Query private var settingsList: [Settings]
     @Query private var events: [TripEvent]
+    @Query private var wallet: [WalletItem]
 
     private var region: Region { store.region }
     private var now: Date { AppClock.now }
@@ -296,6 +297,11 @@ struct TripView: View {
     private var progressTags: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
+                // Central da viagem: a Carteira (cartões, passes, QR de entrada) fica na mesma fileira.
+                Button { router.push(.carteira, on: router.tab) } label: {
+                    Tag(wallet.isEmpty ? "Carteira" : "Carteira · \(wallet.count)")
+                }
+                .buttonStyle(MustPressStyle())
                 ForEach(TripStats.progress(lists: lists), id: \.list.id) { item in
                     Button { router.push(.list(id: item.list.id), on: router.tab) } label: {
                         Tag("\(item.list.name.capitalized) \(item.done)/\(item.total)", dot: item.list.color.strong)

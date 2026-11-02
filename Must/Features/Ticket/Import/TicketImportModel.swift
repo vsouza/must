@@ -303,22 +303,26 @@ final class TicketImportModel {
         draft!.meta[field] = FieldMeta(confidence: 1, origin: "à mão")
     }
 
-    /// Pode salvar? (título, e tipo que a fatia já grava)
+    /// Pode salvar? Lugar precisa de título; trem e QR de entrada vão pra Carteira (título opcional).
     var canSave: Bool {
-        guard let draft else { return false }
-        return !draft.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !isNotYetSupported
+        guard let draft, !isNotYetSupported else { return false }
+        if isWalletKind { return true }
+        return !draft.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
-    /// Voo e trem ficam pras fatias 5 e 6 (Carteira e Voos): nada é salvo daqui ainda.
+    /// Voo fica pra fatia 6 (Voos): nada é salvo daqui ainda.
     var isNotYetSupported: Bool {
-        guard let kind = draft?.kind else { return false }
-        return kind == .flight || kind == .rail
+        draft?.kind == .flight
+    }
+
+    /// Trem e QR de entrada não viram lugar do board: vão pra Carteira (`WalletItem`).
+    var isWalletKind: Bool {
+        WalletFromTicket.kind(for: draft?.kind ?? .other) != nil
     }
 
     var notYetMessage: String? {
         switch draft?.kind {
         case .flight: "Voo: a tela Voos entra na fatia 6 (TODO). Nada foi salvo."
-        case .rail: "Trem: entra na Carteira na fatia 5 (TODO). Nada foi salvo."
         default: nil
         }
     }
@@ -330,14 +334,14 @@ final class TicketImportModel {
     }
 
     /// Grava: arquivo em `TicketFiles`, sessão no lugar (ou lugar novo em "Must do") e o `Ticket`. Nada antes disso.
+    /// Trem e QR de entrada gravam um `WalletItem` (Carteira) no lugar disso.
     func save() throws {
         guard let context, let draft, canSave else { throw TicketImportError.incomplete }
-        var pdfName: String?
-        switch draft.attachment {
-        case .pending(let data, let ext): pdfName = try TicketFiles.save(data, ext: ext)
-        case .stored(let name): pdfName = name
-        case nil: pdfName = nil
+        if let kind = WalletFromTicket.kind(for: draft.kind) {
+            try saveToWallet(draft, kind: kind, context: context)
+            return
         }
+        let pdfName = try storeAttachment(draft.attachment, keepPasses: true)
         do {
             let place = try resolvePlace(context: context, draft: draft)
             let sameCurrency = draft.currency.map { $0 == region.currency } ?? true
@@ -356,6 +360,32 @@ final class TicketImportModel {
         } catch {
             // Se o banco não gravou, o arquivo novo não fica órfão.
             if case .pending = draft.attachment { TicketFiles.remove(pdfName) }
+            throw error
+        }
+        saved = true
+        if let inboxId { ShareInbox.remove(id: inboxId) }
+    }
+
+    /// O anexo entra em `TicketFiles` (PDF, foto). `.pkpass` não é guardado na Carteira: o QR já vai como texto.
+    private func storeAttachment(_ attachment: TicketDraft.Attachment?, keepPasses: Bool) throws -> String? {
+        switch attachment {
+        case .pending(_, let ext) where ext == "pkpass" && !keepPasses: return nil
+        case .pending(let data, let ext): return try TicketFiles.save(data, ext: ext)
+        case .stored(let name): return name
+        case nil: return nil
+        }
+    }
+
+    /// Trem ou QR de entrada: um `WalletItem` no container da região. Nada vai pro board.
+    private func saveToWallet(_ draft: TicketDraft, kind: WalletKind, context: ModelContext) throws {
+        let attachment = try storeAttachment(draft.attachment, keepPasses: false)
+        do {
+            let order = (try? context.fetchCount(FetchDescriptor<WalletItem>())) ?? 0
+            context.insert(WalletFromTicket.item(from: draft, kind: kind, attachmentName: attachment, order: order, now: AppClock.now))
+            try context.save()
+        } catch {
+            // Se o banco não gravou, o arquivo novo não fica órfão.
+            TicketFiles.remove(attachment)
             throw error
         }
         saved = true

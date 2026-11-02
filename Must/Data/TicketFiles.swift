@@ -1,8 +1,11 @@
 import Foundation
 
-/// PDFs e fotos de ingresso guardados no container do app, com `FileProtectionType.complete`
-/// (legíveis só com o aparelho destravado). O `Ticket` guarda só o nome do arquivo.
+/// PDFs e fotos de ingresso (e documentos da Carteira: passaporte, seguro, QR) guardados no container do app, com
+/// `FileProtectionType.complete` (legíveis só com o aparelho destravado). O `Ticket` e o `WalletItem` guardam só o nome.
 enum TicketFiles {
+    /// Opções de gravação de todo documento: proteção completa, escrita atômica.
+    static let writeOptions: Data.WritingOptions = [.atomic, .completeFileProtection]
+
     static func directory() throws -> URL {
         let base = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
         let dir = base.appendingPathComponent("Tickets", isDirectory: true)
@@ -18,7 +21,7 @@ enum TicketFiles {
     /// Grava os bytes e devolve o nome do arquivo.
     static func save(_ data: Data, ext: String) throws -> String {
         let name = "\(UUID().uuidString).\(ext.isEmpty ? "pdf" : ext.lowercased())"
-        try data.write(to: url(for: name), options: [.atomic, .completeFileProtection])
+        try data.write(to: url(for: name), options: writeOptions)
         return name
     }
 

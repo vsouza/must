@@ -332,7 +332,8 @@ private struct DashedLine: Shape {
 }
 
 /// QR em tela cheia, com brilho no máximo enquanto está aberto (a leitora na porta).
-private struct BigQRView: View {
+/// Também usado pela Carteira (QR de entrada e passe).
+struct BigQRView: View {
     let payload: String
     let confirmation: String?
 
