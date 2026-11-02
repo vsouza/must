@@ -166,3 +166,14 @@ struct MapTilesAreaTests {
         #expect(try OfflineMaps.sha256(of: url) == "4137b01e139589b7a1d3b3fc4da031d8ce5bb415808734e970c3a58ea0e98f0f") // shasum -a 256
     }
 }
+
+struct MapStyleWriteTests {
+    @Test func writesStyleForEverySource() throws {
+        let r2 = URL(string: "https://pub-x.r2.dev/bh.pmtiles")!
+        for tiles: MapTiles in [.remote(name: "bh", url: r2), .local(name: "bh", url: URL(filePath: "/tmp/bh.pmtiles")), .none] {
+            let url = try #require(MapStyleLoader.styleURL(region: .bh, tiles: tiles), "\(tiles)")
+            let style = try JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any]
+            #expect(style?["layers"] != nil)
+        }
+    }
+}

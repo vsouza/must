@@ -68,6 +68,8 @@ struct MapLibreView: UIViewRepresentable {
 
     func makeUIView(context: Context) -> MLNMapView {
         let map = MLNMapView(frame: .zero)
+        // Antes do delegate: ligar o delegate já dispara regionDidChange, que chama loadStyle.
+        context.coordinator.map = map
         map.delegate = context.coordinator
         map.logoView.isHidden = true
         map.attributionButton.isHidden = true
@@ -78,7 +80,6 @@ struct MapLibreView: UIViewRepresentable {
         map.minimumZoomLevel = 9
         map.maximumZoomLevel = 18.5
         map.backgroundColor = UIColor(red: 0xE9 / 255, green: 0xEB / 255, blue: 0xEF / 255, alpha: 1)
-        context.coordinator.map = map
         context.coordinator.loadStyle(near: scene.you ?? scene.region.defaultCenter)
         context.coordinator.observePacks()
         return map
@@ -97,7 +98,8 @@ struct MapLibreView: UIViewRepresentable {
     @MainActor
     final class Coordinator: NSObject, MLNMapViewDelegate {
         var parent: MapLibreView
-        weak var map: MLNMapView?
+        /// Forte: o delegate do MLNMapView é fraco, então não há ciclo.
+        var map: MLNMapView?
         var lastCommand: UUID?
         private(set) var styleRegion: Region?
         private var tiles: MapTiles = .none
@@ -108,27 +110,23 @@ struct MapLibreView: UIViewRepresentable {
         private var clusterBucket: Int?
         private var moving = false
 
-        private var packsObserver: NSObjectProtocol?
-
         init(_ parent: MapLibreView) { self.parent = parent }
 
-        isolated deinit {
-            if let packsObserver { NotificationCenter.default.removeObserver(packsObserver) }
+        /// Cidade baixada ou apagada: troca a fonte (R2 ↔ arquivo) sem esperar a câmera mexer.
+        /// Observer por seletor: o NotificationCenter solta sozinho quando o coordinator morre.
+        func observePacks() {
+            NotificationCenter.default.addObserver(self, selector: #selector(packsChanged), name: .mapPacksChanged, object: nil)
         }
 
-        /// Cidade baixada ou apagada: troca a fonte (R2 ↔ arquivo) sem esperar a câmera mexer.
-        func observePacks() {
-            packsObserver = NotificationCenter.default.addObserver(forName: .mapPacksChanged, object: nil, queue: .main) { [weak self] _ in
-                MainActor.assumeIsolated {
-                    guard let self, let map = self.map else { return }
-                    self.loadStyle(near: map.centerCoordinate)
-                }
-            }
+        @objc private func packsChanged() {
+            guard let map else { return }
+            loadStyle(near: map.centerCoordinate)
         }
 
         // MARK: Style
 
         func loadStyle(near center: CLLocationCoordinate2D) {
+            guard let map else { return }
             let region = parent.scene.region
             let picked = MapTiles.pick(region: region, near: center)
             guard styleRegion != region || picked != tiles else { return }
@@ -137,7 +135,7 @@ struct MapLibreView: UIViewRepresentable {
             styleReady = false
             signatures = [:]
             if case .none = picked { Log.data.error("mapa: sem mapa baixado, sem MAP_TILES_URL e sem PROTOMAPS_KEY — só fundo") }
-            map?.styleURL = MapStyleLoader.styleURL(region: region, tiles: picked)
+            map.styleURL = MapStyleLoader.styleURL(region: region, tiles: picked)
         }
 
         nonisolated func mapView(_ mapView: MLNMapView, didFinishLoading style: MLNStyle) {

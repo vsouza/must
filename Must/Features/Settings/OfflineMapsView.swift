@@ -278,7 +278,7 @@ struct OfflineMapNudge: View {
                 .frame(width: 38, height: 38)
                 .background(Circle().fill(Color.must.surface))
             VStack(alignment: .leading, spacing: 2) {
-                Text("Mapa de \(pack.title) sem internet").font(.must.archivo(15, .semibold)).foregroundStyle(Color.must.ink)
+                Text(pack.title).font(.must.archivo(15, .semibold)).foregroundStyle(Color.must.ink).lineLimit(1)
                 Text(status(phase, bytes: bytes)).font(.must.meta).foregroundStyle(Color.must.secondary)
             }
             Spacer(minLength: 0)
@@ -308,7 +308,7 @@ struct OfflineMapNudge: View {
         case .downloading(let f): "baixando · \(Int(f * 100))%"
         case .verifying: "conferindo o arquivo"
         case .failed(let message): message
-        case nil: "baixe a cidade inteira\(bytes)"
+        case nil: "mapa sem internet\(bytes)"
         }
     }
 }

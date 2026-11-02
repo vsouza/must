@@ -116,7 +116,10 @@ enum DebugLaunch {
         let arg = parts.count > 1 ? parts[1] : nil
         switch parts[0] {
         case "ajustes", "regiao": router.push(.settings, on: .inicio)
-        case "mapas-offline": router.push(.settings, on: .inicio); router.push(.offlineMaps, on: .inicio)
+        case "mapas-offline": // mapas-offline:bh já começa a baixar BH
+            router.push(.settings, on: .inicio)
+            router.push(.offlineMaps, on: .inicio)
+            if let pack = MapPack.catalog.first(where: { $0.id == arg }) { services.maps.download(pack) }
         case "musts": router.select(.musts)
         case "lista": router.push(.list(id: arg ?? "eat"), on: .musts)
         case "fim": router.push(.saveForEnd, on: .musts)

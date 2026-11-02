@@ -139,3 +139,10 @@ xcodebuild -project Must.xcodeproj -scheme Must -destination 'platform=iOS Simul
   execuções; o "iPhone 17" roda limpo. Se acontecer: `xcrun simctl erase <udid>`.
 - Marcar 済 direto na Lista (sem passar pelo Lugar) ficou de fora: o toque longo da Lista é Editar. Hoje o 済 é pelo
   Lugar → Feito ou pelo "+ gasto" do Hoje.
+
+## 18. Mapas offline por cidade (02/11)
+- [ ] Ajustes › Mapas offline lista Minas Gerais (BH, Inhotim) e Japão (7 cidades) com tamanho; "você está aqui" na cidade do GPS.
+- [ ] Baixar BH: progresso em %, depois ✓ e "baixado"; "No iPhone" soma o tamanho. Cancelar no meio não deixa arquivo.
+- [ ] Modo avião com BH baixado: o Mapa mostra ruas e prédios. Sem baixar e com internet, o mapa também aparece (lido do R2).
+- [ ] Apagar (lixeira → confirmar) libera o espaço; o mapa troca pro R2 sem reabrir.
+- [ ] No Mapa, cidade do GPS sem baixar mostra o aviso "Baixar"; o × some com ele só pra essa cidade.
