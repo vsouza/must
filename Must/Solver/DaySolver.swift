@@ -30,8 +30,10 @@ enum DaySolver {
     }
 
     /// A pé até `walkMaxKm` (80 m/min); acima, metrô (2,5 min/km + 6 min).
-    static func leg(_ a: CLLocationCoordinate2D, _ b: CLLocationCoordinate2D, walkMax walkMaxKm: Double) -> Leg {
+    /// Com `matrix` (Routes, prompt 17 · A) usa o tempo real do par; sem ele, a estimativa.
+    static func leg(_ a: CLLocationCoordinate2D, _ b: CLLocationCoordinate2D, walkMax walkMaxKm: Double, matrix: TravelMatrix? = nil) -> Leg {
         let km = streetKm(a, b)
+        if let real = matrix?.leg(a, b, km: km, walkMaxKm: walkMaxKm) { return real }
         if km <= walkMaxKm { return Leg(km: km, mode: .walk, minutes: Int((km * 1000 / Walk.metersPerMinute).rounded(.up))) }
         // Acima de 25 km é trem/ônibus regional (Fuji, Inhotim): ~65 km/h + 20 min de espera.
         if km > 25 { return Leg(km: km, mode: .metro, minutes: Int((km * 0.9 + 20).rounded(.up))) }
@@ -129,9 +131,12 @@ enum DaySolver {
         var sun: SunDay
         /// Minuto (no dia) em que o último passo pode começar: partida − 4 h de voo. `nil` = sem voo.
         var flightDeadlineMinute: Int?
+        /// Tempos reais do dia (Routes), se foram buscados antes.
+        var travel: TravelMatrix?
 
         init(_ request: DayRequest, catalog: [SolverPlace]) {
             self.request = request
+            travel = request.travel
             sun = SunService.day(request.date.addingTimeInterval(12 * 3600), request.cityCenter ?? request.origin, timeZone: request.timeZone)
             flightDeadlineMinute = request.flightDeadline.map { Int($0.timeIntervalSince(request.date) / 60) }
             let intent = request.intent
@@ -352,7 +357,7 @@ enum DaySolver {
                         continue
                     }
                     let here = CLLocationCoordinate2D(latitude: p.lat, longitude: p.lng)
-                    let legIn = leg(cursorLocation, here, walkMax: walkMax)
+                    let legIn = leg(cursorLocation, here, walkMax: walkMax, matrix: ctx.travel)
                     var start = max(w.lowerBound, cursorMinute + legIn.minutes, startMinute)
                     var length = duration(p) + (p.queueMinutes ?? 0)
                     var light: LightKind?
@@ -419,7 +424,7 @@ enum DaySolver {
                     }
                     let end = start + length
                     if let a = nextAnchor {
-                        let toAnchor = leg(here, CLLocationCoordinate2D(latitude: a.place.lat, longitude: a.place.lng), walkMax: walkMax)
+                        let toAnchor = leg(here, CLLocationCoordinate2D(latitude: a.place.lat, longitude: a.place.lng), walkMax: walkMax, matrix: ctx.travel)
                         if end + toAnchor.minutes + 10 > ctx.minute(a.at) && start < ctx.minute(a.end) {
                             rejection[p.id] = rejection[p.id] ?? "não dá tempo antes da reserva"
                             continue
@@ -492,7 +497,7 @@ enum DaySolver {
         var previous = request.origin
         for i in stops.indices {
             let here = CLLocationCoordinate2D(latitude: stops[i].place.lat, longitude: stops[i].place.lng)
-            stops[i].legFromPrevious = leg(previous, here, walkMax: walkMax)
+            stops[i].legFromPrevious = leg(previous, here, walkMax: walkMax, matrix: ctx.travel)
             previous = here
         }
         // Teto de caminhada: as pernas a pé mais longas viram metrô.

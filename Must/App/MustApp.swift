@@ -115,6 +115,8 @@ struct AppRoot: View {
 /// (use `-debugNearby fake` pra não gastar Google). `carteira` põe itens de exemplo na Carteira e abre a tela.
 /// `voos` abre Voos (aba da agenda); `viagem-voos` e `viagem-reservas` passam pelo calendário da Viagem.
 /// `-debugFlight fake` troca o AeroDataBox por status de mentira (prints, sem cota). `-gallery` abre a Gallery.
+/// `como-chegar:<id>` abre Como chegar; `-debugRoutes fake` troca o Routes por respostas de exemplo. `buscar-nome:<texto>` abre
+/// Buscar por nome (com `-debugAutocomplete fake` pras sugestões de "koffee mam").
 @MainActor
 enum DebugLaunch {
     static func apply(to router: AppRouter, context: ModelContext, region: Region, services: Services) {
@@ -174,6 +176,14 @@ enum DebugLaunch {
         case "ingresso": // ingresso: cria a experiência de exemplo (Tsukiji) e abre o Ingresso
             TicketDemo.ensure(context: context, region: region)
             router.push(.ticket(placeId: TicketDemo.placeId, ticketId: TicketDemo.ticketId), on: .inicio)
+        case "como-chegar": // como-chegar:j01 (Naka-Meguro → Udatsu, GPS e hora simulados); com -debugRoutes fake, sem rede
+            router.push(.comoChegar(placeId: arg ?? "j01"), on: .hoje)
+        case "como-chegar-encontro": // ingresso: o ponto de encontro (Ir ao encontro)
+            TicketDemo.ensure(context: context, region: region)
+            router.push(.comoChegar(placeId: TicketDemo.placeId, meeting: true), on: .inicio)
+        case "uso-google": router.push(.googleUsage, on: .inicio)
+        case "buscar-nome": // buscar-nome:koffee mam (com -debugAutocomplete fake); buscar-nome:koffee mam:escolher já escolhe a 1ª
+            router.push(.buscarNome(query: (arg ?? "").replacingOccurrences(of: ":escolher", with: ""), listId: nil), on: .musts)
         case "sincronizar":
             router.push(.settings, on: .inicio)
             Task { await services.sync.syncPlaces(context: context, region: region) }

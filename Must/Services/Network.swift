@@ -5,9 +5,12 @@ enum ServiceError: LocalizedError, Equatable {
     case missingKey(String)
     case http(Int, String)
     case decoding(String)
+    /// Orçamento do Google (`ApiBudget`) não deixou sair: a tela cai no cache/estimativa, sem erro.
+    case budget(String)
 
     var errorDescription: String? {
         switch self {
+        case .budget(let why): "Google fora por enquanto: \(why)."
         case .liveDataOff: "Dados ao vivo desligados (menu escondido)."
         case .missingKey(let key): "Falta \(key) no Secrets.plist."
         case .http(let code, let body): "HTTP \(code): \(body.prefix(700))"

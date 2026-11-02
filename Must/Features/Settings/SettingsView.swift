@@ -242,12 +242,15 @@ private struct SettingsSections: View {
 
     private var data: some View {
         FormSection("Dados") {
-            FormRow("Google Places", subtitle: placesSubtitle) {
-                HStack(spacing: 8) {
-                    Circle().fill(Secrets.googlePlacesKey == nil ? Color(hex: 0xC5C9D0) : Color.must.green).frame(width: 8, height: 8)
-                    MonoValue("\(PlacesUsage.thisMonth) usados")
+            Button { router.push(.googleUsage, on: .inicio) } label: {
+                FormRow("Google Maps", subtitle: placesSubtitle) {
+                    HStack(spacing: 8) {
+                        Circle().fill(Secrets.googlePlacesKey == nil ? Color(hex: 0xC5C9D0) : Color.must.green).frame(width: 8, height: 8)
+                        MonoValue("\(ApiBudget.placesUsedThisMonth()) usados", chevron: true)
+                    }
                 }
             }
+            .buttonStyle(.plain)
             Button {
                 Task { await services.sync.syncPlaces(context: context, region: region) }
             } label: {
@@ -331,8 +334,8 @@ private struct SettingsSections: View {
     }
 
     private var placesSubtitle: String {
-        if Secrets.googlePlacesKey == nil { return "sem chave no Secrets.plist · 1.000 grátis/mês" }
-        return services.sync.placesSummary ?? "horários e preço · 1.000 grátis/mês · até \(SyncCoordinator.placesBatch) por vez"
+        if Secrets.googlePlacesKey == nil { return "sem chave no Secrets.plist · uso por SKU ao tocar" }
+        return services.sync.placesSummary ?? "horários, preço e fotos · uso por SKU ao tocar · até \(SyncCoordinator.placesBatch) por vez"
     }
 
     private var weatherStatus: String {
@@ -358,19 +361,5 @@ private struct SettingsSections: View {
         let cleaned = text.replacingOccurrences(of: ".", with: "").replacingOccurrences(of: ",", with: ".")
             .trimmingCharacters(in: .whitespaces)
         return Double(cleaned)
-    }
-}
-
-/// Contador de chamadas pagas do Places no mês (o serviço real incrementa no prompt 07).
-enum PlacesUsage {
-    static var monthKey: String {
-        let c = Calendar(identifier: .gregorian).dateComponents([.year, .month], from: AppClock.now)
-        return String(format: "places.calls.%04d-%02d", c.year ?? 0, c.month ?? 0)
-    }
-
-    static var thisMonth: Int { UserDefaults.standard.integer(forKey: monthKey) }
-
-    static func record(_ calls: Int = 1) {
-        UserDefaults.standard.set(thisMonth + calls, forKey: monthKey)
     }
 }

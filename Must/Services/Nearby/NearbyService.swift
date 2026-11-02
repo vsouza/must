@@ -6,7 +6,7 @@ protocol NearbyProviding: Sendable {
 }
 
 /// Google Places Nearby (New) + Wikipedia geosearch + Foursquare search. Sem tips (são pagas).
-/// Google é cobrado por chamada: uma rodada por célula a cada 30 min (`NearbyLoader`), contada no `PlacesUsage`.
+/// Google é cobrado por chamada: uma rodada por célula a cada 30 min (`NearbyLoader`), contada no `ApiBudget`.
 struct NearbyService: NearbyProviding {
     var http = HTTP()
     var googleKey: String? = Secrets.googlePlacesKey
@@ -51,11 +51,11 @@ struct NearbyService: NearbyProviding {
             "languageCode": "pt-BR",
             "locationRestriction": ["circle": ["center": ["latitude": lat, "longitude": lng], "radius": Self.radius]],
         ]
-        let data = try await http.post(URL(string: "https://places.googleapis.com/v1/places:searchNearby")!, json: body,
-                                       headers: ["X-Goog-Api-Key": googleKey, "X-Goog-FieldMask": Self.nearbyMask,
-                                                 "X-Ios-Bundle-Identifier": Bundle.main.bundleIdentifier ?? "dev.viniso.must"],
-                                       service: "places.nearby")
-        await MainActor.run { PlacesUsage.record() }
+        // Nota e "aberto agora" fazem a chamada ser Pro (cota de 5 mil); o orçamento confere antes.
+        let data = try await GoogleAPI.run(.placesPro) {
+            try await http.post(URL(string: "https://places.googleapis.com/v1/places:searchNearby")!, json: body,
+                                headers: GoogleAPI.headers(key: googleKey, mask: Self.nearbyMask), service: "places.nearby")
+        }
         return try Self.parseGoogle(data)
     }
 

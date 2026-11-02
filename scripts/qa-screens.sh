@@ -128,9 +128,19 @@ ${=W} dev.simDate -float $(epoch 2026-11-15T18:42:00+09:00)
 ${=W} dev.simLat -float 35.6442; ${=W} dev.simLng -float 139.6985
 shot jp-descobrir -debugScreen descobrir
 
+echo "→ Google Maps (fatia 8A · prompt 17 · A) · Japão · Routes e Autocomplete de mentira (sem cota) · GPS Naka-Meguro 18:42"
+${=W} debugRoutes -string fake; ${=W} debugAutocomplete -string fake
+${=W} region jp
+${=W} dev.simDate -float $(epoch 2026-11-15T18:42:00+09:00)
+${=W} dev.simLat -float 35.6442; ${=W} dev.simLng -float 139.6985
+shot jp-como-chegar -debugScreen como-chegar:j01
+shot jp-buscar-nome -debugScreen "buscar-nome:koffee mam"
+shot jp-buscar-nome-card -debugScreen "buscar-nome:koffee mam:escolher"
+shot jp-uso-google -debugScreen uso-google
+
 echo "→ limpando simulações e chaves de debug"
 for k in dev.simDateOn dev.simDate dev.simSetAt dev.simGPSOn dev.simLat dev.simLng dev.simCloud skipOnboarding \
-         debugPlaces debugNearby debugFlight debugTips debugAsk; do
+         debugPlaces debugNearby debugFlight debugTips debugAsk debugRoutes debugAutocomplete; do
   xcrun simctl spawn "$UDID" defaults delete $PREFS $k 2>/dev/null || true
 done
 ${=W} region bh

@@ -18,6 +18,7 @@ struct AddLinkView: View {
     @Query private var settingsList: [Settings]
 
     @State private var model = AddLinkModel()
+    @State private var showNameSearch = false
     @FocusState private var fieldFocused: Bool
 
     private var region: Region { store.region }
@@ -54,6 +55,12 @@ struct AddLinkView: View {
                         .padding(.top, 26)
 
                         inputField.padding(.top, 18)
+                        // "ou um nome": busca no Google por nome (Autocomplete), sem link.
+                        Button { showNameSearch = true } label: {
+                            Text("ou um nome → buscar no Google").font(.must.archivo(14, .semibold)).foregroundStyle(Color.must.ink)
+                        }
+                        .buttonStyle(MustPressStyle())
+                        .padding(.top, 10)
                         badges.padding(.top, 14)
                         resultArea.padding(.top, 28)
                     }
@@ -73,6 +80,10 @@ struct AddLinkView: View {
             .scrollDismissesKeyboard(.interactively)
 
             mainButton
+        }
+        .sheet(isPresented: $showNameSearch) {
+            BuscarNomeView(initialQuery: model.input.trimmingCharacters(in: .whitespacesAndNewlines).contains(".") ? "" : model.input,
+                           preferredListId: preferredListId)
         }
         .task {
             if let initialURL, model.input.isEmpty {

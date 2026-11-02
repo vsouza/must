@@ -46,6 +46,8 @@ final class DayPlanner {
 
     /// Previsão do dia (do `SyncCoordinator`), usada no subtítulo e na regra de tempo do solver.
     var weather: DayWeather?
+    /// Tempos reais do Routes (Route Matrix) pras candidatas do dia. Buscados antes de montar; sem eles, a estimativa.
+    var travel: TravelMatrix?
 
     func request(trip: TripInfo?, settings: Settings?, location: CLLocation?, flights: [DayFlight] = []) -> DayRequest {
         let cal = region.calendar
@@ -63,7 +65,20 @@ final class DayPlanner {
                           daysLeftInCity: city.flatMap { trip?.daysLeft(in: $0, after: date, calendar: cal) },
                           weather: weather, walkMaxKm: settings?.walkMaxKm ?? 1.5,
                           oneMealPerWindow: settings?.oneMealPerWindow ?? true, cityCenter: center, seed: seed,
-                          flights: flights)
+                          flights: flights, travel: travel)
+    }
+
+    /// Busca a matriz (a pé e transporte) entre a origem e as 9 candidatas mais perto. Antes do solver: ele segue síncrono.
+    func prefetchTravel(catalog: [SolverPlace], trip: TripInfo?, settings: Settings?, location: CLLocation?, flights: [DayFlight] = []) async {
+        let req = request(trip: trip, settings: settings, location: location, flights: flights)
+        let candidates = catalog
+            .filter { !$0.done && req.isInCity($0.cityId) }
+            .map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lng) }
+            .sorted { DaySolver.streetKm(req.origin, $0) < DaySolver.streetKm(req.origin, $1) }
+        let points = TravelMatrixLoader.points(origin: req.origin, candidates: candidates)
+        let departAt = max(req.startAt, AppClock.now)
+        let day = BoardDates(timeZone: region.timeZone).dayString(date)
+        travel = await TravelMatrixLoader.load(points: points, departAt: departAt, day: day)
     }
 
     func solve(catalog: [SolverPlace], trip: TripInfo?, settings: Settings?, location: CLLocation?, flights: [DayFlight] = []) -> DayProposal {

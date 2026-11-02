@@ -12,7 +12,7 @@ struct PlaceCandidate: Sendable, Hashable, Identifiable {
     var primaryType: String? = nil
 }
 
-/// Detalhes que o Must guarda em cache (horário + preço).
+/// Detalhes que o Must guarda em cache (horário + preço) e o card de Buscar por nome (nome, endereço, nota).
 struct PlaceDetails: Sendable, Hashable {
     var id: String
     var hours: PlaceHours?
@@ -21,28 +21,44 @@ struct PlaceDetails: Sendable, Hashable {
     var priceFrom: Double?
     var priceCurrency: String?
     var rating: Double?
+    var ratingCount: Int? = nil
+    var name: String? = nil
+    var address: String? = nil
+    var lat: Double? = nil
+    var lng: Double? = nil
+    var primaryType: String? = nil
 }
 
 protocol PlacesProviding: Sendable {
     var isConfigured: Bool { get }
     func searchText(_ query: String, near: CLLocationCoordinate2D, radius: Double, languageCode: String) async throws -> [PlaceCandidate]
     func details(_ placeId: String, languageCode: String) async throws -> PlaceDetails
+    /// Fecha a sessão do Autocomplete (o Details com o mesmo token).
+    func details(_ placeId: String, languageCode: String, sessionToken: String?) async throws -> PlaceDetails
 }
 
-/// Google Places API (New). Cada chamada conta no contador do mês (Ajustes).
+extension PlacesProviding {
+    func details(_ placeId: String, languageCode: String, sessionToken: String?) async throws -> PlaceDetails {
+        try await details(placeId, languageCode: languageCode)
+    }
+}
+
+/// Google Places API (New). Cada chamada passa pelo `GoogleAPI` (orçamento por SKU, `ApiBudget`).
 struct PlacesService: PlacesProviding {
     var http = HTTP()
     var apiKey: String? = Secrets.googlePlacesKey
 
     var isConfigured: Bool { apiKey != nil }
 
-    /// Campos mínimos (SKU barato).
+    /// Conferir/juntar (Text Search). O nome entra porque o candidato é escolhido pelo nome: a máscara
+    /// `places.id` sozinha não dá pra conferir (regra do projeto: código existente ganha, ver commit).
     static let searchMask = "places.id,places.displayName,places.location,places.formattedAddress,places.primaryType"
-    static let detailsMask = "id,regularOpeningHours,currentOpeningHours,priceLevel,priceRange,rating"
+    /// Pro: horário, nota, preço + o que o card de Buscar por nome mostra (uma chamada só, mais barata que Essentials + Pro).
+    static let detailsMask = "id,displayName,formattedAddress,location,primaryType,regularOpeningHours,currentOpeningHours,priceLevel,priceRange,rating,userRatingCount"
 
     /// Chave restrita a apps iOS exige o bundle id no cabeçalho.
     private func headers(_ key: String, mask: String) -> [String: String] {
-        ["X-Goog-Api-Key": key, "X-Goog-FieldMask": mask, "X-Ios-Bundle-Identifier": Bundle.main.bundleIdentifier ?? "dev.viniso.must"]
+        GoogleAPI.headers(key: key, mask: mask)
     }
 
     func searchText(_ query: String, near: CLLocationCoordinate2D, radius: Double = 30_000, languageCode: String = "pt-BR") async throws -> [PlaceCandidate] {
@@ -53,18 +69,26 @@ struct PlacesService: PlacesProviding {
             "maxResultCount": 8,
             "locationBias": ["circle": ["center": ["latitude": near.latitude, "longitude": near.longitude], "radius": min(radius, 50_000)]],
         ]
-        let data = try await http.post(URL(string: "https://places.googleapis.com/v1/places:searchText")!, json: body,
-                                       headers: headers(apiKey, mask: Self.searchMask), service: "places.search")
-        await MainActor.run { PlacesUsage.record() }
+        let data = try await GoogleAPI.run(.placesEssentials) {
+            try await http.post(URL(string: "https://places.googleapis.com/v1/places:searchText")!, json: body,
+                                headers: headers(apiKey, mask: Self.searchMask), service: "places.search")
+        }
         return try Self.parseSearch(data)
     }
 
-    func details(_ placeId: String, languageCode: String = "pt-BR") async throws -> PlaceDetails {
+    /// Pro (horário, nota, preço, nome/endereço pro card). `sessionToken` fecha a sessão do Autocomplete.
+    func details(_ placeId: String, languageCode: String) async throws -> PlaceDetails {
+        try await details(placeId, languageCode: languageCode, sessionToken: nil)
+    }
+
+    func details(_ placeId: String, languageCode: String, sessionToken: String?) async throws -> PlaceDetails {
         guard let apiKey else { throw ServiceError.missingKey("GOOGLE_PLACES_KEY") }
         var comps = URLComponents(string: "https://places.googleapis.com/v1/places/\(placeId)")!
         comps.queryItems = [URLQueryItem(name: "languageCode", value: languageCode)]
-        let data = try await http.get(comps.url!, headers: headers(apiKey, mask: Self.detailsMask), service: "places.details")
-        await MainActor.run { PlacesUsage.record() }
+            + (sessionToken.map { [URLQueryItem(name: "sessionToken", value: $0)] } ?? [])
+        let data = try await GoogleAPI.run(.placesPro) {
+            try await http.get(comps.url!, headers: headers(apiKey, mask: Self.detailsMask), service: "places.details")
+        }
         return try Self.parseDetails(data)
     }
 
@@ -99,8 +123,12 @@ struct PlacesService: PlacesProviding {
                       "PRICE_LEVEL_EXPENSIVE": 3, "PRICE_LEVEL_VERY_EXPENSIVE": 4]
         let start = ((json["priceRange"] as? [String: Any])?["startPrice"] as? [String: Any])
         let units = (start?["units"] as? String).flatMap(Double.init) ?? (start?["units"] as? Double)
+        let name = (json["displayName"] as? [String: Any])?["text"] as? String
+        let loc = json["location"] as? [String: Any]
         return PlaceDetails(id: id, hours: hours, priceLevel: (json["priceLevel"] as? String).flatMap { levels[$0] },
-                            priceFrom: units, priceCurrency: start?["currencyCode"] as? String, rating: json["rating"] as? Double)
+                            priceFrom: units, priceCurrency: start?["currencyCode"] as? String, rating: json["rating"] as? Double,
+                            ratingCount: json["userRatingCount"] as? Int, name: name, address: json["formattedAddress"] as? String,
+                            lat: loc?["latitude"] as? Double, lng: loc?["longitude"] as? Double, primaryType: json["primaryType"] as? String)
     }
 
     private static func point(_ any: Any?) -> PlaceHours.Point? {

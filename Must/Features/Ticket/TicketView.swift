@@ -281,12 +281,8 @@ struct TicketView: View {
         let meeting = place.extra?.experience?.meetingCoordinate
         return HStack(spacing: 10) {
             PrimaryButton("Ir ao encontro", icon: .rota, style: .dark) {
-                if let meeting {
-                    MapsLinks.openApple(to: CLLocationCoordinate2D(latitude: meeting.lat, longitude: meeting.lng),
-                                        name: place.extra?.experience?.meetingPoint ?? place.name, mode: .transit)
-                } else {
-                    MapsLinks.openApple(to: place.coordinate, name: place.name, mode: .transit)
-                }
+                // Como chegar ao ponto de encontro (ou ao lugar, sem ponto marcado).
+                router.push(.comoChegar(placeId: place.id, meeting: meeting != nil), on: router.tab)
             }
             PrimaryButton("Ver o dia", style: .green) {
                 router.push(.day(date: region.calendar.startOfDay(for: ticket.at)), on: router.tab)

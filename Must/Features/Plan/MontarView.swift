@@ -52,6 +52,12 @@ struct MontarView: View {
                 let start = region.calendar.startOfDay(for: date)
                 planner = DayPlanner(date: date, region: region, settings: settingsList.first, existing: days.first { $0.date == start })
                 planner?.weather = services.sync.weather(on: start, region: region, trip: trips.first)
+                // Tempos reais (Routes) entram antes da primeira proposta; sem rede, a estimativa segue.
+                if let planner {
+                    Task { await planner.prefetchTravel(catalog: places.solverCatalog, trip: trips.first, settings: settingsList.first,
+                                                        location: services.location.current,
+                                                        flights: FlightRules.dayFlights(flights, on: planner.date, region: region)) }
+                }
                 #if DEBUG
                 if let screen = UserDefaults.standard.string(forKey: "debugScreen"), ["proposta", "trocar"].contains(screen), let planner {
                     planner.build(catalog: places.solverCatalog, trip: trips.first, settings: settingsList.first, location: services.location.current,
@@ -88,6 +94,9 @@ struct MontarView: View {
                 textFocused = false
                 Task {
                     if !planner.text.isEmpty, parsedText != planner.text { await parse(planner) }
+                    await planner.prefetchTravel(catalog: catalog, trip: trips.first, settings: settingsList.first,
+                                                 location: services.location.current,
+                                                 flights: FlightRules.dayFlights(flights, on: planner.date, region: region))
                     planner.build(catalog: catalog, trip: trips.first, settings: settingsList.first, location: services.location.current,
                               flights: FlightRules.dayFlights(flights, on: planner.date, region: region))
                     showProposal = true

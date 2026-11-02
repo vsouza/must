@@ -167,6 +167,10 @@ struct PlaceView: View {
         } catch {
             Log.network.error("hero \(place.id, privacy: .public): \(error.localizedDescription, privacy: .public)")
         }
+        // Sem nada no Commons: uma foto do Google Places (com crédito), só quando há placeId (prompt 17 · A).
+        if heroPhoto == nil, let placeId = place.placeId, services.placePhotos.isConfigured {
+            heroPhoto = try? await services.placePhotos.photos(placeId: placeId, limit: 1).first
+        }
     }
 
     // MARK: Hero
@@ -520,12 +524,12 @@ struct PlaceView: View {
                 }
                 .frame(width: 140)
             } else {
-                PrimaryButton("Ir agora", icon: .rota) { MapsLinks.openApple(to: place.coordinate, name: place.name, mode: .transit) }
+                PrimaryButton("Ir agora", icon: .rota) { router.push(.comoChegar(placeId: place.id)) }
                     .frame(width: 140)
             }
         case .art:
             darkButton(travelMinutes(place).map { "Ir agora · \($0) min" } ?? "Ir agora", icon: .rota) {
-                MapsLinks.openApple(to: place.coordinate, name: place.name, mode: .transit)
+                router.push(.comoChegar(placeId: place.id))
             }
             let at = addedAt ?? DayInsert.suggestedTime(now: now, region: region, place: place)
             let hour = region.calendar.component(.hour, from: at), minute = region.calendar.component(.minute, from: at)
@@ -586,7 +590,7 @@ struct PlaceView: View {
     }
 
     @ViewBuilder private func placeActions(_ place: Place) -> some View {
-            Button { MapsLinks.openApple(to: place.coordinate, name: place.name) } label: {
+            Button { router.push(.comoChegar(placeId: place.id)) } label: {
                 HStack(spacing: 9) {
                     MustIconView(.rota, size: 18)
                     Text("Ir agora")

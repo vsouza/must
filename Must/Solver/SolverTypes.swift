@@ -177,6 +177,8 @@ struct DayRequest: Sendable {
     var seed = 0
     /// Voos que saem neste dia (prompt 15 · C). Âncora dura: com voo, o dia é `rest` e para em partida − 4 h.
     var flights: [DayFlight] = []
+    /// Tempos reais entre os pontos do dia (Routes Matrix), buscados antes do solver. `nil` = estimativa.
+    var travel: TravelMatrix?
 
     /// Hora limite de paradas no dia de voo: a menor partida − 4 h. `nil` = sem voo.
     var flightDeadline: Date? {

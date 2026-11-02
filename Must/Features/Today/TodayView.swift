@@ -290,6 +290,13 @@ struct TodayView: View {
             .padding(.vertical, 6)
         }
         .buttonStyle(MustPressStyle())
+        .contextMenu {
+            if let place {
+                Button("Como chegar") { router.push(.comoChegar(placeId: place.id), on: .hoje) }
+                Button("Apple Maps · transporte") { MapsLinks.openApple(to: place.coordinate, name: place.name, mode: .transit) }
+                Button("Google Maps") { MapsLinks.openGoogle(to: place.coordinate, mode: .transit) }
+            }
+        }
     }
 
     private func meta(_ stop: Stop) -> String {

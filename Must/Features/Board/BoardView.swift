@@ -20,6 +20,7 @@ struct BoardView: View {
     @State private var model = BoardModel()
     @State private var editMode: EditMode = .inactive
     @State private var sheet: BoardSheet?
+    @State private var showNameSearch = false
     @State private var pendingDelete: [String] = []
     /// Resultado da última ação em lote (ou erro), na barra de baixo.
     @State private var message: String?
@@ -67,6 +68,7 @@ struct BoardView: View {
                 bottomBar.padding(.bottom, 92) // acima da tab bar
             }
         }
+        .sheet(isPresented: $showNameSearch) { BuscarNomeView() }
         .toolbar(.hidden, for: .navigationBar)
         .onAppear {
             guard startEditing else { return }
@@ -102,6 +104,8 @@ struct BoardView: View {
             Spacer(minLength: 8)
             Micro("board · \(places.count) lugares · \(lists.count) listas")
             Spacer(minLength: 8)
+            // "+": adicionar um lugar pelo nome (Buscar por nome, prompt 17 · A).
+            IconButton(.adicionar, style: .dark, label: "Adicionar por nome") { showNameSearch = true }
             Button { editMode = editing ? .inactive : .active } label: {
                 Text(editing ? "Pronto" : "Editar")
                     .font(.must.archivo(14, .semibold))

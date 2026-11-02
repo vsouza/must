@@ -9,10 +9,15 @@ struct CCPhoto: Sendable, Hashable, Codable, Identifiable {
     var owner: String
     var licenseName: String
     var page: String
+    /// Quem forneceu: nil = Wikimedia Commons; "Google" = Places Photos (prompt 17 · A).
+    var source: String? = nil
 
     var pageURL: URL? { URL(string: page) }
-    /// "foto · Wikimedia CC BY 2.0 · @autor"
-    var credit: String { "foto · Wikimedia \(licenseName) · @\(owner)" }
+    /// "foto · Wikimedia CC BY 2.0 · @autor" · "foto · Google · @autor"
+    var credit: String {
+        if let source { return "foto · \(source) · @\(owner)" }
+        return "foto · Wikimedia \(licenseName) · @\(owner)"
+    }
 
     /// `flickrId` é o nome antigo do campo persistido (guarda o id da foto, qualquer fonte).
     var listPhoto: ListPhoto {

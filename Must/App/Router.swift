@@ -28,6 +28,12 @@ enum Route: Hashable {
     case carteira
     /// Agenda da viagem (Viagem › calendário): abas Voos e Reservas (prompt 15 · C).
     case schedule(tab: ScheduleTab)
+    /// Ajustes › Dados › Uso do Google (contador por SKU e teto diário).
+    case googleUsage
+    /// Como chegar (prompt 17 · A): a rota de transporte até o lugar (ou ao ponto de encontro do ingresso).
+    case comoChegar(placeId: String, meeting: Bool = false)
+    /// Buscar por nome (Autocomplete + card com fotos do Google). `query` pré-preenche o campo.
+    case buscarNome(query: String, listId: String?)
 }
 
 /// Navegação do app: aba atual, pilha de cada aba e o que está apresentado por cima.
@@ -143,6 +149,9 @@ extension View {
             case .discover: DiscoverView()
             case .carteira: WalletView()
             case .schedule(let tab): ScheduleView(tab: tab)
+            case .googleUsage: GoogleUsageView()
+            case .comoChegar(let placeId, let meeting): ComoChegarView(placeId: placeId, meeting: meeting)
+            case .buscarNome(let query, let listId): BuscarNomeView(initialQuery: query, preferredListId: listId)
             }
         }
     }
