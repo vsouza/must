@@ -294,6 +294,8 @@ final class Settings {
     var flickrPhotos: Bool
     /// Ajustes → Dados → "Dicas de pessoas" (Google, Foursquare, Reddit no Lugar).
     var peopleTips: Bool = true
+    /// Ajustes → Dados → "Sugerir por perto" (Descobrir e a linha da Home). Desligado, não há chamada nenhuma.
+    var suggestNearby: Bool = true
     /// Quanto vale 1 unidade da moeda da região em BRL (¥1 = R$ 0,036). BH = 1.
     var fxRate: Double
     var fxDate: Date?

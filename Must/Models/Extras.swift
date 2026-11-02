@@ -326,11 +326,13 @@ struct ExperienceInfo: Codable, Hashable, Sendable {
     /// Cancelamento grátis até N horas antes.
     var freeCancellationHours: Int?
     var sessions: [EventSession]
+    /// Foto da página (og:image) de quando o link foi colado. Só pra miniatura.
+    var imageURL: URL?
 
     init(supplier: ExperienceSupplier = .other, productCode: String? = nil, url: URL? = nil, durationMinutes: Int? = nil,
          priceFrom: Double? = nil, currency: String? = nil, rating: Double? = nil, reviewCount: Int? = nil,
          meetingPoint: String? = nil, meetingLat: Double? = nil, meetingLng: Double? = nil, languages: [String] = [],
-         groupMax: Int? = nil, freeCancellationHours: Int? = nil, sessions: [EventSession] = []) {
+         groupMax: Int? = nil, freeCancellationHours: Int? = nil, sessions: [EventSession] = [], imageURL: URL? = nil) {
         self.supplier = supplier
         self.productCode = productCode
         self.url = url
@@ -346,6 +348,7 @@ struct ExperienceInfo: Codable, Hashable, Sendable {
         self.groupMax = groupMax
         self.freeCancellationHours = freeCancellationHours
         self.sessions = sessions
+        self.imageURL = imageURL
     }
 
     init(from decoder: any Decoder) throws {
@@ -365,6 +368,7 @@ struct ExperienceInfo: Codable, Hashable, Sendable {
         groupMax = try c.decodeIfPresent(Int.self, forKey: .groupMax)
         freeCancellationHours = try c.decodeIfPresent(Int.self, forKey: .freeCancellationHours)
         sessions = try c.decodeIfPresent([EventSession].self, forKey: .sessions) ?? []
+        imageURL = try c.decodeIfPresent(URL.self, forKey: .imageURL)
     }
 
     /// Coordenada do ponto de encontro, se houver.

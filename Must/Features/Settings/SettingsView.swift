@@ -264,6 +264,11 @@ private struct SettingsSections: View {
             }
             .toggleStyle(.must)
             RowDivider()
+            Toggle(isOn: $settings.suggestNearby) {
+                FormRow("Sugerir por perto", subtitle: "Google, Wikipedia e Foursquare · a Home só lê o cache")
+            }
+            .toggleStyle(.must)
+            RowDivider()
             if region == .jp {
                 Button {
                     fxText = (settings.fxRate * 100).formatted(.number.locale(region.locale).precision(.fractionLength(2)))

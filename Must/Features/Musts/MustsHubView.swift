@@ -76,7 +76,7 @@ struct MustsHubView: View {
     private var grid: some View {
         LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible())], spacing: 10) {
             ForEach(lists) { list in
-                Button { router.push(.list(id: list.id), on: .musts) } label: { ListTile(list: list, height: 118) }
+                Button { router.push(list.kind == .experience ? .experiences : .list(id: list.id), on: .musts) } label: { ListTile(list: list, height: 118) }
                     .buttonStyle(MustPressStyle())
             }
             Button { router.cover = .newList } label: {

@@ -15,6 +15,10 @@ struct HomeView: View {
     @Query private var trips: [TripInfo]
 
     @State private var headerTab = HeaderTab.hoje
+    /// "Por perto:" da Home (prompt 14 · B): só o cache de 30 min e o board.
+    @State private var nearbyHint: NearbyScored?
+    @State private var nearbyCheckedAt = Date.distantPast
+    @Environment(\.scenePhase) private var scenePhase
 
     private enum HeaderTab: String, CaseIterable { case hoje = "Hoje", musts = "Musts", viagem = "Viagem" }
 
@@ -42,6 +46,13 @@ struct HomeView: View {
                 .padding(.horizontal, 22)
             }
             .scrollIndicators(.hidden)
+            .task(id: nearbyKey) { await refreshNearbyHint() }
+            // Voltou pra frente depois de 20 min: olha o cache de novo (sem rede).
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active, AppClock.now.timeIntervalSince(nearbyCheckedAt) > 20 * 60 {
+                    Task { await refreshNearbyHint() }
+                }
+            }
         }
         .background {
             ZStack {
@@ -50,6 +61,23 @@ struct HomeView: View {
             }
             .ignoresSafeArea()
         }
+    }
+
+    private var nearbyKey: String {
+        services.location.current.map { NearbyCell.key(lat: $0.coordinate.latitude, lng: $0.coordinate.longitude, region: region) } ?? ""
+    }
+
+    /// Lê só o cache (até 30 min) e o board. Nunca chama Google, Wikipedia nem Foursquare.
+    private func refreshNearbyHint() async {
+        let now = AppClock.now
+        nearbyCheckedAt = now
+        guard settingsList.first?.suggestNearby ?? true, let location = services.location.current else {
+            nearbyHint = nil
+            return
+        }
+        let batch = await services.nearby.cached(lat: location.coordinate.latitude, lng: location.coordinate.longitude,
+                                                 region: region, now: now)
+        nearbyHint = DiscoverBuilder.hint(batch: batch, places: places, origin: location, now: now, region: region)
     }
 
     // MARK: Topo
@@ -260,31 +288,59 @@ struct HomeView: View {
     }
 
     private func nearbyCard(_ model: HomeModel) -> some View {
-        Button {
-            router.mapShowsOpenNow = true
-            router.select(.mapa)
-        } label: {
-            VStack(alignment: .leading) {
-                HStack(spacing: 14) {
-                    iconCircle(.mapa)
-                    Text("Perto de você").font(.must.archivo(19, .semibold)).foregroundStyle(Color.must.ink)
-                }
-                Spacer()
-                HStack(alignment: .bottom, spacing: 10) {
-                    MonoNumber("\(model.openNearby.count)", size: 64).foregroundStyle(Color.must.ink)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(model.openNearby.count == 1 ? "must aberto" : "musts abertos")
-                            .font(.must.archivo(19, .semibold)).foregroundStyle(Color.must.ink)
-                        Text(model.nearbyLine).font(.must.archivo(13)).foregroundStyle(Color.must.blueText).lineLimit(1)
-                    }
-                    .padding(.bottom, 6)
-                }
+        VStack(alignment: .leading, spacing: 0) {
+            Button {
+                router.mapShowsOpenNow = true
+                router.select(.mapa)
+            } label: {
+                nearbyContent(model)
             }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 22)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+            .buttonStyle(MustPressStyle())
+            if let hint = nearbyHint {
+                Button { router.push(.discover, on: .inicio) } label: { hintLine(hint) }
+                    .buttonStyle(MustPressStyle())
+            }
         }
-        .buttonStyle(MustPressStyle())
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func nearbyContent(_ model: HomeModel) -> some View {
+        VStack(alignment: .leading) {
+            HStack(spacing: 14) {
+                iconCircle(.mapa)
+                Text("Perto de você").font(.must.archivo(19, .semibold)).foregroundStyle(Color.must.ink)
+            }
+            Spacer()
+            HStack(alignment: .bottom, spacing: 10) {
+                MonoNumber("\(model.openNearby.count)", size: 64).foregroundStyle(Color.must.ink)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(model.openNearby.count == 1 ? "must aberto" : "musts abertos")
+                        .font(.must.archivo(19, .semibold)).foregroundStyle(Color.must.ink)
+                    Text(model.nearbyLine).font(.must.archivo(13)).foregroundStyle(Color.must.blueText).lineLimit(1)
+                }
+                .padding(.bottom, 6)
+            }
+        }
+        .padding(.horizontal, 24)
+        .padding(.vertical, 22)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+    }
+
+    /// "Por perto: Starbucks Reserve Roastery · 4,5 · 450 m": toque abre Descobrir.
+    private func hintLine(_ item: NearbyScored) -> some View {
+        let c = item.candidate
+        var parts = [c.place.name]
+        if let rating = c.place.rating { parts.append(rating.formatted(.number.precision(.fractionLength(1)).locale(region.locale))) }
+        parts.append(Walk.distanceText(c.distance))
+        return HStack(spacing: 8) {
+            Text("Por perto:").font(.must.archivo(13, .semibold)).foregroundStyle(Color.must.blueText)
+            Text(parts.joined(separator: " · ")).font(.must.archivo(13)).foregroundStyle(Color.must.blueText).lineLimit(1)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 24)
+        .padding(.bottom, 18)
+        .contentShape(Rectangle())
     }
 
     private func iconCircle(_ icon: MustIcon) -> some View {

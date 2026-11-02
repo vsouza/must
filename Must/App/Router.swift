@@ -20,6 +20,10 @@ enum Route: Hashable {
     case board(edit: Bool = false)
     /// Ingresso de um lugar (Reservas, Lugar › Ingresso).
     case ticket(placeId: String, ticketId: String)
+    /// Experiências (Must do): colar link e as salvas (prompt 14 · C).
+    case experiences
+    /// Por perto, agora (prompt 14 · B). Só da Home e daqui: nunca push.
+    case discover
 }
 
 /// Navegação do app: aba atual, pilha de cada aba e o que está apresentado por cima.
@@ -131,6 +135,8 @@ extension View {
             case .light(let date): LightDayView(date: date)
             case .board(let edit): BoardView(startEditing: edit)
             case .ticket(let placeId, let ticketId): TicketView(placeId: placeId, ticketId: ticketId)
+            case .experiences: ExperiencesView()
+            case .discover: DiscoverView()
             }
         }
     }

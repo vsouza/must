@@ -103,6 +103,13 @@ shot bh-adicionar-mapa -debugScreen "adicionar:https://www.google.com/maps/place
 ${=W} region jp
 shot jp-adicionar-mapa -debugScreen "adicionar:📍 Tsukiji Outer Market | 📍 Maguroya Kurogin | 📍 Uogashi Senryo | November 2026 | Part 2"
 
+echo "→ Experiências e Por perto (fatia 4 · prompt 14 B/C) · Japão · -debugNearby fake (sem Google)"
+${=W} region jp
+shot jp-experiencias -debugScreen experiencias -debugNearby fake
+${=W} dev.simDate -float $(epoch 2026-11-15T18:42:00+09:00)
+${=W} dev.simLat -float 35.6442; ${=W} dev.simLng -float 139.6985
+shot jp-descobrir -debugScreen descobrir -debugNearby fake
+
 echo "→ limpando simulações"
 for k in dev.simDateOn dev.simDate dev.simSetAt dev.simGPSOn dev.simLat dev.simLng dev.simCloud skipOnboarding debugPlaces; do
   xcrun simctl spawn "$UDID" defaults delete $PREFS $k 2>/dev/null || true
