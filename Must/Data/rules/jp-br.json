@@ -1,0 +1,116 @@
+{
+  "pair": "JP-BR",
+  "from": "JP",
+  "to": "BR",
+  "limits": {
+    "taxFreeMinYen": 5000,
+    "taxFreeRate": 0.10,
+    "taxFreeRateFood": 0.08,
+    "airAllowanceUSD": 1000,
+    "freeShopUSD": 1000,
+    "excessRate": 0.5,
+    "liquorLitres": 12,
+    "identicalAboveUSD": 10,
+    "identicalAboveMax": 3,
+    "identicalBelowMax": 10,
+    "personalCameras": 1
+  },
+  "rules": [
+    {
+      "id": "taxfree-refund",
+      "section": "taxFree",
+      "tone": "warn",
+      "text": "Agora é **reembolso**: você paga com imposto na loja e recebe de volta ao sair, no quiosque da alfândega **antes do check-in**, com passaporte.",
+      "checkedAt": "2026-11-02",
+      "sourceURL": "https://www.mof.go.jp/"
+    },
+    {
+      "id": "taxfree-min",
+      "section": "taxFree",
+      "tone": "ok",
+      "text": "Mínimo **¥ 5.000 por loja/dia**. Não consuma no Japão; faltou um item, perde o recibo todo.",
+      "checkedAt": "2026-11-02",
+      "sourceURL": "https://www.mof.go.jp/"
+    },
+    {
+      "id": "taxfree-deadline",
+      "section": "taxFree",
+      "tone": "ok",
+      "text": "Prazo: **90 dias**.",
+      "checkedAt": "2026-11-02",
+      "sourceURL": "https://www.mof.go.jp/"
+    },
+    {
+      "id": "carry-powerbank",
+      "section": "carry",
+      "tone": "no",
+      "text": "**Power bank só na mão.**",
+      "checkedAt": "2026-11-02",
+      "sourceURL": "https://www.gov.br/receitafederal/"
+    },
+    {
+      "id": "carry-knife",
+      "section": "carry",
+      "tone": "no",
+      "text": "Faca japonesa **só na despachada**.",
+      "checkedAt": "2026-11-02",
+      "sourceURL": "https://www.gov.br/receitafederal/"
+    },
+    {
+      "id": "carry-film",
+      "section": "carry",
+      "tone": "no",
+      "text": "Filme ISO 400+ **na mão**, com inspeção manual.",
+      "checkedAt": "2026-11-02",
+      "sourceURL": "https://www.gov.br/receitafederal/"
+    },
+    {
+      "id": "entering-allowance",
+      "section": "entering",
+      "tone": "ok",
+      "text": "Cota **US$ 1.000** por pessoa (aéreo) + **US$ 1.000** no free shop da chegada. Excedente paga 50% pela e-DBV.",
+      "checkedAt": "2026-11-02",
+      "sourceURL": "https://www.gov.br/receitafederal/"
+    },
+    {
+      "id": "entering-camera",
+      "section": "entering",
+      "tone": "ok",
+      "text": "**1 câmera de uso pessoal** pode ficar fora — na dúvida, declare.",
+      "checkedAt": "2026-11-02",
+      "sourceURL": "https://www.gov.br/receitafederal/"
+    },
+    {
+      "id": "entering-liquor",
+      "section": "entering",
+      "tone": "ok",
+      "text": "Até **12 L** de bebida alcoólica; acima de US$ 10, no máximo **3 iguais**. Abaixo de US$ 10, até 10 iguais ou 20 unidades.",
+      "checkedAt": "2026-11-02",
+      "sourceURL": "https://www.gov.br/receitafederal/"
+    },
+    {
+      "id": "food-pork",
+      "section": "food",
+      "tone": "no",
+      "text": "Nada de origem **suína** — inclusive caldos e temperos com porco.",
+      "checkedAt": "2026-11-02",
+      "sourceURL": "https://www.gov.br/agricultura/"
+    },
+    {
+      "id": "food-raw",
+      "section": "food",
+      "tone": "no",
+      "text": "**Queijo de leite cru**, frutas, sementes e plantas também não.",
+      "checkedAt": "2026-11-02",
+      "sourceURL": "https://www.gov.br/agricultura/"
+    },
+    {
+      "id": "food-packaged",
+      "section": "food",
+      "tone": "ok",
+      "text": "Industrializado, **lacrado e rotulado** (doces, chá, salgadinhos) passa. Na dúvida, declare.",
+      "checkedAt": "2026-11-02",
+      "sourceURL": "https://www.gov.br/agricultura/"
+    }
+  ]
+}

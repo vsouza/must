@@ -194,3 +194,11 @@ Os prints do `scripts/qa-screens.sh` cobrem a aparência. Esta lista cobre o que
 - **Voos:** conferido no print. O cartão mostra CNF→HND com "saia às 15:25 pro aeroporto", que é o cálculo de voo doméstico (2 h + 1 h antes de 18:25). Os status são de mentira (`-debugFlight fake`).
 - **Hoje · voo:** a hora do voo e a de sair pro aeroporto saem no fuso do aeroporto de origem. Coberto por teste unitário (FlightTests), não por print.
 - **Não comparados por completo nesta rodada:** Board, Ingresso, TicketEntrada, Experiências, Descobrir, Carteira, Viagem, AdicionarMapa e Lugar › 3D. Os prints foram gerados (`scripts/qa-screens.sh`) mas a comparação visual não terminou; conferir na próxima passada.
+
+## Fatia 8B · Compras da viagem (prompt 17 · B)
+- Decisão: compras ficam **fora do export do board** (como a Carteira); o JSON do board não muda. As compras compradas já saem como `expenses` (categoria shop).
+- Taxa US$ → R$ em `Settings.brlPerUSD` = 5,50 (padrão de referência, editável em Compras › Regras › "mudar"). Cota do Brasil = previsto convertido em US$.
+- Tax-free: 10% (8% comida) de taxa embutida, reembolso = preço × taxa / (1 + taxa), só loja/dia ≥ ¥ 5.000 com recibo.
+- Sem foto nos itens (sem rede nesta fatia): o card usa bloco de cor da categoria.
+- Checagem de comida sem modelo no aparelho: regex/palavras (função pura). Foundation Models não entrou.
+- Verificado: 15 testes (`ShoppingTests`), build e prints `compras` e `compras-regras` (DEBUG, região jp). Não verificado: Viagem › tag Compras e Carteira › atalho em tela; toque no card e no editor; sheet de taxa.

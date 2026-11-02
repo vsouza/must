@@ -7,11 +7,13 @@ struct WalletView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
     @Environment(RegionStore.self) private var store
+    @Environment(AppRouter.self) private var router
 
     @Query(sort: [SortDescriptor(\WalletItem.order), SortDescriptor(\WalletItem.createdAt)]) private var items: [WalletItem]
     @Query private var expenses: [Expense]
     @Query private var trips: [TripInfo]
     @Query private var settingsList: [Settings]
+    @Query private var shopping: [ShoppingItem]
 
     @State private var opened: WalletItem?
     @State private var adding = false
@@ -34,6 +36,13 @@ struct WalletView: View {
                     Text("Carteira").mustTitle()
                     Text("cartões, passes e documentos — toque e vai direto pro Wallet ou pro app")
                         .mustSerif(18).foregroundStyle(Color.must.secondary)
+                    if region == .jp {
+                        Button { router.push(.compras, on: router.tab) } label: {
+                            Tag(shopping.isEmpty ? "Compras da viagem" : "Compras da viagem · \(shopping.count)")
+                        }
+                        .buttonStyle(MustPressStyle())
+                        .padding(.top, 6)
+                    }
                 }
                 .padding(.top, 22)
 

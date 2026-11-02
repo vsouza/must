@@ -1,0 +1,259 @@
+import Foundation
+
+// Conta da lista de compras (prompt 17 · B, itens 7–8): previsto, já gasto, cota do Brasil, tax-free a receber,
+// álcool e a regra dos iguais, alertas e o impacto de cada regra na lista do usuário. Puro: testável sem SwiftData.
+struct ShoppingAlert: Identifiable, Hashable, Sendable {
+    var id: String
+    /// Regra que o alerta contraria (`ShoppingRule.id`).
+    var ruleId: String
+    var text: String
+}
+
+/// Linha "sua lista: …" de uma regra, com o tom (verde, âmbar, vermelho).
+struct ShoppingImpact: Hashable, Sendable {
+    var text: String
+    var tone: ShoppingTone
+}
+
+struct ShoppingReport {
+    /// Reembolso da saída: recibos que entram (loja/dia com pelo menos ¥ 5.000) e o total.
+    struct TaxFree: Equatable, Sendable {
+        var receipts: Int = 0
+        var refund: Double = 0
+        /// Lojas/dia com recibo mas abaixo do mínimo: sem reembolso.
+        var belowMinStores: Int = 0
+        /// O mesmo, contando também o que ainda não foi comprado (a "volta ~" do topo).
+        var plannedRefund: Double = 0
+    }
+
+    /// Unidades iguais (mesmo nome) somadas.
+    struct Identical: Equatable, Sendable {
+        var name: String
+        var units: Int
+        var unitUSD: Double
+    }
+
+    let items: [ShoppingItem]
+    /// R$ por ¥1 (`Settings.fxRate`).
+    let fxRate: Double
+    /// R$ por US$ 1 (`Settings.brlPerUSD`).
+    let brlPerUSD: Double
+    let rules: ShoppingRulePack
+    let timeZone: TimeZone
+
+    init(items: [ShoppingItem], fxRate: Double, brlPerUSD: Double, rules: ShoppingRulePack = ShoppingRules.jpBR,
+         timeZone: TimeZone = Region.jp.timeZone) {
+        self.items = items
+        self.fxRate = fxRate
+        self.brlPerUSD = brlPerUSD > 0 ? brlPerUSD : ShoppingLimits.standard.taxFreeMinYen / 1_000
+        self.rules = rules
+        self.timeZone = timeZone
+    }
+
+    var limits: ShoppingLimits { rules.limits }
+
+    // MARK: Totais
+
+    /// Previsto em ¥: estimado dos não comprados + pago dos comprados.
+    var planned: Double { items.reduce(0) { $0 + $1.committedYen } }
+
+    /// Já gasto em ¥ (só dos comprados).
+    var spent: Double { items.filter(\.isBought).reduce(0) { $0 + ($1.paid ?? $1.estPrice) } }
+
+    var plannedBRL: Double { planned * fxRate }
+
+    /// Quanto da cota do Brasil a lista usa, em US$ (previsto convertido).
+    var usedUSD: Double { usd(planned) }
+
+    /// Parte da cota que já é compra feita, em US$.
+    var boughtUSD: Double { usd(spent) }
+
+    /// Cota passou da parte do aéreo: vale a e-DBV pelo excedente.
+    var needsEDBV: Bool { usedUSD > limits.airAllowanceUSD }
+
+    func usd(_ yen: Double) -> Double { yen * fxRate / brlPerUSD }
+
+    // MARK: Tax-free
+
+    var taxFree: TaxFree {
+        let bought = items.filter { $0.taxFreeReceipt && $0.isBought }
+        let real = Self.refundable(bought, limits: limits, timeZone: timeZone)
+        let all = Self.refundable(items.filter(\.taxFreeReceipt), limits: limits, timeZone: timeZone)
+        return TaxFree(receipts: real.receipts, refund: real.refund, belowMinStores: real.belowMin, plannedRefund: all.refund)
+    }
+
+    /// Recibos que entram no reembolso: agrupa por loja e dia; cada grupo precisa de ¥ 5.000 (sem imposto e sem o mínimo, o recibo perde).
+    static func refundable(_ list: [ShoppingItem], limits: ShoppingLimits, timeZone: TimeZone)
+        -> (receipts: Int, refund: Double, belowMin: Int) {
+        let groups = Dictionary(grouping: list) { item in
+            "\(item.storeId ?? item.storeName)|\(FlightRules.dayKey(item.boughtAt ?? item.createdAt, zone: timeZone))"
+        }
+        var receipts = 0
+        var refund = 0.0
+        var belowMin = 0
+        for group in groups.values {
+            let total = group.reduce(0) { $0 + $1.committedYen }
+            guard total >= limits.taxFreeMinYen else {
+                belowMin += 1
+                continue
+            }
+            receipts += group.count
+            refund += group.reduce(0) { $0 + refundOf($1, limits: limits) }
+        }
+        return (receipts, refund.rounded(), belowMin)
+    }
+
+    /// Imposto de volta de um item: o preço tem a taxa embutida (preço × taxa / (1 + taxa)).
+    static func refundOf(_ item: ShoppingItem, limits: ShoppingLimits) -> Double {
+        let rate = item.category == .food ? limits.taxFreeRateFood : limits.taxFreeRate
+        return item.committedYen * rate / (1 + rate)
+    }
+
+    // MARK: Álcool e iguais
+
+    /// Litros de bebida alcoólica na lista (unidades × volume do nome/notas). Sem volume, conta zero.
+    var liquorLitres: Double {
+        items.filter { $0.flags.contains(.alcohol) }.reduce(0) { $0 + Double($1.qty) * (volume(of: $1) ?? 0) }
+    }
+
+    func volume(of item: ShoppingItem) -> Double? {
+        ShoppingChecks.volumeLitres(in: [item.name, item.notes, item.ingredients].joined(separator: " "))
+    }
+
+    /// Itens iguais (mesmo nome), com unidades e preço unitário em US$.
+    var identicals: [Identical] {
+        let groups = Dictionary(grouping: items) { ShoppingChecks.identityKey($0.name) }
+        return groups.values.map { group in
+            let units = group.reduce(0) { $0 + $1.qty }
+            let total = group.reduce(0) { $0 + $1.committedYen }
+            return Identical(name: group[0].name, units: units, unitUSD: usd(total / Double(max(units, 1))))
+        }
+        .sorted { ($0.name.lowercased(), $0.units) < ($1.name.lowercased(), $1.units) }
+    }
+
+    /// Passa da regra dos iguais: acima de US$ 10 no máximo 3; abaixo, até 10.
+    func exceedsIdentical(_ identical: Identical) -> Bool {
+        let cap = identical.unitUSD > limits.identicalAboveUSD ? limits.identicalAboveMax : limits.identicalBelowMax
+        return identical.units > cap
+    }
+
+    // MARK: Alertas
+
+    var alerts: [ShoppingAlert] {
+        var out: [ShoppingAlert] = []
+        for item in items {
+            if item.flags.contains(.pork) {
+                out.append(ShoppingAlert(id: "pork-\(item.id)", ruleId: "food-pork", text: "\(item.name): porco"))
+            }
+            if item.flags.contains(.rawMilk) || item.flags.contains(.fruitOrSeed) {
+                let what = item.flags.contains(.rawMilk) ? "leite cru" : "fruta/semente"
+                out.append(ShoppingAlert(id: "raw-\(item.id)", ruleId: "food-raw", text: "\(item.name): \(what)"))
+            }
+            if item.flags.contains(.alcohol), volume(of: item) == nil {
+                out.append(ShoppingAlert(id: "volume-\(item.id)", ruleId: "entering-liquor", text: "\(item.name): sem volume"))
+            }
+        }
+        if liquorLitres > limits.liquorLitres {
+            out.append(ShoppingAlert(id: "liquor", ruleId: "entering-liquor",
+                                     text: "álcool \(Self.litres(liquorLitres)) L · passa de \(Self.litres(limits.liquorLitres)) L"))
+        }
+        for identical in identicals where exceedsIdentical(identical) {
+            out.append(ShoppingAlert(id: "identical-\(identical.name)", ruleId: "entering-liquor",
+                                     text: "\(identical.name) × \(identical.units): passa do limite de iguais"))
+        }
+        if needsEDBV {
+            out.append(ShoppingAlert(id: "allowance", ruleId: "entering-allowance",
+                                     text: "cota \(Self.usdText(usedUSD)) de \(Self.usdText(limits.airAllowanceUSD)) · e-DBV"))
+        }
+        if taxFree.belowMinStores > 0 {
+            out.append(ShoppingAlert(id: "taxfree-min", ruleId: "taxfree-min",
+                                     text: "\(taxFree.belowMinStores) loja(s) abaixo de ¥ 5.000 · sem reembolso"))
+        }
+        return out
+    }
+
+    var hasFood: Bool { items.contains { $0.category == .food } }
+
+    /// Impacto de uma regra na lista do usuário (nil = a lista não toca nessa regra).
+    func impact(for ruleId: String) -> ShoppingImpact? {
+        switch ruleId {
+        case "taxfree-refund":
+            let tf = taxFree
+            return ShoppingImpact(text: "ainda falta: \(tf.receipts) \(tf.receipts == 1 ? "recibo" : "recibos") · ¥ \(Self.yen(tf.refund)) de volta",
+                                  tone: tf.receipts > 0 ? .ok : .warn)
+        case "taxfree-min":
+            let below = taxFree.belowMinStores
+            return below > 0 ? ShoppingImpact(text: "\(below) loja(s) abaixo de ¥ 5.000 · sem reembolso", tone: .no) : nil
+        case "carry-powerbank":
+            return named(["power bank", "powerbank", "bateria externa"]).map { ShoppingImpact(text: "sua lista: \($0) · na mão", tone: .ok) }
+        case "carry-knife":
+            return named(["faca", "包丁", "knife"]).map { ShoppingImpact(text: "sua lista: \($0) · despachar", tone: .warn) }
+        case "carry-film":
+            let rolls = items.filter { Self.matchesAny($0.name, ["filme", "film", "portra", "ektar", "kodak", "ilford", "fuji "]) }
+            let count = rolls.reduce(0) { $0 + $1.qty }
+            return rolls.isEmpty ? nil : ShoppingImpact(text: "sua lista: \(count) \(count == 1 ? "rolo" : "rolos") · na mão", tone: .ok)
+        case "entering-allowance":
+            let over = needsEDBV
+            return ShoppingImpact(text: "sua lista: \(Self.usdText(usedUSD))\(over ? " · excedente: e-DBV" : "")", tone: over ? .warn : .ok)
+        case "entering-camera":
+            let cameras = items.filter { $0.category == .cameras && Self.matchesAny($0.name, Self.cameraWords) && !$0.name.lowercased().contains("bolsa") }
+                .reduce(0) { $0 + $1.qty }
+            guard cameras > 0 else { return nil }
+            let fine = cameras <= limits.personalCameras
+            return ShoppingImpact(text: fine ? "sua lista: \(cameras) câmera" : "sua lista: \(cameras) câmeras · só \(limits.personalCameras) de uso pessoal",
+                                  tone: fine ? .ok : .warn)
+        case "entering-liquor":
+            var parts: [String] = []
+            if liquorLitres > 0 {
+                parts.append("\(liquorLitres > limits.liquorLitres ? "passa" : "álcool") \(Self.litres(liquorLitres)) de \(Self.litres(limits.liquorLitres)) L")
+            }
+            for identical in identicals where identical.units > 1 && !items.contains(where: { $0.flags.contains(.alcohol) && ShoppingChecks.identityKey($0.name) == ShoppingChecks.identityKey(identical.name) }) {
+                let ok = !exceedsIdentical(identical)
+                parts.append("\(identical.name) × \(identical.units): \(ok ? "ok" : "acima do limite") (\(identical.unitUSD > limits.identicalAboveUSD ? "acima de US$ 10, até \(limits.identicalAboveMax)" : "abaixo de US$ 10, até \(limits.identicalBelowMax)"))")
+            }
+            guard !parts.isEmpty else { return nil }
+            return ShoppingImpact(text: parts.joined(separator: " · "), tone: alerts.contains { $0.ruleId == "entering-liquor" } ? .no : .ok)
+        case "food-pork":
+            let pork = items.filter { $0.flags.contains(.pork) }.map(\.name)
+            if pork.isEmpty { return ShoppingImpact(text: "nada suíno na sua lista", tone: .ok) }
+            return ShoppingImpact(text: "na sua lista: \(pork.joined(separator: ", ")) · trocar por shoyu?", tone: .no)
+        case "food-raw":
+            let flagged = items.filter { $0.flags.contains(.rawMilk) || $0.flags.contains(.fruitOrSeed) }.map(\.name)
+            return flagged.isEmpty ? nil : ShoppingImpact(text: "na sua lista: \(flagged.joined(separator: ", "))", tone: .no)
+        case "food-packaged":
+            let packaged = items.filter { $0.category == .food && $0.flags.isEmpty }.count
+            return packaged > 0 ? ShoppingImpact(text: "ok na sua lista: \(packaged) \(packaged == 1 ? "item" : "itens") lacrado", tone: .ok) : nil
+        default:
+            return nil
+        }
+    }
+
+    // MARK: Texto
+
+    /// "¥ 15.400" (pt-BR, sem símbolo no número).
+    static func yen(_ value: Double) -> String {
+        value.formatted(.number.locale(Locale(identifier: "pt_BR")).precision(.fractionLength(0)).grouping(.automatic))
+    }
+
+    /// "US$ 740".
+    static func usdText(_ value: Double) -> String {
+        "US$ " + value.formatted(.number.locale(Locale(identifier: "pt_BR")).precision(.fractionLength(0)).grouping(.automatic))
+    }
+
+    /// "1,4" (uma casa, pt-BR).
+    static func litres(_ value: Double) -> String {
+        value.formatted(.number.locale(Locale(identifier: "pt_BR")).precision(.fractionLength(0...1)))
+    }
+
+    private static let cameraWords = ["câmera", "camera", "contax", "leica", "nikon", "canon", "fuji", "olympus", "ricoh", "pentax", "minolta", "sony"]
+
+    static func matchesAny(_ name: String, _ words: [String]) -> Bool {
+        let lowered = name.lowercased()
+        return words.contains { lowered.contains($0) }
+    }
+
+    /// Primeiro item cujo nome casa com uma das palavras (pra "sua lista: faca · despachar").
+    private func named(_ words: [String]) -> String? {
+        items.first { Self.matchesAny($0.name, words) }?.name
+    }
+}

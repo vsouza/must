@@ -64,6 +64,8 @@ shot jp-lugar -debugScreen lugar:j01
 shot jp-viagem -debugScreen viagem
 shot jp-reservas -debugScreen reservas
 shot jp-mapa -debugScreen mapa
+shot jp-compras -debugScreen compras
+shot jp-compras-regras -debugScreen compras-regras
 WAIT=10 shot jp-assistente -debugScreen assistente -debugAsk "tô cansado, troca o bar de hoje por algo perto do jantar e me diz quanto já fui"
 
 echo "→ Japão · photo/art (prompt 13) · Yanaka 15 nov 15:20, nuvens 20%"

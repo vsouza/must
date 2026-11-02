@@ -182,6 +182,12 @@ enum DebugLaunch {
             TicketDemo.ensure(context: context, region: region)
             router.push(.comoChegar(placeId: TicketDemo.placeId, meeting: true), on: .inicio)
         case "uso-google": router.push(.googleUsage, on: .inicio)
+        case "compras": // lista de exemplo (câmera, Portra, Kit Kat, ramen tonkotsu, saquê, faca, pomada) e Compras
+            ShoppingDemo.ensure(context: context)
+            router.push(.compras, on: .inicio)
+        case "compras-regras":
+            ShoppingDemo.ensure(context: context)
+            router.push(.regrasVolta, on: .inicio)
         case "buscar-nome": // buscar-nome:koffee mam (com -debugAutocomplete fake); buscar-nome:koffee mam:escolher já escolhe a 1ª
             router.sheet = .buscarNome(query: (arg ?? "").replacingOccurrences(of: ":escolher", with: ""), listId: nil)
         case "sincronizar":

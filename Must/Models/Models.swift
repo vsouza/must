@@ -303,6 +303,8 @@ final class Settings {
     var seenSeedIds: [String] = []
     /// Ordem das listas que o seed já aplicou (o design só põe a ordem uma vez; depois a ordem é do usuário).
     var seedListOrder: [String] = []
+    /// Cotação do dólar em reais (R$ por US$ 1) pra cota do Brasil (Compras). Padrão de referência, editável em Compras › Regras.
+    var brlPerUSD: Double = 5.5
 
     init(region: Region) {
         self.perDayBudget = region.defaultBudget
@@ -352,7 +354,7 @@ extension ModelContext {
 enum MustSchema {
     static let models: [any PersistentModel.Type] = [
         MustList.self, Place.self, Expense.self, PlannedDay.self, Stop.self, TripInfo.self, Settings.self, TripEvent.self,
-        WalletItem.self, Flight.self,
+        WalletItem.self, Flight.self, ShoppingItem.self,
     ]
     static var schema: Schema { Schema(models) }
 }

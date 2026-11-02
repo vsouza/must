@@ -32,6 +32,10 @@ enum Route: Hashable {
     case googleUsage
     /// Como chegar (prompt 17 · A): a rota de transporte até o lugar (ou ao ponto de encontro do ingresso).
     case comoChegar(placeId: String, meeting: Bool = false)
+    /// Compras da viagem (prompt 17 · B): a lista, com previsto, cota e categorias.
+    case compras
+    /// Regras da volta (prompt 17 · B): tax-free, Na mala, Entrando no Brasil, Comida/Vigiagro.
+    case regrasVolta
 }
 
 /// Navegação do app: aba atual, pilha de cada aba e o que está apresentado por cima.
@@ -152,6 +156,8 @@ extension View {
             case .schedule(let tab): ScheduleView(tab: tab)
             case .googleUsage: GoogleUsageView()
             case .comoChegar(let placeId, let meeting): ComoChegarView(placeId: placeId, meeting: meeting)
+            case .compras: ShoppingView()
+            case .regrasVolta: ShoppingRulesView()
             }
         }
     }

@@ -16,6 +16,7 @@ struct TripView: View {
     @Query private var settingsList: [Settings]
     @Query private var events: [TripEvent]
     @Query private var wallet: [WalletItem]
+    @Query private var shopping: [ShoppingItem]
 
     private var region: Region { store.region }
     private var now: Date { AppClock.now }
@@ -302,6 +303,13 @@ struct TripView: View {
                     Tag(wallet.isEmpty ? "Carteira" : "Carteira · \(wallet.count)")
                 }
                 .buttonStyle(MustPressStyle())
+                // Compras da viagem (prompt 17 · B): a lista com a previsão e as regras da volta (só Japão).
+                if region == .jp {
+                    Button { router.push(.compras, on: router.tab) } label: {
+                        Tag(shopping.isEmpty ? "Compras" : "Compras · \(shopping.count)")
+                    }
+                    .buttonStyle(MustPressStyle())
+                }
                 ForEach(TripStats.progress(lists: lists), id: \.list.id) { item in
                     Button { router.push(.list(id: item.list.id), on: router.tab) } label: {
                         Tag("\(item.list.name.capitalized) \(item.done)/\(item.total)", dot: item.list.color.strong)

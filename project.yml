@@ -48,6 +48,8 @@ targets:
         buildPhase: resources
       - path: Must/Data/checklists/domestic-br.json
         buildPhase: resources
+      - path: Must/Data/rules/jp-br.json
+        buildPhase: resources
     dependencies:
       - target: MustWidgets
         embed: true
