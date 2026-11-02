@@ -125,6 +125,84 @@ struct TicketReaderTests {
         #expect(TicketReader.imageExtension(for: Data([0, 0, 0, 0x18, 0x66, 0x74, 0x79, 0x70, 0, 0, 0, 0])) == "heic")
     }
 
+    /// E-mail LATAM (texto colado): PNR, duas pernas com aeroportos e horários. Vai pra Voos (fatia 6), mas o extrator já lê.
+    @Test func latamEmailGivesPNRAndTwoLegs() throws {
+        let text = """
+        LATAM Airlines · confirmação da compra
+        Código de reserva: XKQ7MP
+        Passageiro: VINICIUS SOUZA
+        Voo LA 8084 · sáb 14 nov 2026 · 23:55 · São Paulo (GRU) → Doha (DOH)
+        Voo QR 0758 · dom 15 nov 2026 · 02:30 · Doha (DOH) → Tóquio (HND)
+        Assento 12A · franquia 23 kg
+        """
+        let extracted = TicketExtractor.extract(TicketReader.readText(text), region: .bh)
+        #expect(extracted.kind == .flight)
+        #expect(extracted.supplier?.value == "LATAM")
+        let pnr = try #require(extracted.confirmation)
+        #expect(pnr.value == "XKQ7MP")
+        #expect(pnr.confidence >= 0.9)
+        #expect(extracted.legs.map(\.number) == ["LA 8084", "QR 0758"])
+        #expect(extracted.legs.map(\.from) == ["GRU", "DOH"])
+        #expect(extracted.legs.map(\.to) == ["DOH", "HND"])
+        let departs = try #require(extracted.legs.first?.departs)
+        let parts = Region.bh.calendar.dateComponents([.day, .month, .hour, .minute], from: departs)
+        #expect([parts.day, parts.month, parts.hour, parts.minute] == [14, 11, 23, 55])
+        // Sem o trecho de cancelamento, a data do ingresso é a da primeira perna.
+        #expect(extracted.at?.value == departs)
+    }
+
+    /// Ingresso de experiência em inglês (Viator): o endereço é o ponto de encontro; o título é a linha do produto.
+    @Test func experienceTicketGivesFieldsWithConfidence() throws {
+        let text = """
+        Viator · Confirmação de reserva
+        Sushi Making Class with a Chef in Tsukiji
+        Reference BR-7K2M-9931
+        Sat 15 Nov 2026 · 10:00 AM
+        2 travelers · ¥24,000 total paid
+        Meeting point: Tsukiji Outer Market, Gate 1
+        Free cancellation until 13 Nov 2026
+        """
+        let extracted = TicketExtractor.extract(TicketReader.readText(text), region: .jp)
+        #expect(extracted.kind == .experience)
+        #expect(extracted.supplier?.value == "Viator")
+        #expect(extracted.confirmation?.value == "BR-7K2M-9931")
+        #expect(extracted.title?.value == "Sushi Making Class with a Chef in Tsukiji")
+        #expect(extracted.title?.needsReview == true)
+        let at = try #require(extracted.at)
+        #expect(at.confidence == 0.9)
+        let when = Region.jp.calendar.dateComponents([.day, .hour, .minute], from: at.value)
+        #expect([when.day, when.hour, when.minute] == [15, 10, 0])
+        #expect(extracted.people?.value == 2)
+        #expect(extracted.price?.value == 24_000)
+        #expect(extracted.currency?.value == "JPY")
+        #expect(extracted.meetingPoint?.value == "Tsukiji Outer Market, Gate 1")
+        let cancel = try #require(extracted.cancelUntil)
+        #expect(Region.jp.calendar.component(.day, from: cancel.value) == 13)
+        #expect(extracted.legs.isEmpty)
+    }
+
+    /// Ingresso de passe (.pkpass) vira campos com a origem "do passe": a data vem do relevantDate.
+    @Test func passFieldsWinOverTheText() throws {
+        let reading = try TicketReader.readPass(Self.deflatePass)
+        let extracted = TicketExtractor.extract(reading, region: .jp)
+        #expect(extracted.qrPayload?.value == "BR-7K2M-9931")
+        #expect(extracted.confirmation?.value == "BR-7K2M-9931")
+        #expect(extracted.supplier?.origin == "do passe")
+        #expect(extracted.title?.value == "Sushi Making Class with a Chef in Tsukiji")
+        #expect(extracted.meetingPoint?.value == "Tsukiji Outer Market, Gate 1")
+        #expect(extracted.kind == .experience)
+    }
+
+    @Test func moneyAndDatesUseTheRightSeparators() {
+        #expect(TicketMoney.parse("24,000") == 24_000)
+        #expect(TicketMoney.parse("1.234,50") == 1_234.5)
+        #expect(TicketMoney.parse("12,50") == 12.5)
+        #expect(TicketMoney.parse("24.000") == 24_000)
+        #expect(TicketMoney.first(in: "Total: R$ 1.234,50")?.currency == "BRL")
+        #expect(TicketDates.first(in: "15/11/2026 10:00", region: .bh)?.hasTime == true)
+        #expect(TicketDates.first(in: "Nada de data aqui", region: .bh) == nil)
+    }
+
     /// PDF de uma página: texto de verdade (camada de texto) e um QR desenhado pelo CoreImage.
     @MainActor
     static func makePDF(lines: [String], qr: String) -> Data {
