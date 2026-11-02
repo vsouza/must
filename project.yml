@@ -34,6 +34,7 @@ targets:
           - "Widgets/**"
           - "Resources/Fonts/licenses/**"
           - "DesignSystem/MapStyle/**"
+          - "ShareExtension/**"
       - path: Must/DesignSystem/MapStyle
         type: folder
         buildPhase: resources
@@ -45,6 +46,8 @@ targets:
         buildPhase: resources
     dependencies:
       - target: MustWidgets
+        embed: true
+      - target: MustShare
         embed: true
       - package: MapLibre
     postBuildScripts:
@@ -85,6 +88,7 @@ targets:
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
         NSLocationWhenInUseUsageDescription: Pra mostrar o que está aberto perto de você
+        NSCameraUsageDescription: Pra ler o QR e o código do ingresso
         NSSupportsLiveActivities: true
         MLNIdeographicFontFamilyName: Zen Kaku Gothic New
         UIAppFonts:
@@ -149,6 +153,39 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: dev.viniso.must.widgets
         SKIP_INSTALL: YES
 
+  MustShare:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Must/ShareExtension
+      - path: Must/Services/Tickets/ShareInbox.swift
+    dependencies:
+      - sdk: UniformTypeIdentifiers.framework
+    entitlements:
+      path: Must/ShareExtension/MustShare.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.dev.viniso.must
+    info:
+      path: Must/ShareExtension/Info.plist
+      properties:
+        CFBundleDisplayName: Must
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.share-services
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
+          NSExtensionAttributes:
+            NSExtensionActivationRule:
+              NSExtensionActivationSupportsFileWithMaxCount: 1
+              NSExtensionActivationSupportsImageWithMaxCount: 1
+              NSExtensionActivationSupportsWebURLWithMaxCount: 1
+              NSExtensionActivationSupportsText: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.viniso.must.share
+        SKIP_INSTALL: YES
+
   MustTests:
     type: bundle.unit-test
     platform: iOS
@@ -175,6 +212,7 @@ schemes:
       targets:
         Must: all
         MustWidgets: all
+        MustShare: all
     run:
       config: Debug
     test:

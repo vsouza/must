@@ -29,6 +29,20 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "3101B03A58761C702160CC1B"
+               BuildableName = "MustShare.appex"
+               BlueprintName = "MustShare"
+               ReferencedContainer = "container:Must.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "07799D3F6808489686D50C03"
                BuildableName = "MustWidgets.appex"
                BlueprintName = "MustWidgets"

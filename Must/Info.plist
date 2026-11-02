@@ -38,6 +38,8 @@
 	</array>
 	<key>MLNIdeographicFontFamilyName</key>
 	<string>Zen Kaku Gothic New</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Pra ler o QR e o código do ingresso</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Pra mostrar o que está aberto perto de você</string>
 	<key>NSSupportsLiveActivities</key>
