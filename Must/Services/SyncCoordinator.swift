@@ -192,11 +192,15 @@ final class SyncCoordinator {
         guard places.isConfigured else { placesSummary = "Falta GOOGLE_PLACES_KEY no Secrets.plist."; return }
         guard DevOverrides.liveData else { placesSummary = "Dados ao vivo estão desligados."; return }
         let all = (try? context.fetch(FetchDescriptor<Place>(sortBy: [SortDescriptor(\.id)]))) ?? []
-        let pending = Array(all.filter { $0.placeId == nil || $0.approx || $0.hours == nil }.prefix(Self.placesBatch))
+        // Pedidos do Board (Resolver no Places) primeiro; depois o que falta resolver.
+        let queued = all.filter(\.resolveQueued)
+        let missing = all.filter { !$0.resolveQueued && ($0.placeId == nil || $0.approx || $0.hours == nil) }
+        let pending = Array((queued + missing).prefix(Self.placesBatch))
         let trip = try? context.fetch(FetchDescriptor<TripInfo>()).first
         placesProgress = (0, pending.count)
         var resolved = 0, notFound: [String] = [], failed = 0
         for (i, place) in pending.enumerated() {
+            place.resolveQueued = false
             do {
                 if place.placeId == nil || place.approx {
                     let city = trip?.city(id: place.cityId)

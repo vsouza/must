@@ -104,7 +104,8 @@ struct AppRoot: View {
 
 #if DEBUG
 /// `-debugScreen <tela>` abre uma tela direto (simulador/prints):
-/// ajustes, regiao, mapas-offline, musts, lista:<id>, fim, lugar:<id>, editar:<id>, nova-lista, adicionar[:url], hoje, mapa.
+/// ajustes, regiao, mapas-offline, musts, lista:<id>, fim, lugar:<id>, editar:<id>, nova-lista, adicionar[:url], hoje, mapa,
+/// board, board:editar (2 selecionados), editar-lista:<id>.
 /// `-gallery` abre a Gallery.
 @MainActor
 enum DebugLaunch {
@@ -121,6 +122,8 @@ enum DebugLaunch {
             router.push(.offlineMaps, on: .inicio)
             if let pack = MapPack.catalog.first(where: { $0.id == arg }) { services.maps.download(pack) }
         case "musts": router.select(.musts)
+        case "board": router.push(.board(edit: arg == "editar"), on: .musts) // board:editar já em modo edição
+        case "editar-lista": router.cover = .editList(id: arg ?? "eat")
         case "lista": router.push(.list(id: arg ?? "eat"), on: .musts)
         case "fim": router.push(.saveForEnd, on: .musts)
         case "lugar": router.push(.place(id: arg ?? "p01"), on: .musts)

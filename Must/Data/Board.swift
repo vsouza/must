@@ -87,6 +87,8 @@ struct BoardPlace: Codable, Equatable, Sendable {
     var done: DoneMark?
     /// Dados do tipo: `{ photo | art | sport }`.
     var extra: PlaceExtra?
+    /// Ordem dentro da lista (Board). Ausente = 0.
+    var order: Int?
 }
 
 struct BoardExpense: Codable, Equatable, Sendable {

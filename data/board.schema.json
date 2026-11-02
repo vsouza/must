@@ -36,6 +36,7 @@
       "reservation": {"type": ["object", "null"], "properties": {"at": {"type": "string", "format": "date-time"}, "party": {"type": "integer"}, "note": {"type": "string"}}},
       "saveForEnd": {"type": "boolean"}, "allowBudgetException": {"type": "boolean"}, "queueMinutes": {"type": ["integer", "null"]},
       "notes": {"type": "string"},
+      "order": {"type": "integer", "description": "ordem dentro da lista (Board, arrastar); ausente = 0"},
       "source": {"type": ["object", "null"], "properties": {"kind": {"enum": ["instagram", "tiktok", "youtube", "maps", "manual", "board"]}, "url": {"type": "string"}, "savedAt": {"type": "string", "format": "date"}, "caption": {"type": "string"}, "author": {"type": "string"}}},
       "done": {"type": ["object", "null"], "properties": {"at": {"type": "string", "format": "date-time"}, "spent": {"type": "number"}}},
       "extra": {"type": ["object", "null"], "description": "dados do tipo da lista (photo, art ou sport)", "properties": {

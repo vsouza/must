@@ -146,3 +146,12 @@ xcodebuild -project Must.xcodeproj -scheme Must -destination 'platform=iOS Simul
 - [ ] Modo avião com BH baixado: o Mapa mostra ruas e prédios. Sem baixar e com internet, o mapa também aparece (lido do R2).
 - [ ] Apagar (lixeira → confirmar) libera o espaço; o mapa troca pro R2 sem reabrir.
 - [ ] No Mapa, cidade do GPS sem baixar mostra o aviso "Baixar"; o × some com ele só pra essa cidade.
+
+## 19. Board completo (fatia 1 · prompt 14 A, 02/11)
+- [x] sim — `-debugScreen board`: cabeçalho, busca, chips, grupos com "+ N em <lista>" e swipe; `board:editar`: bolinhas,
+  "2 selecionados" e barra de lote. Testes: 178 passando (BoardEditsTests).
+- [ ] sim (aberto) — `editar-lista:eat` e `nova-lista` saem deslocados ~22 pt pra esquerda (o formulário NewListView já
+  existia assim; não é da edição). Causa provável: a linha "busca “…”" do cabeçalho da foto, que não quebra. Não corrigido.
+- [ ] iPhone — arrastar entre listas (drop no cabeçalho) e arrastar pra reordenar: só dá pra confirmar tocando.
+- [ ] sim — o store do BH no simulador tem os 103 lugares do Japão (dado antigo do aparelho de teste); os prints de BH
+  mostram o Japão até apagar/reimportar o board.

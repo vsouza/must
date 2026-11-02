@@ -85,6 +85,10 @@ final class Place {
     var fsqId: String?
     /// JSON de `PlaceExtra` (photo / art / sport).
     var extraData: Data?
+    /// Ordem dentro da lista (Board, arrastar). Lugar sem ordem segue o nome.
+    var order: Int = 0
+    /// Pedido de "Resolver no Places" (Board): a próxima sincronização olha este primeiro.
+    var resolveQueued: Bool = false
 
     @Relationship(deleteRule: .nullify, inverse: \Expense.place)
     var expenses: [Expense] = []
@@ -293,6 +297,8 @@ final class Settings {
     var fxDate: Date?
     /// Ids do seed que este board já recebeu (lugar novo no seed entra uma vez; apagado não volta).
     var seenSeedIds: [String] = []
+    /// Ordem das listas que o seed já aplicou (o design só põe a ordem uma vez; depois a ordem é do usuário).
+    var seedListOrder: [String] = []
 
     init(region: Region) {
         self.perDayBudget = region.defaultBudget

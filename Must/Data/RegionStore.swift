@@ -131,7 +131,9 @@ final class RegionStore {
         }
         let board = try BoardCodec.decode(Data(contentsOf: url))
         let summary = try BoardCodec(context: context, region: region).import(board: board)
-        context.settings(for: region).seenSeedIds = board.places.map(\.id)
+        let settings = context.settings(for: region)
+        settings.seenSeedIds = board.places.map(\.id)
+        settings.seedListOrder = board.lists.map(\.id)
         try context.save()
         Log.data.info("seed \(region.rawValue, privacy: .public): \(summary.description, privacy: .public)")
     }
@@ -157,12 +159,16 @@ final class RegionStore {
             }
             changed = true
         }
-        // Ordem do design pras listas do seed; as criadas pelo usuário vêm depois, na ordem em que estavam.
+        // Ordem do design pras listas do seed, uma vez só (depois a ordem é do usuário: editar lista › ordem).
+        // As criadas pelo usuário vêm depois, na ordem em que estavam.
         let order = seed.lists.map(\.id)
-        if lists.allSatisfy({ !order.contains($0.id) || $0.order == order.firstIndex(of: $0.id)! }) == false {
+        let settings = try context.fetch(FetchDescriptor<Settings>()).first
+        if settings?.seedListOrder.isEmpty ?? true {
             let custom = lists.filter { !order.contains($0.id) }.sorted { $0.order < $1.order }
             for list in lists { if let i = order.firstIndex(of: list.id) { list.order = i } }
             for (i, list) in custom.enumerated() { list.order = order.count + i }
+            // Só marca quando todas as listas do seed já existem: mergeSeed alinha antes e depois de importar as novas.
+            if order.allSatisfy({ id in lists.contains { $0.id == id } }) { settings?.seedListOrder = order }
             changed = true
         }
         if changed {

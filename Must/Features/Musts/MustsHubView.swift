@@ -20,13 +20,27 @@ struct MustsHubView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 topBar.padding(.top, 8)
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Musts").mustTitle()
-                    Text("o board, por vontade — não por bairro").mustSerif(18).foregroundStyle(Color.must.secondary)
+                HStack(alignment: .top, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Musts").mustTitle()
+                        Text("o board, por vontade — não por bairro").mustSerif(18).foregroundStyle(Color.must.secondary)
+                    }
+                    Spacer(minLength: 0)
+                    Button { router.push(.board(edit: false), on: .musts) } label: {
+                        Text("Ver tudo · editar")
+                            .font(.must.archivo(14, .semibold))
+                            .foregroundStyle(Color.must.ink)
+                            .padding(.horizontal, 16)
+                            .frame(height: 40)
+                            .background(Capsule().fill(Color.white.opacity(0.92)))
+                            .shadow(color: Color(hex: 0x121316, opacity: 0.08), radius: 10, x: 0, y: 6)
+                    }
+                    .buttonStyle(MustPressStyle())
+                    .padding(.top, 6)
                 }
                 .padding(.top, 20)
 
-                searchField.padding(.top, 24)
+                SearchPill(text: $query, placeholder: "Buscar lugar, bairro, prato…").padding(.top, 24)
 
                 if query.trimmingCharacters(in: .whitespaces).isEmpty {
                     grid.padding(.top, 18)
@@ -57,26 +71,6 @@ struct MustsHubView: View {
             Spacer()
             IconButton(.adicionar, style: .dark, label: "Adicionar por link") { router.sheet = .addLink(url: nil, listId: nil) }
         }
-    }
-
-    private var searchField: some View {
-        HStack(spacing: 8) {
-            MustIconView(.buscar, size: 16).foregroundStyle(Color.must.secondary)
-            TextField("Buscar lugar, bairro, prato…", text: $query)
-                .font(.must.archivo(14))
-                .foregroundStyle(Color.must.ink)
-                .submitLabel(.search)
-                .autocorrectionDisabled()
-            if !query.isEmpty {
-                Button { query = "" } label: { MustIconView(.fechar, size: 14).foregroundStyle(Color.must.secondary) }
-                    .accessibilityLabel("Limpar busca")
-            }
-        }
-        .padding(.horizontal, 14)
-        .frame(height: 44)
-        .background(Capsule().fill(Color(hex: 0xF1F2F4, opacity: 0.9)))
-        .overlay(Capsule().strokeBorder(Color.white.opacity(0.7)))
-        .shadow(color: Color(hex: 0x121316, opacity: 0.06), radius: 12, x: 0, y: 8)
     }
 
     private var grid: some View {

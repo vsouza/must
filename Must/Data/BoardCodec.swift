@@ -184,6 +184,7 @@ struct BoardCodec {
         place.placeId = pick(item.placeId, place.placeId)
         if item.hours != nil || !merge { place.hours = item.hours }
         if item.extra != nil || !merge { place.extra = item.extra }
+        place.order = item.order ?? (merge ? place.order : 0)
 
         // Coordenada resolvida no aparelho não volta a ser chute.
         let localIsResolved = !place.approx && place.placeId != nil
@@ -328,7 +329,8 @@ struct BoardCodec {
                            cityId: p.cityId, area: p.area, lat: p.lat, lng: p.lng, approx: p.approx, placeId: p.placeId,
                            price: p.price, priceLevel: p.priceLevel, hours: p.hours, window: p.windows,
                            reservation: p.reservation, saveForEnd: p.saveForEnd, allowBudgetException: p.allowBudgetException,
-                           queueMinutes: p.queueMinutes, notes: p.notes, source: p.source, done: p.done, extra: p.extra)
+                           queueMinutes: p.queueMinutes, notes: p.notes, source: p.source, done: p.done, extra: p.extra,
+                           order: p.order)
             },
             expenses: expenses.map { e in
                 BoardExpense(at: e.at, amount: e.amount, category: e.category, placeId: e.place?.id, method: e.method)

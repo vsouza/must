@@ -116,6 +116,7 @@ private struct SettingsSections: View {
 
     @Environment(Services.self) private var services
     @Environment(\.modelContext) private var context
+    @Environment(AppRouter.self) private var router
 
     @State private var editingBudget = false
     @State private var budgetText = ""
@@ -279,6 +280,13 @@ private struct SettingsSections: View {
             }
             RowDivider()
             FormRow("O que sai do aparelho", subtitle: privacyLine)
+            RowDivider()
+            Button { router.push(.board(edit: false)) } label: {
+                FormRow("Board completo", subtitle: "todos os lugares · editar listas e lugares") {
+                    MustIconView(.avancar, size: 14).foregroundStyle(Color.must.secondary)
+                }
+            }
+            .buttonStyle(.plain)
             RowDivider()
             Button(action: onExport) {
                 FormRow("Exportar board (.json)") { MustIconView(.exportar, size: 18).foregroundStyle(Color.must.ink) }

@@ -45,6 +45,7 @@ struct BoardCodecTests {
         p.allowBudgetException = p.allowBudgetException ?? false
         p.notes = p.notes ?? ""
         p.window = p.window ?? []
+        p.order = p.order ?? 0
         return p
     }
 

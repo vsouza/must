@@ -34,6 +34,7 @@ struct RootView: View {
         .fullScreenCover(item: $router.cover) { cover in
             switch cover {
             case .newList: NewListFlow()
+            case .editList(let id): EditListFlow(listId: id)
             case .gallery:
                 #if DEBUG
                 Gallery()

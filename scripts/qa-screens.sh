@@ -78,6 +78,12 @@ ${=W} dev.simLat -float -19.8517; ${=W} dev.simLng -float -43.9733
 shot bh-esporte -debugScreen lugar:p28
 shot bh-esporte-painel -debugScreen painel:p28
 
+echo "→ Board completo (fatia 1 · prompt 14 A) · BH"
+${=W} region bh
+shot bh-board -debugScreen board
+shot bh-board-editar -debugScreen board:editar
+shot bh-editar-lista -debugScreen editar-lista:eat
+
 echo "→ Adicionar por link com mapa (prompt 16) · BH: link do Maps · Japão: legenda com 3 lugares e 'November' (Places de mentira)"
 ${=W} debugPlaces -string fake
 ${=W} region bh

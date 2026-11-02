@@ -16,6 +16,8 @@ enum Route: Hashable {
     case day(date: Date)
     /// Luz de hoje (dia de fotografia), meia-noite do dia.
     case light(date: Date)
+    /// Board completo (Musts › Ver tudo · editar). `edit` abre já em modo edição (prints de QA).
+    case board(edit: Bool = false)
 }
 
 /// Navegação do app: aba atual, pilha de cada aba e o que está apresentado por cima.
@@ -43,6 +45,8 @@ final class AppRouter {
     enum Cover: Identifiable, Hashable {
         case newList
         case gallery
+        /// Editar lista (nome, cor, ícone, sub-listas, ordem, apagar).
+        case editList(id: String)
 
         var id: Self { self }
     }
@@ -117,6 +121,7 @@ extension View {
             case .reservations: ReservationsView()
             case .day(let date): TodayView(date: date)
             case .light(let date): LightDayView(date: date)
+            case .board(let edit): BoardView(startEditing: edit)
             }
         }
     }
