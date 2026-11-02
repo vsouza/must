@@ -20,6 +20,7 @@ struct PlaceView: View {
     @State private var compact = false
     /// "Pôr no dia" já usado (art).
     @State private var addedAt: Date?
+    @State private var show3D = false
 
 
     init(placeId: String) {
@@ -76,6 +77,7 @@ struct PlaceView: View {
                 .task {
                     // -debugScreen dicas:<id> rola direto pras Dicas (prints).
                     let screen = UserDefaults.standard.string(forKey: "debugScreen") ?? ""
+                    if screen.hasPrefix("3d") { show3D = true; return }
                     if screen.hasPrefix("painel") {
                         try? await Task.sleep(for: .milliseconds(600))
                         withAnimation { proxy.scrollTo("panel", anchor: .top) }
@@ -97,6 +99,9 @@ struct PlaceView: View {
         .toolbar(.hidden, for: .navigationBar)
         .onAppear { services.sync.refreshIfStale(place, region: region) }
         .task(id: place.id) { await loadHero(place) }
+        .fullScreenCover(isPresented: $show3D) {
+            Place3DView(name: place.name, coordinate: place.coordinate, heading: place.extra?.photo?.facing)
+        }
     }
 
     private func loadTips(_ place: Place) async {
@@ -199,6 +204,13 @@ struct PlaceView: View {
                     place.saveForEnd.toggle()
                     try? context.save()
                 }
+                Button { show3D = true } label: {
+                    Text("3D").font(.must.mono(13, .semibold)).foregroundStyle(Color.must.ink)
+                        .frame(width: 40, height: 40)
+                        .background { Color.clear.glass(cornerRadius: 20) }
+                }
+                .buttonStyle(MustPressStyle())
+                .accessibilityLabel("Ver em 3D")
                 glassButton(.editar, label: "Editar") { router.sheet = .editPlace(id: place.id) }
             }
             .padding(.horizontal, 22)

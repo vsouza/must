@@ -125,6 +125,7 @@ enum DebugLaunch {
         case "fim": router.push(.saveForEnd, on: .musts)
         case "lugar": router.push(.place(id: arg ?? "p01"), on: .musts)
         case "painel": router.push(.place(id: arg ?? "j18"), on: .musts) // rola até o painel do tipo (PlaceView)
+        case "3d": router.push(.place(id: arg ?? "p01"), on: .musts) // abre o Lugar › 3D (PlaceView)
         case "luz": router.push(.light(date: region.calendar.startOfDay(for: AppClock.now)), on: .hoje)
         case "dicas": router.push(.place(id: (arg ?? "p01").replacingOccurrences(of: ":fim", with: "")), on: .musts) // rola até as Dicas (PlaceView)
         case "editar": router.sheet = .editPlace(id: arg ?? "p01")
