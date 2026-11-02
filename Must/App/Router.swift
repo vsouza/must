@@ -7,6 +7,7 @@ enum Route: Hashable {
     case saveForEnd
     case place(id: String)
     case settings
+    case offlineMaps
     /// Montar o dia (meia-noite do dia, no fuso da região).
     case montar(date: Date)
     case trip
@@ -110,6 +111,7 @@ extension View {
             case .saveForEnd: ListView(listId: nil, initialSub: nil, saveForEndOnly: true)
             case .place(let id): PlaceView(placeId: id)
             case .settings: SettingsView()
+            case .offlineMaps: OfflineMapsView()
             case .montar(let date): MontarView(date: date)
             case .trip: TripView()
             case .reservations: ReservationsView()

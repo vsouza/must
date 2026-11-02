@@ -7,6 +7,7 @@ enum Secrets {
         case googlePlaces = "GOOGLE_PLACES_KEY"
         case anthropic = "ANTHROPIC_KEY"
         case protomaps = "PROTOMAPS_KEY"
+        case mapTilesURL = "MAP_TILES_URL"
         case foursquare = "FOURSQUARE_KEY"
         case redditClientId = "REDDIT_CLIENT_ID"
     }
@@ -19,8 +20,10 @@ enum Secrets {
 
     static var googlePlacesKey: String? { self[.googlePlaces] }
     static var anthropicKey: String? { self[.anthropic] }
-    /// Tiles hospedados, só quando faltam os PMTiles no bundle.
+    /// Tiles hospedados pela Protomaps, só quando não há `MAP_TILES_URL`.
     static var protomapsKey: String? { self[.protomaps] }
+    /// Bucket R2 público com os mapas offline por cidade (`scripts/tiles-upload.sh`).
+    static var mapTilesURL: String? { self[.mapTilesURL] }
     static var foursquareKey: String? { self[.foursquare] }
     static var redditClientId: String? { self[.redditClientId] }
 

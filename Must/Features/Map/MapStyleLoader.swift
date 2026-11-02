@@ -1,60 +1,44 @@
 import CoreLocation
 import Foundation
 
-/// Fonte dos tiles da base: PMTiles no bundle (offline) ou Protomaps hospedado.
+/// Fonte dos tiles da base: arquivo baixado (offline), o mesmo PMTiles lido do R2, ou Protomaps hospedado.
 enum MapTiles: Equatable, Sendable {
-    case bundled(name: String, url: URL)
+    case local(name: String, url: URL)
+    case remote(name: String, url: URL)
     case hosted(key: String)
     case none
 
-    /// Áreas com tiles no bundle (ver `Must/Data/tiles/README.md`).
-    struct Area: Sendable {
-        var name: String
-        var region: Region
-        var center: CLLocationCoordinate2D
-        /// Recorte do `scripts/tiles.sh`: oeste, sul, leste, norte.
-        var bbox: (west: Double, south: Double, east: Double, north: Double)
-
-        func contains(_ c: CLLocationCoordinate2D) -> Bool {
-            (bbox.west...bbox.east).contains(c.longitude) && (bbox.south...bbox.north).contains(c.latitude)
+    /// Recorte que contém `center`; fora de todos, o mais perto. `local` diz se a cidade está baixada.
+    static func pick(region: Region, near center: CLLocationCoordinate2D,
+                     packs: [MapPack] = MapPack.catalog,
+                     local: (String) -> URL? = MapPackFiles.localURL,
+                     remoteBase: URL? = MapPackFiles.remoteBase,
+                     hostedKey: String? = Secrets.protomapsKey) -> MapTiles {
+        let candidates = packs.filter { $0.region == region }
+        let installed = candidates.compactMap { p in local(p.id).map { (pack: p, url: $0) } }
+        if let hit = installed.first(where: { $0.pack.contains(center) }) { return .local(name: hit.pack.id, url: hit.url) }
+        // Fora do que está baixado: o recorte da câmera (ou o mais perto), baixado ou lido do R2.
+        if let target = candidates.first(where: { $0.contains(center) }) ?? MapPack.nearest(center, in: candidates) {
+            if let url = local(target.id) { return .local(name: target.id, url: url) }
+            if let remoteBase { return .remote(name: target.id, url: remoteBase.appending(path: "\(target.id).pmtiles")) }
         }
+        if let near = MapPack.nearest(center, in: installed.map(\.pack)), let url = local(near.id) {
+            return .local(name: near.id, url: url)
+        }
+        if let hostedKey { return .hosted(key: hostedKey) }
+        return .none
     }
 
-    /// Principais primeiro: quando a câmera está em duas áreas, vale a maior.
-    static let areas: [Area] = [
-        Area(name: "bh", region: .bh, center: CLLocationCoordinate2D(latitude: -19.90, longitude: -43.95),
-             bbox: (-44.10, -20.05, -43.80, -19.75)),
-        Area(name: "bh-inhotim", region: .bh, center: CLLocationCoordinate2D(latitude: -20.125, longitude: -44.20),
-             bbox: (-44.30, -20.20, -44.10, -20.05)),
-        Area(name: "jp-tokyo", region: .jp, center: CLLocationCoordinate2D(latitude: 35.675, longitude: 139.75),
-             bbox: (139.55, 35.55, 139.95, 35.80)),
-        Area(name: "jp-kansai", region: .jp, center: CLLocationCoordinate2D(latitude: 34.85, longitude: 135.75),
-             bbox: (135.60, 34.60, 135.90, 35.10)),
-        Area(name: "jp-fuji", region: .jp, center: CLLocationCoordinate2D(latitude: 35.50, longitude: 138.76),
-             bbox: (138.62, 35.34, 138.86, 35.56)),
-    ]
-
-    /// Arquivo da área que contém `center`; fora de todas, o da área mais perto (Tóquio × Kansai × Fuji no Japão).
-    static func pick(region: Region, near center: CLLocationCoordinate2D, bundle: Bundle = .main) -> MapTiles {
-        let here = CLLocation(latitude: center.latitude, longitude: center.longitude)
-        let available = areas.filter { $0.region == region }
-            .compactMap { area -> (Area, URL)? in
-                bundle.url(forResource: area.name, withExtension: "pmtiles", subdirectory: "tiles").map { (area, $0) }
-            }
-        let nearest = available.sorted {
-            here.distance(from: CLLocation(latitude: $0.0.center.latitude, longitude: $0.0.center.longitude))
-                < here.distance(from: CLLocation(latitude: $1.0.center.latitude, longitude: $1.0.center.longitude))
+    var name: String? {
+        switch self {
+        case .local(let n, _), .remote(let n, _): n
+        case .hosted, .none: nil
         }
-        if let (area, url) = available.first(where: { $0.0.contains(center) }) ?? nearest.first {
-            return .bundled(name: area.name, url: url)
-        }
-        if let key = Secrets.protomapsKey { return .hosted(key: key) }
-        return .none
     }
 
     var sourceURL: String? {
         switch self {
-        case .bundled(_, let url): "pmtiles://\(url.absoluteString)"
+        case .local(_, let url), .remote(_, let url): "pmtiles://\(url.absoluteString)"
         case .hosted(let key): "https://api.protomaps.com/tiles/v4.json?key=\(key)"
         case .none: nil
         }
@@ -74,7 +58,8 @@ enum MapStyleLoader {
         }
         style = customize(style, region: region, tiles: tiles)
         let name: String = switch tiles {
-        case .bundled(let n, _): n
+        case .local(let n, _): n
+        case .remote(let n, _): "\(n)-remote"
         case .hosted: "\(region.rawValue)-hosted"
         case .none: "\(region.rawValue)-empty"
         }

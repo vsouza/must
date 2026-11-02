@@ -276,6 +276,7 @@ struct MapView: View {
                 .padding(.horizontal, 22)
                 legend
                 if let far = farTarget { farNotice(far.place, target: far.target).padding(.horizontal, 22) }
+                OfflineMapNudge(here: here?.coordinate, region: region).padding(.horizontal, 22)
             }
             .padding(.top, 8)
 

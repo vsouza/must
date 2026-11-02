@@ -53,7 +53,7 @@ struct MapCameraState: Equatable {
     }
 }
 
-/// MapLibre Native com o style "papel em relevo" (PMTiles no bundle) e as camadas do Must por cima.
+/// MapLibre Native com o style "papel em relevo" (PMTiles baixado ou lido do R2) e as camadas do Must por cima.
 struct MapLibreView: UIViewRepresentable {
     var scene: MapScene
     var command: MapCameraCommand?
@@ -80,6 +80,7 @@ struct MapLibreView: UIViewRepresentable {
         map.backgroundColor = UIColor(red: 0xE9 / 255, green: 0xEB / 255, blue: 0xEF / 255, alpha: 1)
         context.coordinator.map = map
         context.coordinator.loadStyle(near: scene.you ?? scene.region.defaultCenter)
+        context.coordinator.observePacks()
         return map
     }
 
@@ -107,7 +108,23 @@ struct MapLibreView: UIViewRepresentable {
         private var clusterBucket: Int?
         private var moving = false
 
+        private var packsObserver: NSObjectProtocol?
+
         init(_ parent: MapLibreView) { self.parent = parent }
+
+        isolated deinit {
+            if let packsObserver { NotificationCenter.default.removeObserver(packsObserver) }
+        }
+
+        /// Cidade baixada ou apagada: troca a fonte (R2 ↔ arquivo) sem esperar a câmera mexer.
+        func observePacks() {
+            packsObserver = NotificationCenter.default.addObserver(forName: .mapPacksChanged, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self, let map = self.map else { return }
+                    self.loadStyle(near: map.centerCoordinate)
+                }
+            }
+        }
 
         // MARK: Style
 
@@ -119,7 +136,7 @@ struct MapLibreView: UIViewRepresentable {
             tiles = picked
             styleReady = false
             signatures = [:]
-            if case .none = picked { Log.data.error("mapa: sem tiles no bundle e sem PROTOMAPS_KEY — só fundo") }
+            if case .none = picked { Log.data.error("mapa: sem mapa baixado, sem MAP_TILES_URL e sem PROTOMAPS_KEY — só fundo") }
             map?.styleURL = MapStyleLoader.styleURL(region: region, tiles: picked)
         }
 

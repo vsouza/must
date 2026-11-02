@@ -1,0 +1,14 @@
+{
+  "_comment": "Mapas offline por cidade. Fonte única: scripts/tiles.sh recorta estes bboxes (oeste, sul, leste, norte) e o app lê este arquivo (MapPack.catalog). Principais primeiro: quando a câmera está em dois recortes, vale o primeiro.",
+  "packs": [
+    {"id": "bh", "region": "bh", "title": "Belo Horizonte", "subtitle": "cidade inteira + Nova Lima e Contagem", "center": [-19.92, -43.95], "bbox": [-44.12, -20.10, -43.78, -19.72]},
+    {"id": "bh-inhotim", "region": "bh", "title": "Inhotim", "subtitle": "Brumadinho", "center": [-20.125, -44.20], "bbox": [-44.30, -20.20, -44.10, -20.05]},
+    {"id": "jp-tokyo", "region": "jp", "title": "Tóquio", "subtitle": "23 bairros, Kichijoji e Haneda", "center": [35.675, 139.75], "bbox": [139.50, 35.52, 139.95, 35.82]},
+    {"id": "jp-kansai", "region": "jp", "title": "Kyoto · Nara", "subtitle": "Arashiyama, Uji e Nara", "center": [34.85, 135.75], "bbox": [135.60, 34.60, 135.90, 35.10]},
+    {"id": "jp-fuji", "region": "jp", "title": "Fuji · Kawaguchiko", "subtitle": "lago, Chureito e 5ª estação", "center": [35.50, 138.76], "bbox": [138.62, 35.34, 138.86, 35.56]},
+    {"id": "jp-osaka", "region": "jp", "title": "Osaka", "subtitle": "Umeda, Namba e o castelo", "center": [34.68, 135.50], "bbox": [135.40, 34.60, 135.60, 34.75]},
+    {"id": "jp-yokohama", "region": "jp", "title": "Yokohama · Kamakura", "subtitle": "bate-volta ao sul de Tóquio", "center": [35.40, 139.60], "bbox": [139.48, 35.28, 139.72, 35.52]},
+    {"id": "jp-nikko", "region": "jp", "title": "Nikko", "subtitle": "Toshogu e lago Chuzenji", "center": [36.75, 139.56], "bbox": [139.40, 36.70, 139.65, 36.80]},
+    {"id": "jp-himeji", "region": "jp", "title": "Himeji", "subtitle": "castelo e Koko-en", "center": [34.83, 134.69], "bbox": [134.66, 34.80, 134.72, 34.86]}
+  ]
+}

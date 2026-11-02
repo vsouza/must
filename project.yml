@@ -34,13 +34,14 @@ targets:
           - "Widgets/**"
           - "Resources/Fonts/licenses/**"
           - "DesignSystem/MapStyle/**"
-          - "Data/tiles/**"
       - path: Must/DesignSystem/MapStyle
         type: folder
         buildPhase: resources
       - path: data/seed-bh.json
         buildPhase: resources
       - path: data/seed-jp.json
+        buildPhase: resources
+      - path: data/map-packs.json
         buildPhase: resources
     dependencies:
       - target: MustWidgets
@@ -59,19 +60,6 @@ targets:
             rm -f "$DST"
             echo "warning: Secrets.plist ausente — serviços ao vivo ficam desligados (ver Secrets.example.plist)"
           fi
-      - name: Copiar tiles do mapa (se existirem)
-        basedOnDependencyAnalysis: false
-        script: |
-          SRC="${SRCROOT}/Must/Data/tiles"
-          DST="${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/tiles"
-          mkdir -p "$DST"
-          found=0
-          for f in "$SRC"/*.pmtiles; do
-            [ -f "$f" ] || continue
-            found=1
-            if [ ! -f "$DST/$(basename "$f")" ] || [ "$f" -nt "$DST/$(basename "$f")" ]; then cp "$f" "$DST/"; fi
-          done
-          if [ $found = 0 ]; then echo "warning: sem tiles em Must/Data/tiles — o mapa usa o Protomaps hospedado (PROTOMAPS_KEY). Rode scripts/tiles.sh"; fi
     entitlements:
       path: Must/Must.entitlements
       properties:
@@ -169,6 +157,8 @@ targets:
       - path: data/seed-bh.json
         buildPhase: resources
       - path: data/seed-jp.json
+        buildPhase: resources
+      - path: data/map-packs.json
         buildPhase: resources
     dependencies:
       - target: Must

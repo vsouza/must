@@ -13,6 +13,7 @@ final class Services {
     let routes: any RoutesProviding
     let eta: ETACache
     let sync: SyncCoordinator
+    let maps = OfflineMaps()
 
     init(places: any PlacesProviding = PlacesService(), weather: any WeatherProviding = WeatherService(),
          photos: any PhotoProviding = CommonsPhotoService(), routes: any RoutesProviding = RoutesService()) {

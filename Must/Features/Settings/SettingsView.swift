@@ -34,6 +34,7 @@ struct SettingsView: View {
                     .padding(.bottom, 12)
 
                     RegionPicker()
+                    OfflineMapsRow()
                     if let settings = settingsList.first {
                         SettingsSections(settings: settings, region: store.region,
                                          onExport: exportBoard, onReimport: { showReimport = true })

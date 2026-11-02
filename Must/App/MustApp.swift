@@ -104,7 +104,7 @@ struct AppRoot: View {
 
 #if DEBUG
 /// `-debugScreen <tela>` abre uma tela direto (simulador/prints):
-/// ajustes, regiao, musts, lista:<id>, fim, lugar:<id>, editar:<id>, nova-lista, adicionar[:url], hoje, mapa.
+/// ajustes, regiao, mapas-offline, musts, lista:<id>, fim, lugar:<id>, editar:<id>, nova-lista, adicionar[:url], hoje, mapa.
 /// `-gallery` abre a Gallery.
 @MainActor
 enum DebugLaunch {
@@ -116,6 +116,7 @@ enum DebugLaunch {
         let arg = parts.count > 1 ? parts[1] : nil
         switch parts[0] {
         case "ajustes", "regiao": router.push(.settings, on: .inicio)
+        case "mapas-offline": router.push(.settings, on: .inicio); router.push(.offlineMaps, on: .inicio)
         case "musts": router.select(.musts)
         case "lista": router.push(.list(id: arg ?? "eat"), on: .musts)
         case "fim": router.push(.saveForEnd, on: .musts)

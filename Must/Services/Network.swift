@@ -40,7 +40,7 @@ struct HTTP: Sendable {
         return try await send(request, service: service)
     }
 
-    private func send(_ request: URLRequest, service: String) async throws -> Data {
+    func send(_ request: URLRequest, service: String) async throws -> Data {
         guard DevOverrides.liveData else { throw ServiceError.liveDataOff }
         let started = Date()
         let (data, response) = try await session.data(for: request)

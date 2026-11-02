@@ -12,8 +12,9 @@ Primeiro em **Belo Horizonte** (dia a dia, GPS real); a viagem ao **Japão** (11
 2. Abra `Must.xcodeproj`, escolha o iPhone e ⌘R. Sem Apple Developer Program: Xcode → Settings → Accounts → seu Apple ID
    (Personal Team); no iPhone, Ajustes → Geral → VPN e Gerenciamento de Dispositivo → confiar no desenvolvedor. O build grátis
    expira em 7 dias.
-3. Mapa offline: `brew install pmtiles && ./scripts/tiles.sh` gera `Must/Data/tiles/*.pmtiles` (BH 10 MB, Tóquio 90 MB,
-   Kyoto/Nara 64 MB; fora do git). Sem eles o mapa usa o Protomaps hospedado (`PROTOMAPS_KEY`) ou só o fundo.
+3. Mapas offline por cidade (`data/map-packs.json`): `brew install pmtiles && ./scripts/tiles.sh` gera `dist/tiles/`
+   (BH 11 MB, Tóquio 107 MB, Kyoto/Nara 64 MB, Osaka 28 MB…; fora do git) e `./scripts/tiles-upload.sh` sobe pro R2.
+   No app, Ajustes › Mapas offline baixa/apaga cada cidade; sem baixar, o mapa lê do R2 (`MAP_TILES_URL`). Ver `data/map-packs.md`.
    Glyphs e sprite do style: `scripts/gen-glyphs.py` e `scripts/gen-sprites.py` (já commitados).
 4. Testes: `xcodebuild -project Must.xcodeproj -scheme Must -destination 'platform=iOS Simulator,name=iPhone 17' test`.
 5. Prints de revisão no simulador: `./scripts/qa-screens.sh` (ver `QA.md`).

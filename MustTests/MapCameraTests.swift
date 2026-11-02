@@ -84,28 +84,85 @@ struct MapCameraControllerTests {
 
 struct MapTilesAreaTests {
     func area(_ lat: Double, _ lng: Double, _ region: Region) -> String? {
-        let c = CLLocationCoordinate2D(latitude: lat, longitude: lng)
-        return MapTiles.areas.first { $0.region == region && $0.contains(c) }?.name
+        MapPack.containing(CLLocationCoordinate2D(latitude: lat, longitude: lng), region: region)?.id
+    }
+
+    @Test func catalogLoadsFromBundle() {
+        let ids = MapPack.catalog.map(\.id)
+        #expect(ids.count == 9)
+        #expect(Set(ids).count == ids.count)
+        for pack in MapPack.catalog {
+            #expect(pack.bbox.count == 4 && pack.bbox[0] < pack.bbox[2] && pack.bbox[1] < pack.bbox[3], "\(pack.id)")
+            #expect(pack.contains(pack.centerCoordinate), "\(pack.id) centro fora do recorte")
+        }
     }
 
     @Test func areasCoverTheTrips() {
         #expect(area(-19.9385, -43.9343, .bh) == "bh")            // Savassi
+        #expect(area(-19.8516, -43.9686, .bh) == "bh")            // Pampulha
+        #expect(area(-19.9856, -43.8467, .bh) == "bh")            // Nova Lima
         #expect(area(-20.125, -44.219, .bh) == "bh-inhotim")      // Inhotim
         #expect(area(35.6442, 139.6985, .jp) == "jp-tokyo")       // Naka-Meguro
+        #expect(area(35.7033, 139.5797, .jp) == "jp-tokyo")       // Kichijoji
+        #expect(area(35.5494, 139.7798, .jp) == "jp-tokyo")       // Haneda
         #expect(area(35.0037, 135.7788, .jp) == "jp-kansai")      // Gion
+        #expect(area(34.8893, 135.8077, .jp) == "jp-kansai")      // Uji
         #expect(area(35.5171, 138.7514, .jp) == "jp-fuji")        // Kawaguchiko
         #expect(area(35.3606, 138.7274, .jp) == "jp-fuji")        // Fuji · 5ª estação (Subaru Line)
+        #expect(area(34.6687, 135.5013, .jp) == "jp-osaka")       // Dotonbori
+        #expect(area(35.3167, 139.5358, .jp) == "jp-yokohama")    // Kamakura · Daibutsu
+        #expect(area(36.7580, 139.5989, .jp) == "jp-nikko")       // Toshogu
+        #expect(area(34.8394, 134.6939, .jp) == "jp-himeji")      // castelo
     }
 
-    @Test func pickUsesTheContainingFile() throws {
-        // Só quando os tiles estão no bundle do app (gerados pelo scripts/tiles.sh).
-        guard Bundle.main.url(forResource: "bh-inhotim", withExtension: "pmtiles", subdirectory: "tiles") != nil else { return }
-        #expect(MapTiles.pick(region: .bh, near: CLLocationCoordinate2D(latitude: -20.125, longitude: -44.219)).name == "bh-inhotim")
-        #expect(MapTiles.pick(region: .bh, near: CLLocationCoordinate2D(latitude: -20.04, longitude: -44.09)).name == "bh")
-        #expect(MapTiles.pick(region: .jp, near: CLLocationCoordinate2D(latitude: 35.5171, longitude: 138.7514)).name == "jp-fuji")
-    }
-}
+    let inhotim = CLLocationCoordinate2D(latitude: -20.125, longitude: -44.219)
+    let fakeDir = URL(filePath: "/tmp/tiles")
+    let r2 = URL(string: "https://pub-x.r2.dev")!
 
-private extension MapTiles {
-    var name: String? { if case .bundled(let n, _) = self { n } else { nil } }
+    func local(_ ids: Set<String>) -> (String) -> URL? {
+        { id in ids.contains(id) ? self.fakeDir.appending(path: "\(id).pmtiles") : nil }
+    }
+
+    @Test func downloadedFileWins() {
+        let t = MapTiles.pick(region: .bh, near: inhotim, local: local(["bh", "bh-inhotim"]), remoteBase: r2, hostedKey: nil)
+        #expect(t == .local(name: "bh-inhotim", url: fakeDir.appending(path: "bh-inhotim.pmtiles")))
+    }
+
+    @Test func notDownloadedStreamsTheSameFileFromR2() {
+        let t = MapTiles.pick(region: .bh, near: inhotim, local: local(["bh"]), remoteBase: r2, hostedKey: nil)
+        #expect(t == .remote(name: "bh-inhotim", url: r2.appending(path: "bh-inhotim.pmtiles")))
+        #expect(t.sourceURL == "pmtiles://https://pub-x.r2.dev/bh-inhotim.pmtiles")
+    }
+
+    @Test func outsideEveryPackUsesTheNearest() {
+        let confins = CLLocationCoordinate2D(latitude: -19.6337, longitude: -43.9686) // aeroporto, fora do recorte
+        #expect(MapTiles.pick(region: .bh, near: confins, local: local([]), remoteBase: r2, hostedKey: nil).name == "bh")
+        #expect(MapTiles.pick(region: .bh, near: confins, local: local(["bh"]), remoteBase: r2, hostedKey: nil)
+            == .local(name: "bh", url: fakeDir.appending(path: "bh.pmtiles")))
+        let narita = CLLocationCoordinate2D(latitude: 35.772, longitude: 140.3929)
+        #expect(MapTiles.pick(region: .jp, near: narita, local: local([]), remoteBase: r2, hostedKey: nil).name == "jp-tokyo")
+    }
+
+    @Test func offlineWithoutServerFallsBackToNearestDownload() {
+        let t = MapTiles.pick(region: .jp, near: CLLocationCoordinate2D(latitude: 35.0037, longitude: 135.7788),
+                              local: local(["jp-tokyo"]), remoteBase: nil, hostedKey: "k")
+        #expect(t.name == "jp-tokyo")
+        #expect(MapTiles.pick(region: .jp, near: inhotim, local: local([]), remoteBase: nil, hostedKey: "k") == .hosted(key: "k"))
+        #expect(MapTiles.pick(region: .jp, near: inhotim, local: local([]), remoteBase: nil, hostedKey: nil) == .none)
+    }
+
+    @Test func manifestDecodesScriptOutput() throws {
+        let json = #"{"packs": [{"id": "bh", "bytes": 11532865, "sha256": "9ca9", "build": "20261102"}]}"#
+        let manifest = try JSONDecoder().decode(MapPackManifest.self, from: Data(json.utf8))
+        #expect(manifest["bh"]?.bytes == 11_532_865)
+        #expect(manifest["jp-tokyo"] == nil)
+        #expect(OfflineMapsView.buildDate("20261102") == "2 nov 2026")
+    }
+
+    @Test func sha256MatchesShasum() throws {
+        let url = FileManager.default.temporaryDirectory.appending(path: "sha-test.bin")
+        try Data("must".utf8).write(to: url)
+        defer { try? FileManager.default.removeItem(at: url) }
+        #expect(try OfflineMaps.sha256(of: url) == "4137b01e139589b7a1d3b3fc4da031d8ce5bb415808734e970c3a58ea0e98f0f") // shasum -a 256
+    }
 }

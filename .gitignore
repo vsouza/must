@@ -28,3 +28,6 @@ qa-screens/
 
 # Tiles do mapa (gerar com scripts/tiles.sh)
 Must/Data/tiles/*.pmtiles
+
+# Mapas offline gerados (scripts/tiles.sh → R2)
+dist/
