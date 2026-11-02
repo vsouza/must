@@ -26,6 +26,8 @@ enum Route: Hashable {
     case discover
     /// Carteira da viagem: cartões, passes, eSIM, QR de entrada e documentos (prompt 15 · B).
     case carteira
+    /// Agenda da viagem (Viagem › calendário): abas Voos e Reservas (prompt 15 · C).
+    case schedule(tab: ScheduleTab)
 }
 
 /// Navegação do app: aba atual, pilha de cada aba e o que está apresentado por cima.
@@ -140,6 +142,7 @@ extension View {
             case .experiences: ExperiencesView()
             case .discover: DiscoverView()
             case .carteira: WalletView()
+            case .schedule(let tab): ScheduleView(tab: tab)
             }
         }
     }

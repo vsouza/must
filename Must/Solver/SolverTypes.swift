@@ -175,6 +175,13 @@ struct DayRequest: Sendable {
     var cityCenter: CLLocationCoordinate2D?
     /// Desempate (↻ "outra proposta").
     var seed = 0
+    /// Voos que saem neste dia (prompt 15 · C). Âncora dura: com voo, o dia é `rest` e para em partida − 4 h.
+    var flights: [DayFlight] = []
+
+    /// Hora limite de paradas no dia de voo: a menor partida − 4 h. `nil` = sem voo.
+    var flightDeadline: Date? {
+        flights.map { $0.departs.addingTimeInterval(-4 * 3600) }.min()
+    }
 
     /// Lugar da cidade do dia (ou de outro trecho dela).
     func isInCity(_ id: String) -> Bool { id == cityId || sameCityIds.contains(id) }
@@ -187,6 +194,13 @@ struct DayRequest: Sendable {
 
     /// 0 = domingo … 6 = sábado.
     var weekday: Int { calendar.component(.weekday, from: date) - 1 }
+}
+
+/// Um trecho que sai no dia: a partida que vale e a hora de sair de casa pro aeroporto (`FlightRules.leaveForAirport`).
+struct DayFlight: Sendable, Hashable {
+    var number: String
+    var departs: Date
+    var leaveAt: Date
 }
 
 enum LegMode: String, Sendable, Hashable { case walk, metro }

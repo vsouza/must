@@ -12,8 +12,34 @@ struct Board: Codable, Equatable, Sendable {
     var places: [BoardPlace]
     var expenses: [BoardExpense]?
     var days: [BoardDay]?
-    /// Extensão do schema: eventos sem lugar (Shinkansen, voo, dia inteiro).
+    /// Extensão do schema: eventos sem lugar (Shinkansen, dia inteiro). Voo `kind: flight` aqui é lido como `flights`.
     var events: [BoardEvent]?
+    /// Reservas de voo (PNR, pernas, franquia, checklist). Prompt 15 · C.
+    var flights: [BoardFlight]?
+}
+
+/// Reserva de voo. As pernas são os trechos; o checklist guarda o que já foi marcado.
+struct BoardFlight: Codable, Equatable, Sendable {
+    var pnr: String?
+    var carrier: String?
+    /// "intl-japan" ou "domestic-br".
+    var template: String?
+    var checkedKg: Int?
+    var cabinKg: Int?
+    var legs: [BoardFlightLeg]
+    var checklist: [ChecklistItem]?
+}
+
+struct BoardFlightLeg: Codable, Equatable, Sendable {
+    var number: String
+    var from: String
+    var to: String
+    var departs: Date
+    var arrives: Date?
+    var seat: String?
+    var terminal: String?
+    var gate: String?
+    var note: String?
 }
 
 struct BoardEvent: Codable, Equatable, Sendable {

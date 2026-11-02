@@ -14,6 +14,7 @@ struct MontarView: View {
     @Query private var trips: [TripInfo]
     @Query private var settingsList: [Settings]
     @Query private var days: [PlannedDay]
+    @Query private var flights: [Flight]
 
     @State private var planner: DayPlanner?
     @State private var showProposal = false
@@ -53,7 +54,8 @@ struct MontarView: View {
                 planner?.weather = services.sync.weather(on: start, region: region, trip: trips.first)
                 #if DEBUG
                 if let screen = UserDefaults.standard.string(forKey: "debugScreen"), ["proposta", "trocar"].contains(screen), let planner {
-                    planner.build(catalog: places.solverCatalog, trip: trips.first, settings: settingsList.first, location: services.location.current)
+                    planner.build(catalog: places.solverCatalog, trip: trips.first, settings: settingsList.first, location: services.location.current,
+                              flights: FlightRules.dayFlights(flights, on: planner.date, region: region))
                     showProposal = true
                 }
                 #endif
@@ -63,7 +65,8 @@ struct MontarView: View {
 
     private func content(_ planner: DayPlanner) -> some View {
         let catalog = places.solverCatalog
-        let preview = planner.solve(catalog: catalog, trip: trips.first, settings: settingsList.first, location: services.location.current)
+        let preview = planner.solve(catalog: catalog, trip: trips.first, settings: settingsList.first, location: services.location.current,
+                                     flights: FlightRules.dayFlights(flights, on: planner.date, region: region))
         return ZStack(alignment: .bottom) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
@@ -85,7 +88,8 @@ struct MontarView: View {
                 textFocused = false
                 Task {
                     if !planner.text.isEmpty, parsedText != planner.text { await parse(planner) }
-                    planner.build(catalog: catalog, trip: trips.first, settings: settingsList.first, location: services.location.current)
+                    planner.build(catalog: catalog, trip: trips.first, settings: settingsList.first, location: services.location.current,
+                              flights: FlightRules.dayFlights(flights, on: planner.date, region: region))
                     showProposal = true
                 }
             }

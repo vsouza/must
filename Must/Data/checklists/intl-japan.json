@@ -1,0 +1,18 @@
+{
+  "id": "intl-japan",
+  "version": 1,
+  "items": [
+    { "id": "vjw", "phase": "h72", "title": "Visit Japan Web · imigração e alfândega", "note": "QR de imigração e QR da alfândega salvos na Carteira", "onlyJapan": true, "autoRule": "entryQR" },
+    { "id": "banco", "phase": "h72", "title": "Avisar o banco · cartão liberado pra JPY", "onlyJapan": true },
+    { "id": "checkin", "phase": "h72", "title": "Check-in online", "note": "abre 48 h antes · o assento já marcado", "dueOffsetHours": -48 },
+    { "id": "esim-salvo", "phase": "h72", "title": "eSIM comprado e instruções salvas", "note": "marca sozinho quando o eSIM está na Carteira", "onlyJapan": true, "autoRule": "esim" },
+    { "id": "camera", "phase": "bags", "title": "Câmeras e filmes na mão · pedir inspeção manual", "note": "filme ISO 400+ não passa no raio-X do despacho" },
+    { "id": "peso", "phase": "bags", "title": "Pesar a mala ≤ franquia", "note": "a franquia está no cartão do voo" },
+    { "id": "powerbank", "phase": "bags", "title": "Power banks na mão", "note": "nunca despachados" },
+    { "id": "conexao", "phase": "airport", "title": "Reconferir portão e tempo de conexão", "note": "na escala o portão pode mudar", "onlyConnection": true },
+    { "id": "ir-aeroporto", "phase": "airport", "title": "Ir pro aeroporto", "note": "ônibus ou táxi · confira o horário" },
+    { "id": "esim-ativar", "phase": "arrival", "title": "Ativar o eSIM", "onlyJapan": true },
+    { "id": "suica", "phase": "arrival", "title": "Recarregar a Suica", "note": "saldo anotado na Carteira", "onlyJapan": true },
+    { "id": "jrpass", "phase": "arrival", "title": "Trocar o JR Pass na data certa", "note": "troca no guichê JR do aeroporto · vale a data de início", "onlyJapan": true }
+  ]
+}

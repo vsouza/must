@@ -122,7 +122,8 @@ struct WalletTests {
         #expect(item.qrPayload == "JR-7K2M-NZ17")
     }
 
-    @Test func flightStillWaitsForTheVoosScreen() throws {
+    /// Voo vai pra Voos (prompt 15 · C), nunca pra Carteira nem pro board. Sem trecho, não salva.
+    @Test func flightWithoutLegsCannotBeSaved() throws {
         let container = try Self.container()
         let model = TicketImportModel()
         model.configure(context: container.mainContext, region: .jp, provider: NoPlaces())
@@ -130,10 +131,11 @@ struct WalletTests {
         draft.kind = .flight
         draft.title = "LA 8084"
         model.draft = draft
+        #expect(model.isFlight)
         #expect(model.canSave == false)
-        #expect(model.notYetMessage != nil)
         #expect(throws: TicketImportError.incomplete) { try model.save() }
         #expect(container.mainContext.walletItems().isEmpty)
+        #expect(container.mainContext.flights().isEmpty)
     }
 
     // MARK: Consultas e regras

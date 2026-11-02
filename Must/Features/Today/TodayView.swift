@@ -10,6 +10,7 @@ struct TodayView: View {
     @Query private var days: [PlannedDay]
     @Query private var expenses: [Expense]
     @Query private var settingsList: [Settings]
+    @Query private var flights: [Flight]
     @Environment(\.dismiss) private var dismiss
 
     /// Outro dia aceito (aberto pela Viagem). `nil` = hoje.
@@ -110,6 +111,7 @@ struct TodayView: View {
                 Text("dia \(day.kind.label) · \(done) de \(stops.count) feitos").mustSerif(18).foregroundStyle(Color.must.secondary)
             }
             .padding(.top, 22)
+            flightNotes(day, now: now)
             if day.kind == .photo {
                 // Dia de fotografia: a tela da luz (Luz.png).
                 Button { router.push(.light(date: day.date)) } label: {
@@ -224,6 +226,32 @@ struct TodayView: View {
         .opacity(stop.done ? 0.55 : 1)
         .contentShape(Rectangle())
         .onTapGesture { if let id = place?.id { router.push(.place(id: id), on: .hoje) } }
+    }
+
+    /// Dia de voo (prompt 15 · C): o voo é âncora dura e a hora de sair pro aeroporto. O deslocamento é estimativa (60 min) sem rota.
+    @ViewBuilder
+    private func flightNotes(_ day: PlannedDay, now: Date) -> some View {
+        let today = FlightRules.dayFlights(flights, on: day.date, region: region)
+        if !today.isEmpty {
+            VStack(alignment: .leading, spacing: 10) {
+                ForEach(today, id: \.number) { flight in
+                    HStack(alignment: .firstTextBaseline, spacing: 10) {
+                        MustIconView(.rota, size: 16)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("voo \(flight.number) · \(region.timeString(flight.departs))")
+                                .font(.must.archivo(15, .semibold)).foregroundStyle(Color.must.ink)
+                            Text(flight.leaveAt > now
+                                 ? "saia pro aeroporto às \(region.timeString(flight.leaveAt)) · estimativa"
+                                 : "hora de ir pro aeroporto · estimativa")
+                                .mustMeta()
+                        }
+                        Spacer(minLength: 0)
+                    }
+                    .padding(14)
+                    .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Color.must.surface))
+                }
+            }
+        }
     }
 
     private func currentRow(_ stop: Stop, index: Int, now: Date) -> some View {

@@ -47,7 +47,7 @@ final class DayPlanner {
     /// Previsão do dia (do `SyncCoordinator`), usada no subtítulo e na regra de tempo do solver.
     var weather: DayWeather?
 
-    func request(trip: TripInfo?, settings: Settings?, location: CLLocation?) -> DayRequest {
+    func request(trip: TripInfo?, settings: Settings?, location: CLLocation?, flights: [DayFlight] = []) -> DayRequest {
         let cal = region.calendar
         let city = trip?.city(on: date, calendar: cal)
         let center = CLLocationCoordinate2D(latitude: city?.lat ?? region.defaultCenter.latitude,
@@ -62,21 +62,22 @@ final class DayPlanner {
                           sameCityIds: Set((trip?.cities ?? []).filter { $0.name == city?.name && $0.id != city?.id }.map(\.id)),
                           daysLeftInCity: city.flatMap { trip?.daysLeft(in: $0, after: date, calendar: cal) },
                           weather: weather, walkMaxKm: settings?.walkMaxKm ?? 1.5,
-                          oneMealPerWindow: settings?.oneMealPerWindow ?? true, cityCenter: center, seed: seed)
+                          oneMealPerWindow: settings?.oneMealPerWindow ?? true, cityCenter: center, seed: seed,
+                          flights: flights)
     }
 
-    func solve(catalog: [SolverPlace], trip: TripInfo?, settings: Settings?, location: CLLocation?) -> DayProposal {
-        DaySolver.solve(request(trip: trip, settings: settings, location: location), catalog: catalog)
+    func solve(catalog: [SolverPlace], trip: TripInfo?, settings: Settings?, location: CLLocation?, flights: [DayFlight] = []) -> DayProposal {
+        DaySolver.solve(request(trip: trip, settings: settings, location: location, flights: flights), catalog: catalog)
     }
 
-    func build(catalog: [SolverPlace], trip: TripInfo?, settings: Settings?, location: CLLocation?) {
-        proposal = solve(catalog: catalog, trip: trip, settings: settings, location: location)
+    func build(catalog: [SolverPlace], trip: TripInfo?, settings: Settings?, location: CLLocation?, flights: [DayFlight] = []) {
+        proposal = solve(catalog: catalog, trip: trip, settings: settings, location: location, flights: flights)
         if let proposal { Log.solver.info("dia \(proposal.stops.count) paradas · \(proposal.predictedSpend) · \(proposal.explanation, privacy: .public)") }
     }
 
-    func reshuffle(catalog: [SolverPlace], trip: TripInfo?, settings: Settings?, location: CLLocation?) {
+    func reshuffle(catalog: [SolverPlace], trip: TripInfo?, settings: Settings?, location: CLLocation?, flights: [DayFlight] = []) {
         seed += 1
-        build(catalog: catalog, trip: trip, settings: settings, location: location)
+        build(catalog: catalog, trip: trip, settings: settings, location: location, flights: flights)
     }
 
     /// "ou diga: …" → intenção; reflete na tela (tipo, andar, orçamento, listas) antes de montar.

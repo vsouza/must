@@ -224,6 +224,22 @@ private struct SettingsSections: View {
 
     // MARK: Dados
 
+    /// Status de voo (AeroDataBox): o contador do mês, como o do Google. Zera no mês seguinte.
+    private var flightRow: some View {
+        FormRow("Status de voo", subtitle: flightSubtitle) {
+            HStack(spacing: 8) {
+                Circle().fill(Secrets.aerodataboxKey == nil ? Color(hex: 0xC5C9D0) : Color.must.green).frame(width: 8, height: 8)
+                MonoValue("\(FlightQuota.used()) / \(FlightQuota.planLimit)")
+            }
+        }
+    }
+
+    private var flightSubtitle: String {
+        if Secrets.aerodataboxKey == nil { return "AeroDataBox · sem chave: só o horário programado" }
+        if FlightQuota.isBlocked() { return "AeroDataBox · cota recusada neste mês · volta no mês que vem" }
+        return "AeroDataBox · 2 unidades por consulta · para em \(FlightQuota.monthlyCap)"
+    }
+
     private var data: some View {
         FormSection("Dados") {
             FormRow("Google Places", subtitle: placesSubtitle) {
@@ -249,6 +265,8 @@ private struct SettingsSections: View {
             .buttonStyle(MustPressStyle())
             .disabled(services.sync.isSyncingPlaces)
             .padding(.bottom, 14)
+            RowDivider()
+            flightRow
             RowDivider()
             FormRow("Tempo", subtitle: region == .jp ? "Open-Meteo + JMA" : "Open-Meteo") {
                 MonoValue(weatherStatus, color: Color.must.secondary)

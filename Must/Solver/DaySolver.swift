@@ -127,12 +127,16 @@ enum DaySolver {
         var mustExclude: Set<String>
         /// Luz do dia na cidade (sem rede).
         var sun: SunDay
+        /// Minuto (no dia) em que o último passo pode começar: partida − 4 h de voo. `nil` = sem voo.
+        var flightDeadlineMinute: Int?
 
         init(_ request: DayRequest, catalog: [SolverPlace]) {
             self.request = request
             sun = SunService.day(request.date.addingTimeInterval(12 * 3600), request.cityCenter ?? request.origin, timeZone: request.timeZone)
+            flightDeadlineMinute = request.flightDeadline.map { Int($0.timeIntervalSince(request.date) / 60) }
             let intent = request.intent
-            kind = intent.kind ?? request.kind
+            // Dia de voo é descanso (regra do prompt 15 · C): o tipo pedido não passa por cima.
+            kind = request.flightDeadline != nil ? .rest : (intent.kind ?? request.kind)
             budget = intent.budget ?? request.budget
             walk = kind == .rest ? .low : (intent.walk ?? request.walk)
             startEarly = intent.startEarly ?? (kind == .temples || kind == .photo)
@@ -155,6 +159,12 @@ enum DaySolver {
         }
 
         func date(_ minute: Int) -> Date { request.date.addingTimeInterval(TimeInterval(minute * 60)) }
+
+        /// Janela cortada na hora do voo (vazia se a janela inteira cai depois dele).
+        func clamp(_ window: Range<Int>) -> Range<Int> {
+            guard let deadline = flightDeadlineMinute else { return window }
+            return window.lowerBound..<max(window.lowerBound, min(window.upperBound, deadline))
+        }
     }
 
     /// Motivo pra não entrar (nil = elegível). `silent` = não vale citar na explicação.
@@ -222,6 +232,10 @@ enum DaySolver {
             guard req.isInCity(p.cityId) else { leftOut.append(LeftOut(place: p, reason: "outra cidade")); continue }
             if ctx.mustExclude.contains(p.id) { continue }
             let minute = ctx.minute(r.at)
+            if let deadline = ctx.flightDeadlineMinute, minute >= deadline {
+                leftOut.append(LeftOut(place: p, reason: "depois do voo"))
+                continue
+            }
             let duration = p.role == .eat ? 105 : p.role.duration
             var exception = false
             if spend + p.cost > ctx.budget, p.allowBudgetException, !hasException {
@@ -234,7 +248,9 @@ enum DaySolver {
             anchors.append(ProposedStop(place: p, at: r.at, end: ctx.date(minute + duration), window: window(at: minute),
                                         reason: "reserva", isAnchor: true, isException: exception, legFromPrevious: nil))
         }
-        anchors += ticketAnchors(catalog, ctx: ctx).filter { t in !anchors.contains { $0.place.id == t.place.id } }
+        anchors += ticketAnchors(catalog, ctx: ctx).filter { t in
+            !anchors.contains { $0.place.id == t.place.id } && (ctx.flightDeadlineMinute.map { ctx.minute(t.at) < $0 } ?? true)
+        }
         anchors.sort { $0.at < $1.at }
 
         // 2–9. Candidatos elegíveis.
@@ -308,15 +324,17 @@ enum DaySolver {
                 && !(req.intent.mealsException && slot.window == .lunch && chosen.filter({ $0.window == .lunch && $0.place.role == .eat }).count < 2) {
                 continue
             }
-            let w: Range<Int>
+            let windowRaw: Range<Int>
             if let timing = slot.timing {
                 guard let r = range(timing, sun: ctx.sun, ctx: ctx) else { continue }
                 if let light = timing.light, light != .hard, usedLights.contains(light) { continue }
-                w = r
+                windowRaw = r
             } else {
-                w = range(slot.window, startEarly: ctx.startEarly)
+                windowRaw = range(slot.window, startEarly: ctx.startEarly)
             }
-            if w.upperBound <= startMinute { continue }
+            // Dia de voo: a janela para na partida − 4 h.
+            let w = ctx.clamp(windowRaw)
+            if w.isEmpty || w.upperBound <= startMinute { continue }
 
             // Tenta antes e depois da próxima âncora.
             var best: (stop: ProposedStop, score: Double)?

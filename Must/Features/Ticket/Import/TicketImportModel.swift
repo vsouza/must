@@ -303,28 +303,22 @@ final class TicketImportModel {
         draft!.meta[field] = FieldMeta(confidence: 1, origin: "à mão")
     }
 
-    /// Pode salvar? Lugar precisa de título; trem e QR de entrada vão pra Carteira (título opcional).
+    /// Pode salvar? Voo precisa de pelo menos um trecho; lugar precisa de título; trem e QR de entrada vão pra Carteira.
     var canSave: Bool {
-        guard let draft, !isNotYetSupported else { return false }
+        guard let draft else { return false }
+        if isFlight { return !draft.legs.isEmpty }
         if isWalletKind { return true }
         return !draft.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
-    /// Voo fica pra fatia 6 (Voos): nada é salvo daqui ainda.
-    var isNotYetSupported: Bool {
+    /// Voo lido (ou "à mão" com tipo voo): vai pra Voos como `Flight` (prompt 15 · C).
+    var isFlight: Bool {
         draft?.kind == .flight
     }
 
     /// Trem e QR de entrada não viram lugar do board: vão pra Carteira (`WalletItem`).
     var isWalletKind: Bool {
         WalletFromTicket.kind(for: draft?.kind ?? .other) != nil
-    }
-
-    var notYetMessage: String? {
-        switch draft?.kind {
-        case .flight: "Voo: a tela Voos entra na fatia 6 (TODO). Nada foi salvo."
-        default: nil
-        }
     }
 
     /// Lugar escolhido agora (nil = lugar novo).
@@ -337,6 +331,10 @@ final class TicketImportModel {
     /// Trem e QR de entrada gravam um `WalletItem` (Carteira) no lugar disso.
     func save() throws {
         guard let context, let draft, canSave else { throw TicketImportError.incomplete }
+        if draft.kind == .flight {
+            try saveFlight(draft, context: context)
+            return
+        }
         if let kind = WalletFromTicket.kind(for: draft.kind) {
             try saveToWallet(draft, kind: kind, context: context)
             return
@@ -374,6 +372,26 @@ final class TicketImportModel {
         case .stored(let name): return name
         case nil: return nil
         }
+    }
+
+    /// Voo: um `Flight` (PNR, pernas, checklist do modelo) no container da região. Nada vai pro board nem pra Carteira.
+    private func saveFlight(_ draft: TicketDraft, context: ModelContext) throws {
+        let attachment = try storeAttachment(draft.attachment, keepPasses: true)
+        let order = (try? context.fetchCount(FetchDescriptor<Flight>())) ?? 0
+        guard let flight = FlightFromTicket.flight(from: draft, region: region, order: order, attachmentName: attachment, now: AppClock.now) else {
+            TicketFiles.remove(attachment)
+            throw TicketImportError.incomplete
+        }
+        do {
+            context.insert(flight)
+            try context.save()
+        } catch {
+            // Se o banco não gravou, o arquivo novo não fica órfão.
+            TicketFiles.remove(attachment)
+            throw error
+        }
+        saved = true
+        if let inboxId { ShareInbox.remove(id: inboxId) }
     }
 
     /// Trem ou QR de entrada: um `WalletItem` no container da região. Nada vai pro board.

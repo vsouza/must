@@ -15,6 +15,7 @@ struct LightDayView: View {
     @Query private var trips: [TripInfo]
     @Query private var settingsList: [Settings]
     @Query private var days: [PlannedDay]
+    @Query private var flights: [Flight]
 
     init(date: Date) {
         self.date = date
@@ -168,7 +169,8 @@ struct LightDayView: View {
             planner.weather = weather
             planner.startAt = region.calendar.date(byAdding: .minute, value: settingsList.first?.dayStartMinutes ?? 570, to: date) ?? date
             let proposal = planner.solve(catalog: places.solverCatalog, trip: trips.first, settings: settingsList.first,
-                                         location: services.location.current)
+                                         location: services.location.current,
+                                         flights: FlightRules.dayFlights(flights, on: planner.date, region: region))
             var previous: CLLocationCoordinate2D?
             for s in proposal.stops {
                 guard let place = byId[s.place.id] else { continue }

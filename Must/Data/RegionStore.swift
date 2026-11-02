@@ -120,6 +120,7 @@ final class RegionStore {
         let count = try context.fetchCount(FetchDescriptor<MustList>())
         _ = context.settings(for: region)
         guard count == 0 else {
+            try BoardCodec(context: context, region: region).migrateFlightEvents()
             try mergeSeed(context, region: region, bundle: bundle)
             try context.save()
             return

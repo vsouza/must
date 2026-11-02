@@ -360,7 +360,8 @@ struct TripEventCodecTests {
         final class T {}
         let seed = try BoardCodec.decode(Data(contentsOf: Region.jp.seedURL(in: Bundle(for: T.self))!))
         try codec.import(board: seed)
-        let seedEvents = seed.events?.count ?? 0
+        // Voos do seed viram reservas (Flight), não eventos: só os outros eventos contam aqui.
+        let seedEvents = seed.events?.filter { $0.kind != .flight }.count ?? 0
         let at = BoardDates.parseDateTime("2026-11-17T09:12:00+09:00")!
         ctx.insert(TripEvent(at: at, title: "Shinkansen → Kyoto", kind: .train, note: "Nozomi 215 · vagão 8"))
         try ctx.save()

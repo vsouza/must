@@ -78,3 +78,41 @@ struct SolverTicketTests {
         #expect(stop.at == S.time("11:00"))
     }
 }
+
+/// Prompt 15 · C (fatia 6): voo é âncora dura; dia de voo vira `rest` e para em partida − 4 h.
+struct SolverFlightDayTests {
+    let catalog = S.catalog()
+
+    private func flight(at hhmm: String) -> DayFlight {
+        let departs = S.time(hhmm)
+        return DayFlight(number: "LA 8084", departs: departs, leaveAt: departs.addingTimeInterval(-4 * 3600))
+    }
+
+    @Test func flightDeadlineIsFourHoursBeforeDeparture() {
+        var request = S.sunday()
+        request.flights = [flight(at: "22:10")]
+        #expect(request.flightDeadline == S.time("18:10"))
+        #expect(S.sunday().flightDeadline == nil)
+    }
+
+    @Test func flightDayIsRestAndStopsBeforeFourHoursBeforeTheFlight() throws {
+        var request = S.sunday()
+        request.flights = [flight(at: "22:10")]
+        let p = DaySolver.solve(request, catalog: catalog)
+        #expect(p.stops.isEmpty == false)
+        // Nenhuma parada começa depois de partida − 4 h.
+        #expect(p.stops.allSatisfy { $0.at < S.time("18:10") })
+        // Descanso: só comer, beber e ver (sem noite, sem compras).
+        #expect(p.stops.allSatisfy { [StopRole.eat, .drink, .see].contains($0.place.role) })
+        // A reserva das 19:00 cai depois do voo: sai do dia, com o motivo.
+        #expect(p.stops.first { $0.place.id == "j01" } == nil)
+        #expect(p.leftOut.first { $0.place.id == "j01" }?.reason == "depois do voo")
+    }
+
+    @Test func morningFlightLeavesNoStopsAtAll() {
+        var request = S.sunday()
+        request.flights = [flight(at: "06:00")]
+        let p = DaySolver.solve(request, catalog: catalog)
+        #expect(p.stops.isEmpty)
+    }
+}

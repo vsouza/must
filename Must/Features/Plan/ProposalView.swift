@@ -14,6 +14,7 @@ struct ProposalView: View {
     @Query private var places: [Place]
     @Query private var trips: [TripInfo]
     @Query private var settingsList: [Settings]
+    @Query private var flights: [Flight]
 
     @State private var swapping: ProposedStop?
     @State private var error: String?
@@ -79,7 +80,7 @@ struct ProposalView: View {
             IconButton(.outraProposta, style: .glass, label: "Outra proposta") {
                 withAnimation(.snappy) {
                     planner.reshuffle(catalog: places.solverCatalog, trip: trips.first, settings: settingsList.first,
-                                      location: services.location.current)
+                                      location: services.location.current, flights: FlightRules.dayFlights(flights, on: planner.date, region: region))
                 }
             }
         }

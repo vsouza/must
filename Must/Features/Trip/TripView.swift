@@ -109,7 +109,7 @@ struct TripView: View {
                 Text(meta(spent: spent, elapsed: elapsed)).font(.must.meta).foregroundStyle(Color.must.secondary).lineLimit(2)
             }
             Spacer(minLength: 0)
-            Button { router.push(.reservations, on: router.tab) } label: {
+            Button { router.push(.schedule(tab: .voos), on: router.tab) } label: {
                 MustIconView(.calendario, size: 20)
                     .foregroundStyle(.white)
                     .frame(width: 48)
@@ -117,7 +117,7 @@ struct TripView: View {
                     .background(Capsule().fill(Color.must.ink))
             }
             .buttonStyle(MustPressStyle())
-            .accessibilityLabel("Reservas")
+            .accessibilityLabel("Voos e reservas")
         }
         .fixedSize(horizontal: false, vertical: true)
     }

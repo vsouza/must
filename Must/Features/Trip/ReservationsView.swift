@@ -12,6 +12,12 @@ struct ReservationsView: View {
     @Query(sort: \TripEvent.at) private var events: [TripEvent]
     @Query private var trips: [TripInfo]
     @Query private var settingsList: [Settings]
+    @Query private var flights: [Flight]
+
+    /// Dentro da agenda (Viagem › calendário): sem o botão voltar, que é da agenda.
+    var embedded = false
+    /// Toque num voo: a agenda troca pra aba Voos.
+    var onFlight: (() -> Void)? = nil
 
     @State private var editing: EditTarget?
 
@@ -35,6 +41,8 @@ struct ReservationsView: View {
         var cityId: String?
         /// Ingresso anexado ao lugar (abre o Ingresso).
         var ticket: Ticket? = nil
+        /// Trecho de voo (abre a aba Voos).
+        var flightId: String? = nil
     }
 
     private var region: Region { store.region }
@@ -62,7 +70,17 @@ struct ReservationsView: View {
                  place: nil, event: e, done: e.at < region.calendar.startOfDay(for: now), allDay: e.allDay,
                  weatherDependent: e.weatherDependent, cityId: trips.first?.city(on: e.at, calendar: region.calendar)?.id)
         }
-        return (reserved + ticketed + evs).sorted { $0.at < $1.at }
+        let flown = flights.flatMap { f in
+            f.legs.map { leg -> Item in
+                let zone = FlightFormat.zone(leg.from, fallback: region.timeZone)
+                let meta = [FlightFormat.time(leg.departsNow, zone: zone), leg.seat.map { "assento \($0)" }, f.pnr.isEmpty ? nil : "PNR \(f.pnr)"]
+                    .compactMap { $0 }.joined(separator: " · ")
+                return Item(id: "flight#\(leg.id)", at: leg.departsNow, title: "\(leg.number) · \(leg.routeLabel)", meta: meta,
+                            place: nil, event: nil, done: leg.departsNow < region.calendar.startOfDay(for: now), allDay: false,
+                            weatherDependent: false, cityId: nil, flightId: f.id)
+            }
+        }
+        return (reserved + ticketed + evs + flown).sorted { $0.at < $1.at }
     }
 
     var body: some View {
@@ -71,7 +89,11 @@ struct ReservationsView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 HStack {
-                    IconButton(.voltar, style: .glass, label: "Voltar") { dismiss() }
+                    if embedded {
+                        Color.clear.frame(width: 40, height: 40)
+                    } else {
+                        IconButton(.voltar, style: .glass, label: "Voltar") { dismiss() }
+                    }
                     Spacer()
                     Micro(trips.first?.hasTrip == true ? "âncoras da viagem" : "âncoras do mês")
                     Spacer()
@@ -203,6 +225,7 @@ struct ReservationsView: View {
         if let place = item.place, let ticket = item.ticket { router.push(.ticket(placeId: place.id, ticketId: ticket.id), on: router.tab) }
         else if let place = item.place { router.push(.place(id: place.id), on: router.tab) }
         else if let event = item.event { editing = .event(event) }
+        else if item.flightId != nil { onFlight?() }
     }
 }
 
@@ -240,7 +263,7 @@ struct EventEditor: View {
                 .padding(.horizontal, 16).frame(height: 52)
                 .background(Color.must.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
             FlowLayout(spacing: 8) {
-                ForEach(TripEventKind.allCases) { k in
+                ForEach(TripEventKind.allCases.filter { $0 != .flight }) { k in
                     Button { kind = k; if k == .dayTrip { allDay = true } } label: { Pill(k.label.capitalized, isOn: kind == k, icon: k.icon) }
                         .buttonStyle(MustPressStyle())
                 }

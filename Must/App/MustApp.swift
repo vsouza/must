@@ -113,7 +113,8 @@ struct AppRoot: View {
 /// `ingresso` abre um ingresso de exemplo (TicketDemo). `ingresso-entrada` e `ingresso-revisar` abrem Trazer ingresso
 /// (o segundo com um PDF de exemplo na caixa). `experiencias` abre Experiências (com exemplos); `descobrir` abre Por perto
 /// (use `-debugNearby fake` pra não gastar Google). `carteira` põe itens de exemplo na Carteira e abre a tela.
-/// `-gallery` abre a Gallery.
+/// `voos` abre Voos (aba da agenda); `viagem-voos` e `viagem-reservas` passam pelo calendário da Viagem.
+/// `-debugFlight fake` troca o AeroDataBox por status de mentira (prints, sem cota). `-gallery` abre a Gallery.
 @MainActor
 enum DebugLaunch {
     static func apply(to router: AppRouter, context: ModelContext, region: Region, services: Services) {
@@ -161,6 +162,9 @@ enum DebugLaunch {
             ExperienceDemo.ensure(context: context, region: region)
             router.push(.experiences, on: .musts)
         case "descobrir": router.push(.discover, on: .inicio)
+        case "voos": router.push(.schedule(tab: .voos), on: .inicio)
+        case "viagem-voos": router.push(.trip, on: .inicio); router.push(.schedule(tab: .voos), on: .inicio)
+        case "viagem-reservas": router.push(.trip, on: .inicio); router.push(.schedule(tab: .reservas), on: .inicio)
         case "carteira": // itens de exemplo (Suica, JR Pass, eSIM, Visit Japan Web com QR) e a Carteira
             WalletDemo.ensure(context: context, region: region)
             router.push(.carteira, on: .inicio)
@@ -184,7 +188,8 @@ enum DebugLaunch {
         let places = (try? context.fetch(FetchDescriptor<Place>())) ?? []
         let date = region.calendar.date(byAdding: .day, value: offset, to: AppClock.now) ?? AppClock.now
         let planner = DayPlanner(date: date, region: region, settings: settings, existing: nil)
-        planner.build(catalog: places.solverCatalog, trip: trip, settings: settings, location: offset == 0 ? location.current : nil)
+        let flights = FlightRules.dayFlights(context.flights(), on: planner.date, region: region)
+        planner.build(catalog: places.solverCatalog, trip: trip, settings: settings, location: offset == 0 ? location.current : nil, flights: flights)
         try? planner.accept(context: context)
     }
 }

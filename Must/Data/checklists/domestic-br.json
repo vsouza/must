@@ -1,0 +1,15 @@
+{
+  "id": "domestic-br",
+  "version": 1,
+  "items": [
+    { "id": "checkin", "phase": "h72", "title": "Check-in online", "note": "abre 24 h antes · o assento já marcado", "dueOffsetHours": -24 },
+    { "id": "documento", "phase": "h72", "title": "Documento com foto na mão", "note": "o da reserva, o mesmo que você apresenta" },
+    { "id": "liquidos", "phase": "bags", "title": "Líquidos até 100 ml no bolso", "note": "o resto vai despachado" },
+    { "id": "peso", "phase": "bags", "title": "Pesar a mala ≤ franquia", "note": "a franquia está no cartão do voo" },
+    { "id": "powerbank", "phase": "bags", "title": "Power bank na mão", "note": "nunca despachado" },
+    { "id": "conexao", "phase": "airport", "title": "Reconferir portão e tempo de conexão", "note": "na escala o portão pode mudar", "onlyConnection": true },
+    { "id": "ir-aeroporto", "phase": "airport", "title": "Ir pro aeroporto", "note": "ônibus, app ou carro · confira o horário" },
+    { "id": "esteira", "phase": "arrival", "title": "Pegar a bagagem na esteira" },
+    { "id": "destino", "phase": "arrival", "title": "Ir pro destino", "note": "táxi ou app" }
+  ]
+}

@@ -44,6 +44,10 @@ targets:
         buildPhase: resources
       - path: data/map-packs.json
         buildPhase: resources
+      - path: Must/Data/checklists/intl-japan.json
+        buildPhase: resources
+      - path: Must/Data/checklists/domestic-br.json
+        buildPhase: resources
     dependencies:
       - target: MustWidgets
         embed: true

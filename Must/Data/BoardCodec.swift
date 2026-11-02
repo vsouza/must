@@ -156,6 +156,7 @@ struct BoardCodec {
         summary.expensesInserted = try importExpenses(board.expenses ?? [], places: places)
         summary.daysUpserted = try importDays(board.days ?? [], places: places)
         try importEvents(board.events ?? [])
+        try importFlights(board.flights ?? [])
 
         try context.save()
         Log.data.info("import \(region.rawValue): \(summary.description, privacy: .public)")
@@ -278,16 +279,66 @@ struct BoardCodec {
         return count
     }
 
-    /// Eventos: dedupe por (instante, título).
+    /// Eventos: dedupe por (instante, título). `kind: flight` não vira evento: vai pras reservas de voo (prompt 15 · C).
     private func importEvents(_ items: [BoardEvent]) throws {
         let existing = try context.fetch(FetchDescriptor<TripEvent>())
         var keys = Set(existing.map { "\(Int($0.at.timeIntervalSince1970))|\($0.title)" })
-        for item in items {
+        for item in items where item.kind != .flight {
             let key = "\(Int(item.at.timeIntervalSince1970))|\(item.title)"
             guard keys.insert(key).inserted else { continue }
             context.insert(TripEvent(at: item.at, title: item.title, kind: item.kind ?? .event, note: item.note ?? "",
                                      allDay: item.allDay ?? false, weatherDependent: item.weatherDependent ?? false))
         }
+        // Voo no formato antigo (evento "LA3553 · BH → São Paulo"): trechos soltos, agrupados em reservas.
+        let legacy = items.filter { $0.kind == .flight }.map { FlightRules.legacyLeg(title: $0.title, at: $0.at, note: $0.note) }
+        for chain in FlightChains.bookings(from: legacy) {
+            try insertFlight(pnr: nil, legs: chain, checkedKg: nil, cabinKg: nil, template: nil, checklist: nil)
+        }
+    }
+
+    /// Reservas de voo do board (`flights`). Dedupe pelo primeiro trecho (número + partida).
+    private func importFlights(_ items: [BoardFlight]) throws {
+        for item in items where !item.legs.isEmpty {
+            let legs = item.legs.map { leg in
+                FlightSegment(number: leg.number, from: leg.from, to: leg.to, departs: leg.departs, arrives: leg.arrives,
+                          seat: leg.seat, terminal: leg.terminal, gate: leg.gate, note: leg.note)
+            }
+            try insertFlight(pnr: item.pnr, legs: legs, checkedKg: item.checkedKg, cabinKg: item.cabinKg,
+                             template: item.template, checklist: item.checklist, carrier: item.carrier)
+        }
+    }
+
+    /// Grava uma reserva se o primeiro trecho ainda não está no banco. Sem checklist no arquivo, usa o modelo.
+    @discardableResult
+    func insertFlight(pnr: String?, legs: [FlightSegment], checkedKg: Int?, cabinKg: Int?, template: String?,
+                      checklist: [ChecklistItem]?, carrier: String? = nil) throws -> Bool {
+        guard let first = legs.first else { return false }
+        let known = try context.fetch(FetchDescriptor<Flight>())
+        let duplicate = known.contains { flight in
+            guard let existing = flight.firstLeg else { return false }
+            return existing.number == first.number && abs(existing.departs.timeIntervalSince(first.departs)) < 60
+        }
+        guard !duplicate else { return false }
+        let key = template ?? FlightRules.templateKey(for: legs)
+        let items = checklist ?? ChecklistTemplates.items(template: key, legs: legs)
+        let order = known.count
+        context.insert(Flight(pnr: pnr ?? "", carrier: carrier ?? FlightRules.carrierName(FlightRules.carrierCode(of: first.number)),
+                              template: key, checkedKg: checkedKg, cabinKg: cabinKg, legs: legs, checklist: items, order: order))
+        return true
+    }
+
+    /// Board antigo: os voos que estavam como evento (`TripEvent` kind flight) viram reservas, sem perder nada.
+    /// Roda a cada abertura; sem voo antigo, não faz nada.
+    func migrateFlightEvents() throws {
+        let events = try context.fetch(FetchDescriptor<TripEvent>()).filter { $0.kind == .flight }
+        guard !events.isEmpty else { return }
+        let legs = events.map { FlightRules.legacyLeg(title: $0.title, at: $0.at, note: $0.note.isEmpty ? nil : $0.note) }
+        for chain in FlightChains.bookings(from: legs) {
+            try insertFlight(pnr: nil, legs: chain, checkedKg: nil, cabinKg: nil, template: nil, checklist: nil)
+        }
+        events.forEach(context.delete)
+        try context.save()
+        Log.data.info("\(events.count, privacy: .public) voo(s) do board antigo viraram reservas")
     }
 
     static func cityName(from id: String) -> String {
@@ -306,6 +357,7 @@ struct BoardCodec {
         let expenses = try context.fetch(FetchDescriptor<Expense>(sortBy: [SortDescriptor(\.at)]))
         let days = try context.fetch(FetchDescriptor<PlannedDay>(sortBy: [SortDescriptor(\.date)]))
         let events = try context.fetch(FetchDescriptor<TripEvent>(sortBy: [SortDescriptor(\.at), SortDescriptor(\.title)]))
+        let flights = context.flights()
 
         let boardTrip = trip.map { t in
             BoardTrip(start: t.start.map(d.dayString), end: t.end.map(d.dayString), home: t.home,
@@ -343,9 +395,18 @@ struct BoardCodec {
                          },
                          accepted: day.accepted)
             },
-            events: events.map { e in
+            events: events.filter { $0.kind != .flight }.map { e in
                 BoardEvent(at: e.at, title: e.title, kind: e.kind, note: e.note.isEmpty ? nil : e.note,
                            allDay: e.allDay, weatherDependent: e.weatherDependent)
+            },
+            flights: flights.map { f in
+                BoardFlight(pnr: f.pnr.isEmpty ? nil : f.pnr, carrier: f.carrier.isEmpty ? nil : f.carrier,
+                            template: f.template.isEmpty ? nil : f.template, checkedKg: f.checkedKg, cabinKg: f.cabinKg,
+                            legs: f.legs.map { l in
+                                BoardFlightLeg(number: l.number, from: l.from, to: l.to, departs: l.departs, arrives: l.arrives,
+                                               seat: l.seat, terminal: l.terminal, gate: l.gate, note: l.note)
+                            },
+                            checklist: f.checklist.isEmpty ? nil : f.checklist)
             }
         )
     }

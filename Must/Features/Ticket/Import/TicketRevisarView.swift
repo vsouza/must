@@ -33,6 +33,9 @@ struct TicketRevisarView: View {
 
                 if model.isWalletKind {
                     walletCard.padding(.top, 26)
+                } else if model.isFlight {
+                    Micro("voo · vai pra Voos").padding(.top, 26)
+                    flightCard.padding(.top, 10)
                 } else {
                     Micro("vincular a").padding(.top, 26)
                     matchCard.padding(.top, 10)
@@ -45,15 +48,9 @@ struct TicketRevisarView: View {
                     budgetCard.padding(.top, 18)
                 }
 
-                if let note = model.notYetMessage {
-                    Text(note).font(.must.archivo(14, .semibold)).foregroundStyle(Color(hex: 0x8A5A00))
-                        .padding(14).frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color(hex: 0xFFF3D6), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                        .padding(.top, 16)
-                }
                 if let saveError { Text(saveError).font(.must.meta).foregroundStyle(Color(hex: 0xC2261D)).padding(.top, 12) }
 
-                PrimaryButton(model.isWalletKind ? "Salvar na Carteira" : "Salvar ingresso", icon: .ok, iconTrailing: true) { save() }
+                PrimaryButton(saveTitle, icon: .ok, iconTrailing: true) { save() }
                     .disabled(!model.canSave)
                     .padding(.top, 18)
                 Color.clear.frame(height: 40)
@@ -66,6 +63,34 @@ struct TicketRevisarView: View {
         .sheet(isPresented: $choosing) {
             TicketPlacePicker(model: model, close: { choosing = false })
         }
+    }
+
+    private var saveTitle: String {
+        if model.isFlight { return "Salvar voo" }
+        return model.isWalletKind ? "Salvar na Carteira" : "Salvar ingresso"
+    }
+
+    /// Trechos lidos: número, rota e partida no fuso do aeroporto. Chegada, portão e terminal vêm do status ao vivo.
+    private var flightCard: some View {
+        let segments = FlightFromTicket.segments(from: model.draft ?? TicketDraft(at: AppClock.now), region: region)
+        return VStack(alignment: .leading, spacing: 12) {
+            ForEach(Array(segments.enumerated()), id: \.offset) { index, segment in
+                if index > 0 { RowDivider() }
+                HStack(alignment: .firstTextBaseline) {
+                    Text(segment.number).font(.must.mono(15, .semibold))
+                    Text("\(segment.from) → \(segment.to)").font(.must.archivo(15, .semibold)).foregroundStyle(Color.must.ink)
+                    Spacer(minLength: 8)
+                    Text("\(FlightFormat.day(segment.departs, zone: FlightFormat.zone(segment.from, fallback: region.timeZone))) · \(FlightFormat.time(segment.departs, zone: FlightFormat.zone(segment.from, fallback: region.timeZone)))")
+                        .font(.must.mono(13)).foregroundStyle(Color.must.secondary)
+                }
+            }
+            if segments.isEmpty {
+                Text("Nenhum trecho lido. Confira o número do voo e os aeroportos antes de salvar.").font(.must.meta).foregroundStyle(Color.must.secondary)
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.must.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 
     /// Legenda que quebra linha (um HStack não quebra e empurra a tela pra fora).
@@ -99,7 +124,7 @@ struct TicketRevisarView: View {
                     .environment(\.timeZone, region.timeZone)
                     .environment(\.locale, region.locale)
             }
-            if !model.isWalletKind {
+            if !model.isWalletKind && !model.isFlight {
                 RowDivider()
                 row("Pessoas", .people) {
                     Stepper(value: integer(\.people, .people), in: 1...12) {
@@ -118,7 +143,7 @@ struct TicketRevisarView: View {
                 TextField("código", text: text(\.confirmation, .confirmation)).font(.must.mono(15, .semibold)).lineLimit(1)
                     .textInputAutocapitalization(.characters).multilineTextAlignment(.trailing)
             }
-            if !model.isWalletKind {
+            if !model.isWalletKind && !model.isFlight {
                 RowDivider()
                 row("Encontro", .meeting) {
                     TextField("ponto de encontro", text: text(\.meetingPoint, .meeting), axis: .vertical).lineLimit(1...3).multilineTextAlignment(.trailing)
