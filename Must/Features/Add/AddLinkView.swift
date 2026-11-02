@@ -2,86 +2,6 @@ import CoreLocation
 import SwiftData
 import SwiftUI
 
-/// Estado do fluxo "Adicionar por link".
-@MainActor
-@Observable
-final class AddLinkModel {
-    enum Phase: Equatable { case idle, reading, needsText(String), done, failed(String) }
-
-    var input = ""
-    var phase: Phase = .idle
-    var resolved: ResolvedLink?
-    var caption: Caption?
-    var matches: [MatchedPlace] = []
-    /// Lista escolhida por resultado.
-    var listChoice: [String: String] = [:]
-    /// Resultados marcados pra adicionar.
-    var included: Set<String> = []
-    var pastedText = ""
-
-    var detectedSource: LinkSource? {
-        let source = LinkResolver.resolve(input).source
-        return source.badge == nil ? nil : source
-    }
-
-    /// Modelo no aparelho / reforço na nuvem (de Ajustes).
-    var extractorOptions = AIPlaceExtractor.Options(onDevice: true, cloudBoost: false, knownAreas: [])
-    /// Por onde a extração passou ("no aparelho", "reforço na nuvem", "palavras-chave").
-    var extractedVia: String?
-
-    func run(places: [Place], lists: [MustList], city: City?, region: Region, knownAreas: [String]) async {
-        let link = LinkResolver.resolve(input)
-        guard !link.text.isEmpty || link.url != nil else { return }
-        resolved = link
-        phase = .reading
-        matches = []
-        do {
-            let caption = try await CaptionFetcher().fetch(link)
-            await finish(caption, places: places, lists: lists, city: city, region: region, knownAreas: knownAreas)
-        } catch {
-            Log.network.error("legenda falhou: \(error.localizedDescription, privacy: .public)")
-            phase = .needsText((error as? LocalizedError)?.errorDescription ?? "Não consegui ler a legenda.")
-        }
-    }
-
-    /// Fallback: o usuário cola o texto da legenda.
-    func runPasted(places: [Place], lists: [MustList], city: City?, region: Region, knownAreas: [String]) async {
-        let source = resolved?.source ?? .text
-        let caption = Caption(source: source, title: nil, text: String(pastedText.prefix(CaptionFetcher.maxLength)), url: resolved?.url)
-        await finish(caption, places: places, lists: lists, city: city, region: region, knownAreas: knownAreas)
-    }
-
-    private func finish(_ caption: Caption, places: [Place], lists: [MustList], city: City?, region: Region, knownAreas: [String]) async {
-        self.caption = caption
-        var options = extractorOptions
-        options.knownAreas = knownAreas
-        let (extracted, via) = await AIPlaceExtractor.extract(from: caption, options: options)
-        extractedVia = via
-        matches = PlaceMatcher.match(extracted, caption: caption, places: places, lists: lists, city: city, region: region)
-        listChoice = Dictionary(uniqueKeysWithValues: matches.compactMap { m in m.suggestedListId.map { (m.id, $0) } })
-        included = Set(matches.prefix(1).filter { $0.existing == nil }.map(\.id))
-        phase = matches.isEmpty ? .needsText("Li a legenda, mas não achei nome de lugar. Cola o trecho com o nome:") : .done
-    }
-
-    var stepLines: [(done: Bool, text: String)] {
-        guard let resolved else { return [] }
-        var lines: [(Bool, String)] = []
-        switch resolved.source {
-        case .maps: lines.append((caption != nil, "Link do Maps lido · nome e coordenada"))
-        case .text: lines.append((true, "Texto lido"))
-        default:
-            let what = resolved.source == .youtube ? "título e descrição do vídeo" : "legenda do post"
-            lines.append((caption != nil, caption != nil ? "Legenda lida · \(what)" : "Lendo a \(what)…"))
-        }
-        if caption != nil {
-            let n = matches.count
-            let via = extractedVia.map { " · \($0)" } ?? ""
-            lines.append((n > 0, (n == 1 ? "1 lugar encontrado" : "\(n) lugares encontrados") + via))
-        }
-        return lines
-    }
-}
-
 /// "Cola o link": Reel, TikTok, YouTube, Maps ou um nome → lugares do board.
 struct AddLinkView: View {
     var initialURL: String?
@@ -123,15 +43,20 @@ struct AddLinkView: View {
                     }
                     .padding(.top, 16)
 
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Cola o link").mustTitle()
-                        Text("Reel, TikTok, YouTube ou um nome — eu descubro o lugar").mustSerif(18).foregroundStyle(Color.must.secondary)
-                    }
-                    .padding(.top, 26)
+                    if model.phase == .done {
+                        AddLinkResults(model: model, lists: lists, region: region)
+                            .padding(.top, 20)
+                    } else {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Cola o link").mustTitle()
+                            Text("Reel, TikTok, YouTube ou um nome — eu descubro o lugar").mustSerif(18).foregroundStyle(Color.must.secondary)
+                        }
+                        .padding(.top, 26)
 
-                    inputField.padding(.top, 18)
-                    badges.padding(.top, 14)
-                    resultArea.padding(.top, 28)
+                        inputField.padding(.top, 18)
+                        badges.padding(.top, 14)
+                        resultArea.padding(.top, 28)
+                    }
 
                     Text(settingsList.first?.cloudBoost == true && CloudBoost.isConfigured
                          ? "Processado no aparelho · legendas difíceis vão pro Claude Haiku (só o texto)"
@@ -207,7 +132,7 @@ struct AddLinkView: View {
 
     @ViewBuilder private var resultArea: some View {
         switch model.phase {
-        case .idle:
+        case .idle, .done:
             EmptyView()
         case .reading:
             HStack(spacing: 10) {
@@ -221,8 +146,6 @@ struct AddLinkView: View {
             pasteCard(message)
         case .failed(let message):
             Text(message).font(.must.meta).foregroundStyle(Color(hex: 0xC2261D))
-        case .done:
-            foundCards
         }
     }
 
@@ -236,7 +159,7 @@ struct AddLinkView: View {
                 .padding(14)
                 .background(Color.white, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             Button {
-                Task { await model.runPasted(places: places, lists: lists, city: city, region: region, knownAreas: knownAreas) }
+                Task { await runPasted() }
             } label: { Pill("Ler texto", style: .green) }
                 .buttonStyle(MustPressStyle())
                 .disabled(model.pastedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -260,98 +183,19 @@ struct AddLinkView: View {
         }
     }
 
-    @ViewBuilder private var foundCards: some View {
-        let matches = model.matches
-        VStack(spacing: -22) {
-            if let first = matches.first {
-                VStack(alignment: .leading, spacing: 14) {
-                    stepsView
-                    RowDivider()
-                    Micro("encontrei")
-                    matchDetail(first, big: true)
-                    listPills(for: first)
-                }
-                .padding(.horizontal, 22)
-                .padding(.vertical, 20)
-                .padding(.bottom, matches.count > 1 ? 30 : 0)
-                .glass(cornerRadius: 26)
-                .rotationEffect(.degrees(-1))
-                .zIndex(0)
-            }
-            ForEach(Array(matches.dropFirst().enumerated()), id: \.element.id) { index, match in
-                HStack(alignment: .center, spacing: 12) {
-                    matchDetail(match, big: false)
-                    Spacer(minLength: 8)
-                    if match.existing == nil {
-                        Button { toggle(match) } label: {
-                            Pill(model.included.contains(match.id) ? "Incluído" : "Adicionar", style: model.included.contains(match.id) ? .green : .default)
-                        }
-                        .buttonStyle(MustPressStyle())
-                    }
-                }
-                .padding(20)
-                .background(Color(hex: 0xF4F5F7), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-                .shadow(color: Color(hex: 0x121316, opacity: 0.08), radius: 16, x: 0, y: 10)
-                .rotationEffect(.degrees(index.isMultiple(of: 2) ? 1.2 : -0.8))
-                .padding(.horizontal, 12)
-                .zIndex(Double(index + 1))
-            }
-        }
-    }
-
-    private func matchDetail(_ match: MatchedPlace, big: Bool) -> some View {
-        let e = match.extracted
-        var meta: [String] = []
-        if let area = e.area ?? match.existing?.area { meta.append(area) }
-        if let sub = e.sub { meta.append(sub.lowercased()) }
-        if let here = services.location.current, !match.approx {
-            meta.append("\(Walk.distanceText(CLLocationDistance(CLLocation(latitude: match.lat, longitude: match.lng).distance(from: here)))) daqui")
-        }
-        meta.append(e.hint)
-        if let existing = match.existing { meta.append("já está no board · \(existing.list?.displayName ?? "")") }
-        return VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(match.existing?.name ?? e.name).font(.must.archivo(big ? 30 : 19, .semibold)).tracking(big ? -0.6 : 0)
-                    .foregroundStyle(Color.must.ink).lineLimit(2)
-                if let local = e.nameLocal ?? match.existing?.nameLocal {
-                    Text(local).font(.must.kanji(big ? 17 : 13, bold: false)).foregroundStyle(Color.must.secondary)
-                }
-            }
-            Text(meta.joined(separator: " · ")).font(.must.archivo(big ? 15 : 13)).foregroundStyle(Color.must.secondary)
-        }
-    }
-
-    private func listPills(for match: MatchedPlace) -> some View {
-        FlowLayout(spacing: 8) {
-            ForEach(lists) { list in
-                let chosen = model.listChoice[match.id] == list.id
-                Button { model.listChoice[match.id] = list.id } label: {
-                    Pill(chosen ? "\(list.displayName)\(match.extracted.sub.map { " · \($0)" } ?? "")" : list.name.capitalized,
-                         style: chosen ? .green : .default)
-                }
-                .buttonStyle(MustPressStyle())
-            }
-        }
-        .disabled(match.existing != nil)
-    }
-
     // MARK: Ação principal
 
-    private var targetListName: String? {
-        let id = model.matches.first.flatMap { model.listChoice[$0.id] } ?? preferredListId
-        return lists.first { $0.id == id }?.displayName
-    }
-
     @ViewBuilder private var mainButton: some View {
-        let count = model.included.count
         Group {
-            if model.phase == .done, let first = model.matches.first, first.existing != nil, count == 0 {
-                PrimaryButton("Já está no board · fechar", style: .dark) { dismiss() }
-            } else if model.phase == .done {
-                PrimaryButton(count > 1 ? "Adicionar \(count) lugares" : "Adicionar ao \(targetListName ?? "board")",
-                              icon: .ok, iconTrailing: true) { save() }
-                    .disabled(count == 0)
-                    .opacity(count == 0 ? 0.5 : 1)
+            if model.phase == .done {
+                if model.matches.allSatisfy({ $0.existing != nil }) {
+                    PrimaryButton("Já está no board · fechar", style: .dark) { dismiss() }
+                } else {
+                    let count = model.included.count
+                    PrimaryButton(addTitle, icon: .ok, iconTrailing: true) { save() }
+                        .disabled(count == 0)
+                        .opacity(count == 0 ? 0.5 : 1)
+                }
             } else {
                 PrimaryButton("Ler o link", icon: .avancar, iconTrailing: true, style: .dark) { Task { await run() } }
                     .disabled(model.input.trimmingCharacters(in: .whitespaces).isEmpty || model.phase == .reading)
@@ -366,8 +210,14 @@ struct AddLinkView: View {
         }
     }
 
-    private func toggle(_ match: MatchedPlace) {
-        if model.included.contains(match.id) { model.included.remove(match.id) } else { model.included.insert(match.id) }
+    /// "Adicionar 2 ao Must eat" quando a lista é a mesma; "Adicionar 2 lugares" quando não.
+    private var addTitle: String {
+        let count = model.included.count
+        guard count > 0 else { return "Marque um lugar" }
+        if let listId = model.sharedListId, let list = lists.first(where: { $0.id == listId }) {
+            return "Adicionar \(count) ao \(list.displayName)"
+        }
+        return count == 1 ? "Adicionar 1 lugar" : "Adicionar \(count) lugares"
     }
 
     private func run() async {
@@ -375,10 +225,19 @@ struct AddLinkView: View {
         let settings = settingsList.first
         model.extractorOptions = AIPlaceExtractor.Options(onDevice: settings?.onDeviceAI ?? true, cloudBoost: settings?.cloudBoost ?? false,
                                                           knownAreas: [], timeZone: region.timeZone)
-        await model.run(places: places, lists: lists, city: city, region: region, knownAreas: knownAreas)
-        if let preferredListId {
-            for m in model.matches where m.existing == nil { model.listChoice[m.id] = preferredListId }
-        }
+        await model.run(board: places, lists: lists, city: city, region: region, knownAreas: knownAreas, provider: services.places)
+        applyPreferredList()
+    }
+
+    private func runPasted() async {
+        await model.runPasted(board: places, lists: lists, city: city, region: region, knownAreas: knownAreas, provider: services.places)
+        applyPreferredList()
+    }
+
+    /// Abriu de uma lista (Musts › lista › +): os novos já vêm nela.
+    private func applyPreferredList() {
+        guard let preferredListId else { return }
+        for m in model.matches where m.existing == nil { model.listChoice[m.id] = preferredListId }
     }
 
     private func save() {
@@ -392,24 +251,26 @@ struct AddLinkView: View {
             place.nameLocal = e.nameLocal
             place.area = e.area
             place.approx = match.approx
+            place.placeId = e.placeId
             place.list = list
             if let sub = e.sub, list?.subs.contains(sub) == true { place.sub = sub }
             place.source = Source(kind: source.sourceKind, url: model.caption?.url?.absoluteString ?? model.resolved?.url?.absoluteString,
                                   savedAt: today, caption: model.caption?.text.isEmpty == false ? model.caption?.text : nil,
                                   author: model.caption?.title)
-            place.notes = e.hint == "link do Maps" ? "" : "Achado \(e.hint)."
+            let alias = e.aliases.isEmpty ? "" : " Na legenda: \(e.aliases.joined(separator: ", "))."
+            place.notes = (e.hint == "link do Maps" ? "" : "Achado \(e.hint).") + alias
             if let art = e.art {
                 place.extra = PlaceExtra(art: art)
                 if let p = art.priceAdult { place.price = p }
                 if let venue = e.venue { place.nameLocal = place.nameLocal ?? venue }
             }
             context.insert(place)
-            // (d) Places Text Search perto da cidade: placeId, coordenada exata e horário, em segundo plano.
-            services.sync.resolveNew(place, candidate: nil, region: region, context: context)
+            // (d) Já conferido no Places: só horário e detalhes. Senão, Text Search perto da cidade.
+            let candidate = e.placeId.map { PlaceCandidate(id: $0, name: e.name, address: nil, lat: match.lat, lng: match.lng) }
+            services.sync.resolveNew(place, candidate: candidate, region: region, context: context)
             Log.data.info("link → \(place.id, privacy: .public) \(source.rawValue, privacy: .public)")
         }
         try? context.save()
         dismiss()
     }
 }
-

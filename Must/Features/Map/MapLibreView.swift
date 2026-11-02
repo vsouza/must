@@ -18,6 +18,8 @@ struct MapScene {
     var distanceLine: [CLLocationCoordinate2D]?
     var you: CLLocationCoordinate2D?
     var heading: Double?
+    /// Área citada (anel fechado, preenchida a 8% e tracejada): o preview do Adicionar por link.
+    var area: [CLLocationCoordinate2D]? = nil
 }
 
 /// Pedido de câmera vindo da tela (cada `id` novo é aplicado uma vez).
@@ -63,6 +65,8 @@ struct MapLibreView: UIViewRepresentable {
     /// A câmera parou (depois de gesto ou animação).
     var onIdle: () -> Void = {}
     var onSelect: (MapPin) -> Void = { _ in }
+    /// Gestos de arrastar e pinçar. Desligado no preview (só pinos).
+    var interactive = true
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
@@ -77,6 +81,8 @@ struct MapLibreView: UIViewRepresentable {
         map.showsScale = false
         map.isRotateEnabled = false
         map.isPitchEnabled = false
+        map.isScrollEnabled = interactive
+        map.isZoomEnabled = interactive
         map.minimumZoomLevel = 9
         map.maximumZoomLevel = 18.5
         map.backgroundColor = UIColor(red: 0xE9 / 255, green: 0xEB / 255, blue: 0xEF / 255, alpha: 1)
@@ -88,6 +94,8 @@ struct MapLibreView: UIViewRepresentable {
     func updateUIView(_ map: MLNMapView, context: Context) {
         let c = context.coordinator
         c.parent = self
+        map.isScrollEnabled = interactive
+        map.isZoomEnabled = interactive
         if c.styleRegion != scene.region { c.loadStyle(near: scene.you ?? scene.region.defaultCenter) }
         c.apply(scene)
         if let command, command.id != c.lastCommand { c.lastCommand = command.id; c.run(command) }
@@ -188,6 +196,19 @@ struct MapLibreView: UIViewRepresentable {
             stations.textOptional = NSExpression(forConstantValue: true)
             style.addLayer(stations)
 
+            // Área citada (preview do Adicionar por link): preenchimento a 8% e contorno tracejado verde.
+            let areaSource = source("rt-area")
+            let areaFill = MLNFillStyleLayer(identifier: "rt-area-fill", source: areaSource)
+            areaFill.fillColor = NSExpression(forConstantValue: PinStyle.green)
+            areaFill.fillOpacity = NSExpression(forConstantValue: 0.08)
+            style.addLayer(areaFill)
+            let areaLine = MLNLineStyleLayer(identifier: "rt-area-line", source: areaSource)
+            areaLine.lineColor = NSExpression(forConstantValue: PinStyle.green)
+            areaLine.lineOpacity = NSExpression(forConstantValue: 0.35)
+            areaLine.lineWidth = NSExpression(forConstantValue: 1.5)
+            areaLine.lineDashPattern = NSExpression(forConstantValue: [3, 4])
+            style.addLayer(areaLine)
+
             let tomorrow = MLNLineStyleLayer(identifier: "rt-tomorrow", source: source("rt-tomorrow"))
             tomorrow.lineColor = NSExpression(forConstantValue: Self.blue)
             tomorrow.lineOpacity = NSExpression(forConstantValue: 0.8)
@@ -272,16 +293,29 @@ struct MapLibreView: UIViewRepresentable {
             setShape("rt-done", scene.routeDone, style: style)
             setShape("rt-future", scene.routeFuture, style: style)
             setShape("rt-distance", scene.distanceLine.map { [$0] } ?? [], style: style)
+            applyArea(scene.area, style: style)
 
             let visible: [String: Bool] = [
                 "rt-metro": scene.layers.contains(.metro), "rt-stations": scene.layers.contains(.metro),
                 "rt-tomorrow": scene.layers.contains(.tomorrow),
                 "rt-done": scene.layers.contains(.today), "rt-future": scene.layers.contains(.today),
                 "rt-distance": true,
+                "rt-area-fill": scene.area != nil, "rt-area-line": scene.area != nil,
             ]
             for (id, on) in visible {
                 if let layer = style.layer(withIdentifier: id), layer.isVisible != on { layer.isVisible = on }
             }
+        }
+
+        private func applyArea(_ ring: [CLLocationCoordinate2D]?, style: MLNStyle) {
+            guard let source = style.source(withIdentifier: "rt-area") as? MLNShapeSource else { return }
+            var h = Hasher()
+            for c in ring ?? [] { h.combine(c.latitude); h.combine(c.longitude) }
+            let sig = h.finalize()
+            guard signatures["rt-area"] != sig else { return }
+            signatures["rt-area"] = sig
+            guard var coords = ring, coords.count > 2 else { source.shape = nil; return }
+            source.shape = MLNPolygonFeature(coordinates: &coords, count: UInt(coords.count))
         }
 
         /// Sem plano em z ≤ 13 vira cluster por grade de ~48 pt.

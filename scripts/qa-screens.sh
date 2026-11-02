@@ -78,8 +78,15 @@ ${=W} dev.simLat -float -19.8517; ${=W} dev.simLng -float -43.9733
 shot bh-esporte -debugScreen lugar:p28
 shot bh-esporte-painel -debugScreen painel:p28
 
+echo "→ Adicionar por link com mapa (prompt 16) · BH: link do Maps · Japão: legenda com 3 lugares e 'November' (Places de mentira)"
+${=W} debugPlaces -string fake
+${=W} region bh
+shot bh-adicionar-mapa -debugScreen "adicionar:https://www.google.com/maps/place/Xapuri/@-19.8517,-43.9733,17z"
+${=W} region jp
+shot jp-adicionar-mapa -debugScreen "adicionar:📍 Tsukiji Outer Market | 📍 Maguroya Kurogin | 📍 Uogashi Senryo | November 2026 | Part 2"
+
 echo "→ limpando simulações"
-for k in dev.simDateOn dev.simDate dev.simSetAt dev.simGPSOn dev.simLat dev.simLng dev.simCloud skipOnboarding; do
+for k in dev.simDateOn dev.simDate dev.simSetAt dev.simGPSOn dev.simLat dev.simLng dev.simCloud skipOnboarding debugPlaces; do
   xcrun simctl spawn "$UDID" defaults delete dev.viniso.must $k 2>/dev/null || true
 done
 ${=W} region bh

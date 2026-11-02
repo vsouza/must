@@ -8,6 +8,8 @@ struct PlaceCandidate: Sendable, Hashable, Identifiable {
     var address: String?
     var lat: Double
     var lng: Double
+    /// Tipo principal do Places ("ramen_restaurant", "market"…): manda na categoria do lugar.
+    var primaryType: String? = nil
 }
 
 /// Detalhes que o Must guarda em cache (horário + preço).
@@ -35,7 +37,7 @@ struct PlacesService: PlacesProviding {
     var isConfigured: Bool { apiKey != nil }
 
     /// Campos mínimos (SKU barato).
-    static let searchMask = "places.id,places.displayName,places.location,places.formattedAddress"
+    static let searchMask = "places.id,places.displayName,places.location,places.formattedAddress,places.primaryType"
     static let detailsMask = "id,regularOpeningHours,currentOpeningHours,priceLevel,priceRange,rating"
 
     /// Chave restrita a apps iOS exige o bundle id no cabeçalho.
@@ -75,7 +77,8 @@ struct PlacesService: PlacesProviding {
             guard let id = p["id"] as? String, let loc = p["location"] as? [String: Any],
                   let lat = loc["latitude"] as? Double, let lng = loc["longitude"] as? Double else { return nil }
             let name = (p["displayName"] as? [String: Any])?["text"] as? String ?? id
-            return PlaceCandidate(id: id, name: name, address: p["formattedAddress"] as? String, lat: lat, lng: lng)
+            return PlaceCandidate(id: id, name: name, address: p["formattedAddress"] as? String, lat: lat, lng: lng,
+                                  primaryType: p["primaryType"] as? String)
         }
     }
 
@@ -120,6 +123,25 @@ struct FakePlacesService: PlacesProviding {
         detailsById[placeId] ?? PlaceDetails(id: placeId)
     }
 }
+
+#if DEBUG
+extension FakePlacesService {
+    /// Prints do Adicionar por link (`-debugPlaces fake`): Tsukiji e Maguroya "conferidos", o resto não.
+    static var linkSamples: FakePlacesService {
+        let tsukiji = PlaceCandidate(id: "fake-tsukiji-outer", name: "Tsukiji Outer Market", address: "Tsukiji, Chuo City",
+                                     lat: 35.6654, lng: 139.7707, primaryType: "market")
+        let maguro = PlaceCandidate(id: "fake-maguroya", name: "Maguroya Kurogin", address: "Tsukiji, Chuo City",
+                                    lat: 35.6651, lng: 139.7706, primaryType: "sushi_restaurant")
+        let hours = PlaceHours(weekdayText: nil, periods: (0...6).map { day in
+            .init(open: .init(day: day, hour: 5, minute: 0), close: .init(day: day, hour: 14, minute: 0))
+        }, fetchedAt: nil)
+        return FakePlacesService(candidates: [tsukiji, maguro], detailsById: [
+            "fake-tsukiji-outer": PlaceDetails(id: "fake-tsukiji-outer", hours: hours),
+            "fake-maguroya": PlaceDetails(id: "fake-maguroya", hours: hours, priceFrom: 3000, priceCurrency: "JPY"),
+        ])
+    }
+}
+#endif
 
 extension PlaceHours {
     /// Cache vence em 7 dias.

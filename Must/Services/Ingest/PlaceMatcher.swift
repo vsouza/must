@@ -18,29 +18,48 @@ struct MatchedPlace: Identifiable {
     var approx: Bool
     /// Lista sugerida.
     var suggestedListId: String?
+    /// Horário e preço do Places (só quando conferido).
+    var details: PlaceDetails? = nil
 
     var id: String { extracted.id }
 
     var existing: Place? { if case .existing(let p) = kind { p } else { nil } }
+
+    /// Tem coordenada real (Places ou link do Maps): aparece no mapa e vem marcado.
+    var located: Bool { !approx }
 }
 
-/// (d) Casa os nomes com o board. O prompt 07 acrescenta o Places Text Search restrito à cidade.
+/// (d) Casa os nomes com o board (por placeId ou nome + distância) e sugere a lista.
 @MainActor
 enum PlaceMatcher {
-    static func match(_ extracted: [ExtractedPlace], caption: Caption, places: [Place], lists: [MustList],
-                      city: City?, region: Region) -> [MatchedPlace] {
+    static func match(_ extracted: [ExtractedPlace], places: [Place], lists: [MustList], city: City?, region: Region,
+                      details: [String: PlaceDetails] = [:]) -> [MatchedPlace] {
         extracted.map { item in
             let suggested = suggestList(for: item, lists: lists)
-            if let place = places.first(where: { similar($0.name, item.name) || ($0.nameLocal != nil && $0.nameLocal == item.nameLocal) }) {
+            let detail = item.placeId.flatMap { details[$0] }
+            if let place = existingPlace(for: item, in: places) {
                 return MatchedPlace(extracted: item, kind: .existing(place), lat: place.lat, lng: place.lng, approx: place.approx,
-                                    suggestedListId: place.list?.id ?? suggested)
+                                    suggestedListId: place.list?.id ?? suggested, details: detail)
             }
-            if let lat = caption.lat, let lng = caption.lng {
-                return MatchedPlace(extracted: item, kind: .new, lat: lat, lng: lng, approx: false, suggestedListId: suggested)
+            if let lat = item.lat, let lng = item.lng {
+                return MatchedPlace(extracted: item, kind: .new, lat: lat, lng: lng, approx: false, suggestedListId: suggested, details: detail)
             }
             let center = city.map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lng) } ?? region.defaultCenter
             return MatchedPlace(extracted: item, kind: .new, lat: center.latitude, lng: center.longitude, approx: true,
-                                suggestedListId: suggested)
+                                suggestedListId: suggested, details: detail)
+        }
+    }
+
+    /// Mesmo placeId; senão nome parecido (ou nome local igual) a até 300 m, se o candidato tem coordenada.
+    static func existingPlace(for item: ExtractedPlace, in places: [Place]) -> Place? {
+        if let id = item.placeId, let hit = places.first(where: { $0.placeId == id }) { return hit }
+        return places.first { place in
+            let sameName = similar(place.name, item.name)
+                || (place.nameLocal != nil && place.nameLocal == item.nameLocal)
+            guard sameName else { return false }
+            guard let lat = item.lat, let lng = item.lng else { return true }
+            let here = CLLocation(latitude: lat, longitude: lng)
+            return here.distance(from: CLLocation(latitude: place.lat, longitude: place.lng)) < 300
         }
     }
 

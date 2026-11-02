@@ -46,6 +46,8 @@ struct MapPin: Identifiable, Equatable, Sendable {
         case callout(text: String)
         /// Pílula preta centrada, em mono (meio da linha de distância: "2,1 km · 9 min de metrô").
         case badge(text: String)
+        /// Pino preto numerado do preview do Adicionar por link; `label` (nome) só no selecionado.
+        case preview(number: Int, label: String?)
     }
 
     enum TodayStatus: Equatable, Sendable { case future, next, done }
@@ -75,6 +77,7 @@ struct MapPin: Identifiable, Equatable, Sendable {
         case .tomorrow: 2
         case .today(_, let status, _): status == .next ? 5 : 4
         case .callout, .badge: 6
+        case .preview(_, let label): label == nil ? 4 : 7
         }
     }
 }
@@ -214,6 +217,11 @@ final class PinView: MLNAnnotationView {
             disc.isHidden = true
             label.isHidden = true
             showPill(caption, gap: 0, font: PinStyle.mono(12), centered: true)
+        case .preview(let number, let caption):
+            setSize(caption == nil ? 28 : 34)
+            fill(PinStyle.ink, stroke: nil)
+            text("\(number)", font: PinStyle.mono(caption == nil ? 12 : 14), color: .white)
+            if let caption { showPill(caption, gap: 6) }
         }
         accessibilityLabel = pin.placeId
     }

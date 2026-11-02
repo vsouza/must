@@ -86,9 +86,13 @@ enum AIPlaceExtractor {
             let name = g.name.trimmingCharacters(in: .whitespacesAndNewlines)
             // Nunca aceita nome que não está no texto (o modelo não inventa lugar).
             guard !name.isEmpty, text.localizedCaseInsensitiveContains(name.split(separator: " ").first.map(String.init) ?? name) else { return nil }
+            // Categoria e sub do próprio lugar; o modelo só entra com a categoria, e a legenda inteira não manda no sub.
+            let near = PlaceExtractor.window(around: name, in: text)
             return ExtractedPlace(name: name, nameLocal: g.nameLocal.isEmpty ? nil : g.nameLocal,
                                   area: g.area.isEmpty ? PlaceExtractor.area(in: text, known: knownAreas) : g.area,
-                                  category: MustColor(rawValue: g.category), sub: PlaceExtractor.sub(in: "\(name) \(text)"),
+                                  category: MustColor(rawValue: g.category) ?? PlaceExtractor.category(in: name)
+                                      ?? PlaceExtractor.category(in: near),
+                                  sub: PlaceExtractor.sub(in: name) ?? PlaceExtractor.sub(in: near),
                                   hint: g.hint.isEmpty ? "citado na legenda" : g.hint)
         }
     }

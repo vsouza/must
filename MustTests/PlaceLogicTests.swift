@@ -184,6 +184,30 @@ struct PlaceExtractorTests {
     @Test func nothingFromNoise() {
         #expect(PlaceExtractor.extract(text: "que dia!!! 😍😍 #tokyo #japan").isEmpty)
     }
+
+    @Test(arguments: ["November", "Part 2", "Day 3", "Vlog", "Food Tour", "Monday", "3 de novembro", "12月"])
+    func datesAndCaptionWordsAreNotPlaces(text: String) {
+        #expect(PlaceExtractor.extract(text: text).isEmpty)
+    }
+
+    @Test func captionOfDatesAndSeriesGivesNoCandidates() {
+        #expect(PlaceExtractor.extract(text: "November 2026 · Part 2 · Day 3 · Vlog").isEmpty)
+    }
+
+    @Test func categoryComesFromThePlaceNotTheCaption() {
+        let filler = String(repeating: "x ", count: 60)
+        let text = "📍 Maguroya Kurogin — atum no balcão, vale a fila.\n\(filler)\nTsukiji market também vale a manhã toda"
+        let maguro = PlaceExtractor.extract(text: text).first { $0.name == "Maguroya Kurogin" }
+        #expect(maguro?.category == .eat)
+        #expect(maguro?.category != .shop)
+    }
+
+    @Test func categoryFallsBackToTheMentionWindowBeforeTheCaption() {
+        let filler = String(repeating: "x ", count: 60)
+        let text = "📍 Uogashi Senryo — kaisendon de manhã.\n\(filler)\nTsukiji market também"
+        let senryo = PlaceExtractor.extract(text: text).first { $0.name == "Uogashi Senryo" }
+        #expect(senryo?.category == .eat)
+    }
 }
 
 @MainActor

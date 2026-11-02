@@ -14,8 +14,18 @@ struct ExtractedPlace: Equatable, Sendable, Identifiable {
     var art: ArtEvent? = nil
     /// Museu/casa do evento.
     var venue: String? = nil
+    /// Conferido no Places (ou coordenada do link do Maps). Nil = ainda não achei no mapa.
+    var placeId: String? = nil
+    var lat: Double? = nil
+    var lng: Double? = nil
+    /// Outros nomes que a legenda usou pro mesmo lugar ("Tsukiji" pra "Tsukiji Outer Market").
+    var aliases: [String] = []
+    /// Menções da legenda que viraram este item ("juntei 2 menções").
+    var mentions: Int = 1
 
-    var id: String { name.lowercased() }
+    /// Chave da lista: o placeId quando há, então duas menções do mesmo lugar não empilham.
+    var id: String { placeId ?? name.lowercased() }
+    var hasCoordinate: Bool { lat != nil && lng != nil }
 }
 
 /// (c) Extrai nomes de lugares de uma legenda.
@@ -25,7 +35,8 @@ enum PlaceExtractor {
     static func extract(from caption: Caption, knownAreas: [String] = [], limit: Int = 5) -> [ExtractedPlace] {
         if let name = caption.placeName, !name.isEmpty {
             return [ExtractedPlace(name: name, nameLocal: nil, area: area(in: caption.text, known: knownAreas),
-                                   category: category(in: name), sub: sub(in: name), hint: "link do Maps")]
+                                   category: category(in: name), sub: sub(in: name), hint: "link do Maps",
+                                   lat: caption.lat, lng: caption.lng)]
         }
         return extract(text: caption.text, knownAreas: knownAreas, limit: limit)
     }
@@ -74,25 +85,45 @@ enum PlaceExtractor {
 
         let area = area(in: text, known: knownAreas)
         var results = found.prefix(limit).enumerated().map { index, item in
-            ExtractedPlace(name: item.name, nameLocal: index < locals.count ? locals[index] : nil, area: area,
-                           category: category(in: item.name + " " + text), sub: sub(in: item.name + " " + text), hint: item.hint)
+            // Categoria e sub vêm do próprio lugar (nome, depois a janela em volta da menção);
+            // a legenda inteira é o último recurso.
+            let near = window(around: item.name, in: text)
+            return ExtractedPlace(name: item.name, nameLocal: index < locals.count ? locals[index] : nil, area: area,
+                                  category: category(in: item.name) ?? category(in: near) ?? category(in: text),
+                                  sub: sub(in: item.name) ?? sub(in: near), hint: item.hint)
         }
         if results.isEmpty, let local = locals.first {
-            results = [ExtractedPlace(name: local, nameLocal: local, area: area, category: category(in: text), sub: sub(in: text),
-                                      hint: "nome em japonês na legenda")]
+            let near = window(around: local, in: text)
+            results = [ExtractedPlace(name: local, nameLocal: local, area: area, category: category(in: near) ?? category(in: text),
+                                      sub: sub(in: near), hint: "nome em japonês na legenda")]
         }
         return results
     }
 
     // MARK: Heurísticas
 
+    /// Nomes que não são lugar: cidades, palavras de legenda, dias da semana e meses (pt/en/ja).
     private static let stopwords: Set<String> = [
         "tokyo", "tóquio", "japan", "japão", "japao", "kyoto", "osaka", "brasil", "brazil", "belo horizonte", "bh", "minas",
         "the", "best", "top", "melhor", "melhores", "dica", "dicas", "reel", "reels", "video", "vídeo", "link", "bio",
         "follow", "siga", "salva", "salve", "hoje", "amanhã", "ontem", "instagram", "tiktok", "youtube", "shorts",
         "eu", "você", "a gente", "aqui", "lá", "esse", "essa", "isso", "não", "sim", "obrigado", "obrigada",
         "segunda", "terça", "quarta", "quinta", "sexta", "sábado", "domingo",
+        // Legenda de vídeo.
+        "part", "parte", "day", "vlog", "guide", "itinerary", "food", "tour", "roteiro", "episode", "episódio",
+        // Dias da semana (en).
+        "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
+        "mon", "tue", "tues", "wed", "thu", "thur", "thurs", "fri", "sat", "sun",
+        // Meses (pt, en, ja).
+        "janeiro", "fevereiro", "março", "marco", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro",
+        "novembro", "dezembro",
+        "january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december",
+        "jan", "feb", "mar", "apr", "jun", "jul", "aug", "sep", "sept", "oct", "nov", "dec",
+        "1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月",
     ]
+
+    /// Palavras que ligam partes de um nome ("Part of", "3 de novembro") e não contam como palavra.
+    private static let connectorWords: Set<String> = ["de", "do", "da", "dos", "das", "of", "the", "in", "at", "e", "&", "-", "–"]
 
     private static func clean(_ s: String) -> String {
         var out = s.trimmingCharacters(in: .whitespacesAndNewlines.union(.punctuationCharacters).union(.symbols))
@@ -108,8 +139,11 @@ enum PlaceExtractor {
         if stopwords.contains(lower) { return false }
         if lower.hasPrefix("http") || lower.contains("www.") { return false }
         if name.allSatisfy({ $0.isNumber || $0.isPunctuation || $0.isWhitespace }) { return false }
-        let words = lower.split(separator: " ")
-        if words.allSatisfy({ stopwords.contains(String($0)) }) { return false }
+        // "Part 2", "3 de novembro", "Food Tour": se sobra só palavra de data ou legenda, não é lugar.
+        let words = lower.split(separator: " ").map(String.init).filter { word in
+            !connectorWords.contains(word) && !word.allSatisfy { $0.isNumber || $0.isPunctuation }
+        }
+        if words.isEmpty || words.allSatisfy({ stopwords.contains($0) }) { return false }
         return true
     }
 
@@ -117,6 +151,14 @@ enum PlaceExtractor {
         let parts = handle.replacingOccurrences(of: ".", with: " ").replacingOccurrences(of: "_", with: " ")
             .split(separator: " ").filter { !["tokyo", "jp", "japan", "official", "oficial", "bh"].contains($0.lowercased()) }
         return parts.map { $0.prefix(1).uppercased() + $0.dropFirst() }.joined(separator: " ")
+    }
+
+    /// Trecho de até 80 caracteres em volta da menção do nome (pra categoria não vir de outro lugar da legenda).
+    static func window(around name: String, in text: String, radius: Int = 80) -> String {
+        guard let found = text.range(of: name, options: [.caseInsensitive, .diacriticInsensitive]) else { return "" }
+        let start = text.index(found.lowerBound, offsetBy: -radius, limitedBy: text.startIndex) ?? text.startIndex
+        let end = text.index(found.upperBound, offsetBy: radius, limitedBy: text.endIndex) ?? text.endIndex
+        return String(text[start..<end])
     }
 
     static func area(in text: String, known: [String]) -> String? {
@@ -129,7 +171,8 @@ enum PlaceExtractor {
     private static let categories: [(MustColor, [String])] = [
         (.coffee, ["kissa", "kissaten", "喫茶", "珈琲", "coffee", "café ", "cafe ", "cafeteria", "espresso", "pour-over"]),
         (.eat, ["ramen", "ラーメン", "麺", "sushi", "寿司", "鮨", "omakase", "izakaya", "居酒屋", "tsukemen", "udon", "soba",
-                "tonkatsu", "yakitori", "restaurante", "comida", "mineira", "boteco", "almoço", "jantar", "feijoada", "pão de queijo"]),
+                "tonkatsu", "yakitori", "restaurante", "comida", "mineira", "boteco", "almoço", "jantar", "feijoada", "pão de queijo",
+                "sashimi", "maguro", "まぐろ", "atum", "tuna", "kaisen", "海鮮", "donburi", "丼"]),
         (.drink, ["bar ", "cocktail", "coquetel", "drink", "cerveja", "beer", "sake", "wine", "vinho", "whisky", "highball"]),
         (.listen, ["listening", "vinyl", "vinil", "jazz", "record bar", "música ao vivo", "live music", "kissa jazz"]),
         (.temple, ["temple", "templo", "shrine", "santuário", "寺", "神社", "torii"]),

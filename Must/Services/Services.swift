@@ -18,12 +18,21 @@ final class Services {
     init(places: any PlacesProviding = PlacesService(), weather: any WeatherProviding = WeatherService(),
          photos: any PhotoProviding = CommonsPhotoService(), routes: any RoutesProviding = RoutesService()) {
         location = LocationService()
-        self.places = places
+        let launched = Self.launchPlaces(places)
+        self.places = launched
         self.weather = weather
         self.photos = photos
         self.routes = routes
         eta = ETACache(routes: routes)
-        sync = SyncCoordinator(places: places, weather: weather, photos: photos)
+        sync = SyncCoordinator(places: launched, weather: weather, photos: photos)
+    }
+
+    /// `-debugPlaces fake` (simulador/prints): Places de mentira pro Adicionar por link.
+    private static func launchPlaces(_ live: any PlacesProviding) -> any PlacesProviding {
+        #if DEBUG
+        if UserDefaults.standard.string(forKey: "debugPlaces") == "fake" { return FakePlacesService.linkSamples }
+        #endif
+        return live
     }
 
     /// Fontes das "Dicas de quem foi" (prompt 11). `-debugTips fake` usa amostras (prints/simulador).
