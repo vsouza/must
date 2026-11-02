@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Must — Adicionar por link (preview com mapa)</title>
+
+<link rel="stylesheet" href="must-light.css"><style>html,body{background:#EEF0F3}body{display:flex;justify-content:center;padding:24px 0}.app{box-shadow:0 30px 80px rgba(0,0,0,.18);border-radius:44px}</style>
+</head>
+<body>
+
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;family=Instrument+Serif:ital@0;1&amp;family=Geist+Mono:wght@400;600&amp;family=Zen+Kaku+Gothic+New:wght@500;700&amp;display=swap">
+<style>
+body{margin:0;background:#fff}
+.it{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid #EEF0F3}
+.it:first-child{border-top:0}
+.num{width:28px;height:28px;border-radius:50%;background:#121316;color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Geist Mono',monospace;font-size:12px;font-weight:600;flex-shrink:0}
+.nm{font-size:16px;font-weight:600;letter-spacing:-.01em}
+.mt{font-size:12px;color:#7A7F87;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chk{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#22DD7E;color:#0B2A18}
+.st{font-family:'Archivo',sans-serif;font-size:8.5px;font-weight:600;letter-spacing:.16em;fill:#9AA0A8}
+</style>
+
+<div class="app">
+  <div style="position:absolute;left:22px;right:22px;top:58px;display:flex;justify-content:space-between;align-items:center">
+    <a href="HomeClaro.html" class="ic" aria-label="Fechar"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></a>
+    <span class="micro">Adicionar por link</span>
+    <span style="width:40px"></span>
+  </div>
+
+  <!-- link lido, compacto -->
+  <div class="card" style="position:absolute;left:22px;right:22px;top:110px;padding:10px 12px;display:flex;align-items:center;gap:10px;background:#F1F2F4">
+    <span class="mono" style="font-size:10px;font-weight:600;background:#121316;color:#fff;border-radius:7px;padding:4px 6px">IG</span>
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:1px"><span style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Reel · “3 balcões de atum em Tsukiji que valem a fila”</span><span style="font-size:11.5px;color:#7A7F87;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">3 lugares · conferidos no Places</span></div>
+    <span class="pill" style="padding:6px 10px;background:#fff">Trocar</span>
+  </div>
+
+  <!-- MAPA: papel em relevo, pinos numerados -->
+  <div style="position:absolute;left:22px;right:22px;top:174px;height:226px;border-radius:24px;overflow:hidden;box-shadow:0 14px 36px rgba(18,19,22,.12)">
+    <svg viewBox="0 12 346 226" width="346" height="226" style="display:block" fill="none" aria-label="Mapa com os lugares do link">
+      <defs>
+        <filter id="rl" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-color="#121316" flood-opacity=".14"/></filter>
+        <filter id="pn" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#000" flood-opacity=".25"/></filter>
+        <radialGradient id="ha"><stop offset="0" stop-color="#2B7BFF" stop-opacity=".3"/><stop offset="1" stop-color="#2B7BFF" stop-opacity="0"/></radialGradient>
+      </defs>
+      <rect width="346" height="250" fill="#E9EBEF"/>
+      <path d="M250 -10 C 270 60, 300 120, 360 150 L 360 -10 Z" fill="#D9E4EF"/>
+      <g stroke="#CFD3DB" stroke-width="8" stroke-linecap="round"><path d="M-10 150 L 360 110"/><path d="M120 -10 L 160 260"/></g>
+      <g stroke="#C9CDD3" stroke-width="1.6" stroke-dasharray="0.1 4" stroke-linecap="round"><path d="M-10 80 L 240 60"/><path d="M60 -10 L 90 260"/><path d="M-10 210 L 360 190"/><path d="M220 -10 L 250 260"/></g>
+      <g filter="url(#rl)" fill="#F7F8FA">
+        <rect x="-6" y="-6" width="60" height="64" rx="6"/><rect x="72" y="-6" width="42" height="62" rx="6"/><rect x="132" y="-6" width="80" height="62" rx="6"/>
+        <rect x="-6" y="88" width="60" height="54" rx="6"/><rect x="74" y="72" width="38" height="70" rx="6"/><rect x="134" y="66" width="80" height="40" rx="6"/><rect x="256" y="120" width="96" height="60" rx="6"/>
+        <rect x="-6" y="160" width="62" height="42" rx="6"/><rect x="78" y="156" width="36" height="46" rx="6"/><rect x="140" y="150" width="74" height="34" rx="6"/><rect x="164" y="198" width="54" height="60" rx="6"/><rect x="256" y="196" width="96" height="60" rx="6"/>
+      </g>
+      <text x="8" y="134" class="st">TSUKIJI</text><text x="262" y="36" class="st" style="fill:#7FA3C6">RIO SUMIDA</text>
+      <path d="M-10 240 L 360 230" stroke="#B6007A" stroke-width="2" opacity=".75"/>
+      <circle cx="148" cy="232" r="3.5" fill="#fff" stroke="#121316" stroke-width="1.3"/><text x="154" y="226" class="st" style="fill:#121316">TSUKIJISHIJŌ · E18</text>
+      <!-- área do Reel -->
+      <ellipse cx="160" cy="118" rx="96" ry="58" fill="#22DD7E" opacity=".08" stroke="#22DD7E" stroke-opacity=".35" stroke-dasharray="3 4"/>
+      <!-- pinos -->
+      <g filter="url(#pn)">
+        <circle cx="122" cy="98" r="14" fill="#121316"/><text x="122" y="102" text-anchor="middle" font-family="Geist Mono" font-weight="600" font-size="11" fill="#fff">1</text>
+        <circle cx="196" cy="126" r="14" fill="#121316"/><text x="196" y="130" text-anchor="middle" font-family="Geist Mono" font-weight="600" font-size="11" fill="#fff">2</text>
+        <circle cx="160" cy="156" r="14" fill="#121316"/><text x="160" y="160" text-anchor="middle" font-family="Geist Mono" font-weight="600" font-size="11" fill="#fff">3</text>
+      </g>
+      <g><rect x="208" y="114" width="92" height="22" rx="11" fill="#121316"/><text x="254" y="129" text-anchor="middle" font-family="Archivo" font-size="10.5" font-weight="600" fill="#fff">Maguroya Kurogin</text></g>
+    </svg>
+    <span class="glass" style="position:absolute;left:10px;bottom:10px;border-radius:999px;padding:5px 10px;font-size:11px;font-weight:600">Tsukiji · 380 m entre eles · 34 min de você</span>
+    <span class="glass" style="position:absolute;right:10px;top:10px;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#121316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></span>
+  </div>
+
+  <!-- lista sem empilhar -->
+  <div class="card" style="position:absolute;left:22px;right:22px;top:458px;padding:2px 16px;background:#fff;border:1px solid #EEF0F3;box-shadow:0 10px 30px rgba(18,19,22,.06);display:flex;flex-direction:column">
+    <div class="it"><span class="num">1</span><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span class="nm">Tsukiji Outer Market <span class="jp" style="font-size:11px;color:#7A7F87;font-weight:500">築地場外市場</span></span><span class="mt">mercado · 05:00–14:00 · juntei 2 menções</span></div><span class="chk"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span></div>
+    <div class="it"><span class="num">2</span><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span class="nm">Maguroya Kurogin <span class="jp" style="font-size:11px;color:#7A7F87;font-weight:500">まぐろ屋 黒銀</span></span><span class="mt">atum · balcão · fila ~30 min · ¥3.000</span></div><span class="chk"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span></div>
+    <div class="it"><span class="num">3</span><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span class="nm">Uogashi Senryo</span><span class="mt">kaisendon · 06:00–14:00 · <span style="color:#0B5A33;font-weight:600">já no board</span></span></div><span class="tag">no board</span></div>
+    <div class="it" style="opacity:.5"><span class="num" style="background:#F1F2F4;color:#7A7F87">–</span><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span class="nm" style="text-decoration:line-through">November</span><span class="mt">não achei no mapa · parece data</span></div><span class="tag" style="background:#fff;border:1px solid #EEF0F3">manter</span></div>
+  </div>
+
+  <div style="position:absolute;left:22px;right:22px;top:414px;display:flex;align-items:center;gap:8px;overflow:hidden">
+    <span style="font-size:12px;color:#7A7F87;flex-shrink:0">Lista</span>
+    <span class="pill pill-green" style="padding:7px 11px">Must eat · Mercado</span><span class="pill" style="padding:7px 11px">um por lugar…</span>
+  </div>
+
+  <div style="position:absolute;left:22px;right:22px;bottom:24px">
+    <a href="Lista.html" class="btn">Adicionar 2 ao Must eat<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0B2A18" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></a>
+  </div>
+</div>
+
+</body>
+</html>

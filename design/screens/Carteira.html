@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Must — Carteira da viagem</title>
+
+<link rel="stylesheet" href="must-light.css"><style>html,body{background:#EEF0F3}body{display:flex;justify-content:center;padding:24px 0}.app{box-shadow:0 30px 80px rgba(0,0,0,.18);border-radius:44px}</style>
+</head>
+<body>
+
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;family=Instrument+Serif:ital@0;1&amp;family=Geist+Mono:wght@400;600&amp;family=Zen+Kaku+Gothic+New:wght@500;700&amp;display=swap">
+<style>
+body{margin:0;background:#fff}
+.cc{position:absolute;left:22px;right:22px;height:150px;border-radius:22px;padding:16px 18px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;text-decoration:none;color:#fff;box-shadow:0 16px 40px rgba(18,19,22,.18)}
+.cc .n{font-size:17px;font-weight:600;letter-spacing:-.01em}
+.cc .s{font-size:12px;opacity:.8}
+.cc .b{font-family:'Geist Mono',monospace;font-size:22px;font-weight:600;letter-spacing:-.02em}
+.open{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;background:rgba(255,255,255,.22);border-radius:999px;padding:6px 10px}
+.doc{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid #EEF0F3;text-decoration:none;color:#121316}
+.doc:first-child{border-top:0}
+</style>
+
+<div class="app">
+  <div style="position:absolute;left:22px;right:22px;top:58px;display:flex;justify-content:space-between;align-items:center">
+    <a href="Viagem.html" class="ic" aria-label="Voltar"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></a>
+    <span class="micro">Japão · central da viagem</span>
+    <button class="ic ic-dark" aria-label="Adicionar cartão"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+  </div>
+
+  <div style="position:absolute;left:22px;right:22px;top:112px;display:flex;flex-direction:column;gap:4px">
+    <h1 class="h1">Carteira</h1>
+    <span class="serif" style="font-size:17px;color:#7A7F87">cartões, passes e documentos — toque e vai direto pro Wallet ou pro app</span>
+  </div>
+
+  <!-- cartões empilhados, leve rotação -->
+  <a href="#" class="cc" style="top:190px;background:linear-gradient(135deg,#1FA37A,#0B5A33);transform:rotate(-1.5deg)">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div class="n">Suica <span class="jp" style="font-weight:500;opacity:.8">スイカ</span></div><div class="s">Apple Wallet · Express Transit · metrô, JR, konbini</div></div><span class="open">Abrir no Wallet ↗</span></div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-end"><div><div class="s">saldo (você anotou ontem)</div><div class="b">¥ 3.240</div></div><span class="tag" style="background:rgba(255,255,255,.2);color:#fff">recarregar abaixo de ¥1.000</span></div>
+  </a>
+  <a href="#" class="cc" style="top:330px;background:linear-gradient(135deg,#3B4150,#15171C);transform:rotate(1deg)">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div class="n">JR Pass · 7 dias</div><div class="s">ativar 17 nov no balcão · Tokyo Station · voucher no PDF</div></div><span class="open">Ver voucher</span></div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-end"><div><div class="s">cobre</div><div class="b" style="font-size:16px">Tóquio → Kyoto → Tóquio · Nara</div></div><span class="tag" style="background:#22DD7E;color:#0B2A18">vale 17–23</span></div>
+  </a>
+  <a href="#" class="cc" style="top:470px;background:linear-gradient(135deg,#5B6CFF,#2B7BFF);transform:rotate(-0.8deg)">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div class="n">Nubank · Mastercard</div><div class="s">Apple Pay · sem IOF extra · avisar banco: feito</div></div><span class="open">Abrir no Wallet ↗</span></div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-end"><div><div class="s">gasto na viagem</div><div class="b">R$ 2.118</div></div><span class="tag" style="background:rgba(255,255,255,.2);color:#fff">câmbio ¥100 = R$ 3,60</span></div>
+  </a>
+
+  <div class="card" style="position:absolute;left:22px;right:22px;top:640px;bottom:96px;padding:2px 16px;background:#fff;border:1px solid #EEF0F3;overflow:hidden;display:flex;flex-direction:column">
+    <a href="#" class="doc"><span style="width:34px;height:34px;border-radius:10px;background:#F1F2F4;display:flex;align-items:center;justify-content:center;font-family:'Geist Mono',monospace;font-size:10px;font-weight:600">eSIM</span><div style="flex:1;display:flex;flex-direction:column;gap:1px"><span style="font-size:14px;font-weight:600">Ubigi · 10 GB · ativa em JP</span><span style="font-size:12px;color:#7A7F87">QR instalado · ativar ao pousar</span></div><span class="tag">Ajustes ↗</span></a>
+    <a href="#" class="doc"><span style="width:34px;height:34px;border-radius:10px;background:#F1F2F4;display:flex;align-items:center;justify-content:center;font-family:'Geist Mono',monospace;font-size:10px;font-weight:600">QR</span><div style="flex:1;display:flex;flex-direction:column;gap:1px"><span style="font-size:14px;font-weight:600">Visit Japan Web · imigração + alfândega</span><span style="font-size:12px;color:#7A7F87">2 QRs · salvo offline</span></div><span class="tag" style="background:#B9F5CF;color:#0B2A18">pronto</span></a>
+    <a href="#" class="doc"><span style="width:34px;height:34px;border-radius:10px;background:#F1F2F4;display:flex;align-items:center;justify-content:center;font-family:'Geist Mono',monospace;font-size:10px;font-weight:600">PDF</span><div style="flex:1;display:flex;flex-direction:column;gap:1px"><span style="font-size:14px;font-weight:600">Seguro viagem · apólice</span><span style="font-size:12px;color:#7A7F87">telefone 24h · nº 88213</span></div><span class="tag">Abrir</span></a>
+    <a href="#" class="doc"><span style="width:34px;height:34px;border-radius:10px;background:#F1F2F4;display:flex;align-items:center;justify-content:center;font-family:'Geist Mono',monospace;font-size:10px;font-weight:600">IMG</span><div style="flex:1;display:flex;flex-direction:column;gap:1px"><span style="font-size:14px;font-weight:600">Passaporte · foto da página</span><span style="font-size:12px;color:#7A7F87">só no aparelho · válido até 2031</span></div><span class="tag">Abrir</span></a>
+  </div>
+
+  <nav class="tabs">
+    <a href="HomeClaro.html" class="tab"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7v9H4z"/></svg>Início</a>
+    <a href="Hoje.html" class="tab"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>Hoje</a>
+    <a href="Mapa.html" class="tab"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg>Mapa</a>
+    <a href="Musts.html" class="tab"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6h14M5 12h14M5 18h9"/></svg>Musts</a>
+  </nav>
+</div>
+
+</body>
+</html>

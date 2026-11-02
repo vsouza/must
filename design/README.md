@@ -11,6 +11,7 @@
 | Nova lista | NovaLista | hub → "Nova lista" | 04 |
 | Adicionar lugares à lista | AddItens | Nova lista → criar | 04 |
 | Editar lugar | Editar | Lugar → lápis; long-press na Lista | 04 |
+| Adicionar por link — preview com mapa | AdicionarMapa | Adicionar, depois de ler o link | 16 |
 | Adicionar por link | Adicionar | Início ↓, Lista +, `must://add` | 04 |
 | Montar o dia | Montar | Início "Montar amanhã", Hoje ⇅ | 05 |
 | Proposta do dia | Proposta | Montar → "Montar o dia" | 05 |
@@ -24,6 +25,10 @@
 | Luz de hoje — dia de fotografia | Luz | Hoje (dia fotografia), Lugar photo | 13 |
 | Lugar › Must art — entrada e temporada | Arte | Lista art | 13 |
 | Lugar › Must sport — condições | Esporte | Lista sport | 13 |
+| Board completo — ver tudo e editar | Board | hub "Ver tudo · editar"; Ajustes | 14 |
+| Por perto, agora | Descobrir | Início (linha "Por perto:") | 14 |
+| Experiências (Must do) | Experiencias | hub; Por perto → Experiências | 14 |
+| Ingresso vinculado | Ingresso | Experiências; Reservas; Lugar com ingresso | 14 |
 | Assistente (vazio) | Assistente | Início +, FAB do Hoje | 08 |
 | Assistente respondendo | Chat | Assistente → pergunta | 08 |
 | Viagem | Viagem | Início aba Viagem | 09 |

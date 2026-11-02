@@ -31,3 +31,6 @@ Must/Data/tiles/*.pmtiles
 
 # Mapas offline gerados (scripts/tiles.sh → R2)
 dist/
+
+# Estado local do wrangler (upload dos tiles pro R2)
+.wrangler/

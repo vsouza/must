@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Must — Escanear ingresso</title>
+
+<link rel="stylesheet" href="must-light.css"><style>html,body{background:#EEF0F3}body{display:flex;justify-content:center;padding:24px 0}.app{box-shadow:0 30px 80px rgba(0,0,0,.18);border-radius:44px}</style>
+</head>
+<body>
+
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;family=Instrument+Serif:ital@0;1&amp;family=Geist+Mono:wght@400;600&amp;family=Zen+Kaku+Gothic+New:wght@500;700&amp;display=swap">
+<style>body{margin:0;background:#fff}</style>
+
+<div class="app" style="background:#121316">
+  <!-- "câmera": papel do ingresso visto de cima -->
+  <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 45%,#3A3D45,#15171C 70%)"></div>
+  <div style="position:absolute;left:50px;right:50px;top:230px;height:330px;background:#F7F3EA;border-radius:6px;transform:rotate(-3deg);box-shadow:0 30px 60px rgba(0,0,0,.5);padding:22px;box-sizing:border-box;color:#2A2A2A;font-family:'Archivo',sans-serif">
+    <div style="font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:#777">Viator · Booking confirmation</div>
+    <div style="font-size:17px;font-weight:700;margin-top:6px;line-height:1.1">Sushi Making Class with a Chef in Tsukiji</div>
+    <div style="font-size:11px;margin-top:8px;line-height:1.5">Sat 15 Nov 2026 · 10:00 AM<br>2 travelers · Reference <b>BR-7K2M-9931</b><br>Meeting point: Tsukiji Outer Market, Gate 1</div>
+    <div style="position:absolute;right:22px;bottom:22px;width:96px;height:96px;background:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center">
+      <svg width="80" height="80" viewBox="0 0 21 21" fill="#121316" shape-rendering="crispEdges" aria-hidden="true"><rect x="0" y="0" width="7" height="7"/><rect x="1" y="1" width="5" height="5" fill="#fff"/><rect x="2" y="2" width="3" height="3"/><rect x="14" y="0" width="7" height="7"/><rect x="15" y="1" width="5" height="5" fill="#fff"/><rect x="16" y="2" width="3" height="3"/><rect x="0" y="14" width="7" height="7"/><rect x="1" y="15" width="5" height="5" fill="#fff"/><rect x="2" y="16" width="3" height="3"/><path d="M8 0h1v2H8zM10 0h2v1h-2zM8 3h2v1H8zM11 2h1v3h-1zM9 5h3v1H9zM0 8h1v1H0zM2 8h2v2H2zM5 8h1v1H5zM7 8h1v1H7zM8 9h2v1H8zM11 8h1v2h-1zM13 8h1v1h-1zM15 8h2v1h-2zM18 8h1v2h-1zM20 8h1v1h-1zM1 10h1v1H1zM4 11h1v1H4zM6 10h2v1H6zM9 11h1v2H9zM12 10h2v1h-2zM15 10h1v2h-1zM17 11h2v1h-2zM20 10h1v2h-1zM0 12h2v1H0zM3 12h1v1H3zM6 12h1v1H6zM11 12h2v1h-2zM14 12h1v1h-1zM19 12h1v1h-1zM8 14h2v1H8zM11 14h1v1h-1zM13 14h2v1h-2zM16 14h1v2h-1zM18 14h3v1h-3zM9 16h1v1H9zM11 16h2v1h-2zM14 16h1v1h-1zM18 16h1v1h-1zM20 16h1v1h-1zM8 18h1v2H8zM10 18h3v1h-3zM14 18h2v1h-2zM17 18h1v1h-1zM19 18h2v1h-2zM10 20h1v1h-1zM12 20h3v1h-3zM16 20h2v1h-2z"/></svg>
+    </div>
+  </div>
+  <!-- detecções -->
+  <div style="position:absolute;left:236px;top:436px;width:112px;height:112px;border:2.5px solid #22DD7E;border-radius:10px;transform:rotate(-3deg);box-shadow:0 0 0 6px rgba(34,221,126,.2)"></div>
+  <span class="pill pill-green" style="position:absolute;left:236px;top:552px;padding:6px 10px;font-size:11px">QR · lido</span>
+  <div style="position:absolute;left:70px;top:296px;width:200px;height:20px;border:1.5px solid #2B7BFF;border-radius:4px;transform:rotate(-3deg)"></div>
+  <div style="position:absolute;left:70px;top:322px;width:170px;height:40px;border:1.5px solid #2B7BFF;border-radius:4px;transform:rotate(-3deg)"></div>
+  <span class="pill" style="position:absolute;left:70px;top:254px;padding:6px 10px;font-size:11px;background:#2B7BFF;color:#fff">texto · data, hora, código</span>
+
+  <!-- chrome -->
+  <div style="position:absolute;left:22px;right:22px;top:58px;display:flex;justify-content:space-between;align-items:center">
+    <a href="TicketEntrada.html" class="ic" aria-label="Fechar" style="background:rgba(255,255,255,.14);color:#fff"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></a>
+    <span class="micro" style="color:rgba(255,255,255,.7)">Escanear · 2 de 3</span>
+    <button class="ic" aria-label="Lanterna" style="background:rgba(255,255,255,.14);color:#fff"><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h8l-1 6H9zM9 9h6v12H9z"/></svg></button>
+  </div>
+  <div style="position:absolute;left:22px;right:22px;top:118px;display:flex;flex-direction:column;gap:4px;color:#fff">
+    <span style="font-size:22px;font-weight:600;letter-spacing:-.01em">Aponte pro ingresso</span>
+    <span class="serif" style="font-size:16px;color:rgba(255,255,255,.7)">QR, código de barras ou o papel inteiro — pode ser a tela de outro app</span>
+  </div>
+
+  <!-- resultado ao vivo -->
+  <div class="card" style="position:absolute;left:22px;right:22px;bottom:24px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;background:#fff">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="jp" style="width:34px;height:34px;border-radius:50%;background:#22DD7E;color:#0B2A18;display:flex;align-items:center;justify-content:center;font-size:14px">済</span>
+      <div style="flex:1;display:flex;flex-direction:column;gap:1px"><span style="font-size:15px;font-weight:600">Encontrei: Viator · sáb 15 · 10:00 · 2 pessoas</span><span style="font-size:12px;color:#7A7F87">código BR-7K2M-9931 · parece <b style="color:#121316">Aula de sushi em Tsukiji</b> do seu board</span></div>
+    </div>
+    <div style="display:flex;gap:8px"><a href="TicketRevisar.html" class="btn" style="flex:1;height:46px">Conferir e salvar</a><button class="ghost" style="width:120px;height:46px">Outra foto</button></div>
+  </div>
+</div>
+
+</body>
+</html>
