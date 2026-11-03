@@ -18,6 +18,7 @@ struct MustApp: App {
                 .id("\(regionStore.region.rawValue)-\(regionStore.generation)")
                 .modelContainer(regionStore.container)
                 .environment(regionStore)
+                .environment(\.tripTheme, regionStore.theme)
                 .environment(services)
                 .preferredColorScheme(.light)
         }

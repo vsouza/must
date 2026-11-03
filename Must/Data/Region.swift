@@ -25,6 +25,14 @@ enum Region: String, CaseIterable, Codable, Sendable, Identifiable {
 
     var kanji: String? { self == .jp ? "日本" : nil }
 
+    /// País da região (ISO 3166-1 alfa-2): a bandeira e o tom da viagem vêm daqui (`TripTheme`).
+    var country: String {
+        switch self {
+        case .bh: "BR"
+        case .jp: "JP"
+        }
+    }
+
     /// Código ISO 4217.
     var currency: String {
         switch self {
