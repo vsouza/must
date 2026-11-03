@@ -21,6 +21,9 @@ struct AddLinkView: View {
 
     @State private var model = AddLinkModel()
     @State private var showNameSearch = false
+    /// Link · Texto · Nome (ColarTexto.png, prompt 18 · E.21). "Nome" abre a busca por nome, sem trocar a aba.
+    @State private var mode: AddMode = .link
+    @State private var texto = ColarTextoModel()
     @FocusState private var fieldFocused: Bool
 
     private var region: Region { store.region }
@@ -40,13 +43,16 @@ struct AddLinkView: View {
                     HStack {
                         IconButton(.fechar, label: "Fechar") { dismiss() }
                         Spacer()
-                        Micro("adicionar")
+                        modePicker
                         Spacer()
                         Color.clear.frame(width: 40, height: 40)
                     }
                     .padding(.top, 16)
 
-                    if model.phase == .done {
+                    if mode == .text {
+                        ColarTextoView(model: texto, env: colarContext(), sync: services.sync, waiting: waiting.count) { dismiss() }
+                            .padding(.top, 26)
+                    } else if model.phase == .done {
                         AddLinkResults(model: model, lists: lists, region: region)
                             .padding(.top, 20)
                     } else {
@@ -87,11 +93,17 @@ struct AddLinkView: View {
             }
             .scrollDismissesKeyboard(.interactively)
 
-            mainButton
+            if mode == .link { mainButton }
         }
         .sheet(isPresented: $showNameSearch) {
             BuscarNomeView(initialQuery: model.input.trimmingCharacters(in: .whitespacesAndNewlines).contains(".") ? "" : model.input,
                            preferredListId: preferredListId)
+        }
+        .onChange(of: mode) { _, new in
+            if new == .name {
+                showNameSearch = true
+                mode = .link
+            }
         }
         .task {
             if let initialURL, model.input.isEmpty {
@@ -99,6 +111,47 @@ struct AddLinkView: View {
                 await run()
             }
         }
+        .task {
+            #if DEBUG
+            // -debugScreen colar-texto[:amostra] abre a aba Texto (com a amostra já lida).
+            if let screen = DebugFlags.string("debugScreen"), screen.hasPrefix("colar-texto") {
+                mode = .text
+                if screen.hasSuffix(":amostra") {
+                    texto.text = ColarTextoSample.text
+                    await texto.analyze(texto.text, env: colarContext())
+                }
+            }
+            #endif
+        }
+    }
+
+    /// Seletor "Link · Texto · Nome" no topo (no lugar do rótulo "adicionar").
+    private var modePicker: some View {
+        HStack(spacing: 2) {
+            ForEach(AddMode.allCases, id: \.self) { option in
+                Button { mode = option } label: {
+                    Text(option.label)
+                        .font(.must.archivo(14, .semibold))
+                        .foregroundStyle(Color.must.ink)
+                        .padding(.horizontal, 16)
+                        .frame(height: 40)
+                        .background(Capsule().fill(mode == option ? Color.white : .clear))
+                }
+                .buttonStyle(MustPressStyle())
+            }
+        }
+        .padding(3)
+        .background(Capsule().fill(Color.must.surface))
+        .accessibilityElement(children: .contain)
+    }
+
+    /// O que a aba Texto precisa: board, listas, cidade, Places, fila de saída e a configuração de IA do aparelho.
+    private func colarContext() -> ColarContext {
+        ColarContext(board: places, lists: lists, city: city,
+                     cityId: city?.id ?? trips.first?.cities.first?.id ?? region.rawValue,
+                     tripStart: trips.first?.start, region: region, knownAreas: knownAreas,
+                     provider: services.places, queue: context,
+                     onDevice: settingsList.first?.onDeviceAI ?? true, readLinks: true)
     }
 
     // MARK: Entrada
@@ -262,35 +315,27 @@ struct AddLinkView: View {
 
     private func save() {
         let today = BoardDates(timeZone: region.timeZone).dayString(AppClock.now)
-        let source = model.resolved?.source ?? .text
+        let source = Source(kind: (model.resolved?.source ?? .text).sourceKind,
+                            url: model.caption?.url?.absoluteString ?? model.resolved?.url?.absoluteString,
+                            savedAt: today, caption: model.caption?.text.isEmpty == false ? model.caption?.text : nil,
+                            author: model.caption?.title)
         let cityId = city?.id ?? trips.first?.cities.first?.id ?? region.rawValue
-        for match in model.matches where model.included.contains(match.id) && match.existing == nil {
-            let e = match.extracted
-            let list = lists.first { $0.id == model.listChoice[match.id] } ?? lists.first
-            let place = Place(id: "m-\(UUID().uuidString.prefix(8).lowercased())", name: e.name, cityId: cityId, lat: match.lat, lng: match.lng)
-            place.nameLocal = e.nameLocal
-            place.area = e.area
-            place.approx = match.approx
-            place.placeId = e.placeId
-            place.list = list
-            if let sub = e.sub, list?.subs.contains(sub) == true { place.sub = sub }
-            place.source = Source(kind: source.sourceKind, url: model.caption?.url?.absoluteString ?? model.resolved?.url?.absoluteString,
-                                  savedAt: today, caption: model.caption?.text.isEmpty == false ? model.caption?.text : nil,
-                                  author: model.caption?.title)
-            let alias = e.aliases.isEmpty ? "" : " Na legenda: \(e.aliases.joined(separator: ", "))."
-            place.notes = (e.hint == "link do Maps" ? "" : "Achado \(e.hint).") + alias
-            if let art = e.art {
-                place.extra = PlaceExtra(art: art)
-                if let p = art.priceAdult { place.price = p }
-                if let venue = e.venue { place.nameLocal = place.nameLocal ?? venue }
-            }
-            context.insert(place)
-            // (d) Já conferido no Places: só horário e detalhes. Senão, Text Search perto da cidade.
-            let candidate = e.placeId.map { PlaceCandidate(id: $0, name: e.name, address: nil, lat: match.lat, lng: match.lng) }
-            services.sync.resolveNew(place, candidate: candidate, region: region, context: context)
-            Log.data.info("link → \(place.id, privacy: .public) \(source.rawValue, privacy: .public)")
-        }
+        PlaceImport.insert(model.matches, included: model.included, listChoice: model.listChoice, lists: lists, cityId: cityId,
+                           region: region, source: source, sync: services.sync, context: context)
         try? context.save()
         dismiss()
+    }
+}
+
+/// Abas do Adicionar (prompt 18 · E.21).
+enum AddMode: CaseIterable, Hashable {
+    case link, text, name
+
+    var label: String {
+        switch self {
+        case .link: "Link"
+        case .text: "Texto"
+        case .name: "Nome"
+        }
     }
 }
