@@ -81,6 +81,8 @@ final class HomeState {
     private(set) var heroes: [String: CCPhoto] = [:]
     /// Quantos musts o board tem por bairro (pra "Hoje, pra onde?" e pro título do card).
     private(set) var areaIndex = AreaIndex.empty
+    /// Bairro onde o GPS está (prompt 21 · fatia 2). Sem dia aceito, o card vira "Hoje em <bairro>".
+    private(set) var currentArea: Area?
 
     @ObservationIgnored private var candidates: [String: [AreaHeroes.Candidate]] = [:]
     @ObservationIgnored private var requestedHeroes: Set<String> = []
@@ -92,6 +94,7 @@ final class HomeState {
     var visibleAreaIds: [String] {
         var ids: [String] = []
         if let areaId = day?.areaId { ids.append(areaId) }
+        if day == nil, let currentArea { ids.append(currentArea.id) }
         ids += pick.map(\.id)
         ids += tomorrow.map(\.id)
         return ids.reduce(into: [String]()) { if !$0.contains($1) { $0.append($1) } }
@@ -101,6 +104,12 @@ final class HomeState {
     var heroKey: String { visibleAreaIds.joined(separator: ",") }
 
     func area(_ id: String) -> Area? { areaIndex.area(id) }
+
+    /// Bairro do GPS, vindo do `CurrentAreaService` (assíncrono: a Home não espera por ele).
+    func setCurrentArea(_ area: Area?) {
+        guard currentArea != area else { return }
+        currentArea = area
+    }
 
     /// Recalcula tudo. Chamado só nos gatilhos da Início.
     func refresh(_ i: Inputs) {

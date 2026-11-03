@@ -50,6 +50,8 @@ struct DiscoverView: View {
     @Query private var trips: [TripInfo]
 
     @State private var model = DiscoverModel()
+    /// Bairro do GPS no cabeçalho "Por perto · <bairro>" (prompt 21 · fatia 2).
+    @State private var currentArea: Area?
 
     private var region: Region { store.region }
     private var enabled: Bool { settingsList.first?.suggestNearby ?? true }
@@ -65,7 +67,7 @@ struct DiscoverView: View {
             VStack(alignment: .leading, spacing: 0) {
                 topBar(now: now).padding(.top, 8)
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Por perto, agora").mustTitle()
+                    Text(currentArea.map { "Por perto · \($0.name)" } ?? "Por perto, agora").mustTitle()
                     Text("o que as pessoas gostam aqui — esteja no seu board ou não").mustSerif(18).foregroundStyle(Color.must.secondary)
                 }
                 .padding(.top, 22)
@@ -102,6 +104,10 @@ struct DiscoverView: View {
             .ignoresSafeArea()
         }
         .task(id: loadKey) { await reload() }
+        .task(id: loadKey) {
+            guard let here = location else { currentArea = nil; return }
+            currentArea = await services.currentArea.area(at: here, region: region)
+        }
         .toolbar(.hidden, for: .navigationBar)
     }
 
