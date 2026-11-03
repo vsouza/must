@@ -529,4 +529,11 @@ iPhone: [ ] andar entre Shinjuku, Ginza e Shibuya e ver o bairro trocar (fora da
 - Hoje: o botão flutuante do assistente fica sobre a hora da 4ª linha com a lista no topo.
 - Dynamic Type XXXL não verificado nos prints (o `content_size` do simulador não refletiu).
 
+**Pendências corrigidas depois da fatia 6 (03/11).** Suíte: 551 testes passam; build do aparelho ok.
+- Colar texto: "Meiji Jingu" casa com "Santuário Meiji" (`PlaceMatcher.core` tira palavras de tipo: santuário/jingu/templo/parque/mercado…; nome próprio igual com ≥ 4 letras). Lugar do board com coordenada chute (`approx`) aceita o mesmo nome a até 2 km (Fuunji estava a ~1 km do chute do seed) e usa a posição do Places: aparece marcado, não riscado. Print da amostra: Meiji Jingu, Fuunji e Koffee Mameya "no board", marcados.
+- Hoje: a timeline termina num fade branco sólido da altura do FAB pra baixo (cobre também a área embaixo da tab bar); a hora da linha de baixo não fica mais sob o botão.
+- Dynamic Type: todas as fontes eram `fixedSize` (por isso o XXXL não mudava nada nos prints). Agora `MustFonts` usa `relativeTo:` pelo tamanho até 30 pt, com teto em `.xxxLarge` na raiz (`DynamicTypeSize.mustCap`); kanji e números de vitrine (> 30 pt) seguem fixos. Prints em XXXL de Início, Hoje, Guia, Musts, Lugar, Viagem, Carteira, Voos, Compras, Bairros, Nova lista: nada sobreposto; textos longos truncam com "…". Colunas de hora (Guia, proposta, Como chegar, Luz, sessões) não quebram mais ("09:4 / 8").
+- Carteira em DEBUG: os itens de exemplo preenchem a Suica e o JR Pass de partida em vez de duplicar (conferido com instalação limpa).
+- Continua: o toque em "Ajustar" na Bairros não foi exercitado no simulador (sem ferramenta de toque; a lógica tem teste). `-region.auto NO` trocar a região uma vez segue sem explicação (não se repetiu). Colar texto no simulador leva ~15 s na primeira abertura depois de instalar (modelo no aparelho carregando).
+
 **iPhone (Vinicius).** Ver `docs/checklist-viagem.md`. Além dele: abrir o app pela primeira vez no Japão (troca BH → Japão pelo GPS) e confirmar que não fecha; andar entre bairros e ver "Hoje em <bairro>" trocar; Colar texto com resposta real do ChatGPT; avisos do guia com o app fechado; Instruments (Hangs).
