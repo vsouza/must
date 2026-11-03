@@ -38,6 +38,10 @@
 | Importar board | Importar | primeira abertura; Ajustes → Reimportar | 03 |
 | Live Activity e widgets | Widgets | fora do app | 09 |
 | Ícones | Icones | — (folha de referência; SVGs em `icons/`) | 02 |
+| Início v6 — card do dia objetivo, bairros | Home6 | launch (substitui HomeClaro) | 18 |
+| Pra onde hoje? (bairros) | Bairros | Início "ver todos", Montar | 18 |
+| Guia do dia por bairro | GuiaBairro | Bairros "Montar", card do dia | 18 |
+| Colar texto (resposta de IA) | ColarTexto | Adicionar › Texto, FAB "+" | 18 |
 | Como chegar (Routes + Street View) | ComoChegar | Lugar "Ir agora", Ingresso, Hoje | 17 |
 | Adicionar por nome | BuscarNome | Adicionar, Board "+" | 17 |
 | Compras da viagem | Compras | Viagem, Carteira | 17 |

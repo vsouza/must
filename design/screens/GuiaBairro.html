@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Must — Guia do dia · Shinjuku+</title>
+
+<link rel="stylesheet" href="must-light.css"><style>html,body{background:#EEF0F3}body{display:flex;justify-content:center;padding:24px 0}.app{box-shadow:0 30px 80px rgba(0,0,0,.18);border-radius:44px}</style>
+</head>
+<body>
+
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;family=Instrument+Serif:ital@0;1&amp;family=Geist+Mono:wght@400;600&amp;family=Zen+Kaku+Gothic+New:wght@500;700&amp;display=swap">
+<style>
+body{margin:0;background:#fff}
+.ch{display:flex;gap:12px;align-items:stretch}
+.tm{width:44px;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding-top:12px}
+.tm b{font-family:'Geist Mono',monospace;font-size:12px;font-weight:600}
+.tm span{font-family:'Zen Kaku Gothic New',sans-serif;font-size:11px;font-weight:700;color:#A9AEB6;white-space:nowrap}
+.act{flex:1;border-radius:20px;overflow:hidden;display:flex;text-decoration:none;color:#121316;min-height:74px}
+.act .ph{width:74px;position:relative;flex-shrink:0}
+.act .bd{flex:1;padding:10px 12px;display:flex;flex-direction:column;gap:2px;justify-content:center;min-width:0}
+.act .n{font-size:15px;font-weight:600;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.act .m{font-size:11.5px;color:#7A7F87;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mv{display:flex;align-items:center;gap:8px;white-space:nowrap;overflow:hidden;margin-left:56px;padding:6px 0;font-size:12px;color:#7A7F87}
+.mv .rail{width:4px;height:26px;border-radius:2px}
+.walk{width:3px;height:26px;background-image:linear-gradient(#9AA0A8 40%,transparent 40%);background-size:3px 7px}
+</style>
+
+<div class="app">
+  <!-- mini mapa do percurso -->
+  <div style="position:absolute;left:0;right:0;top:0;height:220px;background:#E9EBEF;overflow:hidden">
+    <svg viewBox="0 0 390 220" width="390" height="220" fill="none" aria-hidden="true">
+      <defs><pattern id="b2" width="22" height="22" patternUnits="userSpaceOnUse"><rect x="2" y="3.5" width="18" height="18" rx="3" fill="#121316" opacity=".07"/><rect x="2" y="2" width="18" height="18" rx="3" fill="#F7F8FA"/></pattern></defs>
+      <rect width="390" height="220" fill="url(#b2)"/>
+      <path d="M40 120 L 160 132" stroke="#F15A22" stroke-width="4" stroke-linecap="round"/>
+      <path d="M160 132 L 196 100" stroke="#9AA0A8" stroke-width="3" stroke-dasharray="1 6" stroke-linecap="round"/>
+      <path d="M196 100 L 250 150" stroke="#9AA0A8" stroke-width="3" stroke-dasharray="1 6" stroke-linecap="round"/>
+      <path d="M250 150 L 214 92" stroke="#9AA0A8" stroke-width="3" stroke-dasharray="1 6" stroke-linecap="round"/>
+      <g font-family="Geist Mono" font-weight="700" font-size="11" text-anchor="middle">
+        <circle cx="40" cy="120" r="13" fill="#22DD7E"/><text x="40" y="124" fill="#0B2A18" font-family="Zen Kaku Gothic New">済</text>
+        <circle cx="196" cy="100" r="15" fill="#121316"/><text x="196" y="104" fill="#fff">2</text>
+        <circle cx="250" cy="150" r="13" fill="#fff" stroke="#121316" stroke-width="1.5"/><text x="250" y="154" fill="#121316">3</text>
+        <circle cx="214" cy="92" r="13" fill="#fff" stroke="#121316" stroke-width="1.5"/><text x="214" y="96" fill="#121316">4</text>
+      </g>
+      <g font-family="Archivo" font-weight="700" font-size="9" letter-spacing="1.4" fill="#A9AEB6"><text x="20" y="152">NAKANO</text><text x="150" y="190">SHINJUKU</text><text x="262" y="186">GYOEN</text></g>
+      <circle cx="176" cy="140" r="7" fill="#2B7BFF" stroke="#fff" stroke-width="2.5"/>
+    </svg>
+    <div style="position:absolute;left:0;right:0;bottom:0;height:70px;background:linear-gradient(180deg,rgba(255,255,255,0),#fff)"></div>
+  </div>
+
+  <div style="position:absolute;left:22px;right:22px;top:58px;display:flex;justify-content:space-between;align-items:center">
+    <a href="Bairros.html" class="ic glass" aria-label="Voltar"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></a>
+    <a href="Mapa.html" class="ic glass" aria-label="Abrir mapa"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></a>
+  </div>
+
+  <div style="position:absolute;left:22px;right:22px;top:196px;display:flex;align-items:flex-end;justify-content:space-between">
+    <div style="display:flex;flex-direction:column;gap:2px"><span class="micro">Guia de hoje</span><span style="font-size:28px;font-weight:700;letter-spacing:-.02em;line-height:1">Shinjuku<span style="color:#A9AEB6">+</span></span></div>
+    <span class="stamp" style="width:54px;height:54px;color:#121316;font-size:15px;transform:rotate(-6deg)">新宿</span>
+  </div>
+
+  <div style="position:absolute;left:22px;right:22px;top:268px;bottom:96px;display:flex;flex-direction:column;overflow:hidden">
+    <div class="ch" style="opacity:.5"><div class="tm"><b>12:00</b><span>中野</span></div><a href="Lugar.html" class="act" style="background:#FFF1D6"><span class="ph"><span class="photo" style="background-image:url('https://picsum.photos/seed/must-nakano/200/200')"></span></span><span class="bd"><span class="n">Nakano Broadway 済</span><span class="m">Must shop · câmeras · ¥ 28.000</span></span></a></div>
+    <div class="mv"><span class="rail" style="background:#F15A22"></span><span class="line-chip" style="padding:3px 8px 3px 3px"><i style="background:#F15A22;width:18px;height:18px">JC</i>Chūō rápida</span><span>5 min · plat. 7</span></div>
+
+    <div class="ch"><div class="tm"><b style="color:#0B5A33">14:35</b><span>新宿</span></div><a href="ComoChegar.html" class="act" style="background:linear-gradient(135deg,#B9F5CF,#22DD7E);box-shadow:0 10px 24px rgba(34,221,126,.25)"><span class="ph"><span class="photo" style="background-image:url('https://picsum.photos/seed/must-tsukemen/200/200')"></span></span><span class="bd"><span class="n">Fuunji · agora</span><span class="m" style="color:#0B2A18">almoço · fila ~20 min · ¥ 1.250</span><span class="pill pill-on" style="align-self:flex-start;padding:4px 9px;font-size:11px;margin-top:3px">Como chegar · 9 min</span></span></a></div>
+    <div class="mv"><span class="walk"></span><span>a pé 11 min · saída sul</span></div>
+
+    <div class="ch"><div class="tm"><b>15:48</b><span>御苑</span></div><a href="Foto.html" class="act" style="background:linear-gradient(135deg,#FFE9C2,#FFB347)"><span class="ph"><span class="photo" style="background-image:url('https://picsum.photos/seed/must-gyoen/200/200')"></span></span><span class="bd"><span class="n">Shinjuku Gyoen · golden</span><span class="m" style="color:#4A2E00">Must photo · ¥ 500 · fecha 16:30</span></span></a></div>
+    <div class="mv"><span class="walk"></span><span>a pé 14 min · ou Marunouchi 1 parada</span></div>
+
+    <div class="ch"><div class="tm"><b>19:30</b><span>歌舞伎町</span></div><a href="Lugar.html" class="act" style="background:#F1F2F4"><span class="ph"><span class="photo" style="background-image:url('https://picsum.photos/seed/must-goldengai/200/200')"></span></span><span class="bd"><span class="n">Golden Gai · bar Albatross</span><span class="m">Must drink · cover ¥ 800 · noite</span></span></a></div>
+    <div class="mv"><span class="rail" style="background:#9ACD32"></span><span class="line-chip" style="padding:3px 8px 3px 3px"><i style="background:#9ACD32;width:18px;height:18px">JY</i>Yamanote</span><span>último 00:40</span></div>
+  </div>
+
+  <div style="position:absolute;left:22px;right:22px;bottom:24px;display:flex;gap:10px">
+    <button class="ghost" style="width:52px;height:52px;border-radius:50%;padding:0" aria-label="Trocar"><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4M3 8l4-4 4 4M17 8v12M13 16l4 4 4-4"/></svg></button>
+    <a href="ComoChegar.html" class="btn" style="flex:1">Ir pro Fuunji · saia 14:35</a>
+  </div>
+</div>
+
+</body>
+</html>

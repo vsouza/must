@@ -18,6 +18,7 @@ App iOS pessoal (um usuário: Vinicius) que transforma um board de "Musts" (Must
 - **Experiências:** por enquanto **só colando link** (Viator, Klook, Airbnb, GetYourGuide, ingressos) — decisão de 02/11/2026. A Viator (afiliado Basic, header `exp-api-key`) fica pra depois, atrás do protocolo `ExperienceSource`. Nada de scraping.
 - **Voos:** status ao vivo só pela **AeroDataBox** (RapidAPI, Basic grátis 400 unidades/mês); sem chave, mostra o horário programado.
 - **Por perto, agora:** board + Google Nearby (popularidade) + Wikipedia geosearch + Foursquare, ranqueado no aparelho. Nunca push; só na Home e na tela própria.
+- **Guia, não banco de dados** (prompt 18, 02/11): a Home mostra só o dia (bairro, agora, saia às) — orçamento vai pra Ajustes. Planejamento por **bairro + vizinhos** (`Area`, tabela curada com tempos de trem) e guia com deslocamentos entre paradas. **Resiliência é requisito**: nada de JSON decodificado em `body`, serviços fora do main, `NWPathMonitor`, timeouts curtos, circuit breaker, fila de saída offline, dia baixado pro offline. Visual: selo de estação por bairro, kanji grande, cor oficial das linhas.
 - **Importação/exportação** pelo JSON em `data/board.schema.json`. Seeds em `data/seed-bh.json` e `data/seed-jp.json` (coordenadas `approx: true` são chute — resolver no Places na primeira sincronização).
 
 ## Design (v5, tema claro) — fonte da verdade em `design/`
@@ -40,4 +41,4 @@ App iOS pessoal (um usuário: Vinicius) que transforma um board de "Musts" (Must
 - Commits pequenos, mensagem em português, um prompt = um ou mais commits.
 
 ## Como o trabalho está dividido
-Os prompts em `prompts/` são executados em ordem (01 → 15; a rodada atual está em `prompts/RODADA-14-15.md`). Cada um diz o que entregar e como verificar. Antes de cada prompt, olhar os PNGs das telas citadas.
+Os prompts em `prompts/` são executados em ordem (01 → 18; a rodada atual é o `prompts/18-guia-bairro-resiliencia.md`). Cada um diz o que entregar e como verificar. Antes de cada prompt, olhar os PNGs das telas citadas.

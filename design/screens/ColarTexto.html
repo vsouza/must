@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Must — Colar texto (resposta de IA, lista, mensagem)</title>
+
+<link rel="stylesheet" href="must-light.css"><style>html,body{background:#EEF0F3}body{display:flex;justify-content:center;padding:24px 0}.app{box-shadow:0 30px 80px rgba(0,0,0,.18);border-radius:44px}</style>
+</head>
+<body>
+
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;family=Instrument+Serif:ital@0;1&amp;family=Geist+Mono:wght@400;600&amp;family=Zen+Kaku+Gothic+New:wght@500;700&amp;display=swap">
+<style>
+body{margin:0;background:#fff}
+.src{font-size:13px;line-height:1.55;color:#4A4E55}
+.h-eat{background:#B9F5CF;border-radius:4px;padding:0 3px;color:#0B2A18;font-weight:600}
+.h-see{background:#DCCFFF;border-radius:4px;padding:0 3px;color:#2E1065;font-weight:600}
+.h-drink{background:#9FD6FF;border-radius:4px;padding:0 3px;color:#0F3B8C;font-weight:600}
+.h-link{background:#121316;color:#fff;border-radius:4px;padding:0 4px;font-family:'Geist Mono',monospace;font-size:11px}
+.h-tip{text-decoration:underline;text-decoration-color:#FFB020;text-decoration-thickness:2px;text-underline-offset:2px}
+.h-area{border-bottom:1.5px dashed #121316;font-weight:600;color:#121316}
+.grp{display:flex;flex-direction:column;gap:6px}
+.gh{display:flex;justify-content:space-between;align-items:center}
+.gh b{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+.row{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid #EEF0F3}
+.row:first-of-type{border-top:0}
+.nm{font-size:14px;font-weight:600}
+.mt{font-size:11.5px;color:#7A7F87}
+.chk{width:22px;height:22px;border-radius:50%;background:#22DD7E;color:#0B2A18;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+</style>
+
+<div class="app">
+  <div style="position:absolute;left:22px;right:22px;top:58px;display:flex;justify-content:space-between;align-items:center">
+    <a href="Home6.html" class="ic" aria-label="Fechar"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></a>
+    <div style="display:flex;gap:4px;background:#F1F2F4;border-radius:999px;padding:4px">
+      <span class="pill" style="padding:7px 12px;background:transparent">Link</span><span class="pill pill-on" style="padding:7px 12px">Texto</span><span class="pill" style="padding:7px 12px;background:transparent">Nome</span>
+    </div>
+    <span style="width:40px"></span>
+  </div>
+
+  <!-- texto colado, com o que foi reconhecido marcado -->
+  <div class="card" style="position:absolute;left:22px;right:22px;top:112px;height:198px;padding:14px 16px;background:#F6F7F9;overflow:hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span class="micro">Colado · ChatGPT · 1.840 car.</span><span class="tag" style="background:#fff">trocar</span></div>
+    <div class="src">
+      <b style="color:#121316">Dia 2 — <span class="h-area">Asakusa e Ueno</span></b><br>
+      Comece cedo no <span class="h-see">Senso-ji</span> (antes das 8h fica vazio). Para o almoço, <span class="h-eat">Asakusa Imahan</span> — sukiyaki, <span class="h-tip">reserve com antecedência</span>. À tarde, <span class="h-see">Tokyo National Museum</span> <span class="h-link">tnm.jp</span> e uma volta no <span class="h-see">Ameyoko</span>. Para fechar, um drink no <span class="h-drink">Bar Gen Yamamoto</span> <span class="h-link">instagram.com/p/…</span>. <span class="h-tip">Compre o Tokyo Subway Ticket de 72h</span>…
+    </div>
+    <div style="position:absolute;left:0;right:0;bottom:0;height:46px;background:linear-gradient(180deg,rgba(246,247,249,0),#F6F7F9)"></div>
+  </div>
+
+  <!-- resumo visual -->
+  <div style="position:absolute;left:22px;right:22px;top:322px;display:flex;gap:8px">
+    <div class="card" style="flex:1;padding:10px 12px;background:#B9F5CF;display:flex;flex-direction:column;gap:1px"><span class="mono" style="font-size:20px;font-weight:600;color:#0B2A18">2</span><span style="font-size:11px;color:#0B2A18">comer</span></div>
+    <div class="card" style="flex:1;padding:10px 12px;background:#DCCFFF;display:flex;flex-direction:column;gap:1px"><span class="mono" style="font-size:20px;font-weight:600;color:#2E1065">4</span><span style="font-size:11px;color:#2E1065">ver</span></div>
+    <div class="card" style="flex:1;padding:10px 12px;background:#9FD6FF;display:flex;flex-direction:column;gap:1px"><span class="mono" style="font-size:20px;font-weight:600;color:#0F3B8C">1</span><span style="font-size:11px;color:#0F3B8C">beber</span></div>
+    <div class="card" style="flex:1;padding:10px 12px;background:#121316;display:flex;flex-direction:column;gap:1px"><span class="mono" style="font-size:20px;font-weight:600;color:#fff">2</span><span style="font-size:11px;color:#fff">links</span></div>
+    <div class="card" style="flex:1;padding:10px 12px;background:#FFE3A3;display:flex;flex-direction:column;gap:1px"><span class="mono" style="font-size:20px;font-weight:600;color:#4A2E00">3</span><span style="font-size:11px;color:#4A2E00">dicas</span></div>
+  </div>
+
+  <!-- itens -->
+  <div class="card" style="position:absolute;left:22px;right:22px;top:392px;bottom:96px;padding:10px 16px;background:#fff;border:1px solid #EEF0F3;box-shadow:0 10px 30px rgba(18,19,22,.06);overflow:hidden;display:flex;flex-direction:column;gap:10px">
+    <div class="grp">
+      <div class="gh"><b><span class="stamp" style="width:26px;height:26px;color:#121316;font-size:9px;border-width:1.5px">浅草</span>Asakusa e Ueno · dia sugerido</b><span class="tag">virar dia 2</span></div>
+      <div class="row"><span class="chk"><svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><div style="flex:1;min-width:0"><div class="nm">Senso-ji <span class="tag" style="padding:1px 6px;font-size:10px;background:#B8F2EA;color:#063F3A">see · templo</span></div><div class="mt">no board · dica: antes das 8h</div></div></div>
+      <div class="row"><span class="chk"><svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><div style="flex:1;min-width:0"><div class="nm">Asakusa Imahan <span class="tag" style="padding:1px 6px;font-size:10px;background:#B9F5CF;color:#0B2A18">eat · sukiyaki</span></div><div class="mt">novo · nota: reservar · ¥¥¥</div></div></div>
+      <div class="row"><span class="chk"><svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><div style="flex:1;min-width:0"><div class="nm">Tokyo National Museum <span class="tag" style="padding:1px 6px;font-size:10px;background:#DCCFFF;color:#2E1065">art · museu</span></div><div class="mt">novo · site tnm.jp lido · fecha seg</div></div></div>
+      <div class="row" style="opacity:.55"><span class="chk" style="background:#fff;border:1.5px solid #D9DCE1"></span><div style="flex:1;min-width:0"><div class="nm">+ Ameyoko, Bar Gen Yamamoto</div><div class="mt">2 mais · toque pra ver</div></div></div>
+    </div>
+    <div class="grp" style="border-top:1px solid #EEF0F3;padding-top:8px">
+      <div class="gh"><b><span style="width:26px;height:26px;border-radius:8px;background:#FFE3A3;display:flex;align-items:center;justify-content:center;font-size:12px">💡</span>Dicas · vão pras notas</b></div>
+      <span class="mt" style="font-size:12.5px;color:#121316">“Tokyo Subway Ticket 72h” → Carteira · “reserve o Imahan” → nota do lugar</span>
+    </div>
+  </div>
+
+  <div style="position:absolute;left:22px;right:22px;bottom:24px;display:flex;gap:10px">
+    <button class="ghost" style="width:120px;height:52px">Só salvar</button>
+    <a href="GuiaBairro.html" class="btn btn-dark" style="flex:1">Adicionar 6 e criar dia 2</a>
+  </div>
+</div>
+
+</body>
+</html>

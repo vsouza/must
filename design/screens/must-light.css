@@ -49,3 +49,8 @@ a{color:#1E73FF}a:hover{color:#0F5AD6}
 .m-sport{--c1:#FFD1C7;--c2:#FF5A3C;--ct:#5A1A0E}
 .gold{background:linear-gradient(135deg,#FFE9C2,#FFB347);color:#4A2E00}
 .dusk{background:linear-gradient(135deg,#C9D2FF,#5B6CFF);color:#161C66}
+/* selo de estação/bairro (eki stamp) */
+.stamp{position:relative;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;border:2.5px solid currentColor;font-family:'Zen Kaku Gothic New',sans-serif;font-weight:700;line-height:1}
+.stamp::after{content:"";position:absolute;inset:4px;border-radius:50%;border:1px dashed currentColor;opacity:.6}
+.line-chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 10px 4px 4px;font-size:12px;font-weight:600;color:#121316;background:#fff;border:1px solid #EEF0F3}
+.line-chip i{width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-family:'Geist Mono',monospace;font-size:10px;font-weight:700;color:#fff}
