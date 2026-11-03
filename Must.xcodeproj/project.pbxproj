@@ -213,6 +213,7 @@
 		A4ABDFDB23B8DB772156E82D /* Tips.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D464D945A49E20B455A3BEA /* Tips.swift */; };
 		A5612E340C054B84E966C1D4 /* TripReadinessTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5D405F1474161A1FDB959C2 /* TripReadinessTests.swift */; };
 		A5CE60D8B6B29EF0FBE94136 /* HomeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FADFA709EC6E6F26C38E2D34 /* HomeModel.swift */; };
+		A5D0D6788434CB54CED73139 /* ColarTextoCloudTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81ADBEA332F02C068F3ED632 /* ColarTextoCloudTests.swift */; };
 		A653778BB8318C9B046608E9 /* MustsHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C42FCB610CD3F0DCA2D3DAF /* MustsHubView.swift */; };
 		A6E54DD819864C777D940C51 /* tokyo-lines.geojson in Resources */ = {isa = PBXBuildFile; fileRef = FE11D8C2ED0A877468648D71 /* tokyo-lines.geojson */; };
 		A75DBF72261F35941206EFF2 /* AssistantTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E274CE97AE647FC0BF84F38E /* AssistantTests.swift */; };
@@ -523,6 +524,7 @@
 		7F254E195A33BA760DE16C3A /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		80374DD7C366832956DAD9EC /* FlowLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowLayout.swift; sourceTree = "<group>"; };
 		80AB3193D4A8D68E8A7C7975 /* Archivo.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Archivo.ttf; sourceTree = "<group>"; };
+		81ADBEA332F02C068F3ED632 /* ColarTextoCloudTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColarTextoCloudTests.swift; sourceTree = "<group>"; };
 		81C441C4CF94405A51158D55 /* RouteGeometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteGeometry.swift; sourceTree = "<group>"; };
 		84A3772999467B2DD84F0755 /* MapPins.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapPins.swift; sourceTree = "<group>"; };
 		857547316EC7074891DD51AD /* Colors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Colors.swift; sourceTree = "<group>"; };
@@ -1001,6 +1003,7 @@
 				3847B720AFE775247C5B85A9 /* BoardCodecTests.swift */,
 				4057F13FC1B1224A5960AEE0 /* BoardEditsTests.swift */,
 				34B77A2A3A62BB77CAE9126D /* BuscarNomeTests.swift */,
+				81ADBEA332F02C068F3ED632 /* ColarTextoCloudTests.swift */,
 				2B64D1B6B9C678CF295B9B62 /* ColarTextoTests.swift */,
 				0FF11D40BC1FD6464D2737BB /* DayFlowTests.swift */,
 				96B6023D7FE3D8AF2A2D0583 /* DayPrefetchTests.swift */,
@@ -1787,6 +1790,7 @@
 				D6C8A98A1AE102D60705D9F8 /* BoardCodecTests.swift in Sources */,
 				78181CEF9BEEFB6917B6775B /* BoardEditsTests.swift in Sources */,
 				B4961DBFF091160A910EB743 /* BuscarNomeTests.swift in Sources */,
+				A5D0D6788434CB54CED73139 /* ColarTextoCloudTests.swift in Sources */,
 				81443345977C727CB448470D /* ColarTextoTests.swift in Sources */,
 				34D6081A5CB2767A55D164EE /* DayFlowTests.swift in Sources */,
 				8A8A34CBBC66706B777BA3C5 /* DayPrefetchTests.swift in Sources */,

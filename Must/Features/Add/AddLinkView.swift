@@ -157,7 +157,8 @@ struct AddLinkView: View {
                      cityId: city?.id ?? trips.first?.cities.first?.id ?? region.rawValue,
                      tripStart: trips.first?.start, region: region, knownAreas: knownAreas,
                      provider: services.places, queue: context,
-                     onDevice: settingsList.first?.onDeviceAI ?? true, readLinks: true)
+                     onDevice: settingsList.first?.onDeviceAI ?? true, readLinks: true,
+                     cloudBoost: settingsList.first?.cloudBoost ?? false)
     }
 
     // MARK: Entrada

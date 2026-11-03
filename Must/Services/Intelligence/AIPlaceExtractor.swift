@@ -144,19 +144,26 @@ enum CloudBoost {
         return try parse(data, text: text, knownAreas: knownAreas)
     }
 
-    /// Corpo da chamada: Haiku, effort `low`, saída estruturada, sem thinking.
+    /// Corpo da chamada de lugares: Haiku, effort `low`, saída estruturada, sem thinking.
     static func requestBody(_ text: String) -> [String: Any] {
+        messages(system: AIPlaceExtractor.instructions + " Responda em pt-BR. Use string vazia quando não souber.",
+                 user: "Legenda:\n\(text)", schema: schema, maxTokens: maxTokens)
+    }
+
+    /// Construtor único dos pedidos (lugares de legenda e texto colado): só muda o esquema, o texto e o teto.
+    /// Não tem campo de thinking de propósito; `CloudBoostTests` confere.
+    static func messages(system: String, user: String, schema: [String: Any], maxTokens: Int) -> [String: Any] {
         [
             "model": model,
             "max_tokens": maxTokens,
-            "system": AIPlaceExtractor.instructions + " Responda em pt-BR. Use string vazia quando não souber.",
+            "system": system,
             "output_config": ["effort": effort, "format": ["type": "json_schema", "schema": schema]],
-            "messages": [["role": "user", "content": "Legenda:\n\(text)"]],
+            "messages": [["role": "user", "content": user]],
         ]
     }
 
-    /// Lê a resposta da Messages API (checa `stop_reason` antes do conteúdo).
-    static func parse(_ data: Data, text: String, knownAreas: [String]) throws -> [ExtractedPlace] {
+    /// Lê a resposta da Messages API (checa `stop_reason` antes do conteúdo) e devolve o JSON estruturado.
+    static func payload(_ data: Data) throws -> [String: Any] {
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else { throw ServiceError.decoding("anthropic") }
         let stop = json["stop_reason"] as? String
         guard stop != "refusal", stop != "max_tokens" else { throw ServiceError.decoding("stop_reason \(stop ?? "")") }
@@ -165,11 +172,106 @@ enum CloudBoost {
               let payload = try JSONSerialization.jsonObject(with: Data(textBlock.utf8)) as? [String: Any] else {
             throw ServiceError.decoding("sem bloco de texto")
         }
-        let items = payload["places"] as? [[String: Any]] ?? []
+        return payload
+    }
+
+    static func parse(_ data: Data, text: String, knownAreas: [String]) throws -> [ExtractedPlace] {
+        let items = try payload(data)["places"] as? [[String: Any]] ?? []
         let generated = items.map { i in
             GeneratedPlace(name: i["name"] as? String ?? "", nameLocal: i["nameLocal"] as? String ?? "", area: i["area"] as? String ?? "",
                            category: i["category"] as? String ?? "none", hint: i["hint"] as? String ?? "")
         }
         return AIPlaceExtractor.map(generated, text: text, knownAreas: knownAreas)
+    }
+
+    // MARK: Texto colado (Colar texto, rodada 21 · fatia 3)
+
+    /// Só entra quando o aparelho acha menos de 2 lugares (`TravelTextExtractor.needsCloud`).
+    static let textMaxTokens = 2_048
+    /// Teto do texto mandado: é reforço, não a análise inteira.
+    static let textMaxLength = 6_000
+    static let textEndpoint = URL(string: "https://api.anthropic.com/v1/messages")!
+
+    static var textSchema: [String: Any] { [
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["days", "places", "tips"],
+        "properties": [
+            "days": [
+                "type": "array",
+                "items": [
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["title", "area", "items"],
+                    "properties": [
+                        "title": ["type": "string"],
+                        "area": ["type": "string"],
+                        "items": ["type": "array", "items": ["type": "string"]],
+                    ],
+                ],
+            ],
+            "places": [
+                "type": "array",
+                "items": [
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["name", "nameLocal", "area", "category", "sub", "why"],
+                    "properties": [
+                        "name": ["type": "string"],
+                        "nameLocal": ["type": "string"],
+                        "area": ["type": "string"],
+                        "category": ["type": "string", "enum": ["eat", "drink", "coffee", "see", "temple", "listen", "shop", "night",
+                                                                "photo", "art", "sport", "none"]],
+                        "sub": ["type": "string"],
+                        "why": ["type": "string"],
+                    ],
+                ],
+            ],
+            "tips": [
+                "type": "array",
+                "items": [
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["text", "kind", "placeName"],
+                    "properties": [
+                        "text": ["type": "string"],
+                        "kind": ["type": "string", "enum": ["place", "wallet", "general"]],
+                        "placeName": ["type": "string"],
+                    ],
+                ],
+            ],
+        ],
+    ] }
+
+    /// Corpo do pedido de texto: mesmo modelo, effort e formato do de lugares (Haiku, `low`, sem thinking).
+    static func textRequestBody(_ text: String) -> [String: Any] {
+        messages(system: TravelTextExtractor.instructions + " Responda em pt-BR. Use string vazia quando não souber.",
+                 user: "Texto:\n\(text)", schema: textSchema, maxTokens: textMaxTokens)
+    }
+
+    /// Uma tentativa só (POST nunca repete; host cobrado). Devolve a resposta crua, pra guardar na fila se preciso.
+    static func extractText(_ text: String, key: String? = Secrets.anthropicKey, http: HTTP = HTTP(),
+                            endpoint: URL = textEndpoint) async throws -> Data {
+        guard let key else { throw ServiceError.missingKey("ANTHROPIC_KEY") }
+        var http = http
+        http.kind = .long
+        return try await http.post(endpoint, json: textRequestBody(String(text.prefix(textMaxLength))),
+                                   headers: ["x-api-key": key, "anthropic-version": "2026-10-21"], service: "anthropic")
+    }
+
+    /// Resposta crua → `ParsedTravelText` (mesmo formato do aparelho). Nome fora do texto cai depois, no mapeamento.
+    static func parseText(_ data: Data) throws -> ParsedTravelText {
+        let json = try payload(data)
+        let days = (json["days"] as? [[String: Any]] ?? []).map { d in
+            SuggestedDay(title: d["title"] as? String ?? "", area: d["area"] as? String ?? "", items: d["items"] as? [String] ?? [])
+        }
+        let places = (json["places"] as? [[String: Any]] ?? []).map { p in
+            TextPlace(name: p["name"] as? String ?? "", nameLocal: p["nameLocal"] as? String ?? "", area: p["area"] as? String ?? "",
+                      category: p["category"] as? String ?? "none", sub: p["sub"] as? String ?? "", why: p["why"] as? String ?? "")
+        }
+        let tips = (json["tips"] as? [[String: Any]] ?? []).map { t in
+            TextTipDraft(text: t["text"] as? String ?? "", kind: t["kind"] as? String ?? "general", placeName: t["placeName"] as? String ?? "")
+        }
+        return ParsedTravelText(days: days, places: places, tips: tips)
     }
 }

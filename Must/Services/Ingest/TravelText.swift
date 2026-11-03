@@ -189,7 +189,8 @@ enum TravelTextParser {
     /// Nomes em potencial numa frase: "no Senso-ji", "Asakusa Imahan", "Tokyo National Museum" e o começo de um item de lista.
     static func candidates(in sentence: String, leading: Bool) -> [Candidate] {
         var raw: [(Substring, Range<String.Index>)] = []
-        if leading, let m = sentence.firstMatch(of: /^\s*(\p{Lu}[\p{L}'’&\-]*(?:\s+(?:\p{Lu}[\p{L}'’&\-]*|de|do|da|of|the|&))*)/) {
+        // Item de lista com nome em japonês antes ("- 風雲児 Fuunji"): o nome latino é que conta.
+        if leading, let m = sentence.firstMatch(of: /^\s*(?:\p{Han}[\p{Han}\p{Hiragana}\p{Katakana}ー]*\s+)?(\p{Lu}[\p{L}'’&\-]*(?:\s+(?:\p{Lu}[\p{L}'’&\-]*|de|do|da|of|the|&))*)/) {
             raw.append((m.1, m.1.startIndex..<m.1.endIndex))
         }
         for m in sentence.matches(of: /(?:^|\s)(?:no|na|em|at|in|do|da)\s+(\p{Lu}[\p{L}'’&\-]*(?:\s+(?:\p{Lu}[\p{L}'’&\-]*|of|the|de|do|da|&))*)/) {
@@ -229,6 +230,32 @@ enum TravelTextParser {
         while let last = words.last, trailConnectors.contains(foldedText(last)) { words.removeLast() }
         let name = words.joined(separator: " ").trimmingCharacters(in: CharacterSet(charactersIn: ".,;:!?'\"“”’"))
         return name.isEmpty ? nil : name
+    }
+
+    /// Nome em japonês ao lado do nome latino (rodada 21 · fatia 3): "Fuunji (風雲児)" ou "風雲児 Fuunji".
+    /// Só vale se o trecho é todo japonês (kanji, hiragana, katakana); "(ramen, 風雲児)" não conta.
+    static func nameLocal(for name: String, in text: String) -> String? {
+        guard let found = text.range(of: name, options: [.caseInsensitive, .diacriticInsensitive]) else { return nil }
+        // Depois do nome, entre parênteses (meia ou cheia largura).
+        let after = text[found.upperBound...].drop(while: { $0 == " " })
+        if let open = after.first, open == "(" || open == "（" {
+            let inner = after.dropFirst().prefix { $0 != ")" && $0 != "）" }
+            let trimmed = inner.trimmingCharacters(in: .whitespaces)
+            if !trimmed.isEmpty, trimmed.unicodeScalars.allSatisfy({ isJapaneseScalar($0) || $0 == " " || $0 == "・" }) {
+                return trimmed
+            }
+        }
+        // Antes do nome, colado com espaço: a corrida de caracteres japoneses que termina ali.
+        let before = text[..<found.lowerBound].reversed().drop(while: { $0 == " " })
+        let run = before.prefix { character in character.unicodeScalars.allSatisfy(isJapaneseScalar) }
+        let local = String(run.reversed())
+        return local.isEmpty || !local.unicodeScalars.contains(where: isJapaneseScalar) ? nil : local
+    }
+
+    /// Kanji, hiragana, katakana e as marcas que acompanham (ー, 々, ・).
+    static func isJapaneseScalar(_ scalar: Unicode.Scalar) -> Bool {
+        let v = scalar.value
+        return scalar.properties.isIdeographic || (0x3040...0x30FF).contains(v) || v == 0x30FC || v == 0x3005 || v == 0xFF65
     }
 
     static func foldedText(_ s: String) -> String {
@@ -360,7 +387,7 @@ private struct Accumulator {
             }
             for cand in inside {
                 let context = segment(of: cand, in: text, among: raw)
-                addPlace(cand.name, context: context)
+                addPlace(cand.name, context: context, local: TravelTextParser.nameLocal(for: cand.name, in: text))
                 lastPlace = cand.name
             }
             prevTip = false
@@ -386,15 +413,16 @@ private struct Accumulator {
         tips.append(TravelTip(text: clean, target: target))
     }
 
-    private mutating func addPlace(_ name: String, context: String) {
+    private mutating func addPlace(_ name: String, context: String, local: String?) {
         let key = PlaceMatcher.normalize(name)
         if let i = places.firstIndex(where: { PlaceMatcher.normalize($0.name) == key }) {
             places[i].mentions += 1
+            places[i].nameLocal = places[i].nameLocal ?? local
             return
         }
         let dayArea = current.flatMap { days[$0].area }
         let area = TravelTextParser.area(in: context, areas: areas) ?? dayArea.flatMap { TravelTextParser.area(in: $0, areas: areas) }
-        places.append(ExtractedPlace(name: name, nameLocal: nil, area: area,
+        places.append(ExtractedPlace(name: name, nameLocal: local, area: area,
                                      category: TravelCategory.color(name: name, context: context),
                                      sub: PlaceExtractor.sub(in: name) ?? PlaceExtractor.sub(in: context),
                                      hint: current == nil ? "citado no texto" : "no texto colado", dayIndex: current))
