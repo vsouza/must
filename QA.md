@@ -285,3 +285,23 @@ Observação: o "antes" é uma emulação do getter antigo, não o código antig
 - Vinicius testou em 03/11 com Wi-Fi sem internet: só o 3D e as fotos falharam; o resto fluiu. Isso confirma o caminho offline; o pré-download de fotos sem internet fica pendente de teste no aparelho.
 
 iPhone: [ ] medir com Instruments (Hangs + Time Profiler) — Vinicius
+
+## Início novo (prompt 18 · B)
+
+**Feito.** Card do dia com foto do bairro escurecida, "Hoje em <bairro>", selo (`StationStamp`), bloco Agora (fila, saia às, a pé), progresso em selos e "Ir agora" → Como chegar. Sem dia: "Hoje, pra onde?" com 3 bairros e "Montar por bairro". "Amanhã, pra onde?" com 3 cartões (foto, selo, contagem, chip de contexto, faixa da categoria). "Por perto" (uma linha), "gasto hoje" (orçamento fica em Ajustes › Dia, que já existia), "+" abre Adicionar. `HomeState` recalcula só no minuto, na posição (≥ 50 m), ao salvar (300 ms de silêncio) e ao voltar pra frente; `HomeModel` ficou intacto pro `OutsideBridge` e os testes.
+
+**Prints** (`scripts/qa-screens.sh`, seção "Início novo"): `jp-inicio-sem-dia`, `jp-inicio-aceito`, `bh-inicio-sem-dia`, `bh-inicio-aceito`. Conferidos contra Home6.png / Home6BH.png. `-debugScreen inicio` agora apaga o dia de hoje antes de mostrar a Início (sem isso, um print "sem dia" herdava o dia aceito da rodada anterior).
+
+**Testes.** `MustTests/AreaTests.swift` (15): tabelas decodificam e cobrem os bairros pedidos, vizinhos apontam pra área existente e são simétricos, lugar → bairro (nome, alias, centroide, cidade), índice (contagem, dominante, abertos, "hoje pra onde", "amanhã", bairro do dia), card do dia e data/cidade.
+
+**Pendências**
+- Horário no aparelho: o seed JP tem horário em 1 de 103 lugares e o BH em nenhum. No simulador, "Hoje, pra onde?" cai no fallback (3 bairros com mais musts, subtítulo "nada aberto agora · os 3 com mais musts"). No iPhone os horários vêm do sync do Places; confirmar lá.
+- Layout: compactado (card do dia 320 pt, cartões de amanhã 116 pt, espaços menores) pra que o gasto e o "Perto de você" fiquem acima da tab bar sem rolar em iPhone 17. Conferir no aparelho.
+- Distância acima de 2 km mostra só a distância ("5,2 km"), sem "a pé". O trecho de trem é do Como chegar.
+- Cores aproximadas: Inokashira, JR Nara, JR Sagano e o ônibus de BH e Kyoto. Metrô de BH não está na tabela de bairros.
+- "Melhor avaliado" pra foto do bairro = verificado no Places › ordem do board (o board não guarda nota). Foto é Commons via `PlaceHero`, não Google (prompt 19).
+- Não feito: reverse geocoding (`CLGeocoder`, fatia C); pré-download da foto dos bairros no Wi-Fi (hoje é cache sob demanda); "ver todos", "Montar por bairro" e o toque no cartão são TODO até a tela Bairros (fatia C); o "+" abre só Link/Nome (Texto é a fatia E).
+- Tema da viagem (prompt 20): o selo usa `StampPalette` (ponto único), sem cor de país.
+- Medição com Instruments e Network Link Conditioner no aparelho (hangs da Início): pendente, como na parte A.
+- Suíte: a primeira rodada completa caiu com "Test crashed with signal kill before establishing connection" (runner do simulador, não código). Simulador apagado (`erase`) e rodada refeita.
+

@@ -2,58 +2,57 @@ import CoreLocation
 import SwiftData
 import SwiftUI
 
-/// Início: gasto do dia, próxima parada, montar amanhã e "perto de você".
+/// Início (prompt 18 · B, `Home6.png`): o dia (bairro, agora, progresso), "Amanhã, pra onde?", uma linha de
+/// "Por perto" e o "+". O orçamento não está aqui: a Home mostra só "gasto hoje" (meta em Ajustes › Dia).
+/// Tudo que aparece sai de `HomeState`, recalculado nos gatilhos (minuto, posição ≥ 50 m, salvar, voltar).
 struct HomeView: View {
     @Environment(AppRouter.self) private var router
     @Environment(RegionStore.self) private var store
     @Environment(Services.self) private var services
+    @Environment(\.scenePhase) private var scenePhase
 
     @Query private var places: [Place]
     @Query private var expenses: [Expense]
     @Query private var days: [PlannedDay]
-    @Query private var settingsList: [Settings]
     @Query private var trips: [TripInfo]
+    @Query private var settingsList: [Settings]
 
-    @State private var headerTab = HeaderTab.hoje
+    @State private var state = HomeState()
     /// "Por perto:" da Home (prompt 14 · B): só o cache de 30 min e o board.
     @State private var nearbyHint: NearbyScored?
     @State private var nearbyCheckedAt = Date.distantPast
-    @Environment(\.scenePhase) private var scenePhase
-
-    private enum HeaderTab: String, CaseIterable { case hoje = "Hoje", musts = "Musts", viagem = "Viagem" }
+    @State private var saveRefresh: Task<Void, Never>?
 
     private var region: Region { store.region }
-    private var now: Date { AppClock.now }
-    private var budget: Double { settingsList.first?.perDayBudget ?? region.defaultBudget }
+
+    /// Célula de ~55 m: o `.onChange` só dispara quando o GPS anda de fato (o filtro de 50 m já está no serviço).
+    private var locationCell: String {
+        guard let here = services.location.current else { return "" }
+        return "\(Int((here.coordinate.latitude * 2000).rounded())),\(Int((here.coordinate.longitude * 2000).rounded()))"
+    }
+
+    private var nearbyKey: String {
+        services.location.current.map { NearbyCell.key(lat: $0.coordinate.latitude, lng: $0.coordinate.longitude, region: region) } ?? ""
+    }
 
     var body: some View {
-        let tomorrow = region.calendar.date(byAdding: .day, value: 1, to: now) ?? now
-        let model = HomeModel(places: places, expenses: expenses, days: days, trip: trips.first,
-                              region: region, now: now, location: services.location.current,
-                              tomorrowWeather: services.sync.weather(on: tomorrow, region: region, trip: trips.first),
-                              nowTemp: services.sync.now(region: region, trip: trips.first)?.temp)
-        ScrollViewReader { proxy in
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    topBar.padding(.top, 8)
-                    greeting.padding(.top, 34)
-                    headerTabs(badge: model.openNearby.count, proxy: proxy).padding(.top, 26)
-                    spend(model).padding(.top, 26).id(HeaderTab.hoje)
-                    cards(model).padding(.top, 56).id(HeaderTab.musts)
-                    Color.clear.frame(height: 1).id(HeaderTab.viagem)
-                    TabBarSpacer()
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                topBar.padding(.top, 8)
+                if services.connectivity.isOffline {
+                    offlineChip.padding(.top, 12)
                 }
-                .padding(.horizontal, 22)
+                dayCard.padding(.top, 16)
+                tomorrowSection.padding(.top, 20)
+                nearbyRow.padding(.top, 14)
+                spendLine.padding(.top, 10)
+                TabBarSpacer()
             }
-            .scrollIndicators(.hidden)
-            .task(id: nearbyKey) { await refreshNearbyHint() }
-            // Voltou pra frente depois de 20 min: olha o cache de novo (sem rede).
-            .onChange(of: scenePhase) { _, phase in
-                if phase == .active, AppClock.now.timeIntervalSince(nearbyCheckedAt) > 20 * 60 {
-                    Task { await refreshNearbyHint() }
-                }
-            }
+            .padding(.horizontal, 22)
+            .padding(.bottom, 24)
         }
+        .scrollIndicators(.hidden)
+        .overlay(alignment: .bottomTrailing) { addButton }
         .background {
             ZStack {
                 Color.must.bg
@@ -61,10 +60,54 @@ struct HomeView: View {
             }
             .ignoresSafeArea()
         }
+        .onAppear { refresh() }
+        // Relógio: recalcula a cada minuto (abertos agora, "Agora", fila) — o sono vai até o próximo minuto cheio.
+        .task { await clock() }
+        .task(id: nearbyKey) { await refreshNearbyHint() }
+        .task(id: state.heroKey) { await state.loadHeroes(services: services, region: region, cityName: region.displayName) }
+        .onChange(of: locationCell) { _, _ in refresh() }
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active else { return }
+            refresh()
+            // Voltou pra frente depois de 20 min: olha o cache de novo (sem rede).
+            if AppClock.now.timeIntervalSince(nearbyCheckedAt) > 20 * 60 {
+                Task { await refreshNearbyHint() }
+            }
+        }
+        // Salvou no SwiftData (lugar, dia, gasto): recalcula uma vez, depois de 300 ms de silêncio.
+        .onReceive(NotificationCenter.default.publisher(for: ModelContext.didSave)) { _ in scheduleRefresh() }
     }
 
-    private var nearbyKey: String {
-        services.location.current.map { NearbyCell.key(lat: $0.coordinate.latitude, lng: $0.coordinate.longitude, region: region) } ?? ""
+    // MARK: Gatilhos
+
+    /// Monta a entrada a partir do que a view já tem (`@Query`, serviços). Só chamado nos gatilhos.
+    private func refresh() {
+        let now = AppClock.now
+        let trip = trips.first
+        let tomorrow = region.calendar.date(byAdding: .day, value: 1, to: region.calendar.startOfDay(for: now)) ?? now
+        state.refresh(HomeState.Inputs(
+            region: region, now: now, trip: trip, places: places, expenses: expenses, days: days,
+            location: services.location.current,
+            tomorrowWeather: services.sync.weather(on: tomorrow, region: region, trip: trip),
+            nowTemp: services.sync.now(region: region, trip: trip)?.temp
+        ))
+    }
+
+    private func scheduleRefresh() {
+        saveRefresh?.cancel()
+        saveRefresh = Task {
+            try? await Task.sleep(for: .milliseconds(300))
+            guard !Task.isCancelled else { return }
+            refresh()
+        }
+    }
+
+    private func clock() async {
+        while !Task.isCancelled {
+            refresh()
+            let seconds = 60 - Int(AppClock.now.timeIntervalSince1970) % 60
+            try? await Task.sleep(for: .seconds(Double(seconds) + 0.5))
+        }
     }
 
     /// Lê só o cache (até 30 min) e o board. Nunca chama Google, Wikipedia nem Foursquare.
@@ -83,7 +126,7 @@ struct HomeView: View {
     // MARK: Topo
 
     private var topBar: some View {
-        HStack {
+        HStack(spacing: 10) {
             ZStack {
                 Circle().fill(Color.must.ink)
                 Text("済").font(.must.kanji(15)).foregroundStyle(.white)
@@ -96,358 +139,452 @@ struct HomeView: View {
             }
             .accessibilityLabel("Must")
 
-            Spacer()
-
-            HStack(spacing: 8) {
-                IconButton(.exportar, label: "Adicionar por link") { router.sheet = .addLink(url: nil, listId: nil) }
-                HStack(spacing: -8) {
-                    Button { router.push(.settings, on: .inicio) } label: {
-                        Text("V")
-                            .font(.must.archivo(15, .bold))
-                            .foregroundStyle(.white)
-                            .frame(width: 40, height: 40)
-                            .background(Circle().fill(MustGradient.avatar))
-                            .overlay(Circle().strokeBorder(.white, lineWidth: 2))
-                    }
-                    .buttonStyle(MustPressStyle())
-                    .zIndex(1)
-                    .accessibilityLabel("Ajustes")
-                    IconButton(.adicionar, style: .dark, label: "Assistente") { router.sheet = .assistant }
-                }
-            }
-        }
-    }
-
-    private var greeting: some View {
-        HStack {
-            Text("Olá, Vinicius!").mustTitle()
-            Spacer()
-            // Sem rede de verdade (prompt 18 · A.4): o mesmo chip, dizendo que o offline funciona.
-            if services.connectivity.isOffline {
-                Tag("offline ok", dot: Color(hex: 0xC5C9D0))
-                    .accessibilityLabel("Sem internet; o app funciona offline")
-            } else if services.sync.status.isProblem || !DevOverrides.liveData {
-                Tag("sem dados ao vivo", dot: Color(hex: 0xC5C9D0))
-                    .accessibilityHint("Mostrando só o que está em cache")
-            }
-            // Toggle de tema: só visual (o app é sempre claro).
-            Capsule()
-                .fill(.white)
-                .overlay(Capsule().strokeBorder(Color.must.lineStrong))
-                .frame(width: 54, height: 28)
-                .overlay(alignment: .leading) {
-                    MustIconView(.sol, size: 12)
-                        .frame(width: 20, height: 20)
-                        .background(Circle().fill(Color.must.surface))
-                        .padding(.leading, 3)
-                }
-                .accessibilityLabel("Tema claro")
-        }
-    }
-
-    private func headerTabs(badge: Int, proxy: ScrollViewProxy) -> some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 22) {
-                ForEach(HeaderTab.allCases, id: \.self) { tab in
-                    Button {
-                        if tab == .viagem {
-                            router.push(.trip, on: .inicio)
-                            return
-                        }
-                        headerTab = tab
-                        withAnimation(.snappy) { proxy.scrollTo(tab, anchor: .top) }
-                    } label: {
-                        Text(tab.rawValue)
-                            .font(.must.archivo(14, headerTab == tab ? .semibold : .regular))
-                            .foregroundStyle(headerTab == tab ? Color.must.ink : Color.must.secondary)
-                            .padding(.bottom, 10)
-                            .overlay(alignment: .bottom) {
-                                if headerTab == tab { Rectangle().fill(Color.must.ink).frame(height: 2) }
-                            }
-                            .overlay(alignment: .topTrailing) {
-                                if tab == .musts, badge > 0 {
-                                    Text("\(badge)")
-                                        .font(.must.mono(9, .semibold))
-                                        .foregroundStyle(Color.must.greenText)
-                                        .padding(.horizontal, 5)
-                                        .padding(.vertical, 1)
-                                        .background(Capsule().fill(Color.must.green))
-                                        .offset(x: 14, y: -6)
-                                }
-                            }
-                    }
-                    .buttonStyle(.plain)
-                }
-                Spacer()
-            }
-            Rectangle().fill(Color.must.line).frame(height: 1)
-        }
-    }
-
-    // MARK: Gasto
-
-    private func spend(_ model: HomeModel) -> some View {
-        HStack(alignment: .center, spacing: 12) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Gasto hoje").font(.must.archivo(14)).foregroundStyle(Color.must.secondary)
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    MonoNumber(region.money(model.spentToday, symbol: false), size: 44)
-                    Text(region.currency).font(.must.archivo(17, .semibold))
-                }
-                .foregroundStyle(Color.must.ink)
-                Text(metaLine(model))
-                    .font(.must.meta)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(state.dateLine)
+                    .font(.must.archivo(15, .semibold))
+                    .foregroundStyle(Color.must.ink)
+                    .lineLimit(1)
+                Text(state.cityLine)
+                    .font(.must.mono(10))
+                    .textCase(.uppercase)
+                    .tracking(1)
                     .foregroundStyle(Color.must.secondary)
-                    .lineLimit(2)
+                    .lineLimit(1)
             }
-            Spacer(minLength: 0)
-            Button { router.select(.hoje) } label: {
-                MustIconView(.avancar, size: 18)
-                    .foregroundStyle(Color.must.greenText)
-                    .frame(width: 48)
-                    .frame(maxHeight: .infinity)
-                    .background(Capsule().fill(Color.must.green))
+
+            Spacer(minLength: 8)
+
+            IconButton(.calendario, label: "Viagem") { router.push(.trip, on: .inicio) }
+            Button { router.push(.settings, on: .inicio) } label: {
+                Text("V")
+                    .font(.must.archivo(15, .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 40, height: 40)
+                    .background(Circle().fill(MustGradient.avatar))
+                    .overlay(Circle().strokeBorder(.white, lineWidth: 2))
             }
             .buttonStyle(MustPressStyle())
-            .accessibilityLabel("Abrir o dia")
+            .accessibilityLabel("Ajustes")
+            IconButton(.adicionar, style: .dark, label: "Assistente") { router.sheet = .assistant }
         }
-        .fixedSize(horizontal: false, vertical: true)
     }
 
-    private func metaLine(_ model: HomeModel) -> String {
-        var parts = ["Meta \(region.money(budget))"]
-        if let day = model.today {
-            let done = day.stops.filter(\.done).count
-            parts.append("\(done) de \(day.stops.count) feitos")
-        } else {
-            parts.append("nenhum dia montado")
+    /// "sem internet · offline ok" (A.4): o app segue funcionando com o que está no aparelho.
+    private var offlineChip: some View {
+        HStack(spacing: 6) {
+            Circle().fill(Color(hex: 0xFFB020)).frame(width: 8, height: 8)
+            Text("sem internet · offline ok")
+                .font(.must.archivo(12, .semibold))
+                .foregroundStyle(Color(hex: 0x4A2E00))
         }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(Capsule().fill(Color(hex: 0xFFF1D6)))
+        .accessibilityLabel("Sem internet; o app funciona offline")
+    }
+
+    // MARK: Card do dia
+
+    @ViewBuilder
+    private var dayCard: some View {
+        if let day = state.day {
+            dayPanel(day)
+        } else {
+            pickPanel
+        }
+    }
+
+    /// Card grande com foto do bairro escurecida: "Hoje em <bairro>", selo, bloco Agora e progresso em selos.
+    private func dayPanel(_ day: HomeDay) -> some View {
+        let photo = day.areaId.flatMap { state.heroes[$0] }
+        return ZStack(alignment: .topLeading) {
+            HeroBackdrop(photo: photo, fallback: .eat)
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(alignment: .top, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Micro("Hoje em", color: .white.opacity(0.7))
+                        Text(day.title)
+                            .font(.must.archivo(30, .bold))
+                            .tracking(-0.6)
+                            .foregroundStyle(.white)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                        Text(day.subtitle)
+                            .font(.must.archivo(13))
+                            .foregroundStyle(.white.opacity(0.75))
+                            .lineLimit(1)
+                    }
+                    Spacer(minLength: 0)
+                    StationStamp(day.seal, sub: day.sealSub, size: 74, rotation: -8)
+                }
+                Spacer(minLength: 12)
+                if let current = day.current {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Micro("Agora", color: Color.must.green)
+                        Text(current.name)
+                            .font(.must.archivo(24, .semibold))
+                            .tracking(-0.2)
+                            .foregroundStyle(.white)
+                            .lineLimit(1)
+                        if let detail = day.currentDetail {
+                            Text(detail)
+                                .font(.must.archivo(13.5))
+                                .foregroundStyle(.white.opacity(0.8))
+                                .lineLimit(1)
+                        }
+                    }
+                } else if day.allDone {
+                    Text("Dia feito 済")
+                        .font(.must.archivo(20, .semibold))
+                        .foregroundStyle(.white)
+                }
+                HStack(spacing: 8) {
+                    progress(day.stops)
+                    Spacer(minLength: 4)
+                    if let placeId = day.currentPlaceId {
+                        Button { router.push(.comoChegar(placeId: placeId), on: .inicio) } label: {
+                            Text("Ir agora")
+                                .font(.must.archivo(14, .semibold))
+                                .foregroundStyle(Color.must.greenText)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 9)
+                                .background(Capsule().fill(Color.must.green))
+                        }
+                        .buttonStyle(MustPressStyle())
+                    }
+                }
+                .padding(.top, 14)
+                if let photo {
+                    Credit(photo.credit, color: Color.must.ink, url: photo.pageURL)
+                        .padding(.top, 10)
+                }
+            }
+            .padding(20)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        }
+        .frame(height: 320)
+        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .shadow(color: Color.must.ink.opacity(0.22), radius: 25, y: 22)
+    }
+
+    /// Sem dia montado: "Hoje, pra onde?" com os 3 bairros com mais musts abertos agora.
+    private var pickPanel: some View {
+        let photo = state.pick.first.flatMap { state.heroes[$0.id] }
+        return ZStack(alignment: .topLeading) {
+            HeroBackdrop(photo: photo, fallback: .night)
+            VStack(alignment: .leading, spacing: 0) {
+                Micro("Hoje", color: .white.opacity(0.7))
+                Text("Hoje, pra onde?")
+                    .font(.must.archivo(28, .bold))
+                    .tracking(-0.5)
+                    .foregroundStyle(.white)
+                    .padding(.top, 2)
+                Text(state.pickIsFallback ? "nada aberto agora · os 3 com mais musts" : "os 3 bairros com mais musts abertos agora")
+                    .font(.must.archivo(13))
+                    .foregroundStyle(.white.opacity(0.75))
+                    .padding(.top, 2)
+                VStack(spacing: 8) {
+                    ForEach(state.pick) { entry in
+                        // TODO(prompt 18 · C): a tela Bairros abre o bairro; por ora vai pro Montar do dia.
+                        Button { router.push(.montar(date: today), on: .hoje) } label: { pickRow(entry) }
+                            .buttonStyle(MustPressStyle())
+                    }
+                }
+                .padding(.top, 16)
+                Spacer(minLength: 14)
+                Button { router.push(.montar(date: today), on: .hoje) } label: {
+                    // TODO(prompt 18 · C): "Montar por bairro" abre a tela Bairros (fatia C); hoje é o Montar.
+                    Text("Montar por bairro")
+                        .font(.must.archivo(15, .semibold))
+                        .foregroundStyle(Color.must.greenText)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(Capsule().fill(Color.must.green))
+                }
+                .buttonStyle(MustPressStyle())
+            }
+            .padding(20)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        }
+        .frame(height: 320)
+        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .shadow(color: Color.must.ink.opacity(0.22), radius: 25, y: 22)
+    }
+
+    private func pickRow(_ entry: AreaEntry) -> some View {
+        HStack(spacing: 12) {
+            StationStamp(entry.area.seal, size: 36, ring: .white, fill: StampPalette.onPhotoFill, rotation: -8)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(entry.area.name)
+                    .font(.must.archivo(16, .semibold))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                Text("\(entry.openCount) abertos agora · \(entry.count) musts")
+                    .font(.must.archivo(12))
+                    .foregroundStyle(.white.opacity(0.75))
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 0)
+            MustIconView(.avancar, size: 14)
+                .foregroundStyle(.white.opacity(0.8))
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(.white.opacity(0.14)))
+    }
+
+    /// Progresso em selos: 済 feito, número atual (branco), próximos (contorno). Janela de 5 em volta do atual.
+    private func progress(_ stops: [HomeStop]) -> some View {
+        let current = stops.firstIndex { $0.isCurrent } ?? max(0, stops.count - 1)
+        let start = min(max(0, current - 2), max(0, stops.count - 5))
+        let window = Array(stops.dropFirst(start).prefix(5))
+        return HStack(spacing: 6) {
+            ForEach(Array(window.enumerated()), id: \.element.id) { index, stop in
+                if index > 0 {
+                    Rectangle().fill(.white.opacity(0.3)).frame(width: 8, height: 2)
+                }
+                progressSeal(stop)
+            }
+            if stops.count > window.count + start {
+                Text("+\(stops.count - start - window.count)")
+                    .font(.must.mono(11))
+                    .foregroundStyle(.white.opacity(0.7))
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(stops.filter(\.done).count) de \(stops.count) feitos")
+    }
+
+    private func progressSeal(_ stop: HomeStop) -> some View {
+        ZStack {
+            if stop.done {
+                Circle().fill(Color.must.green)
+                Text("済").font(.must.kanji(11)).foregroundStyle(Color.must.greenText)
+            } else if stop.isCurrent {
+                Circle().fill(.white)
+                Text("\(stop.number)").font(.must.archivo(11, .bold)).foregroundStyle(Color.must.ink)
+            } else {
+                Circle().strokeBorder(.white.opacity(0.5), lineWidth: 1.5)
+                Text("\(stop.number)").font(.must.archivo(11, .semibold)).foregroundStyle(.white)
+            }
+        }
+        .frame(width: 26, height: 26)
+    }
+
+    private var today: Date { region.calendar.startOfDay(for: AppClock.now) }
+
+    // MARK: Amanhã
+
+    private var tomorrowSection: some View {
+        let tomorrow = region.calendar.date(byAdding: .day, value: 1, to: today) ?? today
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .firstTextBaseline) {
+                HStack(spacing: 8) {
+                    Circle().fill(Color.must.green).frame(width: 6, height: 6)
+                    Text("Amanhã, pra onde?")
+                        .font(.must.archivo(17, .semibold))
+                        .foregroundStyle(Color.must.ink)
+                }
+                Spacer()
+                // TODO(prompt 18 · C): "ver todos" abre a tela Bairros (fatia C).
+                Text("ver todos")
+                    .font(.must.mono(11))
+                    .textCase(.uppercase)
+                    .tracking(1.1)
+                    .foregroundStyle(Color.must.ink)
+            }
+            HStack(spacing: 10) {
+                ForEach(state.tomorrow) { card in
+                    // TODO(prompt 18 · C): o cartão abre o bairro (Bairros); por ora vai pro Montar de amanhã.
+                    Button { router.push(.montar(date: tomorrow), on: .hoje) } label: { areaCard(card) }
+                        .buttonStyle(MustPressStyle())
+                }
+            }
+        }
+    }
+
+    /// Cartão de bairro: foto escurecida, selo no canto, nome, contagem, chip de contexto e faixa da categoria.
+    private func areaCard(_ card: HomeAreaCard) -> some View {
+        let entry = card.entry
+        let photo = state.heroes[entry.id]
+        let dominant = entry.dominant
+        return ZStack(alignment: .bottomLeading) {
+            AreaPhotoView(photo: photo, fallback: dominant ?? .eat)
+            LinearGradient(colors: [.clear, Color.must.ink.opacity(0.82)], startPoint: UnitPoint(x: 0.5, y: 0.3), endPoint: .bottom)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(entry.area.name)
+                    .font(.must.archivo(15, .semibold))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                Text(countLine(entry))
+                    .font(.must.archivo(11))
+                    .foregroundStyle(.white.opacity(0.85))
+                    .lineLimit(1)
+                if let context = card.context {
+                    Text(context)
+                        .font(.must.archivo(10, .semibold))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 2)
+                        .background(Capsule().fill(.white.opacity(0.22)))
+                        .padding(.top, 3)
+                }
+            }
+            .padding(10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 116)
+        .overlay(alignment: .topTrailing) {
+            StationStamp(entry.area.seal, size: 34, ring: .white, fill: StampPalette.onPhotoFill, rotation: -8)
+                .padding(8)
+        }
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill((dominant ?? .eat).strong)
+                .frame(height: 4)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .shadow(color: Color.must.ink.opacity(0.14), radius: 12, y: 8)
+        .accessibilityElement(children: .combine)
+    }
+
+    private func countLine(_ entry: AreaEntry) -> String {
+        guard let dominant = entry.dominant, let n = entry.mix[dominant] else { return "\(entry.count) musts" }
+        return "\(entry.count) musts · \(n) \(dominant.label)"
+    }
+
+    // MARK: Por perto · gasto · +
+
+    /// Uma linha: a dica do cache ("Por perto: Golden Gai") ou, sem dica, o mapa dos abertos agora.
+    private var nearbyRow: some View {
+        Button {
+            if nearbyHint != nil {
+                router.push(.discover, on: .inicio)
+            } else {
+                router.mapShowsOpenNow = true
+                router.select(.mapa)
+            }
+        } label: {
+            HStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color.must.surface)
+                    MustIconView(.mapa, size: 20)
+                        .foregroundStyle(Color.must.ink)
+                }
+                .frame(width: 44, height: 44)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(nearbyTitle)
+                        .font(.must.archivo(14, .semibold))
+                        .foregroundStyle(Color.must.ink)
+                        .lineLimit(1)
+                    Text(nearbySubtitle)
+                        .font(.must.archivo(12))
+                        .foregroundStyle(Color.must.secondary)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 0)
+                MustIconView(.avancar, size: 14)
+                    .foregroundStyle(Color.must.secondary)
+            }
+            .padding(8)
+            // Espaço pro "+" (fica sobre a direita da linha).
+            .padding(.trailing, 66)
+            .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(Color.must.surface2))
+        }
+        .buttonStyle(MustPressStyle())
+    }
+
+    private var nearbyTitle: String {
+        guard let nearbyHint else { return "Perto de você" }
+        return "Por perto: \(nearbyHint.candidate.place.name)"
+    }
+
+    private var nearbySubtitle: String {
+        guard let nearbyHint else {
+            let n = state.openNearbyCount
+            return n == 0 ? "nada aberto perto agora · no mapa" : "\(n) \(n == 1 ? "must aberto" : "musts abertos") perto · no mapa"
+        }
+        let c = nearbyHint.candidate
+        var parts: [String] = []
+        if let rating = c.place.rating { parts.append(rating.formatted(.number.precision(.fractionLength(1)).locale(region.locale))) }
+        parts.append(Walk.distanceText(c.distance))
+        parts.append("fora do board")
         return parts.joined(separator: " · ")
     }
 
-    // MARK: Cards
-
-    private func cards(_ model: HomeModel) -> some View {
-        ZStack(alignment: .topLeading) {
-            nextCard(model)
-                .frame(height: 118)
-                .stackCard(color: .drink, rotation: -2)
-                .padding(.leading, 78)
-                .padding(.trailing, -62)
-
-            tomorrowCard(model)
-                .frame(height: 118)
-                .stackCard(color: .eat, rotation: 1.5)
-                .padding(.leading, 38)
-                .padding(.trailing, -42)
-                .offset(y: 86)
-
-            nearbyCard(model)
-                .frame(height: 250)
-                .stackCard(tint: .sky)
-                .offset(y: 172)
+    /// "gasto hoje ¥ 4.250 · orçamento fica em Ajustes" (o orçamento e a meta estão em Ajustes › Dia).
+    private var spendLine: some View {
+        let amount = Text(region.money(state.spentToday)).font(.must.mono(12, .semibold)).foregroundStyle(Color.must.ink)
+        return Button { router.push(.settings, on: .inicio) } label: {
+            Text("gasto hoje \(amount) · orçamento fica em Ajustes")
+                .font(.must.archivo(12))
+                .foregroundStyle(Color.must.secondary)
         }
-        .frame(height: 430, alignment: .top)
+        .buttonStyle(.plain)
     }
 
-    private func nextCard(_ model: HomeModel) -> some View {
-        let next = model.next
-        let title = next.map { "Próxima · \($0.place.name)" } ?? "Montar o dia"
-        var subtitle = "nada montado pra hoje · toque pra montar"
-        if let next {
-            var parts = [region.timeString(next.at)]
-            let distance = next.place.distance(from: services.location.current)
-            if next.isReservation {
-                // "Saia às" = reserva − caminhada − 5 min (o prompt 07 troca pela ETA do MapKit).
-                let walk = distance.map(Walk.minutes) ?? 0
-                if distance != nil, let leave = region.calendar.date(byAdding: .minute, value: -(walk + 5), to: next.at), leave > now {
-                    parts.append("saia \(region.timeString(leave))")
-                } else {
-                    parts.append("reserva")
-                }
+    /// "+" verde (Adicionar): hoje abre Link/Nome; o Texto é a fatia E.
+    private var addButton: some View {
+        Button { router.sheet = .addLink(url: nil, listId: nil) } label: {
+            ZStack {
+                Circle().fill(Color.must.green)
+                MustIconView(.adicionar, size: 22)
+                    .foregroundStyle(Color.must.greenText)
             }
-            if let distance { parts.append("\(Walk.shortText(distance)) a pé") }
-            subtitle = parts.joined(separator: " · ")
-        }
-        return Button {
-            if let id = next?.place.id {
-                router.push(.place(id: id), on: .inicio)
-            } else {
-                router.push(.montar(date: region.calendar.startOfDay(for: now)), on: .hoje)
-            }
-        } label: {
-            stackRow(icon: .relogio, title: title, subtitle: subtitle, subtitleColor: Color.must.blueText)
+            .frame(width: 54, height: 54)
+            .shadow(color: Color.must.ink.opacity(0.2), radius: 14, y: 8)
         }
         .buttonStyle(MustPressStyle())
-    }
-
-    private func tomorrowCard(_ model: HomeModel) -> some View {
-        Button {
-            let tomorrow = region.calendar.date(byAdding: .day, value: 1, to: region.calendar.startOfDay(for: now)) ?? now
-            router.push(.montar(date: tomorrow), on: .hoje)
-        } label: {
-            stackRow(icon: .montarAjustar, title: "Montar amanhã", subtitle: model.tomorrowLine, subtitleColor: Color.must.greenTextSoft)
-        }
-        .buttonStyle(MustPressStyle())
-    }
-
-    private func nearbyCard(_ model: HomeModel) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Button {
-                router.mapShowsOpenNow = true
-                router.select(.mapa)
-            } label: {
-                nearbyContent(model)
-            }
-            .buttonStyle(MustPressStyle())
-            if let hint = nearbyHint {
-                Button { router.push(.discover, on: .inicio) } label: { hintLine(hint) }
-                    .buttonStyle(MustPressStyle())
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    private func nearbyContent(_ model: HomeModel) -> some View {
-        VStack(alignment: .leading) {
-            HStack(spacing: 14) {
-                iconCircle(.mapa)
-                Text("Perto de você").font(.must.archivo(19, .semibold)).foregroundStyle(Color.must.ink)
-            }
-            Spacer()
-            HStack(alignment: .bottom, spacing: 10) {
-                MonoNumber("\(model.openNearby.count)", size: 64).foregroundStyle(Color.must.ink)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(model.openNearby.count == 1 ? "must aberto" : "musts abertos")
-                        .font(.must.archivo(19, .semibold)).foregroundStyle(Color.must.ink)
-                    Text(model.nearbyLine).font(.must.archivo(13)).foregroundStyle(Color.must.blueText).lineLimit(1)
-                }
-                .padding(.bottom, 6)
-            }
-        }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 22)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-        .contentShape(Rectangle())
-    }
-
-    /// "Por perto: Starbucks Reserve Roastery · 4,5 · 450 m": toque abre Descobrir.
-    private func hintLine(_ item: NearbyScored) -> some View {
-        let c = item.candidate
-        var parts = [c.place.name]
-        if let rating = c.place.rating { parts.append(rating.formatted(.number.precision(.fractionLength(1)).locale(region.locale))) }
-        parts.append(Walk.distanceText(c.distance))
-        return HStack(spacing: 8) {
-            Text("Por perto:").font(.must.archivo(13, .semibold)).foregroundStyle(Color.must.blueText)
-            Text(parts.joined(separator: " · ")).font(.must.archivo(13)).foregroundStyle(Color.must.blueText).lineLimit(1)
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, 24)
-        .padding(.bottom, 18)
-        .contentShape(Rectangle())
-    }
-
-    private func iconCircle(_ icon: MustIcon) -> some View {
-        MustIconView(icon, size: 20)
-            .frame(width: 48, height: 48)
-            .background(Circle().fill(Color.white.opacity(0.55)))
-    }
-
-    private func stackRow(icon: MustIcon, title: String, subtitle: String, subtitleColor: Color) -> some View {
-        HStack(spacing: 14) {
-            iconCircle(icon)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.must.archivo(19, .semibold)).foregroundStyle(Color.must.ink).lineLimit(1)
-                Text(subtitle).font(.must.archivo(13)).foregroundStyle(subtitleColor).lineLimit(1)
-            }
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, 24)
-        .padding(.top, 22)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .contentShape(Rectangle())
+        .accessibilityLabel("Adicionar")
+        .padding(.trailing, 22)
+        .padding(.bottom, 96)
     }
 }
 
-/// Contas da Início, separadas da view pra ficar fácil de ler.
-@MainActor
-struct HomeModel {
-    var places: [Place]
-    var expenses: [Expense]
-    var days: [PlannedDay]
-    var trip: TripInfo?
-    var region: Region
-    var now: Date
-    var location: CLLocation?
-    var tomorrowWeather: DayWeather?
-    var nowTemp: Double?
+/// Foto do bairro com a escurecida de baixo pra cima (cards grandes da Início). Sem foto: a cor da categoria.
+struct HeroBackdrop: View {
+    var photo: CCPhoto?
+    var fallback: MustColor
 
-    /// Raio do "Perto de você".
-    static let nearbyRadius: Double = 1500
-
-    var spentToday: Double {
-        let range = region.dayRange(now)
-        return expenses.filter { range.contains($0.at) }.reduce(0) { $0 + $1.amount }
-    }
-
-    var today: PlannedDay? {
-        let start = region.calendar.startOfDay(for: now)
-        return days.first { $0.date == start && $0.accepted }
-    }
-
-    var nextStop: Stop? {
-        today?.orderedStops.first { !$0.done && $0.place != nil }
-    }
-
-    /// Próxima coisa do dia: a próxima parada do dia aceito ou, sem dia montado, a reserva de hoje.
-    var next: (place: Place, at: Date, isReservation: Bool)? {
-        if let stop = nextStop, let place = stop.place {
-            return (place, stop.at, place.hasReservation(on: now, calendar: region.calendar))
+    var body: some View {
+        ZStack {
+            AreaPhotoView(photo: photo, fallback: fallback)
+            LinearGradient(
+                stops: [
+                    .init(color: Color(hex: 0x15171C).opacity(0.15), location: 0),
+                    .init(color: Color(hex: 0x15171C).opacity(0.55), location: 0.45),
+                    .init(color: Color(hex: 0x15171C).opacity(0.96), location: 1),
+                ],
+                startPoint: .top, endPoint: .bottom
+            )
         }
-        let soon = now.addingTimeInterval(-3600)
-        return places
-            .compactMap { p in p.reservation.map { (p, $0.at) } }
-            .filter { region.calendar.isDate($0.1, inSameDayAs: now) && $0.1 >= soon && !$0.0.isDone }
-            .min { $0.1 < $1.1 }
-            .map { ($0.0, $0.1, true) }
-    }
-
-    /// Lugares do board abertos agora a ≤ 1,5 km. Sem horário não conta.
-    var openNearby: [Place] {
-        guard let location else { return [] }
-        return places.filter { place in
-            !place.isDone
-                && place.openState(at: now, timeZone: region.timeZone).isOpen
-                && place.location.distance(from: location) <= Self.nearbyRadius
-        }
-    }
-
-    var nearbyLine: String {
-        let time = region.timeString(now)
-        guard let location else { return "sem GPS · \(time)" }
-        let nearest = places.filter { $0.area != nil }.min { $0.location.distance(from: location) < $1.location.distance(from: location) }
-        let area = nearest.flatMap { $0.location.distance(from: location) < 3000 ? $0.area : nil }
-            ?? trip?.city(on: now, calendar: region.calendar)?.name ?? region.displayName
-        return [area, time, nowTemp.map { "\(Int($0.rounded()))°" }].compactMap { $0 }.joined(separator: " · ")
-    }
-
-    var tomorrowLine: String {
-        let cal = region.calendar
-        let tomorrow = cal.date(byAdding: .day, value: 1, to: now) ?? now
-        var style = Date.FormatStyle(locale: region.locale, calendar: cal).weekday(.wide)
-        style.timeZone = region.timeZone
-        let weekday = tomorrow.formatted(style)
-        let reservations = places.filter { $0.hasReservation(on: tomorrow, calendar: cal) }.count
-        let reserved = reservations == 0 ? "nada reservado" : reservations == 1 ? "1 reserva" : "\(reservations) reservas"
-        // Dia de fotografia amanhã: a hora do golden no lugar das reservas.
-        let start = cal.startOfDay(for: tomorrow)
-        if days.contains(where: { $0.date == start && $0.kind == .photo }) {
-            let city = trip?.city(on: tomorrow, calendar: cal)
-            let c = CLLocationCoordinate2D(latitude: city?.lat ?? region.defaultCenter.latitude, longitude: city?.lng ?? region.defaultCenter.longitude)
-            if let g = SunService.day(start.addingTimeInterval(12 * 3600), c, timeZone: region.timeZone).goldenPM {
-                return [weekday, tomorrowWeather?.short, "golden \(region.timeString(g.start))"].compactMap { $0 }.joined(separator: " · ")
-            }
-        }
-        return [weekday, tomorrowWeather?.short, reserved].compactMap { $0 }.joined(separator: " · ")
+        .background(Color(hex: 0x15171C))
     }
 }
+
+/// Foto de um bairro ou lugar: cache primeiro (`PhotoLoader`), sem spinner. Sem foto, o gradiente da cor.
+struct AreaPhotoView: View {
+    var photo: CCPhoto?
+    var fallback: MustColor
+    @State private var image: UIImage?
+
+    private var url: URL? { photo.flatMap { URL(string: $0.largeURL ?? $0.url) } }
+
+    var body: some View {
+        fallback.gradient
+            .overlay {
+                if let image {
+                    Image(uiImage: image).resizable().scaledToFill().saturation(0.8)
+                }
+            }
+            .clipped()
+            .task(id: url) {
+                guard let url else { image = nil; return }
+                image = await PhotoLoader.load(url)
+            }
+    }
+}
+

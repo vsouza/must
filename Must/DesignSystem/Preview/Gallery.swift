@@ -23,6 +23,7 @@ struct Gallery: View {
                         buttons.id("buttons")
                         pills.id("pills")
                         seals.id("seals")
+                        stamps.id("stamps")
                         stackCards.id("stack")
                         tiles.id("tiles")
                         toggles.id("toggles")
@@ -162,6 +163,24 @@ struct Gallery: View {
                     Tag("abre 18:00", dot: Color.must.green)
                     Tag("reserva")
                 }
+            }
+        }
+    }
+
+    /// Selo de bairro (D.18) e chip de linha (D.19): sobre papel e sobre foto escurecida.
+    private var stamps: some View {
+        section("Selos de bairro e linhas") {
+            HStack(spacing: 14) {
+                StationStamp("新宿", size: 74, ring: StampPalette.onPhotoFill == .clear ? .black : .white, fill: nil)
+                StationStamp("SAV", sub: "BH · 1897", size: 74, ring: StampPalette.onPaper, fill: nil)
+                StationStamp("上野", size: 44, ring: StampPalette.onPaper, fill: nil, rotation: -6)
+                Spacer()
+            }
+            HStack(spacing: 8) {
+                LineChip(code: "JY", name: "Yamanote", color: 0x80C241)
+                LineChip(code: "H", name: "Hibiya", color: 0xB5B5AC)
+                LineChip(code: "BUS", name: "ônibus", color: 0x7A7F87)
+                Spacer()
             }
         }
     }
