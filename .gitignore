@@ -34,3 +34,6 @@ dist/
 
 # Estado local do wrangler (upload dos tiles pro R2)
 .wrangler/
+
+# worktrees dos agentes do Claude Code
+.claude/worktrees/
