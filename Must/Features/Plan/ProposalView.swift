@@ -228,6 +228,8 @@ struct ProposalView: View {
             router.paths[.hoje] = []
             router.paths[.inicio] = []
             router.tab = .hoje
+            // Dia montado por bairro ("Ajustar" em Bairros): vai pro Guia, como o "Montar" da sheet.
+            if planner.focusArea != nil { router.push(.guia(date: planner.date), on: .hoje) }
             // Aceitou: baixa o que o dia pede (só no Wi-Fi; no celular fica "salva no Wi-Fi") (prompt 18 · A.5).
             let date = planner.date, network = services.connectivity.prefetchNetwork
             let region = planner.region

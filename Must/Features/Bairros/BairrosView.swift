@@ -164,7 +164,7 @@ struct BairrosView: View {
     private var bottom: some View {
         if let sheet = model.sheet {
             BairroSheetView(sheet: sheet,
-                            onAdjust: { router.push(.montar(date: region.calendar.startOfDay(for: AppClock.now))) },
+                            onAdjust: { adjust(sheet.area.id) },
                             onMontar: { montar(sheet.area.id) })
                 .transition(.move(edge: .bottom).combined(with: .opacity))
         } else {
@@ -185,6 +185,11 @@ struct BairrosView: View {
             .frame(width: 44, height: 44)
             .background(Circle().fill(.white.opacity(0.92)))
             .shadow(color: Color.must.ink.opacity(0.12), radius: 10, y: 4)
+    }
+
+    /// "Ajustar": abre a montagem do dia de hoje já com o bairro (e vizinhos) como foco; nada é gravado ainda.
+    private func adjust(_ areaId: String) {
+        router.push(.montar(date: region.calendar.startOfDay(for: AppClock.now), focusArea: areaId))
     }
 
     /// "Montar <bairro>+": grava o dia de hoje no bairro (com vizinhos) e abre o Guia.
@@ -306,9 +311,8 @@ struct BairroSheetView: View {
                     Text("Ajustar")
                         .font(.must.archivo(15, .semibold))
                         .foregroundStyle(Color.must.ink)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 52)
-                        .background(Capsule().strokeBorder(Color.must.line, lineWidth: 1.5))
+                        .frame(width: 120, height: 52)
+                        .background(Capsule().fill(Color.must.surface))
                 }
                 .buttonStyle(MustPressStyle())
                 Button(action: onMontar) {

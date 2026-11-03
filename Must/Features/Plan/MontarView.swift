@@ -4,6 +4,8 @@ import SwiftUI
 /// Montar o dia: tipo de dia, listas (auto/ligada/desligada), orçamento, andar e "ou diga…".
 struct MontarView: View {
     let date: Date
+    /// Bairro do foco ("Ajustar" em Bairros): o pedido abre com `Bairro+` e o Guia recebe o dia montado.
+    var focusArea: String?
 
     @Environment(\.dismiss) private var dismiss
     @Environment(RegionStore.self) private var store
@@ -51,6 +53,7 @@ struct MontarView: View {
             if planner == nil {
                 let start = region.calendar.startOfDay(for: date)
                 planner = DayPlanner(date: date, region: region, settings: settingsList.first, existing: days.first { $0.date == start })
+                planner?.focusArea = focusArea
                 planner?.weather = services.sync.weather(on: start, region: region, trip: trips.first)
                 // Tempos reais (Routes) entram antes da primeira proposta; sem rede, a estimativa segue.
                 if let planner {
