@@ -1,6 +1,7 @@
 import CoreLocation
 import Foundation
 import SwiftData
+import Synchronization
 
 // Lógica pura sobre lugares: horário (cache do Places), cidade do dia, distância, gasto do dia.
 
@@ -10,10 +11,22 @@ extension PlaceHours {
     static let weekdayShort = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"]
     private static let week = 7 * 1440
 
+    /// Um Calendar por fuso (Rodada 21 · A.4): criar um por chamada custava mais que a conta. Só há poucos fusos.
+    private static let calendars = Mutex<[TimeZone: Calendar]>([:])
+
+    private static func calendar(in timeZone: TimeZone) -> Calendar {
+        calendars.withLock { cache in
+            if let cal = cache[timeZone] { return cal }
+            var cal = Calendar(identifier: .gregorian)
+            cal.timeZone = timeZone
+            cache[timeZone] = cal
+            return cal
+        }
+    }
+
     /// (dia 0–6, minutos desde a meia-noite) de `date` no fuso.
     static func weekMinute(_ date: Date, in timeZone: TimeZone) -> (day: Int, minute: Int) {
-        var cal = Calendar(identifier: .gregorian)
-        cal.timeZone = timeZone
+        let cal = calendar(in: timeZone)
         let c = cal.dateComponents([.weekday, .hour, .minute], from: date)
         return ((c.weekday ?? 1) - 1, (c.hour ?? 0) * 60 + (c.minute ?? 0))
     }
