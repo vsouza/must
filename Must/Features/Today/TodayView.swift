@@ -309,6 +309,9 @@ struct TodayView: View {
         return Button { if let id = place?.id { router.push(.place(id: id), on: .hoje) } } label: {
             HStack(alignment: .center, spacing: 14) {
                 KanjiSeal(done: false, number: index + 1, size: 30)
+                if let place {
+                    PlaceThumb(placeId: place.placeId, refs: place.photoRefs, color: place.list?.color ?? .eat, size: 44)
+                }
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(alignment: .firstTextBaseline) {
                         Text(place?.name ?? "Lugar removido").font(.must.archivo(18, .semibold)).foregroundStyle(Color.must.ink).lineLimit(1)

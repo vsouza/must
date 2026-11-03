@@ -286,6 +286,8 @@ private struct SettingsSections: View {
             .disabled(services.sync.isSyncingPlaces)
             .padding(.bottom, 14)
             RowDivider()
+            PhotoDataRows()
+            RowDivider()
             flightRow
             RowDivider()
             FormRow("Tempo", subtitle: region == .jp ? "Open-Meteo + JMA" : "Open-Meteo") {
@@ -293,7 +295,7 @@ private struct SettingsSections: View {
             }
             RowDivider()
             Toggle(isOn: $settings.flickrPhotos) {
-                FormRow("Fotos de fundo", subtitle: "Wikimedia Commons · CC · crédito sempre visível")
+                FormRow("Fotos de fundo", subtitle: "Google Places e Wikimedia Commons · crédito sempre visível")
             }
             .toggleStyle(.must)
             RowDivider()

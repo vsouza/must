@@ -66,7 +66,7 @@ final class BuscarNomeModel {
         }
     }
 
-    /// Escolhida: Details (o fim da sessão) e até 3 fotos do Google.
+    /// Escolhida: Details (o fim da sessão, que já traz `photos`) e a foto principal (uma `/media`, prompt 19).
     func choose(_ suggestion: PlaceSuggestion) async {
         selected = suggestion
         details = nil
@@ -75,8 +75,15 @@ final class BuscarNomeModel {
         let token = sessionToken
         details = try? await places.details(suggestion.placeId, languageCode: "pt-BR", sessionToken: token)
         sessionToken = UUID().uuidString
-        photos = (try? await photoProvider.photos(placeId: suggestion.placeId, limit: 3)) ?? []
+        photos = await mainPhoto(details?.photos ?? [], placeId: suggestion.placeId)
         loadingCard = false
+    }
+
+    /// Só a primeira foto (a principal): uma chamada `/media`, ou nenhuma se já está no disco.
+    private func mainPhoto(_ refs: [PlacePhotoRef], placeId: String) async -> [CCPhoto] {
+        guard let ref = refs.first,
+              let file = try? await photoProvider.photo(ref, placeId: placeId, hero: false, prefetch: false) else { return [] }
+        return [PlacePhotoResolver.photo(ref, file: file, placeId: placeId)]
     }
 
     /// Lista sugerida pelo tipo do Google (a mesma regra da Descobrir). `nil` quando não há categoria clara.

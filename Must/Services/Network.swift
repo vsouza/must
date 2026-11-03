@@ -201,6 +201,7 @@ struct HTTP: Sendable {
         }
         let http = response as? HTTPURLResponse
         let code = http?.statusCode ?? 0
+        DataUsage.add(data.count, network: DataUsage.currentNetwork)
         let ms = Int(Date().timeIntervalSince(started) * 1000)
         Log.network.info("\(service, privacy: .public) \(request.httpMethod ?? "GET", privacy: .public) \(request.url?.host() ?? "", privacy: .public) → \(code) em \(ms) ms")
         guard (200..<300).contains(code) else {
@@ -238,7 +239,8 @@ struct HTTP: Sendable {
 /// Cache simples em disco (Caches/) pra respostas que valem por um tempo.
 actor DiskCache {
     static let shared = DiskCache()
-    private let directory = URL.cachesDirectory.appending(path: "must-cache", directoryHint: .isDirectory)
+    static let folder = URL.cachesDirectory.appending(path: "must-cache", directoryHint: .isDirectory)
+    private let directory = DiskCache.folder
 
     func data(for key: String, maxAge: TimeInterval) -> Data? {
         let url = file(key)

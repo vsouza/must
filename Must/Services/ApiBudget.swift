@@ -7,6 +7,14 @@ enum GoogleSKU: String, CaseIterable, Sendable, Identifiable {
 
     var id: String { rawValue }
 
+    /// Teto por dia só desta SKU (prompt 19): fotos têm 60 por dia, além do teto geral.
+    var dailyLimit: Int? {
+        switch self {
+        case .placePhotos: 60
+        default: nil
+        }
+    }
+
     /// Cota grátis por mês. `nil` = sem limite (IDs Only e o metadata do Street View são grátis).
     var freeMonthly: Int? {
         switch self {
@@ -38,7 +46,7 @@ enum GoogleSKU: String, CaseIterable, Sendable, Identifiable {
         case .placesIdsOnly: "ilimitado · conferir/juntar"
         case .placesEssentials: "10 mil grátis/mês · endereço, coordenada, tipo"
         case .placesPro: "5 mil grátis/mês · horário, nota, preço"
-        case .placePhotos: "1 mil grátis/mês · só sem foto do Commons"
+        case .placePhotos: "1 mil grátis/mês · foto principal de cada lugar"
         case .autocomplete: "10 mil grátis/mês · Buscar por nome"
         case .routesEssentials: "10 mil grátis/mês · a pé, carro, trajeto"
         case .routesPro: "5 mil grátis/mês · trajeto com tarifa"
@@ -58,6 +66,7 @@ enum ApiBlock: Error, Equatable, Sendable {
     case dailyCapReached(cap: Int)
     case monthlyCut(sku: GoogleSKU, used: Int)
     case unavailableToday(sku: GoogleSKU)
+    case dailySKUCap(sku: GoogleSKU, cap: Int)
 
     var message: String {
         switch self {
@@ -65,6 +74,7 @@ enum ApiBlock: Error, Equatable, Sendable {
         case .dailyCapReached(let cap): "teto diário de \(cap) chamadas atingido"
         case .monthlyCut(let sku, let used): "\(sku.label) em \(used) · corte de 80% da cota do mês"
         case .unavailableToday(let sku): "\(sku.label) indisponível hoje (a chave recusou)"
+        case .dailySKUCap(let sku, let cap): "\(sku.label): teto diário de \(cap) atingido"
         }
     }
 }
@@ -97,6 +107,7 @@ enum ApiBudget {
 
     static func usedKey(_ sku: GoogleSKU, _ now: Date) -> String { "api.used.\(sku.rawValue).\(monthKey(now))" }
     static func dayTotalKey(_ now: Date) -> String { "api.day.\(dayKey(now))" }
+    static func daySKUKey(_ sku: GoogleSKU, _ now: Date) -> String { "api.daysku.\(sku.rawValue).\(dayKey(now))" }
     static func unavailableKey(_ sku: GoogleSKU) -> String { "api.unavailable.\(sku.rawValue)" }
     static let dailyCapKey = "api.dailyCap"
 
@@ -116,6 +127,11 @@ enum ApiBudget {
         defaults.integer(forKey: dayTotalKey(now))
     }
 
+    /// Chamadas de uma SKU hoje (teto próprio, ex.: fotos 60/dia).
+    static func usedToday(_ sku: GoogleSKU, now: Date = AppClock.now, defaults: UserDefaults = .standard) -> Int {
+        defaults.integer(forKey: daySKUKey(sku, now))
+    }
+
     static func dailyCap(defaults: UserDefaults = .standard) -> Int {
         defaults.object(forKey: dailyCapKey) as? Int ?? defaultDailyCap
     }
@@ -130,14 +146,19 @@ enum ApiBudget {
     }
 
     /// Diz se uma chamada pode sair agora. `units` = elementos (matriz) ou 1.
-    static func check(_ sku: GoogleSKU, units: Int = 1, now: Date = AppClock.now, defaults: UserDefaults = .standard) -> ApiBlock? {
+    /// `hero`: foto principal do Lugar aberto (prompt 19). Acima de 80% do mês, só ela sai (até a cota grátis).
+    static func check(_ sku: GoogleSKU, units: Int = 1, hero: Bool = false, now: Date = AppClock.now, defaults: UserDefaults = .standard) -> ApiBlock? {
         migrateLegacyPlaces(now: now, defaults: defaults)
         let cap = dailyCap(defaults: defaults)
         if cap == 0 { return .dailyCapZero }
         if isUnavailable(sku, now: now, defaults: defaults) { return .unavailableToday(sku: sku) }
         if usedToday(now: now, defaults: defaults) + units > cap { return .dailyCapReached(cap: cap) }
+        if let limit = sku.dailyLimit, usedToday(sku, now: now, defaults: defaults) + units > limit {
+            return .dailySKUCap(sku: sku, cap: limit)
+        }
         if let free = sku.freeMonthly {
-            let cut = Int((Double(free) * cutFraction).rounded(.down))
+            let fraction = (sku == .placePhotos && hero) ? 1.0 : cutFraction
+            let cut = Int((Double(free) * fraction).rounded(.down))
             let used = defaults.integer(forKey: usedKey(sku, now))
             if used + units > cut { return .monthlyCut(sku: sku, used: used) }
         }
@@ -146,8 +167,8 @@ enum ApiBudget {
 
     /// Decide e, se não sair, registra no log o motivo (o app segue sem erro na UI).
     @discardableResult
-    static func admit(_ sku: GoogleSKU, units: Int = 1, now: Date = AppClock.now, defaults: UserDefaults = .standard) -> ApiBlock? {
-        let block = check(sku, units: units, now: now, defaults: defaults)
+    static func admit(_ sku: GoogleSKU, units: Int = 1, hero: Bool = false, now: Date = AppClock.now, defaults: UserDefaults = .standard) -> ApiBlock? {
+        let block = check(sku, units: units, hero: hero, now: now, defaults: defaults)
         if let block { Log.network.notice("google \(sku.rawValue, privacy: .public) bloqueado: \(block.message, privacy: .public)") }
         return block
     }
@@ -157,6 +178,7 @@ enum ApiBudget {
     static func record(_ sku: GoogleSKU, units: Int = 1, now: Date = AppClock.now, defaults: UserDefaults = .standard) {
         defaults.set(defaults.integer(forKey: usedKey(sku, now)) + units, forKey: usedKey(sku, now))
         defaults.set(defaults.integer(forKey: dayTotalKey(now)) + units, forKey: dayTotalKey(now))
+        defaults.set(defaults.integer(forKey: daySKUKey(sku, now)) + units, forKey: daySKUKey(sku, now))
     }
 
     static func markUnavailable(_ sku: GoogleSKU, now: Date = AppClock.now, defaults: UserDefaults = .standard) {
@@ -178,9 +200,9 @@ enum ApiBudget {
 /// Chamada Google com orçamento: `admit` → chamada → `record` (ou `markUnavailable` em 403/REQUEST_DENIED).
 /// Todos os serviços do Google passam por aqui (Places, Nearby, Autocomplete, Routes, Street View, fotos).
 enum GoogleAPI {
-    static func run<T>(_ sku: GoogleSKU, units: Int = 1, now: Date = AppClock.now, defaults: UserDefaults = .standard,
+    static func run<T>(_ sku: GoogleSKU, units: Int = 1, hero: Bool = false, now: Date = AppClock.now, defaults: UserDefaults = .standard,
                        _ body: () async throws -> T) async throws -> T {
-        if let block = ApiBudget.admit(sku, units: units, now: now, defaults: defaults) {
+        if let block = ApiBudget.admit(sku, units: units, hero: hero, now: now, defaults: defaults) {
             throw ServiceError.budget(block.message)
         }
         do {

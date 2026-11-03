@@ -186,6 +186,8 @@ final class SyncCoordinator {
     private func apply(_ details: PlaceDetails, to place: Place, region: Region) {
         if let hours = details.hours { place.hours = hours }
         if let level = details.priceLevel { place.priceLevel = level }
+        // Fotos vêm no mesmo Details (prompt 19): o que chegou substitui o que estava guardado.
+        place.photoRefs = details.photos
         // Preço do board vale mais; só preenche se faltar e a moeda bater.
         if place.price == nil, let from = details.priceFrom, details.priceCurrency == region.currency { place.price = from }
     }
@@ -199,7 +201,14 @@ final class SyncCoordinator {
         guard placesProgress == nil else { return }
         guard places.isConfigured else { placesSummary = "Falta GOOGLE_PLACES_KEY no Secrets.plist."; return }
         guard DevOverrides.liveData else { placesSummary = "Dados ao vivo estão desligados."; return }
-        let all = (try? context.fetch(FetchDescriptor<Place>(sortBy: [SortDescriptor(\.id)]))) ?? []
+        var all = (try? context.fetch(FetchDescriptor<Place>(sortBy: [SortDescriptor(\.id)]))) ?? []
+        #if DEBUG
+        // `-debugSyncOnly j01,j05` (QA do prompt 19): sincroniza só esses lugares, pra gastar a cota com juízo.
+        if let only = DebugFlags.string("debugSyncOnly") {
+            let ids = Set(only.split(separator: ",").map(String.init))
+            all = all.filter { ids.contains($0.id) }
+        }
+        #endif
         // Pedidos do Board (Resolver no Places) primeiro; depois o que falta resolver.
         let queued = all.filter(\.resolveQueued)
         let missing = all.filter { !$0.resolveQueued && ($0.placeId == nil || $0.approx || $0.hours == nil) }

@@ -186,6 +186,10 @@ enum DebugLaunch {
     static func apply(to router: AppRouter, context: ModelContext, region: Region, services: Services) {
         let location = services.location
         if DebugFlags.has("-gallery") { router.cover = .gallery }
+        // `-debugSyncOnly ids`: resolve só esses lugares no Places (prompt 19, QA das fotos reais).
+        if DebugFlags.string("debugSyncOnly") != nil {
+            Task { await services.sync.syncPlaces(context: context, region: region) }
+        }
         guard let screen = DebugFlags.string("debugScreen") else { return }
         let parts = screen.split(separator: ":", maxSplits: 1).map(String.init)
         let arg = parts.count > 1 ? parts[1] : nil

@@ -15,6 +15,9 @@ struct PlaceView: View {
     @Query private var settingsList: [Settings]
 
     @State private var heroPhoto: CCPhoto?
+    /// Galeria do Google (páginas 1…4; a 0 é `heroPhoto`), carregada ao deslizar (prompt 19).
+    @State private var galleryPhotos: [Int: CCPhoto] = [:]
+    @State private var galleryPage = 0
     @State private var tips = TipsModel()
     /// Header comprimido (nome + "Dicas de quem foi" + horário) quando o título sai da tela.
     @State private var compact = false
@@ -154,49 +157,52 @@ struct PlaceView: View {
         .background(Color.white.ignoresSafeArea(edges: .top))
     }
 
-    /// Foto do Commons perto do lugar (300 m), senão do bairro.
+    /// Foto principal do lugar (prompt 19): Google primeiro (disco, depois uma `/media`), Commons só de reserva.
     private func loadHero(_ place: Place) async {
-        let photos = services.photos
-        guard photos.isConfigured, settingsList.first?.flickrPhotos ?? true, heroPhoto == nil else { return }
+        guard heroPhoto == nil else { return }
+        let city = trips.first?.city(id: place.cityId)?.name ?? region.displayName
         do {
-            let city = trips.first?.city(id: place.cityId)?.name ?? region.displayName
-            heroPhoto = try await PlaceHero.commons(coordinate: place.coordinate, area: place.area, cityName: city, photos: photos)
+            heroPhoto = try await services.photoResolver.hero(for: place, cityName: city,
+                                                              commonsAllowed: settingsList.first?.flickrPhotos ?? true)
         } catch {
             Log.network.error("hero \(place.id, privacy: .public): \(error.localizedDescription, privacy: .public)")
-        }
-        // Sem nada no Commons: uma foto do Google Places (com crédito), só quando há placeId (prompt 17 · A).
-        if heroPhoto == nil, let placeId = place.placeId, services.placePhotos.isConfigured {
-            heroPhoto = try? await services.placePhotos.photos(placeId: placeId, limit: 1).first
         }
     }
 
     // MARK: Hero
 
-    private func photoURL(_ place: Place) -> URL? {
-        if let heroPhoto { return URL(string: heroPhoto.largeURL ?? heroPhoto.url) }
-        return place.list?.photo?.url.flatMap(URL.init(string:))
+    /// Fotos do Google do lugar (até 5, galeria ao deslizar). Vazio = o hero é a foto do Commons ou a da lista.
+    private func googlePages(_ place: Place) -> Int {
+        guard place.placeId != nil else { return 0 }
+        return place.photoRefs.count
     }
 
-    private func credit(_ place: Place) -> (text: String, url: URL?)? {
-        if let heroPhoto { return (heroPhoto.credit, heroPhoto.pageURL) }
-        guard let photo = place.list?.photo, let text = photo.credit else { return nil }
+    private func photoURL(_ place: Place, page: Int = 0) -> URL? {
+        if page > 0, let photo = galleryPhotos[page] { return URL(string: photo.url) }
+        if let heroPhoto, page == 0 { return URL(string: heroPhoto.largeURL ?? heroPhoto.url) }
+        return page == 0 ? place.list?.photo?.url.flatMap(URL.init(string:)) : nil
+    }
+
+    private func credit(_ place: Place, page: Int = 0) -> (text: String, url: URL?)? {
+        if page > 0, let photo = galleryPhotos[page] { return (photo.credit, photo.pageURL) }
+        if page == 0, let heroPhoto { return (heroPhoto.credit, heroPhoto.pageURL) }
+        guard page == 0, let photo = place.list?.photo, let text = photo.credit else { return nil }
         return (text, photo.page.flatMap(URL.init(string:)))
+    }
+
+    /// Página da galeria (deslizar): a página 0 é o hero; as outras carregam quando aparecem (sob demanda).
+    private func loadGalleryPage(_ place: Place, index: Int) async {
+        guard index > 0, galleryPhotos[index] == nil else { return }
+        do {
+            galleryPhotos[index] = try await services.photoResolver.gallery(for: place, index: index)
+        } catch {
+            Log.network.error("galeria \(place.id, privacy: .public): \(error.localizedDescription, privacy: .public)")
+        }
     }
 
     private func hero(_ place: Place, color: MustColor) -> some View {
         ZStack(alignment: .topLeading) {
-            Group {
-                if let url = photoURL(place) {
-                    // photo: prata dessaturado; art/sport: tinta mais leve que a das listas.
-                    TintedPhoto(url: url, color: color, tintOpacity: place.kind == .photo ? 0.55 : (place.kind == .place ? 0.82 : 0.7))
-                        .saturation(place.kind == .photo ? 0.25 : 1)
-                } else {
-                    ZStack {
-                        MustGradient.sky(opacity: (1, 0.9))
-                        BlobBackground(style: .lugar).ignoresSafeArea(edges: [])
-                    }
-                }
-            }
+            heroBackground(place, color: color)
             .frame(height: 390)
             .clipped()
             .overlay(alignment: .bottom) {
@@ -226,11 +232,51 @@ struct PlaceView: View {
             .padding(.horizontal, 22)
             .padding(.top, 62)
 
-            if photoURL(place) != nil, let credit = credit(place) {
+            if photoURL(place, page: galleryPage) != nil, let credit = credit(place, page: galleryPage) {
                 Credit(credit.text, color: color.text, url: credit.url)
                     .padding(.trailing, 22)
                     .frame(maxWidth: .infinity, alignment: .trailing)
                     .padding(.top, 182)
+            }
+        }
+    }
+
+    /// Fundo do hero: uma foto, ou a galeria do Google (até 5 páginas) quando o lugar tem mais de uma.
+    @ViewBuilder private func heroBackground(_ place: Place, color: MustColor) -> some View {
+        let pages = min(googlePages(place), 5)
+        if pages > 1 {
+            TabView(selection: $galleryPage) {
+                ForEach(0..<pages, id: \.self) { index in
+                    heroPhotoView(place, color: color, page: index).tag(index)
+                }
+            }
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            // Só a página que o usuário está vendo (nada de vizinha pré-carregada): uma `/media` por deslize.
+            .task(id: galleryPage) { await loadGalleryPage(place, index: galleryPage) }
+        } else {
+            heroPhotoView(place, color: color, page: 0)
+        }
+    }
+
+    @ViewBuilder private func heroPhotoView(_ place: Place, color: MustColor, page: Int) -> some View {
+        if let url = photoURL(place, page: page) {
+            if page > 0 || heroPhoto?.source == "Google" {
+                // Foto do Google sem tingir (prompt 19): a cor do Must só numa faixa de 30% embaixo, pra legibilidade.
+                TintedPhoto(url: url, color: color, tintOpacity: 0, saturation: 1)
+                    .overlay(alignment: .bottom) {
+                        color.gradient
+                            .frame(height: 390 * 0.3)
+                            .mask(LinearGradient(colors: [.clear, .black], startPoint: .top, endPoint: .bottom))
+                    }
+            } else {
+                // photo: prata dessaturado; art/sport: tinta mais leve que a das listas.
+                TintedPhoto(url: url, color: color, tintOpacity: place.kind == .photo ? 0.55 : (place.kind == .place ? 0.82 : 0.7))
+                    .saturation(place.kind == .photo ? 0.25 : 1)
+            }
+        } else {
+            ZStack {
+                MustGradient.sky(opacity: (1, 0.9))
+                BlobBackground(style: .lugar).ignoresSafeArea(edges: [])
             }
         }
     }

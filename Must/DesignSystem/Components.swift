@@ -343,12 +343,15 @@ struct TintedPhoto: View {
     var url: URL?
     var color: MustColor
     var tintOpacity: Double = 0.82
+    /// 0.7 nas fotos de fundo; 1 na foto do Google (prompt 19: sem alterar a foto).
+    var saturation: Double = 0.7
     @State private var image: UIImage?
 
-    init(url: URL?, color: MustColor, tintOpacity: Double = 0.82) {
+    init(url: URL?, color: MustColor, tintOpacity: Double = 0.82, saturation: Double = 0.7) {
         self.url = url
         self.color = color
         self.tintOpacity = tintOpacity
+        self.saturation = saturation
     }
 
     var body: some View {
@@ -357,7 +360,7 @@ struct TintedPhoto: View {
             .overlay {
                 if let url {
                     if let image {
-                        Image(uiImage: image).resizable().scaledToFill().saturation(0.7)
+                        Image(uiImage: image).resizable().scaledToFill().saturation(saturation)
                     }
                     color.gradient.opacity(tintOpacity)
                 }
@@ -380,6 +383,12 @@ enum PhotoLoader {
 
     static func load(_ url: URL) async -> UIImage? {
         if let hit = memory.object(forKey: url as NSURL) { return hit }
+        // Foto do Google (prompt 19): já está no disco, em arquivo (800 px ou miniatura 240 px).
+        if url.isFileURL {
+            guard let image = UIImage(contentsOfFile: url.path()) else { return nil }
+            memory.setObject(image, forKey: url as NSURL)
+            return image
+        }
         let key = "photo|\(url.absoluteString)"
         if let saved = await DiskCache.shared.stale(key), let image = UIImage(data: saved) {
             memory.setObject(image, forKey: url as NSURL)
@@ -396,11 +405,13 @@ enum PhotoLoader {
     /// Pré-download do dia (prompt 18 · A.5): garante a foto no disco. Não gasta dado do Modo de Pouco Dados
     /// (`HTTP(kind: .prefetch)`). `true` se já estava lá ou baixou.
     static func prefetch(_ url: URL) async -> Bool {
+        if url.isFileURL { return FileManager.default.fileExists(atPath: url.path()) }
         let key = "photo|\(url.absoluteString)"
         if await DiskCache.shared.exists(key) { return true }
         guard let data = try? await HTTP(kind: .prefetch).get(url, headers: ["User-Agent": CommonsPhotoService.userAgent], service: "foto"),
               UIImage(data: data) != nil else { return false }
         await DiskCache.shared.store(data, for: key)
+        trimInBackground()
         return true
     }
 
@@ -409,7 +420,13 @@ enum PhotoLoader {
             return nil
         }
         await DiskCache.shared.store(data, for: key)
+        trimInBackground()
         return data
+    }
+
+    /// Teto de 300 MB (prompt 19 · item 3): as fotos do Commons entram no mesmo despejo LRU.
+    private static func trimInBackground() {
+        Task.detached(priority: .utility) { PlacePhotoStore.trim() }
     }
 }
 
