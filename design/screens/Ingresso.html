@@ -15,9 +15,11 @@ body{margin:0;background:#fff}
 .kv{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:9px 0;border-top:1px solid #EEF0F3}
 .kv:first-child{border-top:0}
 .kv .k{font-size:12.5px;color:#7A7F87}
-.kv .v{font-size:14px;font-weight:600;text-align:right}
+.kv .v{font-size:14px;font-weight:600;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.kv .k{white-space:nowrap;flex-shrink:0}
 .tk{position:relative;border-radius:24px;background:#121316;color:#fff;overflow:hidden}
-.notch{position:absolute;width:26px;height:26px;border-radius:50%;background:#fff;top:150px}
+.notch{position:absolute;width:26px;height:26px;border-radius:50%;background:#fff;top:111px}
+.col{position:absolute;left:22px;right:22px;top:160px;display:flex;flex-direction:column}
 </style>
 
 <div class="app m-night">
@@ -32,36 +34,38 @@ body{margin:0;background:#fff}
     <div style="display:flex;gap:8px"><button class="ic glass" aria-label="Compartilhar"><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M8 8l4-4 4 4M5 14v6h14v-6"/></svg></button><a href="Editar.html" class="ic glass" aria-label="Editar"><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4l10-10-4-4L4 16z"/><path d="M13 7l4 4"/></svg></a></div>
   </div>
 
-  <div style="position:absolute;left:22px;right:22px;top:166px;display:flex;flex-direction:column;gap:6px">
-    <div style="display:flex;gap:6px;flex-wrap:wrap"><span class="tag" style="background:#121316;color:#fff">Must do · Experiência</span><span class="tag" style="background:#B9F5CF;color:#0B2A18">confirmado · âncora de sáb</span><span class="tag">Viator</span></div>
+  <div class="col">
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <div style="display:flex;gap:6px;flex-wrap:nowrap;overflow:hidden"><span class="tag" style="background:#121316;color:#fff">Must do · Experiência</span><span class="tag" style="background:#B9F5CF;color:#0B2A18">confirmado · âncora sáb</span><span class="tag">Viator</span></div>
     <h1 class="h1" style="font-size:28px;line-height:1.05">Aula de sushi com chef em Tsukiji</h1>
-    <span style="font-size:14px;color:#7A7F87">3h · grupo até 8 · em inglês · 2 pessoas</span>
+    <span style="font-size:14px;color:#7A7F87;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">3h · grupo até 8 · em inglês · 2 pessoas</span>
   </div>
 
   <!-- o ingresso -->
-  <div class="tk" style="position:absolute;left:22px;right:22px;top:292px;height:300px;transform:rotate(-1deg);box-shadow:0 22px 50px rgba(18,19,22,.28)">
+  <div class="tk" style="flex-shrink:0;margin-top:18px;height:262px;transform:rotate(-1deg);box-shadow:0 22px 50px rgba(18,19,22,.28)">
     <span class="notch" style="left:-13px"></span><span class="notch" style="right:-13px"></span>
     <div style="position:absolute;left:22px;right:22px;top:20px;display:flex;justify-content:space-between;align-items:flex-start">
-      <div style="display:flex;flex-direction:column;gap:2px"><span class="micro" style="color:rgba(255,255,255,.6)">Sáb · 15 nov</span><span class="mono" style="font-size:34px;font-weight:600;letter-spacing:-.03em;line-height:1">10:00</span><span style="font-size:12px;color:rgba(255,255,255,.7)">chegar <b style="color:#fff">09:45</b> · saia de Naka-Meguro <b style="color:#22DD7E">09:12</b></span></div>
+      <div style="display:flex;flex-direction:column;gap:5px;min-width:0"><span class="micro" style="color:rgba(255,255,255,.6)">Sáb · 15 nov</span><span class="mono" style="font-size:34px;font-weight:600;letter-spacing:-.03em;line-height:1">10:00</span><span style="font-size:12px;line-height:1.4;color:rgba(255,255,255,.7)">chegar <b style="color:#fff">09:45</b><br>saia de Naka-Meguro <b style="color:#22DD7E">09:12</b></span></div>
       <div style="width:92px;height:92px;border-radius:14px;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0">
         <svg width="76" height="76" viewBox="0 0 21 21" fill="#121316" aria-label="QR do ingresso" shape-rendering="crispEdges"><rect x="0" y="0" width="7" height="7"/><rect x="1" y="1" width="5" height="5" fill="#fff"/><rect x="2" y="2" width="3" height="3"/><rect x="14" y="0" width="7" height="7"/><rect x="15" y="1" width="5" height="5" fill="#fff"/><rect x="16" y="2" width="3" height="3"/><rect x="0" y="14" width="7" height="7"/><rect x="1" y="15" width="5" height="5" fill="#fff"/><rect x="2" y="16" width="3" height="3"/><path d="M8 0h1v2H8zM10 0h2v1h-2zM8 3h2v1H8zM11 2h1v3h-1zM9 5h3v1H9zM0 8h1v1H0zM2 8h2v2H2zM5 8h1v1H5zM7 8h1v1H7zM8 9h2v1H8zM11 8h1v2h-1zM13 8h1v1h-1zM15 8h2v1h-2zM18 8h1v2h-1zM20 8h1v1h-1zM1 10h1v1H1zM4 11h1v1H4zM6 10h2v1H6zM9 11h1v2H9zM12 10h2v1h-2zM15 10h1v2h-1zM17 11h2v1h-2zM20 10h1v2h-1zM0 12h2v1H0zM3 12h1v1H3zM6 12h1v1H6zM11 12h2v1h-2zM14 12h1v1h-1zM19 12h1v1h-1zM8 14h2v1H8zM11 14h1v1h-1zM13 14h2v1h-2zM16 14h1v2h-1zM18 14h3v1h-3zM9 16h1v1H9zM11 16h2v1h-2zM14 16h1v1h-1zM18 16h1v1h-1zM20 16h1v1h-1zM8 18h1v2H8zM10 18h3v1h-3zM14 18h2v1h-2zM17 18h1v1h-1zM19 18h2v1h-2zM10 20h1v1h-1zM12 20h3v1h-3zM16 20h2v1h-2z"/></svg>
       </div>
     </div>
-    <div style="position:absolute;left:22px;right:22px;top:136px;border-top:1px dashed rgba(255,255,255,.25)"></div>
-    <div style="position:absolute;left:22px;right:22px;top:150px;display:flex;flex-direction:column;gap:8px">
+    <div style="position:absolute;left:22px;right:22px;top:124px;border-top:1px dashed rgba(255,255,255,.25)"></div>
+    <div style="position:absolute;left:22px;right:22px;top:138px;display:flex;flex-direction:column;gap:8px">
       <div style="display:flex;justify-content:space-between"><span style="font-size:12px;color:rgba(255,255,255,.6)">Confirmação</span><span class="mono" style="font-size:13px;font-weight:600">BR-7K2M-9931</span></div>
-      <div style="display:flex;justify-content:space-between"><span style="font-size:12px;color:rgba(255,255,255,.6)">Pago</span><span class="mono" style="font-size:13px;font-weight:600">¥ 24.000 · 2 × 12.000 · <span style="color:#9FD6FF">exceção aceita</span></span></div>
+      <div style="display:flex;justify-content:space-between"><span style="font-size:12px;color:rgba(255,255,255,.6)">Pago</span><span style="white-space:nowrap"><span class="mono" style="font-size:13px;font-weight:600">¥ 24.000 (2×)</span> <span style="font-size:12px;color:#9FD6FF">· exceção aceita</span></span></div>
       <div style="display:flex;justify-content:space-between"><span style="font-size:12px;color:rgba(255,255,255,.6)">Cancelamento</span><span style="font-size:13px;font-weight:600">grátis até qui 13 · 10:00</span></div>
       <div style="display:flex;gap:6px;margin-top:4px"><span class="pill" style="background:rgba(255,255,255,.14);color:#fff;padding:7px 11px">Mostrar QR grande</span><span class="pill" style="background:rgba(255,255,255,.14);color:#fff;padding:7px 11px">Abrir PDF</span><span class="pill" style="background:#fff;color:#121316;padding:7px 11px">+ Wallet</span></div>
     </div>
   </div>
 
   <!-- ponto de encontro -->
-  <div class="card" style="position:absolute;left:22px;right:22px;top:606px;padding:6px 16px;background:#F6F7F9">
-    <div class="kv"><span class="k">Ponto de encontro</span><span class="v">Portão 1 do Mercado Externo de Tsukiji <span class="jp" style="font-weight:500;color:#7A7F87">築地</span></span></div>
+  <div class="card" style="margin-top:20px;padding:4px 16px;background:#F6F7F9">
+    <div class="kv"><span class="k">Encontro</span><span class="v">Portão 1 · Mercado Externo <span class="jp" style="font-weight:500;color:#7A7F87">築地</span></span></div>
     <div class="kv"><span class="k">Como chegar</span><span class="v">Hibiya → Tsukiji · 24 min · ¥210</span></div>
     <div class="kv"><span class="k">Fornecedor</span><span class="v" style="color:#1E73FF">Viator · ver reserva ↗</span></div>
-    <div class="kv"><span class="k">Depois</span><span class="v">fica a 9 min do Manten Sushi — <span style="color:#7A7F87">mas é almoço duplo</span></span></div>
+    <div class="kv"><span class="k">Depois</span><span class="v">Manten Sushi a 9 min <span style="color:#7A7F87">· almoço duplo</span></span></div>
+  </div>
   </div>
 
   <div style="position:absolute;left:22px;right:22px;bottom:24px;display:flex;gap:10px">

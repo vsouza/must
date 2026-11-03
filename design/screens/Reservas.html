@@ -12,13 +12,17 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;family=Instrument+Serif:ital@0;1&amp;family=Geist+Mono:wght@400;600&amp;family=Zen+Kaku+Gothic+New:wght@500;700&amp;display=swap">
 <style>
 body{margin:0;background:#fff}
-.rs{display:flex;gap:14px;align-items:flex-start;text-decoration:none;color:#121316;padding:14px 0;border-top:1px solid #EEF0F3}
+.rs{display:grid;grid-template-columns:52px minmax(0,1fr) auto;column-gap:14px;row-gap:3px;align-items:start;text-decoration:none;color:#121316;padding:14px 0;border-top:1px solid #EEF0F3}
 .rs:first-child{border-top:0}
 .dt{width:52px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:0;font-family:'Geist Mono',monospace}
 .dt b{font-size:22px;font-weight:600;letter-spacing:-.02em;line-height:1}
 .dt span{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#7A7F87}
 .nm{font-size:17px;font-weight:600;letter-spacing:-.01em}
-.mt{font-size:12.5px;color:#7A7F87}
+.mt{font-size:12.5px;color:#7A7F87;grid-column:2/4}
+.rs>div:nth-child(2){display:contents!important}
+.rs .dt{grid-row:1/3}
+.rs>:last-child{grid-column:3;grid-row:1;align-self:center}
+.listfade{position:absolute;left:0;right:0;bottom:0;height:56px;background:linear-gradient(180deg,rgba(255,255,255,0),#fff 85%);pointer-events:none;border-radius:0 0 22px 22px}
 </style>
 
 <div class="app">
@@ -45,7 +49,7 @@ body{margin:0;background:#fff}
     <span style="font-size:13px;color:rgba(255,255,255,.85)">2 pessoas · omakase ¥22.000 · saia 18:50 · confirmação no e-mail</span>
   </div>
 
-  <div class="card" style="position:absolute;left:22px;right:22px;top:318px;bottom:24px;padding:4px 18px;background:#fff;border:1px solid #EEF0F3;box-shadow:0 10px 30px rgba(18,19,22,.06);overflow:hidden;display:flex;flex-direction:column">
+  <div class="card" style="position:absolute;left:22px;right:22px;top:330px;bottom:24px;padding:4px 18px;background:#fff;border:1px solid #EEF0F3;box-shadow:0 10px 30px rgba(18,19,22,.06);overflow:hidden;display:flex;flex-direction:column">
     <a href="Lugar.html" class="rs" style="opacity:.5"><div class="dt"><b>13</b><span>nov</span></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span class="nm">teamLab Planets</span><span class="mt">Toyosu · ingresso 15:00 · feito</span></div><span class="jp" style="width:26px;height:26px;border-radius:50%;background:#22DD7E;color:#0B2A18;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">済</span></a>
     <a href="Lugar.html" class="rs"><div class="dt"><b>15</b><span>nov</span></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span class="nm">Udatsu Sushi</span><span class="mt">Naka-Meguro · <span class="mono">19:00</span> · 2 pessoas</span></div><span class="tag" style="background:#121316;color:#fff">hoje</span></a>
     <a href="Lugar.html" class="rs"><div class="dt"><b>17</b><span>nov</span></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span class="nm">Shinkansen → Kyoto</span><span class="mt">Tokyo Sta. · Nozomi 215 · <span class="mono">09:12</span> · vagão 8</span></div><span class="tag">viagem</span></a>
@@ -53,6 +57,7 @@ body{margin:0;background:#fff}
     <a href="Lugar.html" class="rs"><div class="dt"><b>19</b><span>nov</span></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span class="nm">Nara · dia inteiro</span><span class="mt">sem hora · trem às <span class="mono">08:40</span> sugerido</span></div><span class="tag">dia</span></a>
     <a href="Lugar.html" class="rs"><div class="dt"><b>22</b><span>nov</span></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span class="nm">Fuji · Kawaguchiko</span><span class="mt">condicional · só se céu limpo · ônibus <span class="mono">07:35</span></span></div><span class="tag"><span class="dot" style="background:#2B7BFF"></span>tempo</span></a>
     <a href="Lugar.html" class="rs"><div class="dt"><b>24</b><span>nov</span></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span class="nm">Voo HND → GRU</span><span class="mt"><span class="mono">23:55</span> · sair do hotel 20:00 · último dia livre até 19h</span></div><span class="tag">voo</span></a>
+    <div class="listfade"></div>
   </div>
 </div>
 

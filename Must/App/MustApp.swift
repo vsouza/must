@@ -151,6 +151,7 @@ struct AppRoot: View {
 #if DEBUG
 /// `-debugScreen <tela>` abre uma tela direto (simulador/prints):
 /// ajustes, regiao, mapas-offline, musts, lista:<id>, fim, lugar:<id>, editar:<id>, nova-lista, adicionar[:url], hoje, mapa,
+/// inicio (sem dia), inicio-aceito (dia de hoje aceito, fica na Início),
 /// board, board:editar (2 selecionados), editar-lista:<id>.
 /// `ingresso` abre um ingresso de exemplo (TicketDemo). `ingresso-entrada` e `ingresso-revisar` abrem Trazer ingresso
 /// (o segundo com um PDF de exemplo na caixa). `experiencias` abre Experiências (com exemplos); `descobrir` abre Por perto
@@ -197,6 +198,13 @@ enum DebugLaunch {
             acceptToday(context: context, region: region, location: location)
             router.select(.hoje)
             prefetchDays(services: services, context: context, region: region)
+        case "inicio-aceito": // dia de hoje aceito, e fica na Início (prints do card do dia, prompt 18 · B)
+            acceptToday(context: context, region: region, location: location)
+            router.select(.inicio)
+            prefetchDays(services: services, context: context, region: region)
+        case "inicio": // sem dia montado (prints do "Hoje, pra onde?"): tira o dia de hoje de prints anteriores
+            clearToday(context: context, region: region)
+            router.select(.inicio)
         case "mapa":
             // mapa:aceitar monta e aceita hoje e amanhã antes (rota e pinos numerados).
             if arg == "aceitar" {
@@ -243,6 +251,14 @@ enum DebugLaunch {
             Task { await services.sync.syncPlaces(context: context, region: region) }
         default: break
         }
+    }
+
+    /// Apaga o dia de hoje (aceito ou não), pra print "sem dia" não herdar o de uma rodada anterior.
+    private static func clearToday(context: ModelContext, region: Region) {
+        let start = region.calendar.startOfDay(for: AppClock.now)
+        let days = (try? context.fetch(FetchDescriptor<PlannedDay>(predicate: #Predicate { $0.date == start }))) ?? []
+        days.forEach { context.delete($0) }
+        try? context.save()
     }
 
     /// Pré-download dos dias aceitos (como o aceite pela tela faria), conforme a rede do `-debugNetwork`.

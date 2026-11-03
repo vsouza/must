@@ -14,7 +14,10 @@
 body{margin:0;background:#fff}
 .stack{position:absolute;border-radius:24px;padding:16px 18px;display:flex;flex-direction:column;gap:8px;color:#121316;box-shadow:0 18px 44px rgba(18,19,22,.12);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.6)}
 .kv{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
-.ev{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid rgba(18,19,22,.08)}
+.col{position:absolute;left:22px;right:22px;top:184px;display:flex;flex-direction:column}
+.col .stack{position:relative}
+.nw{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev{display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px solid rgba(18,19,22,.08)}
 .ev:first-child{border-top:0}
 .dt{font-family:'Geist Mono',monospace;font-size:11px;font-weight:600;width:52px;flex-shrink:0;line-height:1.1}
 </style>
@@ -35,35 +38,37 @@ body{margin:0;background:#fff}
     </div>
   </div>
 
-  <div style="position:absolute;left:22px;right:22px;top:196px;display:flex;flex-direction:column;gap:6px">
-    <div style="display:flex;gap:6px;flex-wrap:wrap"><span class="tag" style="background:#121316;color:#fff">Must art · Fotografia</span><span class="tag" style="background:#FFD2BF;color:#5A2200">termina em 15 dias</span><span class="tag"><span class="dot" style="background:#22DD7E"></span>aberto até 18:00</span></div>
-    <h1 class="h1" style="font-size:30px;line-height:1.02">Daidō Moriyama — A Retrospective</h1>
-    <span class="jp" style="font-size:15px;color:#7A7F87">東京都写真美術館 · Tokyo Photographic Art Museum · Ebisu</span>
-    <span class="serif" style="font-size:17px;color:#121316">“grão, pb, rua — o motivo da viagem inteira caber num museu”</span>
+  <div class="col">
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <div style="display:flex;gap:6px;flex-wrap:nowrap;overflow:hidden"><span class="tag" style="background:#121316;color:#fff">Must art · Fotografia</span><span class="tag" style="background:#FFD2BF;color:#5A2200">últimos 15 dias</span><span class="tag"><span class="dot" style="background:#22DD7E"></span>aberto até 18h</span></div>
+    <h1 class="h1" style="font-size:28px;line-height:1.02">Daidō Moriyama — A Retrospective</h1>
+    <span class="jp nw" style="font-size:14px;color:#7A7F87">東京都写真美術館 · TOP Museum · Ebisu</span>
+    <span class="serif nw" style="font-size:17px;color:#121316">“grão, pb, rua — a viagem inteira num museu”</span>
   </div>
 
   <!-- card 1: entrada e temporada -->
-  <div class="stack" style="left:22px;right:22px;top:400px;height:150px;transform:rotate(-1.2deg);background:linear-gradient(135deg,rgba(220,207,255,.96),rgba(139,92,246,.85));color:#2E1065">
+  <div class="stack" style="margin-top:12px;padding-top:14px;padding-bottom:20px;gap:6px;transform:rotate(-1.2deg);background:linear-gradient(135deg,rgba(220,207,255,.96),rgba(139,92,246,.85));color:#2E1065">
     <div class="kv"><span class="micro" style="color:#2E1065">Entrada · temporada</span><span class="mono" style="font-size:12px;font-weight:600">até 30 nov</span></div>
-    <div style="display:flex;align-items:baseline;gap:10px"><span class="mono" style="font-size:30px;font-weight:600;letter-spacing:-.02em;color:#121316">¥ 1.400</span><span style="font-size:13px">estudante ¥1.120 · <b>grátis</b> 1ª quinta do mês</span></div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap"><span class="tag" style="background:rgba(255,255,255,.6);color:#2E1065">10:00–18:00 · qui/sex até 20:00</span><span class="tag" style="background:rgba(255,255,255,.6);color:#2E1065">última entrada 17:30</span><span class="tag" style="background:rgba(255,255,255,.6);color:#2E1065">fecha seg</span><span class="tag" style="background:rgba(255,255,255,.6);color:#2E1065">sem reserva · fila ~10 min</span></div>
+    <div style="display:flex;align-items:baseline;gap:10px"><span class="mono" style="font-size:28px;font-weight:600;letter-spacing:-.02em;color:#121316;white-space:nowrap;flex-shrink:0">¥ 1.400</span><span style="font-size:12.5px;line-height:1.25">estudante ¥1.120 · <b>grátis</b> 1ª quinta do mês</span></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap"><span class="tag" style="background:rgba(255,255,255,.6);color:#2E1065">10–18h · qui/sex até 20h</span><span class="tag" style="background:rgba(255,255,255,.6);color:#2E1065">última entrada 17:30</span><span class="tag" style="background:rgba(255,255,255,.6);color:#2E1065">fecha seg</span><span class="tag" style="background:rgba(255,255,255,.6);color:#2E1065">sem reserva · fila ~10 min</span></div>
   </div>
 
   <!-- card 2: estilo e o que ver -->
-  <div class="stack" style="left:60px;right:-10px;top:532px;height:96px;transform:rotate(1.4deg);background:rgba(246,247,249,.96)">
+  <div class="stack" style="margin:-14px -32px 0 38px;padding-top:14px;padding-bottom:14px;gap:6px;transform:rotate(1.4deg);background:rgba(246,247,249,.96)">
     <div class="kv"><span class="micro">Estilo</span><span style="font-size:12px;color:#7A7F87">1h30 · 3 andares</span></div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap"><span class="tag" style="background:#121316;color:#fff">fotografia</span><span class="tag">pb · are-bure-boke</span><span class="tag">rua · Provoke</span><span class="tag">anos 60–hoje</span><span class="tag">livraria boa</span></div>
-    <span style="font-size:12.5px;color:#7A7F87">Fotografar: proibido nas salas, liberado no hall. Catálogo ¥4.200.</span>
+    <div style="display:flex;gap:6px;flex-wrap:nowrap;overflow:hidden"><span class="tag" style="background:#121316;color:#fff">fotografia</span><span class="tag">pb · are-bure-boke</span><span class="tag">rua · Provoke</span><span class="tag">anos 60–hoje</span><span class="tag">livraria boa</span></div>
+    <span class="nw" style="font-size:12.5px;color:#7A7F87">Fotos só no hall, não nas salas · catálogo ¥4.200</span>
   </div>
 
   <!-- card 3: agenda do lugar (shows/eventos com ingresso) -->
-  <div class="stack" style="left:22px;right:22px;top:620px;height:124px;background:rgba(233,235,239,.96);gap:2px">
+  <div class="stack" style="margin-top:-10px;background:rgba(233,235,239,.96);gap:2px;padding-top:14px;padding-bottom:8px">
     <div class="kv"><span class="micro">Também aqui</span><span style="font-size:12px;color:#7A7F87">eventos com ingresso</span></div>
     <div class="ev"><span class="dt">ter 18<br>19:00</span><div style="flex:1;display:flex;flex-direction:column;gap:1px"><span style="font-size:14px;font-weight:600">Conversa com o curador</span><span style="font-size:12px;color:#7A7F87">¥500 · em japonês · 40 lugares</span></div><span class="pill" style="padding:6px 10px">Comprar</span></div>
     <div class="ev"><span class="dt">sáb 22<br>14:00</span><div style="flex:1;display:flex;flex-direction:column;gap:1px"><span style="font-size:14px;font-weight:600">Mostra de filmes · Hall</span><span style="font-size:12px;color:#7A7F87">¥600 · 16 mm</span></div><span class="tag" style="background:#FFD2BF;color:#5A2200">esgotado</span></div>
   </div>
 
-  <div style="position:absolute;left:22px;right:22px;top:756px;display:flex;gap:6px;overflow:hidden"><span class="tag">fonte: site do museu · lido no aparelho</span><span class="tag">ingresso online · link</span></div>
+  <div style="margin-top:10px;display:flex;gap:6px;overflow:hidden"><span class="tag">fonte: site do museu · lido no aparelho</span><span class="tag">ingresso online · link</span></div>
+  </div>
 
   <div style="position:absolute;left:22px;right:22px;bottom:24px;display:flex;gap:10px">
     <a href="Mapa.html" class="btn btn-dark" style="flex:1"><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-8 18-2-8z"/></svg>Ir agora · 22 min</a>

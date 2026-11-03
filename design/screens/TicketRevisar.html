@@ -12,10 +12,12 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;family=Instrument+Serif:ital@0;1&amp;family=Geist+Mono:wght@400;600&amp;family=Zen+Kaku+Gothic+New:wght@500;700&amp;display=swap">
 <style>
 body{margin:0;background:#fff}
-.f{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-top:1px solid #EEF0F3}
+.f{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 0;min-height:22px;border-top:1px solid #EEF0F3}
 .f:first-child{border-top:0}
 .f .k{font-size:12.5px;color:#7A7F87;flex-shrink:0}
-.f .v{font-size:14px;font-weight:600;text-align:right;display:flex;align-items:center;gap:6px}
+.f .v{font-size:14px;font-weight:600;text-align:right;display:flex;align-items:center;gap:6px;white-space:nowrap;min-width:0}
+.col{position:absolute;left:22px;right:22px;top:112px;display:flex;flex-direction:column;gap:12px}
+.sw-card .f{padding:8px 0}
 .conf{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .opt{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:#fff;border:1px solid #EEF0F3;text-decoration:none;color:#121316}
 .sw{position:relative;width:46px;height:28px;border-radius:14px;flex-shrink:0;cursor:pointer;border:0;padding:0}
@@ -29,37 +31,39 @@ body{margin:0;background:#fff}
     <span style="width:40px"></span>
   </div>
 
-  <div style="position:absolute;left:22px;right:22px;top:112px;display:flex;flex-direction:column;gap:4px">
+  <div class="col">
+  <div style="display:flex;flex-direction:column;gap:4px">
     <h1 class="h1">Conferir</h1>
-    <span class="serif" style="font-size:17px;color:#7A7F87">toque em qualquer campo pra corrigir · <span style="color:#22DD7E">●</span> certo · <span style="color:#FFB020">●</span> conferir</span>
+    <span class="serif" style="font-size:17px;color:#7A7F87">toque num campo pra corrigir · <span style="color:#22DD7E">●</span> certo · <span style="color:#FFB020">●</span> conferir</span>
   </div>
 
   <!-- o que foi lido -->
-  <div class="card" style="position:absolute;left:22px;right:22px;top:190px;padding:4px 16px;background:#F6F7F9;display:flex;flex-direction:column">
+  <div class="card" style="padding:2px 16px;background:#F6F7F9;display:flex;flex-direction:column">
     <div class="f"><span class="k">Fornecedor</span><span class="v"><span class="conf" style="background:#22DD7E"></span>Viator <span class="mono" style="font-size:11px;color:#7A7F87;font-weight:400">pelo QR</span></span></div>
     <div class="f"><span class="k">Título</span><span class="v" style="text-align:right"><span class="conf" style="background:#22DD7E"></span>Aula de sushi com chef em Tsukiji</span></div>
     <div class="f"><span class="k">Quando</span><span class="v"><span class="conf" style="background:#22DD7E"></span><span class="mono">sáb 15 nov · 10:00</span></span></div>
     <div class="f"><span class="k">Pessoas · pago</span><span class="v"><span class="conf" style="background:#22DD7E"></span><span class="mono">2 · ¥ 24.000</span></span></div>
     <div class="f"><span class="k">Confirmação</span><span class="v"><span class="conf" style="background:#22DD7E"></span><span class="mono">BR-7K2M-9931</span></span></div>
-    <div class="f"><span class="k">Encontro</span><span class="v" style="text-align:right"><span class="conf" style="background:#FFB020"></span>Tsukiji Outer Market, Gate 1 <span style="font-size:11px;color:#7A7F87;font-weight:400">· sem coordenada</span></span></div>
+    <div class="f"><span class="k">Encontro</span><span class="v" style="text-align:right"><span class="conf" style="background:#FFB020"></span>Tsukiji Outer Market, Gate 1 <span style="font-size:11px;color:#7A7F87;font-weight:400">· sem mapa</span></span></div>
     <div class="f"><span class="k">Cancelamento</span><span class="v"><span class="conf" style="background:#FFB020"></span>grátis até 24h antes <span style="font-size:11px;color:#7A7F87;font-weight:400">· lido do texto</span></span></div>
     <div class="f"><span class="k">Anexos</span><span class="v"><span class="tag">PDF</span><span class="tag">QR</span><span class="tag" style="background:#fff;border:1px dashed #D9DCE1">+ .pkpass</span></span></div>
   </div>
 
   <!-- vincular -->
-  <div style="position:absolute;left:22px;right:22px;top:520px;display:flex;flex-direction:column;gap:8px">
+  <div style="display:flex;flex-direction:column;gap:8px">
     <span class="micro">Vincular a</span>
     <a href="Ingresso.html" class="opt" style="background:linear-gradient(135deg,#C9D2FF,#9FD6FF);border:0">
       <span class="jp" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-size:13px;color:#161C66">体</span>
       <div style="flex:1;display:flex;flex-direction:column;gap:1px"><span style="font-size:14px;font-weight:600">Aula de sushi em Tsukiji · Must do</span><span style="font-size:12px;color:#161C66">já no board · 92% · vira âncora de sáb 15</span></div>
       <span class="pill pill-on" style="padding:6px 10px">✓</span>
     </a>
-    <div style="display:flex;gap:8px"><a href="AddItens.html" class="opt" style="flex:1"><span style="font-size:13px;font-weight:600">Outro lugar do board</span></a><a href="Editar.html" class="opt" style="flex:1"><span style="font-size:13px;font-weight:600">Criar novo</span></a></div>
+    <div style="display:flex;gap:8px"><a href="AddItens.html" class="opt" style="flex:1;padding:8px 12px"><span style="font-size:13px;font-weight:600">Outro lugar do board</span></a><a href="Editar.html" class="opt" style="flex:1;padding:8px 12px"><span style="font-size:13px;font-weight:600">Criar novo</span></a></div>
   </div>
 
-  <div class="card" style="position:absolute;left:22px;right:22px;top:654px;padding:2px 14px;background:#fff;border:1px solid #EEF0F3">
+  <div class="card sw-card" style="padding:0 14px;background:#fff;border:1px solid #EEF0F3">
     <div class="f"><div style="display:flex;flex-direction:column;gap:1px"><span style="font-size:14px;font-weight:600">Vale a exceção de orçamento</span><span style="font-size:12px;color:#7A7F87">¥24.000 fica fora da meta do dia</span></div><button class="sw" style="background:#22DD7E"><span class="knob" style="right:3px"></span></button></div>
     <div class="f"><div style="display:flex;flex-direction:column;gap:1px"><span style="font-size:14px;font-weight:600">Avisar "saia às" e Live Activity</span><span style="font-size:12px;color:#7A7F87">saia de Naka-Meguro 09:12</span></div><button class="sw" style="background:#22DD7E"><span class="knob" style="right:3px"></span></button></div>
+  </div>
   </div>
 
   <div style="position:absolute;left:22px;right:22px;bottom:24px;display:flex;gap:10px">

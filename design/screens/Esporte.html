@@ -14,6 +14,9 @@
 body{margin:0;background:#fff}
 .stack{position:absolute;border-radius:24px;padding:16px 18px;display:flex;flex-direction:column;gap:8px;color:#121316;box-shadow:0 18px 44px rgba(18,19,22,.12);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.6)}
 .kv{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.col{position:absolute;left:22px;right:22px;top:190px;display:flex;flex-direction:column}
+.col .stack{position:relative}
+.nw{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .m{display:flex;flex-direction:column;gap:1px;align-items:center;flex:1}
 .m b{font-family:'Geist Mono',monospace;font-size:15px;font-weight:600}
 .m span{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#5A1A0E;opacity:.8}
@@ -35,15 +38,16 @@ body{margin:0;background:#fff}
     </div>
   </div>
 
-  <div style="position:absolute;left:22px;right:22px;top:196px;display:flex;flex-direction:column;gap:6px">
-    <div style="display:flex;gap:6px;flex-wrap:wrap"><span class="tag" style="background:#121316;color:#fff">Must sport · Corrida</span><span class="tag" style="background:#B9F5CF;color:#0B2A18">bom agora · 23°</span><span class="tag">UV 4 · moderado</span></div>
+  <div class="col">
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <div style="display:flex;gap:6px;flex-wrap:nowrap;overflow:hidden"><span class="tag" style="background:#121316;color:#fff">Must sport · Corrida</span><span class="tag" style="background:#B9F5CF;color:#0B2A18">bom agora · 23°</span><span class="tag">UV 4 · moderado</span></div>
     <h1 class="h1" style="font-size:32px">Lagoa da Pampulha</h1>
-    <span style="font-size:15px;color:#7A7F87">Orla · circuito 18 km · plano · asfalto e ciclovia</span>
-    <span class="serif" style="font-size:17px;color:#121316">“fazer só o trecho da Igreja ao Museu e voltar — 7 km, sombra até as 9h”</span>
+    <span class="nw" style="font-size:15px;color:#7A7F87">Orla · circuito 18 km · plano · asfalto e ciclovia</span>
+    <span class="serif nw" style="font-size:17px;color:#121316">“só o trecho Igreja–Museu e volta: 7 km, sombra até 9h”</span>
   </div>
 
   <!-- card 1: condições agora + janela -->
-  <div class="stack" style="left:22px;right:22px;top:386px;height:168px;transform:rotate(-1.2deg);background:linear-gradient(135deg,rgba(255,209,199,.96),rgba(255,90,60,.78));color:#5A1A0E">
+  <div class="stack" style="margin-top:16px;padding-bottom:20px;transform:rotate(-1.2deg);background:linear-gradient(135deg,rgba(255,209,199,.96),rgba(255,90,60,.78));color:#5A1A0E">
     <div class="kv"><span class="micro" style="color:#5A1A0E">Condições · dom 2 nov · 07:40</span><span class="mono" style="font-size:12px;font-weight:600">Open-Meteo</span></div>
     <div style="display:flex;align-items:baseline;gap:10px"><span class="mono" style="font-size:34px;font-weight:600;letter-spacing:-.03em;color:#121316">23°</span><span style="font-size:13px">sensação <b>24°</b> · sobe pra <b>31°</b> às 11h</span></div>
     <div style="display:flex;gap:4px;background:rgba(255,255,255,.55);border-radius:14px;padding:8px 6px">
@@ -53,9 +57,9 @@ body{margin:0;background:#fff}
   </div>
 
   <!-- card 2: janela do dia (barras por hora) -->
-  <div class="stack" style="left:60px;right:-10px;top:536px;height:100px;transform:rotate(1.4deg);background:rgba(246,247,249,.96)">
-    <div class="kv"><span class="micro">Melhor janela hoje</span><span style="font-size:12px;color:#7A7F87">verde = bom · vermelho = evitar</span></div>
-    <svg viewBox="0 0 300 40" width="100%" height="40" fill="none" aria-label="Janela por hora">
+  <div class="stack" style="margin:-14px -32px 0 38px;transform:rotate(1.4deg);background:rgba(246,247,249,.96)">
+    <div class="kv"><span class="micro">Melhor janela hoje</span><span style="font-size:12px;color:#7A7F87;white-space:nowrap">verde bom · vermelho evitar</span></div>
+    <svg viewBox="0 0 300 44" width="100%" height="44" fill="none" aria-label="Janela por hora">
       <g>
         <rect x="0" y="4" width="18" height="24" rx="4" fill="#22DD7E"/><rect x="21" y="4" width="18" height="24" rx="4" fill="#22DD7E"/><rect x="42" y="4" width="18" height="24" rx="4" fill="#22DD7E"/><rect x="63" y="4" width="18" height="24" rx="4" fill="#B9F5CF"/><rect x="84" y="4" width="18" height="24" rx="4" fill="#FFE3A3"/><rect x="105" y="4" width="18" height="24" rx="4" fill="#FFB020"/><rect x="126" y="4" width="18" height="24" rx="4" fill="#FF5A3C"/><rect x="147" y="4" width="18" height="24" rx="4" fill="#FF5A3C"/><rect x="168" y="4" width="18" height="24" rx="4" fill="#FF5A3C"/><rect x="189" y="4" width="18" height="24" rx="4" fill="#FFB020"/><rect x="210" y="4" width="18" height="24" rx="4" fill="#FFE3A3"/><rect x="231" y="4" width="18" height="24" rx="4" fill="#B9F5CF"/><rect x="252" y="4" width="18" height="24" rx="4" fill="#22DD7E"/><rect x="273" y="4" width="18" height="24" rx="4" fill="#22DD7E"/>
       </g>
@@ -65,20 +69,21 @@ body{margin:0;background:#fff}
   </div>
 
   <!-- card 3: o percurso -->
-  <div class="stack" style="left:22px;right:22px;top:626px;height:118px;background:rgba(233,235,239,.96);flex-direction:row;align-items:center;gap:14px">
-    <svg width="90" height="80" viewBox="0 0 90 80" fill="none" aria-label="Perfil do percurso">
+  <div class="stack" style="margin-top:-10px;background:rgba(233,235,239,.96);flex-direction:row;align-items:center;gap:14px">
+    <svg width="86" height="76" viewBox="0 0 90 80" fill="none" aria-label="Perfil do percurso" style="flex-shrink:0">
       <path d="M4 60 C 20 58, 30 50, 45 52 S 70 60, 86 56" stroke="#FF5A3C" stroke-width="3" stroke-linecap="round"/>
       <path d="M4 60 C 20 58, 30 50, 45 52 S 70 60, 86 56 L 86 76 L 4 76 Z" fill="#FFD1C7" opacity=".6"/>
       <text x="4" y="12" font-family="Geist Mono" font-size="9" font-weight="600" fill="#7A7F87">+34 m</text>
     </svg>
-    <div style="flex:1;display:flex;flex-direction:column;gap:3px"><span style="font-size:15px;font-weight:600">7 km · ida e volta · ~42 min</span><span style="font-size:12.5px;color:#7A7F87">Começa na Igreja São Francisco (Must see — fotografar antes). Água no quiosque do km 3. Banheiro no Museu de Arte.</span></div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:3px"><span style="font-size:15px;font-weight:600">7 km · ida e volta · ~42 min</span><span style="font-size:12.5px;color:#7A7F87">Começa na Igreja São Francisco (Must see). Água no quiosque do km 3, banheiro no Museu de Arte.</span></div>
   </div>
 
-  <div style="position:absolute;left:22px;right:22px;top:756px;display:flex;gap:6px;overflow:hidden"><span class="tag">tênis · sem mochila</span><span class="tag">Strava · salvar rota</span><span class="tag">assistir: Mineirão 16h · ingresso</span></div>
+  <div style="margin-top:12px;display:flex;gap:6px;overflow:hidden"><span class="tag">tênis · sem mochila</span><span class="tag">Strava · salvar rota</span><span class="tag">assistir: Mineirão 16h · ingresso</span></div>
+  </div>
 
   <div style="position:absolute;left:22px;right:22px;bottom:24px;display:flex;gap:10px">
     <a href="Mapa.html" class="btn btn-dark" style="flex:1"><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="4" r="1.8"/><path d="M10 21l2-7M14 21l-2-7-1-5 3 2 3 1M8 13l3-5"/></svg>Começar · 23°</a>
-    <a href="Gasto.html" class="btn" style="width:120px"><span class="jp" style="font-size:16px">済</span>Feito</a>
+    <a href="Gasto.html" class="btn" style="width:120px;white-space:nowrap"><span class="jp" style="font-size:16px">済</span>Feito</a>
   </div>
 </div>
 

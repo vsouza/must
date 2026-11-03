@@ -13,6 +13,7 @@
 <style>
 body{margin:0;background:#fff}
 .key{height:60px;border-radius:18px;background:#F6F7F9;border:0;font-family:'Geist Mono',monospace;font-size:24px;font-weight:600;color:#121316;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.chips .pill{padding:9px 11px}
 .key-ghost{background:transparent;color:#7A7F87}
 </style>
 
@@ -37,15 +38,15 @@ body{margin:0;background:#fff}
 
   <div class="card glass" style="position:absolute;left:22px;right:22px;top:300px;padding:12px 14px;display:flex;align-items:center;gap:12px;transform:rotate(-1deg);background:rgba(255,255,255,.92)">
     <span class="jp" style="width:36px;height:36px;border-radius:50%;background:#22DD7E;color:#0B2A18;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">済</span>
-    <div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:600">Koffee Mameya</span><span style="font-size:12.5px;color:#7A7F87">você está aqui · parada 3 · Must drink</span></div>
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:600">Koffee Mameya</span><span style="font-size:12.5px;color:#7A7F87;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">aqui · parada 3 · Must drink</span></div>
     <button class="pill" style="padding:7px 11px">Outro lugar</button>
   </div>
 
-  <div style="position:absolute;left:22px;right:22px;top:376px;display:flex;gap:6px">
+  <div style="position:absolute;left:22px;right:22px;top:388px;display:flex;gap:6px" class="chips">
     <button class="pill pill-on">Café</button><button class="pill">Comida</button><button class="pill">Metrô</button><button class="pill">Compra</button><button class="pill">Entrada</button>
   </div>
 
-  <div style="position:absolute;left:22px;right:22px;top:430px;display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:8px">
+  <div style="position:absolute;left:22px;right:22px;top:442px;display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:8px">
     <button class="key">1</button><button class="key">2</button><button class="key">3</button>
     <button class="key">4</button><button class="key">5</button><button class="key">6</button>
     <button class="key">7</button><button class="key">8</button><button class="key">9</button>

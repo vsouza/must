@@ -50,6 +50,12 @@ targets:
         buildPhase: resources
       - path: Must/Data/rules/jp-br.json
         buildPhase: resources
+      - path: Must/Data/areas/tokyo.json
+        buildPhase: resources
+      - path: Must/Data/areas/kyoto.json
+        buildPhase: resources
+      - path: Must/Data/areas/bh.json
+        buildPhase: resources
     dependencies:
       - target: MustWidgets
         embed: true

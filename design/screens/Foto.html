@@ -14,6 +14,9 @@
 body{margin:0;background:#fff}
 .stack{position:absolute;border-radius:24px;padding:16px 18px;display:flex;flex-direction:column;gap:8px;color:#121316;box-shadow:0 18px 44px rgba(18,19,22,.12);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.6)}
 .kv{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.col{position:absolute;left:22px;right:22px;top:190px;display:flex;flex-direction:column}
+.col .stack{position:relative}
+.nw{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tm{font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.04em;fill:#7A7F87}
 </style>
 
@@ -34,17 +37,18 @@ body{margin:0;background:#fff}
     </div>
   </div>
 
-  <div style="position:absolute;left:22px;right:22px;top:196px;display:flex;flex-direction:column;gap:6px">
+  <div class="col">
+  <div style="display:flex;flex-direction:column;gap:6px">
     <div style="display:flex;gap:6px"><span class="tag" style="background:#121316;color:#fff">Must photo · Rua</span><span class="tag gold"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>golden em 1h18</span></div>
     <h1 class="h1" style="font-size:32px">Yanaka Ginza</h1>
-    <span class="jp" style="font-size:16px;color:#7A7F87">谷中銀座 · Yūyake Dandan (escadaria do pôr do sol)</span>
-    <span class="serif" style="font-size:16px;color:#121316">“sol no eixo da rua — ficar no alto da escada, contraluz”</span>
+    <span class="jp nw" style="font-size:15px;color:#7A7F87">谷中銀座 · Yūyake Dandan (escada do pôr do sol)</span>
+    <span class="serif nw" style="font-size:16px;color:#121316">“sol no eixo da rua — ficar no alto da escada, contraluz”</span>
   </div>
 
   <!-- card 1: sol hoje (arco) -->
-  <div class="stack gold" style="left:22px;right:22px;top:378px;height:176px;transform:rotate(-1.2deg);background:linear-gradient(135deg,rgba(255,233,194,.96),rgba(255,179,71,.9))">
+  <div class="stack gold" style="margin-top:14px;padding-bottom:20px;transform:rotate(-1.2deg);background:linear-gradient(135deg,rgba(255,233,194,.96),rgba(255,179,71,.9))">
     <div class="kv"><span class="micro" style="color:#4A2E00">Sol hoje · sáb 15 nov</span><span class="mono" style="font-size:12px;font-weight:600;color:#4A2E00">agora 15:20</span></div>
-    <svg viewBox="0 0 330 92" width="100%" height="92" fill="none" aria-label="Arco do sol: nasce 06:14, golden 15:48–16:38, azul até 17:06">
+    <svg viewBox="0 6 330 86" width="100%" height="81" fill="none" aria-label="Arco do sol: nasce 06:14, golden 15:48–16:38, azul até 17:06">
       <path d="M12 80 A 153 153 0 0 1 318 80" stroke="rgba(74,46,0,.25)" stroke-width="1.5" stroke-dasharray="2 5"/>
       <!-- golden hour: trecho destacado no fim do arco -->
       <path d="M262 36 A 153 153 0 0 1 318 80" stroke="#FF8A00" stroke-width="5" stroke-linecap="round"/>
@@ -61,19 +65,19 @@ body{margin:0;background:#fff}
       </g>
       <line x1="12" y1="80" x2="318" y2="80" stroke="rgba(74,46,0,.3)" stroke-width="1"/>
     </svg>
-    <div style="display:flex;gap:6px;flex-wrap:wrap"><span class="tag" style="background:rgba(255,255,255,.6);color:#4A2E00">golden 15:48–16:38</span><span class="tag" style="background:rgba(91,108,255,.18);color:#161C66">azul 16:38–17:06</span><span class="tag" style="background:rgba(255,255,255,.6);color:#4A2E00">sol a 248° · bate no eixo da rua</span></div>
+    <div style="display:flex;gap:6px;flex-wrap:nowrap;overflow:hidden"><span class="tag" style="background:rgba(255,255,255,.6);color:#4A2E00">golden 15:48–16:38</span><span class="tag" style="background:rgba(91,108,255,.18);color:#161C66">azul 16:38–17:06</span><span class="tag" style="background:rgba(255,255,255,.6);color:#4A2E00">sol 248°</span></div>
   </div>
 
   <!-- card 2: céu agora -->
-  <div class="stack" style="left:60px;right:-10px;top:536px;height:104px;transform:rotate(1.4deg);background:rgba(246,247,249,.96)">
+  <div class="stack" style="margin:-14px -32px 0 38px;transform:rotate(1.4deg);background:rgba(246,247,249,.96)">
     <div class="kv"><span class="micro">Céu · Open-Meteo</span><span style="font-size:12px;color:#7A7F87">atualizado 15:10</span></div>
     <div style="display:flex;gap:14px;align-items:baseline"><span class="mono" style="font-size:26px;font-weight:600;letter-spacing:-.02em">14°</span><span style="font-size:13px;color:#7A7F87">nuvens <b style="color:#121316">20%</b> · visibilidade <b style="color:#121316">18 km</b> · chuva <b style="color:#121316">0%</b> · vento 9 km/h</span></div>
     <span class="serif" style="font-size:14px;color:#0B5A33">céu limpo no pôr do sol — vale ir hoje</span>
   </div>
 
   <!-- card 3: direção da luz sobre o lugar (mini-mapa com sol) -->
-  <div class="stack" style="left:22px;right:22px;top:628px;height:112px;background:rgba(233,235,239,.96);flex-direction:row;align-items:center;gap:14px">
-    <svg width="84" height="84" viewBox="0 0 84 84" fill="none" aria-label="Bússola da luz">
+  <div class="stack" style="margin-top:-10px;background:rgba(233,235,239,.96);flex-direction:row;align-items:center;gap:14px">
+    <svg width="76" height="76" viewBox="0 0 84 84" fill="none" aria-label="Bússola da luz" style="flex-shrink:0">
       <circle cx="42" cy="42" r="38" fill="#F7F8FA" stroke="#E6E8EC"/>
       <path d="M42 10 L 42 74 M10 42 L 74 42" stroke="#E6E8EC"/>
       <text x="42" y="9" text-anchor="middle" font-family="Archivo" font-size="8" font-weight="700" fill="#A9AEB6">N</text>
@@ -84,10 +88,11 @@ body{margin:0;background:#fff}
       <path d="M20 58 L 16 56" stroke="#FFB347" stroke-width="2"/>
       <circle cx="42" cy="42" r="4" fill="#2B7BFF" stroke="#fff" stroke-width="1.5"/>
     </svg>
-    <div style="flex:1;display:flex;flex-direction:column;gap:3px"><span style="font-size:15px;font-weight:600">Contraluz no golden</span><span style="font-size:12.5px;color:#7A7F87">Sol a oeste-sudoeste, alinhado com a escadaria. Do alto: silhuetas; de baixo: luz na cara. Sombra longa às 16:20.</span></div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:3px"><span style="font-size:15px;font-weight:600">Contraluz no golden</span><span style="font-size:12.5px;color:#7A7F87">Sol a oeste-sudoeste, no eixo da escadaria. Do alto: silhuetas; de baixo: luz na cara. Sombra longa às 16:20.</span></div>
   </div>
 
-  <div style="position:absolute;left:22px;right:22px;top:752px;display:flex;gap:6px;overflow:hidden"><span class="tag">35 mm · Portra 400</span><span class="tag">tripé não</span><span class="tag">lotado 16h+ sáb</span><span class="tag">2 fotos salvas</span></div>
+  <div style="margin-top:12px;display:flex;gap:6px;overflow:hidden"><span class="tag">35 mm · Portra 400</span><span class="tag">tripé não</span><span class="tag">lotado 16h+ sáb</span><span class="tag">2 fotos salvas</span></div>
+  </div>
 
   <div style="position:absolute;left:22px;right:22px;bottom:24px;display:flex;gap:10px">
     <a href="Luz.html" class="btn btn-dark" style="flex:1"><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>Luz de hoje</a>

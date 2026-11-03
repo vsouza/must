@@ -32,7 +32,7 @@ body{margin:0;background:#fff}
 
   <div style="position:absolute;left:22px;right:22px;top:118px;display:flex;flex-direction:column;gap:4px">
     <h1 class="h1">Cola o link</h1>
-    <span class="serif" style="font-size:18px;color:#7A7F87">Reel, TikTok, YouTube ou um nome — eu descubro o lugar</span>
+    <span class="serif" style="font-size:18px;color:#7A7F87">Reel, TikTok, YouTube ou nome — eu acho o lugar</span>
   </div>
 
   <label class="card" style="position:absolute;left:22px;right:22px;top:200px;padding:14px 16px;display:flex;align-items:center;gap:10px;cursor:text;background:#F1F2F4">
@@ -46,10 +46,11 @@ body{margin:0;background:#fff}
     <span style="font-size:12.5px;color:#7A7F87;margin-left:4px">Também pelo botão Compartilhar do iPhone</span>
   </div>
 
-  <div class="card glass" style="position:absolute;left:22px;right:22px;top:350px;padding:18px 20px;display:flex;flex-direction:column;gap:14px;transform:rotate(-1deg);background:rgba(255,255,255,.92)">
+  <div style="position:absolute;left:22px;right:22px;top:350px;display:flex;flex-direction:column">
+  <div class="card glass" style="position:relative;padding:18px 20px;display:flex;flex-direction:column;gap:14px;transform:rotate(-1deg);background:rgba(255,255,255,.92)">
     <div style="display:flex;flex-direction:column;gap:6px">
       <div class="step"><span class="ok"><svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0B2A18" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span>Legenda lida · legenda do vídeo transcrita</div>
-      <div class="step"><span class="ok"><svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0B2A18" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span>2 lugares encontrados · confirmados no Google Places</div>
+      <div class="step"><span class="ok"><svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0B2A18" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span>2 lugares · confirmados no Google Places</div>
     </div>
     <div style="border-top:1px solid #EEF0F3"></div>
     <div style="display:flex;flex-direction:column;gap:4px">
@@ -57,16 +58,17 @@ body{margin:0;background:#fff}
       <span style="font-size:22px;font-weight:600;letter-spacing:-.01em">Menya Kaijin <span class="jp" style="font-size:14px;color:#7A7F87;font-weight:500">麺屋 海神</span></span>
       <span style="font-size:13px;color:#7A7F87">Shinjuku · ramen de peixe · <span class="mono">11:00–22:30</span> · ~¥1.100 · 1,2 km de Naka-Meguro</span>
     </div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap"><span class="pill pill-green">Must eat · Ramen</span><button class="pill">Sushi</button><button class="pill">Drink</button><button class="pill">Shop</button><button class="pill">+ lista</button></div>
+    <div style="display:flex;gap:6px;flex-wrap:nowrap;overflow:hidden;margin-right:-20px;-webkit-mask-image:linear-gradient(90deg,#000 80%,transparent);mask-image:linear-gradient(90deg,#000 80%,transparent)"><span class="pill pill-green">Must eat · Ramen</span><button class="pill">Sushi</button><button class="pill">Drink</button><button class="pill">Shop</button><button class="pill">+ lista</button></div>
   </div>
 
-  <div class="card" style="position:absolute;left:46px;right:46px;top:586px;padding:14px 18px;display:flex;align-items:center;gap:12px;transform:rotate(1.2deg);background:#F6F7F9">
-    <div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:16px;font-weight:600">Tsukemen Michi <span class="jp" style="font-size:12px;color:#7A7F87;font-weight:500">つけ麺 道</span></span><span style="font-size:12.5px;color:#7A7F87">Kameido · 2º lugar do vídeo · 40 min de metrô</span></div>
+  <div class="card" style="position:relative;margin:-14px 18px 0;padding:14px 18px;display:flex;align-items:center;gap:12px;transform:rotate(1.2deg);background:#F6F7F9">
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span style="font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Tsukemen Michi</span><span style="font-size:12.5px;color:#7A7F87;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span class="jp">つけ麺 道</span> · Kameido · 40 min de metrô</span></div>
     <button class="pill" style="padding:7px 11px">Adicionar</button>
+  </div>
   </div>
 
   <div style="position:absolute;left:22px;right:22px;bottom:24px;display:flex;flex-direction:column;gap:10px">
-    <span style="text-align:center;font-size:12.5px;color:#7A7F87">Processado no aparelho · nada sai do seu iPhone sem você pedir</span>
+    <span style="text-align:center;font-size:12.5px;color:#7A7F87">Processado no aparelho · nada sai sem você pedir</span>
     <a href="Lista.html" class="btn">Adicionar ao Must eat<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0B2A18" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></a>
   </div>
 </div>

@@ -15,6 +15,11 @@ body{margin:0;background:#fff}
 .tip{border-radius:20px;background:#F6F7F9;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
 .q{font-family:'Instrument Serif',serif;font-style:italic;font-size:16.5px;line-height:1.3;color:#121316;margin:0}
 .who{display:flex;align-items:center;gap:8px;font-size:12px;color:#7A7F87}
+.who>.wt{flex:1;min-width:0;line-height:1.5}
+.who .src,.who .tag{vertical-align:1px}
+.av,.who>.src{flex-shrink:0}
+.lst>*{flex-shrink:0}
+.fade{position:absolute;left:0;right:0;bottom:92px;height:52px;background:linear-gradient(180deg,rgba(255,255,255,0),#fff 85%);pointer-events:none}
 .src{font-family:'Geist Mono',monospace;font-size:10px;font-weight:600;border-radius:7px;padding:3px 6px;background:#fff;border:1px solid #EEF0F3;color:#121316;letter-spacing:.04em}
 .av{width:22px;height:22px;border-radius:50%;background:#E4E6EA;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#121316}
 .sum{display:flex;gap:10px;align-items:flex-start;font-size:14.5px;line-height:1.35}
@@ -31,7 +36,7 @@ body{margin:0;background:#fff}
     </div>
   </div>
 
-  <div style="position:absolute;left:22px;right:22px;top:128px;bottom:96px;display:flex;flex-direction:column;gap:10px;overflow:hidden">
+  <div class="lst" style="position:absolute;left:0;right:0;top:112px;bottom:92px;padding:16px 22px 0;display:flex;flex-direction:column;gap:10px;overflow:hidden">
 
     <!-- resumo no aparelho -->
     <div class="card glass" style="padding:14px 16px;background:rgba(255,255,255,.95);border:1px solid #EEF0F3;display:flex;flex-direction:column;gap:10px;transform:rotate(-.8deg)">
@@ -45,35 +50,36 @@ body{margin:0;background:#fff}
     <!-- o que o Reel disse -->
     <div class="tip" style="background:linear-gradient(135deg,rgba(185,245,207,.55),rgba(34,221,126,.35))">
       <p class="q">“Melhor omakase custo-benefício de Tóquio, sem a frescura de Ginza. Pede o uni extra, confia.”</p>
-      <div class="who"><span class="src" style="background:#121316;color:#fff;border-color:#121316">IG</span>Reel do @gustavo.viaja · salvo 02 out · <span style="color:#0B5A33;font-weight:600">de onde veio este must</span></div>
+      <div class="who"><span class="src" style="background:#121316;color:#fff;border-color:#121316">IG</span><span class="wt">Reel do @gustavo.viaja · salvo 02 out · <span style="color:#0B5A33;font-weight:600">de onde veio este must</span></span></div>
     </div>
 
     <div class="tip">
       <p class="q">“Counter seats only, 8 people. The chef speaks great English and explains each neta. Uni from Hokkaido was the best I had in Japan.”</p>
-      <div class="who"><span class="av">M</span>Marcus L. · <span class="src">G</span> 5★ · ago 2026 · 1.248 avaliações · 4,7</div>
+      <div class="who"><span class="av">M</span><span class="wt">Marcus L. · <span class="src">G</span> 5★ · ago 2026 · 1.248 avaliações · 4,7</span></div>
     </div>
 
     <div class="tip">
       <p class="q">“予約時間厳守。10分前に着くのがベスト。カードは1万円以上から。” <span style="font-size:12px;color:#7A7F87;font-style:normal;font-family:'Archivo'">→ Pontualidade total; chegue 10 min antes. Cartão só acima de ¥10k.</span></p>
-      <div class="who"><span class="av">田</span>Tabelog-style · <span class="src">G</span> 4★ · jun 2026 · <span class="tag" style="padding:2px 7px;font-size:11px">traduzido no aparelho</span></div>
+      <div class="who"><span class="av">田</span><span class="wt">Tabelog-style · <span class="src">G</span> 4★ · jun 2026 · <span class="tag" style="padding:2px 7px;font-size:11px">traduzido no aparelho</span></span></div>
     </div>
 
     <div class="tip">
       <p class="q">“Went on a Tuesday, booked via Omakase.in 3 weeks out. ¥22k pp without drinks — pricey but worth it once.”</p>
-      <div class="who"><span class="av">r/</span>r/JapanTravel · <span class="src">Reddit</span> · 212 ↑ · mai 2026</div>
+      <div class="who"><span class="av">r/</span><span class="wt">r/JapanTravel · <span class="src">Reddit</span> · 212 ↑ · mai 2026</span></div>
     </div>
 
     <div class="tip" style="opacity:.85">
       <p class="q">“Chef é gentil, mas o ritmo é rápido — não é lugar pra ficar 3 horas.”</p>
-      <div class="who"><span class="av">4</span>Foursquare · <span class="src">FSQ</span> · dica · 2025</div>
+      <div class="who"><span class="av">4</span><span class="wt">Foursquare · <span class="src">FSQ</span> · dica · 2025</span></div>
     </div>
 
     <span style="font-size:11px;color:#7A7F87;line-height:1.4">Avaliações do Google, Foursquare e Reddit mostradas com autor e fonte, não armazenadas além de 30 dias. Traduções e resumo gerados no aparelho.</span>
   </div>
+  <div class="fade"></div>
 
   <div style="position:absolute;left:22px;right:22px;bottom:24px;display:flex;gap:10px">
-    <a href="Mapa2.html" class="btn btn-dark" style="flex:1"><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-8 18-2-8z"/></svg>Ir agora</a>
-    <a href="Gasto.html" class="btn" style="width:120px"><span class="jp" style="font-size:16px">済</span>Feito</a>
+    <a href="Mapa.html" class="btn btn-dark" style="flex:1"><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-8 18-2-8z"/></svg>Ir agora</a>
+    <a href="Gasto.html" class="btn" style="width:120px;white-space:nowrap"><span class="jp" style="font-size:16px">済</span>Feito</a>
   </div>
 </div>
 

@@ -12,13 +12,22 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;family=Instrument+Serif:ital@0;1&amp;family=Geist+Mono:wght@400;600&amp;family=Zen+Kaku+Gothic+New:wght@500;700&amp;display=swap">
 <style>
 body{margin:0;background:#fff}
-.cc{position:absolute;left:22px;right:22px;height:150px;border-radius:22px;padding:16px 18px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;text-decoration:none;color:#fff;box-shadow:0 16px 40px rgba(18,19,22,.18)}
+.cc{position:absolute;left:22px;right:22px;height:134px;border-radius:22px;padding:14px 18px 16px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;text-decoration:none;color:#fff;box-shadow:0 16px 40px rgba(18,19,22,.18)}
 .cc .n{font-size:17px;font-weight:600;letter-spacing:-.01em}
-.cc .s{font-size:12px;opacity:.8}
+.cc .s{font-size:12px;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cc .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.cc .top>div{min-width:0;flex:1}
+.cc .bot{display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
+.cc .bot>div{min-width:0}
+.cc .tag{flex-shrink:0}
 .cc .b{font-family:'Geist Mono',monospace;font-size:22px;font-weight:600;letter-spacing:-.02em}
-.open{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;background:rgba(255,255,255,.22);border-radius:999px;padding:6px 10px}
+.open{flex-shrink:0;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;background:rgba(255,255,255,.22);border-radius:999px;padding:6px 10px}
 .doc{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid #EEF0F3;text-decoration:none;color:#121316}
 .doc:first-child{border-top:0}
+.doc>div{min-width:0}
+.doc>div>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.doc .tag{flex-shrink:0}
+.fade{position:absolute;left:0;right:0;bottom:0;height:40px;background:linear-gradient(rgba(255,255,255,0),#fff 85%);pointer-events:none;border-radius:0 0 22px 22px}
 </style>
 
 <div class="app">
@@ -30,28 +39,29 @@ body{margin:0;background:#fff}
 
   <div style="position:absolute;left:22px;right:22px;top:112px;display:flex;flex-direction:column;gap:4px">
     <h1 class="h1">Carteira</h1>
-    <span class="serif" style="font-size:17px;color:#7A7F87">cartões, passes e documentos — toque e vai direto pro Wallet ou pro app</span>
+    <span class="serif" style="font-size:17px;color:#7A7F87">cartões, passes e documentos — um toque e abre</span>
   </div>
 
   <!-- cartões empilhados, leve rotação -->
-  <a href="#" class="cc" style="top:190px;background:linear-gradient(135deg,#1FA37A,#0B5A33);transform:rotate(-1.5deg)">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div class="n">Suica <span class="jp" style="font-weight:500;opacity:.8">スイカ</span></div><div class="s">Apple Wallet · Express Transit · metrô, JR, konbini</div></div><span class="open">Abrir no Wallet ↗</span></div>
-    <div style="display:flex;justify-content:space-between;align-items:flex-end"><div><div class="s">saldo (você anotou ontem)</div><div class="b">¥ 3.240</div></div><span class="tag" style="background:rgba(255,255,255,.2);color:#fff">recarregar abaixo de ¥1.000</span></div>
+  <a href="#" class="cc" style="top:180px;background:linear-gradient(135deg,#1FA37A,#0B5A33);transform:rotate(-1.5deg)">
+    <div class="top"><div><div class="n">Suica <span class="jp" style="font-weight:500;opacity:.8">スイカ</span></div><div class="s">Express Transit · metrô, JR, konbini</div></div><span class="open">Abrir no Wallet ↗</span></div>
+    <div class="bot"><div><div class="s">saldo · anotado ontem</div><div class="b">¥ 3.240</div></div><span class="tag" style="background:rgba(255,255,255,.2);color:#fff">recarregar abaixo de ¥1.000</span></div>
   </a>
-  <a href="#" class="cc" style="top:330px;background:linear-gradient(135deg,#3B4150,#15171C);transform:rotate(1deg)">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div class="n">JR Pass · 7 dias</div><div class="s">ativar 17 nov no balcão · Tokyo Station · voucher no PDF</div></div><span class="open">Ver voucher</span></div>
-    <div style="display:flex;justify-content:space-between;align-items:flex-end"><div><div class="s">cobre</div><div class="b" style="font-size:16px">Tóquio → Kyoto → Tóquio · Nara</div></div><span class="tag" style="background:#22DD7E;color:#0B2A18">vale 17–23</span></div>
+  <a href="#" class="cc" style="top:306px;background:linear-gradient(135deg,#3B4150,#15171C);transform:rotate(1deg)">
+    <div class="top"><div><div class="n">JR Pass · 7 dias</div><div class="s">ativar 17 nov · Tokyo Station</div></div><span class="open">Ver voucher</span></div>
+    <div class="bot"><div><div class="s">cobre</div><div class="b" style="font-size:15px;white-space:nowrap">Tóquio → Kyoto · Nara</div></div><span class="tag" style="background:#22DD7E;color:#0B2A18">vale 17–23</span></div>
   </a>
-  <a href="#" class="cc" style="top:470px;background:linear-gradient(135deg,#5B6CFF,#2B7BFF);transform:rotate(-0.8deg)">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div class="n">Nubank · Mastercard</div><div class="s">Apple Pay · sem IOF extra · avisar banco: feito</div></div><span class="open">Abrir no Wallet ↗</span></div>
-    <div style="display:flex;justify-content:space-between;align-items:flex-end"><div><div class="s">gasto na viagem</div><div class="b">R$ 2.118</div></div><span class="tag" style="background:rgba(255,255,255,.2);color:#fff">câmbio ¥100 = R$ 3,60</span></div>
+  <a href="#" class="cc" style="top:432px;background:linear-gradient(135deg,#5B6CFF,#2B7BFF);transform:rotate(-0.8deg)">
+    <div class="top"><div><div class="n">Nubank · Mastercard</div><div class="s">Apple Pay · sem IOF extra</div></div><span class="open">Abrir no Wallet ↗</span></div>
+    <div class="bot"><div><div class="s">gasto na viagem</div><div class="b">R$ 2.118</div></div><span class="tag" style="background:rgba(255,255,255,.2);color:#fff">câmbio ¥100 = R$ 3,60</span></div>
   </a>
 
-  <div class="card" style="position:absolute;left:22px;right:22px;top:640px;bottom:96px;padding:2px 16px;background:#fff;border:1px solid #EEF0F3;overflow:hidden;display:flex;flex-direction:column">
+  <div class="card" style="position:absolute;left:22px;right:22px;top:582px;bottom:96px;padding:2px 16px;background:#fff;border:1px solid #EEF0F3;overflow:hidden;display:flex;flex-direction:column">
     <a href="#" class="doc"><span style="width:34px;height:34px;border-radius:10px;background:#F1F2F4;display:flex;align-items:center;justify-content:center;font-family:'Geist Mono',monospace;font-size:10px;font-weight:600">eSIM</span><div style="flex:1;display:flex;flex-direction:column;gap:1px"><span style="font-size:14px;font-weight:600">Ubigi · 10 GB · ativa em JP</span><span style="font-size:12px;color:#7A7F87">QR instalado · ativar ao pousar</span></div><span class="tag">Ajustes ↗</span></a>
-    <a href="#" class="doc"><span style="width:34px;height:34px;border-radius:10px;background:#F1F2F4;display:flex;align-items:center;justify-content:center;font-family:'Geist Mono',monospace;font-size:10px;font-weight:600">QR</span><div style="flex:1;display:flex;flex-direction:column;gap:1px"><span style="font-size:14px;font-weight:600">Visit Japan Web · imigração + alfândega</span><span style="font-size:12px;color:#7A7F87">2 QRs · salvo offline</span></div><span class="tag" style="background:#B9F5CF;color:#0B2A18">pronto</span></a>
+    <a href="#" class="doc"><span style="width:34px;height:34px;border-radius:10px;background:#F1F2F4;display:flex;align-items:center;justify-content:center;font-family:'Geist Mono',monospace;font-size:10px;font-weight:600">QR</span><div style="flex:1;display:flex;flex-direction:column;gap:1px"><span style="font-size:14px;font-weight:600">Visit Japan Web</span><span style="font-size:12px;color:#7A7F87">imigração + alfândega · 2 QRs offline</span></div><span class="tag" style="background:#B9F5CF;color:#0B2A18">pronto</span></a>
     <a href="#" class="doc"><span style="width:34px;height:34px;border-radius:10px;background:#F1F2F4;display:flex;align-items:center;justify-content:center;font-family:'Geist Mono',monospace;font-size:10px;font-weight:600">PDF</span><div style="flex:1;display:flex;flex-direction:column;gap:1px"><span style="font-size:14px;font-weight:600">Seguro viagem · apólice</span><span style="font-size:12px;color:#7A7F87">telefone 24h · nº 88213</span></div><span class="tag">Abrir</span></a>
     <a href="#" class="doc"><span style="width:34px;height:34px;border-radius:10px;background:#F1F2F4;display:flex;align-items:center;justify-content:center;font-family:'Geist Mono',monospace;font-size:10px;font-weight:600">IMG</span><div style="flex:1;display:flex;flex-direction:column;gap:1px"><span style="font-size:14px;font-weight:600">Passaporte · foto da página</span><span style="font-size:12px;color:#7A7F87">só no aparelho · válido até 2031</span></div><span class="tag">Abrir</span></a>
+    <span class="fade"></span>
   </div>
 
   <nav class="tabs">
