@@ -21,6 +21,15 @@ App iOS pessoal (um usuário: Vinicius) que transforma um board de "Musts" (Must
 - **Guia, não banco de dados** (prompt 18, 02/11): a Home mostra só o dia (bairro, agora, saia às) — orçamento vai pra Ajustes. Planejamento por **bairro + vizinhos** (`Area`, tabela curada com tempos de trem) e guia com deslocamentos entre paradas. **Resiliência é requisito**: nada de JSON decodificado em `body`, serviços fora do main, `NWPathMonitor`, timeouts curtos, circuit breaker, fila de saída offline, dia baixado pro offline. Visual: selo de estação por bairro, kanji grande, cor oficial das linhas.
 - **Importação/exportação** pelo JSON em `data/board.schema.json`. Seeds em `data/seed-bh.json` e `data/seed-jp.json` (coordenadas `approx: true` são chute — resolver no Places na primeira sincronização).
 
+## Premissa: visual e econômico em dados (03/11/2026, pedido do Vinicius)
+O app tem que ser **bem visual** (foto em todo lugar que mostra um lugar ou bairro) e ao mesmo tempo **gastar o mínimo de internet**. Valem pra toda tela e todo serviço, novo ou existente:
+- **Cache primeiro, sempre.** Toda leitura mostra o que está no aparelho na hora e atualiza em segundo plano (stale-while-revalidate). Nenhuma tela espera a rede pra aparecer.
+- **Imagem: uma por lugar, baixada uma vez.** Foto principal em 800 px JPEG/HEIC (qualidade 0,7), miniatura gerada no aparelho (240 px) — nunca uma segunda chamada. Cache em disco com teto (300 MB, LRU) e validade de 30 dias; `URLCache` pra respostas GET.
+- **Pré-baixar só no Wi-Fi** (e com o dia aceito, o bairro escolhido ou o board novo); no celular, só o que está na tela. Respeitar **Modo de Pouco Dados** (`allowsConstrainedNetworkAccess`): nele, nada de pré-download nem foto nova fora do Lugar aberto.
+- **Pedir só os campos usados** (field masks do Google), agrupar o que dá numa chamada, deduplicar requisições em voo, nunca repetir a mesma chamada na mesma sessão.
+- **Offline é estado normal, não erro:** chip "sem internet · offline ok", fila de saída pro que precisa de rede, e o dia aceito 100% utilizável sem conexão.
+- **Medir:** Ajustes › Dados mostra MB usados no mês (celular × Wi-Fi), cache em disco e cota do Google; QA confere que abrir o app com cache quente gasta 0 KB.
+
 ## Design (v5, tema claro) — fonte da verdade em `design/`
 - Telas: `design/screens/*.png` (render) e `*.html` (HTML de referência, abrir no navegador; os links entre telas funcionam). `must-light.css` tem os tokens.
 - Fundo branco `#FFFFFF`, tinta `#121316`, secundário `#7A7F87`, superfícies `#F1F2F4` / `#F6F7F9`, borda `#EEF0F3`.
@@ -41,4 +50,10 @@ App iOS pessoal (um usuário: Vinicius) que transforma um board de "Musts" (Must
 - Commits pequenos, mensagem em português, um prompt = um ou mais commits.
 
 ## Como o trabalho está dividido
-Os prompts em `prompts/` são executados em ordem (01 → 18; a rodada atual é o `prompts/18-guia-bairro-resiliencia.md`). Cada um diz o que entregar e como verificar. Antes de cada prompt, olhar os PNGs das telas citadas.
+Os prompts em `prompts/` são executados em ordem (01 → 20; a rodada atual é o `prompts/18-guia-bairro-resiliencia.md`, depois 19 fotos e 20 tema da viagem). Cada um diz o que entregar e como verificar. Antes de cada prompt, olhar os PNGs das telas citadas.
+
+## Tema da viagem (03/11/2026, pedido do Vinicius) — prompt 20
+- Ao entrar numa viagem/região, o app ganha a **bandeira do país** (círculo 22 pt ao lado da data, vetor, offline) e um **tom leve** do país: lavado no topo das telas principais, tinta dos selos, ponto dos títulos de seção e da aba ativa, rótulo da cidade.
+- Tokens por país em `TripTheme` (JP vermelho #BC002D / selo #C8102E; BR verde #009C3B / amarelo claro), derivados de `City.country`.
+- **Identidade não muda:** botões verde #22DD7E, links azul #2B7BFF, tinta #121316, cores das listas, linhas de trem e pinos do mapa ficam iguais.
+- Referência: `design/screens/Home6.png` (Japão) e `Home6BH.png` (Brasil).

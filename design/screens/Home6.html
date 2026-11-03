@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<title>Must — Início (objetivo, por bairro)</title>
+<title>Must — Início · tema Japão</title>
 
 <link rel="stylesheet" href="must-light.css"><style>html,body{background:#EEF0F3}body{display:flex;justify-content:center;padding:24px 0}.app{box-shadow:0 30px 80px rgba(0,0,0,.18);border-radius:44px}</style>
 </head>
@@ -15,15 +15,17 @@ body{margin:0;background:#fff}
 .dayc{position:absolute;left:22px;right:22px;border-radius:28px;overflow:hidden;color:#fff;box-shadow:0 22px 50px rgba(18,19,22,.22)}
 .stp{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Geist Mono',monospace;font-size:10px;font-weight:700;flex-shrink:0}
 .nb{flex:1;border-radius:20px;padding:12px;display:flex;flex-direction:column;gap:6px;text-decoration:none;color:#121316;position:relative;overflow:hidden;min-height:92px;box-sizing:border-box}
+.nbp{flex:1;height:132px;border-radius:20px;position:relative;overflow:hidden;text-decoration:none;box-shadow:0 10px 24px rgba(18,19,22,.14)}
 .nb .k{position:absolute;right:8px;bottom:4px;font-family:'Zen Kaku Gothic New',sans-serif;font-weight:700;font-size:30px;opacity:.18}
 </style>
 
-<div class="app">
+<div class="app trip-jp">
+  <div class="trip-wash"></div>
   <!-- topo enxuto -->
   <div style="position:absolute;left:22px;right:22px;top:58px;display:flex;justify-content:space-between;align-items:center">
     <div style="display:flex;align-items:center;gap:10px">
       <div style="width:36px;height:36px;border-radius:50%;background:#121316;display:flex;align-items:center;justify-content:center"><span class="jp" style="color:#fff;font-size:15px;font-weight:700">済</span></div>
-      <div style="display:flex;flex-direction:column;gap:1px"><span style="font-size:15px;font-weight:600">Sáb · 15 nov</span><span class="micro" style="font-size:10px">dia 3 de 5 · Tóquio</span></div>
+      <div style="display:flex;flex-direction:column;gap:1px"><span style="font-size:15px;font-weight:600;display:flex;align-items:center;gap:6px">Sáb · 15 nov <svg class="flag" viewBox="0 0 22 22" aria-label="Japão"><rect width="22" height="22" fill="#fff"/><circle cx="11" cy="11" r="5.2" fill="#BC002D"/></svg></span><span class="micro" style="font-size:10px;color:var(--trip-ink)">Tóquio · dia 3/5</span></div>
     </div>
     <div style="display:flex;gap:8px;align-items:center">
       <span class="tag" style="background:#FFF1D6;color:#4A2E00"><span class="dot" style="background:#FFB020"></span>sem internet · offline ok</span>
@@ -36,7 +38,7 @@ body{margin:0;background:#fff}
     <span class="photo" style="background-image:url('https://picsum.photos/seed/must-shinjuku-night/800/700');filter:saturate(.8) contrast(1.05)"></span>
     <span style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(21,23,28,.15) 0%,rgba(21,23,28,.55) 45%,rgba(21,23,28,.96) 100%)"></span>
     <!-- selo do bairro -->
-    <span class="stamp" style="position:absolute;right:18px;top:18px;width:74px;height:74px;color:#fff;font-size:22px;transform:rotate(-8deg);background:rgba(255,255,255,.08)">新宿</span>
+    <span class="stamp" style="position:absolute;right:18px;top:18px;width:74px;height:74px;color:#fff;font-size:22px;transform:rotate(-8deg);background:rgba(200,16,46,.55);border-color:#fff">新宿</span>
     <div style="position:absolute;left:20px;top:20px;display:flex;flex-direction:column;gap:2px">
       <span class="micro" style="color:rgba(255,255,255,.7)">Hoje em</span>
       <span style="font-size:30px;font-weight:700;letter-spacing:-.02em;line-height:1">Shinjuku</span>
@@ -61,25 +63,25 @@ body{margin:0;background:#fff}
   </div>
 
   <!-- bairros: planejar por região -->
-  <div style="position:absolute;left:22px;right:22px;top:494px;display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:17px;font-weight:600">Amanhã, pra onde?</span><a href="Bairros.html" class="micro" style="text-decoration:none;color:#121316">ver todos</a></div>
+  <div style="position:absolute;left:22px;right:22px;top:494px;display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:17px;font-weight:600;display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:50%;background:var(--trip)"></span>Amanhã, pra onde?</span><a href="Bairros.html" class="micro" style="text-decoration:none;color:#121316">ver todos</a></div>
   <div style="position:absolute;left:22px;right:22px;top:526px;display:flex;gap:10px">
-    <a href="Bairros.html" class="nb" style="background:linear-gradient(135deg,#B9F5CF,#22DD7E)"><span class="k">渋谷</span><span style="font-size:15px;font-weight:600">Shibuya</span><span style="font-size:11.5px;color:#0B2A18">9 musts · 4 eat</span><span class="tag" style="align-self:flex-start;background:rgba(255,255,255,.6);font-size:10.5px;padding:3px 7px">sol · 19°</span></a>
-    <a href="Bairros.html" class="nb" style="background:linear-gradient(135deg,#DCCFFF,#8B5CF6)"><span class="k" style="color:#2E1065">上野</span><span style="font-size:15px;font-weight:600">Ueno</span><span style="font-size:11.5px;color:#2E1065">7 · golden</span><span class="tag" style="align-self:flex-start;background:rgba(255,255,255,.6);font-size:10.5px;padding:3px 7px">museus seg ✕</span></a>
-    <a href="Bairros.html" class="nb" style="background:#F1F2F4"><span class="k">銀座</span><span style="font-size:15px;font-weight:600">Ginza</span><span style="font-size:11.5px;color:#7A7F87">6 · noite</span><span class="tag" style="align-self:flex-start;background:#fff;font-size:10.5px;padding:3px 7px">reserva qua</span></a>
+    <a href="Bairros.html" class="nbp"><span class="photo" style="background-image:url('https://picsum.photos/seed/must-shibuya-crossing/400/500');filter:saturate(.9)"></span><span style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,19,22,0) 30%,rgba(18,19,22,.82) 100%)"></span><span style="position:absolute;left:0;right:0;bottom:0;height:4px;background:#22DD7E"></span><span class="stamp" style="position:absolute;right:8px;top:8px;width:34px;height:34px;color:#fff;font-size:10px;border-width:1.8px;transform:rotate(-8deg);background:rgba(200,16,46,.5)">渋谷</span><span style="position:absolute;left:10px;right:8px;bottom:12px;display:flex;flex-direction:column;gap:2px;color:#fff"><span style="font-size:15px;font-weight:600">Shibuya</span><span style="font-size:11px;opacity:.85">9 musts · 4 eat</span><span class="tag" style="align-self:flex-start;background:rgba(255,255,255,.22);color:#fff;font-size:10px;padding:2px 7px;margin-top:3px">sol · 19°</span></span></a>
+    <a href="Bairros.html" class="nbp"><span class="photo" style="background-image:url('https://picsum.photos/seed/must-ueno-park/400/500');filter:saturate(.9)"></span><span style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,19,22,0) 30%,rgba(18,19,22,.82) 100%)"></span><span style="position:absolute;left:0;right:0;bottom:0;height:4px;background:#8B5CF6"></span><span class="stamp" style="position:absolute;right:8px;top:8px;width:34px;height:34px;color:#fff;font-size:10px;border-width:1.8px;transform:rotate(-8deg);background:rgba(200,16,46,.5)">上野</span><span style="position:absolute;left:10px;right:8px;bottom:12px;display:flex;flex-direction:column;gap:2px;color:#fff"><span style="font-size:15px;font-weight:600">Ueno</span><span style="font-size:11px;opacity:.85">7 · golden</span><span class="tag" style="align-self:flex-start;background:rgba(255,255,255,.22);color:#fff;font-size:10px;padding:2px 7px;margin-top:3px">museus seg ✕</span></span></a>
+    <a href="Bairros.html" class="nbp"><span class="photo" style="background-image:url('https://picsum.photos/seed/must-ginza-street/400/500');filter:saturate(.9)"></span><span style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,19,22,0) 30%,rgba(18,19,22,.82) 100%)"></span><span style="position:absolute;left:0;right:0;bottom:0;height:4px;background:#2B7BFF"></span><span class="stamp" style="position:absolute;right:8px;top:8px;width:34px;height:34px;color:#fff;font-size:10px;border-width:1.8px;transform:rotate(-8deg);background:rgba(200,16,46,.5)">銀座</span><span style="position:absolute;left:10px;right:8px;bottom:12px;display:flex;flex-direction:column;gap:2px;color:#fff"><span style="font-size:15px;font-weight:600">Ginza</span><span style="font-size:11px;opacity:.85">6 · noite</span><span class="tag" style="align-self:flex-start;background:rgba(255,255,255,.22);color:#fff;font-size:10px;padding:2px 7px;margin-top:3px">reserva qua</span></span></a>
   </div>
 
   <!-- uma linha de por perto -->
-  <a href="Descobrir.html" class="card" style="position:absolute;left:22px;right:22px;top:640px;padding:12px 14px;display:flex;align-items:center;gap:12px;text-decoration:none;color:#121316;background:#F6F7F9">
-    <span class="stamp" style="width:40px;height:40px;color:#2B7BFF;font-size:13px;flex-shrink:0">飲</span>
+  <a href="Descobrir.html" class="card" style="position:absolute;left:22px;top:672px;right:96px;padding:10px 12px;display:flex;align-items:center;gap:12px;text-decoration:none;color:#121316;background:#F6F7F9">
+    <span style="width:44px;height:44px;border-radius:12px;position:relative;overflow:hidden;flex-shrink:0"><span class="photo" style="background-image:url('https://picsum.photos/seed/must-goldengai/120/120')"></span></span>
     <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:1px"><span style="font-size:14px;font-weight:600">Por perto: Golden Gai</span><span style="font-size:12px;color:#7A7F87;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">bares minúsculos · abre 19:00 · 6 min · fora do board</span></div>
     <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7A7F87" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
   </a>
-  <span style="position:absolute;left:22px;right:22px;top:716px;text-align:left;font-size:11.5px;color:#7A7F87;right:96px">gasto hoje <b class="mono" style="color:#121316">¥ 4.250</b> · orçamento fica em Ajustes</span>
+  <span style="position:absolute;left:22px;right:22px;top:744px;text-align:left;font-size:11.5px;color:#7A7F87;right:96px">gasto hoje <b class="mono" style="color:#121316">¥ 4.250</b> · orçamento fica em Ajustes</span>
 
-  <a href="ColarTexto.html" class="fab" aria-label="Adicionar" style="background:#22DD7E;bottom:100px"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0B2A18" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></a>
+  <a href="ColarTexto.html" class="fab" aria-label="Adicionar" style="background:#22DD7E;bottom:106px"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0B2A18" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></a>
 
   <nav class="tabs">
-    <a href="Home6.html" class="tab tab-on"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7v9H4z"/></svg>Início</a>
+    <a href="Home6.html" class="tab tab-on"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7v9H4z"/></svg>Início<span class="tdot"></span></a>
     <a href="Hoje.html" class="tab"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>Hoje</a>
     <a href="Mapa.html" class="tab"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg>Mapa</a>
     <a href="Musts.html" class="tab"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6h14M5 12h14M5 18h9"/></svg>Musts</a>

@@ -48,3 +48,4 @@
 | Regras da volta | ComprasRegras | Compras | 17 |
 
 Fluxo principal: Início → Montar → Proposta → (Trocar) → Hoje → Lugar → Gasto (済) → Hoje. Mapa acompanha o Hoje. Musts → Lista → Lugar é o lado "catálogo". Nova lista → Adicionar lugares e Adicionar por link alimentam o board.
+| 20 | Tema da viagem (bandeira + tom) | `Home6.png` (JP) · `Home6BH.png` (BR) |

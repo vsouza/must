@@ -2,6 +2,8 @@ Leia `CLAUDE.md` e as telas `design/screens/Home6.png`, `Bairros.png`, `GuiaBair
 
 Faça nesta ordem. **A parte A é pré-requisito de tudo**: não comece B antes de medir e corrigir os travamentos.
 
+> **Premissa nova (03/11): visual e econômico em dados** — leia a seção no `CLAUDE.md` e aplique em tudo desta rodada.
+
 ## A — Travamentos e resiliência (medir → corrigir → medir)
 0. **Medir antes**: rode no iPhone com Instruments (Time Profiler + Hangs + SwiftUI) abrindo Início, Mapa, Lista, Lugar e voltando pro app depois de 20 min em background; também com Network Link Conditioner em "Very Bad Network" e em "100% Loss". Salve os números (hangs > 250 ms, tempo de abertura, frames) em `QA.md` › Performance.
 1. **JSON decodificado a cada leitura** (causa provável nº 1): `Place.hours`, `Place.extra`, `Place.tickets` e `TripInfo.cities` decodificam `Data` toda vez que são lidos, e Home/Mapa/Lista chamam `openState` pra todos os lugares a cada redesenho. → Cache por objeto (`@Transient` com o valor decodificado + invalidação no `set`), **ou** pré-computar campos derivados na escrita: `opensAtToday`, `closesAtToday`, `weekSchedule` compacto, `kind` e `area` como colunas simples. Nunca decodificar JSON dentro de `body`.
@@ -20,8 +22,8 @@ Faça nesta ordem. **A parte A é pré-requisito de tudo**: não comece B antes 
 
 ## B — Início objetivo (`Home6.png`)
 9. **Orçamento sai da Home**: vai pra Ajustes › Dia (meta diária, exceções) e Viagem. Na Home fica só uma linha discreta "gasto hoje ¥ X".
-10. **Card do dia** (um só, grande): foto do bairro do dia (Wikimedia/Place Photo do ponto mais famoso, escurecida), "Hoje em **Shinjuku**" + vizinhos + hora + tempo, **selo do bairro** (ver D), e o bloco **Agora**: a parada atual/próxima com o essencial (fila, saia às, minutos) + progresso do dia em selos (済 / atual / próximas) + botão verde "Ir agora" (abre Como chegar). Sem dia montado: "Hoje, pra onde?" com os 3 bairros com mais musts abertos agora e o botão "Montar por bairro".
-11. **Amanhã, pra onde?**: 3 cards de bairro (cor do que domina, kanji grande ao fundo, contagem, um chip de contexto: tempo, golden, "museus seg ✕", reserva). "ver todos" → Bairros.
+10. **Card do dia** (um só, grande): foto do bairro do dia (Place Photo do ponto mais famoso do bairro, escurecida; ver prompt 19 e a premissa de dados do `CLAUDE.md`), "Hoje em **Shinjuku**" + vizinhos + hora + tempo, **selo do bairro** (ver D), e o bloco **Agora**: a parada atual/próxima com o essencial (fila, saia às, minutos) + progresso do dia em selos (済 / atual / próximas) + botão verde "Ir agora" (abre Como chegar). Sem dia montado: "Hoje, pra onde?" com os 3 bairros com mais musts abertos agora e o botão "Montar por bairro".
+11. **Amanhã, pra onde?**: 3 cards de bairro **com foto** (a mesma foto do bairro, do cache; escurecida embaixo), selo do bairro no canto, nome, contagem, um chip de contexto (tempo, golden, "museus seg ✕", reserva) e uma faixa de 4 pt na cor do que domina. "ver todos" → Bairros. Foto do bairro = foto principal do lugar mais bem avaliado do bairro no board, escolhida uma vez e guardada no `Area` (`heroPhotoRef`); sem lugar com foto, Commons por coordenada.
 12. Uma linha de "Por perto" (prompt 14) e o FAB verde "+" que abre Adicionar (com Link / Texto / Nome).
 
 ## C — Planejar por bairro e guiar (`Bairros.png`, `GuiaBairro.png`)
