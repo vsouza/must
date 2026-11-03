@@ -428,3 +428,28 @@ iPhone: [ ] medir com Instruments (Hangs + Time Profiler) — Vinicius
 - Toque na bolha e a sheet com o mapa em movimento.
 
 iPhone: [ ] medir Bairros e Guia com Instruments — Vinicius
+
+## Rodada 21 · fatia 5 (prontidão da viagem, 03/11)
+
+**Suíte completa** (simulador BD4F5784, iPhone): **514 testes em 95 suítes, todos passando**. Novos: `TripReadinessTests` (8 testes: TripInfo 11–24/11 e fuso Asia/Tokyo; rota Tóquio → Kyoto → Tóquio contígua; datas das cidades dentro da viagem; seed JP válido (cidade na viagem, lista existente, ids únicos, coordenadas no Japão, reservas dentro da viagem); catálogo de mapas decodifica com Tóquio e Kyoto; Suica e JR Pass entram uma vez, não voltam se apagados, e não entram em BH).
+
+| # | Item | Status | Onde está / o que foi feito |
+|---|---|---|---|
+| 1 | `TripInfo` JP | **OK** (teste novo) | 11/11 → 24/11, casa Naka-Meguro, tz Asia/Tokyo. Cidades: tokyo1 **13→17**, kyoto 17→20, tokyo2 20→24. tokyo1 começa 13 (não 11) de propósito: o voo NY→Tóquio sai 12/11 e pousa 13/11 (`seed-jp.json`, evento "chega no dia seguinte"). 11/11 é a saída de BH. |
+| 2 | Seed JP válido | **OK** (teste novo) | 105 lugares, 8 listas, 3 cidades; zero ids repetidos, zero cidade/lista órfã, todas as coordenadas dentro do Japão. Validação de schema feita por decodificação (`BoardCodec.decode`) + teste de regras; sem `jsonschema` no ambiente. |
+| 3 | Mapas offline Tóquio e Kyoto | **Catálogo OK; download NÃO testado** | `data/map-packs.json`: `jp-tokyo` (Tóquio) e `jp-kansai` (Kyoto · Nara). Ajustes › Mapas offline lista `MapPack.catalog` filtrado pela região (`OfflineMapsView`). Nada foi baixado nem subido. Pendência: baixar no Wi-Fi no iPhone (checklist). |
+| 4 | Voos importáveis | **Caminho OK; teste real pendente** | "Trazer ingresso" em Voos (`FlightsView`), Reservas e Agenda → `TicketImportModel` → `TicketRevisarView` → `FlightFromTicket` (template escolhido por `FlightRules.templateKey`). JSON: `board.flights` no import. Não testado: leitura real de PDF/.pkpass/foto no aparelho, e AeroDataBox (não chamado, como pedido). |
+| 5 | Checklist intl-japan | **OK** (testes existentes) | `Must/Data/checklists/intl-japan.json` carrega; voo que toca o Japão ganha o modelo (`ChecklistTests`, `FlightTests` ~245: 12 itens, prazo do check-in, Visit Japan Web marcado pela Carteira). Sem teste novo. |
+| 6 | Carteira: Suica e JR Pass | **Feito agora** (teste novo) | Antes só existiam no `WalletDemo` (DEBUG). Agora `WalletStarter` põe **Suica** (sem saldo; anotado à mão, aviso de recarga) e **JR Pass** (sem datas: você preenche do voucher) na Carteira do Japão, uma vez. Ids em `Settings.seenSeedIds` (prefixo `wallet-starter-`): apagar não faz voltar. BH não recebe. |
+| 7 | Export do board | **OK** (testes existentes) | `BoardCodecTests`: `exportMatchesSeed` e `roundTripIntoFreshContainer` (export → decode → import em container novo → export igual), nas duas regiões. Ajustes › Board completo › Exportar board (.json). Sem teste novo. |
+| 8 | `docs/checklist-viagem.md` | **Feito** | Commitado. Só texto; nenhuma chave aparece. |
+
+**Chaves.** Não li nem imprimi `Secrets.plist`; só copiei o arquivo pro worktree (gitignored). Nenhuma chamada paga: AeroDataBox, Google, Anthropic e Open-Meteo não foram chamados nesta fatia.
+
+**Não testado (só no iPhone).**
+- Baixar Tóquio e Kyoto em Ajustes › Mapas offline, e abrir o mapa em modo avião.
+- Leitura real de PDF/.pkpass/foto em "Trazer ingresso" (câmera e Fotos).
+- Lote de fotos no Wi-Fi (Ajustes › Dados) com o board JP.
+- Permissão de notificação do "Avisos do guia".
+- Modo avião de ponta a ponta (Hoje, dia aceito, mapa, Carteira).
+- Prints `scripts/qa-screens.sh` de JP não foram refeitos nesta fatia (fica pra fatia 6).
