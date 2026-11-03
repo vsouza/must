@@ -21,6 +21,8 @@ struct ListView: View {
     @State private var openOnly = false
     @State private var cityName: String?
     @State private var cheapOnly = false
+    /// Abertos e distâncias: recalculados só quando muda o minuto, a posição (≥ 50 m), o conjunto ou os filtros (A.3).
+    @State private var openNow = OpenNowIndex()
 
     init(listId: String?, initialSub: String?, saveForEndOnly: Bool = false) {
         self.saveForEndOnly = saveForEndOnly
@@ -44,18 +46,20 @@ struct ListView: View {
         let location = services.location.current
         let tz = region.timeZone
         let cheapLimit = (settingsList.first?.perDayBudget ?? region.defaultBudget) * 0.35
+        let snapshot = openNow.snapshot(for: basePlaces, now: now, timeZone: tz, location: location)
         let filtered = basePlaces.filter { place in
-            if openOnly && !place.openState(at: now, timeZone: tz).isOpen { return false }
+            if openOnly && !snapshot.isOpen(place.id) { return false }
             if let cityName, trips.first?.city(id: place.cityId)?.name != cityName { return false }
             if cheapOnly, (place.price ?? 0) > cheapLimit { return false }
             return true
         }
+        // Chaves de ordenação calculadas uma vez por lugar (antes eram recalculadas a cada comparação).
         return filtered.sorted { a, b in
             if a.isDone != b.isDone { return !a.isDone }
-            let ao = a.openState(at: now, timeZone: tz).isOpen, bo = b.openState(at: now, timeZone: tz).isOpen
+            let ao = snapshot.isOpen(a.id), bo = snapshot.isOpen(b.id)
             if ao != bo { return ao }
-            if nearSort, let location {
-                return a.location.distance(from: location) < b.location.distance(from: location)
+            if nearSort, let da = snapshot.distance(a.id), let db = snapshot.distance(b.id) {
+                return da < db
             }
             return a.name.localizedCompare(b.name) == .orderedAscending
         }
@@ -135,7 +139,8 @@ struct ListView: View {
 
     private var subtitle: String {
         let places = basePlaces
-        let open = places.filter { $0.openState(at: now, timeZone: region.timeZone).isOpen }.count
+        let snapshot = openNow.snapshot(for: places, now: now, timeZone: region.timeZone, location: services.location.current)
+        let open = places.filter { snapshot.isOpen($0.id) }.count
         let reserved = places.filter { ($0.reservation?.at ?? .distantPast) >= region.calendar.startOfDay(for: now) }.count
         var parts = ["\(places.count) musts", "\(open) abertos agora"]
         if reserved > 0 { parts.append("\(reserved) com reserva") }

@@ -202,3 +202,34 @@ Os prints do `scripts/qa-screens.sh` cobrem a aparência. Esta lista cobre o que
 - Sem foto nos itens (sem rede nesta fatia): o card usa bloco de cor da categoria.
 - Checagem de comida sem modelo no aparelho: regex/palavras (função pura). Foundation Models não entrou.
 - Verificado: 15 testes (`ShoppingTests`), build e prints `compras` e `compras-regras` (DEBUG, região jp). Não verificado: Viagem › tag Compras e Carteira › atalho em tela; toque no card e no editor; sheet de taxa.
+
+## Performance (prompt 18 · A)
+
+**Método.** Tentado no simulador (iPhone 17, iOS 26.5, Debug): `xctrace record --template 'Time Profiler'` com `--launch` (app instalado) e com `--attach Must`, por ~15 s, nas telas Lista (`-debugScreen lista:eat`) e Início. Nas duas tentativas a gravação não fechou (ficou parada e saiu com trace de 52 KB, sem tabelas de dados), então não há números de Time Profiler nem de Hangs deste ambiente. Como o briefing manda, passei pro fallback: teste de medição em `MustTests/OpenNowIndexTests.swift` (`PerformanceMeasureTests`), que roda o "abertos agora" pros 103 lugares do seed JP (metade Tóquio, metade Quioto; jantar e bar que vira a noite) 50 vezes e imprime os tempos. Não tem asserção de tempo (depende da máquina).
+
+**Antes/depois (simulador, prints do teste, 50 passadas × 103 lugares):**
+
+| Caminho | Tempo | Decodificações de JSON |
+|---|---|---|
+| Antes: getter decodifica o `Data` a cada leitura (emulado: decode + `isOpen`) | 64–66 ms | 5 150 |
+| Depois: `Place.openState` com cache por objeto | 17–18 ms | 1 por lugar (no primeiro acesso) |
+| Depois: `OpenNowIndex` (usado pela Lista) | 13–14 ms no total, 1 recálculo | 0 |
+
+Observação: o "antes" é uma emulação do getter antigo, não o código antigo rodando. A Lista antes chamava `openState` dentro do comparador do `sort` (n log n chamadas com decodificação cada); agora são n chamadas por recálculo.
+
+**A.1 · JSON decodificado a cada leitura.** `Place.hours`, `Place.extra`, `Place.tickets`, `TripInfo.cities`, `Flight.legs` e `Flight.checklist` passam por `JSONMemo` (`Must/Models/JSONMemo.swift`): um cache por objeto (`@Transient`, fora do schema) que guarda o valor e o `Data` de origem e compara os bytes a cada leitura. Se o SwiftData trocar o `Data` (sync, merge, import) sem passar pelo setter, o cache se invalida. Schema e export não mudaram. `Place.tickets` saiu da extensão (de `Ticket.swift`) pro corpo da classe, porque extensão não guarda propriedade. Testes: `MustTests/JSONMemoTests.swift` (5).
+
+**A.2 · Bússola e GPS.** Heading saiu do `LocationService` pro `Compass` (`@Observable` próprio, `let compass` no serviço). Só `CompassBridge` (view de 1 pt, `Must/Features/Map/CompassBridge.swift`) lê o heading e empurra o valor pro coordenador do MapLibre (`YouHeadingSink`). `MapView.body` não lê mais heading; `MapScene.heading` foi removido. `headingFilter` 8 → 10. O filtro de 50 m já rodava antes de publicar `device`; agora a regra é a função pura `LocationService.publishable(_:after:)`, testada. Testes: `MustTests/LocationGateTests.swift` (6), incluindo "girar a bússola não invalida quem lê posição".
+
+**A.3 · Trabalho fora do body.** `OpenNowIndex` (`Must/Models/OpenNowIndex.swift`) guarda, por tela, o snapshot de abertos e distâncias e só recalcula quando muda o minuto, a posição (≥ 50 m), o fuso ou o conjunto de lugares (`PlacesRevision`: id, 済, reserva, horário, área, lista, coordenada). Lista usa o índice: filtro e ordenação leem o snapshot, com uma chave por lugar em vez de `openState` por comparação. Testes: `MustTests/OpenNowIndexTests.swift` (3 + a medição).
+
+**Ficou de fora (e por quê)**
+- **Home:** `HomeModel` continua montado a cada `body`. Os abertos saem do cache de JSON agora (custo baixo). Não mexi porque `HomeModel` é usado por `OutsideBridge` e `QAScenarioTests`; fica pra quando a Home for refeita (B).
+- **Mapa:** `pins` ainda é recalculado a cada `body` (`openState` por lugar sem roteiro). Heading não entra mais, mas não há memo dos pinos.
+- **Lista/Board:** sem `LazyVStack` (o VStack externo da Lista não é lazy, então não ajuda) e sem `@Query` com `predicate`/`fetchLimit` (o board inteiro tem ~100 lugares).
+- **Calendário:** `PlaceHours.weekMinute` cria um `Calendar` por chamada. É o que sobra no custo de `openState` (~3 µs); fica pra próxima medição.
+- **A.4 em diante** (rede, offline, arranque, Foundation Models): outra fatia.
+
+**Testes.** 346 → 361 (todos passando). Build de simulador e de aparelho (`generic/platform=iOS`, sem assinatura) OK.
+
+iPhone: [ ] medir com Instruments (Hangs + Time Profiler) — Vinicius
