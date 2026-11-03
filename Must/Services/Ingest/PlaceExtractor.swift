@@ -22,6 +22,8 @@ struct ExtractedPlace: Equatable, Sendable, Identifiable {
     var aliases: [String] = []
     /// Menções da legenda que viraram este item ("juntei 2 menções").
     var mentions: Int = 1
+    /// Dia do texto colado (índice em `TravelTextDraft.days`). Nil = sem dia (prompt 18 · E).
+    var dayIndex: Int? = nil
 
     /// Chave da lista: o placeId quando há, então duas menções do mesmo lugar não empilham.
     var id: String { placeId ?? name.lowercased() }
@@ -133,7 +135,8 @@ enum PlaceExtractor {
         return out
     }
 
-    private static func isPlausible(_ name: String) -> Bool {
+    /// Nome que pode ser lugar (tamanho, sem stopword, sem data). Usado também pelo texto colado.
+    static func isPlausible(_ name: String) -> Bool {
         guard (2...40).contains(name.count) else { return false }
         let lower = name.lowercased()
         if stopwords.contains(lower) { return false }

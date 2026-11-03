@@ -163,10 +163,11 @@ extension FakePlacesService {
         let hours = PlaceHours(weekdayText: nil, periods: (0...6).map { day in
             .init(open: .init(day: day, hour: 5, minute: 0), close: .init(day: day, hour: 14, minute: 0))
         }, fetchedAt: nil)
-        return FakePlacesService(candidates: [tsukiji, maguro], detailsById: [
+        // Os lugares do texto colado de amostra (prompt 18 · E) entram junto: nenhum outro nome casa com eles.
+        return FakePlacesService(candidates: [tsukiji, maguro] + ColarTextoSample.candidates, detailsById: [
             "fake-tsukiji-outer": PlaceDetails(id: "fake-tsukiji-outer", hours: hours),
             "fake-maguroya": PlaceDetails(id: "fake-maguroya", hours: hours, priceFrom: 3000, priceCurrency: "JPY"),
-        ])
+        ].merging(ColarTextoSample.details) { a, _ in a })
     }
 }
 #endif

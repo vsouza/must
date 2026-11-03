@@ -286,6 +286,21 @@ Observação: o "antes" é uma emulação do getter antigo, não o código antig
 
 iPhone: [ ] medir com Instruments (Hangs + Time Profiler) — Vinicius
 
+## Colar texto (prompt 18 · E)
+
+**Entregue.** E.21: o Adicionar ganha o seletor Link · Texto · Nome ("Nome" abre a busca por nome existente). Em Texto, o pipeline roda no aparelho: URLs (NSDataDetector) viram links; o texto vai em blocos de até 3.000 caracteres pro Foundation Models (`@Generable ParsedTravelText`, com nomes `SuggestedDay`, `TextPlace`, `TextTipDraft` pra não colidir com `ExtractedPlace` e `Tip`); sem modelo, o parser por regex (listas, títulos, frases com "no/na/em" e nomes em Title Case, dicas por verbo de instrução ou por ingresso/passe). Categoria pela palavra do nome e do trecho, e depois pelo `primaryType` do Places. Conferência no Places e junção de duplicados pelo `PlaceResolver` do prompt 16. E.22: tela conforme `ColarTexto.png` (texto marcado por cor, contadores, grupos por dia com "virar dia N", dicas que vão pras notas ou pra Carteira, "Só salvar" e "Adicionar N e criar dia K"). `PlannedDay.focusAreaName` guarda a área do dia (a fatia C troca por `focus`). E.23: sem rede, a conferência entra na fila de saída como `OutboxKind.conferText` (o `Outbox.drain` recebe o provedor de Places), o botão mostra "N esperando internet" e, ao reabrir o texto, a conferência feita é aplicada.
+
+**Código.** `Must/Services/Ingest/TravelText.swift` (parser e tipos), `Must/Services/Intelligence/TravelTextExtractor.swift` (Foundation Models, blocos, merge), `Must/Services/Ingest/TextConference.swift` (fila), `Must/Features/Add/PlaceImport.swift` (gravação dos lugares, tirada do `AddLinkView.save` e usada pelos dois fluxos), `Must/Features/ColarTexto/` (modelo, view, destaque e amostra em DEBUG). `PlaceExtractor.isPlausible` ficou internal; `ExtractedPlace.dayIndex` novo (o `PlaceResolver.combine` preserva).
+
+**Testes.** 406 passando (base 395 + 11 em `MustTests/ColarTextoTests.swift`): amostra igual à fixture `MustTests/Fixtures/colar-texto-amostra.txt`; 2 dias, 8 lugares, 2 links, 3 dicas; categorias sem Places; blocos ≤ 3.000 caracteres; merge; Carteira ("Tokyo Subway Ticket 72h", passe de trem); análise com Places fake (8 conferidos, 6 marcados, grupos); sem Places; fila offline e drain; gravação (6 lugares, 2 dias de 3 paradas, 1 item na Carteira, dicas nas notas).
+
+**Prints (simulador "Must-Texto", iPhone 17, Debug, `build/qa/`, não commitados).**
+- `xcrun simctl launch 9826BD97-6F13-4C68-90E6-4B044D56602F dev.viniso.must -skipOnboarding YES -region jp -debugPlaces fake -debugScreen colar-texto:amostra` e `xcrun simctl io 9826BD97-6F13-4C68-90E6-4B044D56602F screenshot build/qa/colar-amostra-1.png`. Mostra o seletor com "Texto" ativo e o texto marcado (comer, ver, beber, área tracejada, dica âmbar, links em preto).
+- Revisão (coordenador): `build/qa/colar-recolhido-2.png`, mesmo comando. Card recolhido (~200 pt a partir do dia em foco, fade, última linha cinza, "ver tudo"), contadores, cartão do dia com o selo do bairro (渋谷), "virar dia 1" e os botões fixos embaixo. A lista do dia rola por trás do fade; dicas e links ficam abaixo, sem print.
+- Offline (`-debugNetwork offline`) e Foundation Models: não rodados. O simulador não tem Apple Intelligence, então o aparelho cai no parser por regex.
+
+**Ficou de fora.** Fallback na nuvem (Haiku) pro Texto: o fluxo do link já tem o seu; o Texto não chama a nuvem. Nomes em japonês (`nameLocal`) no parser de regex. `StationStamp` não existe neste worktree, então a Texto não mostra selo de estação. Leitura de links no `-debugPlaces fake` usa legenda de mentira (sem rede).
+
 ## Início novo (prompt 18 · B)
 
 **Feito.** Card do dia com foto do bairro escurecida, "Hoje em <bairro>", selo (`StationStamp`), bloco Agora (fila, saia às, a pé), progresso em selos e "Ir agora" → Como chegar. Sem dia: "Hoje, pra onde?" com 3 bairros e "Montar por bairro". "Amanhã, pra onde?" com 3 cartões (foto, selo, contagem, chip de contexto, faixa da categoria). "Por perto" (uma linha), "gasto hoje" (orçamento fica em Ajustes › Dia, que já existia), "+" abre Adicionar. `HomeState` recalcula só no minuto, na posição (≥ 50 m), ao salvar (300 ms de silêncio) e ao voltar pra frente; `HomeModel` ficou intacto pro `OutsideBridge` e os testes.

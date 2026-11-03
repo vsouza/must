@@ -194,6 +194,8 @@ final class PlannedDay {
     /// Itens prontos e itens do pedido, na última tentativa (pra "salvo 5/7" quando algo faltou).
     var offlineDone: Int = 0
     var offlineTotal: Int = 0
+    /// Área ou foco do dia vindo do texto colado ("Asakusa e Ueno"). Simples por enquanto; a fatia C troca por `focus`.
+    var focusAreaName: String? = nil
 
     @Relationship(deleteRule: .cascade, inverse: \Stop.day)
     var stops: [Stop] = []

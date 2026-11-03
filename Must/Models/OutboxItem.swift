@@ -7,6 +7,9 @@ enum OutboxKind: String, Sendable, CaseIterable {
     case flightStatus
     /// `ref` = URL colada. Ao terminar, `result` guarda a legenda lida (JSON), pra Adicionar usar.
     case readLink
+    /// `ref` = chave do texto colado (prompt 18 · E.23). `result` = lugares a conferir no Places (JSON de `ConferredPlace`);
+    /// ao terminar, o mesmo JSON com placeId e coordenada.
+    case conferText
 }
 
 /// Pedido que depende de rede e foi feito sem rede (prompt 18 · A.4). Vive no container da região.
