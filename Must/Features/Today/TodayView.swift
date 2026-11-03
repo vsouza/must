@@ -34,7 +34,7 @@ struct TodayView: View {
                         topBar(hasDay: today != nil).padding(.top, 8)
                         if let today {
                             content(today, now: now)
-                            Color.clear.frame(height: 60) // espaço pro FAB
+                            Color.clear.frame(height: 132) // espaço pro FAB e o fade: a última linha termina acima deles
                         } else {
                             empty(now: now)
                         }
@@ -43,6 +43,22 @@ struct TodayView: View {
                     .padding(.horizontal, 22)
                 }
                 .scrollIndicators(.hidden)
+
+                if today != nil {
+                    // A timeline rola por trás de um fade branco: a hora da linha de baixo não fica sob o FAB.
+                    // Sólido da altura do FAB pra baixo (FAB: 92 + 54 pt acima da área segura); a área do indicador
+                    // também fica coberta: nada da timeline aparece embaixo da tab bar.
+                    GeometryReader { geo in
+                        LinearGradient(stops: [.init(color: Color.must.bg.opacity(0), location: 0),
+                                               .init(color: Color.must.bg.opacity(0.95), location: 0.2),
+                                               .init(color: Color.must.bg, location: 1)],
+                                       startPoint: .top, endPoint: .bottom)
+                            .frame(height: 194 + geo.safeAreaInsets.bottom)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                            .ignoresSafeArea(edges: .bottom)
+                    }
+                    .allowsHitTesting(false)
+                }
 
                 Fab { router.sheet = .assistant }
                     .padding(.trailing, 22)
