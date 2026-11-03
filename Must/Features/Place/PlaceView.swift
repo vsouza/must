@@ -643,7 +643,7 @@ struct PlaceView: View {
         .padding(.top, 28)
         .padding(.bottom, 92)
         .background {
-            LinearGradient(colors: [.white.opacity(0), .white.opacity(0.95), .white], startPoint: .top, endPoint: .bottom)
+            LinearGradient(stops: [.init(color: .white.opacity(0), location: 0), .init(color: .white, location: 0.3), .init(color: .white, location: 1)], startPoint: .top, endPoint: .bottom)
                 .ignoresSafeArea()
         }
     }

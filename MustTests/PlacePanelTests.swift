@@ -36,4 +36,21 @@ final class PlacePanelTests: XCTestCase {
         XCTAssertNil(PlacePanelChoice.orderHint(notes: "Fila longa no almoço."))
         XCTAssertNil(PlacePanelChoice.orderHint(notes: ""))
     }
+
+    func testHeadlinePrefersOrderThenSub() {
+        let p = Place(id: "x", name: "Mercado Central", cityId: "bh")
+        p.sub = "mercado"
+        XCTAssertEqual(PlacePanelChoice.headline(p), "Mercado")
+        p.notes = "Balcão. Pedir o fígado com jiló."
+        XCTAssertEqual(PlacePanelChoice.headline(p), "Pedir o fígado com jiló")
+    }
+
+    func testFactsSkipUnknownAndJoinWindows() {
+        let p = Place(id: "x", name: "Fuunji", cityId: "tokyo")
+        XCTAssertEqual(PlacePanelChoice.facts(p, status: nil), "")
+        p.windows = [.lunch, .dinner]
+        p.queueMinutes = 25
+        p.saveForEnd = true
+        XCTAssertEqual(PlacePanelChoice.facts(p, status: "fecha 21:00"), "fecha 21:00 · almoço e jantar · fila ~25 min · fica pro fim")
+    }
 }

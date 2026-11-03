@@ -31,8 +31,9 @@ enum PlacePanelChoice: Equatable, Sendable {
     }
 }
 
-/// Painel simples (lugar sem reserva, ingresso nem painel do tipo): cor do Must, status de horário,
-/// preço e "o que pedir" das notas. Sem nada disso, mostra a área e a lista.
+/// Painel simples (lugar sem reserva, ingresso nem painel do tipo): cor do Must e o que o cartão de
+/// informações não mostra — "o que pedir" das notas (ou o tipo do lugar), janelas do dia, fila e
+/// "fica pro fim". Horário só quando é conhecido; preço e distância ficam no cartão de baixo.
 struct PlainPanel: View {
     var place: Place
     var region: Region
@@ -41,16 +42,14 @@ struct PlainPanel: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Micro(caption, color: (place.list?.color ?? .drink).text)
-            Text(status)
+            Text(PlacePanelChoice.headline(place))
                 .font(.must.archivo(22, .semibold))
                 .foregroundStyle(Color.must.ink)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-            if let price = PlacePanelChoice.priceText(place, region: region) {
-                Text(price).font(.must.mono(14)).foregroundStyle(Color.must.ink).lineLimit(1)
-            }
-            if let order = PlacePanelChoice.orderHint(notes: place.notes) {
-                Text(order).font(.must.archivo(15)).foregroundStyle(Color.must.ink).lineLimit(2)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+            let facts = PlacePanelChoice.facts(place, status: status)
+            if !facts.isEmpty {
+                Text(facts).font(.must.archivo(14)).foregroundStyle((place.list?.color ?? .drink).text).lineLimit(1)
             }
         }
         .padding(.horizontal, 22)
@@ -64,11 +63,33 @@ struct PlainPanel: View {
         return parts.isEmpty ? "lugar" : parts.joined(separator: " · ")
     }
 
-    private var status: String {
+    private var status: String? {
         switch place.openState(at: now, timeZone: region.timeZone) {
         case .open(let until): until.map { "fecha \($0)" } ?? "aberto agora"
         case .closed(let day, let time): time.map { t in day.map { "abre \($0) \(t)" } ?? "abre \(t)" } ?? "fechado"
-        case .unknown: "sem horário"
+        case .unknown: nil
         }
+    }
+}
+
+extension PlacePanelChoice {
+    /// Título do painel simples: "Pedir o uni extra" › tipo do lugar ("Mercado") › nome da lista.
+    static func headline(_ place: Place) -> String {
+        if let order = orderHint(notes: place.notes) { return order }
+        if let sub = place.sub?.trimmingCharacters(in: .whitespaces), !sub.isEmpty {
+            return sub.prefix(1).uppercased() + sub.dropFirst()
+        }
+        return place.list?.displayName ?? place.name
+    }
+
+    /// "fecha 18:00 · almoço e jantar · fila ~25 min · fica pro fim" (só o que existe).
+    static func facts(_ place: Place, status: String?) -> String {
+        var parts: [String] = []
+        if let status { parts.append(status) }
+        let windows = DayWindow.allCases.filter(place.windows.contains).map(\.label)
+        if !windows.isEmpty { parts.append(windows.count > 1 ? windows.dropLast().joined(separator: ", ") + " e " + windows.last! : windows[0]) }
+        if let q = place.queueMinutes, q > 0 { parts.append("fila ~\(q) min") }
+        if place.saveForEnd { parts.append("fica pro fim") }
+        return parts.joined(separator: " · ")
     }
 }
