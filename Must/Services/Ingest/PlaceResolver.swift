@@ -122,6 +122,7 @@ enum PlaceResolver {
         out.sub = rep.sub ?? group.lazy.compactMap(\.sub).first
         out.nameLocal = rep.nameLocal ?? group.lazy.compactMap(\.nameLocal).first
         out.area = rep.area ?? group.lazy.compactMap(\.area).first
+        out.dayIndex = rep.dayIndex ?? group.lazy.compactMap(\.dayIndex).first
         out.art = rep.art ?? group.lazy.compactMap(\.art).first
         out.venue = rep.venue ?? group.lazy.compactMap(\.venue).first
         return out
