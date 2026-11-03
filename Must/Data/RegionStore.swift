@@ -129,6 +129,7 @@ final class RegionStore {
         guard count == 0 else {
             try BoardCodec(context: context, region: region).migrateFlightEvents()
             try mergeSeed(context, region: region, bundle: bundle)
+            WalletStarter.ensure(context, region: region)
             try context.save()
             return
         }
@@ -142,6 +143,7 @@ final class RegionStore {
         let settings = context.settings(for: region)
         settings.seenSeedIds = board.places.map(\.id)
         settings.seedListOrder = board.lists.map(\.id)
+        WalletStarter.ensure(context, region: region)
         try context.save()
         Log.data.info("seed \(region.rawValue, privacy: .public): \(summary.description, privacy: .public)")
     }

@@ -176,6 +176,7 @@
 		8AE5E7691851AAA3DA26ED97 /* tokyo.json in Resources */ = {isa = PBXBuildFile; fileRef = 5CE4364063A688311F003AF8 /* tokyo.json */; };
 		8B37B3D68127F8BF77080F91 /* SunService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5EDC66249525A11114FA12B /* SunService.swift */; };
 		8B4CFB1E2AD52E5F13F707DF /* AreaStamps.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F547CB67FA4B99CA849984C /* AreaStamps.swift */; };
+		8C6FFC2FD44DF3C0EA36E05D /* WalletStarter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34F4EA97484A2217B6E04168 /* WalletStarter.swift */; };
 		8C7BADBAFB9DC29FEA639206 /* TicketImportFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D9A83588A513DDF30DBDFB /* TicketImportFlow.swift */; };
 		8C9E5F57242BE53185CD4904 /* AddLinkResults.swift in Sources */ = {isa = PBXBuildFile; fileRef = 263C7C344090120AAEF01937 /* AddLinkResults.swift */; };
 		8E2C34166575E81B9180D841 /* BoardCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59C0F2D3F8FD625357FE147C /* BoardCodec.swift */; };
@@ -208,6 +209,7 @@
 		A2D11F25618E141D5992AC75 /* TicketScanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA2EEDA6A4AFC91D299B1F6D /* TicketScanView.swift */; };
 		A38687E6AFE416F43343A255 /* Checklists.swift in Sources */ = {isa = PBXBuildFile; fileRef = A16DDE8C735137628D242159 /* Checklists.swift */; };
 		A4ABDFDB23B8DB772156E82D /* Tips.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D464D945A49E20B455A3BEA /* Tips.swift */; };
+		A5612E340C054B84E966C1D4 /* TripReadinessTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5D405F1474161A1FDB959C2 /* TripReadinessTests.swift */; };
 		A5CE60D8B6B29EF0FBE94136 /* HomeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FADFA709EC6E6F26C38E2D34 /* HomeModel.swift */; };
 		A653778BB8318C9B046608E9 /* MustsHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C42FCB610CD3F0DCA2D3DAF /* MustsHubView.swift */; };
 		A6E54DD819864C777D940C51 /* tokyo-lines.geojson in Resources */ = {isa = PBXBuildFile; fileRef = FE11D8C2ED0A877468648D71 /* tokyo-lines.geojson */; };
@@ -421,6 +423,7 @@
 		2F209E1793AF9869B3B5D861 /* ExperienceStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperienceStore.swift; sourceTree = "<group>"; };
 		32C5A3C526057B2F0A5A397C /* MustShare.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = MustShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		34B77A2A3A62BB77CAE9126D /* BuscarNomeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuscarNomeTests.swift; sourceTree = "<group>"; };
+		34F4EA97484A2217B6E04168 /* WalletStarter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletStarter.swift; sourceTree = "<group>"; };
 		3617550DF5AB1EF53F0BCF7A /* AreaTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AreaTests.swift; sourceTree = "<group>"; };
 		361BB6DBEF0297F500E175DB /* ReservationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservationsView.swift; sourceTree = "<group>"; };
 		368E3A56E58BFCDD87F59395 /* TravelText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TravelText.swift; sourceTree = "<group>"; };
@@ -602,6 +605,7 @@
 		C34295159CAF70FE35C4BB47 /* AssistantWarmTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantWarmTests.swift; sourceTree = "<group>"; };
 		C3C762D01CB6DE2F0014144A /* BuscarNomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuscarNomeView.swift; sourceTree = "<group>"; };
 		C5AF0D2662E476416DB5D54F /* WalletItemSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletItemSheet.swift; sourceTree = "<group>"; };
+		C5D405F1474161A1FDB959C2 /* TripReadinessTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripReadinessTests.swift; sourceTree = "<group>"; };
 		C5FAF4576A692087770F948C /* TextConference.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextConference.swift; sourceTree = "<group>"; };
 		C628E2DBF6D02DCC1304D22F /* GoogleUsageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleUsageView.swift; sourceTree = "<group>"; };
 		C738346CC8CF5261BCCCB131 /* AddItemsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddItemsView.swift; sourceTree = "<group>"; };
@@ -1024,6 +1028,7 @@
 				AC71475B7DB916C20DF808A1 /* TicketTests.swift */,
 				E02237E72F8D1584EB69BA1E /* TipsTests.swift */,
 				0ECE91A8AC13EB4F448E14CE /* TravelMatrixTests.swift */,
+				C5D405F1474161A1FDB959C2 /* TripReadinessTests.swift */,
 				7A5C8629E902F9A6B0F451A9 /* TripThemeTests.swift */,
 				7C3752F7160269D8EE14C770 /* WalletTests.swift */,
 			);
@@ -1156,6 +1161,7 @@
 				2C553381C1ACF36D47BABC10 /* ShoppingRules.swift */,
 				2F12ADC96D7618625F1CFDF3 /* TicketFiles.swift */,
 				B64501536181B0AE5A3EEEB6 /* Transit.swift */,
+				34F4EA97484A2217B6E04168 /* WalletStarter.swift */,
 			);
 			path = Data;
 			sourceTree = "<group>";
@@ -1806,6 +1812,7 @@
 				FFA15BA3DF0A181F252A3D4A /* TicketTests.swift in Sources */,
 				E1BF5C2C5E118C7D6B223CE5 /* TipsTests.swift in Sources */,
 				E139A103BE2029BC3E3CCBC2 /* TravelMatrixTests.swift in Sources */,
+				A5612E340C054B84E966C1D4 /* TripReadinessTests.swift in Sources */,
 				AAAAD9818A21029537CD486C /* TripThemeTests.swift in Sources */,
 				65594D963CF25A66D6F5A7B8 /* WalletTests.swift in Sources */,
 			);
@@ -2050,6 +2057,7 @@
 				1AB481AC585577E8440AB2B0 /* WalletEditor.swift in Sources */,
 				DF8F70A609137F4388F796EB /* WalletFromTicket.swift in Sources */,
 				39B6A7E0DF540A19D82124C0 /* WalletItemSheet.swift in Sources */,
+				8C6FFC2FD44DF3C0EA36E05D /* WalletStarter.swift in Sources */,
 				C786B79C3882A765B5F354F8 /* WalletView.swift in Sources */,
 				01564ECC8188D499B5F272B8 /* WeatherService.swift in Sources */,
 				F1C160F671944E20315E0C83 /* ZipReader.swift in Sources */,
