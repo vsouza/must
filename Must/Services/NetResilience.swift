@@ -69,21 +69,50 @@ actor CircuitBreaker {
 }
 
 /// Deduplicação de GET em voo (prompt 18 · A.4): dois pedidos iguais ao mesmo tempo viram uma requisição só.
-/// A Task é independente de quem espera: cancelar um espera não cancela o pedido dos outros.
+/// A Task é compartilhada por quem espera. Quando o último interessado sai (cancelou ou terminou), a Task é
+/// cancelada e a entrada some (Rodada 21 · A.5): nada fica rodando por ninguém.
 actor InFlight {
     static let shared = InFlight()
 
-    private var tasks: [String: (id: UUID, task: Task<Data, Error>)] = [:]
+    private struct Entry {
+        let id: UUID
+        let task: Task<Data, Error>
+        var waiters: Set<UUID>
+    }
+
+    private var entries: [String: Entry] = [:]
 
     func value(for key: String, _ work: @escaping @Sendable () async throws -> Data) async throws -> Data {
-        if let existing = tasks[key] { return try await existing.task.value }
-        let id = UUID()
-        let task = Task { try await work() }
-        tasks[key] = (id, task)
-        defer { if tasks[key]?.id == id { tasks[key] = nil } }
-        return try await task.value
+        var entry = entries[key] ?? Entry(id: UUID(), task: Task { try await work() }, waiters: [])
+        let waiter = UUID()
+        entry.waiters.insert(waiter)
+        entries[key] = entry
+        let (entryId, task) = (entry.id, entry.task)
+        do {
+            let data = try await withTaskCancellationHandler {
+                try await task.value
+            } onCancel: {
+                Task { await self.leave(key, entryId, waiter) }
+            }
+            leave(key, entryId, waiter)
+            return data
+        } catch {
+            leave(key, entryId, waiter)
+            throw error
+        }
+    }
+
+    /// Um interessado saiu. Se era o último, cancela a Task e tira a entrada.
+    private func leave(_ key: String, _ entryId: UUID, _ waiter: UUID) {
+        guard var entry = entries[key], entry.id == entryId, entry.waiters.remove(waiter) != nil else { return }
+        if entry.waiters.isEmpty {
+            entry.task.cancel()
+            entries[key] = nil
+        } else {
+            entries[key] = entry
+        }
     }
 
     /// Quantos pedidos estão em voo (teste).
-    var count: Int { tasks.count }
+    var count: Int { entries.count }
 }

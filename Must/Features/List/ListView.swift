@@ -67,7 +67,7 @@ struct ListView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
+            LazyVStack(alignment: .leading, spacing: 0) {
                 header
                 filters.padding(.top, 14).padding(.horizontal, 22)
                 content.padding(.top, 20).padding(.horizontal, 22)

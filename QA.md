@@ -453,3 +453,26 @@ iPhone: [ ] medir Bairros e Guia com Instruments — Vinicius
 - Permissão de notificação do "Avisos do guia".
 - Modo avião de ponta a ponta (Hoje, dia aceito, mapa, Carteira).
 - Prints `scripts/qa-screens.sh` de JP não foram refeitos nesta fatia (fica pra fatia 6).
+
+## Rodada 21 · fatia 1 (performance)
+
+**Método.** Medição por prints em `MustTests/PerformanceRodada21Tests.swift` (sem asserção de tempo). "Antes" foi rodado no commit `08e22c8` (código antigo, só o teste novo); "depois" na suíte completa depois dos commits de A.2–A.5. Simulador B3980C62 (erased), Debug. Os números são de uma execução por lado: ordem de grandeza, não benchmark.
+
+| Medida | Antes | Depois |
+|---|---|---|
+| Início · 50 bodies × 103 lugares (antes: `HomeModel` montado e recalculado a cada body; depois: `HomeState.refresh` no gatilho + leitura por body) | 34–36 ms (≈0,7 ms por body) | refresh 2–4 ms, 1× por gatilho; leitura por body ≈ 0,02 ms (50 leituras = 20 µs), 1 recálculo |
+| Mapa · pinos · 50 bodies × 2 montagens (antes: lista refeita em `scene` e em `nearby`) | 50–52 ms | 1,6 ms, 1 montagem (`PinsMemo`, chave igual) |
+| `PlaceHours.weekMinute` · 20 000 chamadas | 8,5 ms | 7,9 ms (ganho pequeno: `Calendar` já era barato no simulador; a troca evita a alocação e o custo sobe em aparelho mais antigo) |
+
+**Feito**
+- **A.1 Início (memo).** A Início já não monta `HomeModel` no `body`: `HomeState` (prompt 18 · B) calcula dia, bairros, abertos e linhas no gatilho (minuto, posição ≥ 50 m, salvar, voltar). `HomeModel` ficou só pro `OutsideBridge` (widgets/Live Activity) e pro `QAScenarioTests`. Nada novo a fazer além da medição.
+- **A.2 Pinos do mapa.** `PinsMemo` (`Must/Features/Map/PinsMemo.swift`) guarda os pinos por chave: revisão do conjunto de lugares (`PlacesRevision`), minuto, fuso, paradas de hoje/amanhã com 済, foco, seleção, cidade, posição e raio a pé. Camadas ligadas não entram (pinos são todos; a camada filtra depois). O `body` do mapa lê `pins` várias vezes e só a primeira monta.
+- **A.3 LazyVStack.** Lista (`ListView`) e hub de Musts (`MustsHubView`) passaram a `LazyVStack`. Board já é `List` (lazy) e cada grupo é uma `Section`: não mexi.
+- **A.4 Calendar.** `PlaceHours.weekMinute` usa um `Calendar` por fuso, guardado num `Mutex<[TimeZone: Calendar]>` (thread-safe, Swift 6).
+- **A.5 Dedupe (`InFlight`).** Cada entrada guarda os interessados. Quando sai o último (cancelou ou terminou), a `Task` compartilhada é cancelada e a entrada some. Testes: `MustTests/InFlightCancelTests.swift` (cancelar o único interessado cancela a requisição e zera o `count`; cancelar um de dois não afeta o outro).
+
+**Ficou de fora (anotado)**
+- `TransitLoader.load(region)` é chamado a cada `body` do mapa (`transit` em `MapView`). Não medido; candidato a memo na próxima rodada.
+- Instruments no aparelho continua pendente (não há aparelho nesta rodada).
+
+**Testes.** Suíte completa no simulador B3980C62: `✔ Test run with 512 tests in 96 suites passed`.
