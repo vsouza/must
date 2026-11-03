@@ -137,6 +137,7 @@ xcodebuild -project Must.xcodeproj -scheme Must -destination 'platform=iOS Simul
 ## Notas
 - O simulador "iPhone 17 Pro" ficou travando o test runner ("hung before establishing connection") depois de muitas
   execuções; o "iPhone 17" roda limpo. Se acontecer: `xcrun simctl erase <udid>`.
+  Em 03/11 o "iPhone 17" também degradou (3 de 5 rodadas com "hung", igual no commit anterior ao A.5); depois do `erase`, 4 de 4 limpas.
 - Marcar 済 direto na Lista (sem passar pelo Lugar) ficou de fora: o toque longo da Lista é Editar. Hoje o 済 é pelo
   Lugar → Feito ou pelo "+ gasto" do Hoje.
 
