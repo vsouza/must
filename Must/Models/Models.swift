@@ -194,6 +194,8 @@ final class PlannedDay {
     /// Itens prontos e itens do pedido, na última tentativa (pra "salvo 5/7" quando algo faltou).
     var offlineDone: Int = 0
     var offlineTotal: Int = 0
+    /// Bairro do foco ("Shinjuku+", prompt 18 · C.14): o Guia mostra o nome e o selo. `nil` = o dia todo.
+    var focusAreaId: String?
 
     @Relationship(deleteRule: .cascade, inverse: \Stop.day)
     var stops: [Stop] = []

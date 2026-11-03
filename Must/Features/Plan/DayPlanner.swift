@@ -48,6 +48,8 @@ final class DayPlanner {
     var weather: DayWeather?
     /// Tempos reais do Routes (Route Matrix) pras candidatas do dia. Buscados antes de montar; sem eles, a estimativa.
     var travel: TravelMatrix?
+    /// Bairro do foco (prompt 18 · C.14/C.15): "Shinjuku+" = o bairro e os vizinhos a 15 min. `nil` = o dia todo.
+    var focusArea: String?
 
     func request(trip: TripInfo?, settings: Settings?, location: CLLocation?, flights: [DayFlight] = []) -> DayRequest {
         let cal = region.calendar
@@ -65,7 +67,8 @@ final class DayPlanner {
                           daysLeftInCity: city.flatMap { trip?.daysLeft(in: $0, after: date, calendar: cal) },
                           weather: weather, walkMaxKm: settings?.walkMaxKm ?? 1.5,
                           oneMealPerWindow: settings?.oneMealPerWindow ?? true, cityCenter: center, seed: seed,
-                          flights: flights, travel: travel)
+                          flights: flights, travel: travel,
+                          focus: focusArea.map { .area(id: $0, includeNeighbors: true, maxHopMinutes: 15) })
     }
 
     /// Busca a matriz (a pé e transporte) entre a origem e as 9 candidatas mais perto. Antes do solver: ele segue síncrono.
@@ -128,6 +131,7 @@ final class DayPlanner {
         for day in existing { context.delete(day) }
         let places = Dictionary(uniqueKeysWithValues: try context.fetch(FetchDescriptor<Place>()).map { ($0.id, $0) })
         let day = PlannedDay(date: date, kind: intent.kind ?? kind, budget: intent.budget ?? budget, walk: walk, accepted: true)
+        day.focusAreaId = focusArea
         context.insert(day)
         for (i, s) in proposal.stops.enumerated() {
             let stop = Stop(place: places[s.place.id], at: s.at, order: i, isAnchor: s.isAnchor, isException: s.isException)

@@ -36,6 +36,10 @@ enum Route: Hashable {
     case compras
     /// Regras da volta (prompt 17 · B): tax-free, Na mala, Entrando no Brasil, Comida/Vigiagro.
     case regrasVolta
+    /// Bairros (prompt 18 · C.14): mapa de bolhas e a sheet do bairro. `areaId` abre já com o bairro escolhido (prints).
+    case bairros(areaId: String? = nil)
+    /// Guia do dia (prompt 18 · C.16): a visão por bairro do dia aceito, meia-noite do dia.
+    case guia(date: Date)
 }
 
 /// Navegação do app: aba atual, pilha de cada aba e o que está apresentado por cima.
@@ -158,6 +162,8 @@ extension View {
             case .comoChegar(let placeId, let meeting): ComoChegarView(placeId: placeId, meeting: meeting)
             case .compras: ShoppingView()
             case .regrasVolta: ShoppingRulesView()
+            case .bairros(let areaId): BairrosView(initialArea: areaId)
+            case .guia(let date): GuiaBairroView(date: date)
             }
         }
     }
