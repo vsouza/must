@@ -459,6 +459,7 @@ enum MustTab: String, CaseIterable, Identifiable, Sendable {
 /// Tab bar flutuante: pílula branca 62pt com sombra, 22pt das bordas.
 struct MustTabBar: View {
     @Binding var selected: MustTab
+    @Environment(\.tripTheme) private var theme
 
     var body: some View {
         HStack(spacing: 0) {
@@ -470,6 +471,11 @@ struct MustTabBar: View {
                         MustIconView(tab.icon, size: 22)
                         Text(tab.title)
                             .font(.must.archivo(11, selected == tab ? .semibold : .regular))
+                        // Ponto da aba ativa na cor do país (prompt 20); sem tema, o verde do app. Reserva o espaço nas outras.
+                        Circle()
+                            .fill(theme.tripColor)
+                            .frame(width: 4, height: 4)
+                            .opacity(selected == tab ? 1 : 0)
                     }
                     .foregroundStyle(selected == tab ? Color.must.ink : Color.must.secondary)
                     .frame(maxWidth: .infinity, minHeight: 44)

@@ -171,9 +171,9 @@ struct Gallery: View {
     private var stamps: some View {
         section("Selos de bairro e linhas") {
             HStack(spacing: 14) {
-                StationStamp("新宿", size: 74, ring: StampPalette.onPhotoFill == .clear ? .black : .white, fill: nil)
-                StationStamp("SAV", sub: "BH · 1897", size: 74, ring: StampPalette.onPaper, fill: nil)
-                StationStamp("上野", size: 44, ring: StampPalette.onPaper, fill: nil, rotation: -6)
+                StationStamp("新宿", size: 74, filled: false)
+                StationStamp("SAV", sub: "BH · 1897", size: 74, surface: .paper)
+                StationStamp("上野", size: 44, surface: .paper, rotation: -6)
                 Spacer()
             }
             HStack(spacing: 8) {

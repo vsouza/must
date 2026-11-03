@@ -1,39 +1,63 @@
 import SwiftUI
 
-/// Cores dos selos e linhas. Ponto único: o prompt 20 (tema da viagem) troca a cor do selo por país aqui,
-/// sem mexer nas telas. Por enquanto o selo é branco (sobre foto) ou tinta (sobre papel).
+/// Cores dos selos (prompt 20): ponto único. Sobre papel a tinta é a do país (`stampInk`); sobre foto o selo
+/// é branco com fundo `stampInk` a 55% (card do dia) ou 50% (cartões de bairro). Sem tema (`neutral`), a tinta
+/// é a tinta do app, como antes.
 enum StampPalette {
-    /// Selo sobre foto escurecida.
+    /// Selo sobre foto escurecida: anel e texto.
     static let onPhoto = Color.white
-    /// Preenchimento atrás do texto do selo sobre foto.
-    static let onPhotoFill = Color.black.opacity(0.28)
-    /// Selo sobre papel (fundo claro).
-    static let onPaper = Color.must.ink
+
+    /// Tinta do selo sobre papel.
+    static func ink(_ theme: TripTheme) -> Color { theme.stampInkColor }
+
+    /// Fundo do selo sobre foto: a tinta do país na opacidade pedida.
+    static func photoFill(_ theme: TripTheme, opacity: Double) -> Color {
+        theme.stampInkColor.opacity(opacity)
+    }
 }
 
 /// Selo de estação/bairro (eki stamp, D.18): círculo de borda dupla com linha tracejada por dentro, kanji
 /// (ou sigla no BH) e uma linha pequena. Rotação leve (−6° a −10°). Ver `.stamp` em `design/screens/must-light.css`.
+///
+/// `surface`: `.photo` (branco sobre foto, com fundo do país se `filled`) ou `.paper` (tinta do país).
 struct StationStamp: View {
+    enum Surface: Sendable {
+        case photo
+        case paper
+    }
+
     var text: String
     var sub: String?
     var size: CGFloat = 74
-    var ring: Color = StampPalette.onPhoto
-    var fill: Color? = StampPalette.onPhotoFill
+    var surface: Surface = .photo
+    /// Sobre foto: `true` põe o fundo do país (`fillOpacity`); `false` deixa o selo sem fundo.
+    var filled: Bool = true
+    var fillOpacity: Double = 0.55
     var rotation: Double = -8
 
-    init(_ text: String, sub: String? = nil, size: CGFloat = 74, ring: Color = StampPalette.onPhoto,
-         fill: Color? = StampPalette.onPhotoFill, rotation: Double = -8) {
+    @Environment(\.tripTheme) private var theme
+
+    init(_ text: String, sub: String? = nil, size: CGFloat = 74, surface: Surface = .photo, filled: Bool = true,
+         fillOpacity: Double = 0.55, rotation: Double = -8) {
         self.text = text
         self.sub = sub
         self.size = size
-        self.ring = ring
-        self.fill = fill
+        self.surface = surface
+        self.filled = filled
+        self.fillOpacity = fillOpacity
         self.rotation = rotation
     }
 
     /// Kanji (Zen Kaku Gothic New) quando o texto não é sigla ASCII (BH: SAV, LOU…).
     static func usesKanji(_ text: String) -> Bool {
         !text.unicodeScalars.allSatisfy { $0.isASCII }
+    }
+
+    private var ring: Color { surface == .photo ? StampPalette.onPhoto : StampPalette.ink(theme) }
+
+    private var fill: Color? {
+        guard surface == .photo, filled else { return nil }
+        return StampPalette.photoFill(theme, opacity: fillOpacity)
     }
 
     var body: some View {

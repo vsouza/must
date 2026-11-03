@@ -217,7 +217,7 @@ struct ColarTextoView: View {
             HStack(alignment: .center, spacing: 12) {
                 if group.id >= 0 {
                     let seal = stamp(for: group)
-                    StationStamp(seal.text, sub: seal.sub, size: 52, ring: StampPalette.onPaper, fill: nil, rotation: -8)
+                    StationStamp(seal.text, sub: seal.sub, size: 52, surface: .paper, rotation: -8)
                 }
                 Text(group.id >= 0 ? "\(group.title) · dia sugerido" : group.title)
                     .font(.must.archivo(17, .semibold))

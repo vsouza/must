@@ -3,6 +3,7 @@ import Foundation
 import Observation
 import OSLog
 import SwiftData
+import SwiftUI
 
 /// Região atual + o `ModelContainer` dela. Trocar região = trocar container (não apaga nada).
 /// O root injeta `.modelContainer(store.container)` e usa `.id(store.region)` pra recriar a árvore.
@@ -37,6 +38,9 @@ final class RegionStore {
         self.lastError = error
     }
 
+    /// Tema da viagem da região (bandeira, lavado, selos). `MustApp` injeta no ambiente, fora da `.id`.
+    var theme: TripTheme { TripTheme.forRegion(region) }
+
     /// Automático: abre na região onde o GPS está (BH no Brasil, Japão lá).
     var isAuto: Bool { defaults.object(forKey: Self.autoKey) as? Bool ?? true }
 
@@ -62,10 +66,13 @@ final class RegionStore {
         Log.data.info("trocando região \(self.region.rawValue, privacy: .public) → \(newRegion.rawValue, privacy: .public)")
         defaults.set(newRegion.rawValue, forKey: Self.regionKey)
         let (container, error) = Self.openContainer(for: newRegion, in: directory, seedBundle: seedBundle)
-        self.container = container
-        self.lastError = error
-        self.region = newRegion
-        generation += 1
+        // 0,4 s: o tema (lavado, bandeira, selos) troca junto com a região (prompt 20).
+        withAnimation(.easeInOut(duration: 0.4)) {
+            self.container = container
+            self.lastError = error
+            self.region = newRegion
+            generation += 1
+        }
     }
 
     /// Apaga o `.store` desta região e reimporta o seed. As outras regiões ficam intactas.

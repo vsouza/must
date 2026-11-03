@@ -381,3 +381,22 @@ iPhone: [ ] medir com Instruments (Hangs + Time Profiler) — Vinicius
 - Lugar novo (Adicionar antes de salvar): mostra gradiente até sincronizar (candidato sem Details não tem foto).
 
 **iPhone (Vinicius):** [ ] conferir o hero e a galeria com fotos reais · [ ] Ajustes › Dados: MB, cache e lote no Wi-Fi · [ ] Modo de Pouco Dados: sem foto nova fora do Lugar aberto
+
+## Tema da viagem (prompt 20)
+
+**Feito.** `TripTheme` (tokens por país, tabela aberta por ISO 3166 em `TripTheme.byCountry`), injetado em `MustApp` com `Region.country`. Lavado do topo (`.tripWash()`, 300 pt, ou cor sólida `tripSoft2` em 120 pt com "Reduzir transparência") em Início, Hoje, Musts e Viagem. Selos (`StationStamp`) com tinta do país sobre papel e fundo `stampInk` a 55% no card do dia (50% nos cartões de bairro). Rótulo da cidade/dia em `tripInk`, ponto da aba ativa e ponto de "Amanhã, pra onde?" em `trip`, anel do dia de hoje na Viagem em `trip`. Bandeira vetorial de 22 pt (`TripFlag`) ao lado da data na Início e no card de cada trecho na Viagem. Identidade (verde, azul, tinta, links, listas, trem, mapa) não muda.
+
+**Prints** (`scripts/qa-screens.sh`, seção "Tema da viagem"): `tema-jp-inicio`, `tema-jp-hoje`, `tema-jp-musts`, `tema-jp-viagem`, `tema-bh-inicio`, `tema-bh-hoje`, `tema-bh-musts`, `tema-bh-viagem` (em `build/qa/`, não commitados). Conferidos contra Home6.png (Japão) e Home6BH.png (Brasil): lavado, bandeira, rótulo, pontos e selos batem.
+
+**Testes.** `MustTests/TripThemeTests.swift` (12): tokens exatos de JP e BR, mapa região → país, tabela aberta (chaves ISO, país desconhecido cai no neutro), tons do país não usam cor de identidade, cores de identidade fixas, forma do lavado (300 pt / 120 pt sólido / sem lavado), fundo do selo a 55%, bandeira só pra JP e BR. Suíte completa: **422** passando (base 410).
+
+**Diferenças em relação aos Home6**
+- A troca de região usa `withAnimation` de 0,4 s em `RegionStore.switchTo`, mas o `.id` da raiz recria a árvore (troca de container). Por isso a transição de cor pode aparecer como troca direta; medir no aparelho.
+- Hoje ganhou o rótulo "Tóquio · dia 1/5" (ou "Belo Horizonte") em tom do país, que não existia na tela antes.
+- Viagem: não há coleção de selos ainda; a borda `trip` ficou no anel do dia de hoje.
+- Cartões de bairro com 50% de fundo (o Home6 mostra 50%; o card do dia 55%).
+
+**Pendente**
+- Guia (prompt 18 C): usar `.tripWash()` antes do `.background` da tela e `StationStamp(surface: .photo / .paper)`.
+- Coleção de selos na Viagem (quando existir) deve usar `theme.tripColor` na borda.
+- `StationStamp` perdeu os parâmetros `ring:` e `fill:` (agora `surface:`, `filled:`, `fillOpacity:`). Quem já tiver código com a API antiga precisa migrar.
