@@ -122,7 +122,11 @@ struct HomeView: View {
         HStack {
             Text("Olá, Vinicius!").mustTitle()
             Spacer()
-            if services.sync.status.isProblem || !DevOverrides.liveData {
+            // Sem rede de verdade (prompt 18 · A.4): o mesmo chip, dizendo que o offline funciona.
+            if services.connectivity.isOffline {
+                Tag("sem internet · offline ok", dot: Color(hex: 0xC5C9D0))
+                    .accessibilityHint("Mostrando o que está salvo no aparelho")
+            } else if services.sync.status.isProblem || !DevOverrides.liveData {
                 Tag("sem dados ao vivo", dot: Color(hex: 0xC5C9D0))
                     .accessibilityHint("Mostrando só o que está em cache")
             }

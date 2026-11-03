@@ -343,6 +343,7 @@ struct TintedPhoto: View {
     var url: URL?
     var color: MustColor
     var tintOpacity: Double = 0.82
+    @State private var image: UIImage?
 
     init(url: URL?, color: MustColor, tintOpacity: Double = 0.82) {
         self.url = url
@@ -355,15 +356,49 @@ struct TintedPhoto: View {
         color.gradient
             .overlay {
                 if let url {
-                    AsyncImage(url: url) { phase in
-                        if let image = phase.image {
-                            image.resizable().scaledToFill().saturation(0.7)
-                        }
+                    if let image {
+                        Image(uiImage: image).resizable().scaledToFill().saturation(0.7)
                     }
                     color.gradient.opacity(tintOpacity)
                 }
             }
             .clipped()
+            // Cache primeiro (prompt 18 · A.4): sem imagem e sem rede, fica o gradiente, sem spinner.
+            .task(id: url) {
+                guard let url else { image = nil; return }
+                image = await PhotoLoader.load(url)
+            }
+    }
+}
+
+/// Foto de fundo: memória → disco (qualquer idade, na hora) → rede (só sem cópia ou com cópia de mais de 30 dias).
+/// Nunca espera a rede pra mostrar uma foto que já está no aparelho. Sem rede, a chamada falha na hora (`HTTP`).
+@MainActor
+enum PhotoLoader {
+    static let memory = NSCache<NSURL, UIImage>()
+    static let freshFor: TimeInterval = 30 * 24 * 3600
+
+    static func load(_ url: URL) async -> UIImage? {
+        if let hit = memory.object(forKey: url as NSURL) { return hit }
+        let key = "photo|\(url.absoluteString)"
+        if let saved = await DiskCache.shared.stale(key), let image = UIImage(data: saved) {
+            memory.setObject(image, forKey: url as NSURL)
+            if await DiskCache.shared.isFresh(key, maxAge: freshFor) == false {
+                Task { _ = await fetch(url, key: key) }   // velha: troca na próxima vez, sem atrasar a tela
+            }
+            return image
+        }
+        guard let data = await fetch(url, key: key), let image = UIImage(data: data) else { return nil }
+        memory.setObject(image, forKey: url as NSURL)
+        return image
+    }
+
+    private static func fetch(_ url: URL, key: String) async -> Data? {
+        guard let data = try? await HTTP().get(url, headers: ["User-Agent": CommonsPhotoService.userAgent], service: "foto") else {
+            return nil
+        }
+        await DiskCache.shared.store(data, for: key)
+        return data
     }
 }
 

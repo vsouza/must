@@ -17,6 +17,8 @@ struct Place3DView: View {
     @State private var orbit = 0
     @State private var scene: MKLookAroundScene?
     @State private var checkedScene = false
+    /// Sem rede (ou Wi-Fi sem internet: a Look Around não responde em 6 s): aviso discreto sobre o mapa.
+    @State private var needsInternet = false
 
     init(name: String, coordinate: CLLocationCoordinate2D, heading: Double? = nil) {
         self.name = name
@@ -40,6 +42,7 @@ struct Place3DView: View {
             }
             VStack {
                 topBar
+                if needsInternet { offlineNote.padding(.top, 10) }
                 Spacer()
                 controls
             }
@@ -47,10 +50,46 @@ struct Place3DView: View {
             .padding(.top, 8)
             .padding(.bottom, 24)
         }
-        .task {
-            scene = try? await MKLookAroundSceneRequest(coordinate: coordinate).scene
+        .task { await loadScene() }
+    }
+
+    /// Look Around pela rede. Offline: aviso na hora. Sem resposta em 6 s (Wi-Fi sem internet): mesmo aviso.
+    private func loadScene() async {
+        guard Connectivity.current != .offline else {
+            needsInternet = true
             checkedScene = true
+            return
         }
+        let watchdog = Task {
+            try? await Task.sleep(for: .seconds(6))
+            guard !Task.isCancelled, !checkedScene else { return }
+            needsInternet = true
+        }
+        do {
+            scene = try await MKLookAroundSceneRequest(coordinate: coordinate).scene
+            needsInternet = false
+        } catch {
+            // Erro de rede (não "sem cobertura", que volta nil): o aviso fica.
+            needsInternet = true
+        }
+        watchdog.cancel()
+        checkedScene = true
+    }
+
+    private var offlineNote: some View {
+        HStack(spacing: 10) {
+            Text("sem conexão · o 3D precisa de internet").mustMeta().foregroundStyle(Color.must.ink)
+            Spacer(minLength: 0)
+            Button { needsInternet = false } label: {
+                Text("Fechar").font(.must.archivo(13, .semibold)).foregroundStyle(Color.must.ink)
+            }
+            .buttonStyle(MustPressStyle())
+            .accessibilityLabel("Fechar aviso")
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .glass(cornerRadius: 18)
+        .accessibilityElement(children: .contain)
     }
 
     private var map: some View {

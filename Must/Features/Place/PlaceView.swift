@@ -23,6 +23,8 @@ struct PlaceView: View {
     @State private var show3D = false
     /// Ingressos do lugar (Lugar › Anexar ingresso).
     @State private var editingTickets = false
+    /// Dicas: a busca roda como `.task(id:)`, então cancela quando a seção some ou o lugar troca (prompt 18 · A.4).
+    @State private var tipsVisible = false
 
 
     init(placeId: String) {
@@ -67,9 +69,7 @@ struct PlaceView: View {
                             .padding(.horizontal, 22)
                             .padding(.top, 44)
                             .id("tips")
-                            .onScrollVisibilityChange(threshold: 0.01) { visible in
-                                if visible { Task { await loadTips(place) } }
-                            }
+                            .onScrollVisibilityChange(threshold: 0.01) { visible in tipsVisible = visible }
                         Color.clear.frame(height: 240).id("tips-end")
                     }
                 }
@@ -101,6 +101,7 @@ struct PlaceView: View {
         .toolbar(.hidden, for: .navigationBar)
         .onAppear { services.sync.refreshIfStale(place, region: region) }
         .task(id: place.id) { await loadHero(place) }
+        .task(id: "\(place.id)|\(tipsVisible)") { if tipsVisible { await loadTips(place) } }
         .fullScreenCover(isPresented: $show3D) {
             Place3DView(name: place.name, coordinate: place.coordinate, heading: place.extra?.photo?.facing)
         }
@@ -216,11 +217,14 @@ struct PlaceView: View {
                 }
                 Button { show3D = true } label: {
                     Text("3D").font(.must.mono(13, .semibold)).foregroundStyle(Color.must.ink)
+                        .opacity(services.connectivity.isOffline ? 0.4 : 1)
                         .frame(width: 40, height: 40)
                         .background { Color.clear.glass(cornerRadius: 20) }
                 }
                 .buttonStyle(MustPressStyle())
                 .accessibilityLabel("Ver em 3D")
+                .accessibilityHint(services.connectivity.isOffline ? "precisa de internet" : "")
+                .disabled(services.connectivity.isOffline)
                 glassButton(.editar, label: "Editar") { router.sheet = .editPlace(id: place.id) }
             }
             .padding(.horizontal, 22)
