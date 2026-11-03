@@ -176,14 +176,24 @@ final class Flight {
         self.createdAt = createdAt
     }
 
+    /// Caches (prompt 18 · A.1): a lista de voos lê pernas e checklist a cada redesenho.
+    @Transient var legsMemo = JSONMemo<[FlightSegment]>()
+    @Transient var checklistMemo = JSONMemo<[ChecklistItem]>()
+
     var legs: [FlightSegment] {
-        get { (try? JSONDecoder.board.decode([FlightSegment].self, from: legsData)) ?? [] }
-        set { legsData = (try? JSONEncoder.board(timeZone: .gmt).encode(newValue)) ?? Data("[]".utf8) }
+        get { legsMemo.value(from: legsData) { try? JSONDecoder.board.decode([FlightSegment].self, from: $0) } ?? [] }
+        set {
+            legsData = (try? JSONEncoder.board(timeZone: .gmt).encode(newValue)) ?? Data("[]".utf8)
+            legsMemo.store(newValue, source: legsData)
+        }
     }
 
     var checklist: [ChecklistItem] {
-        get { (try? JSONDecoder.board.decode([ChecklistItem].self, from: checklistData)) ?? [] }
-        set { checklistData = (try? JSONEncoder.board(timeZone: .gmt).encode(newValue)) ?? Data("[]".utf8) }
+        get { checklistMemo.value(from: checklistData) { try? JSONDecoder.board.decode([ChecklistItem].self, from: $0) } ?? [] }
+        set {
+            checklistData = (try? JSONEncoder.board(timeZone: .gmt).encode(newValue)) ?? Data("[]".utf8)
+            checklistMemo.store(newValue, source: checklistData)
+        }
     }
 
     var firstLeg: FlightSegment? { legs.first }

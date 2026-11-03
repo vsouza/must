@@ -111,9 +111,17 @@ final class Place {
         self.notes = ""
     }
 
+    /// Cache (prompt 18 · A.1): o JSON não é decodificado a cada leitura.
+    @Transient var hoursMemo = JSONMemo<PlaceHours>()
+    @Transient var extraMemo = JSONMemo<PlaceExtra>()
+    @Transient var ticketsMemo = JSONMemo<[Ticket]>()
+
     var hours: PlaceHours? {
-        get { hoursData.flatMap { try? JSONDecoder.board.decode(PlaceHours.self, from: $0) } }
-        set { hoursData = newValue.flatMap { try? JSONEncoder.board(timeZone: .gmt).encode($0) } }
+        get { hoursMemo.value(from: hoursData) { try? JSONDecoder.board.decode(PlaceHours.self, from: $0) } }
+        set {
+            hoursData = newValue.flatMap { try? JSONEncoder.board(timeZone: .gmt).encode($0) }
+            hoursMemo.store(hoursData == nil ? nil : newValue, source: hoursData)
+        }
     }
 
     var windows: [DayWindow] {
@@ -124,8 +132,20 @@ final class Place {
     var isDone: Bool { done != nil }
 
     var extra: PlaceExtra? {
-        get { extraData.flatMap { try? JSONDecoder.board.decode(PlaceExtra.self, from: $0) } }
-        set { extraData = newValue.flatMap { $0.isEmpty ? nil : try? JSONEncoder.board(timeZone: .gmt).encode($0) } }
+        get { extraMemo.value(from: extraData) { try? JSONDecoder.board.decode(PlaceExtra.self, from: $0) } }
+        set {
+            extraData = newValue.flatMap { $0.isEmpty ? nil : try? JSONEncoder.board(timeZone: .gmt).encode($0) }
+            extraMemo.store(extraData == nil ? nil : newValue, source: extraData)
+        }
+    }
+
+    /// Ingressos anexados (JSON em `ticketsData`).
+    var tickets: [Ticket] {
+        get { ticketsMemo.value(from: ticketsData) { try? JSONDecoder.board.decode([Ticket].self, from: $0) } ?? [] }
+        set {
+            ticketsData = newValue.isEmpty ? nil : try? JSONEncoder.board(timeZone: .gmt).encode(newValue)
+            ticketsMemo.store(ticketsData == nil ? nil : newValue, source: ticketsData)
+        }
     }
 
     /// Tipo vindo da lista.
@@ -269,9 +289,15 @@ final class TripInfo {
         self.citiesData = (try? JSONEncoder.board(timeZone: .gmt).encode(cities)) ?? Data("[]".utf8)
     }
 
+    /// Cache (prompt 18 · A.1): `city(id:)` roda por linha da Lista e do Board.
+    @Transient var citiesMemo = JSONMemo<[City]>()
+
     var cities: [City] {
-        get { (try? JSONDecoder.board.decode([City].self, from: citiesData)) ?? [] }
-        set { citiesData = (try? JSONEncoder.board(timeZone: .gmt).encode(newValue)) ?? Data("[]".utf8) }
+        get { citiesMemo.value(from: citiesData) { try? JSONDecoder.board.decode([City].self, from: $0) } ?? [] }
+        set {
+            citiesData = (try? JSONEncoder.board(timeZone: .gmt).encode(newValue)) ?? Data("[]".utf8)
+            citiesMemo.store(newValue, source: citiesData)
+        }
     }
 
     var hasTrip: Bool { start != nil && end != nil }

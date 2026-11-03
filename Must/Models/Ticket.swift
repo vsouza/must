@@ -39,12 +39,6 @@ struct Ticket: Codable, Hashable, Sendable, Identifiable {
 }
 
 extension Place {
-    /// Ingressos anexados (JSON em `ticketsData`).
-    var tickets: [Ticket] {
-        get { ticketsData.flatMap { try? JSONDecoder.board.decode([Ticket].self, from: $0) } ?? [] }
-        set { ticketsData = newValue.isEmpty ? nil : try? JSONEncoder.board(timeZone: .gmt).encode(newValue) }
-    }
-
     /// Ingresso anexado a uma sessão marca essa sessão como comprada (vira âncora, como `bought`).
     func syncBoughtSessions() {
         var extra = self.extra ?? PlaceExtra()
