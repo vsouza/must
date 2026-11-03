@@ -52,6 +52,7 @@
 		2322AACA982A239264D2019F /* WalletCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E73E37133E3474A471011CD9 /* WalletCardView.swift */; };
 		23E5F5CBB10426C71A2EDFBB /* PlaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 486E283B4CB2889203AE8597 /* PlaceView.swift */; };
 		24272338F7D1250862BDEE12 /* PlaceLogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CD1E440AD926B55E75952EB /* PlaceLogicTests.swift */; };
+		24E0EB4DB56885E84049C095 /* LocationGateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 673F8401797BB6988B424DF7 /* LocationGateTests.swift */; };
 		25F1D69D524D1DB8234C3152 /* MustTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9E45EB741EE7A4B0C62B1E9 /* MustTests.swift */; };
 		28ABC4E7570FC6797BE3C327 /* Extras.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03253802B39EE1C2C9B2E6D4 /* Extras.swift */; };
 		2A3B5E803BB2D63031091E1A /* WalletDemo.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDA371C417B2B9F722B417BE /* WalletDemo.swift */; };
@@ -109,6 +110,7 @@
 		65594D963CF25A66D6F5A7B8 /* WalletTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C3752F7160269D8EE14C770 /* WalletTests.swift */; };
 		67BEEE9773A82874943B84D4 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10E1AAF40DE6541D6FB3D78D /* RootView.swift */; };
 		682E2C00BD69F88552577F8E /* TicketFiles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F12ADC96D7618625F1CFDF3 /* TicketFiles.swift */; };
+		6836CDC83A2EF220F0F13615 /* CompassBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7762045A378DADBDFF7270E0 /* CompassBridge.swift */; };
 		6B1D76E59DB26263796CFB33 /* PlaceExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EC31260FFD7C170271ED2A1 /* PlaceExtractor.swift */; };
 		6B3A9B753F8DDA7395A53C4C /* Region.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA6E59F40F1B2D3D5518007E /* Region.swift */; };
 		6B9F6C927AC6F89623638391 /* FlowLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80374DD7C366832956DAD9EC /* FlowLayout.swift */; };
@@ -399,6 +401,7 @@
 		6520EC9BC1F8EF500D501D86 /* TripStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripStats.swift; sourceTree = "<group>"; };
 		6675C1F44B4037B9EE207B20 /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
 		67244091AE5914D81634B15B /* TripView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripView.swift; sourceTree = "<group>"; };
+		673F8401797BB6988B424DF7 /* LocationGateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationGateTests.swift; sourceTree = "<group>"; };
 		69DF2AD74C904D34D8A23995 /* NearbyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearbyService.swift; sourceTree = "<group>"; };
 		6A65495A52E0B006233D513B /* DebugFlags.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugFlags.swift; sourceTree = "<group>"; };
 		6C9849256E110EA3402843D3 /* ShoppingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShoppingView.swift; sourceTree = "<group>"; };
@@ -410,6 +413,7 @@
 		7589696EAD8A739DA1C8196C /* ExperiencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperiencesView.swift; sourceTree = "<group>"; };
 		75D868B5A981073D5AED5B21 /* ApiBudget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiBudget.swift; sourceTree = "<group>"; };
 		76824D324E16F3429F510F1D /* BoardRows.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardRows.swift; sourceTree = "<group>"; };
+		7762045A378DADBDFF7270E0 /* CompassBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompassBridge.swift; sourceTree = "<group>"; };
 		7B514A86BB604B08856786EA /* SunServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SunServiceTests.swift; sourceTree = "<group>"; };
 		7BA25CA47124E3E6E046ED06 /* map-packs.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "map-packs.json"; sourceTree = "<group>"; };
 		7BC23CD2D9B7A3D345E2FA14 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
@@ -620,6 +624,7 @@
 		09F500CD5EA3D252AE1778C1 /* Map */ = {
 			isa = PBXGroup;
 			children = (
+				7762045A378DADBDFF7270E0 /* CompassBridge.swift */,
 				9B23D24A63662CDD8BB529F4 /* MapCamera.swift */,
 				7D5285288E86B22BBED506EB /* MapLibreView.swift */,
 				F89EE24137D29930396E7AFE /* MapPacks.swift */,
@@ -835,6 +840,7 @@
 				5092A6F919E95C25C7D6B97B /* JapanTransitTests.swift */,
 				8E95DBB5D221CACCD98CDFCB /* JSONMemoTests.swift */,
 				A68D631FD82CB44E32D3116B /* KindsTests.swift */,
+				673F8401797BB6988B424DF7 /* LocationGateTests.swift */,
 				152B888DEEFD8182E7E1B1CC /* MapCameraTests.swift */,
 				D9E45EB741EE7A4B0C62B1E9 /* MustTests.swift */,
 				1F7ACC6606F867AC81E9F0B9 /* NearbyTests.swift */,
@@ -1536,6 +1542,7 @@
 				55CF57919CDE99D67C54F835 /* JSONMemoTests.swift in Sources */,
 				01986439F3BF1AC9AE8AF29B /* JapanTransitTests.swift in Sources */,
 				C921CC2375678A03499F2454 /* KindsTests.swift in Sources */,
+				24E0EB4DB56885E84049C095 /* LocationGateTests.swift in Sources */,
 				1983873D9D81C55F540630BB /* MapCameraTests.swift in Sources */,
 				25F1D69D524D1DB8234C3152 /* MustTests.swift in Sources */,
 				1612B6C290795ADC55501C26 /* NearbyTests.swift in Sources */,
@@ -1595,6 +1602,7 @@
 				6BF5560F2DABC0A1A701AAB7 /* Colors.swift in Sources */,
 				A116493AD519770D568720CD /* ComoChegarModel.swift in Sources */,
 				8E6F8A5363040C60B7BBC57E /* ComoChegarView.swift in Sources */,
+				6836CDC83A2EF220F0F13615 /* CompassBridge.swift in Sources */,
 				7991783AFD37AA9A273508C9 /* Components.swift in Sources */,
 				08762FC7D78835A8A4A998F7 /* DayPlanner.swift in Sources */,
 				C826618BD1B4AD4D059647D9 /* DaySolver.swift in Sources */,

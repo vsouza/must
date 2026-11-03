@@ -1,23 +1,46 @@
 import CoreLocation
 import Observation
 
+/// Direção pra onde o aparelho aponta (bússola). Fica fora do `LocationService`: muda várias vezes por segundo
+/// e só o cone do "você" no mapa lê (prompt 18 · A.2). Quem lê posição não é invalidado por ela.
+@MainActor
+@Observable
+final class Compass {
+    /// Graus, norte = 0. Nil sem bússola ou antes da primeira leitura.
+    private(set) var heading: CLLocationDirection?
+
+    /// Chamado pelo `LocationService` a cada leitura do sensor; só publica se mudou.
+    func receive(heading value: CLLocationDirection?) {
+        guard heading != value else { return }
+        heading = value
+    }
+}
+
 /// GPS do app. Atualiza a cada ~50 m, só com o app em uso. Respeita o GPS simulado do menu escondido.
 @MainActor
 @Observable
 final class LocationService: NSObject {
     private(set) var authorization: CLAuthorizationStatus
-    /// Última posição real do aparelho.
+    /// Última posição real do aparelho. Só muda quando o aparelho andou ≥ 50 m (ver `publishable`).
     private(set) var device: CLLocation?
     /// Posição simulada (menu escondido), se ligada.
     private(set) var simulated: CLLocation?
-    /// Direção pra onde o aparelho aponta (graus, norte = 0), pro cone do "você" no mapa.
-    private(set) var heading: CLLocationDirection?
+    /// Bússola: observável à parte, pra não invalidar quem só lê a posição.
+    let compass = Compass()
 
     @ObservationIgnored private let manager = CLLocationManager()
     @ObservationIgnored private var isUpdating = false
 
     /// Distância mínima pra publicar uma nova posição.
-    static let distanceFilter: CLLocationDistance = 50
+    nonisolated static let distanceFilter: CLLocationDistance = 50
+
+    /// Decide se uma leitura do GPS vira `device`: nil quando não tem precisão ou não andou ≥ 50 m.
+    /// Regra pura (testada): o filtro roda antes de qualquer publicação.
+    static func publishable(_ reading: CLLocation, after previous: CLLocation?) -> CLLocation? {
+        guard reading.horizontalAccuracy >= 0 else { return nil }
+        if let previous, reading.distance(from: previous) < distanceFilter { return nil }
+        return reading
+    }
 
     override init() {
         authorization = manager.authorizationStatus
@@ -50,7 +73,8 @@ final class LocationService: NSObject {
         isUpdating = true
         manager.startUpdatingLocation()
         if CLLocationManager.headingAvailable() {
-            manager.headingFilter = 8
+            // Só avisa a cada 10° (antes 8°): a bússola não precisa de mais que isso.
+            manager.headingFilter = 10
             manager.startUpdatingHeading()
         }
         Log.location.info("GPS ligado")
@@ -77,9 +101,8 @@ final class LocationService: NSObject {
     }
 
     fileprivate func handle(locations: [CLLocation]) {
-        guard let last = locations.last, last.horizontalAccuracy >= 0 else { return }
-        if let previous = device, last.distance(from: previous) < Self.distanceFilter { return }
-        device = last
+        guard let last = locations.last, let next = Self.publishable(last, after: device) else { return }
+        device = next
     }
 }
 
@@ -96,7 +119,7 @@ extension LocationService: CLLocationManagerDelegate {
 
     nonisolated func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
         let value = newHeading.trueHeading >= 0 ? newHeading.trueHeading : newHeading.magneticHeading
-        MainActor.assumeIsolated { heading = value }
+        MainActor.assumeIsolated { compass.receive(heading: value) }
     }
 
     nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: any Error) {

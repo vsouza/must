@@ -17,7 +17,6 @@ struct MapScene {
     /// Linha de distância você → mais perto (prompt 11); aparece só depois que a câmera para.
     var distanceLine: [CLLocationCoordinate2D]?
     var you: CLLocationCoordinate2D?
-    var heading: Double?
     /// Área citada (anel fechado, preenchida a 8% e tracejada): o preview do Adicionar por link.
     var area: [CLLocationCoordinate2D]? = nil
 }
@@ -67,6 +66,8 @@ struct MapLibreView: UIViewRepresentable {
     var onSelect: (MapPin) -> Void = { _ in }
     /// Gestos de arrastar e pinçar. Desligado no preview (só pinos).
     var interactive = true
+    /// Direção do aparelho pro cone do "você". Vem de `CompassBridge`, não do `scene`: girar a bússola não redesenha o mapa.
+    var headingSink: YouHeadingSink?
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
@@ -75,6 +76,7 @@ struct MapLibreView: UIViewRepresentable {
         // Antes do delegate: ligar o delegate já dispara regionDidChange, que chama loadStyle.
         context.coordinator.map = map
         map.delegate = context.coordinator
+        context.coordinator.attachHeading(headingSink)
         map.logoView.isHidden = true
         map.attributionButton.isHidden = true
         map.compassView.isHidden = true
@@ -109,6 +111,8 @@ struct MapLibreView: UIViewRepresentable {
         /// Forte: o delegate do MLNMapView é fraco, então não há ciclo.
         var map: MLNMapView?
         var lastCommand: UUID?
+        /// Último heading da bússola (graus), já vindo do `YouHeadingSink`.
+        private(set) var youHeading: Double?
         private(set) var styleRegion: Region?
         private var tiles: MapTiles = .none
         private var styleReady = false
@@ -119,6 +123,20 @@ struct MapLibreView: UIViewRepresentable {
         private var moving = false
 
         init(_ parent: MapLibreView) { self.parent = parent }
+
+        /// Liga a bússola: a cada mudança só o cone do "você" gira (não passa pelo `body` do mapa).
+        func attachHeading(_ sink: YouHeadingSink?) {
+            sink?.onChange = { [weak self] value in
+                guard let self else { return }
+                youHeading = value
+                refreshYouHeading()
+            }
+        }
+
+        private func refreshYouHeading() {
+            guard let map, let you, let view = map.view(for: you) as? YouView else { return }
+            view.setHeading(youHeading.map { $0 - map.direction })
+        }
 
         /// Cidade baixada ou apagada: troca a fonte (R2 ↔ arquivo) sem esperar a câmera mexer.
         /// Observer por seletor: o NotificationCenter solta sozinho quando o coordinator morre.
@@ -380,7 +398,7 @@ struct MapLibreView: UIViewRepresentable {
                 map.addAnnotation(a)
             }
             if let you, let view = map.view(for: you) as? YouView {
-                view.setHeading(scene.heading.map { $0 - map.direction })
+                view.setHeading(youHeading.map { $0 - map.direction })
             }
         }
 
@@ -489,7 +507,7 @@ struct MapLibreView: UIViewRepresentable {
             return MainActor.assumeIsolated {
                 if annotation is YouAnnotation {
                     let view = mapView.dequeueReusableAnnotationView(withIdentifier: "you") as? YouView ?? YouView(reuseIdentifier: "you")
-                    view.setHeading(parent.scene.heading.map { $0 - mapView.direction })
+                    view.setHeading(youHeading.map { $0 - mapView.direction })
                     return view
                 }
                 guard let pin = (annotation as? PinAnnotation)?.pin else { return nil }

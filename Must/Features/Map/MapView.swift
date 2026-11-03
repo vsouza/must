@@ -19,6 +19,8 @@ struct MapView: View {
     @State private var cam = MapCameraController()
     @Environment(\.scenePhase) private var scenePhase
     @State private var routes = RouteGeometry()
+    /// Bússola → cone do "você" (prompt 18 · A.2). Fica fora do `body`: ver `CompassBridge`.
+    @State private var headingSink = YouHeadingSink()
     @State private var selectedId: String?
     @State private var query = ""
     @State private var didCenter = false
@@ -71,8 +73,10 @@ struct MapView: View {
                          onCamera: { camera = $0 },
                          onGesture: { cam.userGestured() },
                          onIdle: { cam.cameraIdle() },
-                         onSelect: select)
+                         onSelect: select,
+                         headingSink: headingSink)
                 .ignoresSafeArea()
+            CompassBridge(compass: services.location.compass, sink: headingSink)
             overlays
         }
         .onAppear(perform: appear)
@@ -134,7 +138,6 @@ struct MapView: View {
             if let pa = a.place, let pb = b.place { scene.routeTomorrow.append(routes.path(from: pa, to: pb)) }
         }
         scene.you = here?.coordinate
-        scene.heading = services.location.heading
         if let far = farTarget, let here {
             let target = far.target.coordinate.value
             if cam.showsDistanceLine {
