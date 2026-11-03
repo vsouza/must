@@ -79,7 +79,8 @@ struct ShoppingTile: View {
 struct ShoppingItemCard: View {
     var item: ShoppingItem
     var storeName: String
-    var region: Region
+    /// Moeda do item: o preço aparece na moeda que foi anotado (¥ ou R$), não na da região.
+    var currency: String
     var onTap: () -> Void
 
     var body: some View {
@@ -94,11 +95,13 @@ struct ShoppingItemCard: View {
                 .frame(height: 80)
                 .clipped()
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(item.name).font(.must.archivo(14, .semibold)).foregroundStyle(Color.must.ink).lineLimit(2)
-                    Text(meta).font(.must.archivo(12)).foregroundStyle(Color.must.secondary).lineLimit(1)
-                    Text(region.money(item.isBought ? (item.paid ?? item.estPrice) : item.estPrice))
-                        .font(.must.mono(13, .semibold)).foregroundStyle(Color.must.ink).lineLimit(1)
-                        .padding(.top, 2)
+                    Text(item.name).font(.must.archivo(17, .semibold)).foregroundStyle(Color.must.ink)
+                        .lineLimit(2).fixedSize(horizontal: false, vertical: true)
+                    Text(meta).font(.must.archivo(13)).foregroundStyle(Color.must.secondary).lineLimit(1)
+                    Text(ShoppingReport.money(item.committedAmount, currency: currency))
+                        .font(.must.mono(15, .semibold)).foregroundStyle(Color.must.ink).lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .padding(.top, 4)
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 10)

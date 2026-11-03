@@ -72,9 +72,11 @@ final class ShoppingItem {
     /// Loja que não está no board ("Map Camera").
     var storeName: String = ""
     var area: String?
-    /// Preço estimado da linha (todas as unidades), na moeda da região.
+    /// Preço estimado da linha (todas as unidades), na moeda do item.
     var estPrice: Double = 0
-    /// Quanto pagou de fato (só depois de comprado).
+    /// Moeda do preço (`JPY`, `BRL`, `USD`). Nil = a moeda da região (itens antigos).
+    var currency: String?
+    /// Quanto pagou de fato (só depois de comprado), na moeda do item.
     var paid: Double?
     var qty: Int = 1
     var statusRaw: String = ShoppingStatus.want.rawValue
@@ -94,7 +96,7 @@ final class ShoppingItem {
     init(id: String = UUID().uuidString, name: String, category: ShoppingCategory = .other, storeId: String? = nil,
          storeName: String = "", area: String? = nil, estPrice: Double = 0, paid: Double? = nil, qty: Int = 1,
          status: ShoppingStatus = .want, flags: [RuleFlag] = [], taxFreeReceipt: Bool = false, ingredients: String = "",
-         notes: String = "", boughtAt: Date? = nil, createdAt: Date = AppClock.now) {
+         notes: String = "", boughtAt: Date? = nil, currency: String? = nil, createdAt: Date = AppClock.now) {
         self.id = id
         self.name = name
         self.categoryRaw = category.rawValue
@@ -102,6 +104,7 @@ final class ShoppingItem {
         self.storeName = storeName
         self.area = area
         self.estPrice = estPrice
+        self.currency = currency
         self.paid = paid
         self.qty = max(1, qty)
         self.statusRaw = status.rawValue
@@ -130,8 +133,8 @@ final class ShoppingItem {
 
     var isBought: Bool { status == .bought }
 
-    /// Quanto este item conta no previsto: `paid` se já comprou (ou o estimado, se não anotou o pago), senão o estimado.
-    var committedYen: Double {
+    /// Quanto este item conta no previsto, na moeda dele: `paid` se já comprou (ou o estimado, se não anotou o pago), senão o estimado.
+    var committedAmount: Double {
         isBought ? (paid ?? estPrice) : estPrice
     }
 

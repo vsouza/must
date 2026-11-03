@@ -239,3 +239,69 @@ struct ShoppingTests {
         #expect(item.expenseId == nil)
     }
 }
+
+/// Câmbio por moeda e a cota do Brasil (US$ 1.000) da lista: cada item converte da própria moeda.
+@MainActor
+struct ShoppingCurrencyTests {
+    static let fx = 0.036
+    static let usd = 5.5
+
+    static func report(_ items: [ShoppingItem], region: String = "JPY") -> ShoppingReport {
+        ShoppingReport(items: items, fxRate: fx, brlPerUSD: usd, regionCurrency: region, timeZone: Region.jp.timeZone)
+    }
+
+    @Test func cotaDoBrasilConverteIeneEmDolarPeloCambio() {
+        // ¥ 158.100 × R$ 0,036 = R$ 5.691,60 ÷ 5,50 = US$ 1.034,8 (não US$ 28.745).
+        let item = ShoppingItem(name: "Contax", estPrice: 158_100)
+        let report = Self.report([item])
+        #expect(abs(report.usedUSD - 1_034.8) < 0.1)
+        #expect(ShoppingReport.usdText(report.limits.airAllowanceUSD) == "US$ 1.000")
+        #expect(report.needsEDBV)
+    }
+
+    @Test func itemEmRealConvertePraIeneEDolarSemCambioDeIene() {
+        // R$ 550 = US$ 100 = ¥ 15.278 (550 ÷ 0,036): o item em BRL não passa pelo câmbio do iene como se fosse ¥.
+        let item = ShoppingItem(name: "Mochila", estPrice: 550, currency: "BRL")
+        let report = Self.report([item], region: "BRL")
+        #expect(abs(report.usedUSD - 100) < 0.01)
+        #expect(abs(report.planned - 550 / Self.fx) < 0.01)
+        #expect(abs(report.regionAmount(yen: report.planned) - 550) < 0.01)
+    }
+
+    @Test func itemEmDolarUsaOCambioDoDolar() {
+        let item = ShoppingItem(name: "Livro", estPrice: 40, currency: "USD")
+        let report = Self.report([item])
+        #expect(abs(report.usedUSD - 40) < 0.01)
+        #expect(abs(report.planned - 40 * Self.usd / Self.fx) < 0.01)
+    }
+
+    @Test func totaisNaMoedaDaRegiaoEOutraMoedaParaAproximacao() {
+        let yen = ShoppingItem(name: "Saquê", estPrice: 15_000, currency: "JPY")
+        let real = ShoppingItem(name: "Chocolate", estPrice: 100, currency: "BRL")
+        let report = Self.report([yen, real], region: "BRL")
+        // ¥ 15.000 = R$ 540; mais R$ 100 = R$ 640.
+        #expect(abs(report.regionAmount(yen: report.planned) - 640) < 0.01)
+        #expect(abs(report.amount(yen: report.planned, in: "JPY") - 640 / Self.fx) < 0.5)
+    }
+
+    @Test func limiteDaCotaEmDolarNaoEmIene() {
+        #expect(ShoppingReport.usdText(1_000) == "US$ 1.000")
+        #expect(!ShoppingReport.usdText(1_000).contains("¥"))
+    }
+
+    @Test func voltaCompactaEmMilhares() {
+        #expect(ShoppingReport.compact(15_400) == "15k")
+        #expect(ShoppingReport.compact(11_182) == "11k")
+        #expect(ShoppingReport.compact(740) == "740")
+    }
+
+    @Test func reembolsoEhCalculadoEmIeneMesmoComItemEmReal() {
+        // R$ 360 ÷ 0,036 = ¥ 10.000: passa do mínimo de ¥ 5.000 e entra no reembolso.
+        let item = ShoppingItem(name: "Loja", storeName: "Loja", estPrice: 360, status: .bought, taxFreeReceipt: true,
+                                boughtAt: ShoppingTests.day, currency: "BRL")
+        let report = Self.report([item], region: "BRL")
+        #expect(report.taxFree.receipts == 1)
+        #expect(report.taxFree.refund > 0)
+        #expect(abs(report.spent - 10_000) < 0.5)
+    }
+}

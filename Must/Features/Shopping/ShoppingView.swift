@@ -18,12 +18,17 @@ struct ShoppingView: View {
     @State private var adding = false
 
     private var region: Region { store.region }
-    private var fxRate: Double { settingsList.first?.fxRate ?? 0.036 }
-    private var brlPerUSD: Double { settingsList.first?.brlPerUSD ?? 5.5 }
+    /// R$ por ¥1: o câmbio que o usuário pôs em Ajustes só vale no Japão (no Brasil o `fxRate` é 1 e não converte ¥).
+    private var brlPerYen: Double {
+        guard region == .jp, let rate = settingsList.first?.fxRate, rate > 0 else { return ShoppingFX.brlPerYen }
+        return rate
+    }
+    private var brlPerUSD: Double { settingsList.first?.brlPerUSD ?? ShoppingFX.brlPerUSD }
     private var stores: [Place] { places.filter { $0.list?.id == "shop" } }
 
     private func makeReport(_ items: [ShoppingItem]) -> ShoppingReport {
-        ShoppingReport(items: items, fxRate: fxRate, brlPerUSD: brlPerUSD, timeZone: region.timeZone)
+        ShoppingReport(items: items, fxRate: brlPerYen, brlPerUSD: brlPerUSD, regionCurrency: region.currency,
+                       timeZone: region.timeZone)
     }
 
     var body: some View {
@@ -41,11 +46,12 @@ struct ShoppingView: View {
                         section(category).padding(.top, 30)
                     }
                 }
-                Color.clear.frame(height: 40)
+                TabBarSpacer()
             }
             .padding(.horizontal, 22)
         }
         .scrollIndicators(.hidden)
+        .overlay(alignment: .bottom) { tabFade }
         .background(Color.must.bg)
         .toolbar(.hidden, for: .navigationBar)
         .onAppear { ShoppingFlightSync.refresh(context: context, region: region) }
@@ -88,27 +94,44 @@ struct ShoppingView: View {
         }
     }
 
+    /// Degradê branco na borda de baixo: a lista rola por trás dele até a tab bar.
+    private var tabFade: some View {
+        LinearGradient(colors: [Color.must.bg.opacity(0), Color.must.bg], startPoint: .top, endPoint: .bottom)
+            .frame(height: 90)
+            .allowsHitTesting(false)
+            .ignoresSafeArea(edges: .bottom)
+    }
+
     // MARK: Previsto e cota
 
+    /// Totais na moeda da região; a outra moeda aparece em "≈". Cota do Brasil sempre em US$.
     private func totalCard(_ report: ShoppingReport) -> some View {
         let tax = report.taxFree
+        let currency = report.regionCurrency
+        let symbol = MoneyFormatStyle.symbol(for: currency)
+        let other = currency == "BRL" ? "JPY" : "BRL"
         let boughtShare = min(1, report.boughtUSD / report.limits.airAllowanceUSD)
         let plannedShare = max(0, min(1 - boughtShare, report.usedUSD / report.limits.airAllowanceUSD - boughtShare))
+        let planned = report.regionAmount(yen: report.planned)
+        let refund = report.regionAmount(yen: tax.refund)
         return VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .firstTextBaseline) {
                 Text("previsto").font(.must.archivo(14)).foregroundStyle(.white.opacity(0.7))
                 Spacer()
                 HStack(spacing: 6) {
                     Text("já gasto").font(.must.archivo(13)).foregroundStyle(.white.opacity(0.7))
-                    Text("¥ \(ShoppingReport.yen(report.spent))").font(.must.mono(14, .semibold)).foregroundStyle(Color.must.green)
+                    Text(ShoppingReport.money(report.regionAmount(yen: report.spent), currency: currency))
+                        .font(.must.mono(14, .semibold)).foregroundStyle(Color.must.green)
                 }
             }
             HStack(alignment: .firstTextBaseline, spacing: 10) {
-                Text("¥").font(.must.mono(26, .semibold)).foregroundStyle(.white)
-                MonoNumber(ShoppingReport.yen(report.planned), size: 34).foregroundStyle(.white)
+                Text(symbol).font(.must.mono(26, .semibold)).foregroundStyle(.white)
+                MonoNumber(ShoppingReport.yen(planned), size: 34).foregroundStyle(.white)
+                Text("≈ \(ShoppingReport.money(report.amount(yen: report.planned, in: other), currency: other)) · volta ~\(symbol)\(ShoppingReport.compact(refund))")
+                    .font(.must.mono(13)).foregroundStyle(.white.opacity(0.75))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
             }
-            Text("≈ \(report.plannedBRL.formatted(.money("BRL"))) · volta ~¥\(ShoppingReport.yen(tax.plannedRefund))")
-                .font(.must.mono(13)).foregroundStyle(.white.opacity(0.75))
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     Capsule().fill(.white.opacity(0.16))
@@ -119,14 +142,19 @@ struct ShoppingView: View {
                 }
             }
             .frame(height: 8)
-            VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
                 HStack(alignment: .firstTextBaseline, spacing: 0) {
                     Text("cota do Brasil: ").font(.must.archivo(13)).foregroundStyle(.white.opacity(0.7))
                     Text(ShoppingReport.usdText(report.usedUSD)).font(.must.archivo(13, .semibold)).foregroundStyle(.white)
-                    Text(" de \(ShoppingReport.yen(report.limits.airAllowanceUSD))").font(.must.archivo(13)).foregroundStyle(.white.opacity(0.7))
+                    Text(" de \(ShoppingReport.usdText(report.limits.airAllowanceUSD))").font(.must.archivo(13)).foregroundStyle(.white.opacity(0.7))
                 }
-                Text("tax-free a receber ¥ \(ShoppingReport.yen(tax.refund))")
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                Spacer(minLength: 4)
+                Text("tax-free a receber \(ShoppingReport.money(refund, currency: currency))")
                     .font(.must.archivo(13)).foregroundStyle(.white.opacity(0.85))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
         }
         .padding(20)
@@ -191,7 +219,9 @@ struct ShoppingView: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
                         ForEach(list) { item in
-                            ShoppingItemCard(item: item, storeName: storeName(item), region: region) { editing = item }
+                            ShoppingItemCard(item: item, storeName: storeName(item), currency: makeReport(items).currency(of: item)) {
+                                editing = item
+                            }
                         }
                     }
                     .padding(.vertical, 2)
@@ -216,18 +246,22 @@ struct ShoppingView: View {
                     Spacer(minLength: 8)
                     Text(stores.isEmpty ? "" : "no fim · \(stores)").font(.must.archivo(13)).foregroundStyle(Color.must.secondary).lineLimit(1)
                 }
-                FlowLayout(spacing: 8, lineSpacing: 8) {
-                    ForEach(food) { item in
-                        Button { editing = item } label: {
-                            ShoppingRuleChip(text: chipText(item), tone: chipTone(item))
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(food) { item in
+                            Button { editing = item } label: {
+                                ShoppingRuleChip(text: chipText(item), tone: chipTone(item))
+                            }
+                            .buttonStyle(MustPressStyle())
                         }
-                        .buttonStyle(MustPressStyle())
+                        if !alcohol.isEmpty {
+                            ShoppingRuleChip(text: "álcool \(ShoppingReport.litres(litres)) de \(ShoppingReport.litres(limit)) L",
+                                             tone: litres > limit ? .no : .warn)
+                        }
                     }
-                    if !alcohol.isEmpty {
-                        ShoppingRuleChip(text: "álcool \(ShoppingReport.litres(litres)) de \(ShoppingReport.litres(limit)) L",
-                                         tone: litres > limit ? .no : .warn)
-                    }
+                    .padding(.vertical, 2)
                 }
+                .scrollClipDisabled()
             }
         }
     }

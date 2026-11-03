@@ -15,6 +15,25 @@ struct ShoppingImpact: Hashable, Sendable {
     var tone: ShoppingTone
 }
 
+/// Câmbio da lista, num lugar só. Tudo que é conta passa por aqui: cada item converte da própria moeda pra ¥ (a
+/// moeda das regras da volta) e pra R$ e US$ com estes valores. `Settings.fxRate` só vale no Japão (é o câmbio que o
+/// usuário editou); no Brasil ele é 1 e não serve pra converter ¥.
+enum ShoppingFX {
+    /// R$ por ¥1 quando não há cotação do usuário.
+    static let brlPerYen = 0.036
+    /// R$ por US$ 1 (`Settings.brlPerUSD` começa aqui).
+    static let brlPerUSD = 5.5
+
+    /// Quanto vale 1 unidade da moeda em R$. Moeda desconhecida conta como R$ (não some).
+    static func brlPerUnit(_ currency: String, brlPerYen: Double, brlPerUSD: Double) -> Double {
+        switch currency {
+        case "JPY": brlPerYen
+        case "USD": brlPerUSD
+        default: 1
+        }
+    }
+}
+
 struct ShoppingReport {
     /// Reembolso da saída: recibos que entram (loja/dia com pelo menos ¥ 5.000) e o total.
     struct TaxFree: Equatable, Sendable {
@@ -34,33 +53,55 @@ struct ShoppingReport {
     }
 
     let items: [ShoppingItem]
-    /// R$ por ¥1 (`Settings.fxRate`).
+    /// R$ por ¥1 (o câmbio do Japão em Ajustes, ou `ShoppingFX.brlPerYen`).
     let fxRate: Double
     /// R$ por US$ 1 (`Settings.brlPerUSD`).
     let brlPerUSD: Double
+    /// Moeda da região: a que aparece nos totais. Item sem moeda própria usa esta.
+    let regionCurrency: String
     let rules: ShoppingRulePack
     let timeZone: TimeZone
 
-    init(items: [ShoppingItem], fxRate: Double, brlPerUSD: Double, rules: ShoppingRulePack = ShoppingRules.jpBR,
-         timeZone: TimeZone = Region.jp.timeZone) {
+    init(items: [ShoppingItem], fxRate: Double, brlPerUSD: Double, regionCurrency: String = "JPY",
+         rules: ShoppingRulePack = ShoppingRules.jpBR, timeZone: TimeZone = Region.jp.timeZone) {
         self.items = items
-        self.fxRate = fxRate
-        self.brlPerUSD = brlPerUSD > 0 ? brlPerUSD : ShoppingLimits.standard.taxFreeMinYen / 1_000
+        self.fxRate = fxRate > 0 ? fxRate : ShoppingFX.brlPerYen
+        self.brlPerUSD = brlPerUSD > 0 ? brlPerUSD : ShoppingFX.brlPerUSD
+        self.regionCurrency = regionCurrency
         self.rules = rules
         self.timeZone = timeZone
     }
 
     var limits: ShoppingLimits { rules.limits }
 
+    // MARK: Conversão
+
+    /// Moeda do item: a própria, ou a da região.
+    func currency(of item: ShoppingItem) -> String { item.currency ?? regionCurrency }
+
+    /// Valor do item (o pago ou o estimado) convertido pra ¥: a base das regras da volta.
+    func yen(of item: ShoppingItem) -> Double {
+        let brl = item.committedAmount * ShoppingFX.brlPerUnit(currency(of: item), brlPerYen: fxRate, brlPerUSD: brlPerUSD)
+        return brl / fxRate
+    }
+
+    /// Um valor em ¥ convertido pra outra moeda (R$, US$ ou ¥).
+    func amount(yen: Double, in currency: String) -> Double {
+        yen * fxRate / ShoppingFX.brlPerUnit(currency, brlPerYen: fxRate, brlPerUSD: brlPerUSD)
+    }
+
+    /// Um valor em ¥ na moeda da região (o que os totais mostram).
+    func regionAmount(yen: Double) -> Double { amount(yen: yen, in: regionCurrency) }
+
     // MARK: Totais
 
     /// Previsto em ¥: estimado dos não comprados + pago dos comprados.
-    var planned: Double { items.reduce(0) { $0 + $1.committedYen } }
+    var planned: Double { items.reduce(0) { $0 + yen(of: $1) } }
 
     /// Já gasto em ¥ (só dos comprados).
-    var spent: Double { items.filter(\.isBought).reduce(0) { $0 + ($1.paid ?? $1.estPrice) } }
+    var spent: Double { items.filter(\.isBought).reduce(0) { $0 + yen(of: $1) } }
 
-    var plannedBRL: Double { planned * fxRate }
+    var plannedBRL: Double { amount(yen: planned, in: "BRL") }
 
     /// Quanto da cota do Brasil a lista usa, em US$ (previsto convertido).
     var usedUSD: Double { usd(planned) }
@@ -71,20 +112,21 @@ struct ShoppingReport {
     /// Cota passou da parte do aéreo: vale a e-DBV pelo excedente.
     var needsEDBV: Bool { usedUSD > limits.airAllowanceUSD }
 
+    /// US$ a partir de ¥: ¥ → R$ (× fxRate) → US$ (÷ R$ por US$).
     func usd(_ yen: Double) -> Double { yen * fxRate / brlPerUSD }
 
     // MARK: Tax-free
 
+    /// Reembolso em ¥ (as regras são em iene).
     var taxFree: TaxFree {
         let bought = items.filter { $0.taxFreeReceipt && $0.isBought }
-        let real = Self.refundable(bought, limits: limits, timeZone: timeZone)
-        let all = Self.refundable(items.filter(\.taxFreeReceipt), limits: limits, timeZone: timeZone)
+        let real = refundable(bought)
+        let all = refundable(items.filter(\.taxFreeReceipt))
         return TaxFree(receipts: real.receipts, refund: real.refund, belowMinStores: real.belowMin, plannedRefund: all.refund)
     }
 
     /// Recibos que entram no reembolso: agrupa por loja e dia; cada grupo precisa de ¥ 5.000 (sem imposto e sem o mínimo, o recibo perde).
-    static func refundable(_ list: [ShoppingItem], limits: ShoppingLimits, timeZone: TimeZone)
-        -> (receipts: Int, refund: Double, belowMin: Int) {
+    func refundable(_ list: [ShoppingItem]) -> (receipts: Int, refund: Double, belowMin: Int) {
         let groups = Dictionary(grouping: list) { item in
             "\(item.storeId ?? item.storeName)|\(FlightRules.dayKey(item.boughtAt ?? item.createdAt, zone: timeZone))"
         }
@@ -92,21 +134,21 @@ struct ShoppingReport {
         var refund = 0.0
         var belowMin = 0
         for group in groups.values {
-            let total = group.reduce(0) { $0 + $1.committedYen }
+            let total = group.reduce(0) { $0 + yen(of: $1) }
             guard total >= limits.taxFreeMinYen else {
                 belowMin += 1
                 continue
             }
             receipts += group.count
-            refund += group.reduce(0) { $0 + refundOf($1, limits: limits) }
+            refund += group.reduce(0) { $0 + Self.refundOf(yen: yen(of: $1), category: $1.category, limits: limits) }
         }
         return (receipts, refund.rounded(), belowMin)
     }
 
-    /// Imposto de volta de um item: o preço tem a taxa embutida (preço × taxa / (1 + taxa)).
-    static func refundOf(_ item: ShoppingItem, limits: ShoppingLimits) -> Double {
-        let rate = item.category == .food ? limits.taxFreeRateFood : limits.taxFreeRate
-        return item.committedYen * rate / (1 + rate)
+    /// Imposto de volta de um item (em ¥): o preço tem a taxa embutida (preço × taxa / (1 + taxa)).
+    static func refundOf(yen: Double, category: ShoppingCategory, limits: ShoppingLimits) -> Double {
+        let rate = category == .food ? limits.taxFreeRateFood : limits.taxFreeRate
+        return yen * rate / (1 + rate)
     }
 
     // MARK: Álcool e iguais
@@ -125,7 +167,7 @@ struct ShoppingReport {
         let groups = Dictionary(grouping: items) { ShoppingChecks.identityKey($0.name) }
         return groups.values.map { group in
             let units = group.reduce(0) { $0 + $1.qty }
-            let total = group.reduce(0) { $0 + $1.committedYen }
+            let total = group.reduce(0) { $0 + yen(of: $1) }
             return Identical(name: group[0].name, units: units, unitUSD: usd(total / Double(max(units, 1))))
         }
         .sorted { ($0.name.lowercased(), $0.units) < ($1.name.lowercased(), $1.units) }
@@ -238,6 +280,19 @@ struct ShoppingReport {
     /// "US$ 740".
     static func usdText(_ value: Double) -> String {
         "US$ " + value.formatted(.number.locale(Locale(identifier: "pt_BR")).precision(.fractionLength(0)).grouping(.automatic))
+    }
+
+    /// Valor com símbolo da moeda, pt-BR ("¥ 15.400", "R$ 6.700").
+    static func money(_ value: Double, currency: String) -> String {
+        value.formatted(.money(currency))
+    }
+
+    /// Curto pra linha de cima do total: "15k" pra 15.400, "740" abaixo de mil.
+    static func compact(_ value: Double) -> String {
+        if abs(value) >= 1_000 {
+            return "\(Int((value / 1_000).rounded()))k"
+        }
+        return yen(value)
     }
 
     /// "1,4" (uma casa, pt-BR).
