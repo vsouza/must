@@ -27,6 +27,8 @@ final class Services {
     let maps = OfflineMaps()
     /// Rede do aparelho (prompt 18 · A.4): chip "sem internet · offline ok" e fila de saída.
     let connectivity = Connectivity()
+    /// Bairro do GPS (prompt 21 · fatia 2): tabela curada, depois `CLGeocoder` por célula de ~300 m. Fora do main.
+    let currentArea = CurrentAreaService()
 
     init(places: any PlacesProviding = PlacesService(), weather: any WeatherProviding = WeatherService(),
          photos: any PhotoProviding = CommonsPhotoService(), routes: any RoutesProviding = RoutesService(),

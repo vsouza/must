@@ -65,6 +65,7 @@ struct HomeView: View {
         // Relógio: recalcula a cada minuto (abertos agora, "Agora", fila) — o sono vai até o próximo minuto cheio.
         .task { await clock() }
         .task(id: nearbyKey) { await refreshNearbyHint() }
+        .task(id: locationCell) { await resolveCurrentArea() }
         .task(id: state.heroKey) { await state.loadHeroes(services: services, region: region, cityName: region.displayName) }
         .onChange(of: locationCell) { _, _ in refresh() }
         .onChange(of: scenePhase) { _, phase in
@@ -274,18 +275,36 @@ struct HomeView: View {
         .accessibilityAddTraits(.isButton)
     }
 
-    /// Sem dia montado: "Hoje, pra onde?" com os 3 bairros com mais musts abertos agora.
+    /// Bairro do GPS (prompt 21 · fatia 2): tabela curada ou geocoder por célula, fora do main. Sem GPS, nada.
+    private func resolveCurrentArea() async {
+        guard let here = services.location.current else { state.setCurrentArea(nil); return }
+        let area = await services.currentArea.area(at: here, region: region)
+        state.setCurrentArea(area)
+    }
+
+    /// Sem dia montado: "Hoje em <bairro>" (bairro do GPS) ou "Hoje, pra onde?", com os 3 bairros com mais musts abertos.
     private var pickPanel: some View {
-        let photo = state.pick.first.flatMap { state.heroes[$0.id] }
+        let photo = (state.currentArea.flatMap { state.heroes[$0.id] }) ?? state.pick.first.flatMap { state.heroes[$0.id] }
         return ZStack(alignment: .topLeading) {
             HeroBackdrop(photo: photo, fallback: .night)
             VStack(alignment: .leading, spacing: 0) {
-                Micro("Hoje", color: .white.opacity(0.7))
-                Text("Hoje, pra onde?")
-                    .font(.must.archivo(28, .bold))
-                    .tracking(-0.5)
-                    .foregroundStyle(.white)
-                    .padding(.top, 2)
+                if let here = state.currentArea {
+                    Micro("Hoje em", color: .white.opacity(0.7))
+                    Text(here.name)
+                        .font(.must.archivo(28, .bold))
+                        .tracking(-0.5)
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .padding(.top, 2)
+                } else {
+                    Micro("Hoje", color: .white.opacity(0.7))
+                    Text("Hoje, pra onde?")
+                        .font(.must.archivo(28, .bold))
+                        .tracking(-0.5)
+                        .foregroundStyle(.white)
+                        .padding(.top, 2)
+                }
                 Text(state.pickIsFallback ? "nada aberto agora · os 3 com mais musts" : "os 3 bairros com mais musts abertos agora")
                     .font(.must.archivo(13))
                     .foregroundStyle(.white.opacity(0.75))

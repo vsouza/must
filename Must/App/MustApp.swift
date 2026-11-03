@@ -110,9 +110,13 @@ struct AppRoot: View {
         let region = store.region
         let network = services.connectivity.prefetchNetwork
         let container = context.container
+        let places = ((try? context.fetch(FetchDescriptor<Place>())) ?? []).map(HomeState.areaPlace)
         Task {
             defer { withExtendedLifetime(container) {} }
             await services.prefetch.runPending(context: context, region: region, network: network, now: AppClock.now)
+            // Capa de cada bairro do board (prompt 21 · fatia 2): só Wi-Fi, a política decide dentro.
+            await AreaCoverPrefetch.run(region: region, places: places, network: network, photos: services.photos,
+                                        cityName: region.displayName)
         }
     }
 
