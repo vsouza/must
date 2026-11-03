@@ -36,7 +36,7 @@ body{margin:0;background:#fff}
   </div>
 
   <div style="position:absolute;left:22px;right:22px;top:196px;display:flex;align-items:stretch;gap:12px">
-    <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
       <span style="font-size:14px;color:#7A7F87">Gasto na viagem</span>
       <div style="display:flex;align-items:baseline;gap:8px"><span class="mono" style="font-size:40px;font-weight:600;letter-spacing:-.03em;line-height:1">118.900</span><span style="font-size:16px;font-weight:600">JPY</span></div>
       <span style="font-size:13px;color:#7A7F87">≈ R$ 4.280 · média <span class="mono" style="color:#121316;font-weight:600">¥23.780</span>/dia · meta ¥15.000</span>
@@ -48,24 +48,26 @@ body{margin:0;background:#fff}
     <span class="day" style="background:#22DD7E;color:#0B2A18">13</span><span class="day" style="background:#22DD7E;color:#0B2A18">14</span><span class="day" style="background:#121316;color:#fff;outline:3px solid #fff;box-shadow:0 0 0 5px #22DD7E">15</span><span class="day" style="background:#F1F2F4">16</span><span class="day" style="background:#F1F2F4">17</span><span class="day" style="background:#EAF4FF;color:#0F3B8C">18</span><span class="day" style="background:#EAF4FF;color:#0F3B8C">19</span><span class="day" style="background:#EAF4FF;color:#0F3B8C">20</span><span class="day" style="background:#F1F2F4">21</span><span class="day" style="background:#F1F2F4">22</span>
   </div>
 
-  <a href="Hoje.html" class="stack green" style="left:100px;right:-30px;top:360px;height:112px;transform:rotate(-2deg);background:linear-gradient(135deg,rgba(185,245,207,.96),rgba(34,221,126,.9))">
+  <div style="position:absolute;left:0;right:0;top:350px;display:flex;flex-direction:column">
+  <a href="Hoje.html" class="stack green" style="position:relative;margin:0 -30px 0 100px;transform:rotate(-2deg);background:linear-gradient(135deg,rgba(185,245,207,.96),rgba(34,221,126,.9))">
     <span class="micro" style="color:#0B5A33">Tóquio · 13–17 nov · agora</span>
     <span style="font-size:22px;font-weight:600">Dia 3 de 5</span>
-    <span style="font-size:13px;color:#0B5A33">Naka-Meguro · 11 feitos · 3 reservas: Udatsu hoje, teamLab qua</span>
+    <span style="font-size:13px;color:#0B5A33">Naka-Meguro · 11 feitos · 3 reservas</span>
   </a>
 
-  <a href="Lista.html" class="stack" style="left:60px;right:-10px;top:450px;height:112px;transform:rotate(1.5deg);background:linear-gradient(135deg,rgba(159,214,255,.95),rgba(43,123,255,.88))">
+  <a href="Lista.html" class="stack" style="position:relative;margin:-8px -10px 0 60px;transform:rotate(1.5deg);background:linear-gradient(135deg,rgba(159,214,255,.95),rgba(43,123,255,.88))">
     <span class="micro" style="color:#0F3B8C">Kyoto · 17–20 nov · Nara dia 19</span>
     <span style="font-size:22px;font-weight:600">24 musts esperando</span>
-    <span style="font-size:13px;color:#0F3B8C">Shinkansen 17 nov <span class="mono">09:12</span> · hotel Gion · Sushi Iwa reservado</span>
+    <span style="font-size:13px;color:#0F3B8C">Shinkansen 17 nov <span class="mono">09:12</span> · hotel Gion</span>
   </a>
 
-  <a href="Lista.html" class="stack sky" style="left:22px;right:22px;top:540px;height:150px;justify-content:space-between;background:linear-gradient(160deg,rgba(234,244,255,.96),rgba(156,203,255,.92))">
+  <a href="Lista.html" class="stack sky" style="position:relative;margin:-8px 22px 0;background:linear-gradient(160deg,rgba(234,244,255,.96),rgba(156,203,255,.92))">
     <span class="micro" style="color:#0F3B8C">Tóquio de novo · 20–24 nov</span>
-    <div style="display:flex;align-items:flex-end;gap:10px"><span class="mono" style="font-size:56px;font-weight:600;letter-spacing:-.04em;line-height:.9">9</span><span style="font-size:17px;font-weight:600;padding-bottom:4px">ficaram pro fim<br><span style="font-size:13px;font-weight:400;color:#0F3B8C">Sushi Dai, Nakano Broadway, Fuji dia 22 se o céu abrir</span></span></div>
+    <div style="display:flex;align-items:flex-end;gap:10px"><span class="mono" style="font-size:56px;font-weight:600;letter-spacing:-.04em;line-height:.9">9</span><span style="font-size:17px;font-weight:600;padding-bottom:4px">ficaram pro fim<br><span style="font-size:13px;font-weight:400;color:#0F3B8C">Sushi Dai, Nakano Broadway e Fuji (dia 22, se o céu abrir)</span></span></div>
   </a>
+  </div>
 
-  <div style="position:absolute;left:22px;right:22px;top:712px;display:flex;gap:8px">
+  <div style="position:absolute;left:22px;right:0;top:722px;display:flex;gap:8px;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent);mask-image:linear-gradient(90deg,#000 85%,transparent)">
     <span class="tag"><span class="dot" style="background:#22DD7E"></span>Eat 11/23</span><span class="tag"><span class="dot" style="background:#2B7BFF"></span>Drink 3/14</span><span class="tag">See 4/21</span><span class="tag">Listen 0/9</span><span class="tag">Shop 1/25</span>
   </div>
 

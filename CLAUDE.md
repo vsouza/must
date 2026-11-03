@@ -57,3 +57,9 @@ Os prompts em `prompts/` são executados em ordem (01 → 20; a rodada atual é 
 - Tokens por país em `TripTheme` (JP vermelho #BC002D / selo #C8102E; BR verde #009C3B / amarelo claro), derivados de `City.country`.
 - **Identidade não muda:** botões verde #22DD7E, links azul #2B7BFF, tinta #121316, cores das listas, linhas de trem e pinos do mapa ficam iguais.
 - Referência: `design/screens/Home6.png` (Japão) e `Home6BH.png` (Brasil).
+
+## Layout das telas (03/11/2026)
+- Os PNGs de `design/screens/` foram realinhados: nada de texto sobreposto, cortado no meio ou embaixo da tab bar.
+- No app, montar as telas com stacks (`VStack`/`ScrollView`), nunca posições fixas: texto que quebra empurra o bloco seguinte. Metadados de linha única usam `lineLimit(1)` + truncamento; títulos no máximo 2 linhas.
+- Listas que continuam rolam por trás de um fade branco antes da tab bar ou dos botões; linhas de chips rolam na horizontal.
+- Fotos têm sempre placeholder de cor enquanto carregam (premissa offline).

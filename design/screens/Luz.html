@@ -16,8 +16,12 @@ body{margin:0;background:#fff}
 .hr:first-child{border-top:0}
 .t{font-family:'Geist Mono',monospace;font-size:12px;font-weight:600;width:44px;flex-shrink:0}
 .bar{width:6px;border-radius:3px;height:34px;flex-shrink:0}
-.nm{font-size:15px;font-weight:600;letter-spacing:-.01em}
-.mt{font-size:12px;color:#7A7F87}
+.nm{font-size:15px;font-weight:600;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mt{font-size:12px;color:#7A7F87;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.hr{flex-shrink:0}
+.hr>div{min-width:0}
+.hr>.tag,.hr>.pill{flex-shrink:0}
+.fade{position:absolute;left:0;right:0;bottom:0;height:46px;background:linear-gradient(180deg,rgba(255,255,255,0),#fff 85%);pointer-events:none;border-radius:0 0 22px 22px}
 </style>
 
 <div class="app">
@@ -33,11 +37,12 @@ body{margin:0;background:#fff}
 
   <div style="position:absolute;left:22px;right:22px;top:118px;display:flex;flex-direction:column;gap:4px">
     <h1 class="h1">Luz de hoje</h1>
-    <span class="serif" style="font-size:18px;color:#4A2E00">10h26 de sol · céu limpo até 18h · golden curto, 50 min</span>
+    <span class="serif" style="font-size:18px;color:#4A2E00;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">10h26 de sol · céu limpo até 18h · golden curto, 50 min</span>
   </div>
 
+  <div style="position:absolute;left:22px;right:22px;top:196px;bottom:96px;display:flex;flex-direction:column;gap:12px">
   <!-- linha do dia: 06 → 18 com faixas -->
-  <div class="card glass" style="position:absolute;left:22px;right:22px;top:196px;padding:14px 16px;background:rgba(255,255,255,.92);display:flex;flex-direction:column;gap:8px">
+  <div class="card glass" style="flex-shrink:0;padding:14px 16px;background:rgba(255,255,255,.92);display:flex;flex-direction:column;gap:8px">
     <svg viewBox="0 0 326 56" width="100%" height="56" fill="none" aria-label="Linha do dia">
       <rect x="0" y="22" width="326" height="10" rx="5" fill="#EEF0F3"/>
       <!-- faixas: azul manhã, golden manhã, luz dura, golden tarde, azul -->
@@ -48,21 +53,23 @@ body{margin:0;background:#fff}
       <rect x="264" y="22" width="14" height="10" rx="5" fill="#5B6CFF"/>
       <!-- agora -->
       <path d="M212 8 L 212 46" stroke="#121316" stroke-width="2"/><circle cx="212" cy="8" r="4" fill="#121316"/>
-      <g font-family="Geist Mono" font-size="9" font-weight="600" fill="#7A7F87"><text x="10" y="50">06:14</text><text x="120" y="50">11:26 pico 36°</text><text x="236" y="16">15:48</text><text x="276" y="50">17:06</text></g>
+      <g font-family="Geist Mono" font-size="9" font-weight="600" fill="#7A7F87"><text x="10" y="50">06:14</text><text x="132" y="50" text-anchor="middle">11:26 pico 36°</text><text x="236" y="16">15:48</text><text x="276" y="50">17:06</text></g>
       <text x="212" y="54" text-anchor="middle" font-family="Geist Mono" font-size="9" font-weight="600" fill="#121316">15:20</text>
     </svg>
-    <div style="display:flex;gap:6px;flex-wrap:wrap"><span class="tag" style="background:#FFB347;color:#4A2E00">golden 15:48–16:38</span><span class="tag" style="background:#C9D2FF;color:#161C66">azul 16:38–17:06</span><span class="tag">sol baixo o dia todo · 36° no pico</span><span class="tag">nuvens 20% → 10%</span></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap"><span class="tag" style="background:#FFB347;color:#4A2E00">golden 15:48–16:38</span><span class="tag" style="background:#C9D2FF;color:#161C66">azul 16:38–17:06</span><span class="tag">sol baixo o dia todo</span><span class="tag">nuvens 20% → 10%</span></div>
   </div>
 
   <!-- spots por hora -->
-  <div class="card" style="position:absolute;left:22px;right:22px;top:352px;bottom:96px;padding:4px 16px;background:#fff;border:1px solid #EEF0F3;box-shadow:0 10px 30px rgba(18,19,22,.06);overflow:hidden;display:flex;flex-direction:column">
+  <div class="card" style="position:relative;flex:1;min-height:0;padding:4px 16px;background:#fff;border:1px solid #EEF0F3;box-shadow:0 10px 30px rgba(18,19,22,.06);overflow:hidden;display:flex;flex-direction:column">
     <a href="Foto.html" class="hr" style="opacity:.5"><span class="t">07:00</span><span class="bar" style="background:#FFB347"></span><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span class="nm">Senso-ji sem gente <span class="jp" style="font-size:11px;color:#7A7F87;font-weight:500">済</span></span><span class="mt">luz lateral leste · névoa fina · 12 fotos</span></div></a>
     <a href="Foto.html" class="hr" style="opacity:.5"><span class="t">10:30</span><span class="bar" style="background:#FFE1B8"></span><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span class="nm">Nakamise · sombra das lojas <span class="jp" style="font-size:11px;color:#7A7F87;font-weight:500">済</span></span><span class="mt">luz dura — ficar nas arcadas · pb</span></div></a>
-    <a href="Foto.html" class="hr"><span class="t">13:00</span><span class="bar" style="background:#FFE1B8"></span><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span class="nm">Tokyo Photographic Art Museum</span><span class="mt">hora do sol alto = museu · Must art · até 17:30</span></div><span class="tag" style="background:#DCCFFF;color:#2E1065">art</span></a>
-    <a href="Foto.html" class="hr" style="background:linear-gradient(135deg,rgba(255,233,194,.8),rgba(255,179,71,.5));border-radius:14px;padding:10px 10px;margin:4px -10px;border-top:0"><span class="t" style="color:#4A2E00">15:48</span><span class="bar" style="background:#FF8A00"></span><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span class="nm">Yanaka Ginza · Yūyake Dandan</span><span class="mt" style="color:#4A2E00">golden · sol no eixo da rua · saia 15:30 · 2 paradas na Chiyoda</span></div><span class="pill pill-on" style="padding:6px 10px">próximo</span></a>
+    <a href="Foto.html" class="hr"><span class="t">13:00</span><span class="bar" style="background:#FFE1B8"></span><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span class="nm">TOP Museum · Ebisu</span><span class="mt">hora do sol alto = museu · Must art · até 17:30</span></div><span class="tag" style="background:#DCCFFF;color:#2E1065">art</span></a>
+    <a href="Foto.html" class="hr" style="background:linear-gradient(135deg,rgba(255,233,194,.8),rgba(255,179,71,.5));border-radius:14px;padding:10px 10px;margin:4px -10px;border-top:0"><span class="t" style="color:#4A2E00">15:48</span><span class="bar" style="background:#FF8A00"></span><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span class="nm">Yanaka Ginza</span><span class="mt" style="color:#4A2E00">golden · sol no eixo da rua · saia 15:30, 2 paradas</span></div><span class="pill pill-on" style="padding:6px 10px">próximo</span></a>
     <a href="Foto.html" class="hr"><span class="t">16:40</span><span class="bar" style="background:#5B6CFF"></span><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span class="nm">Nippori · trilhos e neon</span><span class="mt">hora azul · 8 min a pé do Yanaka · longa exposição</span></div></a>
     <a href="Foto.html" class="hr"><span class="t">19:00</span><span class="bar" style="background:#121316"></span><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span class="nm">Omoide Yokocho</span><span class="mt">noite · neon e vapor · 1600 ISO · Must eat junto</span></div><span class="tag"><span class="dot" style="background:#22DD7E"></span>eat</span></a>
     <span class="serif" style="font-size:14px;color:#7A7F87;padding:10px 0 4px">Amanhã: 70% de nuvens à tarde — se quiser outro golden, é hoje.</span>
+    <div class="fade"></div>
+  </div>
   </div>
 
   <nav class="tabs">

@@ -15,8 +15,11 @@ body{margin:0;background:#fff}
 .it{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid #EEF0F3;text-decoration:none;color:#121316}
 .it:first-child{border-top:0}
 .th{width:48px;height:48px;border-radius:14px;position:relative;overflow:hidden;flex-shrink:0}
-.nm{font-size:15px;font-weight:600;letter-spacing:-.01em}
-.mt{font-size:12px;color:#7A7F87}
+.nm{font-size:15px;font-weight:600;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mt{font-size:12px;color:#7A7F87;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.it{flex-shrink:0}
+.it>.src{flex-shrink:0}
+.fade{position:absolute;left:0;right:0;bottom:0;height:46px;background:linear-gradient(180deg,rgba(255,255,255,0),#fff 85%);pointer-events:none;border-radius:0 0 22px 22px}
 .src{font-family:'Geist Mono',monospace;font-size:9.5px;font-weight:600;border-radius:6px;padding:2px 5px;background:#F1F2F4;color:#121316;letter-spacing:.04em}
 </style>
 
@@ -35,22 +38,22 @@ body{margin:0;background:#fff}
 
   <div style="position:absolute;left:22px;right:22px;top:118px;display:flex;flex-direction:column;gap:4px">
     <h1 class="h1">Por perto, agora</h1>
-    <span class="serif" style="font-size:18px;color:#7A7F87">o que as pessoas gostam aqui — esteja no seu board ou não</span>
+    <span class="serif" style="font-size:18px;color:#7A7F87;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">o que as pessoas gostam aqui — no board ou não</span>
   </div>
 
   <!-- destaque: fora do board -->
   <a href="Lugar.html" class="card m-night" style="position:absolute;left:22px;right:22px;top:200px;height:226px;overflow:hidden;text-decoration:none;color:#fff;box-shadow:0 18px 44px rgba(18,19,22,.16);transform:rotate(-1deg)">
     <span class="photo" style="background-image:url('https://picsum.photos/seed/must-roastery/800/600')"></span>
     <span style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,19,22,.05),rgba(18,19,22,.78))"></span>
-    <div style="position:absolute;inset:0;padding:16px 18px;display:flex;flex-direction:column;justify-content:space-between">
+    <div style="position:absolute;inset:0;padding:16px 18px 30px;display:flex;flex-direction:column;justify-content:space-between">
       <div style="display:flex;justify-content:space-between;align-items:flex-start"><span class="tag" style="background:#fff;color:#121316">não está no seu board</span><span class="tag" style="background:rgba(255,255,255,.2);color:#fff">450 m · 6 min</span></div>
       <div style="display:flex;flex-direction:column;gap:4px">
         <span style="font-size:22px;font-weight:600;letter-spacing:-.01em;line-height:1.05">Starbucks Reserve Roastery Tokyo</span>
-        <span style="font-size:13px;color:rgba(255,255,255,.85)"><span class="mono" style="font-weight:600;color:#fff">4,5</span> · 23 mil avaliações · aberto até 22:00 · Kengo Kuma, à beira do Meguro</span>
-        <span class="serif" style="font-size:15px;color:#B9F5CF">“o terraço no 4º andar no fim do dia — e o rio com as cerejeiras nuas”</span>
+        <span style="font-size:13px;color:rgba(255,255,255,.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span class="mono" style="font-weight:600;color:#fff">4,5</span> · 23 mil · até 22:00 · Kengo Kuma, no rio Meguro</span>
+        <span class="serif" style="font-size:15px;color:#B9F5CF">“o terraço do 4º andar no fim do dia, sobre o rio”</span>
       </div>
     </div>
-    <span class="credit" style="color:#fff;background:rgba(0,0,0,.35)">Wikimedia CC</span>
+    <span class="credit" style="color:#fff;background:rgba(0,0,0,.35);bottom:10px;right:12px">Wikimedia CC</span>
   </a>
 
   <div style="position:absolute;left:22px;right:22px;top:438px;display:flex;gap:8px">
@@ -62,8 +65,9 @@ body{margin:0;background:#fff}
   <div class="card" style="position:absolute;left:22px;right:22px;top:540px;bottom:96px;padding:4px 16px;background:#fff;border:1px solid #EEF0F3;box-shadow:0 10px 30px rgba(18,19,22,.06);overflow:hidden;display:flex;flex-direction:column">
     <a href="Lugar.html" class="it"><span class="th m-eat"><span class="photo" style="background-image:url('https://picsum.photos/seed/must-onibus/200/200')"></span><span class="tint" style="opacity:.6"></span></span><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span class="nm">Onibus Coffee <span class="src">no board</span></span><span class="mt">Must drink · <span style="color:#0B5A33;font-weight:600">aberto</span> · 180 m · 4,6 · 3,1 mil</span></div><span class="src">G</span></a>
     <a href="Lugar.html" class="it"><span class="th m-see"><span class="photo" style="background-image:url('https://picsum.photos/seed/must-meguro/200/200')"></span><span class="tint" style="opacity:.6"></span></span><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span class="nm">Rio Meguro · passarela</span><span class="mt">ponto histórico · 290 m · <span style="color:#7A7F87">artigo em pt</span></span></div><span class="src">Wiki</span></a>
-    <a href="Experiencias.html" class="it"><span class="th m-night"><span class="photo" style="background-image:url('https://picsum.photos/seed/must-sake/200/200')"></span><span class="tint" style="opacity:.6"></span></span><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span class="nm">Degustação de saquê · 90 min</span><span class="mt">experiência · hoje 20:00 · ¥6.500 · 4,9 · 540 m</span></div><span class="src">Viator</span></a>
+    <a href="Experiencias.html" class="it"><span class="th m-night"><span class="photo" style="background-image:url('https://picsum.photos/seed/must-sake/200/200')"></span><span class="tint" style="opacity:.6"></span></span><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span class="nm">Degustação de saquê</span><span class="mt">experiência · 90 min · hoje 20:00 · ¥6.500 · 4,9</span></div><span class="src">Viator</span></a>
     <a href="Lugar.html" class="it"><span class="th m-listen"><span class="photo" style="background-image:url('https://picsum.photos/seed/must-jazz/200/200')"></span><span class="tint" style="opacity:.6"></span></span><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span class="nm">Jazz bar · pessoas chegando agora</span><span class="mt">em alta neste horário · 610 m · 4,4</span></div><span class="src">FSQ</span></a>
+    <div class="fade"></div>
   </div>
 
   <nav class="tabs">
