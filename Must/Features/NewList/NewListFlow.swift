@@ -103,8 +103,8 @@ struct NewListView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            Color.must.bg.ignoresSafeArea()
+        // Botão fixo embaixo, FORA do scroll (antes sobrepunha o último bloco: fotos, créditos, "Salvar" em cima do texto).
+        VStack(spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     HStack {
@@ -134,7 +134,7 @@ struct NewListView: View {
                         orderSection.padding(.top, 26)
                         deleteSection.padding(.top, 26)
                     }
-                    Color.clear.frame(height: 110)
+                    Color.clear.frame(height: 24)
                 }
                 .padding(.horizontal, 22)
             }
@@ -147,10 +147,9 @@ struct NewListView: View {
                 .padding(.horizontal, 22)
                 .padding(.top, 24)
                 .padding(.bottom, 8)
-                .background {
-                    LinearGradient(colors: [.white.opacity(0), .white], startPoint: .top, endPoint: .center).ignoresSafeArea()
-                }
+                .background(Color.must.bg)
         }
+        .background(Color.must.bg.ignoresSafeArea())
         .sheet(isPresented: $showIcons) {
             IconGridSheet(selected: $icon).presentationDetents([.medium, .large])
         }
