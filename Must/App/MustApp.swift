@@ -96,7 +96,8 @@ struct AppRoot: View {
         LaunchTiming.mark("sync começou")
         await services.sync.syncIfNeeded(context: context, region: region)
         // Fila de saída: o que ficou sem rede sai agora; cada item segue a própria política (voo, cota).
-        await Outbox.drain(context: context, region: region)
+        // Places entra pra conferir texto colado que ficou na fila sem rede (prompt 18 · E.23).
+        await Outbox.drain(context: context, region: region, places: services.places)
         LaunchTiming.mark("sync terminou")
         guard store.region == region, !Task.isCancelled else { return }
         OutsideBridge.refresh(context: context, region: region, services: services)
@@ -188,6 +189,7 @@ enum DebugLaunch {
         case "editar": router.sheet = .editPlace(id: arg ?? "p01")
         case "nova-lista": router.select(.musts); router.cover = .newList
         case "adicionar": router.sheet = .addLink(url: arg, listId: nil)
+        case "colar-texto": router.sheet = .addLink(url: nil, listId: nil) // aba Texto (o arg `amostra` lê a amostra)
         case "hoje": router.select(.hoje)
         case "montar", "proposta", "trocar": router.push(.montar(date: region.calendar.startOfDay(for: AppClock.now)), on: .hoje)
         case "gasto": router.select(.hoje); router.sheet = .expense(placeId: nil)

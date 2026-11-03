@@ -46,7 +46,8 @@ enum Outbox {
     static func drain(context: ModelContext, region: Region, now: Date = AppClock.now,
                       isOnline: @Sendable () -> Bool = { Connectivity.current != .offline },
                       flightSource: (any FlightStatusProviding)? = FlightStatusUpdater.activeSource(),
-                      fetchCaption: @Sendable (String) async throws -> Caption = readLinkCaption) async -> Int {
+                      fetchCaption: @Sendable (String) async throws -> Caption = readLinkCaption,
+                      places: (any PlacesProviding)? = nil) async -> Int {
         guard isOnline() else { return 0 }
         var finished = 0
         for item in undone(context) where item.nextTry <= now {
@@ -85,6 +86,15 @@ enum Outbox {
                         finished += 1
                     }
                 }
+            case .conferText:
+                // Texto colado sem rede (prompt 18 · E.23): confere os lugares no Places quando a rede volta.
+                guard let places, places.isConfigured, DevOverrides.liveData else { continue }
+                let pending = (try? JSONDecoder().decode([ConferredPlace].self, from: item.result ?? Data())) ?? []
+                let conferred = await TextConference.conference(pending, provider: places, near: region.defaultCenter)
+                item.result = try? JSONEncoder().encode(conferred)
+                item.lastError = nil
+                item.done = true
+                finished += 1
             case nil:
                 item.done = true
                 finished += 1
