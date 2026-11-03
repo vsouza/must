@@ -13,7 +13,7 @@ xcodebuild -project Must.xcodeproj -scheme Must -destination 'platform=iOS Simul
 ## 1. Primeira abertura
 - [x] auto — seed BH carregado: 23 lugares, 5 listas, meta R$ 200 (`QAScenarioTests.firstOpenLoadsBHSeed`, `RegionStoreTests`).
 - [x] sim — tela Importar aparece na 1ª abertura da região, com contagens, viagem/cidades e "Permitir" localização.
-- [ ] iPhone — o pedido de localização do iOS aparece ao tocar "Permitir" e a Início mostra "Perto de você" com GPS real.
+- [x] iPhone — o pedido de localização do iOS aparece ao tocar "Permitir" e a Início mostra "Perto de você" com GPS real (Vinicius, 01/11/2026).
 
 ## 2. Sincronizar Places (Ajustes → Sincronizar horários e preço)
 - [x] auto — resolve os approx em lote de 50, preço do board não é sobrescrito, nome exato tem prioridade (`PlacesSyncTests`).
