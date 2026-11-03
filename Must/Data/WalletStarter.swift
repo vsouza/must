@@ -27,8 +27,9 @@ enum WalletStarter {
         for item in jpItems() where !seen.contains(seenPrefix + item.id) {
             seen.insert(seenPrefix + item.id)
             changed = true
-            let id = item.id
-            let exists = (try? context.fetchCount(FetchDescriptor<WalletItem>(predicate: #Predicate { $0.id == id }))) ?? 0
+            // Já tem um do mesmo tipo (Suica/JR Pass que você mesmo adicionou)? Não duplica.
+            let kind = item.kindRaw
+            let exists = (try? context.fetchCount(FetchDescriptor<WalletItem>(predicate: #Predicate { $0.kindRaw == kind }))) ?? 0
             if exists == 0 { context.insert(item) }
         }
         guard changed else { return }
