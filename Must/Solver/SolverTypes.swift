@@ -179,6 +179,8 @@ struct DayRequest: Sendable {
     var flights: [DayFlight] = []
     /// Tempos reais entre os pontos do dia (Routes Matrix), buscados antes do solver. `nil` = estimativa.
     var travel: TravelMatrix?
+    /// Foco por bairro (prompt 18 · C.15): candidatos do bairro e, se pedido, dos vizinhos. `nil` = o dia todo.
+    var focus: DayFocus? = nil
 
     /// Hora limite de paradas no dia de voo: a menor partida − 4 h. `nil` = sem voo.
     var flightDeadline: Date? {
@@ -196,6 +198,12 @@ struct DayRequest: Sendable {
 
     /// 0 = domingo … 6 = sábado.
     var weekday: Int { calendar.component(.weekday, from: date) - 1 }
+}
+
+/// Foco do dia por bairro (prompt 18 · C.15). `.area(id, includeNeighbors: true, maxHopMinutes: 15)` = "Shinjuku+":
+/// o bairro e os vizinhos a até `maxHopMinutes` na tabela (`AreaFocusPlan`). Funciona sem rede.
+enum DayFocus: Sendable, Hashable {
+    case area(id: String, includeNeighbors: Bool, maxHopMinutes: Int)
 }
 
 /// Um trecho que sai no dia: a partida que vale e a hora de sair de casa pro aeroporto (`FlightRules.leaveForAirport`).

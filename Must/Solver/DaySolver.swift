@@ -133,6 +133,9 @@ enum DaySolver {
         var flightDeadlineMinute: Int?
         /// Tempos reais do dia (Routes), se foram buscados antes.
         var travel: TravelMatrix?
+        /// Foco por bairro (C.15): bairros aceitos e o bairro de cada candidato do catálogo (`nil` = sem foco).
+        var focus: AreaFocusPlan?
+        var focusArea: [String: String] = [:]
 
         init(_ request: DayRequest, catalog: [SolverPlace]) {
             self.request = request
@@ -151,6 +154,11 @@ enum DaySolver {
             }
             mustInclude = ids(intent.mustInclude)
             mustExclude = ids(intent.mustExclude)
+            if let focusRef = request.focus, let plan = AreaFocusPlan(focus: focusRef, areas: AreaCatalog.all) {
+                focus = plan
+                focusArea = Dictionary(catalog.compactMap { p in plan.areaId(for: p).map { (p.id, $0) } },
+                                       uniquingKeysWith: { first, _ in first })
+            }
         }
 
         func mode(_ p: SolverPlace) -> ListMode {
@@ -179,6 +187,8 @@ enum DaySolver {
         if p.done { return ("já feito", true) }
         if ctx.mustExclude.contains(p.id) { return ("você pediu pra tirar", false) }
         if !req.isInCity(p.cityId) { return ("outra cidade", true) }
+        // Foco por bairro (C.15): só o bairro e os vizinhos da tabela; pedido por nome passa.
+        if ctx.focus != nil && !forced && !ctx.focus!.allows(ctx.focusArea[p.id]) { return ("fora do bairro", true) }
         // Experiência só entra com ingresso (âncora) ou pedido explícito.
         if p.kind == .experience && !forced { return ("experiência: entra com ingresso ou pedido", true) }
         let mode = ctx.mode(p)
@@ -257,6 +267,8 @@ enum DaySolver {
             !anchors.contains { $0.place.id == t.place.id } && (ctx.flightDeadlineMinute.map { ctx.minute(t.at) < $0 } ?? true)
         }
         anchors.sort { $0.at < $1.at }
+        // Bairros por onde o dia já passou (C.15): a ordem evita voltar a um bairro deixado.
+        var areaTrail: [String] = anchors.compactMap { ctx.focusArea[$0.place.id] }
 
         // 2–9. Candidatos elegíveis.
         var candidates: [SolverPlace] = []
@@ -455,6 +467,7 @@ enum DaySolver {
                     if let left = daysLeft(p, ctx: ctx), left <= 7 { score -= 80 - Double(left) * 5 }
                     // "Fica pro fim" nos últimos dias da cidade: é agora ou nunca.
                     if p.saveForEnd, let left = req.daysLeftInCity, left <= 1 { score -= 200 }
+                    score += focusScore(p, ctx: ctx, trail: areaTrail, window: w)
                     score += tieBreak(p.id, seed: req.seed)
                     if best == nil || score < best!.score {
                         best = (ProposedStop(place: p, at: ctx.date(start), end: ctx.date(end), window: slot.window,
@@ -472,6 +485,7 @@ enum DaySolver {
                 spend += pick.place.cost
             }
             chosen.append(pick)
+            if let area = ctx.focusArea[pick.place.id] { areaTrail.append(area) }
             if let l = lightAt(pick, ctx: ctx) { usedLights.insert(l) }
             if let i = needed.firstIndex(of: pick.place.role) { needed.remove(at: i) }
             if pick.place.role == .eat, pick.window.isMeal { mealUsed.insert(pick.window) }
@@ -516,7 +530,11 @@ enum DaySolver {
         let chosenIds = Set(stops.map(\.place.id))
         let left = dedupe(leftOut.filter { !chosenIds.contains($0.place.id) })
         let warnings = overlapWarnings(stops, ctx: ctx)
-        let text = explanation(stops: stops, leftOut: left, request: request)
+        var text = explanation(stops: stops, leftOut: left, request: request)
+        if let focus = ctx.focus {
+            // A ordem por bairro vem antes do resto da explicação (C.15): "Comece por Nakano, …. 1 troca de bairro."
+            text = focus.sentence(for: stops, areaOf: { ctx.focusArea[$0] }) + " " + text
+        }
         return DayProposal(request: request, stops: stops, predictedSpend: spend, exceptionSpend: exception,
                            walkKm: legs.filter { $0.mode == .walk }.reduce(0) { $0 + $1.km },
                            transitLegs: legs.filter { $0.mode == .metro }.count,
@@ -543,6 +561,20 @@ enum DaySolver {
     private static func dedupe(_ items: [LeftOut]) -> [LeftOut] {
         var seen: Set<String> = []
         return items.filter { seen.insert($0.place.id).inserted }
+    }
+
+    /// Ordem por bairro (C.15): trocar de bairro custa o trecho da tabela (25 min se não há ligação direta); voltar a um
+    /// bairro já deixado custa mais; o que fecha antes do fim da janela sai antes. Sem foco, zero.
+    static func focusScore(_ p: SolverPlace, ctx: Context, trail: [String], window: Range<Int>) -> Double {
+        guard let focus = ctx.focus else { return 0 }
+        var score = 0.0
+        let current = trail.last ?? focus.mainId
+        if let here = ctx.focusArea[p.id], here != current {
+            score += Double(focus.hop(current, here) ?? 25)
+            if trail.contains(here) { score += 40 }
+        }
+        if let close = closingMinute(p, ctx: ctx), close < window.upperBound { score -= 15 }
+        return score
     }
 
     private static func tieBreak(_ id: String, seed: Int) -> Double {
