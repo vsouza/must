@@ -53,7 +53,7 @@ struct PlaceView: View {
 
     private func content(_ place: Place) -> some View {
         let color = place.list?.color ?? .drink
-        return ZStack(alignment: .bottom) {
+        return ZStack(alignment: .top) {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
@@ -62,9 +62,7 @@ struct PlaceView: View {
                             .onScrollVisibilityChange(threshold: 0.95) { visible in
                                 withAnimation(.easeOut(duration: 0.2)) { compact = !visible }
                             }
-                        Group {
-                            if let panel = kindPanel(place) { panel } else { cards(place) }
-                        }
+                        panelBlock(place)
                         .padding(.horizontal, 22).padding(.top, 40)
                         .id("panel")
                         // Só busca as dicas quando a seção aparece (Google cobra SKU Atmosphere).
@@ -78,6 +76,8 @@ struct PlaceView: View {
                 }
                 .scrollIndicators(.hidden)
                 .ignoresSafeArea(edges: .top)
+                // Botões fixos embaixo: a lista rola por trás do fade e nunca fica coberta (prompt 18 · D.20).
+                .safeAreaInset(edge: .bottom, spacing: 0) { actions(place) }
                 #if DEBUG
                 .task {
                     // -debugScreen dicas:<id> rola direto pras Dicas (prints).
@@ -97,8 +97,6 @@ struct PlaceView: View {
             }
 
             if compact { compactHeader(place).frame(maxHeight: .infinity, alignment: .top).transition(.opacity) }
-
-            actions(place)
         }
         .background(Color.must.bg.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
@@ -309,13 +307,14 @@ struct PlaceView: View {
                 .font(.must.archivo(32, .semibold))
                 .tracking(-0.6)
                 .foregroundStyle(Color.must.ink)
+                .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
             let local = subtitle(place)
             if !local.isEmpty {
-                Text(local).font(.must.kanji(17, bold: false)).foregroundStyle(Color.must.secondary)
+                Text(local).font(.must.kanji(17, bold: false)).foregroundStyle(Color.must.secondary).lineLimit(1)
             }
             if let line = place.kind == .place ? sourceLine(place) : (quote(place) ?? sourceLine(place)) {
-                Text(line).mustSerif(19).foregroundStyle(Color.must.ink).padding(.top, 4)
+                Text(line).mustSerif(19).foregroundStyle(Color.must.ink).lineLimit(2).padding(.top, 4)
             }
         }
     }
@@ -445,18 +444,38 @@ struct PlaceView: View {
 
     // MARK: Cards
 
-    private func cards(_ place: Place) -> some View {
-        VStack(spacing: -26) {
-            if let reservation = place.reservation {
-                reservationCard(reservation)
-                    .stackCard(color: .drink, rotation: -2)
-                    .padding(.leading, 56)
-                    .padding(.trailing, -40)
+    /// Um painel por lugar (ver `PlacePanelChoice`): tipo, reserva/ingresso âncora ou simples.
+    @ViewBuilder private func panelBlock(_ place: Place) -> some View {
+        let kind = kindPanel(place)
+        let choice = PlacePanelChoice.choose(kind: place.kind, hasReservation: place.reservation != nil,
+                                             hasTicket: !place.tickets.isEmpty, hasKindData: kind != nil)
+        if choice == .kind, let kind { kind } else { cards(place, choice: choice) }
+    }
+
+    private func cards(_ place: Place, choice: PlacePanelChoice) -> some View {
+        let anchored = choice == .reservation || choice == .ticket
+        return VStack(spacing: -26) {
+            switch choice {
+            case .reservation:
+                if let r = place.reservation {
+                    anchorCard(label: "reserva · âncora do dia", at: r.at, party: r.party, note: r.note, color: Color.must.blueText)
+                        .stackCard(color: .drink, rotation: -2)
+                        .padding(.leading, 56).padding(.trailing, -40).zIndex(0)
+                }
+            case .ticket:
+                if let t = nextTicket(place) {
+                    anchorCard(label: "ingresso · âncora do dia", at: t.at, party: t.people, note: t.confirmation, color: MustColor.night.text)
+                        .stackCard(color: .night, rotation: -2)
+                        .padding(.leading, 56).padding(.trailing, -40).zIndex(0)
+                }
+            case .plain, .kind:
+                PlainPanel(place: place, region: region, now: now)
+                    .stackCard(color: place.list?.color ?? .drink, rotation: -1.2)
                     .zIndex(0)
             }
             infoCard(place)
-                .stackCard(tint: .gray, rotation: place.reservation == nil ? -1.5 : 1.5)
-                .padding(.leading, place.reservation == nil ? 30 : 28)
+                .stackCard(tint: .gray, rotation: anchored ? 1.5 : -1.5)
+                .padding(.leading, anchored ? 28 : 30)
                 .padding(.trailing, -20)
                 .zIndex(1)
             notesCard(place)
@@ -465,22 +484,21 @@ struct PlaceView: View {
         }
     }
 
-    private func reservationCard(_ r: Reservation) -> some View {
+    private func anchorCard(label: String, at: Date, party: Int?, note: String?, color: Color) -> some View {
         let cal = region.calendar
-        let day = cal.isDate(r.at, inSameDayAs: now) ? "Hoje"
-            : region.shortDay(r.at)
-        let party = r.party.map { " · \($0) \($0 == 1 ? "pessoa" : "pessoas")" } ?? ""
+        let day = cal.isDate(at, inSameDayAs: now) ? "Hoje" : region.shortDay(at)
+        let partyText = party.map { " · \($0) \($0 == 1 ? "pessoa" : "pessoas")" } ?? ""
         return VStack(alignment: .leading, spacing: 8) {
-            Micro("reserva · âncora do dia", color: Color.must.blueText)
+            Micro(label, color: color)
             HStack(spacing: 0) {
                 Text("\(day) ").font(.must.archivo(26, .semibold))
-                Text(region.timeString(r.at)).font(.must.mono(26, .semibold))
-                Text(party).font(.must.archivo(26, .semibold))
+                Text(region.timeString(at)).font(.must.mono(26, .semibold))
+                Text(partyText).font(.must.archivo(26, .semibold))
             }
             .foregroundStyle(Color.must.ink)
             .lineLimit(1)
             .minimumScaleFactor(0.7)
-            if let note = r.note { Text(note).font(.must.archivo(13)).foregroundStyle(Color.must.blueText) }
+            if let note { Text(note).font(.must.archivo(13)).foregroundStyle(color).lineLimit(1) }
         }
         .padding(.horizontal, 22)
         .padding(.top, 22)
@@ -499,12 +517,7 @@ struct PlaceView: View {
         if let d = place.distance(from: services.location.current) {
             distance = d <= 2500 ? "\(Walk.minutes(d)) min a pé · \(Walk.distanceText(d))" : Walk.distanceText(d)
         }
-        if place.approx { distance += " ~" }
-        var price = "—"
-        if let p = place.price {
-            let level = place.priceLevel.map { String(repeating: region.currencySymbol == "¥" ? "¥" : "$", count: max(1, $0)) + " · " } ?? ""
-            price = "\(level)~\(region.money(p, symbol: false))"
-        }
+        let price = PlacePanelChoice.priceText(place, region: region) ?? "—"
         let source = place.source.map { s in
             s.kind == .board ? "board" : s.kind.label + (s.savedAt.map { " · \($0)" } ?? "")
         } ?? "board"
@@ -627,7 +640,7 @@ struct PlaceView: View {
             }
         }
         .padding(.horizontal, 22)
-        .padding(.top, 24)
+        .padding(.top, 28)
         .padding(.bottom, 92)
         .background {
             LinearGradient(colors: [.white.opacity(0), .white.opacity(0.95), .white], startPoint: .top, endPoint: .bottom)
