@@ -120,6 +120,9 @@ struct AddLinkResults: View {
         let selected = model.selectedId == match.id
         return HStack(alignment: .center, spacing: 12) {
             numberBadge(number, selected: selected)
+            // Foto do lugar que já está no board (prompt 19). Lugar novo ainda não tem foto: gradiente até salvar e sincronizar.
+            PlaceThumb(placeId: match.existing?.placeId, refs: match.existing?.photoRefs ?? [],
+                       color: match.existing?.list?.color ?? .eat, size: 40)
             VStack(alignment: .leading, spacing: 3) {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text(match.existing?.name ?? match.extracted.name)

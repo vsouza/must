@@ -152,6 +152,22 @@ ${=W} dev.simLat -float -19.9385; ${=W} dev.simLng -float -43.9343
 shot bh-inicio-sem-dia -debugScreen inicio
 shot bh-inicio-aceito -debugScreen inicio-aceito
 
+echo "→ Tema da viagem (prompt 20) · Japão 15 nov 14:20 Shinjuku, BH 31 out 09:30 Savassi: Início, Hoje, Musts, Viagem"
+${=W} region jp
+${=W} dev.simDate -float $(epoch 2026-11-15T14:20:00+09:00)
+${=W} dev.simLat -float 35.6909; ${=W} dev.simLng -float 139.7003
+shot tema-jp-inicio -debugScreen inicio-aceito
+shot tema-jp-hoje -debugScreen aceitar
+shot tema-jp-musts -debugScreen musts
+shot tema-jp-viagem -debugScreen viagem
+${=W} region bh
+${=W} dev.simDate -float $(epoch 2026-10-31T09:30:00-03:00)
+${=W} dev.simLat -float -19.9385; ${=W} dev.simLng -float -43.9343
+shot tema-bh-inicio -debugScreen inicio-aceito
+shot tema-bh-hoje -debugScreen aceitar
+shot tema-bh-musts -debugScreen musts
+shot tema-bh-viagem -debugScreen viagem
+
 echo "→ limpando simulações e chaves de debug"
 for k in dev.simDateOn dev.simDate dev.simSetAt dev.simGPSOn dev.simLat dev.simLng dev.simCloud skipOnboarding \
          debugPlaces debugNearby debugFlight debugTips debugAsk debugRoutes debugAutocomplete; do

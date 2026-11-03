@@ -35,7 +35,8 @@ final class DayPrefetch {
 
     /// O que o pré-download toca. Injetado: o teste roda sem rede.
     struct Sources {
-        /// Foto principal da parada (Commons com cache primeiro, senão a da lista). `nil`: o lugar não tem foto.
+        /// Foto principal da parada: Google (se tem placeId, prompt 19), senão Commons, senão a da lista. `nil`: sem foto.
+        /// Erro de rede ou de cota lança: a parada conta como "ainda não" e tenta no próximo Wi-Fi.
         var heroURL: @MainActor (_ place: Place, _ cityName: String, _ commons: Bool) async throws -> URL?
         /// Garante a foto no disco (`PhotoLoader.prefetch`).
         var image: @Sendable (_ url: URL) async -> Bool
@@ -50,13 +51,13 @@ final class DayPrefetch {
         self.sources = sources
     }
 
-    /// Fontes reais: Commons (sem Google), `PhotoLoader` e o Weather do `SyncCoordinator`.
-    static func live(sync: SyncCoordinator, photos: any PhotoProviding) -> Sources {
+    /// Fontes reais: foto do Google (pelo `PlacePhotoResolver`, cota e Wi-Fi já na política), Commons de reserva,
+    /// `PhotoLoader` e o Weather do `SyncCoordinator`.
+    static func live(sync: SyncCoordinator, resolver: PlacePhotoResolver, photos: any PhotoProviding) -> Sources {
         Sources(
             heroURL: { place, cityName, commons in
-                if commons, photos.isConfigured,
-                   let hero = try await PlaceHero.commons(coordinate: place.coordinate, area: place.area, cityName: cityName, photos: photos) {
-                    return URL(string: hero.largeURL ?? hero.url)
+                if let hero = try await resolver.hero(for: place, cityName: cityName, commonsAllowed: commons, purpose: .prefetch) {
+                    return URL(string: hero.url)
                 }
                 return place.list?.photo?.url.flatMap(URL.init(string:))
             },

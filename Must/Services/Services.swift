@@ -14,6 +14,10 @@ final class Services {
     /// Buscar por nome (prompt 17 · A): sugestões e fotos do Google (com `ApiBudget`).
     let autocomplete: any AutocompleteProviding
     let placePhotos: any PlacePhotosProviding
+    /// Foto principal e galeria do lugar: Google primeiro, Commons de reserva (prompt 19).
+    let photoResolver: PlacePhotoResolver
+    /// Ajustes › Dados › "Baixar fotos dos lugares" (prompt 19 · item 5).
+    let photoBatch: PhotoBatch
     let eta: ETACache
     let sync: SyncCoordinator
     /// Dia aceito no aparelho: foto das paradas, previsão e estado do mapa (prompt 18 · A.5).
@@ -33,14 +37,18 @@ final class Services {
         let launched = Self.launchPlaces(places)
         self.places = launched
         self.autocomplete = Self.launchAutocomplete(autocomplete)
-        self.placePhotos = Self.launchPhotos(placePhotos)
+        let launchedPhotos = Self.launchPhotos(placePhotos)
+        self.placePhotos = launchedPhotos
+        let resolver = PlacePhotoResolver(provider: launchedPhotos, commons: photos)
+        photoResolver = resolver
+        photoBatch = PhotoBatch(provider: launchedPhotos)
         self.weather = weather
         self.photos = photos
         self.routes = routes
         eta = ETACache(routes: routes)
         let coordinator = SyncCoordinator(places: launched, weather: weather, photos: photos)
         sync = coordinator
-        prefetch = DayPrefetch(sources: DayPrefetch.live(sync: coordinator, photos: photos))
+        prefetch = DayPrefetch(sources: DayPrefetch.live(sync: coordinator, resolver: resolver, photos: photos))
         self.nearby = Self.launchNearby(nearby)
     }
 
@@ -64,10 +72,10 @@ final class Services {
         return live
     }
 
-    /// `-debugAutocomplete fake`: fotos de mentira (sem cota).
+    /// `-debugPhotos fake` (ou `-debugAutocomplete fake`): fotos de mentira (sem cota) pros prints.
     private static func launchPhotos(_ live: any PlacePhotosProviding) -> any PlacePhotosProviding {
         #if DEBUG
-        if DebugFlags.string("debugAutocomplete") == "fake" { return FakePlacePhotos() }
+        if DebugFlags.string("debugPhotos") == "fake" || DebugFlags.string("debugAutocomplete") == "fake" { return FakePlacePhotos() }
         #endif
         return live
     }

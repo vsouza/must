@@ -100,6 +100,9 @@ struct SolverPlace: Sendable, Hashable, Identifiable {
     var extra: PlaceExtra?
     /// Ingressos anexados: âncoras do dia (como a reserva).
     var tickets: [Ticket] = []
+    /// Foto do Google (prompt 19): só pra miniatura da Proposta e da Hoje. Não entra em nenhuma regra.
+    var placeId: String? = nil
+    var photoRefs: [PlacePhotoRef] = []
 
     var role: StopRole { StopRole(kind: kind, color: listColor) }
     var rules: NotesRules { NotesRules(notes: notes) }
@@ -114,7 +117,8 @@ extension SolverPlace {
                   sub: place.sub, cityId: place.cityId, area: place.area, lat: place.lat, lng: place.lng, price: place.price,
                   windows: place.windows, hours: place.hours, reservation: place.reservation, saveForEnd: place.saveForEnd,
                   allowBudgetException: place.allowBudgetException, queueMinutes: place.queueMinutes, notes: place.notes,
-                  sourceKind: place.source?.kind, done: place.isDone, kind: place.kind, extra: place.extra, tickets: place.tickets)
+                  sourceKind: place.source?.kind, done: place.isDone, kind: place.kind, extra: place.extra, tickets: place.tickets,
+                  placeId: place.placeId, photoRefs: place.photoRefs)
     }
 
     init(_ p: BoardPlace, color: MustColor, kind: ListKind = .place) {

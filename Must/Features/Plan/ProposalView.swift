@@ -146,6 +146,7 @@ struct ProposalView: View {
             if stop.isException { meta.append("fora da meta") }
         }
         return HStack(alignment: .center, spacing: 14) {
+            PlaceThumb(placeId: p.placeId, refs: p.photoRefs, color: p.listColor, size: 40)
             Text(region.timeString(stop.at))
                 .font(.must.mono(15, stop.isAnchor ? .semibold : .regular))
                 .foregroundStyle(stop.isAnchor ? Color.must.blueText : Color.must.secondary)
@@ -231,6 +232,9 @@ struct ProposalView: View {
             let date = planner.date, network = services.connectivity.prefetchNetwork
             let region = planner.region
             Task { await services.prefetch.run(date: date, context: context, region: region, network: network) }
+            // Avisos do guia (prompt 18 · C.17): a permissão de notificação é pedida só aqui.
+            let origin = services.location.current?.coordinate
+            Task { await GuideNudgeScheduler.refresh(context: context, region: region, origin: origin, askPermission: true) }
         } catch {
             self.error = error.localizedDescription
         }

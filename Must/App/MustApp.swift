@@ -18,6 +18,7 @@ struct MustApp: App {
                 .id("\(regionStore.region.rawValue)-\(regionStore.generation)")
                 .modelContainer(regionStore.container)
                 .environment(regionStore)
+                .environment(\.tripTheme, regionStore.theme)
                 .environment(services)
                 .preferredColorScheme(.light)
         }
@@ -70,6 +71,7 @@ struct AppRoot: View {
                 if phase == .active {
                     services.location.start()
                     syncGate.request { await syncThenRefresh() }
+                    refreshGuide()
                     // Ingresso compartilhado que o Share Extension não conseguiu abrir: pega aqui.
                     if router.sheet == nil, let waiting = ShareInbox.pending().first {
                         router.sheet = .ticketImport(inboxId: waiting.id)
@@ -96,7 +98,8 @@ struct AppRoot: View {
         LaunchTiming.mark("sync começou")
         await services.sync.syncIfNeeded(context: context, region: region)
         // Fila de saída: o que ficou sem rede sai agora; cada item segue a própria política (voo, cota).
-        await Outbox.drain(context: context, region: region)
+        // Places entra pra conferir texto colado que ficou na fila sem rede (prompt 18 · E.23).
+        await Outbox.drain(context: context, region: region, places: services.places)
         LaunchTiming.mark("sync terminou")
         guard store.region == region, !Task.isCancelled else { return }
         OutsideBridge.refresh(context: context, region: region, services: services)
@@ -134,6 +137,22 @@ struct AppRoot: View {
             try? await Task.sleep(for: .milliseconds(600))
             guard !Task.isCancelled, store.region == region else { return }
             OutsideBridge.refresh(context: context, region: store.region, services: services)
+            if !DebugFlags.isTestHost {
+                await GuideNudgeScheduler.refresh(context: context, region: store.region, origin: services.location.current?.coordinate, askPermission: false)
+            }
+        }
+    }
+
+    /// Avisos do guia do dia aceito (prompt 18 · C.17): recalcula sem esperar a próxima gravação. Nunca pede permissão.
+    private func refreshGuide() {
+        // No host de testes o app não toca na Central de Notificações (a suíte usa um fake).
+        guard !DebugFlags.isTestHost else { return }
+        let region = store.region
+        let container = context.container
+        let origin = services.location.current?.coordinate
+        Task {
+            defer { withExtendedLifetime(container) {} }
+            await GuideNudgeScheduler.refresh(context: context, region: region, origin: origin, askPermission: false)
         }
     }
 
@@ -160,6 +179,7 @@ struct AppRoot: View {
 /// `-debugNetwork offline` força "sem rede" (chip, falha na hora, fila de saída); `-debugNetwork slow` põe 3 s de
 /// latência e 30% de falha em cada tentativa HTTP (prompt 18 · A.4: a UI não pode travar). `wifi` e `celular` fingem
 /// o tipo de rede (o pré-download do dia só roda no Wi-Fi, prompt 18 · A.5).
+/// `avisos` lista no log os avisos do guia que seriam agendados pro dia aceito (prompt 18 · C.17).
 /// `como-chegar:<id>` abre Como chegar; `-debugRoutes fake` troca o Routes por respostas de exemplo. `buscar-nome:<texto>` abre
 /// Buscar por nome (com `-debugAutocomplete fake` pras sugestões de "koffee mam").
 @MainActor
@@ -167,6 +187,10 @@ enum DebugLaunch {
     static func apply(to router: AppRouter, context: ModelContext, region: Region, services: Services) {
         let location = services.location
         if DebugFlags.has("-gallery") { router.cover = .gallery }
+        // `-debugSyncOnly ids`: resolve só esses lugares no Places (prompt 19, QA das fotos reais).
+        if DebugFlags.string("debugSyncOnly") != nil {
+            Task { await services.sync.syncPlaces(context: context, region: region) }
+        }
         guard let screen = DebugFlags.string("debugScreen") else { return }
         let parts = screen.split(separator: ":", maxSplits: 1).map(String.init)
         let arg = parts.count > 1 ? parts[1] : nil
@@ -189,6 +213,7 @@ enum DebugLaunch {
         case "editar": router.sheet = .editPlace(id: arg ?? "p01")
         case "nova-lista": router.select(.musts); router.cover = .newList
         case "adicionar": router.sheet = .addLink(url: arg, listId: nil)
+        case "colar-texto": router.sheet = .addLink(url: nil, listId: nil) // aba Texto (o arg `amostra` lê a amostra)
         case "hoje": router.select(.hoje)
         case "montar", "proposta", "trocar": router.push(.montar(date: region.calendar.startOfDay(for: AppClock.now)), on: .hoje)
         case "gasto": router.select(.hoje); router.sheet = .expense(placeId: nil)
@@ -244,6 +269,9 @@ enum DebugLaunch {
             router.push(.regrasVolta, on: .inicio)
         case "buscar-nome": // buscar-nome:koffee mam (com -debugAutocomplete fake); buscar-nome:koffee mam:escolher já escolhe a 1ª
             router.sheet = .buscarNome(query: (arg ?? "").replacingOccurrences(of: ":escolher", with: ""), listId: nil)
+        case "avisos": // avisos do guia do dia aceito, no log (prompt 18 · C.17); não agenda nada
+            router.select(.hoje)
+            GuideNudgeScheduler.logPreview(context: context, region: region, origin: location.current?.coordinate)
         case "sincronizar":
             router.push(.settings, on: .inicio)
             Task { await services.sync.syncPlaces(context: context, region: region) }

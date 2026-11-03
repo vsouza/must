@@ -91,6 +91,8 @@ final class Place {
     var order: Int = 0
     /// Pedido de "Resolver no Places" (Board): a próxima sincronização olha este primeiro.
     var resolveQueued: Bool = false
+    /// JSON de `[PlacePhotoRef]` (fotos do Google, até 5; prompt 19 · item 1). Opcional: lugar sem foto = nil.
+    var photoRefsData: Data?
 
     @Relationship(deleteRule: .nullify, inverse: \Expense.place)
     var expenses: [Expense] = []
@@ -115,6 +117,7 @@ final class Place {
     @Transient var hoursMemo = JSONMemo<PlaceHours>()
     @Transient var extraMemo = JSONMemo<PlaceExtra>()
     @Transient var ticketsMemo = JSONMemo<[Ticket]>()
+    @Transient var photoRefsMemo = JSONMemo<[PlacePhotoRef]>()
 
     var hours: PlaceHours? {
         get { hoursMemo.value(from: hoursData) { try? JSONDecoder.board.decode(PlaceHours.self, from: $0) } }
@@ -145,6 +148,15 @@ final class Place {
         set {
             ticketsData = newValue.isEmpty ? nil : try? JSONEncoder.board(timeZone: .gmt).encode(newValue)
             ticketsMemo.store(ticketsData == nil ? nil : newValue, source: ticketsData)
+        }
+    }
+
+    /// Fotos do Google (JSON em `photoRefsData`). Vazio = nada guardado ainda.
+    var photoRefs: [PlacePhotoRef] {
+        get { photoRefsMemo.value(from: photoRefsData) { try? JSONDecoder().decode([PlacePhotoRef].self, from: $0) } ?? [] }
+        set {
+            photoRefsData = newValue.isEmpty ? nil : try? JSONEncoder().encode(Array(newValue.prefix(5)))
+            photoRefsMemo.store(photoRefsData == nil ? nil : Array(newValue.prefix(5)), source: photoRefsData)
         }
     }
 
@@ -196,6 +208,8 @@ final class PlannedDay {
     var offlineTotal: Int = 0
     /// Bairro do foco ("Shinjuku+", prompt 18 · C.14): o Guia mostra o nome e o selo. `nil` = o dia todo.
     var focusAreaId: String?
+    /// Área ou foco do dia vindo do texto colado ("Asakusa e Ueno"). Simples por enquanto; a fatia C troca por `focus`.
+    var focusAreaName: String? = nil
 
     @Relationship(deleteRule: .cascade, inverse: \Stop.day)
     var stops: [Stop] = []

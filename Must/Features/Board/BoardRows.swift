@@ -24,6 +24,7 @@ struct BoardRow: View {
         HStack(alignment: .center, spacing: 12) {
             if isEditing { SelectMark(on: isSelected) }
             if place.isDone { KanjiSeal(done: true, size: 24, look: .soft) }
+            PlaceThumb(placeId: place.placeId, refs: place.photoRefs, color: place.list?.color ?? .drink, size: 40)
             VStack(alignment: .leading, spacing: 4) {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text(place.name)

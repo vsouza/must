@@ -286,6 +286,21 @@ Observação: o "antes" é uma emulação do getter antigo, não o código antig
 
 iPhone: [ ] medir com Instruments (Hangs + Time Profiler) — Vinicius
 
+## Colar texto (prompt 18 · E)
+
+**Entregue.** E.21: o Adicionar ganha o seletor Link · Texto · Nome ("Nome" abre a busca por nome existente). Em Texto, o pipeline roda no aparelho: URLs (NSDataDetector) viram links; o texto vai em blocos de até 3.000 caracteres pro Foundation Models (`@Generable ParsedTravelText`, com nomes `SuggestedDay`, `TextPlace`, `TextTipDraft` pra não colidir com `ExtractedPlace` e `Tip`); sem modelo, o parser por regex (listas, títulos, frases com "no/na/em" e nomes em Title Case, dicas por verbo de instrução ou por ingresso/passe). Categoria pela palavra do nome e do trecho, e depois pelo `primaryType` do Places. Conferência no Places e junção de duplicados pelo `PlaceResolver` do prompt 16. E.22: tela conforme `ColarTexto.png` (texto marcado por cor, contadores, grupos por dia com "virar dia N", dicas que vão pras notas ou pra Carteira, "Só salvar" e "Adicionar N e criar dia K"). `PlannedDay.focusAreaName` guarda a área do dia (a fatia C troca por `focus`). E.23: sem rede, a conferência entra na fila de saída como `OutboxKind.conferText` (o `Outbox.drain` recebe o provedor de Places), o botão mostra "N esperando internet" e, ao reabrir o texto, a conferência feita é aplicada.
+
+**Código.** `Must/Services/Ingest/TravelText.swift` (parser e tipos), `Must/Services/Intelligence/TravelTextExtractor.swift` (Foundation Models, blocos, merge), `Must/Services/Ingest/TextConference.swift` (fila), `Must/Features/Add/PlaceImport.swift` (gravação dos lugares, tirada do `AddLinkView.save` e usada pelos dois fluxos), `Must/Features/ColarTexto/` (modelo, view, destaque e amostra em DEBUG). `PlaceExtractor.isPlausible` ficou internal; `ExtractedPlace.dayIndex` novo (o `PlaceResolver.combine` preserva).
+
+**Testes.** 406 passando (base 395 + 11 em `MustTests/ColarTextoTests.swift`): amostra igual à fixture `MustTests/Fixtures/colar-texto-amostra.txt`; 2 dias, 8 lugares, 2 links, 3 dicas; categorias sem Places; blocos ≤ 3.000 caracteres; merge; Carteira ("Tokyo Subway Ticket 72h", passe de trem); análise com Places fake (8 conferidos, 6 marcados, grupos); sem Places; fila offline e drain; gravação (6 lugares, 2 dias de 3 paradas, 1 item na Carteira, dicas nas notas).
+
+**Prints (simulador "Must-Texto", iPhone 17, Debug, `build/qa/`, não commitados).**
+- `xcrun simctl launch 9826BD97-6F13-4C68-90E6-4B044D56602F dev.viniso.must -skipOnboarding YES -region jp -debugPlaces fake -debugScreen colar-texto:amostra` e `xcrun simctl io 9826BD97-6F13-4C68-90E6-4B044D56602F screenshot build/qa/colar-amostra-1.png`. Mostra o seletor com "Texto" ativo e o texto marcado (comer, ver, beber, área tracejada, dica âmbar, links em preto).
+- Revisão (coordenador): `build/qa/colar-recolhido-2.png`, mesmo comando. Card recolhido (~200 pt a partir do dia em foco, fade, última linha cinza, "ver tudo"), contadores, cartão do dia com o selo do bairro (渋谷), "virar dia 1" e os botões fixos embaixo. A lista do dia rola por trás do fade; dicas e links ficam abaixo, sem print.
+- Offline (`-debugNetwork offline`) e Foundation Models: não rodados. O simulador não tem Apple Intelligence, então o aparelho cai no parser por regex.
+
+**Ficou de fora.** Fallback na nuvem (Haiku) pro Texto: o fluxo do link já tem o seu; o Texto não chama a nuvem. Nomes em japonês (`nameLocal`) no parser de regex. `StationStamp` não existe neste worktree, então a Texto não mostra selo de estação. Leitura de links no `-debugPlaces fake` usa legenda de mentira (sem rede).
+
 ## Início novo (prompt 18 · B)
 
 **Feito.** Card do dia com foto do bairro escurecida, "Hoje em <bairro>", selo (`StationStamp`), bloco Agora (fila, saia às, a pé), progresso em selos e "Ir agora" → Como chegar. Sem dia: "Hoje, pra onde?" com 3 bairros e "Montar por bairro". "Amanhã, pra onde?" com 3 cartões (foto, selo, contagem, chip de contexto, faixa da categoria). "Por perto" (uma linha), "gasto hoje" (orçamento fica em Ajustes › Dia, que já existia), "+" abre Adicionar. `HomeState` recalcula só no minuto, na posição (≥ 50 m), ao salvar (300 ms de silêncio) e ao voltar pra frente; `HomeModel` ficou intacto pro `OutsideBridge` e os testes.
@@ -305,3 +320,83 @@ iPhone: [ ] medir com Instruments (Hangs + Time Profiler) — Vinicius
 - Medição com Instruments e Network Link Conditioner no aparelho (hangs da Início): pendente, como na parte A.
 - Suíte: a primeira rodada completa caiu com "Test crashed with signal kill before establishing connection" (runner do simulador, não código). Simulador apagado (`erase`) e rodada refeita.
 
+
+## Avisos do guia (prompt 18 · C.17)
+
+**O que é.** O app avisa sem ser aberto: "Saia em 5 min pro <parada>", "Golden em 20 min · você está a N min do <foto>", "<lugar> abre agora · está a N min". Só do dia aceito de hoje, só de agora em diante, no máximo um aviso a cada 45 min (prioridade: saída > golden > abre agora). Tudo local, sem push e sem rede. Ajustes › Dia › "Avisos do guia" (ligado por padrão); desligar tira os avisos pendentes.
+
+**Como se calcula.** Saída = hora da parada − deslocamento estimado pelo solver (a pé até o andar do dia, senão metrô) − 5 min; o aviso chega 5 min antes dessa saída. Golden = início da janela (manhã ou tarde) menos 20 min, pra lista photo cuja parada cai perto da janela. Abre agora = primeiro horário de abertura do lugar depois do início do dia, se ele estava fechado e a parada é depois dessa abertura. A origem é a posição de agora se estiver a até 40 km da cidade, senão o centro. Não usa GPS em segundo plano nem a Routes. Os avisos usam trigger de calendário no fuso da região.
+
+**Permissão.** Só é pedida no aceite do dia (Montar › Aceitar). Recálculos (gravações, volta do app, 済, desfazer, o toggle) não pedem. Sem permissão, nada é agendado.
+
+**Identificadores.** `guide.<AAAA-MM-DD>.<n>`. O agendador só remove e recria os `guide.*`; os lembretes de ingresso (`ticket.leave.*`) e de voo (`flight.*`) não são tocados. Se o plano não muda, nada é reagendado.
+
+**Testes.** `MustTests/GuideNudgesTests.swift` (12 de função pura: saída, golden com e sem janela, abre agora, prioridade, espaçamento de 45 min com o limite exato, só futuro, horas já tocadas, ids) e `GuideSchedulerTests` (6 com fake de central: troca só `guide.*`, reagendar sem mudança não toca nada, dia sem aceite, desligado, permissão negada, desligar). Suíte completa: **413** passando (base 395).
+
+**Debug.** `-debugScreen avisos` lista no log (categoria `guide`) os avisos do dia aceito, sem agendar. Ex.: `log show --predicate 'subsystem == "dev.viniso.must" AND category == "guide"'`.
+
+**Simulador (Japão, 15/11 09:00 JST, dia aceito).** Saídas previstas: 09:25 Santuário Meiji ("chega às 09:50", ~20 min); 11:15 Ramen Hōsenka (~11 min, chega 11:31); 14:11 Koffee Mameya (~14 min, chega 14:30); 18:40 Udatsu Sushi (~15 min, chega 19:00). Espaçamento ok. Print do toggle em Ajustes › Dia em `build/qa/c17-ajustes.png`.
+
+**Ficou de fora / não verificado no aparelho.**
+- O agendamento real na Central de Notificações não foi visto no simulador: a permissão não pôde ser concedida por `simctl privacy` (sandbox), então o app não agendou nada de fato. Falta: aceitar o dia com permissão no iPhone e conferir que os avisos chegam no horário.
+- Golden e "abre agora" aparecem só nos testes; o dia de QA não tinha parada de foto na janela de golden nem lugar fechado ao começar o dia.
+- Os tempos de deslocamento são a estimativa do solver, não a matriz do Routes: o aviso pode sair alguns minutos fora do tempo real de trajeto.
+- Pendente do Vinicius: testar no iPhone se o aviso chega com o app fechado.
+
+## Fotos do Google (prompt 19)
+
+**Chamadas reais (simulador "Must-Fotos", 03/11, o máximo acordado: 4 lugares, uma vez cada).** Text Search (IDs/Essentials, pra achar o placeId, como no teste de 03/11), Details com `photos` (sincronização só desses lugares, `-debugSyncOnly`) e uma `/media` por lugar ao abrir o Lugar. Total: **4 Text Search + 4 Details + 4 `/media` = 12 chamadas**. Contadores no fim: `placesEssentials` 4, `placesPro` 4, `placePhotos` 4. Nenhuma chamada a AeroDataBox ou Anthropic. Não fiz lote real (Ajustes › Dados › Baixar) pra não gastar cota.
+
+| Lugar | Região | Resultado |
+|---|---|---|
+| Fuunji | JP | foto da fachada (placa FUUNJI), crédito "FOTO · GOOGLE · @N. HAJIME" |
+| Udatsu Sushi | JP | foto do balcão, crédito "@UDATSU SUSHI" |
+| Mercado Central | BH | foto do balcão de queijos, crédito "@THALES" |
+| Museu Inimá de Paula | BH | foto da pintura (campo de arroz), crédito "@MUSEU INIMÁ DE PAULA" |
+
+**Verificado no simulador:**
+- Contador sobe 1 por lugar novo (`placePhotos` 0 → 4), e não sobe ao reabrir (Lugar e Lista: 4 → 4).
+- Lista (`lista:eat`): miniatura do Mercado Central com cantos 14 pt; os outros lugares seguem com o gradiente da cor.
+- Modo avião (`-debugNetwork offline`, Mercado Central): hero aparece do disco, 3D esmaecido, nenhuma chamada.
+
+**Prints (em `build/qa/`, não commitados):**
+- `build/qa/fuunji-try1.png`, `build/qa/udatsu.png`, `build/qa/mercado-central.png`, `build/qa/museu-inima.png`: hero com foto e crédito.
+- `build/qa/lista-eat-thumbs.png`: Lista com miniatura.
+- `build/qa/offline-mercado.png`: hero offline.
+
+**Comandos (simulador BD4F5784…, container `…/Library/Preferences/dev.viniso.must`):**
+- Sincronizar só alguns lugares: `defaults write <P> region jp|bh`, `defaults write <P> debugSyncOnly -string "j01,j05"` (BH: `p01,p11`), relança. Depois apaga `debugSyncOnly`.
+- Abrir o Lugar: `defaults write <P> debugScreen -string "lugar:j05"` e relança.
+- Lista: `debugScreen -string "lista:eat"`. Offline: `debugNetwork -string offline`.
+- Fake (sem cota, pros prints de UI): `debugPhotos -string fake`.
+
+**Não capturado (pendente):**
+- Ajustes › Dados (MB do mês, cache, lote). A tela está pronta e compila, mas o print exige rolar até a seção Dados, e o simulador não rola sozinho. Fica pro Vinicius no iPhone.
+- Lote real "84 de 130": não rodado, pela cota.
+
+**Ficou de fora:**
+- Galeria (deslizar): código pronto (até 5 páginas, uma `/media` por deslize), não testado deslizando (gastaria cota).
+- Card "Agora" da Home e cards de bairro: fatia B, não toquei.
+- Mapas offline não entram em "MB do mês" (baixam por sessão própria).
+- Lugar novo (Adicionar antes de salvar): mostra gradiente até sincronizar (candidato sem Details não tem foto).
+
+**iPhone (Vinicius):** [ ] conferir o hero e a galeria com fotos reais · [ ] Ajustes › Dados: MB, cache e lote no Wi-Fi · [ ] Modo de Pouco Dados: sem foto nova fora do Lugar aberto
+
+## Tema da viagem (prompt 20)
+
+**Feito.** `TripTheme` (tokens por país, tabela aberta por ISO 3166 em `TripTheme.byCountry`), injetado em `MustApp` com `Region.country`. Lavado do topo (`.tripWash()`, 300 pt, ou cor sólida `tripSoft2` em 120 pt com "Reduzir transparência") em Início, Hoje, Musts e Viagem. Selos (`StationStamp`) com tinta do país sobre papel e fundo `stampInk` a 55% no card do dia (50% nos cartões de bairro). Rótulo da cidade/dia em `tripInk`, ponto da aba ativa e ponto de "Amanhã, pra onde?" em `trip`, anel do dia de hoje na Viagem em `trip`. Bandeira vetorial de 22 pt (`TripFlag`) ao lado da data na Início e no card de cada trecho na Viagem. Identidade (verde, azul, tinta, links, listas, trem, mapa) não muda.
+
+**Prints** (`scripts/qa-screens.sh`, seção "Tema da viagem"): `tema-jp-inicio`, `tema-jp-hoje`, `tema-jp-musts`, `tema-jp-viagem`, `tema-bh-inicio`, `tema-bh-hoje`, `tema-bh-musts`, `tema-bh-viagem` (em `build/qa/`, não commitados). Conferidos contra Home6.png (Japão) e Home6BH.png (Brasil): lavado, bandeira, rótulo, pontos e selos batem.
+
+**Testes.** `MustTests/TripThemeTests.swift` (12): tokens exatos de JP e BR, mapa região → país, tabela aberta (chaves ISO, país desconhecido cai no neutro), tons do país não usam cor de identidade, cores de identidade fixas, forma do lavado (300 pt / 120 pt sólido / sem lavado), fundo do selo a 55%, bandeira só pra JP e BR. Suíte completa: **422** passando (base 410).
+
+**Diferenças em relação aos Home6**
+- A troca de região usa `withAnimation` de 0,4 s em `RegionStore.switchTo`, mas o `.id` da raiz recria a árvore (troca de container). Por isso a transição de cor pode aparecer como troca direta; medir no aparelho.
+- Hoje ganhou o rótulo "Tóquio · dia 1/5" (ou "Belo Horizonte") em tom do país, que não existia na tela antes.
+- Viagem: não há coleção de selos ainda; a borda `trip` ficou no anel do dia de hoje.
+- Cartões de bairro com 50% de fundo (o Home6 mostra 50%; o card do dia 55%).
+
+**Pendente**
+- Guia (prompt 18 C): usar `.tripWash()` antes do `.background` da tela e `StationStamp(surface: .photo / .paper)`.
+- Coleção de selos na Viagem (quando existir) deve usar `theme.tripColor` na borda.
+- `StationStamp` perdeu os parâmetros `ring:` e `fill:` (agora `surface:`, `filled:`, `fillOpacity:`). Quem já tiver código com a API antiga precisa migrar.

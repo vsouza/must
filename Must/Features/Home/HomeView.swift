@@ -10,6 +10,7 @@ struct HomeView: View {
     @Environment(RegionStore.self) private var store
     @Environment(Services.self) private var services
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.tripTheme) private var theme
 
     @Query private var places: [Place]
     @Query private var expenses: [Expense]
@@ -52,6 +53,7 @@ struct HomeView: View {
             .padding(.bottom, 24)
         }
         .scrollIndicators(.hidden)
+        .tripWash()
         .background {
             ZStack {
                 Color.must.bg
@@ -138,16 +140,19 @@ struct HomeView: View {
             }
             .accessibilityLabel("Must")
 
-            VStack(alignment: .leading, spacing: 1) {
-                Text(state.dateLine)
-                    .font(.must.archivo(15, .semibold))
-                    .foregroundStyle(Color.must.ink)
-                    .lineLimit(1)
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 6) {
+                    Text(state.dateLine)
+                        .font(.must.archivo(15, .semibold))
+                        .foregroundStyle(Color.must.ink)
+                        .lineLimit(1)
+                    TripFlag(theme)
+                }
                 Text(state.cityLine)
                     .font(.must.mono(10))
                     .textCase(.uppercase)
                     .tracking(1)
-                    .foregroundStyle(Color.must.secondary)
+                    .foregroundStyle(theme.labelColor)
                     .lineLimit(1)
             }
 
@@ -312,7 +317,7 @@ struct HomeView: View {
 
     private func pickRow(_ entry: AreaEntry) -> some View {
         HStack(spacing: 12) {
-            StationStamp(entry.area.seal, size: 36, ring: .white, fill: StampPalette.onPhotoFill, rotation: -8)
+            StationStamp(entry.area.seal, size: 36, fillOpacity: 0.5)
             VStack(alignment: .leading, spacing: 1) {
                 Text(entry.area.name)
                     .font(.must.archivo(16, .semibold))
@@ -379,7 +384,7 @@ struct HomeView: View {
         return VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .firstTextBaseline) {
                 HStack(spacing: 8) {
-                    Circle().fill(Color.must.green).frame(width: 6, height: 6)
+                    Circle().fill(theme.tripColor).frame(width: 6, height: 6)
                     Text("Amanhã, pra onde?")
                         .font(.must.archivo(17, .semibold))
                         .foregroundStyle(Color.must.ink)
@@ -437,7 +442,7 @@ struct HomeView: View {
         .frame(maxWidth: .infinity)
         .frame(height: 116)
         .overlay(alignment: .topTrailing) {
-            StationStamp(entry.area.seal, size: 34, ring: .white, fill: StampPalette.onPhotoFill, rotation: -8)
+            StationStamp(entry.area.seal, size: 34, fillOpacity: 0.5)
                 .padding(8)
         }
         .overlay(alignment: .bottom) {

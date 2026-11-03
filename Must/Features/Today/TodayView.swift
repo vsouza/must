@@ -7,6 +7,7 @@ struct TodayView: View {
     @Environment(AppRouter.self) private var router
     @Environment(RegionStore.self) private var store
     @Environment(Services.self) private var services
+    @Environment(\.tripTheme) private var theme
 
     @Query private var days: [PlannedDay]
     @Query private var expenses: [Expense]
@@ -47,6 +48,7 @@ struct TodayView: View {
                     .padding(.trailing, 22)
                     .padding(.bottom, 92)
             }
+            .tripWash()
             .background {
                 ZStack {
                     Color.must.bg
@@ -88,11 +90,17 @@ struct TodayView: View {
         }
     }
 
+    /// "Tóquio · dia 3/5" no topo, no tom do país (prompt 20); sem país, cinza como antes.
+    private func cityLabel(_ now: Date) -> some View {
+        Micro(HomeState.cityLine(now, region: region, trip: trips.first), color: theme.labelColor)
+    }
+
     private func empty(now: Date) -> some View {
         let tomorrow = region.calendar.date(byAdding: .day, value: 1, to: region.calendar.startOfDay(for: now)) ?? now
         let tomorrowDay = days.first { $0.date == tomorrow && $0.accepted }
         return VStack(alignment: .leading, spacing: 18) {
             VStack(alignment: .leading, spacing: 6) {
+                cityLabel(now)
                 Text("Hoje").mustTitle()
                 Text("nada montado ainda · \(region.timeString(now))").mustSerif(18).foregroundStyle(Color.must.secondary)
             }
@@ -115,6 +123,7 @@ struct TodayView: View {
         let current = stops.first { !$0.done }
         return VStack(alignment: .leading, spacing: 18) {
             VStack(alignment: .leading, spacing: 6) {
+                cityLabel(now)
                 Text(date.map { region.shortDay($0) } ?? "Hoje").mustTitle()
                 Text("dia \(day.kind.label) · \(done) de \(stops.count) feitos").mustSerif(18).foregroundStyle(Color.must.secondary)
                 offlineLine(day)
@@ -309,6 +318,9 @@ struct TodayView: View {
         return Button { if let id = place?.id { router.push(.place(id: id), on: .hoje) } } label: {
             HStack(alignment: .center, spacing: 14) {
                 KanjiSeal(done: false, number: index + 1, size: 30)
+                if let place {
+                    PlaceThumb(placeId: place.placeId, refs: place.photoRefs, color: place.list?.color ?? .eat, size: 44)
+                }
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(alignment: .firstTextBaseline) {
                         Text(place?.name ?? "Lugar removido").font(.must.archivo(18, .semibold)).foregroundStyle(Color.must.ink).lineLimit(1)
