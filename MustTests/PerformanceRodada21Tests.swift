@@ -94,4 +94,24 @@ struct PerformanceRodada21Tests {
         print("MEDIDA R21 · Mapa pinos · antes (2 montagens por body, \(passes) bodies × 103 lugares): \(t)")
         #expect(sink > 0)
     }
+
+    /// Depois: `PinsMemo` monta uma vez por chave; os 2 acessos por body são leituras.
+    @Test func medePinosDepois() {
+        let places = jpPlaces()
+        let passes = 50
+        let clock = ContinuousClock()
+        let memo = PinsMemo()
+        let key = PinsMemo.Key(revision: PlacesRevision.of(places), minute: Int(now.timeIntervalSinceReferenceDate / 60),
+                               timeZone: fixtureTokyo.identifier, today: [], tomorrow: [], focusPlaceId: nil,
+                               hasSelection: false, cityName: nil, here: "35.6812,139.7671", walkMaxKm: 1.5)
+        var sink = 0
+        let t = clock.measure {
+            for _ in 0..<passes {
+                for _ in 0..<2 { sink += memo.pins(for: key) { buildPins(places, now: now) }.count }
+            }
+        }
+        print("MEDIDA R21 · Mapa pinos · depois (PinsMemo, \(passes) bodies × 2 leituras, chave igual): \(t), montagens \(memo.buildCount)")
+        #expect(memo.buildCount == 1)
+        #expect(sink > 0)
+    }
 }

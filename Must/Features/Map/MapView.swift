@@ -19,6 +19,7 @@ struct MapView: View {
     @State private var cam = MapCameraController()
     @Environment(\.scenePhase) private var scenePhase
     @State private var routes = RouteGeometry()
+    @State private var pinsMemo = PinsMemo()
     /// Bússola → cone do "você" (prompt 18 · A.2). Fica fora do `body`: ver `CompassBridge`.
     @State private var headingSink = YouHeadingSink()
     @State private var selectedId: String?
@@ -155,7 +156,27 @@ struct MapView: View {
         return scene
     }
 
+    /// Pinos memoizados (A.2): `body` lê `pins` várias vezes; só monta de novo quando a chave muda.
     private var pins: [MapPin] {
+        pinsMemo.pins(for: pinsKey) { buildPins() }
+    }
+
+    private var pinsKey: PinsMemo.Key {
+        PinsMemo.Key(
+            revision: PlacesRevision.of(places),
+            minute: Int(now.timeIntervalSinceReferenceDate / 60),
+            timeZone: region.timeZone.identifier,
+            today: stops.map { "\($0.id)|\($0.done)|\($0.place?.id ?? "")" },
+            tomorrow: tomorrowStops.map { "\($0.id)|\($0.place?.id ?? "")" },
+            focusPlaceId: cam.focus?.target?.placeId,
+            hasSelection: selectedId != nil,
+            cityName: currentCityName,
+            here: here.map { "\($0.coordinate.latitude),\($0.coordinate.longitude)" } ?? "",
+            walkMaxKm: walkMaxKm
+        )
+    }
+
+    private func buildPins() -> [MapPin] {
         var pins: [MapPin] = []
         let next = nextStop
         for (i, stop) in stops.enumerated() {
