@@ -231,6 +231,9 @@ struct ProposalView: View {
             let date = planner.date, network = services.connectivity.prefetchNetwork
             let region = planner.region
             Task { await services.prefetch.run(date: date, context: context, region: region, network: network) }
+            // Avisos do guia (prompt 18 · C.17): a permissão de notificação é pedida só aqui.
+            let origin = services.location.current?.coordinate
+            Task { await GuideNudgeScheduler.refresh(context: context, region: region, origin: origin, askPermission: true) }
         } catch {
             self.error = error.localizedDescription
         }
