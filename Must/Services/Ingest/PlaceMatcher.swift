@@ -38,6 +38,11 @@ enum PlaceMatcher {
             let suggested = suggestList(for: item, lists: lists)
             let detail = item.placeId.flatMap { details[$0] }
             if let place = existingPlace(for: item, in: places) {
+                // Board com coordenada chute e o Places achou o lugar: mostra no mapa pela posição do Places.
+                if place.approx, let lat = item.lat, let lng = item.lng {
+                    return MatchedPlace(extracted: item, kind: .existing(place), lat: lat, lng: lng, approx: false,
+                                        suggestedListId: place.list?.id ?? suggested, details: detail)
+                }
                 return MatchedPlace(extracted: item, kind: .existing(place), lat: place.lat, lng: place.lng, approx: place.approx,
                                     suggestedListId: place.list?.id ?? suggested, details: detail)
             }
@@ -51,6 +56,7 @@ enum PlaceMatcher {
     }
 
     /// Mesmo placeId; senão nome parecido (ou nome local igual) a até 300 m, se o candidato tem coordenada.
+    /// Lugar do board com coordenada aproximada (seed `approx`) aceita até 2 km: a posição dele ainda é chute.
     static func existingPlace(for item: ExtractedPlace, in places: [Place]) -> Place? {
         if let id = item.placeId, let hit = places.first(where: { $0.placeId == id }) { return hit }
         return places.first { place in
@@ -59,7 +65,8 @@ enum PlaceMatcher {
             guard sameName else { return false }
             guard let lat = item.lat, let lng = item.lng else { return true }
             let here = CLLocation(latitude: lat, longitude: lng)
-            return here.distance(from: CLLocation(latitude: place.lat, longitude: place.lng)) < 300
+            let limit: CLLocationDistance = place.approx ? 2_000 : 300
+            return here.distance(from: CLLocation(latitude: place.lat, longitude: place.lng)) < limit
         }
     }
 
@@ -71,13 +78,31 @@ enum PlaceMatcher {
         return lists.first?.id
     }
 
-    /// Mesmo nome, ignorando caixa, acento e pontuação, ou um contido no outro (≥ 5 letras).
+    /// Mesmo nome, ignorando caixa, acento e pontuação, ou um contido no outro (≥ 5 letras),
+    /// ou o mesmo nome próprio sem a palavra de tipo ("Meiji Jingu" × "Santuário Meiji").
     nonisolated static func similar(_ a: String, _ b: String) -> Bool {
         let na = normalize(a), nb = normalize(b)
         guard !na.isEmpty, !nb.isEmpty else { return false }
         if na == nb { return true }
         let (short, long) = na.count < nb.count ? (na, nb) : (nb, na)
-        return short.count >= 5 && long.contains(short)
+        if short.count >= 5 && long.contains(short) { return true }
+        let ca = core(a), cb = core(b)
+        return ca.count >= 4 && ca == cb
+    }
+
+    /// Palavras de tipo (pt, en, romaji) que o texto e o board trocam entre si.
+    nonisolated private static let kindWords: Set<String> = [
+        "santuario", "templo", "shrine", "temple", "jingu", "jinja", "taisha", "tenmangu",
+        "mercado", "market", "museu", "museum", "parque", "park", "jardim", "garden", "gyoen", "koen",
+        "castelo", "castle", "jo", "torre", "tower", "o", "a", "do", "da", "de", "the",
+    ]
+
+    /// Nome sem as palavras de tipo, normalizado ("Santuário Meiji" → "meiji").
+    nonisolated static func core(_ s: String) -> String {
+        s.split(whereSeparator: { !$0.isLetter && !$0.isNumber })
+            .map { normalize(String($0)) }
+            .filter { !$0.isEmpty && !kindWords.contains($0) }
+            .joined()
     }
 
     nonisolated static func normalize(_ s: String) -> String {

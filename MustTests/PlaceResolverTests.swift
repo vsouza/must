@@ -102,6 +102,33 @@ struct PlaceBoardMatchTests {
         #expect(PlaceMatcher.existingPlace(for: near, in: [place]) === place)
         #expect(PlaceMatcher.existingPlace(for: far, in: [place]) == nil)
     }
+
+    /// Seed com coordenada chute (`approx`): o mesmo nome a ~1 km ainda é o lugar do board; a 5 km não.
+    @Test func approxBoardPlaceAcceptsSameNameWithinTwoKm() {
+        let place = board("Fuunji", placeId: nil, lat: 35.6873, lng: 139.6994)
+        place.approx = true
+        let near = ExtractedPlace(name: "Fuunji", hint: "x", lat: 35.6962, lng: 139.7025)
+        let far = ExtractedPlace(name: "Fuunji", hint: "x", lat: 35.6873 + 0.045, lng: 139.6994)
+        #expect(PlaceMatcher.existingPlace(for: near, in: [place]) === place)
+        #expect(PlaceMatcher.existingPlace(for: far, in: [place]) == nil)
+    }
+
+    @Test func meijiJinguIsTheBoardsSantuarioMeiji() {
+        let place = board("Santuário Meiji", placeId: nil, lat: 35.6764, lng: 139.6993)
+        let item = ExtractedPlace(name: "Meiji Jingu", hint: "x", lat: 35.6764, lng: 139.6993)
+        #expect(PlaceMatcher.existingPlace(for: item, in: [place]) === place)
+    }
+
+    /// Lugar do board com coordenada chute: casado com um nome que o Places achou, aparece no mapa (marcado).
+    @Test func approxBoardMatchUsesThePlacesCoordinate() {
+        let place = board("Fuunji", placeId: nil, lat: 35.6873, lng: 139.6994)
+        place.approx = true
+        let item = ExtractedPlace(name: "Fuunji", hint: "x", lat: 35.6962, lng: 139.7025)
+        let m = PlaceMatcher.match([item], places: [place], lists: [], city: nil, region: .jp).first
+        #expect(m?.existing === place)
+        #expect(m?.located == true)
+        #expect(m?.lat == 35.6962)
+    }
 }
 
 @MainActor

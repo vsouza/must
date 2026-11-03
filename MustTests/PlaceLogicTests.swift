@@ -218,6 +218,16 @@ struct PlaceMatcherTests {
         #expect(!PlaceMatcher.similar("Fuunji", "Nakiryu"))
         #expect(!PlaceMatcher.similar("Bar", "Bar Benfiddich")) // curto demais pra "contém"
     }
+
+    @Test func sameProperNameAcrossKindWords() {
+        #expect(PlaceMatcher.similar("Meiji Jingu", "Santuário Meiji"))
+        #expect(PlaceMatcher.similar("Meiji-jingu Shrine", "Santuário Meiji"))
+        #expect(PlaceMatcher.similar("Shinjuku Gyoen", "Jardim Shinjuku Gyoen"))
+        #expect(PlaceMatcher.similar("Tsukiji Outer Market", "Mercado Tsukiji Outer"))
+        #expect(!PlaceMatcher.similar("Meiji Jingu", "Meiji Mura"))
+        #expect(!PlaceMatcher.similar("Templo Senso", "Santuário Meiji"))
+        #expect(!PlaceMatcher.similar("Ueno Park", "Yoyogi Park"))
+    }
 }
 
 struct SavedPlacesImporterTests {
