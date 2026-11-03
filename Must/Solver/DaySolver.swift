@@ -49,10 +49,15 @@ enum DaySolver {
     }
 
     static func effectiveWalkMax(_ request: DayRequest, walk: WalkLevel) -> Double {
+        effectiveWalkMax(walkMaxKm: request.walkMaxKm, walk: walk)
+    }
+
+    /// Andar máximo do dia (Ajustes) ajustado pelo nível do dia. Também usado pelos avisos do guia (C.17).
+    static func effectiveWalkMax(walkMaxKm: Double, walk: WalkLevel) -> Double {
         switch walk {
-        case .low: min(request.walkMaxKm, 0.8)
-        case .normal: request.walkMaxKm
-        case .high: request.walkMaxKm * 1.5
+        case .low: min(walkMaxKm, 0.8)
+        case .normal: walkMaxKm
+        case .high: walkMaxKm * 1.5
         }
     }
 

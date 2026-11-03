@@ -70,6 +70,7 @@ struct AppRoot: View {
                 if phase == .active {
                     services.location.start()
                     syncGate.request { await syncThenRefresh() }
+                    refreshGuide()
                     // Ingresso compartilhado que o Share Extension não conseguiu abrir: pega aqui.
                     if router.sheet == nil, let waiting = ShareInbox.pending().first {
                         router.sheet = .ticketImport(inboxId: waiting.id)
@@ -134,6 +135,22 @@ struct AppRoot: View {
             try? await Task.sleep(for: .milliseconds(600))
             guard !Task.isCancelled, store.region == region else { return }
             OutsideBridge.refresh(context: context, region: store.region, services: services)
+            if !DebugFlags.isTestHost {
+                await GuideNudgeScheduler.refresh(context: context, region: store.region, origin: services.location.current?.coordinate, askPermission: false)
+            }
+        }
+    }
+
+    /// Avisos do guia do dia aceito (prompt 18 · C.17): recalcula sem esperar a próxima gravação. Nunca pede permissão.
+    private func refreshGuide() {
+        // No host de testes o app não toca na Central de Notificações (a suíte usa um fake).
+        guard !DebugFlags.isTestHost else { return }
+        let region = store.region
+        let container = context.container
+        let origin = services.location.current?.coordinate
+        Task {
+            defer { withExtendedLifetime(container) {} }
+            await GuideNudgeScheduler.refresh(context: context, region: region, origin: origin, askPermission: false)
         }
     }
 
@@ -159,6 +176,7 @@ struct AppRoot: View {
 /// `-debugNetwork offline` força "sem rede" (chip, falha na hora, fila de saída); `-debugNetwork slow` põe 3 s de
 /// latência e 30% de falha em cada tentativa HTTP (prompt 18 · A.4: a UI não pode travar). `wifi` e `celular` fingem
 /// o tipo de rede (o pré-download do dia só roda no Wi-Fi, prompt 18 · A.5).
+/// `avisos` lista no log os avisos do guia que seriam agendados pro dia aceito (prompt 18 · C.17).
 /// `como-chegar:<id>` abre Como chegar; `-debugRoutes fake` troca o Routes por respostas de exemplo. `buscar-nome:<texto>` abre
 /// Buscar por nome (com `-debugAutocomplete fake` pras sugestões de "koffee mam").
 @MainActor
@@ -236,6 +254,9 @@ enum DebugLaunch {
             router.push(.regrasVolta, on: .inicio)
         case "buscar-nome": // buscar-nome:koffee mam (com -debugAutocomplete fake); buscar-nome:koffee mam:escolher já escolhe a 1ª
             router.sheet = .buscarNome(query: (arg ?? "").replacingOccurrences(of: ":escolher", with: ""), listId: nil)
+        case "avisos": // avisos do guia do dia aceito, no log (prompt 18 · C.17); não agenda nada
+            router.select(.hoje)
+            GuideNudgeScheduler.logPreview(context: context, region: region, origin: location.current?.coordinate)
         case "sincronizar":
             router.push(.settings, on: .inicio)
             Task { await services.sync.syncPlaces(context: context, region: region) }

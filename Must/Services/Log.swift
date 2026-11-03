@@ -11,6 +11,7 @@ enum Log {
     static let network = Logger(subsystem: subsystem, category: "network")
     static let solver = Logger(subsystem: subsystem, category: "solver")
     static let intelligence = Logger(subsystem: subsystem, category: "intelligence")
+    static let guide = Logger(subsystem: subsystem, category: "guide")
 
     /// Entradas do app nas últimas `hours` horas, como texto.
     /// No iOS o `OSLogStore` só enxerga o processo atual (desde a última abertura).
