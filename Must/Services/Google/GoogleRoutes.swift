@@ -53,6 +53,11 @@ struct TravelOption: Sendable, Hashable, Identifiable {
 
 /// Routes API (New): `computeRoutes` (TRANSIT, WALK, DRIVE) e `computeRouteMatrix` (WALK/TRANSIT, máx. 10×10).
 enum GoogleRoutes {
+    /// A API do Google não tem trem/metrô do Japão: TRANSIT em Tóquio volta `{}` (testado em 02/11/2026; o app do
+    /// Google Maps tem, a API não). Lá o transporte vem do MapKit e a matriz pede só a pé (não gasta cota à toa).
+    static func hasTransit(in region: Region) -> Bool { region != .jp }
+    static func matrixModes(for region: Region) -> [String] { hasTransit(in: region) ? ["WALK", "TRANSIT"] : ["WALK"] }
+
     static let routesURL = URL(string: "https://routes.googleapis.com/directions/v2:computeRoutes")!
     static let matrixURL = URL(string: "https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix")!
 

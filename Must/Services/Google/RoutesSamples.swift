@@ -86,7 +86,11 @@ extension TravelOptions {
     /// `-debugRoutes fake`: alternativas de mentira (prints, sem cota). Mesmo formato de resposta, sem rede.
     static func samples(region: Region, from: CLLocationCoordinate2D, to: CLLocationCoordinate2D) -> [TravelOption] {
         var out: [TravelOption] = []
-        if let transit = try? GoogleRoutes.parseTransit(Data(RoutesSamples.transitJSON.utf8)) { out.append(transit) }
+        if let transit = try? GoogleRoutes.parseTransit(Data(RoutesSamples.transitJSON.utf8)) {
+            // No Japão o app real só tem o tempo do MapKit (GoogleRoutes.hasTransit).
+            out.append(GoogleRoutes.hasTransit(in: region) ? transit
+                       : TravelOption(mode: .transit, source: .mapKit, minutes: transit.minutes, meters: transit.meters, departs: nil, arrives: nil))
+        }
         if var walk = try? GoogleRoutes.parseSimple(Data(RoutesSamples.walkJSON.utf8), mode: .walk) {
             walk.source = .routes
             out.append(walk)

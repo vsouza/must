@@ -12,17 +12,18 @@ enum TravelMatrixLoader {
             .prefix(maxPoints - 1)
     }
 
-    static func load(points: [CLLocationCoordinate2D], departAt: Date, day: String, apiKey: String? = Secrets.googlePlacesKey,
-                     http: HTTP = HTTP()) async -> TravelMatrix? {
-        guard let apiKey, DevOverrides.liveData, points.count >= 2, points.count <= maxPoints else { return nil }
-        let signature = points.map { TravelMatrix.key($0, $0) }.joined(separator: "|")
+    /// `modes`: `GoogleRoutes.matrixModes(for:)` (no Japão só WALK: TRANSIT volta vazio e gasta cota).
+    static func load(points: [CLLocationCoordinate2D], departAt: Date, day: String, modes: [String] = ["WALK", "TRANSIT"],
+                     apiKey: String? = Secrets.googlePlacesKey, http: HTTP = HTTP()) async -> TravelMatrix? {
+        guard let apiKey, DevOverrides.liveData, points.count >= 2, points.count <= maxPoints, !modes.isEmpty else { return nil }
+        let signature = (modes + points.map { TravelMatrix.key($0, $0) }).joined(separator: "|")
         let cacheKey = "matrix-\(day)-\(fnv(signature))"
         if let cached = await DiskCache.shared.data(for: cacheKey, maxAge: 86_400),
            let matrix = try? JSONDecoder().decode(TravelMatrix.self, from: cached) {
             return matrix
         }
         var matrix = TravelMatrix()
-        for mode in ["WALK", "TRANSIT"] {
+        for mode in modes {
             guard let cells = try? await GoogleRoutes.matrix(origins: points, destinations: points, mode: mode, departAt: departAt,
                                                             apiKey: apiKey, http: http) else { continue }
             var table: [String: Int] = [:]

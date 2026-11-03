@@ -83,11 +83,20 @@ struct ComoChegarView: View {
         .safeAreaInset(edge: .bottom) { actions(model) }
     }
 
+    /// De onde veio o tempo da alternativa escolhida (no Japão o transporte é sempre Apple Maps).
+    static func sourceLabel(_ source: TravelOption.Source?) -> String {
+        switch source {
+        case .mapKit: "apple maps"
+        case .estimate: "estimativa"
+        default: "routes"
+        }
+    }
+
     private func topBar(_ model: ComoChegarModel) -> some View {
         HStack {
             IconButton(.voltar, label: "Voltar") { dismiss() }
             Spacer()
-            Micro("como chegar · routes")
+            Micro("como chegar · " + Self.sourceLabel(model.selectedOption?.source))
             Spacer()
             Button {
                 Task { await model.swapEnds(routes: services.routes) }
@@ -129,7 +138,7 @@ struct ComoChegarView: View {
         let option = model.selectedOption
         return FlowLayout(spacing: 8) {
             Tag("\(option?.minutes ?? 0) min", style: .dark)
-            if let option, option.mode == .transit {
+            if let option, option.mode == .transit, option.source == .routes {
                 Tag(option.transfers == 0 ? "sem baldeação" : "\(option.transfers) baldeação\(option.transfers > 1 ? "ões" : "")")
                 if let fare = option.fare, let currency = option.fareCurrency {
                     Tag("\(region.money(fare)) · \(currency == "JPY" ? "Suica" : "tarifa")")
@@ -228,12 +237,15 @@ private struct StepsCard: View {
                 ForEach(Array(option.steps.enumerated()), id: \.offset) { index, step in
                     StepRow(step: step, first: index == 0, region: region, departs: model.departs)
                 }
+                if option.mode == .transit, option.steps.isEmpty {
+                    StepRow(transitMinutes: option.minutes, region: region, departs: model.departs)
+                }
                 if option.mode == .taxi {
                     StepRow(step: TravelStep(id: 0, kind: .walk, instruction: "Táxi até o lugar · \(option.minutes) min",
                                              minutes: option.minutes, meters: option.meters), first: true, region: region,
                             taxiFare: option.fare.map { region.money($0) + " estimado" })
                 }
-                StepRow(end: model.placeName, time: model.arrives, region: region, source: option.source)
+                StepRow(end: model.placeName, time: model.arrives, region: region, source: option.source, mode: option.mode)
             }
         }
         .padding(.vertical, 18)
@@ -282,11 +294,30 @@ private struct StepRow: View {
         textColor = step.textColorHex.flatMap(Color.fromRoutesHex) ?? .white
     }
 
+    /// Transporte só com o tempo (MapKit; no Japão é sempre assim): linhas e plataformas ficam no Apple Maps.
+    init(transitMinutes: Int, region: Region, departs: Date) {
+        time = departs
+        title = "Trem e metrô · \(transitMinutes) min"
+        subtitle = "linhas e plataformas no Apple Maps (Começar)"
+        kind = .transit
+        color = Color.must.ink
+        textColor = .white
+        lineShort = nil
+        first = true
+        last = false
+        self.region = region
+        extraTag = nil
+    }
+
     /// Chegada: o lugar, com a frase da porta.
-    init(end: String, time: Date, region: Region, source: TravelOption.Source) {
+    init(end: String, time: Date, region: Region, source: TravelOption.Source, mode: TravelOption.Mode) {
         self.time = time
         title = end
-        subtitle = source == .estimate ? "estimativa · sem horário de trem" : "chegada"
+        subtitle = switch (source, mode) {
+        case (.estimate, _): "estimativa · sem horário de trem"
+        case (.mapKit, .transit): "chegada aproximada"
+        default: "chegada"
+        }
         kind = .walk
         color = Color.must.ink
         textColor = .white

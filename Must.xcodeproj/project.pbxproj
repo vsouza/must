@@ -10,6 +10,7 @@
 		0117D190175ECE479F119A5C /* SearchPill.swift in Sources */ = {isa = PBXBuildFile; fileRef = B44D19A8E9A8BD3390835C32 /* SearchPill.swift */; };
 		01564ECC8188D499B5F272B8 /* WeatherService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5D887EFA3C6F445E5F8EB35 /* WeatherService.swift */; };
 		0182C5E8F51876880442D3B8 /* DevOverrides.swift in Sources */ = {isa = PBXBuildFile; fileRef = 444EAB9A96A0EA348EFC1987 /* DevOverrides.swift */; };
+		01986439F3BF1AC9AE8AF29B /* JapanTransitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5092A6F919E95C25C7D6B97B /* JapanTransitTests.swift */; };
 		01E2DE93FB736A7208AC1F6E /* ShareInbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = B982B5C9A85023A0BF2D3B2E /* ShareInbox.swift */; };
 		037A42A0D37EEDD3EEA3C0A0 /* SolverTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888774E525344E91000A78D6 /* SolverTypes.swift */; };
 		03D4B6D26FF305F7648737A3 /* RegexIntentParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 873F50CBBAED2C9EB558BCDD /* RegexIntentParser.swift */; };
@@ -374,6 +375,7 @@
 		4ED7B13AFB24194D16FBE4EC /* ImportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportView.swift; sourceTree = "<group>"; };
 		4F85FDAC58E26C57ACABA07A /* BoardQuery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardQuery.swift; sourceTree = "<group>"; };
 		5026350BD8BA165B4E150D9A /* MustShare.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MustShare.entitlements; sourceTree = "<group>"; };
+		5092A6F919E95C25C7D6B97B /* JapanTransitTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JapanTransitTests.swift; sourceTree = "<group>"; };
 		50B7B2806BAB98E03649662B /* seed-bh.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "seed-bh.json"; sourceTree = "<group>"; };
 		510AFA185D11B399A89AD9EF /* Icons.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Icons.swift; sourceTree = "<group>"; };
 		51945D3387B8A1F6DF6F5AF9 /* ShoppingReport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShoppingReport.swift; sourceTree = "<group>"; };
@@ -824,6 +826,7 @@
 				F2FCC18F2FD107CBB17F43DD /* FlightTests.swift */,
 				F8A2E431EE5D54677E53846A /* GoogleParsersTests.swift */,
 				1F46BBCF517C68884FEA25E0 /* GoogleRoutesTests.swift */,
+				5092A6F919E95C25C7D6B97B /* JapanTransitTests.swift */,
 				A68D631FD82CB44E32D3116B /* KindsTests.swift */,
 				152B888DEEFD8182E7E1B1CC /* MapCameraTests.swift */,
 				D9E45EB741EE7A4B0C62B1E9 /* MustTests.swift */,
@@ -1521,6 +1524,7 @@
 				345D55FBAF0D045350FAF93E /* FlightTests.swift in Sources */,
 				98B6650DC0EF418C0FE80013 /* GoogleParsersTests.swift in Sources */,
 				5EA8F39179AD3853B92293A3 /* GoogleRoutesTests.swift in Sources */,
+				01986439F3BF1AC9AE8AF29B /* JapanTransitTests.swift in Sources */,
 				C921CC2375678A03499F2454 /* KindsTests.swift in Sources */,
 				1983873D9D81C55F540630BB /* MapCameraTests.swift in Sources */,
 				25F1D69D524D1DB8234C3152 /* MustTests.swift in Sources */,

@@ -78,7 +78,7 @@ final class DayPlanner {
         let points = TravelMatrixLoader.points(origin: req.origin, candidates: candidates)
         let departAt = max(req.startAt, AppClock.now)
         let day = BoardDates(timeZone: region.timeZone).dayString(date)
-        travel = await TravelMatrixLoader.load(points: points, departAt: departAt, day: day)
+        travel = await TravelMatrixLoader.load(points: points, departAt: departAt, day: day, modes: GoogleRoutes.matrixModes(for: region))
     }
 
     func solve(catalog: [SolverPlace], trip: TripInfo?, settings: Settings?, location: CLLocation?, flights: [DayFlight] = []) -> DayProposal {
