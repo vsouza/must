@@ -1,7 +1,7 @@
 import SwiftData
 import SwiftUI
 
-/// Viagem: gasto total, fileira de dias, um card por trecho de cidade, progresso por lista.
+/// Viagem: gasto total, fileira de dias, selos de bairro (prompt 18 · D.18), um card por trecho de cidade, progresso por lista.
 /// Em BH (sem viagem): o mês, com 済 nos dias feitos e cards por semana — sem inventar viagem.
 struct TripView: View {
     @Environment(\.dismiss) private var dismiss
@@ -31,6 +31,7 @@ struct TripView: View {
         let cells = TripStats.days(in: period, trip: trip, now: now, calendar: cal, doneDays: doneDays)
         let spent = TripStats.spent(expenses, in: period, calendar: cal)
         let elapsed = TripStats.elapsedDays(period, now: now, calendar: cal)
+        let stamps = AreaStamps.earned(areas: AreaCatalog.areas(for: region), places: places.map(HomeState.areaPlace))
 
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
@@ -42,13 +43,20 @@ struct TripView: View {
                 .padding(.top, 22)
                 spendBlock(spent: spent, elapsed: elapsed).padding(.top, 26)
                 dayRow(cells).padding(.top, 20)
-                if let trip { cityCards(trip).padding(.top, 34) } else { weekCards(period: period).padding(.top, 34) }
-                progressTags.padding(.top, 16)
-                TabBarSpacer()
+                stampRow(stamps).padding(.top, 24)
+                if let trip { cityCards(trip).padding(.top, 28) } else { weekCards(period: period).padding(.top, 28) }
+                progressTags.padding(.top, 20)
+                // Folga da tab bar: o conteúdo rola por trás do fade branco e termina acima dela.
+                TabBarSpacer().frame(height: 120)
             }
             .padding(.horizontal, 22)
         }
         .scrollIndicators(.hidden)
+        .overlay(alignment: .bottom) {
+            LinearGradient(colors: [Color.white.opacity(0), Color.white], startPoint: .top, endPoint: .bottom)
+                .frame(height: 56)
+                .allowsHitTesting(false)
+        }
         .tripWash()
         .background {
             ZStack {
@@ -129,7 +137,8 @@ struct TripView: View {
     private func meta(spent: Double, elapsed: Int) -> String {
         var parts: [String] = []
         if region == .jp, let fx = settingsList.first?.fxRate, spent > 0 { parts.append("≈ \((spent * fx).formatted(.money("BRL")))") }
-        parts.append("média \(region.money(spent / Double(elapsed)))/dia")
+        // Média sem centavos (prompt 18 · D.20): o formatador mostra centavos quando o valor não é inteiro.
+        parts.append("média \(region.money((spent / Double(max(elapsed, 1))).rounded()))/dia")
         parts.append("meta \(region.money(budget))")
         return parts.joined(separator: " · ")
     }
@@ -187,23 +196,44 @@ struct TripView: View {
         }
     }
 
+    // MARK: Selos de bairro (prompt 18 · D.18)
+
+    /// Um 済-selo por bairro com must feito (`AreaStamps`): kanji, borda dupla, rotação −6° a −10°.
+    /// Sem bairro feito: uma linha em serif, sem selos vazios.
+    private func stampRow(_ areas: [Area]) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if areas.isEmpty {
+                Text("nenhum selo ainda").mustSerif(18).foregroundStyle(Color.must.secondary)
+            } else {
+                Micro("selos de bairro · \(areas.count)", color: theme.labelColor)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 14) {
+                        ForEach(Array(areas.enumerated()), id: \.element.id) { index, area in
+                            StationStamp(area.seal, sub: area.stampSub, size: 74, surface: .photo, filled: true,
+                                         rotation: -6 - Double(index % 3) * 2)
+                        }
+                    }
+                    .padding(.vertical, 6)
+                }
+                .scrollClipDisabled()
+            }
+        }
+    }
+
     // MARK: Cards por cidade (viagem)
 
     private func cityCards(_ trip: TripInfo) -> some View {
-        let cities = trip.cities
         let current = trip.city(on: now, calendar: cal)
-        return ZStack(alignment: .topLeading) {
-            ForEach(Array(cities.prefix(3).enumerated()), id: \.element.id) { index, city in
-                cityCard(city, trip: trip, isCurrent: city.id == current?.id, isLast: index == min(2, cities.count - 1), index: index)
-                    .frame(height: index == min(2, cities.count - 1) ? 250 : 118)
+        let shown = Array(trip.cities.prefix(3))
+        // Pilha com altura do conteúdo (nada de altura fixa): a sobreposição é só a decorativa (−8 pt, abaixo do limite de 12).
+        return VStack(alignment: .leading, spacing: -8) {
+            ForEach(Array(shown.enumerated()), id: \.element.id) { index, city in
+                cityCard(city, trip: trip, isCurrent: city.id == current?.id, isLast: index == shown.count - 1, index: index)
                     .stackCard(tint: index == 0 ? .must(.eat) : index == 1 ? .must(.drink) : .sky,
                                rotation: index == 0 ? -2 : index == 1 ? 1.5 : 0)
-                    .padding(.leading, index == 0 ? 78 : index == 1 ? 38 : 0)
-                    .padding(.trailing, index == 0 ? -62 : index == 1 ? -42 : 0)
-                    .offset(y: CGFloat(index) * 86)
+                    .padding(.leading, index == 0 ? 60 : index == 1 ? 30 : 0)
             }
         }
-        .frame(height: CGFloat(min(3, cities.count) - 1) * 86 + 250, alignment: .top)
     }
 
     private func cityCard(_ city: City, trip: TripInfo, isCurrent: Bool, isLast: Bool, index: Int) -> some View {
@@ -233,23 +263,27 @@ struct TripView: View {
                     .lineLimit(1)
             }
             if isLast && !saveForEnd.isEmpty {
-                Spacer()
-                HStack(alignment: .bottom, spacing: 12) {
-                    MonoNumber("\(saveForEnd.count)", size: 64).foregroundStyle(Color.must.ink)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("ficaram pro fim").font(.must.archivo(19, .semibold)).foregroundStyle(Color.must.ink)
-                        Text(saveForEnd.prefix(3).map(\.name).joined(separator: ", ")).font(.must.archivo(13)).foregroundStyle(Color.must.blueText).lineLimit(2)
-                    }
-                    .padding(.bottom, 6)
-                }
+                saveForEndBlock(saveForEnd)
             } else {
-                Text(title).font(.must.archivo(24, .semibold)).foregroundStyle(Color.must.ink)
+                Text(title).font(.must.archivo(24, .semibold)).foregroundStyle(Color.must.ink).lineLimit(2)
                 Text(detail.joined(separator: " · ")).font(.must.archivo(13)).lineLimit(1)
             }
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 22)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+    }
+
+    /// "ficaram pro fim": o número grande e até três nomes. Altura natural: o texto que quebra empurra o resto.
+    private func saveForEndBlock(_ items: [Place]) -> some View {
+        HStack(alignment: .bottom, spacing: 12) {
+            MonoNumber("\(items.count)", size: 64).foregroundStyle(Color.must.ink).fixedSize()
+            VStack(alignment: .leading, spacing: 2) {
+                Text("ficaram pro fim").font(.must.archivo(19, .semibold)).foregroundStyle(Color.must.ink)
+                Text(items.prefix(3).map(\.name).joined(separator: ", ")).font(.must.archivo(13)).foregroundStyle(Color.must.blueText).lineLimit(2)
+            }
+            .padding(.bottom, 6)
+        }
     }
 
     // MARK: Cards por semana (BH)
@@ -259,30 +293,21 @@ struct TripView: View {
         let weekStart = cal.dateInterval(of: .weekOfYear, for: today)?.start ?? today
         let lastWeek = cal.date(byAdding: .day, value: -7, to: weekStart) ?? weekStart
         let saveForEnd = places.filter { $0.saveForEnd && !$0.isDone }
-        return ZStack(alignment: .topLeading) {
+        return VStack(alignment: .leading, spacing: -8) {
             weekCard(start: weekStart, title: "Esta semana")
-                .frame(height: 118).stackCard(color: .eat, rotation: -2)
-                .padding(.leading, 78).padding(.trailing, -62)
+                .stackCard(color: .eat, rotation: -2)
+                .padding(.leading, 60)
             weekCard(start: lastWeek, title: "Semana passada")
-                .frame(height: 118).stackCard(color: .drink, rotation: 1.5)
-                .padding(.leading, 38).padding(.trailing, -42).offset(y: 86)
+                .stackCard(color: .drink, rotation: 1.5)
+                .padding(.leading, 30)
             VStack(alignment: .leading, spacing: 8) {
                 Micro("fica pro fim · quando você pedir", color: Color.must.blueText)
-                Spacer()
-                HStack(alignment: .bottom, spacing: 12) {
-                    MonoNumber("\(saveForEnd.count)", size: 64).foregroundStyle(Color.must.ink)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("ficaram pro fim").font(.must.archivo(19, .semibold)).foregroundStyle(Color.must.ink)
-                        Text(saveForEnd.prefix(3).map(\.name).joined(separator: ", ")).font(.must.archivo(13)).foregroundStyle(Color.must.blueText).lineLimit(2)
-                    }
-                    .padding(.bottom, 6)
-                }
+                saveForEndBlock(saveForEnd)
             }
             .padding(.horizontal, 24).padding(.vertical, 22)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .frame(height: 250).stackCard(tint: .sky).offset(y: 172)
+            .frame(maxWidth: .infinity, alignment: .topLeading)
+            .stackCard(tint: .sky)
         }
-        .frame(height: 422, alignment: .top)
     }
 
     private func weekCard(start: Date, title: String) -> some View {
@@ -297,7 +322,7 @@ struct TripView: View {
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 22)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
     }
 
     // MARK: Progresso por lista

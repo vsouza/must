@@ -168,7 +168,7 @@ struct AppRoot: View {
 
 #if DEBUG
 /// `-debugScreen <tela>` abre uma tela direto (simulador/prints):
-/// ajustes, regiao, mapas-offline, musts, lista:<id>, fim, lugar:<id>, editar:<id>, nova-lista, adicionar[:url], hoje, mapa,
+/// ajustes, regiao, mapas-offline, musts, lista:<id>, fim, lugar:<id>, editar:<id>, nova-lista, adicionar[:url], hoje, hoje-aceito, mapa,
 /// inicio (sem dia), inicio-aceito (dia de hoje aceito, fica na Início),
 /// board, board:editar (2 selecionados), editar-lista:<id>.
 /// `ingresso` abre um ingresso de exemplo (TicketDemo). `ingresso-entrada` e `ingresso-revisar` abrem Trazer ingresso
@@ -215,6 +215,10 @@ enum DebugLaunch {
         case "adicionar": router.sheet = .addLink(url: arg, listId: nil)
         case "colar-texto": router.sheet = .addLink(url: nil, listId: nil) // aba Texto (o arg `amostra` lê a amostra)
         case "hoje": router.select(.hoje)
+        case "hoje-aceito": // dia de hoje aceito, na aba Hoje (prints do selos de progresso, prompt 18 · D.20)
+            acceptToday(context: context, region: region, location: location)
+            router.select(.hoje)
+            prefetchDays(services: services, context: context, region: region)
         case "montar", "proposta", "trocar": router.push(.montar(date: region.calendar.startOfDay(for: AppClock.now)), on: .hoje)
         case "gasto": router.select(.hoje); router.sheet = .expense(placeId: nil)
         case "aceitar":
