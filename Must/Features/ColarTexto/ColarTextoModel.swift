@@ -56,6 +56,8 @@ final class ColarTextoModel {
     private(set) var key = ""
     /// Texto de exibição (sem marcação de Markdown): é o que o destaque procura.
     private(set) var shown = ""
+    /// Dia em foco: o card recolhido começa nele (o último dia sugerido, até o usuário tocar outro).
+    private(set) var focusId: Int?
 
     // MARK: Análise
 
@@ -101,6 +103,7 @@ final class ColarTextoModel {
         matches = PlaceMatcher.match(merged, places: env.board, lists: env.lists, city: env.city, region: env.region, details: details)
         listChoice = Dictionary(matches.compactMap { m in m.suggestedListId.map { (m.id, $0) } }, uniquingKeysWith: { a, _ in a })
         expanded = []
+        focusId = groups.last { $0.id >= 0 }?.id
         dayOn = Set(groups.map(\.id).filter { $0 >= 0 })
         // Sem Places (offline ou sem chave), todo mundo entra marcado; com Places, só o que foi achado no mapa.
         included = Set(matches.filter { !placesChecked || $0.located }.map(\.id))
@@ -113,6 +116,34 @@ final class ColarTextoModel {
     /// Volta pro campo (o texto fica).
     func edit() {
         phase = .editing
+    }
+
+    func focus(_ id: Int) {
+        focusId = id
+    }
+
+    /// Onde o card recolhido começa: o título do dia em foco; sem ele, o primeiro lugar desse dia.
+    func snippetStart() -> String.Index {
+        guard let draft, let focusId, draft.days.indices.contains(focusId) else { return shown.startIndex }
+        if let title = shown.range(of: draft.days[focusId].title, options: [.caseInsensitive]) {
+            return title.lowerBound
+        }
+        let names = matches.filter { $0.extracted.dayIndex == focusId }.map(\.extracted.name)
+        return names.compactMap { shown.range(of: $0, options: [.caseInsensitive, .diacriticInsensitive])?.lowerBound }.min()
+            ?? shown.startIndex
+    }
+
+    /// "CHATGPT" quando o texto diz, "IA" quando a abertura é de resposta de assistente; senão nada.
+    var origin: String? {
+        let folded = TravelTextParser.foldedText(String(text.prefix(160)))
+        if TravelTextParser.foldedText(text).contains("chatgpt") { return "CHATGPT" }
+        let cues = ["claro!", "certamente", "com certeza", "aqui vai", "aqui esta"]
+        return cues.contains { folded.contains($0) } ? "IA" : nil
+    }
+
+    /// Contagem com ponto de milhar pt-BR: "1.840".
+    static func grouped(_ n: Int) -> String {
+        n.formatted(.number.locale(Locale(identifier: "pt_BR")).grouping(.automatic))
     }
 
     /// Mostra os lugares de um grupo além dos três de cima.
@@ -176,8 +207,11 @@ final class ColarTextoModel {
             let style = Self.style(m.extracted.category)
             return ([m.extracted.name] + m.extracted.aliases).map { (name: $0, style: style) }
         }
-        return ColarTextoHighlight.spans(in: shown, links: TravelTextParser.linkRanges(in: shown).map(\.range),
-                                         tips: draft.tips.map(\.text), places: places, areas: draft.days.compactMap(\.area))
+        let links = TravelTextParser.linkRanges(in: shown).map {
+            ColarTextoHighlight.Link(range: $0.range, label: ColarTextoHighlight.shortLabel($0.url))
+        }
+        return ColarTextoHighlight.spans(in: shown, links: links, tips: draft.tips.map(\.text), places: places,
+                                         areas: draft.days.compactMap(\.area))
     }
 
     // MARK: Gravação

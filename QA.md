@@ -296,7 +296,7 @@ iPhone: [ ] medir com Instruments (Hangs + Time Profiler) — Vinicius
 
 **Prints (simulador "Must-Texto", iPhone 17, Debug, `build/qa/`, não commitados).**
 - `xcrun simctl launch 9826BD97-6F13-4C68-90E6-4B044D56602F dev.viniso.must -skipOnboarding YES -region jp -debugPlaces fake -debugScreen colar-texto:amostra` e `xcrun simctl io 9826BD97-6F13-4C68-90E6-4B044D56602F screenshot build/qa/colar-amostra-1.png`. Mostra o seletor com "Texto" ativo e o texto marcado (comer, ver, beber, área tracejada, dica âmbar, links em preto).
-- Não capturei a metade de baixo (contadores, grupos, dicas, botões): o simulador não rola sem um toque. Essa parte está coberta pelos testes de contagem, grupos e marcação, mas falta olhar no print.
+- Revisão (coordenador): `build/qa/colar-recolhido-2.png`, mesmo comando. Card recolhido (~200 pt a partir do dia em foco, fade, última linha cinza, "ver tudo"), contadores, cartão do dia com o selo do bairro (渋谷), "virar dia 1" e os botões fixos embaixo. A lista do dia rola por trás do fade; dicas e links ficam abaixo, sem print.
 - Offline (`-debugNetwork offline`) e Foundation Models: não rodados. O simulador não tem Apple Intelligence, então o aparelho cai no parser por regex.
 
 **Ficou de fora.** Fallback na nuvem (Haiku) pro Texto: o fluxo do link já tem o seu; o Texto não chama a nuvem. Nomes em japonês (`nameLocal`) no parser de regex. `StationStamp` não existe neste worktree, então a Texto não mostra selo de estação. Leitura de links no `-debugPlaces fake` usa legenda de mentira (sem rede).

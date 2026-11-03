@@ -50,7 +50,7 @@ struct AddLinkView: View {
                     .padding(.top, 16)
 
                     if mode == .text {
-                        ColarTextoView(model: texto, env: colarContext(), sync: services.sync, waiting: waiting.count) { dismiss() }
+                        ColarTextoView(model: texto, env: colarContext(), waiting: waiting.count)
                             .padding(.top, 26)
                     } else if model.phase == .done {
                         AddLinkResults(model: model, lists: lists, region: region)
@@ -92,6 +92,12 @@ struct AddLinkView: View {
                 .padding(.horizontal, 22)
             }
             .scrollDismissesKeyboard(.interactively)
+            // Botões do Texto fixos embaixo (com fade branco); o Link mantém o botão dele, na ZStack.
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                if mode == .text && texto.phase == .done {
+                    ColarTextoActions(model: texto, env: colarContext(), sync: services.sync) { dismiss() }
+                }
+            }
 
             if mode == .link { mainButton }
         }
@@ -132,10 +138,10 @@ struct AddLinkView: View {
                 Button { mode = option } label: {
                     Text(option.label)
                         .font(.must.archivo(14, .semibold))
-                        .foregroundStyle(Color.must.ink)
+                        .foregroundStyle(mode == option ? Color.white : Color.must.ink)
                         .padding(.horizontal, 16)
                         .frame(height: 40)
-                        .background(Capsule().fill(mode == option ? Color.white : .clear))
+                        .background(Capsule().fill(mode == option ? Color.must.ink : .clear))
                 }
                 .buttonStyle(MustPressStyle())
             }
