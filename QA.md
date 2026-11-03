@@ -258,4 +258,29 @@ Observação: o "antes" é uma emulação do getter antigo, não o código antig
 
 **Ficou de fora.** Medição no iPhone com Instruments e Network Link Conditioner (pendente do Vinicius). Limite de 300 MB LRU do cache de foto (não implementado). Pré-download no Wi-Fi e "dia salvo offline" (A.5). Arranque (A.6). Foundation Models (A.7). Cancelamento de requisição quando todos os interessados saem do dedupe (a Task segue até o fim).
 
+**A.5 · Dia offline (prompt 18 · A.5).** `DayPrefetch` (`Must/Services/DayPrefetch.swift`) roda ao aceitar o dia (Montar), às 07:00 com o app aberto e quando o Wi-Fi volta (hoje e amanhã). Só no Wi-Fi, fora do Modo de Pouco Dados e sem medido (`PrefetchPolicy`). Baixa a foto principal de cada parada (Commons com cache, ou a da lista; **sem Google**) e a previsão da cidade. **Não** chama Routes nem Street View (custam cota) e **não** baixa o mapa (~100 MB): a Hoje só mostra "mapa de … não baixado · baixar". Estado no `PlannedDay` (`offlineSavedAt`, `offlineDone`, `offlineTotal`). Hoje: "dia salvo offline ✓", "salvando… 3/7", "salvo 5/7 · completa no Wi-Fi", "salva no Wi-Fi". Testes: `MustTests/DayPrefetchTests.swift` (10). Simulador: `-debugNetwork wifi -debugScreen aceitar` → "dia salvo offline ✓" (`build/qa/a5-wifi-salvo.png`); `-debugNetwork celular -debugScreen aceitar` → "salva no Wi-Fi" (`build/qa/a5-celular-aceitar.png`); `-debugNetwork offline -debugScreen hoje` depois de salvar → Hoje completo com "dia salvo offline ✓" (`build/qa/a5-offline-hoje.png`).
+
+**A.6 · Arranque.** Medido no simulador (iPhone 17, iOS 26.5, Debug), 3 aberturas a frio por fase, `LaunchTiming` (só DEBUG, categoria `launch`):
+
+| Medida | Antes | Depois |
+|---|---|---|
+| Primeiro frame, desde o processo | 726–849 ms | 602–660 ms |
+| Primeiro frame, desde o `init` do App | 292–356 ms | 163–182 ms |
+| Início da primeira sincronização | ~330 ms (com o primeiro frame) | ~2,3 s (espera 2 s) |
+| `init` do App, desde o processo (pré-`main`, fora do nosso código) | 433–492 ms | 439–477 ms |
+
+- `StartupSync`: a primeira sincronização espera 2 s; abertura, `.active` e "voltou a rede" viram um pedido só. Antes, a sincronização disparava duas vezes no arranque.
+- Abas montadas na primeira visita e vivas depois (`RootView`). Antes as quatro subiam no arranque, e o Mapa pedia rotas (`MKDirections`) e criava o `MLNMapView` antes do primeiro frame. Agora o MapLibre é criado uma vez, na primeira vez que o Mapa abre; trocar de aba não recria.
+- Volta do background: `syncIfNeeded` já tinha o limite de 6 h. Mantido.
+- Não medi com `-debugNetwork slow`/`offline` antes da mudança (a linha de base foi só de primeiro frame). Com as duas: primeiro frame ~630–655 ms e sincronização encerrada em ~2,3–2,4 s (com cache de previsão).
+- Ficou de fora: o pré-`main` (~450 ms, dyld e inicializadores estáticos) não é nosso código; não investiguei.
+
+**A.7 · Foundation Models.** Nenhuma sessão é criada na abertura do app (o `ChatModel` não cria nada em `init`; `Services` só cria o `DayPrefetch`, sem modelo). A sessão do Assistente é criada no ponto único `ChatModel.makeSession` (contador `sessionsMade`). Quando o Assistente abre, `warm()` cria uma sessão e chama `prewarm()` numa `Task.detached` (fora do main); ela vale pra primeira pergunta por 60 s. Quando a tela fecha, a pergunta em curso é cancelada (`asking?.cancel()`) e a resposta parcial não vira mensagem. Outras sessões (Montar, Adicionar por link, Dicas, Ticket, Experiências) já eram criadas só na ação do usuário; não mexi. Testes: `MustTests/AssistantWarmTests.swift` (3). Não dá pra medir no simulador (sem Apple Intelligence).
+
+**A.8 · Testes e o que só o iPhone mede.**
+- Testes novos: `StartupSyncTests` (4), `DayPrefetchTests` (10), `AssistantWarmTests` (3). Suíte completa: **395** testes passando (base 378).
+- Simulador: nenhuma tela presa com `-debugNetwork slow` e `offline` (Hoje e Início abrem em ~640 ms). Não rodei Network Link Conditioner nem 100% Loss no aparelho.
+- **Só o iPhone mede:** Instruments (Hangs > 250 ms, SwiftUI, Time Profiler) e o pré-download real em Wi-Fi.
+- Vinicius testou em 03/11 com Wi-Fi sem internet: só o 3D e as fotos falharam; o resto fluiu. Isso confirma o caminho offline; o pré-download de fotos sem internet fica pendente de teste no aparelho.
+
 iPhone: [ ] medir com Instruments (Hangs + Time Profiler) — Vinicius
