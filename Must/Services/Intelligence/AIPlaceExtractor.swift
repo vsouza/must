@@ -137,6 +137,8 @@ enum CloudBoost {
 
     static func extract(_ text: String, knownAreas: [String], http: HTTP = HTTP()) async throws -> [ExtractedPlace] {
         guard let key = Secrets.anthropicKey else { throw ServiceError.missingKey("ANTHROPIC_KEY") }
+        var http = http
+        http.kind = .long
         let data = try await http.post(URL(string: "https://api.anthropic.com/v1/messages")!, json: requestBody(text),
                                        headers: ["x-api-key": key, "anthropic-version": "2026-10-21"], service: "anthropic")
         return try parse(data, text: text, knownAreas: knownAreas)

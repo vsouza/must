@@ -38,6 +38,23 @@ enum AppNetwork {
         config.urlCache = URLCache.shared
         return URLSession(configuration: config)
     }()
+
+    /// Chamadas que demoram pra responder de propósito (Claude Haiku monta a resposta inteira antes de devolver).
+    static let longSession: URLSession = {
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 30
+        config.timeoutIntervalForResource = 40
+        config.waitsForConnectivity = false
+        config.urlCache = nil
+        return URLSession(configuration: config)
+    }()
+
+    /// Hosts que cobram por chamada (Google, AeroDataBox, Anthropic): nunca repetir sozinho. Um timeout pode
+    /// ter sido atendido (e cobrado) do outro lado; quem chama decide se tenta de novo.
+    static func isMetered(_ host: String?) -> Bool {
+        guard let host = host?.lowercased() else { return false }
+        return host.hasSuffix("googleapis.com") || host.hasSuffix("rapidapi.com") || host == "api.anthropic.com"
+    }
 }
 
 /// Pedido que pode ser repetido (429/5xx): leva o Retry-After pro intervalo entre as tentativas.
@@ -51,7 +68,8 @@ private struct RetryHint: Error {
 /// POST nunca repete (custa cota do Google). Registra no OSLog.
 struct HTTP: Sendable {
     /// `.prefetch`: pré-download (fotos, mapas) que não pode gastar dado do Modo de Pouco Dados.
-    enum Kind: Sendable { case interactive, prefetch }
+    /// `.long`: resposta lenta de propósito (Claude Haiku), 30 s.
+    enum Kind: Sendable { case interactive, prefetch, long }
 
     var session: URLSession = AppNetwork.session
     var kind: Kind = .interactive
@@ -71,7 +89,18 @@ struct HTTP: Sendable {
         URLCache.shared = URLCache(memoryCapacity: 16 * 1024 * 1024, diskCapacity: 50 * 1024 * 1024)
     }
 
-    private var timeout: TimeInterval { kind == .interactive ? 8 : 20 }
+    private var timeout: TimeInterval {
+        switch kind {
+        case .interactive: 8
+        case .prefetch: 20
+        case .long: 30
+        }
+    }
+
+    /// `.long` com a sessão padrão troca pra `AppNetwork.longSession` (a padrão corta em 20 s no total).
+    private var activeSession: URLSession {
+        kind == .long && session === AppNetwork.session ? AppNetwork.longSession : session
+    }
 
     func get(_ url: URL, headers: [String: String] = [:], service: String) async throws -> Data {
         var request = URLRequest(url: url, timeoutInterval: timeout)
@@ -98,10 +127,11 @@ struct HTTP: Sendable {
         let ready = prepared
         let method = ready.httpMethod ?? "GET"
         let idempotent = method == "GET" || method == "HEAD"
+        let retryable = idempotent && !AppNetwork.isMetered(ready.url?.host())
         if idempotent, let inFlight {
             let me = self
             return try await inFlight.value(for: Self.dedupeKey(ready, kind: kind)) {
-                try await me.guarded(ready, service: service, retryable: true)
+                try await me.guarded(ready, service: service, retryable: retryable)
             }
         }
         return try await guarded(ready, service: service, retryable: idempotent)
@@ -165,7 +195,7 @@ struct HTTP: Sendable {
         let data: Data
         let response: URLResponse
         do {
-            (data, response) = try await session.data(for: request)
+            (data, response) = try await activeSession.data(for: request)
         } catch let error as URLError where error.code == .notConnectedToInternet {
             throw ServiceError.offline
         }

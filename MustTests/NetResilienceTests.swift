@@ -91,6 +91,15 @@ private func url(_ host: String, _ path: String = "/x") -> URL {
 }
 
 struct HTTPResilienceTests {
+    @Test func meteredHostsAreNeverRetried() {
+        #expect(AppNetwork.isMetered("places.googleapis.com"))
+        #expect(AppNetwork.isMetered("routes.googleapis.com"))
+        #expect(AppNetwork.isMetered("aerodatabox.p.rapidapi.com"))
+        #expect(AppNetwork.isMetered("api.anthropic.com"))
+        #expect(!AppNetwork.isMetered("api.open-meteo.com"))
+        #expect(!AppNetwork.isMetered("commons.wikimedia.org"))
+    }
+
     @Test func offlineFailsAtOnceWithoutTouchingTheNetwork() async {
         let host = "offline-\(UUID().uuidString.prefix(6)).netstub.test"
         NetStub.register(host, [.ok(Data("{}".utf8))])
