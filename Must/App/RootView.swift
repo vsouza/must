@@ -23,6 +23,12 @@ struct RootView: View {
                 }
             }
 
+            // Fade branco por trás da tab bar (prompt 21 · fatia 0): o conteúdo que rola some aos poucos, sem corte seco.
+            LinearGradient(colors: [Color.must.bg.opacity(0), Color.must.bg.opacity(0.94)], startPoint: .top, endPoint: .bottom)
+                .frame(height: 116)
+                .ignoresSafeArea(edges: .bottom)
+                .allowsHitTesting(false)
+
             MustTabBar(selected: Binding(get: { router.tab }, set: { router.select($0) }))
                 .padding(.bottom, 4)
                 .ignoresSafeArea(.keyboard)

@@ -428,3 +428,16 @@ iPhone: [ ] medir com Instruments (Hangs + Time Profiler) — Vinicius
 - Toque na bolha e a sheet com o mapa em movimento.
 
 iPhone: [ ] medir Bairros e Guia com Instruments — Vinicius
+
+## Rodada 21 · fatia 0 (layout igual aos PNGs, 03/11)
+Conferido no simulador (9826BD97) com `-region jp -region.auto NO` contra `design/screens/*.png`: Início (`inicio`, `inicio-aceito`), Hoje (`hoje-aceito`), Guia, Bairros, Musts, Lista (`lista:eat`), Viagem › Voos, Ajustes, Nova lista, Editar lista, Mapa.
+- **Corrigido:** `NewListView` (Nova lista e Editar lista) tinha o botão "Criar / Salvar" sobreposto ao fim do scroll (fotos de fundo e o crédito da foto ficavam atrás do botão). Agora o botão fica fora do scroll, num VStack. A "~22 pt pra esquerda" não apareceu nos prints: as margens saem simétricas (22/22 pt); se o deslocamento aparecer no iPhone, é outro problema.
+- **Corrigido:** fade branco por trás da tab bar em `RootView` (116 pt, sem toque), pra todas as telas que rolam. Antes a última linha cortava seco embaixo da pílula.
+- **Conferido sem mudança:** Início e Hoje com cabeçalho, cards e blocos em stack; metadados de linha única com `lineLimit(1)`; chips em faixa horizontal; Musts com grade de 2 colunas e placeholder de cor.
+- **Dynamic Type XXXL:** `xcrun simctl ui <udid> content_size extra-extra-extra-large` aplicado antes de abrir Início, Hoje, Musts, Lugar, Viagem e Mapa. Nos prints não deu pra confirmar que o texto cresceu (o `-UIPreferredContentSizeCategoryName` não foi testado); a checagem de sobreposição ficou incompleta e precisa de nova rodada com o tamanho confirmado. Resetado para `large` depois.
+- **Ainda difere dos PNGs:**
+  - Início: o chip "offline ok" some quando há rede (no PNG aparece sempre); o card do dia usa foto de fundo em vez do gradiente escuro do PNG (regra do app: foto em todo lugar que mostra um lugar).
+  - Hoje: o botão flutuante (sparkles) fica sobre a hora da linha 4 quando a lista está no topo; o PNG tem o mesmo botão com mais folga entre as linhas.
+  - Musts: o app usa a foto do Commons com o gradiente a 82%, então o contraste varia com a foto; o PNG usa tons mais claros.
+  - Mapa: "Pra onde hoje?" fica sob a hora da barra de status (mapa em tela cheia; não mexi).
+- **Não verificado:** placeholder de cor em cada foto durante o carregamento (só com `-debugNetwork slow`); fica pra fatia 6.
