@@ -168,6 +168,18 @@ shot tema-bh-hoje -debugScreen aceitar
 shot tema-bh-musts -debugScreen musts
 shot tema-bh-viagem -debugScreen viagem
 
+echo "→ Bairros e Guia (prompt 18 · C.14–16): mapa de bolhas, sheet de Shinjuku, Guia de Shinjuku+ (15 nov, Shinjuku)"
+${=W} region jp
+${=W} dev.simDate -float $(epoch 2026-11-15T12:00:00+09:00)
+${=W} dev.simLat -float 35.6896; ${=W} dev.simLng -float 139.7006
+shot bairros-mapa -debugScreen bairros
+shot bairros-shinjuku -debugScreen "bairros:shinjuku"
+shot guia-shinjuku -debugScreen guia
+${=W} region bh
+${=W} dev.simDate -float $(epoch 2026-10-31T09:30:00-03:00)
+${=W} dev.simLat -float -19.9385; ${=W} dev.simLng -float -43.9343
+shot bh-bairros -debugScreen bairros
+
 echo "→ limpando simulações e chaves de debug"
 for k in dev.simDateOn dev.simDate dev.simSetAt dev.simGPSOn dev.simLat dev.simLng dev.simCloud skipOnboarding \
          debugPlaces debugNearby debugFlight debugTips debugAsk debugRoutes debugAutocomplete; do

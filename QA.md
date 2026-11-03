@@ -400,3 +400,31 @@ iPhone: [ ] medir com Instruments (Hangs + Time Profiler) — Vinicius
 - Guia (prompt 18 C): usar `.tripWash()` antes do `.background` da tela e `StationStamp(surface: .photo / .paper)`.
 - Coleção de selos na Viagem (quando existir) deve usar `theme.tripColor` na borda.
 - `StationStamp` perdeu os parâmetros `ring:` e `fill:` (agora `surface:`, `filled:`, `fillOpacity:`). Quem já tiver código com a API antiga precisa migrar.
+
+## Bairros e Guia (prompt 18 · C.14–16)
+
+**Automático.** Suíte completa no simulador (iPhone 17): **482 testes em 89 suítes, todos passando**. Novos: `AreaFocusSolverTests` (Shinjuku+ monta Nakano → Fuunji → Gyoen no golden → Golden Gai; offline com matriz vazia dá a mesma ordem; Ginza nunca entra com foco; frase "Comece por…"; determinismo), `AreaFocusPlanTests` (vizinhos até 15 min, simetria da tabela, bairro desconhecido), `BairrosGuiaTests` (raio ∝ √musts com teto, projeção da câmera no centro e a 1 km, norte para cima, deslocamento pela tabela e pela estimativa, pino do mini-mapa).
+
+**C.15 · solver por área.** `DayRequest.focus = .area(id:, includeNeighbors:, maxHopMinutes:)`. `AreaFocusPlan` monta o conjunto (bairro + vizinhos da tabela, sem rede). Candidato fora do foco sai em silêncio. Pontuação: trocar de bairro custa o trecho da tabela (25 min se não há ligação direta), voltar a um bairro já deixado custa +40, o que fecha dentro da janela sai antes. A explicação abre com a frase da ordem. Regras do CLAUDE.md (uma refeição por janela, reservas âncora, cidade, orçamento) continuam as mesmas.
+
+**C.14 · Bairros** (`Must/Features/Bairros/`). Mapa papel (MapLibre existente) com uma bolha por bairro (raio ∝ √musts, cor = o que mais tem, kanji no maior, contagem em mono), tempos entre vizinhos tracejados, você (azul). Sheet do bairro: selo (`surface: .paper`), nome 30/600, musts/abertos/tempo, barra de mistura, "Junto, a poucos minutos" (`LineChip` com a cor da linha), frase do solver, "Ajustar" e "Montar <bairro>+" (grava o dia com foco e abre o Guia). Início: "ver todos", "Montar por bairro", os 3 cartões de bairro e os 3 bairros do "Hoje, pra onde?" abrem a tela. O card do dia abre o Guia; "Ir agora" continua indo pro Como chegar.
+
+**C.16 · Guia do dia** (`Must/Features/Guia/`). Mini-mapa com o percurso (trecho de trem na cor oficial, a pé pontilhado, paradas numeradas). "Guia de hoje · Shinjuku+" com o selo. Cada parada: hora, kanji do bairro, cartão com a foto principal (`PlaceThumb`) e a cor do tipo a 50%; atual em verde com "Como chegar · N min"; golden em dourado; noite em cinza; feito com 済. Entre as paradas: chip da linha + minutos, ou "a pé N min", ou "metrô · N min". Deslocamento pela tabela de vizinhos (offline); sem ligação, a estimativa de sempre. Fim com o último trem (`LastTrains`, o que já existia). Base: "Trocar" (Montar) e "Ir pro <próximo> · saia HH:MM".
+
+**Prints** (`build/qa/`, não commitados; `scripts/qa-screens.sh` ganhou a seção "Bairros e Guia"): `bairros-mapa`, `bairros-shinjuku`, `guia-shinjuku`. Conferidos contra `Bairros.png` e `GuiaBairro.png`: a sheet e o Guia agora sobem acima da tab bar (ajuste de 96 pt, como no Início).
+
+**Diferenças dos PNGs e por quê.**
+- O seed JP não tem Gyoen nem Golden Gai: o "Shinjuku+" do simulador usa o que o seed tem (Menya Kaijin, Koffee Mameya, Udatsu), não o exemplo do mock. O exemplo está nos testes do solver (fixtures). Não mexi no seed (ele cresce no board do Vinicius).
+- Bolhas: o centro inicial da câmera não enquadra todos os bairros (abre no centro da região); o Shinjuku do mock fica fora da tela no primeiro quadro.
+- Trecho de trem: só o que está nos trilhos aproximados (JY, JC aproximada, H, G…). Linhas sem ligação na tabela de vizinhos caem na estimativa.
+- Último trem: vem do `LastTrains` existente (com "Último … · HH:MM"), chip neutro em vez do chip com a cor da linha.
+- Fotos das paradas: `PlaceThumb` (caminho do prompt 19), não Commons.
+- Filtro (ícone do canto do mock) e "Ajustar" com ação própria ficaram de fora; "Ajustar" abre o Montar de hoje.
+- Plataforma/saída ("saída sul") não existe nos dados: só "a pé N min".
+
+**Pendências (só no iPhone).**
+- Instruments e Network Link Conditioner nas telas Bairros e Guia (hangs > 250 ms).
+- Bolhas com GPS real: distância da sheet e ordem da frase com horários do Places (o seed JP tem horário em pouquíssimos lugares).
+- Toque na bolha e a sheet com o mapa em movimento.
+
+iPhone: [ ] medir Bairros e Guia com Instruments — Vinicius
