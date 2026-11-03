@@ -511,3 +511,22 @@ Conferido no simulador (9826BD97) com `-region jp -region.auto NO` contra `desig
 iPhone: [ ] andar entre Shinjuku, Ginza e Shibuya e ver o bairro trocar (fora da tabela, a troca espera o geocoder) — Vinicius
 [ ] sem sinal, abrir o app no bairro já visto: mostra o último bairro — Vinicius
 [ ] Wi-Fi com Modo de Pouco Dados ligado: nada de capa nova — Vinicius
+
+## Rodada 21 · fatia 6 (QA da rodada, 03/11)
+
+**Automático.** Suíte completa no simulador: **547 testes em 99 suítes, todos passando**. Build de aparelho (`generic/platform=iOS`, sem assinatura) OK.
+
+**Prints** (JP às 12:50 em Naka-Meguro e BH na Savassi, fakes de Places/Nearby/voo): Início, Hoje (dia aceito), Guia, Bairros, Lugar (Udatsu com reserva; Mercado Central), Musts, Viagem, Carteira, Voos, Compras, Colar texto (amostra). Conferidos contra `design/screens/`.
+
+**Corrigido nesta fatia.**
+- **Crash na troca de região no arranque** (SIGTRAP no SwiftData em `AppRoot.syncThenRefresh`): a sincronização da abertura espera 2 s e lia o `modelContext` da árvore que já tinha saído. Acontecia ao abrir com a região errada pro GPS — no iPhone, a primeira abertura no Japão. Agora o pedido leva contexto/container/geração da árvore e a árvore que sai cancela o pendente (`StartupSyncTests.cancelarDuranteOAtrasoNaoRoda`). Widgets e avisos do guia capturam o contexto antes do `Task`.
+- Card "Hoje em <bairro>" da Início tinha altura fixa de 296 pt e cortava o "HOJE EM" no topo: agora cresce com o conteúdo.
+- Fade global atrás da tab bar (fatia 0) removido: cobria o mapa e os botões do Lugar; cada tela já tem o seu.
+
+**Ainda diferente / pendente.**
+- Carteira em DEBUG (`-debugScreen carteira`) mostra Suica e JR Pass duas vezes (itens de partida + itens de exemplo). No uso normal só entram os de partida, e não duplicam um cartão do mesmo tipo.
+- Colar texto (amostra, simulador): Meiji Jingu e Fuunji aparecem como "novo" mesmo existindo no board (Santuário Meiji, Fuunji) — o casamento de nomes não junta "Meiji Jingu" × "Santuário Meiji".
+- Hoje: o botão flutuante do assistente fica sobre a hora da 4ª linha com a lista no topo.
+- Dynamic Type XXXL não verificado nos prints (o `content_size` do simulador não refletiu).
+
+**iPhone (Vinicius).** Ver `docs/checklist-viagem.md`. Além dele: abrir o app pela primeira vez no Japão (troca BH → Japão pelo GPS) e confirmar que não fecha; andar entre bairros e ver "Hoje em <bairro>" trocar; Colar texto com resposta real do ChatGPT; avisos do guia com o app fechado; Instruments (Hangs).
