@@ -43,16 +43,15 @@ struct HomeView: View {
                     offlineChip.padding(.top, 12)
                 }
                 dayCard.padding(.top, 16)
-                tomorrowSection.padding(.top, 20)
-                nearbyRow.padding(.top, 14)
-                spendLine.padding(.top, 10)
+                tomorrowSection.padding(.top, 16)
+                HStack(spacing: 12) { nearbyRow; addButton }.padding(.top, 14)
+                spendLine.padding(.top, 8)
                 TabBarSpacer()
             }
             .padding(.horizontal, 22)
             .padding(.bottom, 24)
         }
         .scrollIndicators(.hidden)
-        .overlay(alignment: .bottomTrailing) { addButton }
         .background {
             ZStack {
                 Color.must.bg
@@ -262,7 +261,7 @@ struct HomeView: View {
             .padding(20)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
-        .frame(height: 320)
+        .frame(height: 296)
         .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         .shadow(color: Color.must.ink.opacity(0.22), radius: 25, y: 22)
     }
@@ -306,7 +305,7 @@ struct HomeView: View {
             .padding(20)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
-        .frame(height: 320)
+        .frame(height: 296)
         .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         .shadow(color: Color.must.ink.opacity(0.22), radius: 25, y: 22)
     }
@@ -490,8 +489,6 @@ struct HomeView: View {
                     .foregroundStyle(Color.must.secondary)
             }
             .padding(8)
-            // Espaço pro "+" (fica sobre a direita da linha).
-            .padding(.trailing, 66)
             .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(Color.must.surface2))
         }
         .buttonStyle(MustPressStyle())
@@ -526,7 +523,7 @@ struct HomeView: View {
         .buttonStyle(.plain)
     }
 
-    /// "+" verde (Adicionar): hoje abre Link/Nome; o Texto é a fatia E.
+    /// "+" verde (Adicionar), ao lado do "Por perto" como no Home6: hoje abre Link/Nome; o Texto é a fatia E.
     private var addButton: some View {
         Button { router.sheet = .addLink(url: nil, listId: nil) } label: {
             ZStack {
@@ -539,8 +536,6 @@ struct HomeView: View {
         }
         .buttonStyle(MustPressStyle())
         .accessibilityLabel("Adicionar")
-        .padding(.trailing, 22)
-        .padding(.bottom, 96)
     }
 }
 
@@ -554,8 +549,10 @@ struct HeroBackdrop: View {
             AreaPhotoView(photo: photo, fallback: fallback)
             LinearGradient(
                 stops: [
-                    .init(color: Color(hex: 0x15171C).opacity(0.15), location: 0),
-                    .init(color: Color(hex: 0x15171C).opacity(0.55), location: 0.45),
+                    // Topo também escuro: o nome do bairro fica legível em foto clara.
+                    .init(color: Color(hex: 0x15171C).opacity(0.62), location: 0),
+                    .init(color: Color(hex: 0x15171C).opacity(0.45), location: 0.35),
+                    .init(color: Color(hex: 0x15171C).opacity(0.6), location: 0.55),
                     .init(color: Color(hex: 0x15171C).opacity(0.96), location: 1),
                 ],
                 startPoint: .top, endPoint: .bottom
