@@ -578,6 +578,8 @@ enum DaySolver {
             score += Double(focus.hop(current, here) ?? 25)
             if trail.contains(here) { score += 40 }
         }
+        // O bairro pedido é o dia; vizinho complementa (sem isso o board grande puxa tudo pro vizinho).
+        if let here = ctx.focusArea[p.id], here != focus.mainId { score += 12 }
         if let close = closingMinute(p, ctx: ctx), close < window.upperBound { score -= 15 }
         return score
     }

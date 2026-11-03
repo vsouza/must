@@ -107,17 +107,19 @@ struct AreaFocusSolverTests {
 }
 
 struct AreaFocusSeedTests {
-    /// O seed de verdade (não fixture): Shinjuku+ tem Gyoen e Golden Gai como candidatos, e a Golden Gai fecha a noite.
-    @Test func shinjukuPlusOnSeedHasGyoenAndGoldenGaiWithGoldenGaiLast() throws {
+    /// O seed de verdade (não fixture): Shinjuku+ fica no bairro pedido (o vizinho só complementa), o Gyoen entra no
+    /// golden e a Golden Gai é candidata (não "fora do bairro"); se entrar, fecha a noite.
+    @Test func shinjukuPlusOnSeedStaysInShinjukuWithGyoenAtGolden() throws {
         let catalog = AreaFixtures.seedCatalog()
         // Sábado 14 nov: sem reserva de jantar (a do Udatsu é dia 15 e viraria âncora).
         let p = DaySolver.solve(AreaFixtures.shinjukuPlus(day: "2026-11-14"), catalog: catalog)
-        let ids = p.stops.map(\.place.id)
         let gyoen = try #require(catalog.first { $0.name == "Shinjuku Gyoen" })
         let golden = try #require(catalog.first { $0.name == "Golden Gai" })
-        #expect(ids.contains(gyoen.id))
-        #expect(ids.contains(golden.id))
-        #expect(ids.last == golden.id)
+        let gyoenStop = try #require(p.stops.first { $0.place.id == gyoen.id })
+        #expect(gyoenStop.reason == "golden")
+        #expect(p.stops.filter { $0.place.area == "Shinjuku" }.count >= 2)
+        #expect(p.reason(for: golden.id) != "fora do bairro")
+        if let i = p.stops.firstIndex(where: { $0.place.id == golden.id }) { #expect(i == p.stops.count - 1) }
     }
 }
 
