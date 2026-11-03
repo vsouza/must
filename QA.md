@@ -232,4 +232,30 @@ Observação: o "antes" é uma emulação do getter antigo, não o código antig
 
 **Testes.** 346 → 361 (todos passando). Build de simulador e de aparelho (`generic/platform=iOS`, sem assinatura) OK.
 
+**A.4 · Rede (prompt 18 · A.4).** Feito no simulador (iPhone 17, iOS 26.5). Instruments no aparelho continua pendente (abaixo).
+
+- `Connectivity` (`Must/Services/Connectivity.swift`): `NWPathMonitor` → `online / constrained / offline` + `isExpensive`. Publica no main (`@Observable`) e espelha num `Mutex` que o `HTTP` lê de qualquer thread.
+- `AppNetwork.session` (uma sessão): timeout 8 s por request, 20 s por recurso, `waitsForConnectivity = false`, 4 conexões por host. Download de mapa segue na sessão própria (`PackDownload`), intacto.
+- `HTTP` (`Must/Services/Network.swift`): offline falha na hora com `ServiceError.offline` (nada sai); GET transitório (timeout, conexão perdida, 5xx, 429 com Retry-After ≤ 5 s) repete até 2 vezes com backoff 0,5/1 s e jitter; POST nunca repete; `HTTP(kind: .prefetch)` manda `allowsConstrainedNetworkAccess = false`; AeroDataBox com `retries: 0, breaker: nil`.
+- Disjuntor por serviço (`CircuitBreaker`, `Must/Services/NetResilience.swift`): 3 falhas seguidas abrem por 2 min, depois 1 tentativa de meia-abertura; `ServiceError.circuitOpen`.
+- Dedupe (`InFlight`): dois GETs iguais em voo viram uma requisição. POST não entra.
+- Fila de saída (`OutboxItem`, `Must/Services/Outbox.swift`), no schema da região: `flightStatus` (passa pelo `FlightStatusUpdater.run`, então respeita `FlightPolicy` e a cota; sem rede não marca o trecho) e `readLink` (sem rede, o link entra na fila; ao reenviar, a legenda fica guardada e o Adicionar a usa). `resolvePlace` não entrou: `Place.resolveQueued` já é a fila do Places. Reenvio: na abertura e quando o chip volta a "online". Offline não conta tentativa; 6 tentativas que falham desistem (backoff até 30 min).
+- Adicionar: "N esperando internet" quando há itens na fila.
+- Home: o chip agora diz "sem internet · offline ok" quando `Connectivity` está offline (antes era "sem dados ao vivo" só pra erro/menu).
+- Foto de fundo (`TintedPhoto` → `PhotoLoader`): cache primeiro (memória → disco em `Caches/must-cache`, qualquer idade → rede só sem cópia ou com cópia de mais de 30 dias). Sem imagem e sem rede: gradiente da cor, sem spinner. Substituiu `AsyncImage`.
+- Lugar › 3D: botão "3D" fica esmaecido e desabilitado sem rede (acessibilidade: "precisa de internet"). No 3D, sem rede ou com a Look Around sem resposta em 6 s: aviso discreto "sem conexão · o 3D precisa de internet" com Fechar.
+- Chamadas que dependem de rede saíram do main: as providers já eram `struct` sem isolamento (execução fora do main); o que ficou no main é a orquestração (`SyncCoordinator`, `FlightStatusUpdater`, `ETACache`, `TipsModel`) e as escritas SwiftData.
+- `.task(id:)`: dicas do Lugar (`PlaceView`) viraram `.task(id:)` cancelável. Os outros `Task {}` de ações do usuário ficaram (sem efeito de tela presa medido).
+
+**Debug.** `-debugNetwork offline` (força offline; `Connectivity` não liga o monitor) e `-debugNetwork slow` (3 s de latência e 30% de falha por tentativa). Desligados sob XCTest.
+
+**Simulador (prints em `build/qa/`, não commitados).**
+- `offline`: Início com chip "sem internet · offline ok"; Lista, Adicionar e Lugar abrem sem tela presa; Lugar com "3D" esmaecido; 3D com o aviso.
+- `slow`: Lugar abre normal, 3D habilitado.
+- Não medi tempo de hang nem Time Profiler (Instruments não roda aqui sem o aparelho). Foto offline: o Lugar j18 mostrou a foto, mas não confirmei se veio do disco ou de uma sessão anterior.
+
+**Testes.** 361 → 377 (16 novos em `MustTests/NetResilienceTests.swift`: 11 de `HTTP` com `NetStub` por host, 5 de fila/FlightPolicy). Todos passando.
+
+**Ficou de fora.** Medição no iPhone com Instruments e Network Link Conditioner (pendente do Vinicius). Limite de 300 MB LRU do cache de foto (não implementado). Pré-download no Wi-Fi e "dia salvo offline" (A.5). Arranque (A.6). Foundation Models (A.7). Cancelamento de requisição quando todos os interessados saem do dedupe (a Task segue até o fim).
+
 iPhone: [ ] medir com Instruments (Hangs + Time Profiler) — Vinicius
