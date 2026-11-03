@@ -52,10 +52,11 @@ struct AppRoot: View {
                 #endif
             }
             // Arranque: nada de rede antes do primeiro frame (prompt 18 · A.6). Abre com o que está salvo.
-            .task { syncGate.request { await syncThenRefresh() } }
+            .task { requestSync() }
+            .onDisappear { syncGate.cancel(); outsideTask?.cancel() }
             // Volta a rede: a fila de saída (voos, links lidos) reenvia sem esperar a próxima abertura.
             .onChange(of: services.connectivity.status) { _, status in
-                if status == .online { syncGate.request { await syncThenRefresh() } }
+                if status == .online { requestSync() }
             }
             // Wi-Fi voltou: o que falta de hoje e amanhã baixa agora (prompt 18 · A.5). No celular, a política não deixa.
             .onChange(of: services.connectivity.prefetchNetwork) { _, network in
@@ -70,7 +71,7 @@ struct AppRoot: View {
             .onChange(of: scenePhase, initial: true) { _, phase in
                 if phase == .active {
                     services.location.start()
-                    syncGate.request { await syncThenRefresh() }
+                    requestSync()
                     refreshGuide()
                     // Ingresso compartilhado que o Share Extension não conseguiu abrir: pega aqui.
                     if router.sheet == nil, let waiting = ShareInbox.pending().first {
@@ -91,17 +92,33 @@ struct AppRoot: View {
 
     /// Sincroniza e atualiza widgets. Se a região trocar no meio (GPS, Ajustes), para: a árvore nova
     /// já faz o dela, e o `context` daqui é do board antigo (o container fica vivo até o fim).
-    private func syncThenRefresh() async {
-        let region = store.region
-        let container = context.container
-        defer { withExtendedLifetime(container) {} }
+    /// Pede a sincronização com o board desta árvore, capturado agora: o pedido da abertura espera 2 s e, se a
+    /// região trocar nesse meio (GPS na primeira abertura no Japão), esta árvore já saiu. Ler o `context` dela
+    /// depois disso derruba o app (SwiftData), então o trabalho leva o contexto e o container daqui.
+    private func requestSync() {
+        let tree = Tree(context: context, container: context.container, region: store.region, generation: store.generation)
+        syncGate.request { await syncThenRefresh(tree) }
+    }
+
+    private struct Tree {
+        let context: ModelContext
+        let container: ModelContainer
+        let region: Region
+        let generation: Int
+    }
+
+    private func syncThenRefresh(_ tree: Tree) async {
+        guard store.region == tree.region, store.generation == tree.generation, !Task.isCancelled else { return }
+        let region = tree.region
+        let context = tree.context
+        defer { withExtendedLifetime(tree.container) {} }
         LaunchTiming.mark("sync começou")
         await services.sync.syncIfNeeded(context: context, region: region)
         // Fila de saída: o que ficou sem rede sai agora; cada item segue a própria política (voo, cota).
         // Places entra pra conferir texto colado que ficou na fila sem rede (prompt 18 · E.23).
         await Outbox.drain(context: context, region: region, places: services.places)
         LaunchTiming.mark("sync terminou")
-        guard store.region == region, !Task.isCancelled else { return }
+        guard store.region == region, store.generation == tree.generation, !Task.isCancelled else { return }
         OutsideBridge.refresh(context: context, region: region, services: services)
     }
 
@@ -109,6 +126,7 @@ struct AppRoot: View {
     private func runPrefetchPending() {
         let region = store.region
         let network = services.connectivity.prefetchNetwork
+        let context = context
         let container = context.container
         let places = ((try? context.fetch(FetchDescriptor<Place>())) ?? []).map(HomeState.areaPlace)
         Task {
@@ -135,11 +153,14 @@ struct AppRoot: View {
     private func refreshOutsideSoon() {
         outsideTask?.cancel()
         let region = store.region
+        let generation = store.generation
+        // O contexto desta árvore, capturado agora (ler o @Environment depois que a árvore saiu derruba o app).
+        let context = context
         let container = context.container
         outsideTask = Task {
             defer { withExtendedLifetime(container) {} }
             try? await Task.sleep(for: .milliseconds(600))
-            guard !Task.isCancelled, store.region == region else { return }
+            guard !Task.isCancelled, store.region == region, store.generation == generation else { return }
             OutsideBridge.refresh(context: context, region: store.region, services: services)
             if !DebugFlags.isTestHost {
                 await GuideNudgeScheduler.refresh(context: context, region: store.region, origin: services.location.current?.coordinate, askPermission: false)
@@ -152,6 +173,7 @@ struct AppRoot: View {
         // No host de testes o app não toca na Central de Notificações (a suíte usa um fake).
         guard !DebugFlags.isTestHost else { return }
         let region = store.region
+        let context = context
         let container = context.container
         let origin = services.location.current?.coordinate
         Task {

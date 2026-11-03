@@ -37,6 +37,24 @@ struct StartupSyncTests {
         #expect(!sync.isBusy)
     }
 
+    /// Troca de região durante o atraso de arranque: a árvore antiga cancela e o trabalho dela não roda
+    /// (rodar derrubava o app lendo o board que já fechou).
+    @Test func cancelarDuranteOAtrasoNaoRoda() async {
+        let calls = Calls()
+        let (gate, release) = AsyncStream<Void>.makeStream()
+        let sync = StartupSync(sleep: { d in
+            await calls.slept(d)
+            for await _ in gate { break }
+        })
+        #expect(sync.request { await calls.ran() })
+        await settle { await calls.sleeps.count == 1 }
+        sync.cancel()
+        #expect(!sync.isBusy)
+        release.yield(())
+        for _ in 0..<200 { await Task.yield() }
+        #expect(await calls.runs == 0)
+    }
+
     @Test func pedidosSeguidosViramUm() async {
         let calls = Calls()
         let (gate, release) = AsyncStream<Void>.makeStream()

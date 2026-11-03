@@ -37,6 +37,12 @@ final class StartupSync {
         return true
     }
 
+    /// A árvore saiu (troca de região): o pedido que ainda espera não roda.
+    func cancel() {
+        running?.cancel()
+        running = nil
+    }
+
     /// Há um pedido esperando ou rodando (teste e QA).
     var isBusy: Bool { running != nil }
 }
