@@ -19,12 +19,15 @@ final class Services {
     /// "Por perto": cache de 30 min por célula + fontes externas (prompt 14 · B).
     let nearby: NearbyLoader
     let maps = OfflineMaps()
+    /// Rede do aparelho (prompt 18 · A.4): chip "sem internet · offline ok" e fila de saída.
+    let connectivity = Connectivity()
 
     init(places: any PlacesProviding = PlacesService(), weather: any WeatherProviding = WeatherService(),
          photos: any PhotoProviding = CommonsPhotoService(), routes: any RoutesProviding = RoutesService(),
          nearby: any NearbyProviding = NearbyService(), autocomplete: any AutocompleteProviding = PlaceAutocomplete(),
          placePhotos: any PlacePhotosProviding = GooglePlacePhotos()) {
         location = LocationService()
+        connectivity.start()
         let launched = Self.launchPlaces(places)
         self.places = launched
         self.autocomplete = Self.launchAutocomplete(autocomplete)

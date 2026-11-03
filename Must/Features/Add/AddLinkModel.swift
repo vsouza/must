@@ -44,20 +44,42 @@ final class AddLinkModel {
         return first
     }
 
-    func run(board: [Place], lists: [MustList], city: City?, region: Region, knownAreas: [String], provider: any PlacesProviding) async {
+    /// `queue`: a fila de saída do container da região. Sem rede, o link entra nela (prompt 18 · A.4).
+    func run(board: [Place], lists: [MustList], city: City?, region: Region, knownAreas: [String], provider: any PlacesProviding,
+             queue: ModelContext? = nil) async {
         let link = LinkResolver.resolve(input)
         guard !link.text.isEmpty || link.url != nil else { return }
         resolved = link
         phase = .reading
         matches = []
+        let url = link.url?.absoluteString
+        // Leitura que já ficou pronta na fila (ou em outra tentativa): usa a legenda guardada, sem rede.
+        if let queue, let url, let ready = Outbox.readyCaption(for: url, context: queue) {
+            queue.delete(ready.item)
+            try? queue.save()
+            await finish(ready.caption, board: board, lists: lists, city: city, region: region, knownAreas: knownAreas, provider: provider)
+            return
+        }
+        if let queue, let url, Connectivity.current == .offline {
+            Outbox.enqueue(.readLink, ref: url, context: queue)
+            phase = .needsText(Self.queuedMessage)
+            return
+        }
         do {
             let caption = try await CaptionFetcher().fetch(link)
             await finish(caption, board: board, lists: lists, city: city, region: region, knownAreas: knownAreas, provider: provider)
         } catch {
             Log.network.error("legenda falhou: \(error.localizedDescription, privacy: .public)")
+            if let queue, let url, Outbox.isOffline(error) {
+                Outbox.enqueue(.readLink, ref: url, context: queue)
+                phase = .needsText(Self.queuedMessage)
+                return
+            }
             phase = .needsText((error as? LocalizedError)?.errorDescription ?? "Não consegui ler a legenda.")
         }
     }
+
+    static let queuedMessage = "Sem internet agora. O link ficou na fila e é lido quando a rede voltar. Se preferir, cole o texto agora:"
 
     /// Fallback: o usuário cola o texto da legenda.
     func runPasted(board: [Place], lists: [MustList], city: City?, region: Region, knownAreas: [String], provider: any PlacesProviding) async {

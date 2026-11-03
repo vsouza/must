@@ -84,7 +84,8 @@ final class SyncCoordinator {
         let container = context.container
         defer { withExtendedLifetime(container) {} }
         guard status != .syncing else { return }
-        guard DevOverrides.liveData else {
+        // Sem dados ao vivo ou sem rede: usa o que está salvo, sem esperar o timeout (prompt 18 · A.4).
+        guard DevOverrides.liveData, Connectivity.current != .offline else {
             status = .offline
             await loadCachedWeather(context: context, region: region)
             return

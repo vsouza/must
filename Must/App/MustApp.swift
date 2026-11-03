@@ -47,6 +47,10 @@ struct AppRoot: View {
                 #endif
             }
             .task { await syncThenRefresh() }
+            // Volta a rede: a fila de saída (voos, links lidos) reenvia sem esperar a próxima abertura.
+            .onChange(of: services.connectivity.status) { _, status in
+                if status == .online { Task { await syncThenRefresh() } }
+            }
             // Widgets e Live Activity acompanham qualquer gravação (dia aceito, 済, troca, gasto).
             .onReceive(NotificationCenter.default.publisher(for: ModelContext.didSave)) { _ in
                 refreshOutsideSoon()
@@ -79,6 +83,8 @@ struct AppRoot: View {
         let container = context.container
         defer { withExtendedLifetime(container) {} }
         await services.sync.syncIfNeeded(context: context, region: region)
+        // Fila de saída: o que ficou sem rede sai agora; cada item segue a própria política (voo, cota).
+        await Outbox.drain(context: context, region: region)
         guard store.region == region, !Task.isCancelled else { return }
         OutsideBridge.refresh(context: context, region: region, services: services)
     }
@@ -115,6 +121,8 @@ struct AppRoot: View {
 /// (use `-debugNearby fake` pra não gastar Google). `carteira` põe itens de exemplo na Carteira e abre a tela.
 /// `voos` abre Voos (aba da agenda); `viagem-voos` e `viagem-reservas` passam pelo calendário da Viagem.
 /// `-debugFlight fake` troca o AeroDataBox por status de mentira (prints, sem cota). `-gallery` abre a Gallery.
+/// `-debugNetwork offline` força "sem rede" (chip, falha na hora, fila de saída); `-debugNetwork slow` põe 3 s de
+/// latência e 30% de falha em cada tentativa HTTP (prompt 18 · A.4: a UI não pode travar).
 /// `como-chegar:<id>` abre Como chegar; `-debugRoutes fake` troca o Routes por respostas de exemplo. `buscar-nome:<texto>` abre
 /// Buscar por nome (com `-debugAutocomplete fake` pras sugestões de "koffee mam").
 @MainActor

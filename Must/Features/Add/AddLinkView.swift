@@ -16,6 +16,8 @@ struct AddLinkView: View {
     @Query private var places: [Place]
     @Query private var trips: [TripInfo]
     @Query private var settingsList: [Settings]
+    /// Leituras de link que ficaram sem rede (prompt 18 · A.4): "N esperando internet".
+    @Query(filter: #Predicate<OutboxItem> { !$0.done }) private var waiting: [OutboxItem]
 
     @State private var model = AddLinkModel()
     @State private var showNameSearch = false
@@ -62,6 +64,12 @@ struct AddLinkView: View {
                         .buttonStyle(MustPressStyle())
                         .padding(.top, 10)
                         badges.padding(.top, 14)
+                        if !waiting.isEmpty {
+                            Text(waiting.count == 1 ? "1 esperando internet" : "\(waiting.count) esperando internet")
+                                .mustMeta()
+                                .foregroundStyle(Color.must.secondary)
+                                .padding(.top, 10)
+                        }
                         resultArea.padding(.top, 28)
                     }
 
@@ -236,7 +244,8 @@ struct AddLinkView: View {
         let settings = settingsList.first
         model.extractorOptions = AIPlaceExtractor.Options(onDevice: settings?.onDeviceAI ?? true, cloudBoost: settings?.cloudBoost ?? false,
                                                           knownAreas: [], timeZone: region.timeZone)
-        await model.run(board: places, lists: lists, city: city, region: region, knownAreas: knownAreas, provider: services.places)
+        await model.run(board: places, lists: lists, city: city, region: region, knownAreas: knownAreas, provider: services.places,
+                        queue: context)
         applyPreferredList()
     }
 

@@ -32,7 +32,7 @@ enum CaptionError: LocalizedError, Equatable {
 /// oEmbed + descrição (YouTube), e parse da URL do Maps (seguindo links curtos).
 struct CaptionFetcher: Sendable {
     static let maxLength = 2000
-    var session: URLSession = .shared
+    var session: URLSession = AppNetwork.session
 
     private static let userAgent =
         "Mozilla/5.0 (iPhone; CPU iPhone OS 26_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1"

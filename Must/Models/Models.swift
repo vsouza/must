@@ -380,7 +380,7 @@ extension ModelContext {
 enum MustSchema {
     static let models: [any PersistentModel.Type] = [
         MustList.self, Place.self, Expense.self, PlannedDay.self, Stop.self, TripInfo.self, Settings.self, TripEvent.self,
-        WalletItem.self, Flight.self, ShoppingItem.self,
+        WalletItem.self, Flight.self, ShoppingItem.self, OutboxItem.self,
     ]
     static var schema: Schema { Schema(models) }
 }

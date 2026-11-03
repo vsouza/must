@@ -157,7 +157,8 @@ enum FlightPolicy {
 /// Consulta real: AeroDataBox pela RapidAPI. Conta a cota e bloqueia no 429/403.
 struct AeroDataBoxService: FlightStatusProviding {
     static let host = "aerodatabox.p.rapidapi.com"
-    var http = HTTP()
+    /// Cobra por chamada: nada de repetir (retries 0) e sem disjuntor (a cota e o 429/403 já são o freio).
+    var http = HTTP(retries: 0, breaker: nil)
 
     func report(number: String, departureIATA: String, day: String) async throws -> FlightStatusReport? {
         guard let key = Secrets.aerodataboxKey else { throw ServiceError.missingKey(Secrets.Key.aerodatabox.rawValue) }
@@ -197,11 +198,26 @@ enum FlightStatusUpdater {
     }
 
     /// Consulta os trechos devidos (no máximo um por trecho). Devolve quantas consultas foram feitas.
+    /// Sem rede, o voo entra na fila de saída (`Outbox`) e a consulta não é marcada: a próxima tentativa sai quando a rede voltar.
     @discardableResult
     static func refresh(_ flight: Flight, context: ModelContext, now: Date = AppClock.now, region: Region,
                         source: (any FlightStatusProviding)? = activeSource()) async -> Int {
-        var legs = flight.legs
+        let outcome = await run(flight, context: context, now: now, region: region, source: source)
+        if outcome.offline { Outbox.enqueue(.flightStatus, ref: flight.id, context: context, now: now) }
+        return outcome.calls
+    }
+
+    struct Outcome: Equatable {
         var calls = 0
+        /// Alguma consulta devida não saiu por falta de rede.
+        var offline = false
+    }
+
+    /// O mesmo que `refresh`, sem mexer na fila. Usado pela fila de saída (que também respeita `FlightPolicy`).
+    static func run(_ flight: Flight, context: ModelContext, now: Date = AppClock.now, region: Region,
+                    source: (any FlightStatusProviding)?) async -> Outcome {
+        var legs = flight.legs
+        var outcome = Outcome()
         var changed = false
         for index in legs.indices {
             let leg = legs[index]
@@ -209,26 +225,34 @@ enum FlightStatusUpdater {
                                                usedThisMonth: FlightQuota.used(now: now), blocked: FlightQuota.isBlocked(now: now))
             guard due, let source else { continue }
             let day = FlightRules.localDayString(leg.departsNow, iata: leg.from, fallback: region.timeZone)
-            calls += 1
-            changed = true
             do {
-                if let report = try await source.report(number: leg.number, departureIATA: leg.from, day: day) {
+                let report = try await source.report(number: leg.number, departureIATA: leg.from, day: day)
+                outcome.calls += 1
+                changed = true
+                if let report {
                     legs[index].status = report.status ?? legs[index].status
                     legs[index].revisedDeparts = report.departs
                     legs[index].revisedArrives = report.arrives
                     legs[index].terminal = report.terminal ?? legs[index].terminal
                     legs[index].gate = report.gate ?? legs[index].gate
                 }
+                legs[index].statusFetchedAt = now
+            } catch ServiceError.offline {
+                // Nada saiu nem foi cobrado: não marca o trecho (ele continua devido) e para por aqui.
+                outcome.offline = true
+                break
             } catch {
-                // Sem rede, cota ou chave recusada: o horário programado continua valendo. Não vira erro na tela.
+                // Cota ou chave recusada: o horário programado continua valendo. Não vira erro na tela.
+                outcome.calls += 1
+                changed = true
                 Log.network.info("status de voo indisponível: \(String(describing: error), privacy: .private)")
+                legs[index].statusFetchedAt = now
             }
-            legs[index].statusFetchedAt = now
             if FlightQuota.isBlocked(now: now) { break }
         }
-        guard changed else { return 0 }
+        guard changed else { return outcome }
         flight.legs = legs
         try? context.save()
-        return calls
+        return outcome
     }
 }
