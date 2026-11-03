@@ -175,10 +175,12 @@
 		8A999BAAE61A2AE92D70CB6B /* ColarTextoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C1BEA3A52142382A4E16718 /* ColarTextoView.swift */; };
 		8AE5E7691851AAA3DA26ED97 /* tokyo.json in Resources */ = {isa = PBXBuildFile; fileRef = 5CE4364063A688311F003AF8 /* tokyo.json */; };
 		8B37B3D68127F8BF77080F91 /* SunService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5EDC66249525A11114FA12B /* SunService.swift */; };
+		8B4CFB1E2AD52E5F13F707DF /* AreaStamps.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F547CB67FA4B99CA849984C /* AreaStamps.swift */; };
 		8C7BADBAFB9DC29FEA639206 /* TicketImportFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D9A83588A513DDF30DBDFB /* TicketImportFlow.swift */; };
 		8C9E5F57242BE53185CD4904 /* AddLinkResults.swift in Sources */ = {isa = PBXBuildFile; fileRef = 263C7C344090120AAEF01937 /* AddLinkResults.swift */; };
 		8E2C34166575E81B9180D841 /* BoardCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59C0F2D3F8FD625357FE147C /* BoardCodec.swift */; };
 		8E6F8A5363040C60B7BBC57E /* ComoChegarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF00883D891133B2BC9F646A /* ComoChegarView.swift */; };
+		8FEADBF9AC242901588E7CB3 /* AreaStampsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AF1148EFC3CD008FAB60175 /* AreaStampsTests.swift */; };
 		90B9BDB5BF906FA09336079C /* Tools.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A7F51EA8B63130EF27E29DC /* Tools.swift */; };
 		912E7C55D7659F76EE2F9F65 /* DayPrefetch.swift in Sources */ = {isa = PBXBuildFile; fileRef = F799B02D42632B01E8D3300B /* DayPrefetch.swift */; };
 		930C3451311B48537EBBE0BE /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 249BE4A213B5ED57BBC9CB4E /* README.md */; };
@@ -544,6 +546,7 @@
 		9910B338CBCFBBEB3855A06A /* KindGraphics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KindGraphics.swift; sourceTree = "<group>"; };
 		99212C9008FF3854ABD0FB65 /* ScheduleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleView.swift; sourceTree = "<group>"; };
 		9A74F7C74D5436F46F319256 /* BoardEdits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardEdits.swift; sourceTree = "<group>"; };
+		9AF1148EFC3CD008FAB60175 /* AreaStampsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AreaStampsTests.swift; sourceTree = "<group>"; };
 		9B23D24A63662CDD8BB529F4 /* MapCamera.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapCamera.swift; sourceTree = "<group>"; };
 		9CC941571578B870F1D0E6AD /* domestic-br.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "domestic-br.json"; sourceTree = "<group>"; };
 		9D0666B41FFD22C3744756C8 /* NearbyCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearbyCache.swift; sourceTree = "<group>"; };
@@ -551,6 +554,7 @@
 		9E16D153F0E8CEBCF78909D9 /* BairrosModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BairrosModel.swift; sourceTree = "<group>"; };
 		9F2EF01EBB004820D24C6BD5 /* TicketText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketText.swift; sourceTree = "<group>"; };
 		9F4F0061A29EDC53D23B6F5F /* BairrosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BairrosView.swift; sourceTree = "<group>"; };
+		9F547CB67FA4B99CA849984C /* AreaStamps.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AreaStamps.swift; sourceTree = "<group>"; };
 		A0C6510774C744A53AB78994 /* ShoppingRulesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShoppingRulesView.swift; sourceTree = "<group>"; };
 		A0CDF92BF817A26184F4637E /* TicketMatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketMatcher.swift; sourceTree = "<group>"; };
 		A0DE882D97FE358B156A3EE9 /* PlacesService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlacesService.swift; sourceTree = "<group>"; };
@@ -978,6 +982,7 @@
 				BC4418767176046B48D486E1 /* Fixtures */,
 				B600D87BD8333DC21371F73B /* ApiBudgetTests.swift */,
 				78212F58245B84FF6D0AEC48 /* AreaFocusSolverTests.swift */,
+				9AF1148EFC3CD008FAB60175 /* AreaStampsTests.swift */,
 				3617550DF5AB1EF53F0BCF7A /* AreaTests.swift */,
 				E274CE97AE647FC0BF84F38E /* AssistantTests.swift */,
 				C34295159CAF70FE35C4BB47 /* AssistantWarmTests.swift */,
@@ -1288,6 +1293,7 @@
 			isa = PBXGroup;
 			children = (
 				D11DDAB70F40C5BF814253FA /* AreaIndex.swift */,
+				9F547CB67FA4B99CA849984C /* AreaStamps.swift */,
 				9A74F7C74D5436F46F319256 /* BoardEdits.swift */,
 				03253802B39EE1C2C9B2E6D4 /* Extras.swift */,
 				40115E243E085BD0D1D7F7DD /* Flight.swift */,
@@ -1758,6 +1764,7 @@
 			files = (
 				BC4090ED9F855981DD32C94A /* ApiBudgetTests.swift in Sources */,
 				D1BEADAC2938916EF8EA5A00 /* AreaFocusSolverTests.swift in Sources */,
+				8FEADBF9AC242901588E7CB3 /* AreaStampsTests.swift in Sources */,
 				A23AA1FB3577611653C9764A /* AreaTests.swift in Sources */,
 				A75DBF72261F35941206EFF2 /* AssistantTests.swift in Sources */,
 				0559AB1F0C1B67030230A3AF /* AssistantWarmTests.swift in Sources */,
@@ -1827,6 +1834,7 @@
 				4D2F1173620C2F7B1D23E8F3 /* AreaFocus.swift in Sources */,
 				196E9A6E6BB184E582B1B23D /* AreaHeroes.swift in Sources */,
 				DC95376E70B9E4971D35883C /* AreaIndex.swift in Sources */,
+				8B4CFB1E2AD52E5F13F707DF /* AreaStamps.swift in Sources */,
 				3A0EF3BCBD64F07CAA51B1C7 /* Areas.swift in Sources */,
 				8091D7738E1225AE43365DDF /* AssistantSnapshot.swift in Sources */,
 				B10CDC96A29FED4AEC51643A /* AssistantView.swift in Sources */,
