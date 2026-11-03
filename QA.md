@@ -285,3 +285,25 @@ Observação: o "antes" é uma emulação do getter antigo, não o código antig
 - Vinicius testou em 03/11 com Wi-Fi sem internet: só o 3D e as fotos falharam; o resto fluiu. Isso confirma o caminho offline; o pré-download de fotos sem internet fica pendente de teste no aparelho.
 
 iPhone: [ ] medir com Instruments (Hangs + Time Profiler) — Vinicius
+
+## Avisos do guia (prompt 18 · C.17)
+
+**O que é.** O app avisa sem ser aberto: "Saia em 5 min pro <parada>", "Golden em 20 min · você está a N min do <foto>", "<lugar> abre agora · está a N min". Só do dia aceito de hoje, só de agora em diante, no máximo um aviso a cada 45 min (prioridade: saída > golden > abre agora). Tudo local, sem push e sem rede. Ajustes › Dia › "Avisos do guia" (ligado por padrão); desligar tira os avisos pendentes.
+
+**Como se calcula.** Saída = hora da parada − deslocamento estimado pelo solver (a pé até o andar do dia, senão metrô) − 5 min; o aviso chega 5 min antes dessa saída. Golden = início da janela (manhã ou tarde) menos 20 min, pra lista photo cuja parada cai perto da janela. Abre agora = primeiro horário de abertura do lugar depois do início do dia, se ele estava fechado e a parada é depois dessa abertura. A origem é a posição de agora se estiver a até 40 km da cidade, senão o centro. Não usa GPS em segundo plano nem a Routes. Os avisos usam trigger de calendário no fuso da região.
+
+**Permissão.** Só é pedida no aceite do dia (Montar › Aceitar). Recálculos (gravações, volta do app, 済, desfazer, o toggle) não pedem. Sem permissão, nada é agendado.
+
+**Identificadores.** `guide.<AAAA-MM-DD>.<n>`. O agendador só remove e recria os `guide.*`; os lembretes de ingresso (`ticket.leave.*`) e de voo (`flight.*`) não são tocados. Se o plano não muda, nada é reagendado.
+
+**Testes.** `MustTests/GuideNudgesTests.swift` (12 de função pura: saída, golden com e sem janela, abre agora, prioridade, espaçamento de 45 min com o limite exato, só futuro, horas já tocadas, ids) e `GuideSchedulerTests` (6 com fake de central: troca só `guide.*`, reagendar sem mudança não toca nada, dia sem aceite, desligado, permissão negada, desligar). Suíte completa: **413** passando (base 395).
+
+**Debug.** `-debugScreen avisos` lista no log (categoria `guide`) os avisos do dia aceito, sem agendar. Ex.: `log show --predicate 'subsystem == "dev.viniso.must" AND category == "guide"'`.
+
+**Simulador (Japão, 15/11 09:00 JST, dia aceito).** Saídas previstas: 09:25 Santuário Meiji ("chega às 09:50", ~20 min); 11:15 Ramen Hōsenka (~11 min, chega 11:31); 14:11 Koffee Mameya (~14 min, chega 14:30); 18:40 Udatsu Sushi (~15 min, chega 19:00). Espaçamento ok. Print do toggle em Ajustes › Dia em `build/qa/c17-ajustes.png`.
+
+**Ficou de fora / não verificado no aparelho.**
+- O agendamento real na Central de Notificações não foi visto no simulador: a permissão não pôde ser concedida por `simctl privacy` (sandbox), então o app não agendou nada de fato. Falta: aceitar o dia com permissão no iPhone e conferir que os avisos chegam no horário.
+- Golden e "abre agora" aparecem só nos testes; o dia de QA não tinha parada de foto na janela de golden nem lugar fechado ao começar o dia.
+- Os tempos de deslocamento são a estimativa do solver, não a matriz do Routes: o aviso pode sair alguns minutos fora do tempo real de trajeto.
+- Pendente do Vinicius: testar no iPhone se o aviso chega com o app fechado.
