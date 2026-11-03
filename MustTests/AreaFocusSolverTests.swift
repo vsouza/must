@@ -4,7 +4,7 @@ import Testing
 @testable import Must
 
 /// Solver por área (prompt 18 · C.15): "Shinjuku+" = Shinjuku + vizinhos a até 15 min, na tabela (offline).
-/// Gyoen e Golden Gai não estão no seed JP: são fixtures aqui. Fuunji e Ucchan vêm do seed.
+/// Gyoen e Golden Gai vêm do seed JP (j104, j105). O catálogo de fixtures segue pra ordem exata do exemplo.
 private final class AreaFocusToken {}
 
 private enum AreaFixtures {
@@ -40,9 +40,10 @@ private enum AreaFixtures {
     static let shinjuku = CLLocationCoordinate2D(latitude: 35.6896, longitude: 139.7006)
 
     /// Domingo 15 nov em Tóquio, saindo de Shinjuku às 09:30.
-    static func shinjukuPlus(travel: TravelMatrix? = nil, includeNeighbors: Bool = true, maxHop: Int = 15) -> DayRequest {
+    static func shinjukuPlus(travel: TravelMatrix? = nil, includeNeighbors: Bool = true, maxHop: Int = 15,
+                             day: String = "2026-11-15") -> DayRequest {
         let d = BoardDates(timeZone: Region.jp.timeZone)
-        let date = d.day(from: "2026-11-15")!
+        let date = d.day(from: day)!
         return DayRequest(date: date, timeZone: Region.jp.timeZone, kind: .free, budget: 15000, walk: .normal, lists: [:],
                           intent: DayIntent(), startAt: d.time("09:30", on: date)!, origin: shinjuku, cityId: "tokyo1",
                           daysLeftInCity: 1, travel: travel,
@@ -102,6 +103,21 @@ struct AreaFocusSolverTests {
         let b = DaySolver.solve(AreaFixtures.shinjukuPlus(), catalog: catalog)
         #expect(a.stops.map(\.place.id) == b.stops.map(\.place.id))
         #expect(a.explanation == b.explanation)
+    }
+}
+
+struct AreaFocusSeedTests {
+    /// O seed de verdade (não fixture): Shinjuku+ tem Gyoen e Golden Gai como candidatos, e a Golden Gai fecha a noite.
+    @Test func shinjukuPlusOnSeedHasGyoenAndGoldenGaiWithGoldenGaiLast() throws {
+        let catalog = AreaFixtures.seedCatalog()
+        // Sábado 14 nov: sem reserva de jantar (a do Udatsu é dia 15 e viraria âncora).
+        let p = DaySolver.solve(AreaFixtures.shinjukuPlus(day: "2026-11-14"), catalog: catalog)
+        let ids = p.stops.map(\.place.id)
+        let gyoen = try #require(catalog.first { $0.name == "Shinjuku Gyoen" })
+        let golden = try #require(catalog.first { $0.name == "Golden Gai" })
+        #expect(ids.contains(gyoen.id))
+        #expect(ids.contains(golden.id))
+        #expect(ids.last == golden.id)
     }
 }
 

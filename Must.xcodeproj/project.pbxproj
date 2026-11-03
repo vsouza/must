@@ -305,6 +305,7 @@
 		ECE54E0AA6A093DE81120582 /* bh.json in Resources */ = {isa = PBXBuildFile; fileRef = 5BA09BB900AE438DC86D9821 /* bh.json */; };
 		ED12BECCA5AC6F9B3E206342 /* MustShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F5D9962BB74EFE458C08ABD /* MustShared.swift */; };
 		ED3FFDEA1CC43B910B94FDE6 /* Airports.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F41658628DB4C9FDF9CE9E0 /* Airports.swift */; };
+		EE0AD7F1EA1DECACE7623D76 /* BairrosGuiaTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7CD9A7E3C0765F23B3798EA /* BairrosGuiaTests.swift */; };
 		EE255E355B7475E03A1D56FA /* LaunchTiming.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEE8DC22489334B4E4841AAB /* LaunchTiming.swift */; };
 		EF70CD60DFBE8BCECCFFDF76 /* MapLibreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D5285288E86B22BBED506EB /* MapLibreView.swift */; };
 		F0A01E732988DA2B93EFD925 /* OutboxItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD39887377378A00A8182583 /* OutboxItem.swift */; };
@@ -639,6 +640,7 @@
 		E2F0E7CAB62A868911308C5F /* Fonts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Fonts.swift; sourceTree = "<group>"; };
 		E472129BD157938345D871BF /* UniformTypeIdentifiers.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UniformTypeIdentifiers.framework; path = System/Library/Frameworks/UniformTypeIdentifiers.framework; sourceTree = SDKROOT; };
 		E73E37133E3474A471011CD9 /* WalletCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletCardView.swift; sourceTree = "<group>"; };
+		E7CD9A7E3C0765F23B3798EA /* BairrosGuiaTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BairrosGuiaTests.swift; sourceTree = "<group>"; };
 		E884E5C34972411E3851FCFF /* ServiceParsingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceParsingTests.swift; sourceTree = "<group>"; };
 		E8DF958C7A3147E7A4671A15 /* Gallery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gallery.swift; sourceTree = "<group>"; };
 		E926F5C8871767F5183C44EB /* TicketView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketView.swift; sourceTree = "<group>"; };
@@ -975,6 +977,7 @@
 				3617550DF5AB1EF53F0BCF7A /* AreaTests.swift */,
 				E274CE97AE647FC0BF84F38E /* AssistantTests.swift */,
 				C34295159CAF70FE35C4BB47 /* AssistantWarmTests.swift */,
+				E7CD9A7E3C0765F23B3798EA /* BairrosGuiaTests.swift */,
 				3847B720AFE775247C5B85A9 /* BoardCodecTests.swift */,
 				4057F13FC1B1224A5960AEE0 /* BoardEditsTests.swift */,
 				34B77A2A3A62BB77CAE9126D /* BuscarNomeTests.swift */,
@@ -1752,6 +1755,7 @@
 				A23AA1FB3577611653C9764A /* AreaTests.swift in Sources */,
 				A75DBF72261F35941206EFF2 /* AssistantTests.swift in Sources */,
 				0559AB1F0C1B67030230A3AF /* AssistantWarmTests.swift in Sources */,
+				EE0AD7F1EA1DECACE7623D76 /* BairrosGuiaTests.swift in Sources */,
 				D6C8A98A1AE102D60705D9F8 /* BoardCodecTests.swift in Sources */,
 				78181CEF9BEEFB6917B6775B /* BoardEditsTests.swift in Sources */,
 				B4961DBFF091160A910EB743 /* BuscarNomeTests.swift in Sources */,

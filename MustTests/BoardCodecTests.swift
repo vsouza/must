@@ -51,7 +51,7 @@ struct BoardCodecTests {
 
     // MARK: Decodificação
 
-    @Test(arguments: [(Region.bh, 50, 8), (Region.jp, 103, 8)])
+    @Test(arguments: [(Region.bh, 50, 8), (Region.jp, 105, 8)])
     func decodesSeeds(region: Region, places: Int, lists: Int) throws {
         let board = try Self.seed(region)
         #expect(board.version == 1)
@@ -78,7 +78,7 @@ struct BoardCodecTests {
 
     // MARK: Import
 
-    @Test(arguments: [(Region.bh, 50, 8), (Region.jp, 103, 8)])
+    @Test(arguments: [(Region.bh, 50, 8), (Region.jp, 105, 8)])
     func importsSeed(region: Region, places: Int, lists: Int) throws {
         let codec = try Self.makeCodec(region)
         let summary = try codec.import(board: Self.seed(region))
@@ -306,7 +306,7 @@ struct RegionStoreTests {
         store.switchTo(.jp)
         #expect(store.region == .jp)
         #expect(defaults.string(forKey: RegionStore.regionKey) == "jp")
-        #expect(try store.container.mainContext.fetchCount(FetchDescriptor<Place>()) == 103)
+        #expect(try store.container.mainContext.fetchCount(FetchDescriptor<Place>()) == 105)
         #expect(try store.container.mainContext.fetchCount(FetchDescriptor<Expense>()) == 0)
 
         store.switchTo(.bh)
@@ -317,7 +317,7 @@ struct RegionStoreTests {
         store.switchTo(.jp)
         let reopened = RegionStore(directory: dir, defaults: defaults, seedBundle: Bundle(for: Token.self))
         #expect(reopened.region == .jp)
-        #expect(try reopened.container.mainContext.fetchCount(FetchDescriptor<Place>()) == 103)
+        #expect(try reopened.container.mainContext.fetchCount(FetchDescriptor<Place>()) == 105)
     }
 
     @Test func resetBoardReseedsOnlyThatRegion() throws {

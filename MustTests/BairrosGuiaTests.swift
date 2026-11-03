@@ -45,6 +45,7 @@ struct BairroGeometryTests {
     }
 }
 
+@MainActor
 struct GuideLegTests {
     let areas = Dictionary(AreaCatalog.all.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
     let shinjuku = CLLocationCoordinate2D(latitude: 35.6896, longitude: 139.7006)
