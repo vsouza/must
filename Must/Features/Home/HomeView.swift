@@ -285,9 +285,8 @@ struct HomeView: View {
     /// Sem dia montado: "Hoje em <bairro>" (bairro do GPS) ou "Hoje, pra onde?", com os 3 bairros com mais musts abertos.
     private var pickPanel: some View {
         let photo = (state.currentArea.flatMap { state.heroes[$0.id] }) ?? state.pick.first.flatMap { state.heroes[$0.id] }
-        return ZStack(alignment: .topLeading) {
-            HeroBackdrop(photo: photo, fallback: .night)
-            VStack(alignment: .leading, spacing: 0) {
+        // O card cresce com o conteúdo (3 bairros + botão não cabem em 296 pt fixos: o topo era cortado).
+        return VStack(alignment: .leading, spacing: 0) {
                 if let here = state.currentArea {
                     Micro("Hoje em", color: .white.opacity(0.7))
                     Text(here.name)
@@ -328,9 +327,8 @@ struct HomeView: View {
                 .buttonStyle(MustPressStyle())
             }
             .padding(20)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        }
-        .frame(height: 296)
+            .frame(maxWidth: .infinity, minHeight: 296, alignment: .topLeading)
+            .background { HeroBackdrop(photo: photo, fallback: .night) }
         .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         .shadow(color: Color.must.ink.opacity(0.22), radius: 25, y: 22)
     }
