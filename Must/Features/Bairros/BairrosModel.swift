@@ -106,7 +106,7 @@ final class BairrosModel {
     init(region: Region) {
         self.region = region
         areas = AreaCatalog.areas(for: region)
-        scene = MapScene(region: region, layers: [.metro], pins: [], metro: TransitLoader.load(region))
+        scene = MapScene(region: region, layers: [.metro], pins: [], metro: Self.mainLines(TransitLoader.load(region)))
     }
 
     /// A tela chama ao aparecer: a região pode ser outra que a do modelo criado (tabelas e trilhos são cache estático).
@@ -114,14 +114,41 @@ final class BairrosModel {
         guard region != self.region else { return }
         self.region = region
         areas = AreaCatalog.areas(for: region)
-        scene = MapScene(region: region, layers: [.metro], pins: [], metro: TransitLoader.load(region))
+        scene = MapScene(region: region, layers: [.metro], pins: [], metro: Self.mainLines(TransitLoader.load(region)))
         selectedId = nil
         sheet = nil
     }
 
+    /// Só as linhas que orientam (como no design): Yamanote/Chūō em Tóquio, as de Kyoto e o metrô de BH.
+    /// Com todas as linhas de Tóquio as bolhas e os nomes somem no emaranhado.
+    static let mainLineIds: Set<String> = ["JY", "JC", "K", "T-Kyoto", "1", "L1", "BH1"]
+
+    static func mainLines(_ map: TransitMap) -> TransitMap {
+        let kept = map.lines.filter { mainLineIds.contains($0.id) }
+        // Sem nenhuma conhecida (outra região), mantém tudo.
+        guard !kept.isEmpty else { return map }
+        let ids = Set(kept.map(\.id))
+        return TransitMap(lines: kept, stations: map.stations.filter { !Set($0.lines).isDisjoint(with: ids) },
+                          attribution: map.attribution)
+    }
+
     /// Centro e largura da câmera de entrada: o bairro pedido, senão o centro da região (escala de bairros).
-    func initialCommand(areaId: String?) -> MapCameraCommand {
+    /// Com bolhas: enquadra as bolhas da cidade (a maior e as que estão a até ~8 km dela), acima da sheet.
+    func initialCommand(areaId: String?, near location: CLLocation? = nil) -> MapCameraCommand {
         let c = areaId.flatMap { id in areas.first { $0.id == id }?.centroid.clCoordinate } ?? region.defaultCenter
+        // Âncora: o bairro pedido (sheet aberta), senão o mais perto de você (até 3 km), senão o que tem mais musts.
+        let nearest = location.flatMap { here in
+            bubbles.min { CLLocation(latitude: $0.lat, longitude: $0.lng).distance(from: here) < CLLocation(latitude: $1.lat, longitude: $1.lng).distance(from: here) }
+                .flatMap { CLLocation(latitude: $0.lat, longitude: $0.lng).distance(from: here) < 3_000 ? $0 : nil }
+        }
+        if let anchor = bubbles.first(where: { $0.id == areaId }) ?? nearest ?? bubbles.max(by: { $0.count < $1.count }) {
+            let here = CLLocation(latitude: anchor.lat, longitude: anchor.lng)
+            let near = bubbles.filter { CLLocation(latitude: $0.lat, longitude: $0.lng).distance(from: here) < 5_500 }
+            if near.count >= 2 {
+                let points = near.map { MapCameraCommand.Coordinate(CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lng)) }
+                return MapCameraCommand(target: .fit(points: points, top: 150, bottom: areaId == nil ? 220 : 470, sides: 48))
+            }
+        }
         return MapCameraCommand(target: .center(lat: c.latitude, lng: c.longitude, widthMeters: region == .jp ? 9_000 : 6_000))
     }
 

@@ -99,7 +99,15 @@ final class GuideModel {
         }
 
         // Título: o foco do dia ("Shinjuku+"); sem foco, o bairro que mais aparece no roteiro.
-        if let focusId = day.focusAreaId, let area = byId[focusId] {
+        // Dia criado pelo Colar texto só tem o nome ("Asakusa e Ueno"): vale o primeiro bairro reconhecido.
+        let first = placed.first?.place
+        let focusFromName = day.focusAreaName.flatMap { name in
+            GuideModel.focusParts(name).lazy.compactMap { part in
+                assigner.areaId(name: part, cityId: first?.cityId ?? "", lat: first?.lat ?? 0, lng: first?.lng ?? 0)
+                    .flatMap { byId[$0]?.name == nil ? nil : $0 }
+            }.first
+        }
+        if let focusId = day.focusAreaId ?? focusFromName, let area = byId[focusId] {
             title = area.name
             plus = true
             seal = area.seal
@@ -230,5 +238,15 @@ final class GuideModel {
     func goLabel(region: Region) -> String? {
         guard let current else { return nil }
         return "Ir pro \(current.name) · saia \(region.timeString(current.leaveAt ?? current.at))"
+    }
+}
+
+extension GuideModel {
+    /// Puro (sem estado): usado fora do main também.
+    /// "Asakusa e Ueno", "Shibuya + Harajuku", "Gion, Higashiyama" → cada bairro, na ordem.
+    nonisolated static func focusParts(_ name: String) -> [String] {
+        name.replacingOccurrences(of: " e ", with: ",").replacingOccurrences(of: "+", with: ",")
+            .replacingOccurrences(of: "/", with: ",").replacingOccurrences(of: "&", with: ",")
+            .split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
     }
 }

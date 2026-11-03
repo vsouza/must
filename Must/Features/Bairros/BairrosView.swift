@@ -49,8 +49,9 @@ struct BairrosView: View {
         .navigationBarHidden(true)
         .onAppear {
             model.prepare(region: region)
-            command = model.initialCommand(areaId: initialArea)
             refresh()
+            // Depois do refresh: a câmera enquadra as bolhas já calculadas.
+            command = model.initialCommand(areaId: initialArea, near: services.location.current)
             if let initialArea { model.select(initialArea) }
         }
         .task { await clock() }
