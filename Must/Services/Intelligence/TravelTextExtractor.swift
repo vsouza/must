@@ -1,5 +1,6 @@
 import Foundation
 import FoundationModels
+import SwiftData
 
 // Saída estruturada do texto colado (prompt 18 · E.21). Os nomes ficam com o prefixo "Text" pra não colidir com
 // `ExtractedPlace` (o modelo da conferência) e com `Tip` (as Dicas do Lugar).
@@ -103,6 +104,21 @@ enum TravelTextExtractor {
         return draft
     }
 
+    /// Reforço na nuvem só quando o aparelho acha menos de dois lugares (rodada 21 · fatia 3).
+    static let cloudThreshold = 2
+
+    static func needsCloud(_ draft: TravelTextDraft) -> Bool {
+        draft.places.count < cloudThreshold
+    }
+
+    /// Resposta crua do Haiku → draft do mesmo formato do aparelho (os nomes que não estão no texto caem, como no aparelho).
+    static func draft(fromCloud data: Data, text: String, knownAreas: [String]) throws -> TravelTextDraft {
+        let parsed = try CloudBoost.parseText(data)
+        var out = map(parsed, text: String(text.prefix(CloudBoost.textMaxLength)), knownAreas: knownAreas)
+        out.via = "reforço na nuvem"
+        return out
+    }
+
     /// Aquece o modelo só quando a tela de texto abre (não no arranque): a primeira resposta sai mais rápido.
     static func prewarm() {
         guard OnDeviceAI.isAvailable else { return }
@@ -145,5 +161,34 @@ enum TravelTextExtractor {
             }
         }
         return TravelTextDraft(days: days, places: places, tips: tips, links: [], via: "no aparelho")
+    }
+}
+
+/// Fila do reforço na nuvem do texto colado (rodada 21 · fatia 3): sem rede, o pedido espera no `Outbox`
+/// (`OutboxKind.cloudText`, uma por texto). Quando a fila termina, a resposta crua fica no item e o Colar texto a usa.
+@MainActor
+enum TravelTextCloud {
+    /// Resposta já feita pela fila pra este texto (nil = ainda não, ou não lê mais).
+    static func done(for key: String, context: ModelContext) -> Data? {
+        let done = (try? context.fetch(FetchDescriptor<OutboxItem>(predicate: #Predicate { $0.done }))) ?? []
+        guard let item = done.last(where: { $0.ref == key && $0.outboxKind == .cloudText }), let data = item.result,
+              (try? CloudBoost.parseText(data)) != nil else { return nil }
+        return data
+    }
+
+    /// Põe o texto na fila (uma por texto: pedir de novo não duplica).
+    static func enqueue(_ text: String, key: String, context: ModelContext) {
+        let item = Outbox.enqueue(.cloudText, ref: key, context: context)
+        guard item.result == nil else { return }
+        item.result = Data(text.utf8)
+        try? context.save()
+    }
+
+    /// Tira da fila o que já foi usado (o texto foi salvo).
+    static func forget(_ key: String, context: ModelContext) {
+        let done = (try? context.fetch(FetchDescriptor<OutboxItem>(predicate: #Predicate { $0.done }))) ?? []
+        for item in done where item.ref == key && item.outboxKind == .cloudText {
+            context.delete(item)
+        }
     }
 }

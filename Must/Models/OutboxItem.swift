@@ -10,6 +10,9 @@ enum OutboxKind: String, Sendable, CaseIterable {
     /// `ref` = chave do texto colado (prompt 18 · E.23). `result` = lugares a conferir no Places (JSON de `ConferredPlace`);
     /// ao terminar, o mesmo JSON com placeId e coordenada.
     case conferText
+    /// `ref` = chave do texto colado (rodada 21 · fatia 3). Antes do envio, `result` = o texto; ao terminar, a resposta
+    /// crua do Haiku (uma tentativa só: erro não repete, sem rede espera). Lida por `TravelTextCloud.done`.
+    case cloudText
 }
 
 /// Pedido que depende de rede e foi feito sem rede (prompt 18 · A.4). Vive no container da região.

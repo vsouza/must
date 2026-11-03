@@ -20,6 +20,8 @@ struct ColarContext {
     var onDevice: Bool
     /// Lê os links com o leitor do Adicionar (IG/TT/YT/Maps). Desligado nos testes.
     var readLinks: Bool
+    /// Ajuste "Reforço com Claude Haiku" (Ajustes). Só entra quando o aparelho acha menos de 2 lugares.
+    var cloudBoost: Bool = false
 }
 
 /// Estado do "Colar texto" (prompt 18 · E): texto colado → análise → lugares marcados por dia → gravação.
@@ -51,6 +53,8 @@ final class ColarTextoModel {
     private(set) var placesChecked = false
     /// Sem rede: a conferência no Places ficou na fila (`OutboxKind.conferText`).
     private(set) var queued = false
+    /// O reforço na nuvem ficou na fila (sem rede). Mostrado junto do "na fila" da conferência.
+    private(set) var cloudQueued = false
     /// Estado de cada link colado ("lido · 2 lugares", "na fila").
     private(set) var linkStatus: [String: String] = [:]
     private(set) var key = ""
@@ -73,9 +77,13 @@ final class ColarTextoModel {
         var found = await TravelTextExtractor.analyze(display, onDevice: env.onDevice, knownAreas: env.knownAreas)
         linkStatus = [:]
         if env.readLinks { await readLinks(found.links, into: &found, env: env) }
+        cloudQueued = false
+        if env.cloudBoost, TravelTextExtractor.needsCloud(found), CloudBoost.isConfigured {
+            found = await cloudStep(display, local: found, env: env)
+        }
 
         var places = found.places
-        queued = false
+        queued = cloudQueued
         placesChecked = false
         if let queue = env.queue, let done = TextConference.done(for: key, context: queue) {
             places = TextConference.apply(done, to: places)
@@ -236,6 +244,7 @@ final class ColarTextoModel {
             makeDays(env: env, draft: draft, placeById: placeById, context: context, now: now)
         }
         TextConference.forget(key, context: context)
+        TravelTextCloud.forget(key, context: context)
         try? context.save()
         return chosen.count
     }
@@ -292,6 +301,32 @@ final class ColarTextoModel {
         let line = "Dica do texto: \(text)"
         guard !place.notes.contains(line) else { return }
         place.notes = place.notes.isEmpty ? line : place.notes + "\n" + line
+    }
+
+    // MARK: Reforço na nuvem
+
+    /// Só com menos de dois lugares no aparelho. Ordem: resposta já na fila → sem rede, põe na fila → rede, uma chamada.
+    /// Erro não repete (host cobrado): fica o resultado local e o texto segue normal.
+    private func cloudStep(_ display: String, local: TravelTextDraft, env: ColarContext) async -> TravelTextDraft {
+        if let queue = env.queue, let data = TravelTextCloud.done(for: key, context: queue),
+           let cloud = try? TravelTextExtractor.draft(fromCloud: data, text: display, knownAreas: env.knownAreas) {
+            return TravelTextDraft.merge([local, cloud])
+        }
+        if Connectivity.current == .offline {
+            if let queue = env.queue {
+                TravelTextCloud.enqueue(display, key: key, context: queue)
+                cloudQueued = true
+            }
+            return local
+        }
+        do {
+            let data = try await CloudBoost.extractText(display)
+            let cloud = try TravelTextExtractor.draft(fromCloud: data, text: display, knownAreas: env.knownAreas)
+            return TravelTextDraft.merge([local, cloud])
+        } catch {
+            Log.intelligence.error("reforço na nuvem do texto: \(error.localizedDescription, privacy: .public)")
+            return local
+        }
     }
 
     // MARK: Links

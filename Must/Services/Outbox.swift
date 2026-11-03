@@ -47,7 +47,8 @@ enum Outbox {
                       isOnline: @Sendable () -> Bool = { Connectivity.current != .offline },
                       flightSource: (any FlightStatusProviding)? = FlightStatusUpdater.activeSource(),
                       fetchCaption: @Sendable (String) async throws -> Caption = readLinkCaption,
-                      places: (any PlacesProviding)? = nil) async -> Int {
+                      places: (any PlacesProviding)? = nil,
+                      cloudText: @Sendable (String) async throws -> Data = { try await CloudBoost.extractText($0) }) async -> Int {
         guard isOnline() else { return 0 }
         var finished = 0
         for item in undone(context) where item.nextTry <= now {
@@ -95,6 +96,29 @@ enum Outbox {
                 item.lastError = nil
                 item.done = true
                 finished += 1
+            case .cloudText:
+                // Texto colado com reforço na nuvem (rodada 21 · fatia 3): uma tentativa, erro não repete (host cobrado).
+                let input = String(data: item.result ?? Data(), encoding: .utf8) ?? ""
+                guard CloudBoost.isConfigured, !input.isEmpty else {
+                    item.done = true
+                    item.lastError = "sem chave ou texto"
+                    finished += 1
+                    continue
+                }
+                do {
+                    item.result = try await cloudText(input)
+                    item.lastError = nil
+                    item.done = true
+                    finished += 1
+                } catch {
+                    if isOffline(error) {
+                        reschedule(item, now: now, error: "sem internet", countsAttempt: false)
+                    } else {
+                        item.done = true
+                        item.lastError = error.localizedDescription
+                        finished += 1
+                    }
+                }
             case nil:
                 item.done = true
                 finished += 1
