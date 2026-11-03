@@ -4,7 +4,7 @@ import Testing
 @testable import Must
 
 /// Retrato do Japão em 15 nov 18:42, em Naka-Meguro, com o dia aceito.
-private func tokyoSnapshot() throws -> AssistantSnapshot {
+func tokyoSnapshot() throws -> AssistantSnapshot {
     final class Token {}
     let board = try BoardCodec.decode(Data(contentsOf: Region.jp.seedURL(in: Bundle(for: Token.self))!))
     let colors = Dictionary(uniqueKeysWithValues: board.lists.map { ($0.id, $0.color) })

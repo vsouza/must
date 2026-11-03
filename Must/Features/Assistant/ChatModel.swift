@@ -24,7 +24,29 @@ final class ChatModel {
     private(set) var usesModel = false
 
     @ObservationIgnored private var session: LanguageModelSession?
+    /// Sessão aquecida quando o Assistente abre (prompt 18 · A.7): vale pra primeira pergunta, por pouco tempo.
+    @ObservationIgnored private var warmed: (session: LanguageModelSession, at: Date)?
     @ObservationIgnored private let collector = ActionCollector()
+
+    /// Sessões criadas pelo Assistente (teste: nenhuma na abertura do app, nenhuma com o modelo desligado).
+    private(set) static var sessionsMade = 0
+
+    /// Ponto único de criação de sessão do Assistente (prompt 18 · A.7).
+    private static func makeSession(tools: [any Tool], instructions: String) -> LanguageModelSession {
+        sessionsMade += 1
+        return LanguageModelSession(tools: tools, instructions: instructions)
+    }
+
+    /// Aquece o modelo quando o Assistente abre (prompt 18 · A.7). Nunca no arranque; sem modelo ou sem IA no
+    /// aparelho, não faz nada. Fica em `warmed` por 60 s: depois disso a pergunta cria uma sessão nova.
+    func warm(snapshot: AssistantSnapshot, useModel: Bool) {
+        guard useModel, OnDeviceAI.isAvailable, warmed == nil else { return }
+        let session = Self.makeSession(tools: AssistantTools.all(snapshot, collector: collector),
+                                       instructions: Self.instructions(snapshot))
+        warmed = (session, Date())
+        // Carregar o modelo não espera no main (prompt 18 · A.7).
+        Task.detached(priority: .utility) { session.prewarm() }
+    }
 
     static func instructions(_ s: AssistantSnapshot) -> String {
         """
@@ -54,8 +76,15 @@ final class ChatModel {
         }
 
         // Sessão nova a cada pergunta, com o retrato atual (o histórico vai junto no prompt).
-        let session = LanguageModelSession(tools: AssistantTools.all(snapshot, collector: collector),
-                                           instructions: Self.instructions(snapshot))
+        // A aquecida ao abrir o Assistente vale só pra primeira pergunta, se for recente (prompt 18 · A.7).
+        let session: LanguageModelSession
+        if let warm = warmed, Date().timeIntervalSince(warm.at) < 60 {
+            session = warm.session
+        } else {
+            session = Self.makeSession(tools: AssistantTools.all(snapshot, collector: collector),
+                                       instructions: Self.instructions(snapshot))
+        }
+        warmed = nil
         self.session = session
         let history = messages.dropLast().suffix(6).map { "\($0.role == .user ? "Usuário" : "Assistente"): \($0.text)" }.joined(separator: "\n")
         let prompt = history.isEmpty ? question : "Conversa até aqui:\n\(history)\n\nUsuário: \(question)"
@@ -66,6 +95,8 @@ final class ChatModel {
             for try await partial in session.streamResponse(to: prompt) {
                 messages[index].text = partial.content
             }
+            // A tela fechou no meio: a geração parou, e a resposta parcial não fica no chat (prompt 18 · A.7).
+            if Task.isCancelled { messages.remove(at: index); return }
             let (actions, notes) = await collector.drain()
             messages[index].actions = actions
             messages[index].note = notes.first
@@ -74,6 +105,7 @@ final class ChatModel {
                 return []
             } ?? []
         } catch {
+            if Task.isCancelled { messages.remove(at: index); return }
             Log.intelligence.error("chat: \(String(describing: error), privacy: .public) — respondendo sem modelo")
             let reply = FallbackAssistant.answer(question, snapshot: snapshot)
             messages[index] = ChatMessage(role: .assistant, text: reply.text, actions: reply.actions, note: reply.note, quickReplies: reply.quickReplies)
