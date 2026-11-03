@@ -14,6 +14,8 @@ struct AssistantView: View {
     @State private var chat = ChatModel()
     @State private var input = ""
     @State private var markingDone: String?
+    /// Pergunta em curso: cancelada quando a tela fecha (prompt 18 · A.7).
+    @State private var asking: Task<Void, Never>?
     @FocusState private var focused: Bool
 
     private var region: Region { store.region }
@@ -27,6 +29,9 @@ struct AssistantView: View {
             inputBar
         }
         .background(Color.must.bg.ignoresSafeArea())
+        // Modelo aquecido só agora que o Assistente abre (nunca na abertura do app), e a geração para se a tela fechar.
+        .task { chat.warm(snapshot: snapshot, useModel: useModel) }
+        .onDisappear { asking?.cancel() }
         #if DEBUG
         .onAppear {
             if let q = DebugFlags.string("debugAsk"), chat.messages.isEmpty { ask(q) }
@@ -227,7 +232,7 @@ struct AssistantView: View {
         guard !question.isEmpty else { return }
         input = ""
         let snap = snapshot
-        Task { await chat.send(question, snapshot: snap, useModel: useModel) }
+        asking = Task { await chat.send(question, snapshot: snap, useModel: useModel) }
     }
 
     private func run(_ action: AssistantAction, message: ChatMessage) {

@@ -16,6 +16,8 @@ final class Services {
     let placePhotos: any PlacePhotosProviding
     let eta: ETACache
     let sync: SyncCoordinator
+    /// Dia aceito no aparelho: foto das paradas, previsão e estado do mapa (prompt 18 · A.5).
+    let prefetch: DayPrefetch
     /// "Por perto": cache de 30 min por célula + fontes externas (prompt 14 · B).
     let nearby: NearbyLoader
     let maps = OfflineMaps()
@@ -36,7 +38,9 @@ final class Services {
         self.photos = photos
         self.routes = routes
         eta = ETACache(routes: routes)
-        sync = SyncCoordinator(places: launched, weather: weather, photos: photos)
+        let coordinator = SyncCoordinator(places: launched, weather: weather, photos: photos)
+        sync = coordinator
+        prefetch = DayPrefetch(sources: DayPrefetch.live(sync: coordinator, photos: photos))
         self.nearby = Self.launchNearby(nearby)
     }
 
