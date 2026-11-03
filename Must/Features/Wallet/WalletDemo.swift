@@ -3,11 +3,13 @@ import Foundation
 import SwiftData
 
 /// `-debugScreen carteira`: põe, uma vez, itens de exemplo na Carteira (Suica com saldo anotado, JR Pass, cartão,
-/// eSIM, Visit Japan Web com QR, seguro, passaporte) pra print do QA. Não toca nos itens que já existem.
+/// eSIM, Visit Japan Web com QR, seguro, passaporte) pra print do QA. Suica e JR Pass de partida (`WalletStarter`)
+/// recebem os dados de exemplo em vez de ganhar uma cópia; o resto dos itens que já existem fica como está.
 @MainActor
 enum WalletDemo {
     static func ensure(context: ModelContext, region: Region) {
-        guard !context.walletItems().contains(where: { $0.id == "demo-suica" }) else { return }
+        let current = context.walletItems()
+        guard !current.contains(where: { $0.id == "demo-nubank" }) else { return }
         let now = AppClock.now
         let dates = BoardDates(timeZone: Region.jp.timeZone)
         let items: [WalletItem] = [
@@ -33,7 +35,19 @@ enum WalletDemo {
             WalletItem(id: "demo-passaporte", kind: .passport, name: "Passaporte · foto da página",
                        detail: "só no aparelho", validUntil: dates.day(from: "2031-06-10"), order: 7),
         ]
-        items.forEach(context.insert)
+        for item in items {
+            if [.transitCard, .railPass].contains(item.kind), let mine = current.first(where: { $0.kind == item.kind }) {
+                mine.name = item.name
+                mine.detail = item.detail
+                mine.coverage = item.coverage ?? mine.coverage
+                mine.balance = item.balance ?? mine.balance
+                mine.balanceNotedAt = item.balanceNotedAt ?? mine.balanceNotedAt
+                mine.validFrom = item.validFrom ?? mine.validFrom
+                mine.validUntil = item.validUntil ?? mine.validUntil
+            } else {
+                context.insert(item)
+            }
+        }
         try? context.save()
     }
 }
