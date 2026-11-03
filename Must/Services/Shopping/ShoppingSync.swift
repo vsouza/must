@@ -74,17 +74,26 @@ enum ShoppingFlightSync {
 @MainActor
 enum ShoppingPurchase {
     /// Põe o gasto e a visita de acordo com o status do item. Chamar depois de mudar o item.
-    static func sync(_ item: ShoppingItem, store: Place?, context: ModelContext, now: Date = AppClock.now) {
+    /// O gasto fica na moeda da região: item em outra moeda é convertido pelo câmbio e a nota guarda o valor original.
+    static func sync(_ item: ShoppingItem, store: Place?, context: ModelContext, now: Date = AppClock.now,
+                     regionCurrency: String = "JPY", brlPerYen: Double = ShoppingFX.brlPerYen,
+                     brlPerUSD: Double = ShoppingFX.brlPerUSD) {
         if item.isBought {
             let date = item.boughtAt ?? now
             item.boughtAt = date
-            let amount = item.paid ?? item.estPrice
+            let original = item.paid ?? item.estPrice
+            let itemCurrency = item.currency ?? regionCurrency
+            let amount = ShoppingFX.convert(original, from: itemCurrency, to: regionCurrency,
+                                            brlPerYen: brlPerYen, brlPerUSD: brlPerUSD)
+            let note = itemCurrency == regionCurrency ? "" : ShoppingReport.money(original, currency: itemCurrency)
             if let expense = expense(for: item, context: context) {
                 expense.amount = amount
+                expense.note = note
                 expense.at = date
                 expense.place = store
             } else {
                 let expense = Expense(at: date, amount: amount, category: .shop, place: store, method: .card)
+                expense.note = note
                 context.insert(expense)
                 item.expenseId = expense.id
             }

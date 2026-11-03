@@ -142,19 +142,24 @@ struct ShoppingView: View {
                 }
             }
             .frame(height: 8)
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                HStack(alignment: .firstTextBaseline, spacing: 0) {
-                    Text("cota do Brasil: ").font(.must.archivo(13)).foregroundStyle(.white.opacity(0.7))
-                    Text(ShoppingReport.usdText(report.usedUSD)).font(.must.archivo(13, .semibold)).foregroundStyle(.white)
-                    Text(" de \(ShoppingReport.usdText(report.limits.airAllowanceUSD))").font(.must.archivo(13)).foregroundStyle(.white.opacity(0.7))
+            let cota = HStack(alignment: .firstTextBaseline, spacing: 0) {
+                Text("cota do Brasil: ").font(.must.archivo(13)).foregroundStyle(.white.opacity(0.7))
+                Text(ShoppingReport.usdText(report.usedUSD)).font(.must.archivo(13, .semibold)).foregroundStyle(.white)
+                Text(" de \(ShoppingReport.usdText(report.limits.airAllowanceUSD))").font(.must.archivo(13)).foregroundStyle(.white.opacity(0.7))
+            }
+            let taxText = Text("tax-free a receber \(ShoppingReport.money(refund, currency: currency))")
+                .font(.must.archivo(13)).foregroundStyle(.white.opacity(0.85))
+            // Uma linha se couber; senão cota e tax-free empilhados, alinhados à esquerda (sem truncar).
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    cota.fixedSize()
+                    Spacer(minLength: 4)
+                    taxText.fixedSize()
                 }
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-                Spacer(minLength: 4)
-                Text("tax-free a receber \(ShoppingReport.money(refund, currency: currency))")
-                    .font(.must.archivo(13)).foregroundStyle(.white.opacity(0.85))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+                VStack(alignment: .leading, spacing: 4) {
+                    cota.fixedSize()
+                    taxText.fixedSize()
+                }
             }
         }
         .padding(20)

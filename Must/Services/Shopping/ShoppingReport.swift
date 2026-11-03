@@ -24,6 +24,18 @@ enum ShoppingFX {
     /// R$ por US$ 1 (`Settings.brlPerUSD` começa aqui).
     static let brlPerUSD = 5.5
 
+    /// R$ por ¥1 da região: o câmbio do usuário (Ajustes) só vale no Japão; no Brasil usa o padrão.
+    static func rate(for region: Region, userRate: Double?) -> Double {
+        guard region == .jp, let rate = userRate, rate > 0 else { return brlPerYen }
+        return rate
+    }
+
+    /// Converte um valor de uma moeda pra outra pelo câmbio (passa por R$).
+    static func convert(_ value: Double, from: String, to: String, brlPerYen: Double, brlPerUSD: Double) -> Double {
+        let brl = value * brlPerUnit(from, brlPerYen: brlPerYen, brlPerUSD: brlPerUSD)
+        return brl / brlPerUnit(to, brlPerYen: brlPerYen, brlPerUSD: brlPerUSD)
+    }
+
     /// Quanto vale 1 unidade da moeda em R$. Moeda desconhecida conta como R$ (não some).
     static func brlPerUnit(_ currency: String, brlPerYen: Double, brlPerUSD: Double) -> Double {
         switch currency {

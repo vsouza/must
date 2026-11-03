@@ -246,6 +246,28 @@ struct ShoppingCurrencyTests {
     static let fx = 0.036
     static let usd = 5.5
 
+    @Test func compraDeIeneNumaRegiaoEmRealGravaGastoConvertidoComOriginalNaNota() throws {
+        let context = ModelContext(try ShoppingTests.container())
+        let item = ShoppingItem(name: "Portra 400", estPrice: 28_000, paid: 28_000, status: .bought, currency: "JPY")
+        context.insert(item)
+        ShoppingPurchase.sync(item, store: nil, context: context, now: ShoppingTests.day,
+                              regionCurrency: "BRL", brlPerYen: Self.fx, brlPerUSD: Self.usd)
+        let expense = try #require(try context.fetch(FetchDescriptor<Expense>()).first)
+        // ¥ 28.000 × R$ 0,036 = R$ 1.008.
+        #expect(abs(expense.amount - 1_008) < 0.01)
+        #expect(expense.note == "¥ 28.000")
+    }
+
+    @Test func compraNaMesmaMoedaNaoTemNota() throws {
+        let context = ModelContext(try ShoppingTests.container())
+        let item = ShoppingItem(name: "Mochila", estPrice: 300, status: .bought, currency: "BRL")
+        context.insert(item)
+        ShoppingPurchase.sync(item, store: nil, context: context, now: ShoppingTests.day, regionCurrency: "BRL")
+        let expense = try #require(try context.fetch(FetchDescriptor<Expense>()).first)
+        #expect(expense.amount == 300)
+        #expect(expense.note.isEmpty)
+    }
+
     static func report(_ items: [ShoppingItem], region: String = "JPY") -> ShoppingReport {
         ShoppingReport(items: items, fxRate: fx, brlPerUSD: usd, regionCurrency: region, timeZone: Region.jp.timeZone)
     }
