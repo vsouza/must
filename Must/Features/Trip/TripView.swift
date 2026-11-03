@@ -7,6 +7,7 @@ struct TripView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppRouter.self) private var router
     @Environment(RegionStore.self) private var store
+    @Environment(\.tripTheme) private var theme
 
     @Query(sort: \MustList.order) private var lists: [MustList]
     @Query private var places: [Place]
@@ -48,6 +49,7 @@ struct TripView: View {
             .padding(.horizontal, 22)
         }
         .scrollIndicators(.hidden)
+        .tripWash()
         .background {
             ZStack {
                 Color.must.bg
@@ -69,7 +71,8 @@ struct TripView: View {
             Spacer()
             Micro(trip == nil
                   ? "\(region.shortName) · \(monthName(period.lowerBound))"
-                  : "\(region.displayName) · \(region.dayNumber(period.lowerBound))–\(region.dayNumber(period.upperBound)) \(region.monthShort(period.upperBound))")
+                  : "\(region.displayName) · \(region.dayNumber(period.lowerBound))–\(region.dayNumber(period.upperBound)) \(region.monthShort(period.upperBound))",
+                  color: theme.labelColor)
             Spacer()
             IconButton(.ajustes, label: "Ajustes") { router.push(.settings, on: router.tab) }
         }
@@ -163,7 +166,7 @@ struct TripView: View {
             .frame(width: 40, height: 40)
             .background(Circle().fill(fill))
             .overlay {
-                if cell.state == .today { Circle().strokeBorder(Color.must.green, lineWidth: 2.5).padding(-4) }
+                if cell.state == .today { Circle().strokeBorder(theme.tripColor, lineWidth: 2.5).padding(-4) }
             }
             .overlay(alignment: .topTrailing) {
                 if trip == nil, cell.state == .done { Text("済").font(.must.kanji(9)).foregroundStyle(Color.must.greenText).offset(x: 2, y: -2) }
@@ -224,7 +227,11 @@ struct TripView: View {
         if !anchors.isEmpty { detail.append("\(anchors.count) \(anchors.count == 1 ? "reserva" : "reservas"): \(anchors.prefix(2).joined(separator: ", "))") }
 
         return VStack(alignment: .leading, spacing: 8) {
-            Micro(label, color: isLast ? Color.must.blueText : (index == 0 ? MustColor.eat.text : Color.must.blueText))
+            HStack(spacing: 8) {
+                TripFlag(theme)
+                Micro(label, color: isLast ? Color.must.blueText : (index == 0 ? MustColor.eat.text : Color.must.blueText))
+                    .lineLimit(1)
+            }
             if isLast && !saveForEnd.isEmpty {
                 Spacer()
                 HStack(alignment: .bottom, spacing: 12) {

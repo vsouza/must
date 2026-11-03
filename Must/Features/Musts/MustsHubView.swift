@@ -54,6 +54,7 @@ struct MustsHubView: View {
         }
         .scrollDismissesKeyboard(.immediately)
         .scrollIndicators(.hidden)
+        .tripWash()
         .background {
             ZStack {
                 Color.must.bg
