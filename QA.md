@@ -285,3 +285,42 @@ Observação: o "antes" é uma emulação do getter antigo, não o código antig
 - Vinicius testou em 03/11 com Wi-Fi sem internet: só o 3D e as fotos falharam; o resto fluiu. Isso confirma o caminho offline; o pré-download de fotos sem internet fica pendente de teste no aparelho.
 
 iPhone: [ ] medir com Instruments (Hangs + Time Profiler) — Vinicius
+
+## Fotos do Google (prompt 19)
+
+**Chamadas reais (simulador "Must-Fotos", 03/11, o máximo acordado: 4 lugares, uma vez cada).** Text Search (IDs/Essentials, pra achar o placeId, como no teste de 03/11), Details com `photos` (sincronização só desses lugares, `-debugSyncOnly`) e uma `/media` por lugar ao abrir o Lugar. Total: **4 Text Search + 4 Details + 4 `/media` = 12 chamadas**. Contadores no fim: `placesEssentials` 4, `placesPro` 4, `placePhotos` 4. Nenhuma chamada a AeroDataBox ou Anthropic. Não fiz lote real (Ajustes › Dados › Baixar) pra não gastar cota.
+
+| Lugar | Região | Resultado |
+|---|---|---|
+| Fuunji | JP | foto da fachada (placa FUUNJI), crédito "FOTO · GOOGLE · @N. HAJIME" |
+| Udatsu Sushi | JP | foto do balcão, crédito "@UDATSU SUSHI" |
+| Mercado Central | BH | foto do balcão de queijos, crédito "@THALES" |
+| Museu Inimá de Paula | BH | foto da pintura (campo de arroz), crédito "@MUSEU INIMÁ DE PAULA" |
+
+**Verificado no simulador:**
+- Contador sobe 1 por lugar novo (`placePhotos` 0 → 4), e não sobe ao reabrir (Lugar e Lista: 4 → 4).
+- Lista (`lista:eat`): miniatura do Mercado Central com cantos 14 pt; os outros lugares seguem com o gradiente da cor.
+- Modo avião (`-debugNetwork offline`, Mercado Central): hero aparece do disco, 3D esmaecido, nenhuma chamada.
+
+**Prints (em `build/qa/`, não commitados):**
+- `build/qa/fuunji-try1.png`, `build/qa/udatsu.png`, `build/qa/mercado-central.png`, `build/qa/museu-inima.png`: hero com foto e crédito.
+- `build/qa/lista-eat-thumbs.png`: Lista com miniatura.
+- `build/qa/offline-mercado.png`: hero offline.
+
+**Comandos (simulador BD4F5784…, container `…/Library/Preferences/dev.viniso.must`):**
+- Sincronizar só alguns lugares: `defaults write <P> region jp|bh`, `defaults write <P> debugSyncOnly -string "j01,j05"` (BH: `p01,p11`), relança. Depois apaga `debugSyncOnly`.
+- Abrir o Lugar: `defaults write <P> debugScreen -string "lugar:j05"` e relança.
+- Lista: `debugScreen -string "lista:eat"`. Offline: `debugNetwork -string offline`.
+- Fake (sem cota, pros prints de UI): `debugPhotos -string fake`.
+
+**Não capturado (pendente):**
+- Ajustes › Dados (MB do mês, cache, lote). A tela está pronta e compila, mas o print exige rolar até a seção Dados, e o simulador não rola sozinho. Fica pro Vinicius no iPhone.
+- Lote real "84 de 130": não rodado, pela cota.
+
+**Ficou de fora:**
+- Galeria (deslizar): código pronto (até 5 páginas, uma `/media` por deslize), não testado deslizando (gastaria cota).
+- Card "Agora" da Home e cards de bairro: fatia B, não toquei.
+- Mapas offline não entram em "MB do mês" (baixam por sessão própria).
+- Lugar novo (Adicionar antes de salvar): mostra gradiente até sincronizar (candidato sem Details não tem foto).
+
+**iPhone (Vinicius):** [ ] conferir o hero e a galeria com fotos reais · [ ] Ajustes › Dados: MB, cache e lote no Wi-Fi · [ ] Modo de Pouco Dados: sem foto nova fora do Lugar aberto
