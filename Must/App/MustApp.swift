@@ -7,6 +7,7 @@ struct MustApp: App {
     @State private var services = Services()
 
     init() {
+        LaunchTiming.appDidInit()
         HTTP.configureCache()
     }
 
@@ -32,6 +33,8 @@ struct AppRoot: View {
 
     @State private var router = AppRouter()
     @State private var showOnboarding = false
+    /// Sincronização: a primeira espera o arranque (prompt 18 · A.6); pedidos seguidos viram um.
+    @State private var syncGate = StartupSync()
 
     var body: some View {
         RootView()
@@ -40,16 +43,18 @@ struct AppRoot: View {
                 ImportView(mode: .firstRun).environment(router)
             }
             .onAppear {
+                LaunchTiming.firstFrame()
                 showOnboarding = Self.shouldShowOnboarding(onboarded: store.isOnboarded)
                 services.location.start()
                 #if DEBUG
                 DebugLaunch.apply(to: router, context: context, region: store.region, services: services)
                 #endif
             }
-            .task { await syncThenRefresh() }
+            // Arranque: nada de rede antes do primeiro frame (prompt 18 · A.6). Abre com o que está salvo.
+            .task { syncGate.request { await syncThenRefresh() } }
             // Volta a rede: a fila de saída (voos, links lidos) reenvia sem esperar a próxima abertura.
             .onChange(of: services.connectivity.status) { _, status in
-                if status == .online { Task { await syncThenRefresh() } }
+                if status == .online { syncGate.request { await syncThenRefresh() } }
             }
             // Widgets e Live Activity acompanham qualquer gravação (dia aceito, 済, troca, gasto).
             .onReceive(NotificationCenter.default.publisher(for: ModelContext.didSave)) { _ in
@@ -58,7 +63,7 @@ struct AppRoot: View {
             .onChange(of: scenePhase, initial: true) { _, phase in
                 if phase == .active {
                     services.location.start()
-                    Task { await syncThenRefresh() }
+                    syncGate.request { await syncThenRefresh() }
                     // Ingresso compartilhado que o Share Extension não conseguiu abrir: pega aqui.
                     if router.sheet == nil, let waiting = ShareInbox.pending().first {
                         router.sheet = .ticketImport(inboxId: waiting.id)
@@ -82,9 +87,11 @@ struct AppRoot: View {
         let region = store.region
         let container = context.container
         defer { withExtendedLifetime(container) {} }
+        LaunchTiming.mark("sync começou")
         await services.sync.syncIfNeeded(context: context, region: region)
         // Fila de saída: o que ficou sem rede sai agora; cada item segue a própria política (voo, cota).
         await Outbox.drain(context: context, region: region)
+        LaunchTiming.mark("sync terminou")
         guard store.region == region, !Task.isCancelled else { return }
         OutsideBridge.refresh(context: context, region: region, services: services)
     }
