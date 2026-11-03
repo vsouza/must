@@ -189,6 +189,11 @@ final class PlannedDay {
     var budget: Double
     var walkRaw: String
     var accepted: Bool
+    /// Pré-download do dia (prompt 18 · A.5): quando tudo que o dia pede ficou no aparelho. `nil` = ainda não.
+    var offlineSavedAt: Date?
+    /// Itens prontos e itens do pedido, na última tentativa (pra "salvo 5/7" quando algo faltou).
+    var offlineDone: Int = 0
+    var offlineTotal: Int = 0
 
     @Relationship(deleteRule: .cascade, inverse: \Stop.day)
     var stops: [Stop] = []

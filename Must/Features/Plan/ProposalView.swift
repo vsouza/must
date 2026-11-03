@@ -227,6 +227,10 @@ struct ProposalView: View {
             router.paths[.hoje] = []
             router.paths[.inicio] = []
             router.tab = .hoje
+            // Aceitou: baixa o que o dia pede (só no Wi-Fi; no celular fica "salva no Wi-Fi") (prompt 18 · A.5).
+            let date = planner.date, network = services.connectivity.prefetchNetwork
+            let region = planner.region
+            Task { await services.prefetch.run(date: date, context: context, region: region, network: network) }
         } catch {
             self.error = error.localizedDescription
         }

@@ -56,6 +56,12 @@ struct AppRoot: View {
             .onChange(of: services.connectivity.status) { _, status in
                 if status == .online { syncGate.request { await syncThenRefresh() } }
             }
+            // Wi-Fi voltou: o que falta de hoje e amanhã baixa agora (prompt 18 · A.5). No celular, a política não deixa.
+            .onChange(of: services.connectivity.prefetchNetwork) { _, network in
+                if PrefetchPolicy.allows(network) { runPrefetchPending() }
+            }
+            // 07:00 com o app aberto (prompt 18 · A.5). Sem background task: fechado, fica pra próxima abertura.
+            .task(id: store.region) { await prefetchAtSevenLoop() }
             // Widgets e Live Activity acompanham qualquer gravação (dia aceito, 済, troca, gasto).
             .onReceive(NotificationCenter.default.publisher(for: ModelContext.didSave)) { _ in
                 refreshOutsideSoon()
@@ -96,6 +102,28 @@ struct AppRoot: View {
         OutsideBridge.refresh(context: context, region: region, services: services)
     }
 
+    /// Hoje e amanhã que ainda não estão salvos offline. A política (Wi-Fi, fora do Pouco Dados) decide se roda.
+    private func runPrefetchPending() {
+        let region = store.region
+        let network = services.connectivity.prefetchNetwork
+        let container = context.container
+        Task {
+            defer { withExtendedLifetime(container) {} }
+            await services.prefetch.runPending(context: context, region: region, network: network, now: AppClock.now)
+        }
+    }
+
+    /// Espera as 07:00 (hora da região) e pede o pré-download de hoje e amanhã.
+    private func prefetchAtSevenLoop() async {
+        while !Task.isCancelled {
+            let now = AppClock.now
+            let next = DayPrefetch.nextSevenAM(after: now, calendar: store.region.calendar)
+            try? await Task.sleep(for: .seconds(max(1, next.timeIntervalSince(now))))
+            guard !Task.isCancelled else { return }
+            runPrefetchPending()
+        }
+    }
+
     /// Junta várias gravações seguidas numa atualização só.
     private func refreshOutsideSoon() {
         outsideTask?.cancel()
@@ -129,7 +157,8 @@ struct AppRoot: View {
 /// `voos` abre Voos (aba da agenda); `viagem-voos` e `viagem-reservas` passam pelo calendário da Viagem.
 /// `-debugFlight fake` troca o AeroDataBox por status de mentira (prints, sem cota). `-gallery` abre a Gallery.
 /// `-debugNetwork offline` força "sem rede" (chip, falha na hora, fila de saída); `-debugNetwork slow` põe 3 s de
-/// latência e 30% de falha em cada tentativa HTTP (prompt 18 · A.4: a UI não pode travar).
+/// latência e 30% de falha em cada tentativa HTTP (prompt 18 · A.4: a UI não pode travar). `wifi` e `celular` fingem
+/// o tipo de rede (o pré-download do dia só roda no Wi-Fi, prompt 18 · A.5).
 /// `como-chegar:<id>` abre Como chegar; `-debugRoutes fake` troca o Routes por respostas de exemplo. `buscar-nome:<texto>` abre
 /// Buscar por nome (com `-debugAutocomplete fake` pras sugestões de "koffee mam").
 @MainActor
@@ -165,11 +194,13 @@ enum DebugLaunch {
         case "aceitar":
             acceptToday(context: context, region: region, location: location)
             router.select(.hoje)
+            prefetchDays(services: services, context: context, region: region)
         case "mapa":
             // mapa:aceitar monta e aceita hoje e amanhã antes (rota e pinos numerados).
             if arg == "aceitar" {
                 acceptToday(context: context, region: region, location: location)
                 acceptToday(context: context, region: region, location: location, offset: 1)
+                prefetchDays(services: services, context: context, region: region)
             }
             router.select(.mapa)
         case "assistente": router.sheet = .assistant
@@ -210,6 +241,12 @@ enum DebugLaunch {
             Task { await services.sync.syncPlaces(context: context, region: region) }
         default: break
         }
+    }
+
+    /// Pré-download dos dias aceitos (como o aceite pela tela faria), conforme a rede do `-debugNetwork`.
+    private static func prefetchDays(services: Services, context: ModelContext, region: Region) {
+        let network = services.connectivity.prefetchNetwork
+        Task { await services.prefetch.runPending(context: context, region: region, network: network, now: AppClock.now) }
     }
 
     /// Monta e aceita um dia (hoje + `offset`) com os padrões (prints da tela Hoje e do Mapa).

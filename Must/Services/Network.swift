@@ -258,6 +258,11 @@ actor DiskCache {
         return Date().timeIntervalSince(modified) < maxAge
     }
 
+    /// Está no disco, qualquer que seja a idade (o pré-download do dia só precisa saber se já tem).
+    func exists(_ key: String) -> Bool {
+        FileManager.default.fileExists(atPath: file(key).path())
+    }
+
     func store(_ data: Data, for key: String) {
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         try? data.write(to: file(key), options: .atomic)

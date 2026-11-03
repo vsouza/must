@@ -159,12 +159,8 @@ struct PlaceView: View {
         let photos = services.photos
         guard photos.isConfigured, settingsList.first?.flickrPhotos ?? true, heroPhoto == nil else { return }
         do {
-            var found = try await photos.search(near: place.coordinate, radiusKm: 0.3)
-            if found.isEmpty, let area = place.area {
-                let city = trips.first?.city(id: place.cityId)?.name ?? region.displayName
-                found = try await photos.search(text: "\(area) \(city)")
-            }
-            heroPhoto = found.first
+            let city = trips.first?.city(id: place.cityId)?.name ?? region.displayName
+            heroPhoto = try await PlaceHero.commons(coordinate: place.coordinate, area: place.area, cityName: city, photos: photos)
         } catch {
             Log.network.error("hero \(place.id, privacy: .public): \(error.localizedDescription, privacy: .public)")
         }

@@ -71,6 +71,12 @@ final class SyncCoordinator {
         return forecasts[Self.key(lat, lng)]?.now
     }
 
+    /// Previsão de uma cidade pro pré-download do dia (prompt 18 · A.5): usa o cache do Weather (sem rede se ele
+    /// tiver) e guarda pra Hoje. Não mexe no horário de sincronização.
+    func prefetchForecast(at c: CLLocationCoordinate2D, region: Region) async throws {
+        forecasts[Self.key(c.latitude, c.longitude)] = try await weather.forecast(at: c, region: region)
+    }
+
     // MARK: Ciclo
 
     /// Na abertura e ao voltar pro app: sincroniza se passou de 6 h (ou nunca).

@@ -7,6 +7,7 @@ import Synchronization
 /// O `NWPathMonitor` publica no main (`@Observable`, pra UI: chip "sem internet · offline ok") e espelha o
 /// estado num cofre thread-safe (`current`), que o `HTTP` lê de qualquer thread antes de sair.
 /// `-debugNetwork offline` força offline (simulador); `slow` fica no `HTTP` (latência e falha).
+/// `-debugNetwork wifi` e `celular` fingem o tipo de rede (prompt 18 · A.5: pré-download só no Wi-Fi).
 @MainActor
 @Observable
 final class Connectivity {
@@ -17,6 +18,8 @@ final class Connectivity {
     private(set) var status: Status
     /// Rede medida (celular, hotspot): o aparelho pode pedir pouco dado.
     private(set) var isExpensive = false
+    /// Wi-Fi (não celular). O pré-download do dia só roda com ele (prompt 18 · A.5).
+    private(set) var isWiFi = false
 
     @ObservationIgnored private var monitor: NWPathMonitor?
     @ObservationIgnored private let forced: Bool
@@ -28,19 +31,23 @@ final class Connectivity {
     nonisolated static var current: Status { mirror.withLock { $0 } }
 
     init() {
-        forced = DebugFlags.string("debugNetwork") == "offline"
-        status = forced ? .offline : .online
-        if forced { Self.mirror.withLock { $0 = .offline } }
+        let mode = DebugFlags.string("debugNetwork")
+        forced = ["offline", "wifi", "celular"].contains(mode)
+        status = mode == "offline" ? .offline : .online
+        isWiFi = mode == "wifi"
+        isExpensive = mode == "celular"
+        if mode == "offline" { Self.mirror.withLock { $0 = .offline } }
     }
 
-    /// Liga o monitor (uma vez). No `-debugNetwork offline` não liga: o estado fica travado em offline.
+    /// Liga o monitor (uma vez). Com `-debugNetwork` forçado não liga: o estado fica travado.
     func start() {
         guard monitor == nil, !forced, !DebugFlags.isTestHost else { return }
         let path = NWPathMonitor()
         path.pathUpdateHandler = { update in
             let next: Status = update.status != .satisfied ? .offline : (update.isConstrained ? .constrained : .online)
             let expensive = update.isExpensive
-            Task { @MainActor [weak self] in self?.apply(next, expensive: expensive) }
+            let wifi = update.usesInterfaceType(.wifi)
+            Task { @MainActor [weak self] in self?.apply(next, expensive: expensive, wifi: wifi) }
         }
         path.start(queue: DispatchQueue(label: "dev.viniso.must.path", qos: .utility))
         monitor = path
@@ -52,13 +59,19 @@ final class Connectivity {
     }
 
     /// Só o caminho de atualização (e o teste) chamam isto.
-    func apply(_ next: Status, expensive: Bool) {
+    func apply(_ next: Status, expensive: Bool, wifi: Bool) {
         guard !forced else { return }
         if status != next { status = next }
         if isExpensive != expensive { isExpensive = expensive }
+        if isWiFi != wifi { isWiFi = wifi }
         Self.mirror.withLock { $0 = next }
     }
 
     /// Rótulo do chip da Home: "sem internet · offline ok" quando não há rede.
     var isOffline: Bool { status == .offline }
+
+    /// O que o pré-download precisa saber agora (prompt 18 · A.5).
+    var prefetchNetwork: PrefetchPolicy.Network {
+        PrefetchPolicy.Network(status: status, wifi: isWiFi, expensive: isExpensive)
+    }
 }

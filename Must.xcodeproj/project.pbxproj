@@ -148,12 +148,14 @@
 		85FF5B41404618DAEC523F24 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 988D5ED4FA848499B21CF6FD /* SettingsView.swift */; };
 		87A771375F4DF10DBDDCB9C3 /* SavedPlacesImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CE017A72A1FB6FBBC0A7C46 /* SavedPlacesImporter.swift */; };
 		8830F2E219AC5FF3BBF0D226 /* ShoppingRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C553381C1ACF36D47BABC10 /* ShoppingRules.swift */; };
+		8A8A34CBBC66706B777BA3C5 /* DayPrefetchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96B6023D7FE3D8AF2A2D0583 /* DayPrefetchTests.swift */; };
 		8B37B3D68127F8BF77080F91 /* SunService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5EDC66249525A11114FA12B /* SunService.swift */; };
 		8C7BADBAFB9DC29FEA639206 /* TicketImportFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D9A83588A513DDF30DBDFB /* TicketImportFlow.swift */; };
 		8C9E5F57242BE53185CD4904 /* AddLinkResults.swift in Sources */ = {isa = PBXBuildFile; fileRef = 263C7C344090120AAEF01937 /* AddLinkResults.swift */; };
 		8E2C34166575E81B9180D841 /* BoardCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59C0F2D3F8FD625357FE147C /* BoardCodec.swift */; };
 		8E6F8A5363040C60B7BBC57E /* ComoChegarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF00883D891133B2BC9F646A /* ComoChegarView.swift */; };
 		90B9BDB5BF906FA09336079C /* Tools.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A7F51EA8B63130EF27E29DC /* Tools.swift */; };
+		912E7C55D7659F76EE2F9F65 /* DayPrefetch.swift in Sources */ = {isa = PBXBuildFile; fileRef = F799B02D42632B01E8D3300B /* DayPrefetch.swift */; };
 		930C3451311B48537EBBE0BE /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 249BE4A213B5ED57BBC9CB4E /* README.md */; };
 		933197275D17891043431DF6 /* ExperienceSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE8E48F35361E7F9CD7715BF /* ExperienceSource.swift */; };
 		94513B346BACF6822CA28595 /* TicketReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 125CF367B38BCAE97640D336 /* TicketReader.swift */; };
@@ -465,6 +467,7 @@
 		9402F5580C133734764AAAE2 /* MontarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MontarView.swift; sourceTree = "<group>"; };
 		954DFD2565943C15811989EF /* NetResilienceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetResilienceTests.swift; sourceTree = "<group>"; };
 		95A3D3C984F41EDDC4BFE7CD /* Ticket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Ticket.swift; sourceTree = "<group>"; };
+		96B6023D7FE3D8AF2A2D0583 /* DayPrefetchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayPrefetchTests.swift; sourceTree = "<group>"; };
 		972BE7D900669A53822A7176 /* RoutesService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutesService.swift; sourceTree = "<group>"; };
 		988D5ED4FA848499B21CF6FD /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		9910B338CBCFBBEB3855A06A /* KindGraphics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KindGraphics.swift; sourceTree = "<group>"; };
@@ -576,6 +579,7 @@
 		F648A672D7C195C35608123B /* TravelMatrixLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TravelMatrixLoader.swift; sourceTree = "<group>"; };
 		F6C9781C95F5102BF62B994C /* MustIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MustIcon.swift; sourceTree = "<group>"; };
 		F73465FDB27FA97ECEDBBB81 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		F799B02D42632B01E8D3300B /* DayPrefetch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayPrefetch.swift; sourceTree = "<group>"; };
 		F810A340D5DA4290CC357972 /* NearbyRanker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearbyRanker.swift; sourceTree = "<group>"; };
 		F89EE24137D29930396E7AFE /* MapPacks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapPacks.swift; sourceTree = "<group>"; };
 		F8A2E431EE5D54677E53846A /* GoogleParsersTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleParsersTests.swift; sourceTree = "<group>"; };
@@ -698,6 +702,7 @@
 				E2EBDC5EC0A857E67E65452B /* Tips */,
 				75D868B5A981073D5AED5B21 /* ApiBudget.swift */,
 				19EFD690D19C8AFDD98E2B46 /* Connectivity.swift */,
+				F799B02D42632B01E8D3300B /* DayPrefetch.swift */,
 				BEE8DC22489334B4E4841AAB /* LaunchTiming.swift */,
 				7BC23CD2D9B7A3D345E2FA14 /* LocationService.swift */,
 				23249DD22EE3CC5D75564551 /* Log.swift */,
@@ -860,6 +865,7 @@
 				4057F13FC1B1224A5960AEE0 /* BoardEditsTests.swift */,
 				34B77A2A3A62BB77CAE9126D /* BuscarNomeTests.swift */,
 				0FF11D40BC1FD6464D2737BB /* DayFlowTests.swift */,
+				96B6023D7FE3D8AF2A2D0583 /* DayPrefetchTests.swift */,
 				3CA98508D4D7D365FAFD549B /* DaySolverTests.swift */,
 				D87ABAC6821287A24AB7EF71 /* ExperienceTests.swift */,
 				F2FCC18F2FD107CBB17F43DD /* FlightTests.swift */,
@@ -1568,6 +1574,7 @@
 				78181CEF9BEEFB6917B6775B /* BoardEditsTests.swift in Sources */,
 				B4961DBFF091160A910EB743 /* BuscarNomeTests.swift in Sources */,
 				34D6081A5CB2767A55D164EE /* DayFlowTests.swift in Sources */,
+				8A8A34CBBC66706B777BA3C5 /* DayPrefetchTests.swift in Sources */,
 				AE75462BE18656337F0D8996 /* DaySolverTests.swift in Sources */,
 				C873A054C109C6743931A96E /* ExperienceTests.swift in Sources */,
 				345D55FBAF0D045350FAF93E /* FlightTests.swift in Sources */,
@@ -1643,6 +1650,7 @@
 				7991783AFD37AA9A273508C9 /* Components.swift in Sources */,
 				1A80837B3150B52E78448AE7 /* Connectivity.swift in Sources */,
 				08762FC7D78835A8A4A998F7 /* DayPlanner.swift in Sources */,
+				912E7C55D7659F76EE2F9F65 /* DayPrefetch.swift in Sources */,
 				C826618BD1B4AD4D059647D9 /* DaySolver.swift in Sources */,
 				A999915102AAED04C3E982A4 /* DebugFlags.swift in Sources */,
 				0182C5E8F51876880442D3B8 /* DevOverrides.swift in Sources */,

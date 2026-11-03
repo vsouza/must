@@ -1,3 +1,4 @@
+import CoreLocation
 import SwiftData
 import SwiftUI
 
@@ -11,12 +12,15 @@ struct TodayView: View {
     @Query private var expenses: [Expense]
     @Query private var settingsList: [Settings]
     @Query private var flights: [Flight]
+    @Query private var trips: [TripInfo]
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var context
 
     /// Outro dia aceito (aberto pela Viagem). `nil` = hoje.
     var date: Date?
 
     private var region: Region { store.region }
+    private var dayStart: Date { region.calendar.startOfDay(for: date ?? AppClock.now) }
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { _ in
@@ -49,6 +53,10 @@ struct TodayView: View {
                     BlobBackground(style: .hoje)
                 }
                 .ignoresSafeArea()
+            }
+            // Dia aceito que ainda não está salvo: baixa no Wi-Fi com a tela aberta (prompt 18 · A.5). Sem Wi-Fi, não faz nada.
+            .task(id: dayStart) {
+                await services.prefetch.run(date: dayStart, context: context, region: region, network: services.connectivity.prefetchNetwork)
             }
         }
     }
@@ -109,6 +117,8 @@ struct TodayView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text(date.map { region.shortDay($0) } ?? "Hoje").mustTitle()
                 Text("dia \(day.kind.label) · \(done) de \(stops.count) feitos").mustSerif(18).foregroundStyle(Color.must.secondary)
+                offlineLine(day)
+                mapHint(day.date)
             }
             .padding(.top, 22)
             flightNotes(day, now: now)
@@ -129,6 +139,31 @@ struct TodayView: View {
             }
             spendCard(day: day, now: now)
             timeline(stops, current: current, now: now)
+        }
+    }
+
+    /// "dia salvo offline ✓" · "salvando… 3/7" · "salva no Wi-Fi" (prompt 18 · A.5). Discreto, uma linha.
+    private func offlineLine(_ day: PlannedDay) -> some View {
+        let text = switch OfflineState.of(day, progress: services.prefetch.progress) {
+        case .running(let done, let total): "salvando… \(done)/\(total)"
+        case .saved: "dia salvo offline ✓"
+        case .partial(let done, let total): "salvo \(done)/\(total) · completa no Wi-Fi"
+        case .waitingWiFi: "salva no Wi-Fi"
+        }
+        return Text(text).mustMeta()
+    }
+
+    /// Mapa da cidade do dia não baixado: só a sugestão (o pacote tem ~100 MB; quem decide é o Vinicius).
+    @ViewBuilder private func mapHint(_ date: Date) -> some View {
+        let city = trips.first?.city(on: date, calendar: region.calendar)
+        let center = CLLocationCoordinate2D(latitude: city?.lat ?? region.defaultCenter.latitude,
+                                            longitude: city?.lng ?? region.defaultCenter.longitude)
+        if let pack = MapPack.catalog.first(where: { $0.region == region && $0.contains(center) }),
+           !services.maps.isInstalled(pack.id) {
+            Button { router.push(.offlineMaps, on: .hoje) } label: {
+                Text("mapa de \(city?.name ?? pack.title) não baixado · baixar").underline().mustMeta()
+            }
+            .buttonStyle(.plain)
         }
     }
 

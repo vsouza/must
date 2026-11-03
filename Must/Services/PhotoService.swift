@@ -103,6 +103,19 @@ struct CommonsPhotoService: PhotoProviding {
     }
 }
 
+/// Foto principal de um lugar no Commons: perto (300 m), senão do bairro. Usada pelo Lugar e pelo pré-download
+/// do dia (prompt 18 · A.5), pra que os dois peçam a mesma foto (e a segunda vez vem do cache de 7 dias).
+enum PlaceHero {
+    static func commons(coordinate: CLLocationCoordinate2D, area: String?, cityName: String,
+                        photos: any PhotoProviding) async throws -> CCPhoto? {
+        var found = try await photos.search(near: coordinate, radiusKm: 0.3)
+        if found.isEmpty, let area {
+            found = try await photos.search(text: "\(area) \(cityName)")
+        }
+        return found.first
+    }
+}
+
 struct FakePhotoService: PhotoProviding {
     var isConfigured = true
     var photos: [CCPhoto] = []

@@ -393,6 +393,17 @@ enum PhotoLoader {
         return image
     }
 
+    /// Pré-download do dia (prompt 18 · A.5): garante a foto no disco. Não gasta dado do Modo de Pouco Dados
+    /// (`HTTP(kind: .prefetch)`). `true` se já estava lá ou baixou.
+    static func prefetch(_ url: URL) async -> Bool {
+        let key = "photo|\(url.absoluteString)"
+        if await DiskCache.shared.exists(key) { return true }
+        guard let data = try? await HTTP(kind: .prefetch).get(url, headers: ["User-Agent": CommonsPhotoService.userAgent], service: "foto"),
+              UIImage(data: data) != nil else { return false }
+        await DiskCache.shared.store(data, for: key)
+        return true
+    }
+
     private static func fetch(_ url: URL, key: String) async -> Data? {
         guard let data = try? await HTTP().get(url, headers: ["User-Agent": CommonsPhotoService.userAgent], service: "foto") else {
             return nil
