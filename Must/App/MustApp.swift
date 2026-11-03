@@ -21,6 +21,7 @@ struct MustApp: App {
                 .environment(\.tripTheme, regionStore.theme)
                 .environment(services)
                 .preferredColorScheme(.light)
+                .dynamicTypeSize(...DynamicTypeSize.mustCap)
         }
     }
 }

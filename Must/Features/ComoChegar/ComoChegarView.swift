@@ -337,7 +337,8 @@ private struct StepRow: View {
         HStack(alignment: .top, spacing: 12) {
             Text(time.flatMap { region?.timeString($0) } ?? "")
                 .font(.must.mono(14, .semibold))
-                .frame(width: 52, alignment: .leading)
+                .lineLimit(1).fixedSize()
+                .frame(minWidth: 52, alignment: .leading)
             rail
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)

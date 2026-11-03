@@ -22,33 +22,62 @@ enum MustFontFamily {
 
 /// Escala do Must (CLAUDE.md): título 30/600, nome de lista 20, lugar 17/600,
 /// corpo 15, meta 13, serif 18–20, mono 13, micro 11 mono caixa alta.
+///
+/// Texto até 30 pt acompanha o Dynamic Type (`relativeTo:` pelo tamanho); o app limita em `.xxxLarge`
+/// (`DynamicTypeSize.mustCap`), sem os tamanhos de acessibilidade. Kanji (selos de bairro, círculos) e números de vitrine
+/// (> 30 pt) ficam fixos: vivem dentro de formas de tamanho fixo.
 struct MustFonts: Sendable {
-    let title = Font.custom(MustFontFamily.archivo, fixedSize: 30).weight(.semibold)
-    let listName = Font.custom(MustFontFamily.archivo, fixedSize: 20).weight(.semibold)
-    let place = Font.custom(MustFontFamily.archivo, fixedSize: 17).weight(.semibold)
-    let body = Font.custom(MustFontFamily.archivo, fixedSize: 15)
-    let meta = Font.custom(MustFontFamily.archivo, fixedSize: 13)
-    let serif = Font.custom(MustFontFamily.instrumentSerifItalic, fixedSize: 19)
-    let mono = Font.custom(MustFontFamily.geistMono, fixedSize: 13).monospacedDigit()
+    let title = MustFonts.scaled(MustFontFamily.archivo, 30).weight(.semibold)
+    let listName = MustFonts.scaled(MustFontFamily.archivo, 20).weight(.semibold)
+    let place = MustFonts.scaled(MustFontFamily.archivo, 17).weight(.semibold)
+    let body = MustFonts.scaled(MustFontFamily.archivo, 15)
+    let meta = MustFonts.scaled(MustFontFamily.archivo, 13)
+    let serif = MustFonts.scaled(MustFontFamily.instrumentSerifItalic, 19)
+    let mono = MustFonts.scaled(MustFontFamily.geistMono, 13).monospacedDigit()
     /// Use com `.textCase(.uppercase)` e `.tracking(1.1)` (≈ .1em em 11pt) — ver `Typography.swift`.
-    let micro = Font.custom(MustFontFamily.geistMono, fixedSize: 11)
+    let micro = MustFonts.scaled(MustFontFamily.geistMono, 11)
     let kanji = Font.custom(MustFontFamily.zenKakuBold, fixedSize: 17)
 
     func archivo(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
-        .custom(MustFontFamily.archivo, fixedSize: size).weight(weight)
+        Self.scaled(MustFontFamily.archivo, size).weight(weight)
     }
 
     func serif(_ size: CGFloat) -> Font {
-        .custom(MustFontFamily.instrumentSerifItalic, fixedSize: size)
+        Self.scaled(MustFontFamily.instrumentSerifItalic, size)
     }
 
     func mono(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
-        .custom(MustFontFamily.geistMono, fixedSize: size).weight(weight).monospacedDigit()
+        Self.scaled(MustFontFamily.geistMono, size).weight(weight).monospacedDigit()
     }
 
     func kanji(_ size: CGFloat, bold: Bool = true) -> Font {
         .custom(bold ? MustFontFamily.zenKakuBold : MustFontFamily.zenKakuMedium, fixedSize: size)
     }
+
+    /// Fonte que cresce com o Dynamic Type a partir do estilo mais perto do tamanho; acima de 30 pt, fixa.
+    static func scaled(_ name: String, _ size: CGFloat) -> Font {
+        guard let style = textStyle(for: size) else { return .custom(name, fixedSize: size) }
+        return .custom(name, size: size, relativeTo: style)
+    }
+
+    static func textStyle(for size: CGFloat) -> Font.TextStyle? {
+        switch size {
+        case ...11: .caption2
+        case ...12: .caption
+        case ...13: .footnote
+        case ...15: .subheadline
+        case ...17: .body
+        case ...20: .title3
+        case ...22: .title2
+        case ...30: .title
+        default: nil
+        }
+    }
+}
+
+extension DynamicTypeSize {
+    /// Teto do texto no app: cresce até XXXL; tamanhos de acessibilidade quebrariam os cards e selos.
+    static let mustCap: DynamicTypeSize = .xxxLarge
 }
 
 extension Font {

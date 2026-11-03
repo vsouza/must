@@ -201,7 +201,8 @@ struct SessionsCard: View {
                 Text(region.timeString(s.at))
             }
             .font(.must.mono(12, .semibold)).foregroundStyle(Color.must.ink)
-            .frame(width: 58, alignment: .leading)
+            .lineLimit(1).fixedSize()
+            .frame(minWidth: 58, alignment: .leading)
             VStack(alignment: .leading, spacing: 2) {
                 Text(s.title).font(.must.archivo(14, .semibold)).foregroundStyle(Color.must.ink).lineLimit(2)
                 let meta = [s.price.map { $0 == 0 ? "grátis" : region.money($0) }, s.note].compactMap { $0 }.joined(separator: " · ")

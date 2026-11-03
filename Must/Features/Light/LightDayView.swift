@@ -247,7 +247,8 @@ struct LightDayView: View {
         return HStack(alignment: .center, spacing: 14) {
             Text(region.timeString(r.time)).font(.must.mono(14, .semibold))
                 .foregroundStyle(isNext ? MustGradient.goldText : Color.must.ink)
-                .frame(width: 50, alignment: .leading)
+                .lineLimit(1).fixedSize()
+                .frame(minWidth: 50, alignment: .leading)
             // A barra é a luz da hora (golden, dura, azul); refeição fica na cor da lista.
             Capsule().fill(r.color == .eat ? MustColor.eat.strong : l.color).frame(width: 5, height: 34)
             VStack(alignment: .leading, spacing: 3) {

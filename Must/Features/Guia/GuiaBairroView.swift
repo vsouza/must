@@ -136,13 +136,15 @@ struct GuiaBairroView: View {
                 Text(region.timeString(stop.at))
                     .font(.must.mono(15, .bold))
                     .foregroundStyle(stop.status == .current ? Color.must.greenText : (stop.status == .done ? Color.must.secondary : Color.must.ink))
+                    .lineLimit(1)
+                    .fixedSize() // hora nunca quebra (Dynamic Type grande alarga a coluna)
                 if let seal = stop.areaSeal {
                     Text(seal)
                         .font(.must.kanji(12))
                         .foregroundStyle(Color.must.secondary)
                 }
             }
-            .frame(width: 58, alignment: .leading)
+            .frame(minWidth: 58, alignment: .leading)
             stopCard(stop)
         }
     }

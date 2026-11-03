@@ -150,7 +150,8 @@ struct ProposalView: View {
             Text(region.timeString(stop.at))
                 .font(.must.mono(15, stop.isAnchor ? .semibold : .regular))
                 .foregroundStyle(stop.isAnchor ? Color.must.blueText : Color.must.secondary)
-                .frame(width: 52, alignment: .leading)
+                .lineLimit(1).fixedSize()
+                .frame(minWidth: 52, alignment: .leading)
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
                     Text(p.name).mustPlace().lineLimit(1)
