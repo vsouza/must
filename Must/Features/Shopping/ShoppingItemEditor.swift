@@ -10,6 +10,7 @@ struct ShoppingItemEditor: View {
     @Environment(\.modelContext) private var context
     @Environment(RegionStore.self) private var store
     @Query private var places: [Place]
+    @Query private var settingsList: [Settings]
 
     @State private var name = ""
     @State private var category: ShoppingCategory = .other
@@ -200,7 +201,9 @@ struct ShoppingItemEditor: View {
         target.ingredients = ingredients
         target.notes = notes
         target.flags = ShoppingChecks.flags(name: trimmedName, ingredients: ingredients, food: category == .food)
-        ShoppingPurchase.sync(target, store: chosen, context: context)
+        ShoppingPurchase.sync(target, store: chosen, context: context, regionCurrency: region.currency,
+                              brlPerYen: ShoppingFX.rate(for: region, userRate: settingsList.first?.fxRate),
+                              brlPerUSD: settingsList.first?.brlPerUSD ?? ShoppingFX.brlPerUSD)
         try? context.save()
         dismiss()
     }

@@ -27,6 +27,7 @@ enum ShoppingDemo {
                           estPrice: 1_800, paid: 1_800, status: .bought, taxFreeReceipt: false), ""),
         ]
         for (item, ingredients) in samples {
+            item.currency = "JPY"
             item.ingredients = ingredients
             item.flags = ShoppingChecks.flags(name: item.name, ingredients: ingredients, food: item.category == .food)
             context.insert(item)

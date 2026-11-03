@@ -169,6 +169,8 @@ final class Expense {
     @Attribute(.unique) var id: UUID
     var at: Date
     var amount: Double
+    /// Nota livre (compra de item em outra moeda guarda o valor original aqui).
+    var note: String = ""
     var categoryRaw: String
     var place: Place?
     var methodRaw: String
