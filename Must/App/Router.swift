@@ -8,8 +8,8 @@ enum Route: Hashable {
     case place(id: String)
     case settings
     case offlineMaps
-    /// Montar o dia (meia-noite do dia, no fuso da região).
-    case montar(date: Date)
+    /// Montar o dia (meia-noite do dia, no fuso da região). `focusArea`: "Ajustar" da sheet de Bairros (prompt 18 · C.15).
+    case montar(date: Date, focusArea: String? = nil)
     case trip
     case reservations
     /// Um dia aceito que não é hoje.
@@ -147,7 +147,7 @@ extension View {
             case .place(let id): PlaceView(placeId: id)
             case .settings: SettingsView()
             case .offlineMaps: OfflineMapsView()
-            case .montar(let date): MontarView(date: date)
+            case .montar(let date, let focusArea): MontarView(date: date, focusArea: focusArea)
             case .trip: TripView()
             case .reservations: ReservationsView()
             case .day(let date): TodayView(date: date)
