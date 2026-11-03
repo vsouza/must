@@ -428,3 +428,11 @@ iPhone: [ ] medir com Instruments (Hangs + Time Profiler) — Vinicius
 - Toque na bolha e a sheet com o mapa em movimento.
 
 iPhone: [ ] medir Bairros e Guia com Instruments — Vinicius
+
+## Rodada 21 · fatias 3–4
+
+- **Reforço na nuvem (Colar texto):** só com menos de 2 lugares no aparelho, ajuste ligado e chave. Haiku (`claude-haiku-5-5`, effort low, sem thinking), uma tentativa, sem repetir. Sem rede entra na fila (`OutboxKind.cloudText`). Testes com `NetStub` em `MustTests/ColarTextoCloudTests.swift`. Nada de chamada real.
+- **nameLocal:** "Fuunji (風雲児)" e "風雲児 Fuunji" viram `nameLocal`. Testes no mesmo arquivo.
+- **Selo de grupo:** o kanji do bairro já era `StationStamp`; a linha pequena agora mostra "dia N" quando o bairro não tem sub.
+- **Tinta do país (fatia 4):** os selos já leem `TripTheme.stampInk` pelo ambiente (`MustApp` injeta o tema da região). A coleção de bairros da Viagem ganhou `border: theme.tripColor` no `StationStamp`.
+- **Pendente de QA no aparelho:** print de `colar-texto:amostra` fica em "Lendo o texto…" no simulador, sem resultado em 14 s. O `-debugScreen bairros` abriu o Mapa, não a lista de bairros. Conferir os dois antes de dar a fatia por fechada.

@@ -34,11 +34,13 @@ struct StationStamp: View {
     var filled: Bool = true
     var fillOpacity: Double = 0.55
     var rotation: Double = -8
+    /// Cor do anel quando a coleção pede a borda do país (Viagem: `trip`). `nil` = a tinta do selo.
+    var border: Color?
 
     @Environment(\.tripTheme) private var theme
 
     init(_ text: String, sub: String? = nil, size: CGFloat = 74, surface: Surface = .photo, filled: Bool = true,
-         fillOpacity: Double = 0.55, rotation: Double = -8) {
+         fillOpacity: Double = 0.55, rotation: Double = -8, border: Color? = nil) {
         self.text = text
         self.sub = sub
         self.size = size
@@ -46,6 +48,7 @@ struct StationStamp: View {
         self.filled = filled
         self.fillOpacity = fillOpacity
         self.rotation = rotation
+        self.border = border
     }
 
     /// Kanji (Zen Kaku Gothic New) quando o texto não é sigla ASCII (BH: SAV, LOU…).
@@ -53,7 +56,7 @@ struct StationStamp: View {
         !text.unicodeScalars.allSatisfy { $0.isASCII }
     }
 
-    private var ring: Color { surface == .photo ? StampPalette.onPhoto : StampPalette.ink(theme) }
+    private var ring: Color { border ?? (surface == .photo ? StampPalette.onPhoto : StampPalette.ink(theme)) }
 
     private var fill: Color? {
         guard surface == .photo, filled else { return nil }

@@ -210,7 +210,7 @@ struct TripView: View {
                     HStack(spacing: 14) {
                         ForEach(Array(areas.enumerated()), id: \.element.id) { index, area in
                             StationStamp(area.seal, sub: area.stampSub, size: 74, surface: .photo, filled: true,
-                                         rotation: -6 - Double(index % 3) * 2)
+                                         rotation: -6 - Double(index % 3) * 2, border: theme.tripColor)
                         }
                     }
                     .padding(.vertical, 6)
