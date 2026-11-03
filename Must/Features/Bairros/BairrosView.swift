@@ -43,7 +43,8 @@ struct BairrosView: View {
             }
         }
         .overlay(alignment: .top) { topBar.padding(.horizontal, 16).padding(.top, 6) }
-        .overlay(alignment: .bottom) { bottom.padding(.horizontal, 12).padding(.bottom, 8) }
+        .overlay(alignment: .bottom) { bottom.padding(.horizontal, 12).padding(.bottom, 100) }
+        .tripWash()
         .background(Color.must.bg.ignoresSafeArea())
         .navigationBarHidden(true)
         .onAppear {
@@ -256,8 +257,8 @@ struct BairroSheetView: View {
         VStack(alignment: .leading, spacing: 14) {
             Capsule().fill(Color.must.line).frame(width: 36, height: 5).frame(maxWidth: .infinity)
             HStack(alignment: .center, spacing: 14) {
-                StationStamp(sheet.area.seal, sub: sheet.area.stampSub, size: 74, ring: StampPalette.onPaper,
-                             fill: nil, rotation: -8)
+                StationStamp(sheet.area.seal, sub: sheet.area.stampSub, size: 74, surface: .paper, filled: false,
+                             rotation: -8)
                 VStack(alignment: .leading, spacing: 4) {
                     Text(sheet.area.name)
                         .font(.must.archivo(30, .semibold))

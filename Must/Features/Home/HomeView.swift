@@ -269,6 +269,9 @@ struct HomeView: View {
         .frame(height: 296)
         .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         .shadow(color: Color.must.ink.opacity(0.22), radius: 25, y: 22)
+        .contentShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .onTapGesture { router.push(.guia(date: today), on: .inicio) }
+        .accessibilityAddTraits(.isButton)
     }
 
     /// Sem dia montado: "Hoje, pra onde?" com os 3 bairros com mais musts abertos agora.
@@ -289,15 +292,13 @@ struct HomeView: View {
                     .padding(.top, 2)
                 VStack(spacing: 8) {
                     ForEach(state.pick) { entry in
-                        // TODO(prompt 18 · C): a tela Bairros abre o bairro; por ora vai pro Montar do dia.
-                        Button { router.push(.montar(date: today), on: .hoje) } label: { pickRow(entry) }
+                        Button { router.push(.bairros(areaId: entry.id), on: .inicio) } label: { pickRow(entry) }
                             .buttonStyle(MustPressStyle())
                     }
                 }
                 .padding(.top, 16)
                 Spacer(minLength: 14)
-                Button { router.push(.montar(date: today), on: .hoje) } label: {
-                    // TODO(prompt 18 · C): "Montar por bairro" abre a tela Bairros (fatia C); hoje é o Montar.
+                Button { router.push(.bairros(areaId: nil), on: .inicio) } label: {
                     Text("Montar por bairro")
                         .font(.must.archivo(15, .semibold))
                         .foregroundStyle(Color.must.greenText)
@@ -390,17 +391,17 @@ struct HomeView: View {
                         .foregroundStyle(Color.must.ink)
                 }
                 Spacer()
-                // TODO(prompt 18 · C): "ver todos" abre a tela Bairros (fatia C).
-                Text("ver todos")
-                    .font(.must.mono(11))
-                    .textCase(.uppercase)
-                    .tracking(1.1)
-                    .foregroundStyle(Color.must.ink)
+                Button { router.push(.bairros(areaId: nil), on: .inicio) } label: {
+                    Text("ver todos")
+                        .font(.must.mono(11))
+                        .textCase(.uppercase)
+                        .tracking(1.1)
+                        .foregroundStyle(Color.must.ink)
+                }
             }
             HStack(spacing: 10) {
                 ForEach(state.tomorrow) { card in
-                    // TODO(prompt 18 · C): o cartão abre o bairro (Bairros); por ora vai pro Montar de amanhã.
-                    Button { router.push(.montar(date: tomorrow), on: .hoje) } label: { areaCard(card) }
+                    Button { router.push(.bairros(areaId: card.id), on: .inicio) } label: { areaCard(card) }
                         .buttonStyle(MustPressStyle())
                 }
             }

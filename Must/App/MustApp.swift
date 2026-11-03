@@ -272,6 +272,11 @@ enum DebugLaunch {
         case "avisos": // avisos do guia do dia aceito, no log (prompt 18 · C.17); não agenda nada
             router.select(.hoje)
             GuideNudgeScheduler.logPreview(context: context, region: region, origin: location.current?.coordinate)
+        case "bairros": // bairros (prompt 18 · C.14); bairros:shinjuku já abre a sheet do bairro (prints)
+            router.push(.bairros(areaId: arg), on: .inicio)
+        case "guia": // Shinjuku+ montado e aceito hoje, e o Guia do dia (prompt 18 · C.16)
+            acceptFocusToday(context: context, region: region, location: location, areaId: "shinjuku")
+            router.push(.guia(date: region.calendar.startOfDay(for: AppClock.now)), on: .inicio)
         case "sincronizar":
             router.push(.settings, on: .inicio)
             Task { await services.sync.syncPlaces(context: context, region: region) }
@@ -291,6 +296,19 @@ enum DebugLaunch {
     private static func prefetchDays(services: Services, context: ModelContext, region: Region) {
         let network = services.connectivity.prefetchNetwork
         Task { await services.prefetch.runPending(context: context, region: region, network: network, now: AppClock.now) }
+    }
+
+    /// Monta e aceita hoje no bairro, com vizinhos (o "Montar <bairro>+" da tela Bairros), pros prints do Guia.
+    private static func acceptFocusToday(context: ModelContext, region: Region, location: LocationService, areaId: String) {
+        let settings = try? context.fetch(FetchDescriptor<Settings>()).first
+        let trip = try? context.fetch(FetchDescriptor<TripInfo>()).first
+        let places = (try? context.fetch(FetchDescriptor<Place>())) ?? []
+        let date = region.calendar.startOfDay(for: AppClock.now)
+        let planner = DayPlanner(date: date, region: region, settings: settings, existing: nil)
+        planner.focusArea = areaId
+        let flights = FlightRules.dayFlights(context.flights(), on: planner.date, region: region)
+        planner.build(catalog: places.solverCatalog, trip: trip, settings: settings, location: location.current, flights: flights)
+        try? planner.accept(context: context)
     }
 
     /// Monta e aceita um dia (hoje + `offset`) com os padrões (prints da tela Hoje e do Mapa).
