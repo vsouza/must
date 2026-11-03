@@ -428,3 +428,17 @@ iPhone: [ ] medir com Instruments (Hangs + Time Profiler) — Vinicius
 - Toque na bolha e a sheet com o mapa em movimento.
 
 iPhone: [ ] medir Bairros e Guia com Instruments — Vinicius
+
+## Rodada 21 · fatia 2 (bairro pelo GPS, 03/11/2026)
+
+- Feito: `CurrentAreaService` (actor, fora do main): tabela curada primeiro (polígono se houver, senão centroide a até 1,2 km); depois célula de ~300 m (`AreaGrid`), cache em `Caches/must-cache` (`DiskAreaCellStore`), `CLGeocoder` uma vez por célula, uma requisição por vez, offline usa o último valor.
+- Feito: nome do geocoder vira bairro (`AreaNameMatch`, sem acento/caixa, "-ku"/"City"/"Ward" tirados se o nome inteiro não bater).
+- Feito: Home sem dia aceito mostra "Hoje em <bairro>" com a foto do bairro; "Por perto · <bairro>" no cabeçalho da tela Por perto.
+- Feito: `AreaCoverPrefetch` baixa uma capa por bairro do board só com `PrefetchPolicy` (Wi-Fi, fora do Pouco Dados), gera miniatura de 240 px no aparelho. Disparado junto do pré-download do dia (`runPrefetchPending`). Desvio: a capa é a de 1024 px que o Commons devolve (já era o que `PhotoLoader` guardava), não uma de 800 px.
+- Pendente: a miniatura de 240 px ainda não é lida por nenhuma lista (a Bairros usa a foto grande); fica no disco pra quando a lista usar.
+- Testes: `CurrentAreaTests` (12) e suíte completa verde (518 testes).
+- Print: `qa/inicio-gps.png` (simulador, GPS simulado em Shinjuku, JP): "Hoje em Shinjuku".
+
+iPhone: [ ] andar entre Shinjuku, Ginza e Shibuya e ver o bairro trocar (fora da tabela, a troca espera o geocoder) — Vinicius
+[ ] sem sinal, abrir o app no bairro já visto: mostra o último bairro — Vinicius
+[ ] Wi-Fi com Modo de Pouco Dados ligado: nada de capa nova — Vinicius
