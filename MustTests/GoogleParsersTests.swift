@@ -71,17 +71,17 @@ struct GoogleParsersTests {
         #expect(try PlaceAutocomplete.parse(Data("{}".utf8)).isEmpty)
     }
 
-    @Test func placePhotoRefsKeepNameAndAuthor() {
+    @Test func placePhotoRefsKeepNameAndAuthor() throws {
         let json = """
         {"id": "ChIJ-x", "photos": [
           {"name": "places/ChIJ-x/photos/AAA", "authorAttributions": [{"displayName": "Maria Viaja", "uri": "https://maps.google.com/x"}]},
           {"name": "places/ChIJ-x/photos/BBB"}
         ]}
         """
-        let refs = GooglePlacePhotos.parseRefs(Data(json.utf8))
+        let refs = try GooglePlacePhotos.parseRefs(Data(json.utf8))
         #expect(refs == [
-            .init(name: "places/ChIJ-x/photos/AAA", author: "Maria Viaja"),
-            .init(name: "places/ChIJ-x/photos/BBB", author: nil),
+            .init(name: "places/ChIJ-x/photos/AAA", author: "Maria Viaja", authorURI: "https://maps.google.com/x"),
+            .init(name: "places/ChIJ-x/photos/BBB", author: nil, authorURI: nil),
         ])
     }
 

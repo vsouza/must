@@ -27,6 +27,8 @@ struct PlaceDetails: Sendable, Hashable {
     var lat: Double? = nil
     var lng: Double? = nil
     var primaryType: String? = nil
+    /// `photos[]` do mesmo Details (prompt 19): o que o `Place` guarda pra foto principal e a galeria.
+    var photos: [PlacePhotoRef] = []
 }
 
 protocol PlacesProviding: Sendable {
@@ -54,7 +56,8 @@ struct PlacesService: PlacesProviding {
     /// `places.id` sozinha não dá pra conferir (regra do projeto: código existente ganha, ver commit).
     static let searchMask = "places.id,places.displayName,places.location,places.formattedAddress,places.primaryType"
     /// Pro: horário, nota, preço + o que o card de Buscar por nome mostra (uma chamada só, mais barata que Essentials + Pro).
-    static let detailsMask = "id,displayName,formattedAddress,location,primaryType,regularOpeningHours,currentOpeningHours,priceLevel,priceRange,rating,userRatingCount"
+    /// `photos` entra sem chamada extra (prompt 19): o SKU cobrado é o mais caro do mask (Pro), que já é este.
+    static let detailsMask = "id,displayName,formattedAddress,location,primaryType,regularOpeningHours,currentOpeningHours,priceLevel,priceRange,rating,userRatingCount,photos"
 
     /// Chave restrita a apps iOS exige o bundle id no cabeçalho.
     private func headers(_ key: String, mask: String) -> [String: String] {
@@ -128,7 +131,8 @@ struct PlacesService: PlacesProviding {
         return PlaceDetails(id: id, hours: hours, priceLevel: (json["priceLevel"] as? String).flatMap { levels[$0] },
                             priceFrom: units, priceCurrency: start?["currencyCode"] as? String, rating: json["rating"] as? Double,
                             ratingCount: json["userRatingCount"] as? Int, name: name, address: json["formattedAddress"] as? String,
-                            lat: loc?["latitude"] as? Double, lng: loc?["longitude"] as? Double, primaryType: json["primaryType"] as? String)
+                            lat: loc?["latitude"] as? Double, lng: loc?["longitude"] as? Double, primaryType: json["primaryType"] as? String,
+                            photos: GooglePlacePhotos.refs(from: json))
     }
 
     private static func point(_ any: Any?) -> PlaceHours.Point? {

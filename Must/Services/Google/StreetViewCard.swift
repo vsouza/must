@@ -88,7 +88,7 @@ struct StreetViewService: Sendable {
     static func isFresh(_ file: URL) -> Bool {
         guard let attrs = try? FileManager.default.attributesOfItem(atPath: file.path()),
               let modified = attrs[.modificationDate] as? Date else { return false }
-        return Date().timeIntervalSince(modified) < GooglePlacePhotos.maxAge
+        return Date().timeIntervalSince(modified) < PlacePhotoStore.maxAge
     }
 
     /// Rumo (graus, 0 = norte) do ponto da foto até o lugar.

@@ -26,9 +26,12 @@ final class Connectivity {
 
     /// Espelho pro `HTTP` (fora do main). Só o monitor escreve.
     private nonisolated static let mirror = Mutex<Status>(.online)
+    /// Wi-Fi, espelhado pro `HTTP` (medição de dados: `DataUsage`).
+    private nonisolated static let mirrorWiFi = Mutex<Bool>(false)
 
     /// Estado atual, lido de qualquer thread (o `HTTP` checa aqui antes de cada chamada).
     nonisolated static var current: Status { mirror.withLock { $0 } }
+    nonisolated static var currentIsWiFi: Bool { mirrorWiFi.withLock { $0 } }
 
     init() {
         let mode = DebugFlags.string("debugNetwork")
@@ -37,6 +40,7 @@ final class Connectivity {
         isWiFi = mode == "wifi"
         isExpensive = mode == "celular"
         if mode == "offline" { Self.mirror.withLock { $0 = .offline } }
+        if mode == "wifi" { Self.mirrorWiFi.withLock { $0 = true } }
     }
 
     /// Liga o monitor (uma vez). Com `-debugNetwork` forçado não liga: o estado fica travado.
@@ -65,6 +69,7 @@ final class Connectivity {
         if isExpensive != expensive { isExpensive = expensive }
         if isWiFi != wifi { isWiFi = wifi }
         Self.mirror.withLock { $0 = next }
+        Self.mirrorWiFi.withLock { $0 = wifi }
     }
 
     /// Rótulo do chip da Home: "sem internet · offline ok" quando não há rede.

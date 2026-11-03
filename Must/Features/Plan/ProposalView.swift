@@ -146,6 +146,7 @@ struct ProposalView: View {
             if stop.isException { meta.append("fora da meta") }
         }
         return HStack(alignment: .center, spacing: 14) {
+            PlaceThumb(placeId: p.placeId, refs: p.photoRefs, color: p.listColor, size: 40)
             Text(region.timeString(stop.at))
                 .font(.must.mono(15, stop.isAnchor ? .semibold : .regular))
                 .foregroundStyle(stop.isAnchor ? Color.must.blueText : Color.must.secondary)
