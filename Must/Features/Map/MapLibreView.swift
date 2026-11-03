@@ -19,6 +19,14 @@ struct MapScene {
     var you: CLLocationCoordinate2D?
     /// Área citada (anel fechado, preenchida a 8% e tracejada): o preview do Adicionar por link.
     var area: [CLLocationCoordinate2D]? = nil
+    /// Percurso do Guia do dia (prompt 18 · C.16): trecho de trem na cor da linha, ou a pé (pontilhado).
+    var legs: [MapLegPath] = []
+}
+
+/// Um trecho do percurso: `color` nil = a pé (pontilhado cinza); senão a cor oficial da linha (`0xRRGGBB`).
+struct MapLegPath: Sendable {
+    var coordinates: [CLLocationCoordinate2D]
+    var color: UInt32?
 }
 
 /// Pedido de câmera vindo da tela (cada `id` novo é aplicado uma vez).
@@ -257,6 +265,20 @@ struct MapLibreView: UIViewRepresentable {
             distance.lineWidth = NSExpression(forConstantValue: 1.6)
             distance.lineDashPattern = NSExpression(forConstantValue: [2.5, 3.75])
             style.addLayer(distance)
+
+            // Percurso do Guia (C.16): trem na cor da linha (cor por feature) e a pé pontilhado.
+            let legs = MLNLineStyleLayer(identifier: "rt-legs", source: source("rt-legs"))
+            legs.lineColor = NSExpression(mglJSONObject: ["to-color", ["get", "color"]])
+            legs.lineWidth = NSExpression(forConstantValue: 4)
+            legs.lineCap = round
+            legs.lineJoin = round
+            style.addLayer(legs)
+            let walkLegs = MLNLineStyleLayer(identifier: "rt-legs-walk", source: source("rt-legs-walk"))
+            walkLegs.lineColor = NSExpression(forConstantValue: UIColor(red: 0x7A / 255, green: 0x7F / 255, blue: 0x87 / 255, alpha: 1))
+            walkLegs.lineWidth = NSExpression(forConstantValue: 3)
+            walkLegs.lineDashPattern = NSExpression(forConstantValue: [0.2, 2.4])
+            walkLegs.lineCap = round
+            style.addLayer(walkLegs)
         }
 
         // MARK: Cena
@@ -311,6 +333,10 @@ struct MapLibreView: UIViewRepresentable {
             setShape("rt-done", scene.routeDone, style: style)
             setShape("rt-future", scene.routeFuture, style: style)
             setShape("rt-distance", scene.distanceLine.map { [$0] } ?? [], style: style)
+            let transit = scene.legs.filter { $0.color != nil }
+            setShape("rt-legs", transit.map(\.coordinates), style: style,
+                     attributes: transit.map { ["color": String(format: "#%06X", $0.color ?? 0)] })
+            setShape("rt-legs-walk", scene.legs.filter { $0.color == nil }.map(\.coordinates), style: style)
             applyArea(scene.area, style: style)
 
             let visible: [String: Bool] = [
