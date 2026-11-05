@@ -20,6 +20,7 @@ struct MustApp: App {
                 .environment(regionStore)
                 .environment(\.tripTheme, regionStore.theme)
                 .environment(services)
+                .environment(\.dayEngine, DayEngineV8(store: regionStore, services: services))
                 .preferredColorScheme(.light)
                 .dynamicTypeSize(...DynamicTypeSize.mustCap)
         }

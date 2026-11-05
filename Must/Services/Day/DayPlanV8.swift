@@ -34,8 +34,66 @@ struct DayStop: Identifiable, Hashable, Sendable, Codable {
     /// Custo previsto na moeda da região.
     var cost: Double? = nil
     var done: Bool = false
+    // Acrescentados pelo motor real (agente B); todos com valor padrão, o contrato continua valendo.
+    /// Por que é âncora (selo e regra do "saia às"). `nil` em Must livre e micro-parada.
+    var anchor: DayAnchorReason? = nil
+    /// Que micro-parada é (ícone, liga/desliga). `nil` fora das micro-paradas.
+    var micro: DayMicroKind? = nil
+    /// Fila prevista em minutos (board/Places). Com fila e sem reserva, o "saia às" vira "chegue às".
+    var queueMinutes: Int? = nil
+    /// Abertura do lugar nesse dia (o "chegue às" de quem tem fila). `nil` = sem horário.
+    var opensAt: Date? = nil
+    /// Onde fica (micro-parada: no hotel ou perto da parada vizinha). `nil` = sem coordenada.
+    var lat: Double? = nil
+    var lng: Double? = nil
+    /// Fora da meta do dia ("vale a exceção").
+    var isException: Bool = false
 
     var minutes: Int { max(0, Int(end.timeIntervalSince(start) / 60)) }
+    /// Hora marcada de verdade (reserva, ingresso): não tem "chegue às" nem margem de fila.
+    var isBooked: Bool { anchor == .reservation || anchor == .ticket }
+}
+
+/// Por que uma parada é âncora.
+enum DayAnchorReason: String, Codable, Hashable, Sendable, CaseIterable {
+    /// Reserva (RES). Em Roma, com turno: fim fixo.
+    case reservation
+    /// Ingresso ou sessão comprada (QR).
+    case ticket
+    /// Foto no golden (SOL): a luz manda no horário.
+    case golden
+    /// Domingo sem carros na Via Appia (Roma).
+    case sunday
+    /// Trem com hora (Shinkansen, voo): reservado pra quando o board tiver.
+    case train
+}
+
+/// Tipos de micro-parada gerada (prompt 23 §3). Duração fixa de 10 a 40 min, nunca âncora.
+enum DayMicroKind: String, Codable, Hashable, Sendable, CaseIterable {
+    /// Café da manhã perto do hotel (Roma: cornetto no balcão).
+    case breakfast
+    /// Konbini/água antes de fila longa (Roma: nasone).
+    case water
+    /// 40 min no hotel quando a noite tem âncora depois das 19h.
+    case rest
+    /// Compra rápida a caminho (depachika, tax-free, alimentari).
+    case shop
+    /// Vista/foto no caminho ou no golden.
+    case view
+    /// Doce no caminho à tarde (Roma: gelato).
+    case treat
+
+    /// Minutos fixos.
+    var minutes: Int {
+        switch self {
+        case .breakfast: 30
+        case .water: 10
+        case .rest: 40
+        case .shop: 15
+        case .view: 15
+        case .treat: 15
+        }
+    }
 }
 
 /// Modo de um deslocamento.
@@ -101,6 +159,8 @@ struct DayPlan: Hashable, Sendable, Codable {
     var pace: Pace
     var budget: Double
     var spent: Double = 0
+    /// O que o Montar pediu (micro-paradas, foto no golden, compras): volta igual quando o dia aceito é relido.
+    var includes: Set<DayInclude> = [.micro, .goldenPhoto]
 
     var anchors: [DayStop] { stops.filter { $0.kind == .anchor } }
     var plannedCost: Double { stops.compactMap(\.cost).reduce(0, +) }
@@ -121,8 +181,10 @@ struct DayNow: Hashable, Sendable {
 
 /// Motor do dia. O real (agente B) roda o solver atual e gera micro-paradas e deslocamentos.
 protocol DayEngine: Sendable {
-    /// Monta o dia com o ritmo pedido.
+    /// Monta o dia de hoje com o ritmo pedido.
     func build(area: String?, pace: Pace, budget: Double, until: Date, includes: Set<DayInclude>) async -> DayPlan
+    /// Monta o dia de uma data (amanhã, no Montar da Boa noite). Padrão: o de hoje.
+    func build(on date: Date, area: String?, pace: Pace, budget: Double, until: Date, includes: Set<DayInclude>) async -> DayPlan
     /// "Agora" num instante do dia; `nil` antes da primeira parada ou depois da última.
     func now(in plan: DayPlan, at date: Date) -> DayNow?
     /// O dia aceito numa data (do SwiftData), já no formato v8. `nil` = nada montado.
@@ -130,18 +192,13 @@ protocol DayEngine: Sendable {
 }
 
 extension DayEngine {
-    /// Implementação padrão de "agora": parada em curso (ou a próxima a começar) e "saia às" pela perna seguinte.
+    func build(on date: Date, area: String?, pace: Pace, budget: Double, until: Date, includes: Set<DayInclude>) async -> DayPlan {
+        await build(area: area, pace: pace, budget: budget, until: until, includes: includes)
+    }
+
+    /// "Agora" (prompt 23 §3): a parada cujo horário de saída é o próximo. `DayNowRules` tem as contas.
     func now(in plan: DayPlan, at date: Date) -> DayNow? {
-        let stops = plan.stops
-        guard let idx = stops.firstIndex(where: { $0.end > date }) else { return nil }
-        let current = stops[idx]
-        let next = idx + 1 < stops.count ? stops[idx + 1] : nil
-        var leave = current.end
-        if let next {
-            let travel = plan.leg(after: current)?.minutes ?? 0
-            leave = next.start.addingTimeInterval(-Double(travel + 5) * 60)
-        }
-        return DayNow(current: current, leaveAt: leave, next: next)
+        DayNowRules.now(in: plan, at: date)
     }
 }
 
@@ -165,21 +222,21 @@ struct DayEngineStub: DayEngine {
         func t(_ h: Int, _ m: Int) -> Date { cal.date(bySettingHour: h, minute: m, second: 0, of: day)! }
         let stops: [DayStop] = [
             DayStop(id: "s1", placeId: nil, kind: .micro, start: t(8, 30), end: t(9, 0), label: "Fuglen Tokyo",
-                    note: "micro · café filtrado · a pé do hotel", tag: "café", area: "shibuya", cost: 600, done: true),
+                    note: "micro · café filtrado · a pé do hotel", tag: "café", area: "shibuya", cost: 600, done: true, micro: .breakfast),
             DayStop(id: "s2", placeId: nil, kind: .anchor, start: t(10, 0), end: t(12, 0), label: "Aula de sushi · Tsukiji",
-                    note: "ingresso · 2 h · feito", tag: "QR", area: "tsukiji", done: true),
+                    note: "ingresso · 2 h · feito", tag: "QR", area: "tsukiji", done: true, anchor: .ticket),
             DayStop(id: "s3", placeId: nil, kind: .micro, start: t(12, 30), end: t(12, 45), label: "Konbini · água e onigiri",
-                    note: "7-Eleven na saída · caixa 7 Bank aqui", tag: "7", area: "tsukiji", cost: 400),
+                    note: "7-Eleven na saída · caixa 7 Bank aqui", tag: "7", area: "tsukiji", cost: 400, micro: .water),
             DayStop(id: "s4", placeId: "j05", kind: .must, start: t(14, 35), end: t(15, 20), label: "Fuunji · tsukemen",
-                    note: "Must eat · fila ~20 min · ¥ 1.250", area: "shinjuku", cost: 1_250),
+                    note: "Must eat · fila ~20 min · ¥ 1.250", area: "shinjuku", cost: 1_250, queueMinutes: 20),
             DayStop(id: "s5", placeId: "j104", kind: .anchor, start: t(15, 48), end: t(16, 40), label: "Shinjuku Gyoen · golden",
-                    note: "Must photo · entrada até 16:00 · ¥ 500", tag: "SOL", area: "shinjuku", cost: 500),
+                    note: "Must photo · entrada até 16:00 · ¥ 500", tag: "SOL", area: "shinjuku", cost: 500, anchor: .golden),
             DayStop(id: "s6", placeId: nil, kind: .micro, start: t(16, 50), end: t(17, 30), label: "Descanso no hotel",
-                    note: "40 min · carregar o celular · trocar de roupa", tag: "zz", area: "shinjuku"),
+                    note: "40 min · carregar o celular · trocar de roupa", tag: "zz", area: "shinjuku", micro: .rest),
             DayStop(id: "s7", placeId: nil, kind: .micro, start: t(18, 10), end: t(18, 25), label: "Isetan · depachika",
-                    note: "doces pra levar · tax-free acima de ¥ 5.000", tag: "¥", area: "shinjuku", cost: 1_500),
+                    note: "doces pra levar · tax-free acima de ¥ 5.000", tag: "¥", area: "shinjuku", cost: 1_500, micro: .shop),
             DayStop(id: "s8", placeId: "j01", kind: .anchor, start: t(19, 0), end: t(21, 0), label: "Udatsu Sushi",
-                    note: "reserva · omakase · 2 pessoas · ¥ 22.000", tag: "RES", area: "nakameguro"),
+                    note: "reserva · omakase · 2 pessoas · ¥ 22.000", tag: "RES", area: "nakameguro", anchor: .reservation),
             DayStop(id: "s9", placeId: "j105", kind: .must, start: t(21, 30), end: t(23, 30), label: "Golden Gai · bar Albatross",
                     note: "Must drink · cover ¥ 800 · só cash", area: "shinjuku", cost: 800),
         ]

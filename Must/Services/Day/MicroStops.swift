@@ -1,0 +1,244 @@
+import CoreLocation
+import Foundation
+
+/// Micro-paradas geradas (prompt 23 §3): café perto do hotel, konbini/água antes de fila longa, descanso no hotel quando a
+/// noite tem âncora depois das 19h, doce/vista no caminho, compra rápida. Duração fixa de 10 a 40 min; nunca âncora;
+/// só entram num buraco que já existe entre duas paradas (com o deslocamento e a margem), então nada mais se move.
+/// Determinístico: a mesma Linha volta igual em toda abertura.
+enum MicroStops {
+    /// Até onde um lugar do board conta como "perto" pra dar nome à micro-parada.
+    static let nearMeters: CLLocationDistance = 700
+
+    struct Words: Sendable, Hashable {
+        var label: String
+        var note: String
+        var tag: String
+        var cost: Double?
+    }
+
+    /// O que a micro-parada diz, por região (Japão, Roma, BH).
+    static func words(_ kind: DayMicroKind, region: Region) -> Words {
+        switch (kind, region) {
+        case (.breakfast, .jp): Words(label: "Café perto do hotel", note: "micro · café da manhã · a pé do hotel", tag: "café", cost: 800)
+        case (.breakfast, .it): Words(label: "Cornetto e cappuccino no bar", note: "micro · no balcão, de pé", tag: "café", cost: 2.5)
+        case (.breakfast, .bh): Words(label: "Café da manhã", note: "micro · pão de queijo e café · perto de casa", tag: "café", cost: 20)
+        case (.water, .jp): Words(label: "Konbini · água e onigiri", note: "micro · antes da fila", tag: "7", cost: 400)
+        case (.water, .it): Words(label: "Nasone · água fresca", note: "micro · de graça · tape o cano pra beber", tag: "água", cost: nil)
+        case (.water, .bh): Words(label: "Água e um lanche", note: "micro · antes da fila", tag: "água", cost: 10)
+        case (.rest, .bh): Words(label: "Descanso em casa", note: "micro · 40 min · carregar o celular · trocar de roupa", tag: "zz", cost: nil)
+        case (.rest, _): Words(label: "Descanso no hotel", note: "micro · 40 min · carregar o celular · trocar de roupa", tag: "zz", cost: nil)
+        case (.shop, .jp): Words(label: "Depachika · doces pra levar", note: "micro · tax-free acima de ¥ 5.000 com passaporte", tag: "¥", cost: 1_500)
+        case (.shop, .it): Words(label: "Alimentari · pra levar", note: "micro · tax-free só acima de € 70 por loja", tag: "€", cost: 10)
+        case (.shop, .bh): Words(label: "Compra rápida", note: "micro · mercado ou farmácia no caminho", tag: "R$", cost: nil)
+        case (.view, _): Words(label: "Vista no caminho", note: "micro · foto rápida no caminho", tag: "foto", cost: nil)
+        case (.treat, .it): Words(label: "Gelato no caminho", note: "micro · uma bola no copinho", tag: "gl", cost: 3.5)
+        case (.treat, .jp): Words(label: "Taiyaki no caminho", note: "micro · doce de rua", tag: "doce", cost: 300)
+        case (.treat, .bh): Words(label: "Sorvete no caminho", note: "micro · uma bola", tag: "doce", cost: 12)
+        }
+    }
+
+    /// Ordem de tentativa. Compras na volta (Montar) passa a compra rápida pra frente; Roma ganha o gelato da tarde.
+    static func priority(_ input: DayComposer.Input) -> [DayMicroKind] {
+        var order: [DayMicroKind] = [.breakfast, .water, .rest]
+        if input.region == .it { order.append(.treat) }
+        order.append(.view)
+        if input.includes.contains(.shopping) { order.insert(.shop, at: 1) } else { order.append(.shop) }
+        return order
+    }
+
+    static func insert(into board: [DayStop], input: DayComposer.Input, sun: SunDay, assigner: AreaAssigner) -> [DayStop] {
+        guard !board.isEmpty else { return board }
+        var timeline = board.sorted { ($0.start, $0.id) < ($1.start, $1.id) }
+        var added = 0
+        for kind in priority(input) where added < input.pace.microStops.upperBound {
+            guard let micro = make(kind, timeline: timeline, input: input, sun: sun) else { continue }
+            timeline.append(micro)
+            timeline.sort { ($0.start, $0.id) < ($1.start, $1.id) }
+            added += 1
+        }
+        // Micro-parada antes de uma parada já feita também ficou pra trás.
+        for i in timeline.indices where timeline[i].kind == .micro {
+            if let next = timeline[(i + 1)...].first(where: { $0.kind != .micro }), next.done { timeline[i].done = true }
+        }
+        return timeline
+    }
+
+    // MARK: Encaixe
+
+    /// Início que cabe entre `prev` e `next` pra ficar `minutes` em `here`: chega depois de `prev` (ou de `floor`) e ainda sai
+    /// a tempo de `next` (até `nextStart`, com o deslocamento e 5 min de margem). Grade de 5 min. `nil` = não cabe.
+    static func fit(_ minutes: Int, at here: CLLocationCoordinate2D, prev: DayStop?, next: DayStop, nextStart: Date? = nil,
+                    floor: Date? = nil, latest: Bool, input: DayComposer.Input) -> Date? {
+        let prevEnd = max(prev?.end ?? .distantPast, floor ?? .distantPast)
+        guard prevEnd > .distantPast else { return nil }
+        let prevSpot = prev.flatMap(DayComposer.coordinate) ?? input.hotel
+        let early = roundUp(prevEnd.addingTimeInterval(Double(travel(prevSpot, here, input)) * 60), day: input.date)
+        let leaveBy = (nextStart ?? next.start).addingTimeInterval(-Double(travel(here, DayComposer.coordinate(next), input) + DayNowRules.margin + minutes) * 60)
+        let late = roundDown(leaveBy, day: input.date)
+        guard early <= late else { return nil }
+        return latest ? late : early
+    }
+
+    static func travel(_ a: CLLocationCoordinate2D?, _ b: CLLocationCoordinate2D?, _ input: DayComposer.Input) -> Int {
+        DayComposer.minutes(a, b, walkMaxKm: input.walkMaxKm, travel: input.travel)
+    }
+
+    static func roundUp(_ date: Date, day: Date) -> Date {
+        let minutes = (date.timeIntervalSince(day) / 60).rounded(.up)
+        return day.addingTimeInterval((minutes / 5).rounded(.up) * 5 * 60)
+    }
+
+    static func roundDown(_ date: Date, day: Date) -> Date {
+        let minutes = (date.timeIntervalSince(day) / 60).rounded(.down)
+        return day.addingTimeInterval((minutes / 5).rounded(.down) * 5 * 60)
+    }
+
+    private static func at(_ hour: Int, _ minute: Int = 0, _ input: DayComposer.Input) -> Date {
+        input.date.addingTimeInterval(Double(hour * 60 + minute) * 60)
+    }
+
+    // MARK: Cada tipo
+
+    static func make(_ kind: DayMicroKind, timeline: [DayStop], input: DayComposer.Input, sun: SunDay) -> DayStop? {
+        let boardIndices = timeline.indices.filter { timeline[$0].kind != .micro }
+        guard !boardIndices.isEmpty else { return nil }
+        let inDay = Set(timeline.compactMap(\.placeId))
+        let d = kind.minutes
+        var w = words(kind, region: input.region)
+        func stop(_ start: Date, _ here: CLLocationCoordinate2D, area: String?, place: SolverPlace? = nil) -> DayStop {
+            if let place { w.label = named(place, kind: kind) }
+            return DayStop(id: "m-\(kind.rawValue)", placeId: place?.id, kind: .micro, start: start, end: start.addingTimeInterval(Double(d) * 60),
+                           label: w.label, note: w.note, tag: w.tag, area: area, cost: place.flatMap { $0.price } ?? w.cost,
+                           micro: kind, lat: here.latitude, lng: here.longitude)
+        }
+        /// Pares (anterior, seguinte) de cada buraco, em ordem.
+        let gaps: [(prev: DayStop, next: DayStop)] = zip(timeline, timeline.dropFirst()).map { ($0, $1) }
+
+        switch kind {
+        case .breakfast:
+            // Antes da primeira parada, perto do hotel, entre 07:00 e 10:30.
+            guard let first = timeline.first else { return nil }
+            // O dia já começa num café do board: não tem café da manhã antes.
+            if let morning = input.stops.min(by: { $0.start < $1.start })?.place, isCoffee(morning) { return nil }
+            let here = input.hotel
+            guard let start = fit(d, at: here, prev: nil, next: first, floor: at(7, 0, input), latest: true, input: input),
+                  start <= at(10, 30, input) else { return nil }
+            let cafe = nearest(in: input.catalog, to: here, excluding: inDay, at: start, input: input, where: isCoffee)
+            return stop(start, here, area: nil, place: cafe)
+
+        case .water:
+            // Antes de fila longa (≥ 15 min, sem reserva): logo antes de entrar na fila, do lado.
+            if let qi = boardIndices.first(where: { !timeline[$0].isBooked && (timeline[$0].queueMinutes ?? 0) >= 15 && $0 > 0 }),
+               let here = DayComposer.coordinate(timeline[qi]),
+               let start = fit(d, at: here, prev: timeline[qi - 1], next: timeline[qi], nextStart: DayNowRules.arriveBy(timeline[qi]),
+                               latest: true, input: input) {
+                w.note = "micro · antes da fila de ~\(timeline[qi].queueMinutes ?? 0) min"
+                return stop(start, here, area: timeline[qi].area)
+            }
+            // Senão, depois de uma âncora longa (≥ 1 h 40) que acaba antes das 16h.
+            for (prev, next) in gaps where prev.kind == .anchor && prev.minutes >= 100 && prev.end <= at(16, 0, input) {
+                guard let here = DayComposer.coordinate(prev),
+                      let start = fit(d, at: here, prev: prev, next: next, latest: false, input: input) else { continue }
+                w.note = "micro · na saída · antes de seguir"
+                return stop(start, here, area: prev.area)
+            }
+            return nil
+
+        case .rest:
+            // A noite tem âncora (reserva/ingresso) depois das 19h: 40 min no hotel no buraco da tarde antes dela.
+            guard let evening = timeline.firstIndex(where: { $0.isBooked && $0.start >= at(19, 0, input) }), evening > 0 else { return nil }
+            for k in stride(from: evening, to: 0, by: -1) {
+                let prev = timeline[k - 1], next = timeline[k]
+                guard prev.end >= at(14, 30, input) else { break }
+                if let start = fit(d, at: input.hotel, prev: prev, next: next, latest: false, input: input) {
+                    return stop(start, input.hotel, area: nil)
+                }
+            }
+            return nil
+
+        case .treat:
+            // Doce da tarde (Roma: gelato), saindo de uma parada entre 14:30 e 18:30.
+            for (prev, next) in gaps where prev.end >= at(14, 30, input) && prev.end <= at(18, 30, input) {
+                guard let here = DayComposer.coordinate(prev),
+                      let start = fit(d, at: here, prev: prev, next: next, latest: false, input: input) else { continue }
+                let shop = nearest(in: input.catalog, to: here, excluding: inDay, at: start, input: input) { p in
+                    let t = "\(p.name) \(p.sub ?? "")".lowercased()
+                    return t.contains("gelat") || t.contains("sorvet") || t.contains("taiyaki")
+                }
+                return stop(start, here, area: prev.area, place: shop)
+            }
+            return nil
+
+        case .view:
+            // "Foto no golden" pedida e o dia sem golden: 15 min de foto onde se estiver no começo do golden.
+            if input.includes.contains(.goldenPhoto), !timeline.contains(where: { $0.anchor == .golden }), let golden = sun.goldenPM {
+                for (prev, next) in gaps {
+                    guard let here = DayComposer.coordinate(prev),
+                          let early = fit(d, at: here, prev: prev, next: next, latest: false, input: input),
+                          let late = fit(d, at: here, prev: prev, next: next, latest: true, input: input) else { continue }
+                    let target = roundDown(golden.start, day: input.date)
+                    guard early <= target, target <= late else { continue }
+                    w.label = "Foto no golden"
+                    w.note = "micro · golden \(input.region.timeString(golden.start))–\(input.region.timeString(golden.end))"
+                    return stop(target, here, area: prev.area)
+                }
+            }
+            // Vista no meio do trecho mais longo (≥ 1,2 km).
+            let long = gaps.compactMap { pair -> (prev: DayStop, next: DayStop, km: Double)? in
+                guard let a = DayComposer.coordinate(pair.prev), let b = DayComposer.coordinate(pair.next) else { return nil }
+                let km = DaySolver.streetKm(a, b)
+                return km >= 1.2 ? (pair.prev, pair.next, km) : nil
+            }.sorted { $0.km > $1.km }
+            for gap in long {
+                guard let a = DayComposer.coordinate(gap.prev), let b = DayComposer.coordinate(gap.next) else { continue }
+                let mid = CLLocationCoordinate2D(latitude: (a.latitude + b.latitude) / 2, longitude: (a.longitude + b.longitude) / 2)
+                if let start = fit(d, at: mid, prev: gap.prev, next: gap.next, latest: false, input: input) {
+                    return stop(start, mid, area: gap.prev.area)
+                }
+            }
+            return nil
+
+        case .shop:
+            // A caminho: sai de uma parada e compra antes de seguir pra próxima (de preferência à tarde).
+            let ordered = gaps.filter { $0.prev.end >= at(15, 0, input) } + gaps.filter { $0.prev.end < at(15, 0, input) }
+            for (prev, next) in ordered {
+                guard let here = DayComposer.coordinate(prev),
+                      let start = fit(d, at: here, prev: prev, next: next, latest: true, input: input) else { continue }
+                let shop = nearest(in: input.catalog, to: here, excluding: inDay, at: start, input: input) { $0.role == .shop }
+                return stop(start, here, area: prev.area, place: shop)
+            }
+            return nil
+        }
+    }
+
+    static func isCoffee(_ p: SolverPlace) -> Bool {
+        let sub = (p.sub ?? "").lowercased()
+        return p.listColor == .coffee || sub.contains("café") || sub.contains("cafe") || sub.contains("coffee")
+    }
+
+    /// "Fuglen Tokyo" / "Isetan · compra rápida" / "Fatamorgana · gelato".
+    static func named(_ place: SolverPlace, kind: DayMicroKind) -> String {
+        switch kind {
+        case .shop: "\(place.name) · compra rápida"
+        case .treat:
+            place.name.lowercased().contains("gelat") ? place.name
+                : "\(place.name) · \((place.sub ?? "").lowercased().contains("gelat") ? "gelato" : "doce")"
+        default: place.name
+        }
+    }
+
+    /// Lugar do board mais perto de `here` (até 700 m), da mesma cidade do dia, que não está no dia nem feito e não está
+    /// fechado na hora. Desempate pelo id (determinístico).
+    static func nearest(in catalog: [SolverPlace], to here: CLLocationCoordinate2D, excluding: Set<String>, at start: Date,
+                        input: DayComposer.Input, where match: (SolverPlace) -> Bool) -> SolverPlace? {
+        let spot = CLLocation(latitude: here.latitude, longitude: here.longitude)
+        let cities = Set(input.stops.map { AreaCatalog.cityGroup(forCityId: $0.place.cityId) })
+        return catalog
+            .filter { !$0.done && !excluding.contains($0.id) && ($0.lat != 0 || $0.lng != 0) && match($0) }
+            .filter { cities.isEmpty || cities.contains(AreaCatalog.cityGroup(forCityId: $0.cityId)) }
+            .filter { $0.hours?.isOpen(at: start, timeZone: input.region.timeZone) != false }
+            .map { ($0, $0.location.distance(from: spot)) }
+            .filter { $0.1 <= nearMeters }
+            .min { ($0.1, $0.0.id) < ($1.1, $1.0.id) }?.0
+    }
+}
