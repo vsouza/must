@@ -24,11 +24,20 @@ struct MustApp: App {
                 .environment(\.tripTheme, regionStore.theme)
                 .environment(services)
                 .environment(\.dayEngine, DayEngineV8(store: regionStore, services: services))
+                .environment(\.showEvents, Self.showEvents(regionStore)).environment(\.films, WikidataFilms.shared)
                 .preferredColorScheme(.light)
                 // Fonte padrão: `Text` sem fonte explícita sai em Schibsted (texto v8), não em SF.
                 .font(V8Font.text(15))
                 .dynamicTypeSize(...DynamicTypeSize.mustCap)
         }
+    }
+}
+
+extension MustApp {
+    /// Em cartaz da região atual, lido do board (RODADA-23 · A). O agente E soma os feeds com `.merging(_:)`.
+    static func showEvents(_ store: RegionStore) -> BoardShowEvents {
+        let container = store.container
+        return .live(region: store.region) { (try? container.mainContext.fetch(FetchDescriptor<Place>())) ?? [] }
     }
 }
 
