@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Must — Compartilhar o dia (imagem ou link)</title>
+
+<link rel="stylesheet" href="v8.css"><style>html,body{background:#E8E5DD}body{display:flex;justify-content:center;padding:24px 0}.app{box-shadow:0 30px 80px rgba(0,0,0,.18);border-radius:44px}</style>
+</head>
+<body>
+
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&amp;family=Schibsted+Grotesk:ital,wght@0,400..900;1,400..900&amp;family=Martian+Mono:wdth,wght@75..112.5,100..800&amp;display=swap">
+<style>
+body{margin:0;background:#fff}
+.opt{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid rgba(18,18,18,.14);text-decoration:none;color:inherit}
+.opt .t{font-size:14.5px;font-weight:700}
+.opt .s{font-size:12px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chk{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--ink);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.chk.on{background:var(--ink);color:var(--or)}
+/* o cartaz gerado, em miniatura 9:16 */
+.poster{width:150px;height:267px;border-radius:14px;background:#D7000F;color:#fff;position:relative;overflow:hidden;flex-shrink:0;box-shadow:0 16px 36px rgba(18,18,18,.25)}
+.poster .l{position:absolute;left:10px;right:10px;display:flex;justify-content:space-between;font-family:'Martian Mono',monospace;font-size:5px;letter-spacing:.08em;text-transform:uppercase}
+.poster .st{position:absolute;left:10px;font-size:6.5px;line-height:1.5;white-space:nowrap}
+.poster .st b{font-family:'Martian Mono',monospace;font-weight:600}
+</style>
+
+<div class="app paper">
+  <a href="Dia.html" class="ic" aria-label="Fechar" style="position:absolute;left:18px;top:52px"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></a>
+  <span class="spec" style="right:20px;top:58px;text-align:right;color:var(--mute)">Compartilhar<br>dia 3 · Shinjuku</span>
+
+  <div style="position:absolute;left:20px;right:20px;top:112px;display:flex;gap:16px;align-items:flex-start">
+    <div class="poster" aria-label="Prévia do cartaz do dia">
+      <span class="ring" style="width:170px;height:170px;left:-50px;top:-70px;opacity:.5;color:#fff" aria-hidden="true"></span>
+      <span class="l" style="top:10px"><span>Sáb · 15 nov</span><span>Tóquio</span></span>
+      <span style="position:absolute;left:10px;top:28px;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-variation-settings:'wdth' 92;font-size:17px;letter-spacing:-.02em;line-height:1">Dia 3<br>Shinjuku</span>
+      <span class="st" style="top:76px"><b>08:30</b> Fuglen · café<br><b>10:00</b> Aula de sushi · Tsukiji<br><b>14:35</b> Fuunji · tsukemen<br><b>15:48</b> Gyoen · golden<br><b>18:10</b> Isetan<br><b>19:00</b> Udatsu Sushi<br><b>21:30</b> Golden Gai</span>
+      <span class="num" aria-hidden="true" style="position:absolute;right:-6px;bottom:-26px;font-size:120px;color:#fff;opacity:.95">3</span>
+      <span class="l" style="bottom:8px"><span>must · guia de bolso</span><span></span></span>
+    </div>
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:8px">
+      <span class="disp" style="font-size:30px">Mandar o dia</span>
+      <span style="font-size:13px;color:var(--mute);line-height:1.4">Quem tem o Must abre o roteiro no app. Quem não tem recebe o cartaz, bonito o bastante pro WhatsApp.</span>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
+        <span style="display:flex;align-items:center;gap:8px;font-size:13px"><span class="chk on"><svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span>com horários</span>
+        <span style="display:flex;align-items:center;gap:8px;font-size:13px"><span class="chk on"><svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span>com mapa do percurso</span>
+        <span style="display:flex;align-items:center;gap:8px;font-size:13px"><span class="chk"></span>com preços</span>
+        <span style="display:flex;align-items:center;gap:8px;font-size:13px"><span class="chk"></span>com QR dos ingressos</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="position:absolute;left:20px;right:20px;top:420px;display:flex;flex-direction:column">
+    <a href="Compartilhar.html" class="opt" style="border-top:0"><span class="ic fill" style="width:40px;height:40px"><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 15l5-5 4 4 3-3 6 6"/></svg></span><div style="flex:1;min-width:0"><div class="t">Cartaz · imagem</div><div class="s">1080×1920 · vai pro WhatsApp, Instagram, Fotos</div></div><span class="mono" style="color:var(--mute)">padrão</span></a>
+    <a href="Compartilhar.html" class="opt"><span class="ic" style="width:40px;height:40px"><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1"/></svg></span><div style="flex:1;min-width:0"><div class="t">Link do Must</div><div class="s">must.app/d/9kz2 · abre o dia no app de quem tem; na web, mostra o cartaz</div></div></a>
+    <a href="Compartilhar.html" class="opt"><span class="ic" style="width:40px;height:40px"><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l5 5v13H6zM14 3v6h6M9 13h6M9 17h6"/></svg></span><div style="flex:1;min-width:0"><div class="t">PDF da viagem inteira</div><div class="s">14 dias, um por página · pra imprimir ou pro hotel</div></div></a>
+    <a href="Compartilhar.html" class="opt"><span class="ic" style="width:40px;height:40px"><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M3 20a6 6 0 0112 0M16 4a3.5 3.5 0 010 7M21 20a6 6 0 00-5-5.9"/></svg></span><div style="flex:1;min-width:0"><div class="t">Viajar junto</div><div class="s">Ana entra no board e no dia; mudanças aparecem pros dois (iCloud, sem servidor)</div></div><span class="tag" style="background:var(--or);color:var(--ink)">novo</span></a>
+  </div>
+
+  <a href="Compartilhar.html" class="btn ink" style="position:absolute;left:20px;right:20px;bottom:36px">Mandar cartaz pelo WhatsApp<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Must — Atalhos: um deslize da capa</title>
+
+<link rel="stylesheet" href="v8.css"><style>html,body{background:#E8E5DD}body{display:flex;justify-content:center;padding:24px 0}.app{box-shadow:0 30px 80px rgba(0,0,0,.18);border-radius:44px}</style>
+</head>
+<body>
+
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&amp;family=Schibsted+Grotesk:ital,wght@0,400..900;1,400..900&amp;family=Martian+Mono:wdth,wght@75..112.5,100..800&amp;display=swap">
+<style>
+body{margin:0;background:#fff}
+.a{border-radius:20px;padding:14px;min-height:104px;display:flex;flex-direction:column;justify-content:space-between;text-decoration:none;color:inherit;box-sizing:border-box;background:#fff;border:1px solid rgba(18,18,18,.14)}
+.a .k{font-family:'Martian Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;opacity:.75}
+.a .t{font-size:16px;font-weight:700;letter-spacing:-.01em;line-height:1.1}
+.a .s{display:block;font-size:11.5px;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ln{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 8px 0 3px;border-radius:999px;background:var(--paper);border:1px solid rgba(18,18,18,.14);font-size:11px;font-weight:600;white-space:nowrap}
+.ln i{width:18px;height:18px;border-radius:50%;background:var(--ink);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-family:'Martian Mono',monospace;font-size:8px;font-weight:700}
+</style>
+
+<div class="app paper">
+  <!-- a capa fica atrás, deslocada: o painel entra pela direita -->
+  <div style="position:absolute;left:-330px;top:0;width:390px;height:844px;background:#D7000F;opacity:.9"></div>
+  <div style="position:absolute;left:60px;right:0;top:0;bottom:0;background:var(--paper);border-radius:34px 0 0 34px;box-shadow:-20px 0 60px rgba(18,18,18,.25)">
+    <span class="spec" style="left:22px;top:58px;color:var(--mute)">Atalhos<br>deslize a capa pra direita</span>
+    <a href="CapaJP.html" class="ic" aria-label="Voltar" style="position:absolute;right:18px;top:52px"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></a>
+    <span class="disp" style="position:absolute;left:22px;top:104px;font-size:36px">Na mão</span>
+
+    <div style="position:absolute;left:22px;right:20px;top:166px;display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:10px">
+      <a href="Proximos.html" class="a" style="background:var(--ink);color:#fff;border:0"><span class="k" style="color:var(--mute-d)">Wallet</span><span class="t">Suica<br>¥ 1.240</span><span class="s">abre o Wallet · recarregar</span></a>
+      <a href="Proximos.html" class="a" style="background:var(--or);border:0"><span class="k">Hoje · 2</span><span class="t">Ingressos<br>e reservas</span><span class="s">aula 10:00 · Udatsu 19:00</span></a>
+      <a href="Guia.html" class="a"><span class="k">Offline · baixado</span><span class="t">Mapa</span><span class="s">Tóquio 23 bairros · 184 MB</span></a>
+      <a href="SOS.html" class="a" style="border-color:var(--or)"><span class="k" style="color:var(--or-deep)">Emergência</span><span class="t">SOS</span><span class="s">119 · 110 · seguro · hospital</span></a>
+    </div>
+
+    <div style="position:absolute;left:22px;right:20px;top:398px;display:flex;flex-direction:column;gap:8px">
+      <div class="sec"><h2 style="font-size:18px">Linhas perto</h2><span class="mono">Shinjuku · 4 min</span></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <span class="ln"><i>JY</i>Yamanote</span><span class="ln"><i>JC</i>Chūō</span><span class="ln"><i>M</i>Marunouchi</span><span class="ln"><i>E</i>Ōedo</span><span class="ln"><i>S</i>Shinjuku</span><span class="ln"><i>OH</i>Odakyū</span>
+      </div>
+      <span class="mono" style="color:var(--mute)">último Yamanote 00:40 · próximo pra Shibuya 14:27</span>
+    </div>
+
+    <div style="position:absolute;left:22px;right:20px;top:520px;display:flex;flex-direction:column;gap:8px">
+      <div class="sec"><h2 style="font-size:18px">Indicados por perto</h2><span class="mono">fora do board</span></div>
+      <a href="Lugar.html" class="li" style="padding:9px 0;border-top:0"><span class="ix" style="font-size:22px;width:28px">1</span><div style="flex:1;min-width:0"><div class="nm" style="font-size:15px">Omoide Yokocho</div><div class="mt">vielas de yakitori · 4,4 · 620 m · quem foi: "vá antes das 18"</div></div></a>
+      <a href="Lugar.html" class="li" style="padding:9px 0"><span class="ix" style="font-size:22px;width:28px">2</span><div style="flex:1;min-width:0"><div class="nm" style="font-size:15px">Disk Union Shinjuku</div><div class="mt">vinil, 8 andares · 4,6 · 300 m · Reddit r/JapanTravel</div></div></a>
+      <a href="Lugar.html" class="li" style="padding:9px 0"><span class="ix" style="font-size:22px;width:28px">3</span><div style="flex:1;min-width:0"><div class="nm" style="font-size:15px">Kabukichō Tower · terraço</div><div class="mt">vista grátis · 4,3 · 450 m · em alta hoje</div></div></a>
+    </div>
+
+    <div style="position:absolute;left:22px;right:20px;bottom:30px;display:flex;gap:10px">
+      <a href="Quero.html" class="btn or" style="flex:1">Quero…</a>
+      <a href="Compartilhar.html" class="btn line" style="flex:1">Mandar</a>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
