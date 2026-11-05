@@ -46,6 +46,10 @@ targets:
         buildPhase: resources
       - path: data/map-packs.json
         buildPhase: resources
+      - path: data/emergency-kit.json
+        buildPhase: resources
+      - path: data/hospitals.json
+        buildPhase: resources
       - path: Must/Data/checklists/intl-japan.json
         buildPhase: resources
       - path: Must/Data/checklists/domestic-br.json
@@ -120,6 +124,13 @@ targets:
         LSApplicationQueriesSchemes:
           - comgooglemaps
           - maps
+          - whatsapp
+        # Quick Action "SOS" (prompt 25 · C.3): toque longo no ícone abre o SOS do país.
+        UIApplicationShortcutItems:
+          - UIApplicationShortcutItemType: dev.viniso.must.sos
+            UIApplicationShortcutItemTitle: SOS
+            UIApplicationShortcutItemSubtitle: números do país, hospital, onde estou
+            UIApplicationShortcutItemIconSymbolName: cross.case.fill
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.viniso.must

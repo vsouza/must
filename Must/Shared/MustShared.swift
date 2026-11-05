@@ -41,10 +41,19 @@ struct NextStopAttributes: ActivityAttributes {
         var isAnchor: Bool = false
 
         var progress: Double { total == 0 ? 0 : Double(done) / Double(total) }
+
+        /// Parada da noite (20h–5h no relógio do aparelho): a Live Activity ganha o link do SOS (prompt 25 · C.3).
+        func isNight(calendar: Calendar = .current) -> Bool {
+            let hour = calendar.component(.hour, from: at)
+            return hour >= 20 || hour < 5
+        }
     }
 
     /// "sáb · 31 out"
     var dayLabel: String
+
+    /// Link do SOS na Live Activity à noite.
+    static let sosURL = URL(string: "must://sos")!
 }
 
 /// O que os widgets mostram, escrito pelo app no App Group (sem GPS no widget).

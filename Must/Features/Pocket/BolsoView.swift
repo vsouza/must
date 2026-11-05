@@ -46,6 +46,7 @@ struct BolsoView: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.top, 2)
                 grid(cards).padding(.top, 34)
+                sosCard.padding(.top, 10)
                 V8BarSpacer()
             }
             .padding(.horizontal, 20)
@@ -76,6 +77,34 @@ struct BolsoView: View {
             Spacer(minLength: 12)
             V8CornerButton(systemName: "xmark", label: "Fechar") { dismiss() }
         }
+    }
+
+    // MARK: SOS (prompt 25 · C.3: item fixo do Bolso)
+
+    private var sosCard: some View {
+        let numbers = EmergencyKit.bundled.kit(for: region)?.primary.prefix(3).map(\.number) ?? []
+        return Button { router.push(.sos) } label: {
+            HStack(spacing: 14) {
+                Text("SOS")
+                    .font(V8Font.numeral(34))
+                    .tracking(-1)
+                    .foregroundStyle(V8.ink)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Preciso de ajuda").font(V8Font.text(15, weight: .bold)).foregroundStyle(V8.ink)
+                    Text((numbers + ["hospital", "onde estou"]).joined(separator: " · "))
+                        .font(V8Font.text(13)).foregroundStyle(V8.ink.opacity(0.75)).lineLimit(1)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                Image(systemName: "arrow.up.right").font(.system(size: 15, weight: .bold)).foregroundStyle(V8.ink)
+            }
+            .padding(.horizontal, 18)
+            .frame(maxWidth: .infinity, minHeight: 72)
+            .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(V8.orange))
+            .contentShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        }
+        .buttonStyle(MustPressStyle())
+        .accessibilityLabel("SOS, preciso de ajuda")
+        .accessibilityHint("números de emergência do país, hospital e onde estou; funciona sem internet")
     }
 
     // MARK: Grade

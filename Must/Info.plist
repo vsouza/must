@@ -35,6 +35,7 @@
 	<array>
 		<string>comgooglemaps</string>
 		<string>maps</string>
+		<string>whatsapp</string>
 	</array>
 	<key>MLNIdeographicFontFamilyName</key>
 	<string>Hiragino Sans</string>
@@ -55,6 +56,19 @@
 		<key>UIApplicationSupportsMultipleScenes</key>
 		<false/>
 	</dict>
+	<key>UIApplicationShortcutItems</key>
+	<array>
+		<dict>
+			<key>UIApplicationShortcutItemIconSymbolName</key>
+			<string>cross.case.fill</string>
+			<key>UIApplicationShortcutItemSubtitle</key>
+			<string>números do país, hospital, onde estou</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>SOS</string>
+			<key>UIApplicationShortcutItemType</key>
+			<string>dev.viniso.must.sos</string>
+		</dict>
+	</array>
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>
