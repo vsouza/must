@@ -149,7 +149,7 @@ extension DaySolver {
                 let minute = ctx.minute(item.at)
                 guard seen.insert(minute).inserted else { continue }
                 let length = p.extra?.art?.durationMinutes ?? p.extra?.experience?.durationMinutes ?? (p.kind == .sport ? 150 : 120)
-                out.append(ProposedStop(place: p, at: item.at, end: ctx.date(minute + length), window: window(at: minute),
+                out.append(ProposedStop(place: p, at: item.at, end: ctx.date(minute + length), window: window(at: minute, region: ctx.region),
                                         reason: item.reason, isAnchor: true, isException: false, legFromPrevious: nil))
             }
         }

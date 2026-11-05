@@ -185,6 +185,16 @@ struct DayRequest: Sendable {
     var travel: TravelMatrix?
     /// Foco por bairro (prompt 18 · C.15): candidatos do bairro e, se pedido, dos vizinhos. `nil` = o dia todo.
     var focus: DayFocus? = nil
+    /// Região do dia: regras locais (Itália: janelas italianas, riposo, museu estatal na segunda, turno de reserva,
+    /// Appia no domingo). `nil` = regras gerais (o que os testes antigos montam).
+    var region: Region? = nil
+    /// Ritmo v8 (prompt 23 §3): quantas paradas do board o dia leva (o resto são micro-paradas geradas depois).
+    /// `nil` = o máximo do tipo de dia, como antes.
+    var pace: Pace? = nil
+    /// "Foto no golden" do Montar v8: uma vaga de photo no golden da tarde, mesmo que o tipo de dia não peça.
+    var goldenPhoto = false
+    /// "até 23:30" do Montar v8: nada livre começa depois disso (reserva e ingresso ficam onde estão).
+    var endAt: Date? = nil
 
     /// Hora limite de paradas no dia de voo: a menor partida − 4 h. `nil` = sem voo.
     var flightDeadline: Date? {

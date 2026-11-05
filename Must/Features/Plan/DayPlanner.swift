@@ -50,6 +50,12 @@ final class DayPlanner {
     var travel: TravelMatrix?
     /// Bairro do foco (prompt 18 · C.14/C.15): "Shinjuku+" = o bairro e os vizinhos a 15 min. `nil` = o dia todo.
     var focusArea: String?
+    /// Ritmo v8 (Montar v8): teto de paradas do board. `nil` = o máximo do tipo de dia (Montar v7).
+    var pace: Pace?
+    /// "Foto no golden" (Montar v8).
+    var goldenPhoto = false
+    /// "até 23:30" (Montar v8). `nil` = sem limite.
+    var until: Date?
 
     func request(trip: TripInfo?, settings: Settings?, location: CLLocation?, flights: [DayFlight] = []) -> DayRequest {
         let cal = region.calendar
@@ -68,7 +74,8 @@ final class DayPlanner {
                           weather: weather, walkMaxKm: settings?.walkMaxKm ?? 1.5,
                           oneMealPerWindow: settings?.oneMealPerWindow ?? true, cityCenter: center, seed: seed,
                           flights: flights, travel: travel,
-                          focus: focusArea.map { .area(id: $0, includeNeighbors: true, maxHopMinutes: 15) })
+                          focus: focusArea.map { .area(id: $0, includeNeighbors: true, maxHopMinutes: 15) },
+                          region: region, pace: pace, goldenPhoto: goldenPhoto, endAt: until)
     }
 
     /// Busca a matriz (a pé e transporte) entre a origem e as 9 candidatas mais perto. Antes do solver: ele segue síncrono.
