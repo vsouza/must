@@ -23,12 +23,16 @@ struct RootView: View {
                 }
             }
 
-            V8NavBar(active: router.tab, onSelect: { router.select($0) },
-                     onPlus: { router.sheet = .addLink(url: nil, listId: nil) })
-                .padding(.bottom, 4)
-                .ignoresSafeArea(.keyboard)
+            if !router.hidesNavBar {
+                V8NavBar(active: router.tab, onSelect: { router.select($0) },
+                         onPlus: { router.sheet = .addLink(url: nil, listId: nil) })
+                    .padding(.bottom, 4)
+                    .ignoresSafeArea(.keyboard)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
         }
         // A aba que sai já estava montada (era a visível): guarda também, senão o Início some ao sair dele.
+        .animation(.snappy(duration: 0.25), value: router.hidesNavBar)
         .onChange(of: router.tab) { old, new in visited.formUnion([old, new]) }
         .sheet(item: $router.sheet) { sheet in
             switch sheet {

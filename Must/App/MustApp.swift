@@ -9,6 +9,7 @@ struct MustApp: App {
     init() {
         LaunchTiming.appDidInit()
         HTTP.configureCache()
+        NotificationTaps.shared.install()
     }
 
     var body: some Scene {
@@ -90,6 +91,12 @@ struct AppRoot: View {
                 }
             }
             .onOpenURL { router.handle(url: $0, region: store.region) }
+            // Toque num aviso do guia: o mesmo caminho dos links (`must://bom-dia`, `must://agora`).
+            .onAppear {
+                guard isCurrent else { return }
+                let router = router, store = store
+                NotificationTaps.shared.handler = { router.handle(url: $0, region: store.region) }
+            }
             // Abre na região onde você está (Ajustes › Região › Automático).
             .onChange(of: services.location.current.map { Region.detect($0.coordinate) }, initial: true) { _, _ in
                 if let c = services.location.current?.coordinate { store.followGPS(c) }

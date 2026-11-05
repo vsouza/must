@@ -620,8 +620,7 @@ struct PlaceView: View {
         .padding(.horizontal, 20)
         .padding(.top, 14)
         // A barra v8 do RootView fica por cima de tudo: os botões sobem acima dela.
-        // TODO(v8:orquestrador): esconder a V8NavBar no Lugar em tela cheia (design sem barra) e tirar esta folga.
-        .padding(.bottom, 92)
+        .padding(.bottom, 24) // Lugar em tela cheia: sem barra de abas (`AppRouter.hidesNavBar`)
         .background((onInk ? V8.ink : V8.paper).ignoresSafeArea())
     }
 

@@ -184,6 +184,7 @@
 		753E02476613A94EF1BBE9FF /* TicketReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F9CE3F785580679B015C4ED /* TicketReaderTests.swift */; };
 		75DB4EF8DC7B0C52900CE91F /* PlaceAutocomplete.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FD05E7F456F946A1303382D /* PlaceAutocomplete.swift */; };
 		7610F6501B586B2494A3093C /* RegionPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = B87C890E291B6A952E078034 /* RegionPicker.swift */; };
+		7614D4B9AE6DAEEBC248D2B3 /* NotificationTaps.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BC23A56B003D07E12A30C69 /* NotificationTaps.swift */; };
 		76202EAEEBA546634C87BBD5 /* TipsDayTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9FB39078393F13EE9197529 /* TipsDayTests.swift */; };
 		77730129651176A26E27C869 /* DiscoverBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F55FE18F2CE9BDECC7C25825 /* DiscoverBuilder.swift */; };
 		78181CEF9BEEFB6917B6775B /* BoardEditsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4057F13FC1B1224A5960AEE0 /* BoardEditsTests.swift */; };
@@ -469,6 +470,7 @@
 		18B098156A055B3876CFAC44 /* LightRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LightRules.swift; sourceTree = "<group>"; };
 		19EFD690D19C8AFDD98E2B46 /* Connectivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Connectivity.swift; sourceTree = "<group>"; };
 		1A0026A9B2FF86CB80C7B4E5 /* TicketMatcherTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketMatcherTests.swift; sourceTree = "<group>"; };
+		1BC23A56B003D07E12A30C69 /* NotificationTaps.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationTaps.swift; sourceTree = "<group>"; };
 		1EEE4426948C34EEC1760344 /* PhotoService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoService.swift; sourceTree = "<group>"; };
 		1F46BBCF517C68884FEA25E0 /* GoogleRoutesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleRoutesTests.swift; sourceTree = "<group>"; };
 		1F5D9962BB74EFE458C08ABD /* MustShared.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MustShared.swift; sourceTree = "<group>"; };
@@ -1422,6 +1424,7 @@
 			children = (
 				6A65495A52E0B006233D513B /* DebugFlags.swift */,
 				FED236518F13E68EAEBCC987 /* MustApp.swift */,
+				1BC23A56B003D07E12A30C69 /* NotificationTaps.swift */,
 				10E1AAF40DE6541D6FB3D78D /* RootView.swift */,
 				5621525C6CB7D37030B2A19B /* Router.swift */,
 			);
@@ -2273,6 +2276,7 @@
 				2112256931B46241E389365A /* Network.swift in Sources */,
 				C309A755522150372D686AC8 /* NewListFlow.swift in Sources */,
 				2F61642C63CD0B2F85023063 /* NotesRules.swift in Sources */,
+				7614D4B9AE6DAEEBC248D2B3 /* NotificationTaps.swift in Sources */,
 				989DF46BD7A07F9EC7D4CFA5 /* OfflineMaps.swift in Sources */,
 				9B5ACD00BB9A018D2E4F21C1 /* OfflineMapsView.swift in Sources */,
 				5E5BB9AB96564B986F46B325 /* OpenNowIndex.swift in Sources */,

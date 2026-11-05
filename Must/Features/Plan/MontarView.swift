@@ -194,7 +194,7 @@ struct MontarView: View {
             .disabled(working)
             .padding(.horizontal, 20)
             .padding(.top, 28)
-            .padding(.bottom, 92)
+            .padding(.bottom, 24) // sem barra de abas nesta tela (`AppRouter.hidesNavBar`)
             .background {
                 LinearGradient(colors: [V8.ink.opacity(0), V8.ink], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.25))
                     .ignoresSafeArea()

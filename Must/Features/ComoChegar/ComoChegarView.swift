@@ -181,7 +181,7 @@ struct ComoChegarView: View {
         }
         .padding(.horizontal, 22)
         .padding(.top, 14)
-        .padding(.bottom, 92)
+        .padding(.bottom, 24) // sem barra de abas nesta tela (`AppRouter.hidesNavBar`)
         .background {
             LinearGradient(colors: [.white.opacity(0), .white.opacity(0.95), .white], startPoint: .top, endPoint: .bottom)
                 .ignoresSafeArea()

@@ -106,6 +106,14 @@ final class AppRouter {
     /// Modo pedido pro Mapa ao chegar do card "Perto de você" (prompt 06).
     var mapShowsOpenNow = false
 
+    /// Telas v8 sem barra de abas (design): Montar (e a proposta), Ir/Como chegar e o Lugar em tela cheia.
+    var hidesNavBar: Bool {
+        switch paths[tab]?.last {
+        case .montar, .ir, .comoChegar, .place: true
+        default: false
+        }
+    }
+
     func path(for tab: MustTab) -> Binding<[Route]> {
         Binding(get: { self.paths[tab] ?? [] }, set: { self.paths[tab] = $0 })
     }
@@ -149,6 +157,22 @@ final class AppRouter {
             sheet = nil
             let id = url.pathComponents.dropFirst().first
             if let id { push(.place(id: id), on: .musts) }
+        // Avisos do guia v8 (prompt 23 §4): o toque abre o momento do dia.
+        case "bom-dia":
+            sheet = nil
+            paths[.hoje] = []
+            select(.hoje)
+            push(.bomDia, on: .hoje)
+        case "agora":
+            sheet = nil
+            paths[.hoje] = []
+            select(.hoje)
+            push(.agora, on: .hoje)
+        case "noite":
+            sheet = nil
+            paths[.hoje] = []
+            select(.hoje)
+            push(.boaNoite, on: .hoje)
         case "import":
             // Caixa do Share Extension: o id é o nome da pasta (UUID); a tela confere se ainda existe.
             sheet = .ticketImport(inboxId: items.first { $0.name == "id" }?.value)

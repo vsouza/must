@@ -120,8 +120,6 @@ private struct SettingsSections: View {
 
     @State private var editingBudget = false
     @State private var budgetText = ""
-    /// Avisos do guia (prompt 18 · C.17). Mesma chave que o agendador lê.
-    @AppStorage(GuideNudgeScheduler.enabledKey) private var guideNudges = true
     @State private var editingFX = false
     @State private var fxText = ""
 
@@ -131,6 +129,8 @@ private struct SettingsSections: View {
     var body: some View {
         VStack(spacing: 14) {
             day
+            // Liga/desliga de cada aviso (prompt 23 §4): bom dia, saia em 5, golden, último trem, abre agora.
+            AvisosDoGuiaSection()
             intelligence
             data
         }
@@ -193,21 +193,6 @@ private struct SettingsSections: View {
                 FormRow("Começar o dia", subtitle: "hora que você costuma sair") { MonoValue(settings.dayStart) }
             }
             .buttonStyle(.plain)
-            RowDivider()
-            Toggle(isOn: $guideNudges) {
-                FormRow("Avisos do guia", subtitle: "saída, golden e abertura · no máx. 1 a cada 45 min")
-            }
-            .toggleStyle(.must)
-            .onChange(of: guideNudges) { _, on in
-                let origin = services.location.current?.coordinate
-                Task {
-                    if on {
-                        await GuideNudgeScheduler.refresh(context: context, region: region, origin: origin, askPermission: false)
-                    } else {
-                        await GuideNudgeScheduler.disable()
-                    }
-                }
-            }
         }
     }
 

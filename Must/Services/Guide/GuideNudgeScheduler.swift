@@ -69,8 +69,7 @@ struct UNNudgeCenter: NudgeScheduling {
         content.body = nudge.body
         content.sound = .default
         content.userInfo = ["placeId": nudge.placeId, "url": nudge.url ?? "must://hoje"]
-        // TODO(v8:orquestrador): tocar no aviso abre `url` (delegate do UNUserNotificationCenter → `AppRouter.handle`, com
-        // `must://bom-dia` e `must://agora` no roteador). Hoje o toque só abre o app.
+        // O toque abre `url` (`NotificationTaps` → `AppRouter.handle`).
         var components = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: nudge.fireAt)
         components.calendar = calendar
         components.timeZone = calendar.timeZone

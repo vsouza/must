@@ -140,7 +140,7 @@ struct ProposalView: View {
         }
         .padding(.horizontal, 20)
         .padding(.top, 24)
-        .padding(.bottom, 92)
+        .padding(.bottom, 24) // sem barra de abas nesta tela (`AppRouter.hidesNavBar`)
         .background {
             LinearGradient(colors: [V8.paper.opacity(0), V8.paper], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.25))
                 .ignoresSafeArea()
