@@ -3,6 +3,7 @@ import SwiftUI
 /// Barra v8 (Hoje / Guia / Musts / Viagem + `+`), cada aba com a própria NavigationStack.
 struct RootView: View {
     @Environment(AppRouter.self) private var router
+    @Environment(RegionStore.self) private var store
     /// Abas já visitadas: cada uma é montada na primeira vez e fica viva depois (troca de aba não recria).
     /// Antes as quatro subiam no arranque; o Mapa pedia rotas e criava o MLNMapView antes do primeiro frame (prompt 18 · A.6).
     @State private var visited: Set<MustTab> = []
@@ -24,8 +25,10 @@ struct RootView: View {
             }
 
             if !router.hidesNavBar {
+                // `+`: Quero… (prompt 25 · A); toque longo: Montar o dia de hoje.
                 V8NavBar(active: router.tab, onSelect: { router.select($0) },
-                         onPlus: { router.sheet = .addLink(url: nil, listId: nil) })
+                         onPlus: { router.sheet = .quero(text: nil) },
+                         onPlusHold: { router.push(.montar(date: store.region.calendar.startOfDay(for: AppClock.now)), on: .hoje) })
                     .padding(.bottom, 4)
                     .ignoresSafeArea(.keyboard)
                     .transition(.move(edge: .bottom).combined(with: .opacity))

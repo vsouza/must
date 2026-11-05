@@ -6,6 +6,8 @@ import SwiftUI
 struct AddLinkView: View {
     var initialURL: String?
     var preferredListId: String?
+    /// Aba de entrada: o Quero… abre direto em Link ou Texto (prompt 25 · A: viraram abas secundárias dele).
+    var initialMode: AddMode = .link
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
@@ -112,6 +114,7 @@ struct AddLinkView: View {
             }
         }
         .task {
+            if initialMode == .text { mode = .text }
             if let initialURL, model.input.isEmpty {
                 model.input = initialURL
                 await run()
