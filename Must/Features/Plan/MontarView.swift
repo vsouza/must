@@ -1,17 +1,85 @@
+import CoreLocation
 import SwiftData
 import SwiftUI
 
-/// Montar o dia: tipo de dia, listas (auto/ligada/desligada), orçamento, andar e "ou diga…".
+/// Escolhas do Montar v8 (puras, testáveis): chips de bairro, vizinhos, orçamento por região e "até que horas".
+enum MontarOptions {
+    struct AreaChip: Identifiable, Hashable, Sendable {
+        var id: String
+        var name: String
+        var count: Int
+    }
+
+    /// Bairros com Musts, do que tem mais pro que tem menos (empate: a ordem da tabela).
+    static func chips(_ index: AreaIndex) -> [AreaChip] {
+        index.populated.enumerated()
+            .sorted { $0.element.count != $1.element.count ? $0.element.count > $1.element.count : $0.offset < $1.offset }
+            .map { AreaChip(id: $0.element.id, name: $0.element.area.name, count: $0.element.count) }
+    }
+
+    /// O bairro escolhido ao abrir vem primeiro (como no design); tocar depois não reordena.
+    static func leading(_ id: String, in chips: [AreaChip]) -> [AreaChip] {
+        guard let i = chips.firstIndex(where: { $0.id == id }) else { return chips }
+        var out = chips
+        out.insert(out.remove(at: i), at: 0)
+        return out
+    }
+
+    /// "+ Shin-Okubo e Nakano, a 5 min": até dois vizinhos a até 15 min (os mais perto), com o maior tempo.
+    static func neighborLine(_ area: Area?, areas: [Area]) -> String? {
+        guard let area else { return nil }
+        let near = area.neighbors.filter { $0.minutes <= 15 }.sorted { $0.minutes < $1.minutes }.prefix(2)
+        let names = near.compactMap { n in areas.first { $0.id == n.areaId }?.name }
+        guard !names.isEmpty, let longest = near.map(\.minutes).max() else { return nil }
+        return "+ \(names.joined(separator: " e ")), a \(longest) min"
+    }
+
+    static func budgets(_ region: Region) -> [Double] {
+        switch region {
+        case .jp: [8_000, 12_000, 20_000]
+        case .bh: [100, 200, 400]
+        case .it: [60, 120, 200]
+        }
+    }
+
+    /// "Até que horas": 21:00 → 22:00 → 23:30 → 01:00 (minutos depois da meia-noite do dia).
+    static let untilMinutes = [21 * 60, 22 * 60, 23 * 60 + 30, 25 * 60]
+
+    static func nextUntil(after minutes: Int) -> Int {
+        let i = untilMinutes.firstIndex(of: minutes) ?? 1
+        return untilMinutes[(i + 1) % untilMinutes.count]
+    }
+
+    static func paceLine(_ pace: Pace) -> String {
+        switch pace {
+        case .calm: "calmo · 2 bairros"
+        case .normal: "normal · com pausas"
+        case .intense: "intenso · sem parar"
+        }
+    }
+
+    static func microLine(_ region: Region) -> String {
+        switch region {
+        case .jp: "Micro-paradas (café, konbini, descanso)"
+        case .bh: "Micro-paradas (café, padaria, descanso)"
+        case .it: "Micro-paradas (café, gelato, descanso)"
+        }
+    }
+}
+
+/// 05 · Montar o dia (prompt 23 §2, `Montar.png`). Tinta. Bairro (chips com contagem + vizinhos), ritmo 6/9/12,
+/// grana, até que horas, incluir (micro-paradas, foto no golden, compras) e "Gerar o dia · N paradas", que chama o
+/// motor do dia (`\.dayEngine`) e mostra a proposta. Aceitar grava pela API do `DayPlanner` (solver).
 struct MontarView: View {
     let date: Date
-    /// Bairro do foco ("Ajustar" em Bairros): o pedido abre com `Bairro+` e o Guia recebe o dia montado.
+    /// Bairro do foco ("Ajustar" em Bairros): abre com ele escolhido.
     var focusArea: String?
 
     @Environment(\.dismiss) private var dismiss
     @Environment(RegionStore.self) private var store
     @Environment(Services.self) private var services
+    @Environment(\.dayEngine) private var engine
 
-    @Query(sort: \MustList.order) private var lists: [MustList]
     @Query private var places: [Place]
     @Query private var trips: [TripInfo]
     @Query private var settingsList: [Settings]
@@ -19,314 +87,327 @@ struct MontarView: View {
     @Query private var flights: [Flight]
 
     @State private var planner: DayPlanner?
+    @State private var chips: [MontarOptions.AreaChip] = []
+    @State private var area: String?
+    @State private var pace: Pace = .normal
+    @State private var untilMinutes = 23 * 60 + 30
+    @State private var includes: Set<DayInclude> = [.micro, .goldenPhoto]
+    @State private var golden: Date?
+    @State private var generated: DayPlan?
     @State private var showProposal = false
+    @State private var working = false
     @State private var editingStart = false
-    @State private var parsing = false
     @State private var parsedText = ""
-
-    /// "ou diga…" → intenção (no aparelho quando der), refletida nos controles antes de montar.
-    private func parse(_ planner: DayPlanner) async {
-        parsing = true
-        defer { parsing = false }
-        let text = planner.text
-        let intent = await IntentParser.parse(text, placeNames: places.map(\.name), useModel: settingsList.first?.onDeviceAI ?? true)
-        planner.apply(intent)
-        parsedText = text
-    }
     @FocusState private var textFocused: Bool
 
     private var region: Region { store.region }
+    private var areas: [Area] { AreaCatalog.areas(for: region) }
 
     var body: some View {
         Group {
-            if let planner {
-                content(planner)
-            } else {
-                Color.must.bg
-            }
+            if let planner { content(planner) } else { V8.ink.ignoresSafeArea() }
         }
         .toolbar(.hidden, for: .navigationBar)
-        .task(id: services.sync.forecasts.count) {
-            planner?.weather = planner.flatMap { services.sync.weather(on: $0.date, region: region, trip: trips.first) }
-        }
-        .onAppear {
-            if planner == nil {
-                let start = region.calendar.startOfDay(for: date)
-                planner = DayPlanner(date: date, region: region, settings: settingsList.first, existing: days.first { $0.date == start })
-                planner?.focusArea = focusArea
-                planner?.weather = services.sync.weather(on: start, region: region, trip: trips.first)
-                // Tempos reais (Routes) entram antes da primeira proposta; sem rede, a estimativa segue.
-                if let planner {
-                    Task { await planner.prefetchTravel(catalog: places.solverCatalog, trip: trips.first, settings: settingsList.first,
-                                                        location: services.location.current,
-                                                        flights: FlightRules.dayFlights(flights, on: planner.date, region: region)) }
-                }
-                #if DEBUG
-                if let screen = DebugFlags.string("debugScreen"), ["proposta", "trocar"].contains(screen), let planner {
-                    planner.build(catalog: places.solverCatalog, trip: trips.first, settings: settingsList.first, location: services.location.current,
-                              flights: FlightRules.dayFlights(flights, on: planner.date, region: region))
-                    showProposal = true
-                }
-                #endif
-            }
-        }
+        .onAppear(perform: setUp)
     }
 
-    private func content(_ planner: DayPlanner) -> some View {
-        let catalog = places.solverCatalog
-        let preview = planner.solve(catalog: catalog, trip: trips.first, settings: settingsList.first, location: services.location.current,
-                                     flights: FlightRules.dayFlights(flights, on: planner.date, region: region))
-        return ZStack(alignment: .bottom) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 14) {
-                    header(planner, preview: preview)
-                    kindCard(planner).padding(.top, 8)
-                    listsCard(planner, preview: preview)
-                    HStack(alignment: .top, spacing: 12) {
-                        budgetCard(planner)
-                        walkCard(planner)
-                    }
-                    sayField(planner)
-                    Color.clear.frame(height: 110)
+    private func setUp() {
+        guard planner == nil else { return }
+        let start = region.calendar.startOfDay(for: date)
+        let p = DayPlanner(date: date, region: region, settings: settingsList.first, existing: days.first { $0.date == start })
+        p.focusArea = focusArea
+        p.weather = services.sync.weather(on: start, region: region, trip: trips.first)
+        planner = p
+        let index = AreaIndex.build(areas: areas, places: places.map(HomeState.areaPlace), openIds: [])
+        chips = MontarOptions.chips(index)
+        area = focusArea ?? chips.first?.id
+        if let area { chips = MontarOptions.leading(area, in: chips) }
+        let city = trips.first?.city(on: start, calendar: region.calendar)
+        let center = CLLocationCoordinate2D(latitude: city?.lat ?? region.defaultCenter.latitude,
+                                            longitude: city?.lng ?? region.defaultCenter.longitude)
+        golden = SunService.day(start.addingTimeInterval(12 * 3600), center, timeZone: region.timeZone).goldenPM?.start
+        // Bairro do GPS quando não veio foco: o chip dele já vem escolhido.
+        if focusArea == nil, let here = services.location.current {
+            Task {
+                if let current = await services.currentArea.area(at: here, region: region), chips.contains(where: { $0.id == current.id }) {
+                    area = current.id
+                    chips = MontarOptions.leading(current.id, in: chips)
                 }
-                .padding(.horizontal, 22)
             }
-            .scrollDismissesKeyboard(.interactively)
+        }
+        // Tempos reais (Routes) antes da primeira proposta; sem rede, a estimativa.
+        Task { await p.prefetchTravel(catalog: places.solverCatalog, trip: trips.first, settings: settingsList.first,
+                                      location: services.location.current, flights: dayFlights(p)) }
+        #if DEBUG
+        if let screen = DebugFlags.string("debugScreen"), ["proposta", "trocar"].contains(screen) {
+            Task { await generate(p) }
+        }
+        #endif
+    }
 
-            PrimaryButton(parsing ? "Lendo o pedido…" : "Montar o dia", icon: .avancar, iconTrailing: true) {
-                textFocused = false
-                Task {
-                    if !planner.text.isEmpty, parsedText != planner.text { await parse(planner) }
-                    await planner.prefetchTravel(catalog: catalog, trip: trips.first, settings: settingsList.first,
-                                                 location: services.location.current,
-                                                 flights: FlightRules.dayFlights(flights, on: planner.date, region: region))
-                    planner.build(catalog: catalog, trip: trips.first, settings: settingsList.first, location: services.location.current,
-                              flights: FlightRules.dayFlights(flights, on: planner.date, region: region))
-                    showProposal = true
-                }
+    private func dayFlights(_ p: DayPlanner) -> [DayFlight] { FlightRules.dayFlights(flights, on: p.date, region: region) }
+
+    /// Motor (a proposta v8: micro-paradas, deslocamentos) + solver (o que o Aceitar grava).
+    private func generate(_ p: DayPlanner) async {
+        working = true
+        defer { working = false }
+        if !p.text.isEmpty, parsedText != p.text { await parse(p) }
+        p.focusArea = area
+        await p.prefetchTravel(catalog: places.solverCatalog, trip: trips.first, settings: settingsList.first,
+                               location: services.location.current, flights: dayFlights(p))
+        p.build(catalog: places.solverCatalog, trip: trips.first, settings: settingsList.first,
+                location: services.location.current, flights: dayFlights(p))
+        let until = region.calendar.date(byAdding: .minute, value: untilMinutes, to: p.date) ?? p.date
+        generated = await engine.build(area: area, pace: pace, budget: p.budget, until: until, includes: includes)
+        showProposal = true
+    }
+
+    private func parse(_ p: DayPlanner) async {
+        let text = p.text
+        let intent = await IntentParser.parse(text, placeNames: places.map(\.name), useModel: settingsList.first?.onDeviceAI ?? true)
+        p.apply(intent)
+        parsedText = text
+    }
+
+    // MARK: Tela
+
+    private func content(_ planner: DayPlanner) -> some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                header(planner)
+                areaSection.padding(.top, 24)
+                paceSection.padding(.top, 26)
+                budgetSection(planner).padding(.top, 22)
+                includeSection(planner).padding(.top, 24)
+                Color.clear.frame(height: 130)
             }
-            .disabled(parsing)
-            .padding(.horizontal, 22)
-            .padding(.top, 24)
+            .padding(.horizontal, 20)
+        }
+        .scrollIndicators(.hidden)
+        .scrollDismissesKeyboard(.interactively)
+        .overlay(alignment: .bottom) {
+            BigButton(title: working ? "Montando…" : "Gerar o dia · \(pace.rawValue) paradas", style: .orange,
+                      systemImage: working ? nil : "arrow.up.right") {
+                textFocused = false
+                Task { await generate(planner) }
+            }
+            .disabled(working)
+            .padding(.horizontal, 20)
+            .padding(.top, 28)
             .padding(.bottom, 92)
             .background {
-                LinearGradient(colors: [.white.opacity(0), .white], startPoint: .top, endPoint: .center).ignoresSafeArea()
+                LinearGradient(colors: [V8.ink.opacity(0), V8.ink], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.25))
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
             }
         }
         .background {
             ZStack {
-                Color.must.bg
-                BlobBackground(style: .custom([
-                    Blob(cx: 352, cy: 90, rx: 92, ry: 66, rotation: -22, fill: .green),
-                    Blob(cx: 30, cy: 690, rx: 92, ry: 66, rotation: 12, fill: .blue),
-                ]))
+                V8.ink
+                Rings(color: V8.white, count: 1, diameter: 560, opacity: 0.28, offset: CGSize(width: 110, height: -340))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             }
             .ignoresSafeArea()
         }
         .navigationDestination(isPresented: $showProposal) {
-            ProposalView(planner: planner).toolbar(.hidden, for: .navigationBar)
+            ProposalView(planner: planner, plan: generated).toolbar(.hidden, for: .navigationBar)
         }
-        .sheet(isPresented: $editingStart) {
-            VStack(spacing: 16) {
-                SheetHandle()
-                Text("A que horas você sai?").mustPlace()
-                DatePicker("", selection: Binding(get: { planner.startAt }, set: { planner.startAt = $0 }), displayedComponents: .hourAndMinute)
-                    .datePickerStyle(.wheel)
-                    .labelsHidden()
-                    .environment(\.timeZone, region.timeZone)
-                    .environment(\.locale, region.locale)
-                PrimaryButton("Pronto", style: .dark) { editingStart = false }.padding(.horizontal, 22)
-            }
-            .presentationDetents([.height(340)])
-        }
+        .sheet(isPresented: $editingStart) { startSheet(planner) }
     }
 
-    // MARK: Topo
-
-    private func header(_ planner: DayPlanner, preview: DayProposal) -> some View {
-        VStack(alignment: .leading, spacing: 18) {
-            HStack {
-                IconButton(.voltar, style: .glass, label: "Voltar") { dismiss() }
-                Spacer()
+    private func header(_ planner: DayPlanner) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .top) {
+                RoundButton(systemImage: "xmark", label: "Fechar", style: .line, tint: V8.white) { dismiss() }
+                Spacer(minLength: 12)
                 Button { editingStart = true } label: {
-                    Micro("\(weekdayShort(planner.date)) · \(region.shortDay(planner.date)) · \(planner.isToday ? "sai" : "acorda") \(region.timeString(planner.startAt))")
+                    SpecStack(lines: [DayText.dayLine(planner.date, region: region),
+                                      "a partir das \(region.timeString(planner.startAt))"],
+                              color: V8.muteDark, alignment: .trailing)
                 }
                 .buttonStyle(.plain)
                 .accessibilityHint("Muda a hora de sair")
-                Spacer()
-                Color.clear.frame(width: 40, height: 40)
+                .padding(.top, 4)
             }
-            .padding(.top, 8)
-            VStack(alignment: .leading, spacing: 6) {
-                // Vindo do "Ajustar" da Bairros: o dia é do bairro (com os vizinhos), como o botão "Montar <bairro>+".
-                Text(focusName.map { "Montar \($0)+" } ?? "Montar o dia").mustTitle().lineLimit(2)
-                Text(subtitle(planner, preview: preview)).mustSerif(18).foregroundStyle(Color.must.secondary)
-            }
+            .padding(.top, 10)
+            Text("Montar o dia")
+                .font(V8Font.display(44))
+                .foregroundStyle(V8.white)
+                .lineLimit(2)
+                .minimumScaleFactor(0.7)
+                .padding(.top, 16)
+            Text("Diga o bairro e o ritmo. O resto eu encaixo nos seus Musts.")
+                .font(V8Font.text(16))
+                .foregroundStyle(V8.muteDark)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, 6)
         }
     }
 
-    private var focusName: String? {
-        focusArea.flatMap { id in AreaCatalog.areas(for: region).first { $0.id == id }?.name }
-    }
+    // MARK: Bairro
 
-    private func weekdayShort(_ date: Date) -> String {
-        PlaceHours.weekdayShort[region.calendar.component(.weekday, from: date) - 1]
-    }
-
-    private func subtitle(_ planner: DayPlanner, preview: DayProposal) -> String {
-        var parts: [String] = []
-        let cal = region.calendar
-        if let weather = planner.weather { parts.append(weather.short) }
-        if let trip = trips.first, let city = trip.city(on: planner.date, calendar: cal) {
-            if let idx = trip.dayIndex(in: city, on: planner.date, calendar: cal) {
-                parts.append("dia \(idx.index) de \(idx.total) em \(city.name)")
-            } else {
-                var style = Date.FormatStyle(locale: region.locale, calendar: cal).weekday(.wide)
-                style.timeZone = region.timeZone
-                parts.append("\(city.name) · \(planner.date.formatted(style))")
-            }
-        }
-        let anchors = preview.stops.filter(\.isAnchor).count
-        parts.append(anchors == 0 ? "nada reservado" : anchors == 1 ? "1 reserva" : "\(anchors) reservas")
-        return parts.joined(separator: " · ")
-    }
-
-    // MARK: Tipo de dia
-
-    private func kindCard(_ planner: DayPlanner) -> some View {
+    private var areaSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Micro("tipo de dia")
-            FlowLayout(spacing: 8) {
-                ForEach(DayKind.allCases) { kind in
-                    Button { planner.kind = kind } label: { Pill(kind.label.capitalized, isOn: planner.kind == kind) }
+            MonoLabel("Bairro de hoje", size: 10, color: V8.muteDark)
+            if chips.isEmpty {
+                Text("Nenhum Must com bairro ainda: o dia sai da cidade toda.").font(V8Font.text(14)).foregroundStyle(V8.muteDark)
+            }
+            ScrollView(.horizontal) {
+                HStack(spacing: 8) {
+                    ForEach(chips) { chip in
+                        let on = chip.id == area
+                        Button { area = chip.id } label: {
+                            HStack(spacing: 8) {
+                                Text(chip.name).font(V8Font.text(15, weight: .semibold)).foregroundStyle(on ? V8.ink : V8.white)
+                                Text("\(chip.count)").font(V8Font.mono(12)).fontWeight(.semibold)
+                                    .foregroundStyle(on ? V8.orangeDeep : V8.orange)
+                            }
+                            .lineLimit(1)
+                            .padding(.horizontal, 16)
+                            .frame(height: 44)
+                            .background(Capsule().fill(on ? V8.white : .clear))
+                            .overlay(Capsule().strokeBorder(on ? .clear : V8.white.opacity(0.35), lineWidth: 1))
+                        }
                         .buttonStyle(MustPressStyle())
+                        .accessibilityLabel("\(chip.name), \(chip.count) Musts")
+                        .accessibilityAddTraits(on ? .isSelected : [])
+                    }
                 }
             }
-        }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .glass(cornerRadius: 24)
-    }
-
-    // MARK: Listas
-
-    private func listsCard(_ planner: DayPlanner, preview: DayProposal) -> some View {
-        FormSection {
-            ForEach(Array(lists.enumerated()), id: \.element.id) { index, list in
-                if index > 0 { RowDivider() }
-                let on = isOn(list, planner: planner, preview: preview)
-                Toggle(isOn: Binding(get: { on }, set: { planner.lists[list.id] = $0 ? .on : .off })) {
-                    FormRow(list.displayName, subtitle: context(for: list, preview: preview, on: on))
-                }
-                .toggleStyle(.must)
+            .scrollIndicators(.hidden)
+            .padding(.horizontal, -20)
+            .contentMargins(.horizontal, 20, for: .scrollContent)
+            if let line = MontarOptions.neighborLine(area.flatMap { id in areas.first { $0.id == id } }, areas: areas) {
+                MonoLabel(line, size: 10, color: V8.orange)
             }
         }
     }
 
-    /// Ligada explicitamente, ou `auto` e o tipo de dia usa essa lista (ou o solver escolheu algo dela).
-    private func isOn(_ list: MustList, planner: DayPlanner, preview: DayProposal) -> Bool {
-        switch planner.lists[list.id] ?? .auto {
-        case .on: return true
-        case .off: return false
-        case .auto:
-            if let fromText = planner.intent.roles[StopRole(color: list.color)] { return fromText == .on }
-            if preview.stops.contains(where: { $0.place.listId == list.id }) { return true }
-            return DaySolver.plan(for: planner.intent.kind ?? planner.kind).required.contains(StopRole(color: list.color))
+    // MARK: Ritmo
+
+    private var paceSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            MonoLabel("Ritmo", size: 10, color: V8.muteDark)
+            HStack(spacing: 10) {
+                ForEach(Pace.allCases, id: \.self) { p in
+                    let on = p == pace
+                    Button { pace = p } label: {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("\(p.rawValue)").font(V8Font.numeral(38)).foregroundStyle(on ? V8.ink : V8.white)
+                                .accessibilityHidden(true)
+                            Text(MontarOptions.paceLine(p)).font(V8Font.text(13))
+                                .foregroundStyle(on ? V8.ink.opacity(0.7) : V8.muteDark)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .multilineTextAlignment(.leading)
+                        }
+                        .padding(14)
+                        .frame(maxWidth: .infinity, minHeight: 96, alignment: .topLeading)
+                        .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(on ? V8.orange : .clear))
+                        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous)
+                            .strokeBorder(on ? .clear : V8.white.opacity(0.25), lineWidth: 1))
+                    }
+                    .buttonStyle(MustPressStyle())
+                    .accessibilityLabel("\(p.rawValue) paradas, \(MontarOptions.paceLine(p))")
+                    .accessibilityAddTraits(on ? .isSelected : [])
+                }
+            }
         }
     }
 
-    /// "Ramen hoje · Fuunji, Menya Kaijin" / "Ginza Music Bar · fica pro fim".
-    private func context(for list: MustList, preview: DayProposal, on: Bool) -> String {
-        let chosen = preview.stops.filter { $0.place.listId == list.id }
-        if !chosen.isEmpty {
-            let subs = Set(chosen.compactMap(\.place.sub))
-            let lead = subs.count == 1 ? "\(subs.first!) hoje" : "hoje"
-            return "\(lead) · \(chosen.map(\.place.name).joined(separator: ", "))"
-        }
-        if let left = preview.leftOut.first(where: { $0.place.listId == list.id && $0.reason != "outra cidade" }) {
-            return "\(left.place.name) · \(left.reason)"
-        }
-        let names = list.places.filter { !$0.isDone }.prefix(2).map(\.name)
-        if names.isEmpty { return "nada pra hoje" }
-        return on ? "\(names.joined(separator: ", ")) · se couber" : "\(names.joined(separator: ", ")) · desligada"
-    }
+    // MARK: Grana e horário
 
-    // MARK: Orçamento e andar
-
-    private var budgetChips: [Double] { region == .jp ? [8_000, 15_000, 25_000] : [100, 200, 400] }
-
-    private func chipLabel(_ value: Double) -> String {
-        region == .jp ? "\(Int(value / 1000))k" : region.money(value)
-    }
-
-    private func budgetCard(_ planner: DayPlanner) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Micro("orçamento", color: Color.must.blueText)
-            MonoNumber(region.money(planner.budget), size: 26).foregroundStyle(Color.must.ink)
+    private func budgetSection(_ planner: DayPlanner) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            MonoLabel("Grana e horário", size: 10, color: V8.muteDark)
             HStack(spacing: 6) {
-                ForEach(budgetChips, id: \.self) { value in
-                    Button { planner.budget = value } label: { chip(chipLabel(value), on: planner.budget == value) }
-                        .buttonStyle(MustPressStyle())
+                ForEach(MontarOptions.budgets(region), id: \.self) { value in
+                    let on = planner.budget == value
+                    Button { planner.budget = value } label: {
+                        chip(region.money(value), on: on)
+                    }
+                    .buttonStyle(MustPressStyle())
                 }
+                Spacer(minLength: 4)
+                Button { untilMinutes = MontarOptions.nextUntil(after: untilMinutes) } label: {
+                    HStack(spacing: 6) {
+                        Text("até").font(V8Font.text(14, weight: .semibold))
+                        Text(untilText).font(V8Font.mono(13)).fontWeight(.semibold)
+                    }
+                    .foregroundStyle(V8.white)
+                    .lineLimit(1)
+                    .fixedSize()
+                    .padding(.horizontal, 12)
+                    .frame(height: 42)
+                    .overlay(Capsule().strokeBorder(V8.white.opacity(0.35), lineWidth: 1))
+                }
+                .buttonStyle(MustPressStyle())
+                .accessibilityLabel("Até \(untilText)")
+                .accessibilityHint("Toque pra mudar")
             }
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(MustGradient.sky(opacity: (1, 0.95)), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
 
-    private func walkCard(_ planner: DayPlanner) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Micro("andar", color: Color.must.greenTextSoft)
-            Text(planner.walk.label.capitalized).font(.must.archivo(26, .semibold)).foregroundStyle(Color.must.ink)
-            HStack(spacing: 6) {
-                ForEach(WalkLevel.allCases) { level in
-                    Button { planner.walk = level } label: { chip(level.label.capitalized, on: planner.walk == level) }
-                        .buttonStyle(MustPressStyle())
-                }
-            }
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(MustColor.eat.gradient, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-    }
+    private var untilText: String { String(format: "%02d:%02d", (untilMinutes / 60) % 24, untilMinutes % 60) }
 
     private func chip(_ text: String, on: Bool) -> some View {
         Text(text)
-            .font(.must.archivo(12, .semibold))
+            .font(V8Font.text(14, weight: .semibold))
+            .foregroundStyle(on ? V8.ink : V8.white)
             .lineLimit(1)
             .minimumScaleFactor(0.8)
-            .foregroundStyle(on ? .white : Color.must.ink)
-            .padding(.horizontal, 9)
-            .frame(height: 30)
-            .background(Capsule().fill(on ? Color.must.ink : Color.white.opacity(0.7)))
+            .padding(.horizontal, 11)
+            .frame(height: 42)
+            .background(Capsule().fill(on ? V8.white : .clear))
+            .overlay(Capsule().strokeBorder(on ? .clear : V8.white.opacity(0.35), lineWidth: 1))
+            .accessibilityAddTraits(on ? .isSelected : [])
     }
 
-    // MARK: Ou diga
+    // MARK: Incluir
 
-    private func sayField(_ planner: DayPlanner) -> some View {
-        HStack(spacing: 10) {
-            TextField("ou diga: templo cedo, ramen, café e andar pouco", text: Binding(get: { planner.text }, set: { planner.text = $0 }),
-                      axis: .vertical)
-                .font(.must.serif(19))
-                .lineLimit(1...4)
+    private func includeSection(_ planner: DayPlanner) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            MonoLabel("Incluir", size: 10, color: V8.muteDark).padding(.bottom, 10)
+            includeRow(MontarOptions.microLine(region), .micro)
+            includeRow("Foto no golden" + (golden.map { " (\(region.timeString($0)))" } ?? ""), .goldenPhoto)
+            includeRow("Compras na volta", .shopping)
+            Rectangle().fill(V8.white.opacity(0.14)).frame(height: 1)
+            TextField("", text: Binding(get: { planner.text }, set: { planner.text = $0 }),
+                      prompt: Text("ou diga: templo cedo, ramen, andar pouco").foregroundStyle(V8.muteDark), axis: .vertical)
+                .font(V8Font.text(15))
+                .foregroundStyle(V8.white)
+                .tint(V8.orange)
+                .lineLimit(1...3)
                 .focused($textFocused)
                 .submitLabel(.done)
                 .onSubmit { Task { await parse(planner) } }
-                .onChange(of: textFocused) { _, focused in
-                    if !focused, !planner.text.isEmpty, parsedText != planner.text { Task { await parse(planner) } }
-                }
-            Button { textFocused = true } label: {
-                MustIconView(.falar, size: 18).foregroundStyle(.white)
-                    .frame(width: 40, height: 40)
-                    .background(Circle().fill(Color.must.ink))
-            }
-            .buttonStyle(MustPressStyle())
-            .accessibilityLabel("Ditar (use o microfone do teclado)")
+                .padding(.vertical, 16)
         }
-        .padding(.leading, 18)
-        .padding(.trailing, 8)
-        .padding(.vertical, 8)
-        .background(Color.must.surface2, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+    }
+
+    private func includeRow(_ title: String, _ item: DayInclude) -> some View {
+        VStack(spacing: 0) {
+            Rectangle().fill(V8.white.opacity(0.14)).frame(height: 1)
+            Toggle(isOn: Binding(get: { includes.contains(item) }, set: { on in
+                if on { includes.insert(item) } else { includes.remove(item) }
+            })) {
+                Text(title).font(V8Font.text(15)).foregroundStyle(V8.white)
+            }
+            .tint(V8.orange)
+            .padding(.vertical, 9)
+        }
+    }
+
+    private func startSheet(_ planner: DayPlanner) -> some View {
+        VStack(spacing: 16) {
+            Text("A que horas você sai?").font(V8Font.display(22)).foregroundStyle(V8.ink).padding(.top, 24)
+            DatePicker("", selection: Binding(get: { planner.startAt }, set: { planner.startAt = $0 }), displayedComponents: .hourAndMinute)
+                .datePickerStyle(.wheel)
+                .labelsHidden()
+                .environment(\.timeZone, region.timeZone)
+                .environment(\.locale, region.locale)
+            BigButton(title: "Pronto", style: .ink) { editingStart = false }.padding(.horizontal, 20)
+        }
+        .presentationDetents([.height(360)])
+        .presentationBackground(V8.paper)
     }
 }

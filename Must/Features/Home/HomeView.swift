@@ -2,97 +2,77 @@ import CoreLocation
 import SwiftData
 import SwiftUI
 
-/// Início (prompt 18 · B, `Home6.png`): o dia (bairro, agora, progresso), "Amanhã, pra onde?", uma linha de
-/// "Por perto" e o "+". O orçamento não está aqui: a Home mostra só "gasto hoje" (meta em Ajustes › Dia).
-/// Tudo que aparece sai de `HomeState`, recalculado nos gatilhos (minuto, posição ≥ 50 m, salvar, voltar).
+/// 01 · Hoje, a capa do dia (prompt 23 §2, `CapaJP/BR/IT.png`; com foto: `CapaFoto.png`).
+/// Cor do lugar, ficha técnica nos cantos, "Hoje é <bairro> / e <noite>", numeral do dia sangrando e o card "Agora".
+/// Gestos: pra cima = Linha do dia; pra baixo = Bom dia (antes das 10h) / Boa noite (depois das 21h);
+/// pra esquerda = Dicas; pra direita = Bolso. Tudo sai de `CapaState`, recalculado nos gatilhos.
+/// Saíram da Home (v8): "Por perto" (fica em Guia/Lista), orçamento (Ajustes) e os cards v7.
 struct HomeView: View {
     @Environment(AppRouter.self) private var router
     @Environment(RegionStore.self) private var store
     @Environment(Services.self) private var services
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.tripTheme) private var theme
+    @Environment(\.dayEngine) private var engine
+    @Environment(\.modelContext) private var context
 
     @Query private var places: [Place]
     @Query private var expenses: [Expense]
-    @Query private var days: [PlannedDay]
     @Query private var trips: [TripInfo]
-    @Query private var settingsList: [Settings]
 
-    @State private var state = HomeState()
-    /// "Por perto:" da Home (prompt 14 · B): só o cache de 30 min e o board.
-    @State private var nearbyHint: NearbyScored?
-    @State private var nearbyCheckedAt = Date.distantPast
+    @State private var state = CapaState()
+    @State private var currentArea: Area?
     @State private var saveRefresh: Task<Void, Never>?
 
     private var region: Region { store.region }
+    private var today: Date { region.calendar.startOfDay(for: AppClock.now) }
+    private var ink: Color { theme.coverInk }
 
-    /// Célula de ~55 m: o `.onChange` só dispara quando o GPS anda de fato (o filtro de 50 m já está no serviço).
+    private var forcePhoto: Bool { DebugFlags.has("-capaFoto") }
+    private var usesPhoto: Bool {
+        CapaPhotoPolicy.usesPhoto(hasDiskPhoto: state.photo != nil, forced: forcePhoto,
+                                  debugScreen: DebugFlags.string("debugScreen") != nil) && state.photo != nil
+    }
+
     private var locationCell: String {
         guard let here = services.location.current else { return "" }
         return "\(Int((here.coordinate.latitude * 2000).rounded())),\(Int((here.coordinate.longitude * 2000).rounded()))"
     }
 
-    private var nearbyKey: String {
-        services.location.current.map { NearbyCell.key(lat: $0.coordinate.latitude, lng: $0.coordinate.longitude, region: region) } ?? ""
-    }
-
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                topBar.padding(.top, 8)
-                if services.connectivity.isOffline {
-                    offlineChip.padding(.top, 12)
-                }
-                dayCard.padding(.top, 16)
-                tomorrowSection.padding(.top, 16)
-                HStack(spacing: 12) { nearbyRow; addButton }.padding(.top, 14)
-                spendLine.padding(.top, 8)
-                TabBarSpacer()
+        Group {
+            if let content = state.content {
+                if usesPhoto { photoCover(content) } else { colorCover(content) }
+            } else {
+                theme.cover.ignoresSafeArea()
             }
-            .padding(.horizontal, 22)
-            .padding(.bottom, 24)
         }
-        .scrollIndicators(.hidden)
-        .tripWash()
-        .background {
-            ZStack {
-                Color.must.bg
-                BlobBackground(style: .home)
-            }
-            .ignoresSafeArea()
-        }
+        .contentShape(Rectangle())
+        .gesture(DragGesture(minimumDistance: 30).onEnded { value in
+            guard let swipe = CapaSwipe.from(value.translation) else { return }
+            go(swipe)
+        })
+        .accessibilityAction(named: "Linha do dia") { go(.up) }
+        .accessibilityAction(named: "Dicas") { go(.left) }
+        .accessibilityAction(named: "Bolso") { go(.right) }
         .onAppear { refresh() }
-        // Relógio: recalcula a cada minuto (abertos agora, "Agora", fila) — o sono vai até o próximo minuto cheio.
         .task { await clock() }
-        .task(id: nearbyKey) { await refreshNearbyHint() }
         .task(id: locationCell) { await resolveCurrentArea() }
-        .task(id: state.heroKey) { await state.loadHeroes(services: services, region: region, cityName: region.displayName) }
-        .onChange(of: locationCell) { _, _ in refresh() }
-        .onChange(of: scenePhase) { _, phase in
-            guard phase == .active else { return }
-            refresh()
-            // Voltou pra frente depois de 20 min: olha o cache de novo (sem rede).
-            if AppClock.now.timeIntervalSince(nearbyCheckedAt) > 20 * 60 {
-                Task { await refreshNearbyHint() }
-            }
+        .task(id: state.areaId) {
+            await state.loadPhoto(region: region, places: places, services: services, forced: forcePhoto)
         }
-        // Salvou no SwiftData (lugar, dia, gasto): recalcula uma vez, depois de 300 ms de silêncio.
+        .onChange(of: scenePhase) { _, phase in if phase == .active { refresh() } }
         .onReceive(NotificationCenter.default.publisher(for: ModelContext.didSave)) { _ in scheduleRefresh() }
     }
 
     // MARK: Gatilhos
 
-    /// Monta a entrada a partir do que a view já tem (`@Query`, serviços). Só chamado nos gatilhos.
     private func refresh() {
         let now = AppClock.now
         let trip = trips.first
-        let tomorrow = region.calendar.date(byAdding: .day, value: 1, to: region.calendar.startOfDay(for: now)) ?? now
-        state.refresh(HomeState.Inputs(
-            region: region, now: now, trip: trip, places: places, expenses: expenses, days: days,
-            location: services.location.current,
-            tomorrowWeather: services.sync.weather(on: tomorrow, region: region, trip: trip),
-            nowTemp: services.sync.now(region: region, trip: trip)?.temp
-        ))
+        state.refresh(.init(region: region, now: now, engine: engine, context: context, trip: trip, expenses: expenses,
+                            currentArea: currentArea, nowWeather: services.sync.now(region: region, trip: trip),
+                            todayWeather: services.sync.weather(on: now, region: region, trip: trip)))
     }
 
     private func scheduleRefresh() {
@@ -106,526 +86,238 @@ struct HomeView: View {
 
     private func clock() async {
         while !Task.isCancelled {
-            refresh()
             let seconds = 60 - Int(AppClock.now.timeIntervalSince1970) % 60
             try? await Task.sleep(for: .seconds(Double(seconds) + 0.5))
+            guard !Task.isCancelled else { return }
+            refresh()
         }
     }
 
-    /// Lê só o cache (até 30 min) e o board. Nunca chama Google, Wikipedia nem Foursquare.
-    private func refreshNearbyHint() async {
-        let now = AppClock.now
-        nearbyCheckedAt = now
-        guard settingsList.first?.suggestNearby ?? true, let location = services.location.current else {
-            nearbyHint = nil
-            return
-        }
-        let batch = await services.nearby.cached(lat: location.coordinate.latitude, lng: location.coordinate.longitude,
-                                                 region: region, now: now)
-        nearbyHint = DiscoverBuilder.hint(batch: batch, places: places, origin: location, now: now, region: region)
-    }
-
-    // MARK: Topo
-
-    private var topBar: some View {
-        HStack(spacing: 10) {
-            ZStack {
-                Circle().fill(Color.must.ink)
-                Text("済").font(.must.kanji(15)).foregroundStyle(.white)
-            }
-            .frame(width: 36, height: 36)
-            .onLongPressGesture(minimumDuration: 0.6) {
-                #if DEBUG
-                router.cover = .gallery
-                #endif
-            }
-            .accessibilityLabel("Must")
-
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 6) {
-                    Text(state.dateLine)
-                        .font(.must.archivo(15, .semibold))
-                        .foregroundStyle(Color.must.ink)
-                        .lineLimit(1)
-                    TripFlag(theme)
-                }
-                Text(state.cityLine)
-                    .font(.must.mono(10))
-                    .textCase(.uppercase)
-                    .tracking(1)
-                    .foregroundStyle(theme.labelColor)
-                    .lineLimit(1)
-            }
-
-            Spacer(minLength: 8)
-
-            IconButton(.calendario, label: "Viagem") { router.push(.trip, on: .hoje) }
-            Button { router.push(.settings, on: .hoje) } label: {
-                Text("V")
-                    .font(.must.archivo(15, .bold))
-                    .foregroundStyle(.white)
-                    .frame(width: 40, height: 40)
-                    .background(Circle().fill(MustGradient.avatar))
-                    .overlay(Circle().strokeBorder(.white, lineWidth: 2))
-            }
-            .buttonStyle(MustPressStyle())
-            .accessibilityLabel("Ajustes")
-            IconButton(.adicionar, style: .dark, label: "Assistente") { router.sheet = .assistant }
-        }
-    }
-
-    /// "sem internet · offline ok" (A.4): o app segue funcionando com o que está no aparelho.
-    private var offlineChip: some View {
-        HStack(spacing: 6) {
-            Circle().fill(Color(hex: 0xFFB020)).frame(width: 8, height: 8)
-            Text("sem internet · offline ok")
-                .font(.must.archivo(12, .semibold))
-                .foregroundStyle(Color(hex: 0x4A2E00))
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(Capsule().fill(Color(hex: 0xFFF1D6)))
-        .accessibilityLabel("Sem internet; o app funciona offline")
-    }
-
-    // MARK: Card do dia
-
-    @ViewBuilder
-    private var dayCard: some View {
-        if let day = state.day {
-            dayPanel(day)
-        } else {
-            pickPanel
-        }
-    }
-
-    /// Card grande com foto do bairro escurecida: "Hoje em <bairro>", selo, bloco Agora e progresso em selos.
-    private func dayPanel(_ day: HomeDay) -> some View {
-        let photo = day.areaId.flatMap { state.heroes[$0] }
-        return ZStack(alignment: .topLeading) {
-            HeroBackdrop(photo: photo, fallback: .eat)
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .top, spacing: 12) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Micro("Hoje em", color: .white.opacity(0.7))
-                        Text(day.title)
-                            .font(.must.archivo(30, .bold))
-                            .tracking(-0.6)
-                            .foregroundStyle(.white)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.7)
-                        Text(day.subtitle)
-                            .font(.must.archivo(13))
-                            .foregroundStyle(.white.opacity(0.75))
-                            .lineLimit(1)
-                    }
-                    Spacer(minLength: 0)
-                    StationStamp(day.seal, sub: day.sealSub, size: 74, rotation: -8)
-                }
-                Spacer(minLength: 12)
-                if let current = day.current {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Micro("Agora", color: Color.must.green)
-                        Text(current.name)
-                            .font(.must.archivo(24, .semibold))
-                            .tracking(-0.2)
-                            .foregroundStyle(.white)
-                            .lineLimit(1)
-                        if let detail = day.currentDetail {
-                            Text(detail)
-                                .font(.must.archivo(13.5))
-                                .foregroundStyle(.white.opacity(0.8))
-                                .lineLimit(1)
-                        }
-                    }
-                } else if day.allDone {
-                    Text("Dia feito 済")
-                        .font(.must.archivo(20, .semibold))
-                        .foregroundStyle(.white)
-                }
-                HStack(spacing: 8) {
-                    progress(day.stops)
-                    Spacer(minLength: 4)
-                    if let placeId = day.currentPlaceId {
-                        Button { router.push(.comoChegar(placeId: placeId), on: .hoje) } label: {
-                            Text("Ir agora")
-                                .font(.must.archivo(14, .semibold))
-                                .foregroundStyle(Color.must.greenText)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 9)
-                                .background(Capsule().fill(Color.must.green))
-                        }
-                        .buttonStyle(MustPressStyle())
-                    }
-                }
-                .padding(.top, 14)
-                if let photo {
-                    Credit(photo.credit, color: Color.must.ink, url: photo.pageURL)
-                        .padding(.top, 10)
-                }
-            }
-            .padding(20)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        }
-        .frame(height: 296)
-        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .shadow(color: Color.must.ink.opacity(0.22), radius: 25, y: 22)
-        .contentShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .onTapGesture { router.push(.guia(date: today), on: .hoje) }
-        .accessibilityAddTraits(.isButton)
-    }
-
-    /// Bairro do GPS (prompt 21 · fatia 2): tabela curada ou geocoder por célula, fora do main. Sem GPS, nada.
     private func resolveCurrentArea() async {
-        guard let here = services.location.current else { state.setCurrentArea(nil); return }
+        guard let here = services.location.current else { return }
         let area = await services.currentArea.area(at: here, region: region)
-        state.setCurrentArea(area)
+        guard area != currentArea else { return }
+        currentArea = area
+        refresh()
     }
 
-    /// Sem dia montado: "Hoje em <bairro>" (bairro do GPS) ou "Hoje, pra onde?", com os 3 bairros com mais musts abertos.
-    private var pickPanel: some View {
-        let photo = (state.currentArea.flatMap { state.heroes[$0.id] }) ?? state.pick.first.flatMap { state.heroes[$0.id] }
-        // O card cresce com o conteúdo (3 bairros + botão não cabem em 296 pt fixos: o topo era cortado).
-        return VStack(alignment: .leading, spacing: 0) {
-                if let here = state.currentArea {
-                    Micro("Hoje em", color: .white.opacity(0.7))
-                    Text(here.name)
-                        .font(.must.archivo(28, .bold))
-                        .tracking(-0.5)
-                        .foregroundStyle(.white)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
-                        .padding(.top, 2)
-                } else {
-                    Micro("Hoje", color: .white.opacity(0.7))
-                    Text("Hoje, pra onde?")
-                        .font(.must.archivo(28, .bold))
-                        .tracking(-0.5)
-                        .foregroundStyle(.white)
-                        .padding(.top, 2)
-                }
-                Text(state.pickIsFallback ? "nada aberto agora · os 3 com mais musts" : "os 3 bairros com mais musts abertos agora")
-                    .font(.must.archivo(13))
-                    .foregroundStyle(.white.opacity(0.75))
-                    .padding(.top, 2)
-                VStack(spacing: 8) {
-                    ForEach(state.pick) { entry in
-                        Button { router.push(.bairros(areaId: entry.id), on: .hoje) } label: { pickRow(entry) }
-                            .buttonStyle(MustPressStyle())
-                    }
-                }
-                .padding(.top, 16)
-                Spacer(minLength: 14)
-                Button { router.push(.bairros(areaId: nil), on: .hoje) } label: {
-                    Text("Montar por bairro")
-                        .font(.must.archivo(15, .semibold))
-                        .foregroundStyle(Color.must.greenText)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .background(Capsule().fill(Color.must.green))
-                }
-                .buttonStyle(MustPressStyle())
-            }
-            .padding(20)
-            .frame(maxWidth: .infinity, minHeight: 296, alignment: .topLeading)
-            .background { HeroBackdrop(photo: photo, fallback: .night) }
-        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .shadow(color: Color.must.ink.opacity(0.22), radius: 25, y: 22)
+    private func go(_ swipe: CapaSwipe) {
+        guard let route = CapaSwipe.route(for: swipe, now: AppClock.now, region: region) else { return }
+        router.push(route, on: .hoje)
     }
 
-    private func pickRow(_ entry: AreaEntry) -> some View {
-        HStack(spacing: 12) {
-            StationStamp(entry.area.seal, size: 36, fillOpacity: 0.5)
-            VStack(alignment: .leading, spacing: 1) {
-                Text(entry.area.name)
-                    .font(.must.archivo(16, .semibold))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-                Text("\(entry.openCount) abertos agora · \(entry.count) musts")
-                    .font(.must.archivo(12))
-                    .foregroundStyle(.white.opacity(0.75))
-                    .lineLimit(1)
-            }
-            Spacer(minLength: 0)
-            MustIconView(.avancar, size: 14)
-                .foregroundStyle(.white.opacity(0.8))
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(.white.opacity(0.14)))
-    }
-
-    /// Progresso em selos: 済 feito, número atual (branco), próximos (contorno). Janela de 5 em volta do atual.
-    private func progress(_ stops: [HomeStop]) -> some View {
-        let current = stops.firstIndex { $0.isCurrent } ?? max(0, stops.count - 1)
-        let start = min(max(0, current - 2), max(0, stops.count - 5))
-        let window = Array(stops.dropFirst(start).prefix(5))
-        return HStack(spacing: 6) {
-            ForEach(Array(window.enumerated()), id: \.element.id) { index, stop in
-                if index > 0 {
-                    Rectangle().fill(.white.opacity(0.3)).frame(width: 8, height: 2)
-                }
-                progressSeal(stop)
-            }
-            if stops.count > window.count + start {
-                Text("+\(stops.count - start - window.count)")
-                    .font(.must.mono(11))
-                    .foregroundStyle(.white.opacity(0.7))
-            }
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(stops.filter(\.done).count) de \(stops.count) feitos")
-    }
-
-    private func progressSeal(_ stop: HomeStop) -> some View {
-        ZStack {
-            if stop.done {
-                Circle().fill(Color.must.green)
-                Text("済").font(.must.kanji(11)).foregroundStyle(Color.must.greenText)
-            } else if stop.isCurrent {
-                Circle().fill(.white)
-                Text("\(stop.number)").font(.must.archivo(11, .bold)).foregroundStyle(Color.must.ink)
-            } else {
-                Circle().strokeBorder(.white.opacity(0.5), lineWidth: 1.5)
-                Text("\(stop.number)").font(.must.archivo(11, .semibold)).foregroundStyle(.white)
-            }
-        }
-        .frame(width: 26, height: 26)
-    }
-
-    private var today: Date { region.calendar.startOfDay(for: AppClock.now) }
-
-    // MARK: Amanhã
-
-    private var tomorrowSection: some View {
-        let tomorrow = region.calendar.date(byAdding: .day, value: 1, to: today) ?? today
-        return VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .firstTextBaseline) {
-                HStack(spacing: 8) {
-                    Circle().fill(theme.tripColor).frame(width: 6, height: 6)
-                    Text("Amanhã, pra onde?")
-                        .font(.must.archivo(17, .semibold))
-                        .foregroundStyle(Color.must.ink)
-                }
-                Spacer()
-                Button { router.push(.bairros(areaId: nil), on: .hoje) } label: {
-                    Text("ver todos")
-                        .font(.must.mono(11))
-                        .textCase(.uppercase)
-                        .tracking(1.1)
-                        .foregroundStyle(Color.must.ink)
-                }
-            }
-            HStack(spacing: 10) {
-                ForEach(state.tomorrow) { card in
-                    Button { router.push(.bairros(areaId: card.id), on: .hoje) } label: { areaCard(card) }
-                        .buttonStyle(MustPressStyle())
-                }
-            }
+    private func openAgora(_ content: CapaContent) {
+        if content.agora?.dayOver == true {
+            router.push(.boaNoite, on: .hoje)
+        } else if content.hasPlan {
+            router.push(.agora, on: .hoje)
+        } else {
+            router.push(.montar(date: today), on: .hoje)
         }
     }
 
-    /// Cartão de bairro: foto escurecida, selo no canto, nome, contagem, chip de contexto e faixa da categoria.
-    private func areaCard(_ card: HomeAreaCard) -> some View {
-        let entry = card.entry
-        let photo = state.heroes[entry.id]
-        let dominant = entry.dominant
-        return ZStack(alignment: .bottomLeading) {
-            AreaPhotoView(photo: photo, fallback: dominant ?? .eat)
-            // Vivo: a foto aparece até a metade; o escuro só atrás do nome e da contagem.
-            LinearGradient(colors: [.clear, Color.must.ink.opacity(PhotoStyle.current == .vivid ? 0.78 : 0.82)],
-                           startPoint: UnitPoint(x: 0.5, y: PhotoStyle.current == .vivid ? 0.45 : 0.3), endPoint: .bottom)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(entry.area.name)
-                    .font(.must.archivo(15, .semibold))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                Text(countLine(entry))
-                    .font(.must.archivo(11))
-                    .foregroundStyle(.white.opacity(0.85))
-                    .lineLimit(1)
-                if let context = card.context {
-                    Text(context)
-                        .font(.must.archivo(10, .semibold))
-                        .foregroundStyle(.white)
-                        .lineLimit(1)
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 2)
-                        .background(Capsule().fill(.white.opacity(0.22)))
-                        .padding(.top, 3)
-                }
+    // MARK: Capa com a cor do lugar (01)
+
+    private func colorCover(_ content: CapaContent) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            topRow(content).padding(.top, 10)
+            Spacer(minLength: 20).frame(maxHeight: 170)
+            HStack(alignment: .top) {
+                SpecStack(lines: content.midLeft, color: ink)
+                Spacer(minLength: 12)
+                SpecStack(lines: content.midRight, color: ink, alignment: .trailing)
             }
-            .padding(10)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            Spacer(minLength: 16).frame(maxHeight: 64)
+            title(content)
+            Spacer(minLength: 16)
+            HStack {
+                Spacer(minLength: 0)
+                agoraCard(content).frame(maxWidth: 236)
+            }
+            Color.clear.frame(height: 96)
         }
-        .frame(maxWidth: .infinity)
-        .frame(height: 116)
-        .overlay(alignment: .topTrailing) {
-            StationStamp(entry.area.seal, size: 34, fillOpacity: 0.5)
-                .padding(8)
+        .padding(.horizontal, 20)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        // Texturas no fundo: não entram na conta do layout (o numeral e os arcos sangram a tela).
+        .background {
+            ZStack {
+                theme.cover
+                Rings(color: ink, count: 3, diameter: 420, opacity: 0.55, offset: CGSize(width: 60, height: 40))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                BigNumeral(content.numeral, size: 430, color: ink)
+                    .fixedSize()
+                    .offset(x: -12, y: 96)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+            }
+            .ignoresSafeArea()
+            .accessibilityHidden(true)
         }
-        .overlay(alignment: .bottom) {
-            Rectangle()
-                .fill((dominant ?? .eat).strong)
-                .frame(height: 4)
+    }
+
+    private func topRow(_ content: CapaContent, onPhoto: Bool = false) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            SpecStack(lines: content.topLeft, color: ink).modifier(PhotoChip(on: onPhoto))
+            Spacer(minLength: 8)
+            SpecStack(lines: content.topRight, color: ink, alignment: .trailing).modifier(PhotoChip(on: onPhoto)).padding(.top, 2)
+            RoundButton(systemImage: "sparkle", label: "Dicas", style: .line, tint: ink) { router.push(.dicas, on: .hoje) }
+                .padding(.top, -8)
         }
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .shadow(color: Color.must.ink.opacity(0.14), radius: 12, y: 8)
+    }
+
+    private func title(_ content: CapaContent) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            countryLine(content, suffix: nil)
+            MonoLabel("Hoje é", size: 10, color: ink.opacity(0.85))
+            Text(content.area)
+                .font(V8Font.display(54))
+                .foregroundStyle(ink)
+                .lineLimit(2)
+                .minimumScaleFactor(0.6)
+            if let evening = content.evening {
+                Text(evening)
+                    .font(V8Font.display(28))
+                    .fontWeight(.medium)
+                    .foregroundStyle(ink.opacity(0.9))
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.7)
+            }
+        }
         .accessibilityElement(children: .combine)
+        .accessibilityLabel("Dia \(content.numeral). Hoje é \(content.area)\(content.evening.map { ", \($0)" } ?? "")")
     }
 
-    private func countLine(_ entry: AreaEntry) -> String {
-        guard let dominant = entry.dominant, let n = entry.mix[dominant] else { return "\(entry.count) musts" }
-        return "\(entry.count) musts · \(n) \(dominant.label)"
+    private func countryLine(_ content: CapaContent, suffix: String?) -> some View {
+        HStack(spacing: 8) {
+            theme.flag.frame(width: 22, height: 22)
+            SpecLabel([content.country, suffix].compactMap { $0 }.joined(separator: " · "), color: ink)
+        }
     }
 
-    // MARK: Por perto · gasto · +
-
-    /// Uma linha: a dica do cache ("Por perto: Golden Gai") ou, sem dica, o mapa dos abertos agora.
-    private var nearbyRow: some View {
-        Button {
-            if nearbyHint != nil {
-                router.push(.discover, on: .hoje)
-            } else {
-                router.mapShowsOpenNow = true
-                router.select(.guia)
-            }
-        } label: {
+    /// Card preto "Agora · k de n" com ↗ (abre o Agora). Sem dia: "Hoje, pra onde?" → Montar.
+    private func agoraCard(_ content: CapaContent) -> some View {
+        Button { openAgora(content) } label: {
             HStack(spacing: 12) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color.must.surface)
-                    MustIconView(.mapa, size: 20)
-                        .foregroundStyle(Color.must.ink)
-                }
-                .frame(width: 44, height: 44)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(nearbyTitle)
-                        .font(.must.archivo(14, .semibold))
-                        .foregroundStyle(Color.must.ink)
-                        .lineLimit(1)
-                    Text(nearbySubtitle)
-                        .font(.must.archivo(12))
-                        .foregroundStyle(Color.must.secondary)
-                        .lineLimit(1)
+                VStack(alignment: .leading, spacing: 4) {
+                    MonoLabel(content.agora?.title ?? "Hoje, pra onde?", size: 10, color: V8.orange)
+                    Text(content.agora?.line ?? "Montar o dia")
+                        .font(V8Font.text(15, weight: .bold))
+                        .foregroundStyle(V8.white)
+                        .lineLimit(2)
                 }
                 Spacer(minLength: 0)
-                MustIconView(.avancar, size: 14)
-                    .foregroundStyle(Color.must.secondary)
+                Image(systemName: "arrow.up.right")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(V8.ink)
+                    .frame(width: 40, height: 40)
+                    .background(Circle().fill(V8.white))
             }
-            .padding(8)
-            .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(Color.must.surface2))
+            .padding(.leading, 16)
+            .padding(.trailing, 10)
+            .padding(.vertical, 14)
+            .frame(minHeight: 70)
+            .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(V8.ink))
+            .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         }
         .buttonStyle(MustPressStyle())
+        .accessibilityLabel("\(content.agora?.title ?? "Hoje, pra onde?"): \(content.agora?.line ?? "montar o dia")")
     }
 
-    private var nearbyTitle: String {
-        guard let nearbyHint else { return "Perto de você" }
-        return "Por perto: \(nearbyHint.candidate.place.name)"
-    }
+    // MARK: Capa com foto (01b/01c)
 
-    private var nearbySubtitle: String {
-        guard let nearbyHint else {
-            let n = state.openNearbyCount
-            return n == 0 ? "nada aberto perto agora · no mapa" : "\(n) \(n == 1 ? "must aberto" : "musts abertos") perto · no mapa"
-        }
-        let c = nearbyHint.candidate
-        var parts: [String] = []
-        if let rating = c.place.rating { parts.append(rating.formatted(.number.precision(.fractionLength(1)).locale(region.locale))) }
-        parts.append(Walk.distanceText(c.distance))
-        parts.append("fora do board")
-        return parts.joined(separator: " · ")
-    }
-
-    /// "gasto hoje ¥ 4.250 · orçamento fica em Ajustes" (o orçamento e a meta estão em Ajustes › Dia).
-    private var spendLine: some View {
-        let amount = Text(region.money(state.spentToday)).font(.must.mono(12, .semibold)).foregroundStyle(Color.must.ink)
-        return Button { router.push(.settings, on: .hoje) } label: {
-            Text("gasto hoje \(amount) · orçamento fica em Ajustes")
-                .font(.must.archivo(12))
-                .foregroundStyle(Color.must.secondary)
-        }
-        .buttonStyle(.plain)
-    }
-
-    /// "+" verde (Adicionar), ao lado do "Por perto" como no Home6: hoje abre Link/Nome; o Texto é a fatia E.
-    private var addButton: some View {
-        Button { router.sheet = .addLink(url: nil, listId: nil) } label: {
-            ZStack {
-                Circle().fill(Color.must.green)
-                MustIconView(.adicionar, size: 22)
-                    .foregroundStyle(Color.must.greenText)
+    /// Foto do bairro em cor cheia em cima; embaixo, faixa sólida na cor do lugar com o texto (sem degradê, sem foto
+    /// atrás do texto). A ficha técnica de cima fica sobre a foto, como no design.
+    private func photoCover(_ content: CapaContent) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            topRow(content, onPhoto: true)
+                .padding(.horizontal, 20)
+                .padding(.top, 10)
+            Spacer(minLength: 24)
+            if let photo = state.photo {
+                Text("\(content.area) · \(photo.source ?? "Wikimedia Commons")".uppercased())
+                    .font(V8Font.mono(8))
+                    .tracking(0.8)
+                    .foregroundStyle(V8.white.opacity(0.9))
+                    .lineLimit(1)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 4)
+                    .background(RoundedRectangle(cornerRadius: 6).fill(V8.ink.opacity(0.6)))
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 12)
+                    .accessibilityLabel(photo.credit)
             }
-            .frame(width: 54, height: 54)
-            .shadow(color: Color.must.ink.opacity(0.2), radius: 14, y: 8)
+            // Faixa sólida na cor do lugar: o texto nunca fica em cima da foto.
+            VStack(alignment: .leading, spacing: 8) {
+                countryLine(content, suffix: "hoje é")
+                Text(content.area)
+                    .font(V8Font.display(48))
+                    .foregroundStyle(ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                if let evening = content.evening {
+                    Text(evening).font(V8Font.display(24)).fontWeight(.medium).foregroundStyle(ink.opacity(0.9))
+                        .lineLimit(1).minimumScaleFactor(0.7)
+                }
+                agoraCard(content).frame(maxWidth: 236).padding(.top, 22)
+                Color.clear.frame(height: 96)
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 22)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background {
+                ZStack {
+                    theme.cover
+                    BigNumeral(content.numeral, size: 300, color: ink)
+                        .fixedSize()
+                        .offset(x: 40, y: 70)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                }
+                .clipped()
+                .ignoresSafeArea(edges: .bottom)
+                .accessibilityHidden(true)
+            }
         }
-        .buttonStyle(MustPressStyle())
-        .accessibilityLabel("Adicionar")
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // A foto em cor cheia ocupa a tela toda por trás; a faixa de baixo a cobre.
+        .background {
+            CapaPhoto(photo: state.photo, placeholder: theme.cover)
+                .ignoresSafeArea()
+        }
     }
 }
 
-/// Foto do bairro com a escurecida de baixo pra cima (cards grandes da Início). Sem foto: a cor da categoria.
-struct HeroBackdrop: View {
-    var photo: CCPhoto?
-    var fallback: MustColor
-
-    private var vivid: Bool { PhotoStyle.current == .vivid }
-
-    var body: some View {
-        ZStack {
-            AreaPhotoView(photo: photo, fallback: fallback, motion: true)
-            if vivid {
-                // Foto viva: escurece só onde tem texto (nome do bairro no topo, "agora" e botões embaixo).
-                LinearGradient(
-                    stops: [
-                        .init(color: Color(hex: 0x15171C).opacity(0.5), location: 0),
-                        .init(color: Color(hex: 0x15171C).opacity(0.08), location: 0.3),
-                        .init(color: Color(hex: 0x15171C).opacity(0.15), location: 0.48),
-                        .init(color: Color(hex: 0x15171C).opacity(0.86), location: 1),
-                    ],
-                    startPoint: .top, endPoint: .bottom
-                )
-            } else {
-                LinearGradient(
-                    stops: [
-                        // Topo também escuro: o nome do bairro fica legível em foto clara.
-                        .init(color: Color(hex: 0x15171C).opacity(0.62), location: 0),
-                        .init(color: Color(hex: 0x15171C).opacity(0.45), location: 0.35),
-                        .init(color: Color(hex: 0x15171C).opacity(0.6), location: 0.55),
-                        .init(color: Color(hex: 0x15171C).opacity(0.96), location: 1),
-                    ],
-                    startPoint: .top, endPoint: .bottom
-                )
-            }
+/// Ficha técnica sobre a foto: num retângulo de tinta sólido (sem degradê), pra ler em qualquer foto.
+private struct PhotoChip: ViewModifier {
+    var on: Bool
+    func body(content: Content) -> some View {
+        if on {
+            content.padding(.horizontal, 7).padding(.vertical, 5)
+                .background(RoundedRectangle(cornerRadius: 6).fill(V8.ink.opacity(0.6)))
+        } else {
+            content
         }
-        .background(Color(hex: 0x15171C))
     }
 }
 
-/// Foto de um bairro ou lugar: cache primeiro (`PhotoLoader`), sem spinner. Sem foto, o gradiente da cor.
-struct AreaPhotoView: View {
+/// Foto da capa: só o que já está no aparelho (arquivo do Google ou cópia do Commons no `DiskCache`). Enquanto lê,
+/// a cor do lugar (placeholder). Sem rede, nada muda.
+private struct CapaPhoto: View {
     var photo: CCPhoto?
-    var fallback: MustColor
-    /// Zoom lento (hero grande da Início).
-    var motion = false
+    var placeholder: Color
     @State private var image: UIImage?
 
     private var url: URL? { photo.flatMap { URL(string: $0.largeURL ?? $0.url) } }
 
     var body: some View {
-        fallback.gradient
+        placeholder
             .overlay {
-                if let image {
-                    Image(uiImage: image).resizable().scaledToFill()
-                        .saturation(PhotoStyle.current == .vivid ? 1.08 : 0.8)
-                        .modifier(MaybeKenBurns(on: motion))
-                }
+                if let image { Image(uiImage: image).resizable().scaledToFill() }
             }
             .clipped()
+            .accessibilityHidden(true)
             .task(id: url) {
                 guard let url else { image = nil; return }
                 image = await PhotoLoader.load(url)
             }
     }
 }
-
