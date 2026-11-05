@@ -5,7 +5,8 @@ import UIKit
 /// Tipografia v8 (prompt 23 §1): três vozes, todas OFL no bundle (`Must/Resources/Fonts`).
 /// - **Bricolage Grotesque** (variável: opsz, wght, wdth): display (títulos, wdth 92 / 700) e numeral gigante
 ///   (wdth 78 / 800, tamanho fixo).
-/// - **Schibsted Grotesk** (variável: wght): texto 400–700 com números tabulares. Acompanha o Dynamic Type.
+/// - **Schibsted Grotesk** (variável: wght): texto 400–700. Acompanha o Dynamic Type. Sem `tnum`: no Schibsted o
+///   recurso tabular também alarga vírgula, ponto e dois-pontos ("dia , numa tela só ."); número alinhado vai em mono.
 /// - **Martian Mono** (variável: wght, wdth): ficha técnica, horários, códigos — wdth 100 (o arquivo vem em 112,5).
 ///
 /// Os eixos `wdth`/`opsz` não existem em `Font.custom`: display, numeral e mono são `CTFont` com
@@ -28,9 +29,9 @@ enum V8Font {
         Font(V8Fonts.bricolage(size, weight: 800, width: 78, opticalSize: 96))
     }
 
-    /// Texto: Schibsted Grotesk 400–700, números tabulares. Acompanha o Dynamic Type.
+    /// Texto: Schibsted Grotesk 400–700. Acompanha o Dynamic Type. Sem `.monospacedDigit()` (ver acima).
     static func text(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
-        MustFonts.scaled(V8Fonts.Family.schibsted, size).weight(weight).monospacedDigit()
+        MustFonts.scaled(V8Fonts.Family.schibsted, size).weight(weight)
     }
 
     /// Ficha técnica: Martian Mono 500, wdth 100 (micro-rótulos em caixa alta, horários, códigos).
