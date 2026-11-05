@@ -1,5 +1,6 @@
 import CoreLocation
 import Foundation
+import SwiftData
 import Testing
 @testable import Must
 
@@ -212,5 +213,76 @@ struct DayEngineTests {
         #expect(plan.stops.count == 9)
         #expect(plan.anchors.count == 3)
         #expect(plan.stops.filter { $0.kind == .micro }.allSatisfy { (10...40).contains($0.minutes) })
+    }
+}
+
+/// Dia aceito (SwiftData) → `DayPlan`: aceitar e reler dá a mesma Linha; sem o dia guardado, a regeração é estável.
+@MainActor
+struct DayEngineAcceptTests {
+    private func seeded() throws -> ModelContainer {
+        let c = try ModelContainer(for: MustSchema.schema, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        try RegionStore.seedIfEmpty(c.mainContext, region: .jp, bundle: Bundle(for: DayFixtures.Token.self))
+        return c
+    }
+
+    private func source(_ context: ModelContext, pace: Pace = .normal) -> DaySource? {
+        DayEngineV8.source(context: context, region: .jp,
+                           ask: DayAsk(date: DayFixtures.day, area: nil, pace: pace, budget: 15_000, until: DayFixtures.time("23:30"),
+                                       includes: [.micro, .goldenPhoto]),
+                           location: nil, weather: { _, _ in nil }, online: false)
+    }
+
+    @Test func acceptedDayReadsBackTheSameLine() async throws {
+        let container = try seeded()
+        let ctx = container.mainContext
+        let key = DayPlanPrefs.key(region: .jp, date: DayFixtures.day)
+        defer { UserDefaults.standard.removeObject(forKey: key) }
+        let src = try #require(source(ctx))
+        let engine = DayEngineV8(source: { _ in src }, lastTrain: { _, _, _ in DayFixtures.lastTrain })
+        let plan = await engine.build(on: DayFixtures.day, area: nil, pace: .normal, budget: 15_000, until: DayFixtures.time("23:30"),
+                                      includes: [.micro, .goldenPhoto])
+        #expect(!plan.stops.isEmpty)
+        #expect(engine.plan(for: DayFixtures.day, region: .jp, context: ctx) == nil)
+        try engine.accept(plan, region: .jp, context: ctx)
+        let read = try #require(engine.plan(for: DayFixtures.day, region: .jp, context: ctx))
+        #expect(read == plan)
+        // Só as paradas do board viram `Stop`; reserva e ingresso ficam âncora.
+        let saved = try #require(try ctx.fetch(FetchDescriptor<PlannedDay>()).first { $0.date == DayFixtures.day })
+        #expect(saved.stops.count == plan.stops.filter { $0.kind != .micro }.count)
+        #expect(saved.orderedStops.first { $0.place?.id == "j01" }?.isAnchor == true)
+
+        // Sem o dia guardado (aceito por outro caminho): as micro-paradas voltam geradas, iguais nas duas leituras.
+        UserDefaults.standard.removeObject(forKey: key)
+        let again = try #require(engine.plan(for: DayFixtures.day, region: .jp, context: ctx))
+        let twice = try #require(engine.plan(for: DayFixtures.day, region: .jp, context: ctx))
+        #expect(again == twice)
+        #expect(again.stops.filter { $0.kind != .micro }.map(\.placeId) == plan.stops.filter { $0.kind != .micro }.map(\.placeId))
+        #expect(!again.stops.filter { $0.kind == .micro }.isEmpty)
+
+        // "Feito" anda sem mexer na Linha.
+        try engine.accept(plan, region: .jp, context: ctx)
+        let first = try #require(try ctx.fetch(FetchDescriptor<PlannedDay>()).first { $0.date == DayFixtures.day }?.orderedStops.first)
+        first.done = true
+        try ctx.save()
+        let done = try #require(engine.plan(for: DayFixtures.day, region: .jp, context: ctx))
+        #expect(done.stops.map(\.id) == plan.stops.map(\.id))
+        #expect(done.stops.first { $0.placeId == first.place?.id }?.done == true)
+    }
+
+    @Test func liveActivityShowsLeaveNextAndLastTrain() throws {
+        let qa = DayEngineStub.qaDay
+        let state = try #require(OutsideBridge.liveState(qa, region: .jp, now: DayFixtures.time("14:20"), here: nil, eta: nil))
+        // Indo pro Fuunji (parada 4 de 9): chegue às 14:15 por causa da fila; depois, o Gyoen; último trem 00:40.
+        #expect(state.number == 4)
+        #expect(state.total == 9)
+        #expect(state.name == "Fuunji · tsukemen")
+        #expect(state.arriveBy.map { Region.jp.timeString($0) } == "14:15")
+        #expect(state.leaveAt.map { Region.jp.timeString($0) } == "13:46")
+        #expect(state.nextName == "Shinjuku Gyoen · golden")
+        #expect(state.lastTrainLine == "Yamanote")
+        #expect(state.lastTrainAt == qa.lastTrain?.at)
+        #expect(state.detail.contains("chegue 14:15"))
+        // Depois da última parada: nada.
+        #expect(OutsideBridge.liveState(qa, region: .jp, now: DayFixtures.time("23:40"), here: nil, eta: nil) == nil)
     }
 }

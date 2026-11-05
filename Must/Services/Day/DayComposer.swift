@@ -132,6 +132,7 @@ enum DayComposer {
             parts.append("Must \(word(p))")
         }
         if let q = p.queueMinutes, q > 0, anchor != .reservation, anchor != .ticket { parts.append("fila ~\(q) min") }
+        // TODO(v8:E): `MoneyFormatStyle` ainda não tem o símbolo do EUR (sai "EUR 16" em vez de "€ 16").
         if p.cost > 0 { parts.append(region.money(p.cost)) }
         if board.isException { parts.append("fora da meta") }
         if board.done { parts.append("feito") }
