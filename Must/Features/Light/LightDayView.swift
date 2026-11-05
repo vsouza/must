@@ -254,7 +254,7 @@ struct LightDayView: View {
             VStack(alignment: .leading, spacing: 3) {
                 HStack(alignment: .firstTextBaseline, spacing: 5) {
                     Text(r.name).font(.must.archivo(16, .semibold)).foregroundStyle(Color.must.ink).multilineTextAlignment(.leading)
-                    if r.done { Text("済").font(.must.kanji(11, bold: false)).foregroundStyle(Color.must.secondary) }
+                    if r.done { Image(systemName: "checkmark").font(.system(size: 10, weight: .semibold)).foregroundStyle(Color.must.secondary) }
                 }
                 Text(r.meta).font(.must.archivo(13)).foregroundStyle(Color.must.secondary).multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)

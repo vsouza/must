@@ -69,9 +69,6 @@ struct PlaceRow: View {
             VStack(alignment: .leading, spacing: 5) {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text(place.name).mustPlace().lineLimit(1)
-                    if let local = place.nameLocal, !local.isEmpty {
-                        Text(local).font(.must.kanji(12, bold: false)).foregroundStyle(Color.must.secondary).lineLimit(1)
-                    }
                 }
                 metaLine
             }

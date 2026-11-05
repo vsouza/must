@@ -128,7 +128,7 @@ struct EditPlaceView: View {
             field("nome") {
                 TextField("Nome do lugar", text: $draft.name).font(.must.archivo(17))
             }
-            field("日本語 · local") {
+            field("nome local · mostre ao atendente") {
                 TextField("opcional", text: $draft.nameLocal).font(.must.kanji(17, bold: false))
             }
             .frame(width: 130)

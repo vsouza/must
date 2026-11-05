@@ -200,8 +200,8 @@ struct DoneSheet: View {
             .padding(.horizontal, 16)
             .frame(height: 52)
             .background(Color.must.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-            Text("Pode deixar em branco: o 済 marca do mesmo jeito.").mustMeta()
-            PrimaryButton("Marcar 済") { mark() }
+            Text("Pode deixar em branco: marca como feito do mesmo jeito.").mustMeta()
+            PrimaryButton("Marcar feito") { mark() }
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 22)

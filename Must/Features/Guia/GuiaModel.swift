@@ -63,7 +63,7 @@ final class GuideModel {
     /// "Shinjuku" e `plus` = true ("Shinjuku+"). Sem foco, o bairro que mais aparece no roteiro.
     private(set) var title = "Hoje"
     private(set) var plus = false
-    private(set) var seal = "済"
+    private(set) var seal = "MUST"
     private(set) var sealSub: String?
     private(set) var rows: [Row] = []
     private(set) var stops: [GuideStop] = []
@@ -119,7 +119,7 @@ final class GuideModel {
             let main = best.flatMap { byId[$0] }
             title = main?.name ?? "Hoje"
             plus = false
-            seal = main?.seal ?? "済"
+            seal = main?.seal ?? "MUST"
             sealSub = main?.stampSub
         }
 

@@ -1,7 +1,7 @@
 import SwiftData
 import SwiftUI
 
-/// Tile de uma lista no hub (136 pt): foto tingida ou gradiente, ícone, kanji, contagem.
+/// Tile de uma lista no hub (136 pt): foto tingida ou gradiente, ícone, contagem (sem kanji: nada em japonês na interface).
 struct ListTile: View {
     @Environment(Services.self) private var services: Services?
     @Environment(RegionStore.self) private var store: RegionStore?
@@ -33,12 +33,6 @@ struct ListTile: View {
             }
             .foregroundStyle(color.text)
             .padding(14)
-        }
-        .overlay(alignment: .topTrailing) {
-            if let kanji = list.kanji, !kanji.isEmpty {
-                Text(kanji).font(.must.kanji(28)).foregroundStyle(color.text).opacity(0.3)
-                    .padding(.top, 10).padding(.trailing, 14)
-            }
         }
         .overlay(alignment: .bottomTrailing) {
             if url != nil { Credit(cover?.source == "Google" ? "G" : "CC", color: color.text).padding(.trailing, 8).padding(.bottom, 6) }

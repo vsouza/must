@@ -207,8 +207,8 @@ struct MapView: View {
     }
 
     private func kanji(_ place: Place) -> String {
-        if let k = place.list?.kanji, !k.isEmpty { return String(k.prefix(1)) }
-        return String((place.list?.name ?? place.name).prefix(1)).uppercased()
+        // Letra latina da lista (E de eat, D de drink…): nada de kanji no pino.
+        String((place.list?.name ?? place.name).prefix(1)).uppercased()
     }
 
     private func openState(_ place: Place) -> PinOpenState {
@@ -403,9 +403,9 @@ struct MapView: View {
             case .tomorrow:
                 Circle().strokeBorder(Color.must.blue, style: StrokeStyle(lineWidth: 1.5, dash: [3, 2])).frame(width: 16, height: 16)
             case .unplanned:
-                Text("食").font(.must.kanji(13)).foregroundStyle(MustColor.eat.strong)
+                Text("E").font(.must.mono(12, .bold)).foregroundStyle(Color.must.ink)
             case .done:
-                Text("済").font(.must.kanji(14)).foregroundStyle(Color.must.ink)
+                Image(systemName: "checkmark").font(.system(size: 12, weight: .bold)).foregroundStyle(Color.must.ink)
             case .metro:
                 Capsule().fill(transit.lines.first?.color ?? Color.must.blue).frame(width: 14, height: 4)
             }
@@ -545,8 +545,8 @@ struct MapView: View {
     private var emptyCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
-                Text(accepted(0) == nil ? "Nenhum dia montado hoje" : "Dia feito 済").mustPlace()
-                Text(accepted(0) == nil ? "monte o dia pra ver a rota e as paradas no mapa" : "todas as paradas de hoje têm 済").mustMeta()
+                Text(accepted(0) == nil ? "Nenhum dia montado hoje" : "Dia feito").mustPlace()
+                Text(accepted(0) == nil ? "monte o dia pra ver a rota e as paradas no mapa" : "todas as paradas de hoje estão feitas").mustMeta()
             }
             if accepted(0) == nil {
                 PrimaryButton("Montar o dia", icon: .montarAjustar, style: .dark) {
@@ -637,16 +637,13 @@ struct PlaceSheetCard: View {
                     Text("\(number)").font(.must.mono(15, .semibold)).foregroundStyle(.white)
                         .frame(width: 44, height: 44).background(Circle().fill(stop?.done == true ? Color.must.green : Color.must.ink))
                 } else {
-                    Text(place.list?.kanji.map { String($0.prefix(1)) } ?? "•").font(.must.kanji(18))
+                    Text(String((place.list?.name ?? "•").prefix(1)).uppercased()).font(.must.mono(15, .bold))
                         .foregroundStyle((place.list?.color ?? .eat).text)
                         .frame(width: 44, height: 44).background(Circle().fill((place.list?.color ?? .eat).light))
                 }
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(alignment: .firstTextBaseline, spacing: 6) {
                         Text(place.name).font(.must.archivo(19, .semibold)).tracking(-0.2).foregroundStyle(Color.must.ink).lineLimit(1)
-                        if let local = place.nameLocal {
-                            Text(local).font(.must.kanji(12, bold: false)).foregroundStyle(Color.must.secondary).lineLimit(1)
-                        }
                     }
                     meta(at: at).lineLimit(2).multilineTextAlignment(.leading)
                 }

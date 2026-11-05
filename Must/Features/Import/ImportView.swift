@@ -75,7 +75,7 @@ struct ImportView: View {
             HStack {
                 ZStack {
                     Circle().fill(Color.must.ink)
-                    Text("済").font(.must.kanji(15)).foregroundStyle(.white)
+                    Image(systemName: "checkmark").font(.system(size: 14, weight: .bold)).foregroundStyle(.white)
                 }
                 .frame(width: 36, height: 36)
                 Spacer()

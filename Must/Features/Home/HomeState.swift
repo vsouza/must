@@ -247,7 +247,7 @@ final class HomeState {
             detail = parts.joined(separator: " · ")
         }
         return HomeDay(
-            areaId: areaId, title: area?.name ?? "Hoje", seal: area?.seal ?? "済", sealSub: area?.stampSub,
+            areaId: areaId, title: area?.name ?? "Hoje", seal: area?.seal ?? "MUST", sealSub: area?.stampSub,
             subtitle: sub.joined(separator: " · "), stops: rows, current: current, currentDetail: detail,
             currentPlaceId: currentPlaceId
         )

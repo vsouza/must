@@ -178,15 +178,7 @@ struct NewListView: View {
                 .padding(.horizontal, 16)
                 .frame(height: 52)
                 .background(Color.must.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-
-                TextField("字", text: $kanji)
-                    .font(.must.kanji(24))
-                    .multilineTextAlignment(.center)
-                    .frame(width: 72, height: 52)
-                    .background(Color.must.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                    .accessibilityLabel("Kanji")
             }
-            Text("O kanji aparece grande no card e nos pinos do mapa — opcional.").mustMeta()
         }
     }
 
