@@ -129,7 +129,7 @@ enum PocketRules {
                     card.value = lastMetro(at: context.now, region: region)
                 } else if let last = context.lastTrain {
                     card.value = last.time
-                    card.detail = shortTrainLabel(last.label)
+                    if region == .jp { card.detail = shortTrainLabel(last.label) }
                 }
             default: break
             }

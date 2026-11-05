@@ -52,7 +52,7 @@ v8shots() { # $1 = prefixo (jp|bh|it), $2 = lugar de exemplo, $3 = museu de exem
   shot $r-v8-dicas -debugScreen dicas               # 07 Dicas                         (D)
   shot $r-v8-bolso -debugScreen bolso               # 08 Utilidades / BolsoIT          (D)
   shot $r-v8-lugar -debugScreen lugar:$2            # 09 LugarFoto / LugarIT           (D)
-  shot $r-v8-lugar-sem-foto -debugScreen lugar:$2 -debugNoPhotos  # 09 Lugar (sem foto no disco) (D)
+  shot $r-v8-lugar-sem-foto -debugScreen lugar:$2 -debugNoPhotos YES  # 09 Lugar (sem foto no disco) (D)
   shot $r-v8-museu -debugScreen museu:$3            # 09 MuseuFoto / MuseuIT           (D)
   shot $r-v8-musts -debugScreen musts               # 10 Musts                         (D)
   shot $r-v8-lista -debugScreen lista:$4            # 11 Lista                         (D)
