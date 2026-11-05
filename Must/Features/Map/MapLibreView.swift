@@ -447,6 +447,12 @@ struct MapLibreView: UIViewRepresentable {
                 let zoom = log2(40_075_016.686 * cos(lat * .pi / 180) / (512 * mpp))
                 move(map, to: CLLocationCoordinate2D(latitude: lat, longitude: lng), zoom: zoom, duration: duration)
             case .fit(let points, let top, let bottom, let sides):
+                // Um ponto só (Guia com a última parada da noite): centra nele na escala de bairro. Antes saía sem mexer
+                // e o mapa ficava no 0,0 (mar cinza).
+                if points.count == 1 {
+                    move(map, to: points[0].value, zoom: Self.singlePointZoom, duration: duration)
+                    return
+                }
                 guard points.count > 1 else { return }
                 let (center, zoom) = Self.fit(points.map(\.value), size: map.bounds.size, top: top, bottom: bottom, sides: sides)
                 move(map, to: center, zoom: min(zoom, 16.5), duration: duration)
@@ -462,6 +468,9 @@ struct MapLibreView: UIViewRepresentable {
                 map.setCamera(camera, withDuration: duration, animationTimingFunction: CAMediaTimingFunction(name: .easeOut))
             }
         }
+
+        /// Zoom de um ponto só: ~1 km de largura na tela do iPhone.
+        nonisolated static let singlePointZoom: Double = 15
 
         /// Centro e zoom (Web Mercator, mundo de 512 pt no z0) que enquadram os pontos dentro da área livre.
         nonisolated static func fit(_ coords: [CLLocationCoordinate2D], size: CGSize, top: CGFloat, bottom: CGFloat, sides: CGFloat)

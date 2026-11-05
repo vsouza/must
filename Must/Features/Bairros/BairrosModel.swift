@@ -141,12 +141,17 @@ final class BairrosModel {
             bubbles.min { CLLocation(latitude: $0.lat, longitude: $0.lng).distance(from: here) < CLLocation(latitude: $1.lat, longitude: $1.lng).distance(from: here) }
                 .flatMap { CLLocation(latitude: $0.lat, longitude: $0.lng).distance(from: here) < 3_000 ? $0 : nil }
         }
-        if let anchor = bubbles.first(where: { $0.id == areaId }) ?? nearest ?? bubbles.max(by: { $0.count < $1.count }) {
+        let picked = bubbles.first(where: { $0.id == areaId }) ?? nearest
+        if let anchor = picked ?? bubbles.max(by: { $0.count < $1.count }) {
             let here = CLLocation(latitude: anchor.lat, longitude: anchor.lng)
-            let near = bubbles.filter { CLLocation(latitude: $0.lat, longitude: $0.lng).distance(from: here) < 5_500 }
+            // Bairro escolhido ou perto de você: a vizinhança (5,5 km). Sem isso, a cidade inteira do maior bairro
+            // (18 km: Tóquio de Nakano a Asakusa, sem puxar Kyoto).
+            let radius: CLLocationDistance = picked == nil ? 18_000 : 5_500
+            let near = bubbles.filter { CLLocation(latitude: $0.lat, longitude: $0.lng).distance(from: here) < radius }
             if near.count >= 2 {
                 let points = near.map { MapCameraCommand.Coordinate(CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lng)) }
-                return MapCameraCommand(target: .fit(points: points, top: 150, bottom: areaId == nil ? 220 : 470, sides: 48))
+                // Laterais com folga pro nome da bolha (o ponto é o centro; "ROPPONGI" cortava na borda).
+                return MapCameraCommand(target: .fit(points: points, top: 150, bottom: areaId == nil ? 220 : 470, sides: 72))
             }
         }
         return MapCameraCommand(target: .center(lat: c.latitude, lng: c.longitude, widthMeters: region == .jp ? 9_000 : 6_000))
