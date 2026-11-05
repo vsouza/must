@@ -27,17 +27,20 @@ struct AreaTests {
         for name in required { #expect(names.contains(name), "falta \(name)") }
     }
 
+    /// v8 (selos sem japonês): o selo é a sigla latina; o kanji fica só no `nameLocal` (mostrar a alguém).
     @Test func japaoTemKanjiEBHTemSiglaEAnoDaCidade() {
         for area in AreaCatalog.jp {
             let kanji = try? #require(area.nameLocal)
             #expect(kanji.map { !$0.unicodeScalars.allSatisfy(\.isASCII) } == true, "\(area.name) sem kanji")
-            #expect(area.seal == kanji)
+            #expect(area.stampCode?.count == 3)
+            #expect(area.seal == area.stampCode)
+            #expect(area.stampSub == area.name)
         }
         for area in AreaCatalog.bh {
             #expect(area.nameLocal == nil)
-            #expect(area.stampText?.count == 3)
+            #expect(area.stampCode?.count == 3)
             #expect(area.stampSub == "BH · 1897")
-            #expect(area.seal == area.stampText)
+            #expect(area.seal == area.stampCode)
         }
     }
 

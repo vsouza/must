@@ -51,4 +51,60 @@ struct AreaStampsTests {
         let places = [place("a", area: "SAVASSI", done: true, city: "bh")]
         #expect(AreaStamps.earned(areas: areas, places: places).map(\.id) == ["savassi"])
     }
+
+    // MARK: Selo sem japonês (v8): sigla latina + nome, nunca kanji
+
+    @Test func siglasDoJapaoSaoOsCodigosJRPedidos() {
+        let byId = Dictionary(uniqueKeysWithValues: AreaCatalog.jp.map { ($0.id, $0) })
+        let expected = ["shinjuku": "SJK", "shibuya": "SBY", "ueno": "UEN", "harajuku": "HJK", "akihabara": "AKB",
+                        "ginza": "GNZ", "asakusa": "ASK"]
+        for (id, code) in expected {
+            #expect(byId[id]?.seal == code, "\(id)")
+        }
+        #expect(byId["shinjuku"]?.sealSub == "Shinjuku")
+    }
+
+    @Test func todoSeloETresLetrasLatinasUnicasPorCidade() {
+        for areas in [AreaCatalog.jp.filter { $0.cityId == "tokyo" }, AreaCatalog.jp.filter { $0.cityId == "kyoto" }, AreaCatalog.bh] {
+            let codes = areas.map(\.seal)
+            #expect(Set(codes).count == codes.count, "sigla repetida: \(codes)")
+            for (area, code) in zip(areas, codes) {
+                #expect(code.count == 3, "\(area.id): \(code)")
+                #expect(code.unicodeScalars.allSatisfy { ("A"..."Z").contains(Character($0)) }, "\(area.id): \(code)")
+                #expect(!StationStamp.usesKanji(area.sealSub), "\(area.id): \(area.sealSub)")
+            }
+        }
+    }
+
+    @Test func stampCodeVemDoJSONComEssaChave() throws {
+        let json = #"{"id":"trastevere","name":"Trastevere","cityId":"roma","centroid":{"lat":41.88,"lng":12.47},"#
+            + #""stationIds":[],"aliases":[],"neighbors":[],"stampCode":"TRV","stampSub":"Trastevere"}"#
+        let area = try JSONDecoder().decode(Area.self, from: Data(json.utf8))
+        #expect(area.stampCode == "TRV")
+        #expect(area.seal == "TRV")
+        #expect(area.sealSub == "Trastevere")
+    }
+
+    @Test func semSiglaNaTabelaOSeloDerivaDoNome() {
+        var a = area("ginza")
+        a.name = "Ginza"
+        #expect(a.seal == "GNZ")
+        a.name = "Asakusa"
+        #expect(a.seal == "ASK")
+        a.stampText = "LOU"
+        #expect(a.seal == "LOU")
+        a.stampCode = "SAV"
+        #expect(a.seal == "SAV")
+    }
+
+    @Test func seloNuncaMostraKanji() {
+        #expect(StationStamp.usesKanji("新宿"))
+        #expect(StationStamp.usesKanji("済"))
+        #expect(!StationStamp.usesKanji("Kabukichō"))
+        #expect(!StationStamp.usesKanji("Funcionários"))
+        #expect(StationStamp.code("新宿", sub: "Shinjuku") == "SHN")
+        #expect(StationStamp.code("済", sub: nil) == "MUST")
+        #expect(StationStamp.code("SJK", sub: "Shinjuku") == "SJK")
+    }
 }
+

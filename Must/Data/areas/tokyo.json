@@ -4,7 +4,7 @@
   "cityId": "tokyo",
   "note": "Centroides e tempos aproximados (trem e a pé, horário de dia). Cores JR Yamanote, JR Chūō, Ginza, Hibiya, Fukutoshin conferidas; Inokashira aproximada (conferir no mapa).",
   "areas": [
-    {"id": "shinjuku", "name": "Shinjuku", "nameLocal": "新宿", "cityId": "tokyo", "centroid": {"lat": 35.6915, "lng": 139.7040},
+    {"id": "shinjuku", "name": "Shinjuku", "nameLocal": "新宿", "stampCode": "SJK", "stampSub": "Shinjuku", "cityId": "tokyo", "centroid": {"lat": 35.6915, "lng": 139.7040},
      "stationIds": ["jy-shinjuku", "jc-shinjuku", "m-shinjuku", "f-shinjuku"], "aliases": ["Shinjuku Station", "Kabukicho"],
      "neighbors": [
        {"areaId": "nakano", "minutes": 5, "mode": "train", "line": {"code": "JC", "name": "JR Chūō", "color": "#F15A22"}},
@@ -14,7 +14,7 @@
        {"areaId": "koenji", "minutes": 10, "mode": "train", "line": {"code": "JC", "name": "JR Chūō", "color": "#F15A22"}},
        {"areaId": "kichijoji", "minutes": 17, "mode": "train", "line": {"code": "JC", "name": "JR Chūō", "color": "#F15A22"}}
      ]},
-    {"id": "shibuya", "name": "Shibuya", "nameLocal": "渋谷", "cityId": "tokyo", "centroid": {"lat": 35.6580, "lng": 139.7016},
+    {"id": "shibuya", "name": "Shibuya", "nameLocal": "渋谷", "stampCode": "SBY", "stampSub": "Shibuya", "cityId": "tokyo", "centroid": {"lat": 35.6580, "lng": 139.7016},
      "stationIds": ["jy-shibuya", "g-shibuya", "f-shibuya"], "aliases": ["Shibuya Stream", "Dogenzaka"],
      "neighbors": [
        {"areaId": "shinjuku", "minutes": 6, "mode": "train", "line": {"code": "JY", "name": "JR Yamanote", "color": "#80C241"}},
@@ -23,31 +23,31 @@
        {"areaId": "shimokitazawa", "minutes": 4, "mode": "train", "line": {"code": "IN", "name": "Inokashira", "color": "#B8A86D"}},
        {"areaId": "daikanyama", "minutes": 18, "mode": "walk"}
      ]},
-    {"id": "harajuku", "name": "Harajuku", "nameLocal": "原宿", "cityId": "tokyo", "centroid": {"lat": 35.6702, "lng": 139.7027},
+    {"id": "harajuku", "name": "Harajuku", "nameLocal": "原宿", "stampCode": "HJK", "stampSub": "Harajuku", "cityId": "tokyo", "centroid": {"lat": 35.6702, "lng": 139.7027},
      "stationIds": ["jy-harajuku", "c-meiji-jingumae"], "aliases": ["Omotesando"],
      "neighbors": [
        {"areaId": "shinjuku", "minutes": 4, "mode": "train", "line": {"code": "JY", "name": "JR Yamanote", "color": "#80C241"}},
        {"areaId": "shibuya", "minutes": 3, "mode": "train", "line": {"code": "JY", "name": "JR Yamanote", "color": "#80C241"}}
      ]},
-    {"id": "nakano", "name": "Nakano", "nameLocal": "中野", "cityId": "tokyo", "centroid": {"lat": 35.7056, "lng": 139.6657},
+    {"id": "nakano", "name": "Nakano", "nameLocal": "中野", "stampCode": "NKN", "stampSub": "Nakano", "cityId": "tokyo", "centroid": {"lat": 35.7056, "lng": 139.6657},
      "stationIds": ["jc-nakano"], "aliases": [],
      "neighbors": [
        {"areaId": "shinjuku", "minutes": 5, "mode": "train", "line": {"code": "JC", "name": "JR Chūō", "color": "#F15A22"}},
        {"areaId": "koenji", "minutes": 3, "mode": "train", "line": {"code": "JC", "name": "JR Chūō", "color": "#F15A22"}}
      ]},
-    {"id": "shin-okubo", "name": "Shin-Okubo", "nameLocal": "新大久保", "cityId": "tokyo", "centroid": {"lat": 35.7013, "lng": 139.7003},
+    {"id": "shin-okubo", "name": "Shin-Okubo", "nameLocal": "新大久保", "stampCode": "SOK", "stampSub": "Shin-Okubo", "cityId": "tokyo", "centroid": {"lat": 35.7013, "lng": 139.7003},
      "stationIds": ["jy-shin-okubo"], "aliases": ["Shin Okubo"],
      "neighbors": [
        {"areaId": "shinjuku", "minutes": 3, "mode": "train", "line": {"code": "JY", "name": "JR Yamanote", "color": "#80C241"}}
      ]},
-    {"id": "naka-meguro", "name": "Naka-Meguro", "nameLocal": "中目黒", "cityId": "tokyo", "centroid": {"lat": 35.6441, "lng": 139.6988},
+    {"id": "naka-meguro", "name": "Naka-Meguro", "nameLocal": "中目黒", "stampCode": "NMG", "stampSub": "Naka-Meguro", "cityId": "tokyo", "centroid": {"lat": 35.6441, "lng": 139.6988},
      "stationIds": ["h-naka-meguro"], "aliases": ["Nakameguro"],
      "neighbors": [
        {"areaId": "ebisu", "minutes": 2, "mode": "train", "line": {"code": "H", "name": "Hibiya", "color": "#B5B5AC"}},
        {"areaId": "roppongi", "minutes": 7, "mode": "train", "line": {"code": "H", "name": "Hibiya", "color": "#B5B5AC"}},
        {"areaId": "daikanyama", "minutes": 17, "mode": "walk"}
      ]},
-    {"id": "ebisu", "name": "Ebisu", "nameLocal": "恵比寿", "cityId": "tokyo", "centroid": {"lat": 35.6467, "lng": 139.7100},
+    {"id": "ebisu", "name": "Ebisu", "nameLocal": "恵比寿", "stampCode": "EBS", "stampSub": "Ebisu", "cityId": "tokyo", "centroid": {"lat": 35.6467, "lng": 139.7100},
      "stationIds": ["jy-ebisu", "h-ebisu"], "aliases": [],
      "neighbors": [
        {"areaId": "shibuya", "minutes": 3, "mode": "train", "line": {"code": "JY", "name": "JR Yamanote", "color": "#80C241"}},
@@ -55,20 +55,20 @@
        {"areaId": "roppongi", "minutes": 5, "mode": "train", "line": {"code": "H", "name": "Hibiya", "color": "#B5B5AC"}},
        {"areaId": "daikanyama", "minutes": 14, "mode": "walk"}
      ]},
-    {"id": "asakusa", "name": "Asakusa", "nameLocal": "浅草", "cityId": "tokyo", "centroid": {"lat": 35.7118, "lng": 139.7966},
+    {"id": "asakusa", "name": "Asakusa", "nameLocal": "浅草", "stampCode": "ASK", "stampSub": "Asakusa", "cityId": "tokyo", "centroid": {"lat": 35.7118, "lng": 139.7966},
      "stationIds": ["g-asakusa", "a-asakusa"], "aliases": [],
      "neighbors": [
        {"areaId": "ueno", "minutes": 4, "mode": "train", "line": {"code": "G", "name": "Ginza", "color": "#FF9500"}},
        {"areaId": "ginza", "minutes": 12, "mode": "train", "line": {"code": "G", "name": "Ginza", "color": "#FF9500"}}
      ]},
-    {"id": "ueno", "name": "Ueno", "nameLocal": "上野", "cityId": "tokyo", "centroid": {"lat": 35.7141, "lng": 139.7774},
+    {"id": "ueno", "name": "Ueno", "nameLocal": "上野", "stampCode": "UEN", "stampSub": "Ueno", "cityId": "tokyo", "centroid": {"lat": 35.7141, "lng": 139.7774},
      "stationIds": ["jy-ueno", "g-ueno-hirokoji", "h-ueno"], "aliases": ["Ueno Park"],
      "neighbors": [
        {"areaId": "asakusa", "minutes": 4, "mode": "train", "line": {"code": "G", "name": "Ginza", "color": "#FF9500"}},
        {"areaId": "akihabara", "minutes": 3, "mode": "train", "line": {"code": "H", "name": "Hibiya", "color": "#B5B5AC"}},
        {"areaId": "yanaka", "minutes": 15, "mode": "walk"}
      ]},
-    {"id": "ginza", "name": "Ginza", "nameLocal": "銀座", "cityId": "tokyo", "centroid": {"lat": 35.6717, "lng": 139.7649},
+    {"id": "ginza", "name": "Ginza", "nameLocal": "銀座", "stampCode": "GNZ", "stampSub": "Ginza", "cityId": "tokyo", "centroid": {"lat": 35.6717, "lng": 139.7649},
      "stationIds": ["g-ginza", "h-ginza", "m-ginza"], "aliases": ["Marunouchi"],
      "neighbors": [
        {"areaId": "tsukiji", "minutes": 3, "mode": "train", "line": {"code": "H", "name": "Hibiya", "color": "#B5B5AC"}},
@@ -76,48 +76,48 @@
        {"areaId": "asakusa", "minutes": 12, "mode": "train", "line": {"code": "G", "name": "Ginza", "color": "#FF9500"}},
        {"areaId": "akihabara", "minutes": 10, "mode": "train", "line": {"code": "H", "name": "Hibiya", "color": "#B5B5AC"}}
      ]},
-    {"id": "tsukiji", "name": "Tsukiji", "nameLocal": "築地", "cityId": "tokyo", "centroid": {"lat": 35.6654, "lng": 139.7707},
+    {"id": "tsukiji", "name": "Tsukiji", "nameLocal": "築地", "stampCode": "TSK", "stampSub": "Tsukiji", "cityId": "tokyo", "centroid": {"lat": 35.6654, "lng": 139.7707},
      "stationIds": ["h-tsukiji"], "aliases": ["Tsukiji Outer Market"],
      "neighbors": [
        {"areaId": "ginza", "minutes": 3, "mode": "train", "line": {"code": "H", "name": "Hibiya", "color": "#B5B5AC"}}
      ]},
-    {"id": "yanaka", "name": "Yanaka", "nameLocal": "谷中", "cityId": "tokyo", "centroid": {"lat": 35.7267, "lng": 139.7676},
+    {"id": "yanaka", "name": "Yanaka", "nameLocal": "谷中", "stampCode": "YNK", "stampSub": "Yanaka", "cityId": "tokyo", "centroid": {"lat": 35.7267, "lng": 139.7676},
      "stationIds": ["jy-nippori"], "aliases": ["Nezu"],
      "neighbors": [
        {"areaId": "ueno", "minutes": 15, "mode": "walk"}
      ]},
-    {"id": "shimokitazawa", "name": "Shimokitazawa", "nameLocal": "下北沢", "cityId": "tokyo", "centroid": {"lat": 35.6616, "lng": 139.6680},
+    {"id": "shimokitazawa", "name": "Shimokitazawa", "nameLocal": "下北沢", "stampCode": "SMK", "stampSub": "Shimokitazawa", "cityId": "tokyo", "centroid": {"lat": 35.6616, "lng": 139.6680},
      "stationIds": ["in-shimokitazawa"], "aliases": ["Shimo-Kitazawa"],
      "neighbors": [
        {"areaId": "shibuya", "minutes": 4, "mode": "train", "line": {"code": "IN", "name": "Inokashira", "color": "#B8A86D"}}
      ]},
-    {"id": "kichijoji", "name": "Kichijoji", "nameLocal": "吉祥寺", "cityId": "tokyo", "centroid": {"lat": 35.7030, "lng": 139.5796},
+    {"id": "kichijoji", "name": "Kichijoji", "nameLocal": "吉祥寺", "stampCode": "KCJ", "stampSub": "Kichijoji", "cityId": "tokyo", "centroid": {"lat": 35.7030, "lng": 139.5796},
      "stationIds": ["jc-kichijoji"], "aliases": ["Kichijōji"],
      "neighbors": [
        {"areaId": "shinjuku", "minutes": 17, "mode": "train", "line": {"code": "JC", "name": "JR Chūō", "color": "#F15A22"}},
        {"areaId": "koenji", "minutes": 11, "mode": "train", "line": {"code": "JC", "name": "JR Chūō", "color": "#F15A22"}}
      ]},
-    {"id": "akihabara", "name": "Akihabara", "nameLocal": "秋葉原", "cityId": "tokyo", "centroid": {"lat": 35.6984, "lng": 139.7731},
+    {"id": "akihabara", "name": "Akihabara", "nameLocal": "秋葉原", "stampCode": "AKB", "stampSub": "Akihabara", "cityId": "tokyo", "centroid": {"lat": 35.6984, "lng": 139.7731},
      "stationIds": ["jy-akihabara", "h-akihabara"], "aliases": ["Akihabara Station"],
      "neighbors": [
        {"areaId": "ueno", "minutes": 3, "mode": "train", "line": {"code": "H", "name": "Hibiya", "color": "#B5B5AC"}},
        {"areaId": "ginza", "minutes": 10, "mode": "train", "line": {"code": "H", "name": "Hibiya", "color": "#B5B5AC"}}
      ]},
-    {"id": "roppongi", "name": "Roppongi", "nameLocal": "六本木", "cityId": "tokyo", "centroid": {"lat": 35.6627, "lng": 139.7312},
+    {"id": "roppongi", "name": "Roppongi", "nameLocal": "六本木", "stampCode": "RPG", "stampSub": "Roppongi", "cityId": "tokyo", "centroid": {"lat": 35.6627, "lng": 139.7312},
      "stationIds": ["h-roppongi", "e-roppongi"], "aliases": ["Azabudai Hills", "Azabudai"],
      "neighbors": [
        {"areaId": "ginza", "minutes": 7, "mode": "train", "line": {"code": "H", "name": "Hibiya", "color": "#B5B5AC"}},
        {"areaId": "naka-meguro", "minutes": 7, "mode": "train", "line": {"code": "H", "name": "Hibiya", "color": "#B5B5AC"}},
        {"areaId": "ebisu", "minutes": 5, "mode": "train", "line": {"code": "H", "name": "Hibiya", "color": "#B5B5AC"}}
      ]},
-    {"id": "daikanyama", "name": "Daikanyama", "nameLocal": "代官山", "cityId": "tokyo", "centroid": {"lat": 35.6486, "lng": 139.7036},
+    {"id": "daikanyama", "name": "Daikanyama", "nameLocal": "代官山", "stampCode": "DKY", "stampSub": "Daikanyama", "cityId": "tokyo", "centroid": {"lat": 35.6486, "lng": 139.7036},
      "stationIds": ["ty-daikanyama"], "aliases": [],
      "neighbors": [
        {"areaId": "shibuya", "minutes": 18, "mode": "walk"},
        {"areaId": "ebisu", "minutes": 14, "mode": "walk"},
        {"areaId": "naka-meguro", "minutes": 17, "mode": "walk"}
      ]},
-    {"id": "koenji", "name": "Koenji", "nameLocal": "高円寺", "cityId": "tokyo", "centroid": {"lat": 35.7053, "lng": 139.6499},
+    {"id": "koenji", "name": "Koenji", "nameLocal": "高円寺", "stampCode": "KNJ", "stampSub": "Koenji", "cityId": "tokyo", "centroid": {"lat": 35.7053, "lng": 139.6499},
      "stationIds": ["jc-koenji"], "aliases": [],
      "neighbors": [
        {"areaId": "shinjuku", "minutes": 10, "mode": "train", "line": {"code": "JC", "name": "JR Chūō", "color": "#F15A22"}},
