@@ -93,7 +93,7 @@ enum AreaCatalog {
     static let jp: [Area] = load(["tokyo", "kyoto"])
     static let bh: [Area] = load(["bh"])
     /// Todas as tabelas (o solver por área acha o bairro de um lugar e os vizinhos por aqui).
-    static let all: [Area] = jp + bh
+    static let all: [Area] = jp + bh + AreasIT.all
 
     static func areas(for region: Region) -> [Area] {
         switch region {

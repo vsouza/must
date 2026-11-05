@@ -7,7 +7,5 @@ enum AreasIT {
     /// Grupo de cidade dos bairros (o `cityId` dos lugares do `seed-it.json`).
     static let cityId = "roma"
 
-    // TODO(v8:A): `AreaCatalog.all` (Areas.swift) ainda é `jp + bh`; somar `AreasIT.all` pra o solver por bairro
-    // (`AreaFocusPlan`) e a tela Bairros acharem Roma. Os ids de Roma não colidem com os de Tóquio, Kyoto e BH.
     static let all: [Area] = AreaCatalog.load(["roma"])
 }
