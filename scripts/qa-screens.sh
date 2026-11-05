@@ -43,11 +43,12 @@ ${=W} debugPlaces -string fake; ${=W} debugNearby -string fake; ${=W} debugFligh
 v8shots() { # $1 = prefixo (jp|bh|it), $2 = lugar de exemplo, $3 = museu de exemplo, $4 = lista de exemplo
   local r=$1
   shot $r-v8-capa -debugScreen capa                 # 01 CapaJP/CapaBR/CapaIT          (C)
-  shot $r-v8-capa-foto -debugScreen capa -capaFoto  # 01b CapaFoto                     (C)
+  WAIT=9 shot $r-v8-capa-foto -debugScreen capa -capaFoto  # 01b CapaFoto (força a foto; sem a flag, os prints usam a cor) (C)
   shot $r-v8-bom-dia -debugScreen bom-dia           # 02 Manha                         (C)
   shot $r-v8-agora -debugScreen agora               # 03 Agora                         (C)
   shot $r-v8-dia -debugScreen dia                   # 04 Dia / DiaIT                   (C)
   shot $r-v8-montar -debugScreen montar             # 05 Montar                        (C)
+  WAIT=9 shot $r-v8-proposta -debugScreen proposta  # 05b Montar › Gerar (proposta)    (C)
   shot $r-v8-guia -debugScreen guia                 # 06 Guia                          (D)
   shot $r-v8-dicas -debugScreen dicas               # 07 Dicas                         (D)
   shot $r-v8-bolso -debugScreen bolso               # 08 Utilidades / BolsoIT          (D)

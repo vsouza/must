@@ -165,15 +165,15 @@ struct AgoraView: View {
             .padding(.top, 10)
 
             VStack(alignment: .leading, spacing: 0) {
-                MonoLabel(c.verb, size: 10.5, color: V8.orange).padding(.top, 34)
+                HStack(alignment: .top) {
+                    MonoLabel(c.verb, size: 10.5, color: V8.orange)
+                    Spacer(minLength: 8)
+                    SpecStack(lines: [c.countdown, c.travel].compactMap { $0 }, color: V8.muteDark, alignment: .trailing)
+                }
+                .padding(.top, 34)
                 BigNumeral(region.timeString(c.time), size: 140, color: V8.orange)
                     .padding(.leading, -6)
-                    .padding(.trailing, 70)
-                    .frame(maxWidth: .infinity, minHeight: 150, alignment: .leading)
-                    .overlay(alignment: .topTrailing) {
-                        SpecStack(lines: [c.countdown, c.travel].compactMap { $0 }, color: V8.muteDark, alignment: .trailing)
-                            .padding(.top, 8)
-                    }
+                    .frame(maxWidth: .infinity, minHeight: 130, alignment: .leading)
             }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("\(c.verb) \(region.timeString(c.time)), \(c.countdown)")

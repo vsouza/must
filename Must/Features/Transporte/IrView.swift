@@ -153,7 +153,7 @@ struct IrView: View {
                 .padding(.top, 10)
 
                 HStack(alignment: .center, spacing: 12) {
-                    BigNumeral("\(minutes)", size: 190, color: V8.orange)
+                    BigNumeral("\(minutes)", size: minutes < 10 ? 190 : minutes < 100 ? 130 : 96, color: V8.orange)
                         .fixedSize()
                         .padding(.leading, -8)
                         .redacted(reason: model.loading && model.options.isEmpty ? .placeholder : [])

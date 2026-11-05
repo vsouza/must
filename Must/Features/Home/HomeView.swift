@@ -154,11 +154,11 @@ struct HomeView: View {
         }
     }
 
-    private func topRow(_ content: CapaContent) -> some View {
+    private func topRow(_ content: CapaContent, onPhoto: Bool = false) -> some View {
         HStack(alignment: .top, spacing: 12) {
-            SpecStack(lines: content.topLeft, color: ink)
+            SpecStack(lines: content.topLeft, color: ink).modifier(PhotoChip(on: onPhoto))
             Spacer(minLength: 8)
-            SpecStack(lines: content.topRight, color: ink, alignment: .trailing).padding(.top, 2)
+            SpecStack(lines: content.topRight, color: ink, alignment: .trailing).modifier(PhotoChip(on: onPhoto)).padding(.top, 2)
             RoundButton(systemImage: "sparkle", label: "Dicas", style: .line, tint: ink) { router.push(.dicas, on: .hoje) }
                 .padding(.top, -8)
         }
@@ -202,7 +202,7 @@ struct HomeView: View {
                     Text(content.agora?.line ?? "Montar o dia")
                         .font(V8Font.text(15, weight: .bold))
                         .foregroundStyle(V8.white)
-                        .lineLimit(1)
+                        .lineLimit(2)
                 }
                 Spacer(minLength: 0)
                 Image(systemName: "arrow.up.right")
@@ -227,52 +227,43 @@ struct HomeView: View {
     /// Foto do bairro em cor cheia em cima; embaixo, faixa sólida na cor do lugar com o texto (sem degradê, sem foto
     /// atrás do texto). A ficha técnica de cima fica sobre a foto, como no design.
     private func photoCover(_ content: CapaContent) -> some View {
-        VStack(spacing: 0) {
-            ZStack(alignment: .top) {
-                CapaPhoto(photo: state.photo, placeholder: theme.cover)
-                    .containerRelativeFrame(.vertical) { h, _ in h * 0.6 }
-                    .frame(maxWidth: .infinity)
-                    .clipped()
-                    .overlay(alignment: .bottomTrailing) {
-                        if let photo = state.photo {
-                            Text("\(content.area) · \(photo.source ?? "Wikimedia Commons")".uppercased())
-                                .font(V8Font.mono(8))
-                                .tracking(0.8)
-                                .foregroundStyle(V8.white.opacity(0.9))
-                                .lineLimit(1)
-                                .padding(.horizontal, 7)
-                                .padding(.vertical, 4)
-                                .background(RoundedRectangle(cornerRadius: 6).fill(V8.ink.opacity(0.6)))
-                                .padding(12)
-                                .accessibilityLabel(photo.credit)
-                        }
-                    }
-                topRow(content)
-                    .shadow(color: V8.ink.opacity(0.35), radius: 3)
-                    .padding(.horizontal, 20)
-                    .safeAreaPadding(.top)
-                    .padding(.top, 10)
+        VStack(alignment: .leading, spacing: 0) {
+            topRow(content, onPhoto: true)
+                .padding(.horizontal, 20)
+                .padding(.top, 10)
+            Spacer(minLength: 24)
+            if let photo = state.photo {
+                Text("\(content.area) · \(photo.source ?? "Wikimedia Commons")".uppercased())
+                    .font(V8Font.mono(8))
+                    .tracking(0.8)
+                    .foregroundStyle(V8.white.opacity(0.9))
+                    .lineLimit(1)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 4)
+                    .background(RoundedRectangle(cornerRadius: 6).fill(V8.ink.opacity(0.6)))
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 12)
+                    .accessibilityLabel(photo.credit)
             }
-            .ignoresSafeArea(edges: .top)
-
+            // Faixa sólida na cor do lugar: o texto nunca fica em cima da foto.
             VStack(alignment: .leading, spacing: 8) {
-                    countryLine(content, suffix: "hoje é")
-                    Text(content.area)
-                        .font(V8Font.display(48))
-                        .foregroundStyle(ink)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.6)
-                    if let evening = content.evening {
-                        Text(evening).font(V8Font.display(24)).fontWeight(.medium).foregroundStyle(ink.opacity(0.9))
-                            .lineLimit(1).minimumScaleFactor(0.7)
-                    }
-                    Spacer(minLength: 12)
-                    agoraCard(content).frame(maxWidth: 236)
-                    Color.clear.frame(height: 90)
+                countryLine(content, suffix: "hoje é")
+                Text(content.area)
+                    .font(V8Font.display(48))
+                    .foregroundStyle(ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                if let evening = content.evening {
+                    Text(evening).font(V8Font.display(24)).fontWeight(.medium).foregroundStyle(ink.opacity(0.9))
+                        .lineLimit(1).minimumScaleFactor(0.7)
+                }
+                agoraCard(content).frame(maxWidth: 236).padding(.top, 22)
+                Color.clear.frame(height: 96)
             }
             .padding(.horizontal, 20)
             .padding(.top, 22)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .background {
                 ZStack {
                     theme.cover
@@ -285,6 +276,25 @@ struct HomeView: View {
                 .ignoresSafeArea(edges: .bottom)
                 .accessibilityHidden(true)
             }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // A foto em cor cheia ocupa a tela toda por trás; a faixa de baixo a cobre.
+        .background {
+            CapaPhoto(photo: state.photo, placeholder: theme.cover)
+                .ignoresSafeArea()
+        }
+    }
+}
+
+/// Ficha técnica sobre a foto: num retângulo de tinta sólido (sem degradê), pra ler em qualquer foto.
+private struct PhotoChip: ViewModifier {
+    var on: Bool
+    func body(content: Content) -> some View {
+        if on {
+            content.padding(.horizontal, 7).padding(.vertical, 5)
+                .background(RoundedRectangle(cornerRadius: 6).fill(V8.ink.opacity(0.6)))
+        } else {
+            content
         }
     }
 }
