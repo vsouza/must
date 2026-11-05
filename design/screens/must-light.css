@@ -61,3 +61,17 @@ a{color:#1E73FF}a:hover{color:#0F5AD6}
 .flag{width:22px;height:22px;border-radius:50%;overflow:hidden;box-shadow:0 0 0 1.5px #fff,0 2px 6px rgba(18,19,22,.18);flex-shrink:0;display:inline-block}
 .tab-on .tdot{display:block}
 .tdot{display:none;width:4px;height:4px;border-radius:50%;background:var(--trip);margin-top:1px}
+/* v7 · navegação em pílula: aba ativa vira pílula escura com rótulo; as outras são círculos */
+.nav7{position:absolute;left:50%;transform:translateX(-50%);bottom:18px;height:64px;border-radius:999px;display:flex;align-items:center;gap:6px;padding:0 7px;background:rgba(255,255,255,.92);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 14px 40px rgba(18,19,22,.16);border:1px solid #EEF0F3;box-sizing:border-box}
+.nav7 a{width:50px;height:50px;border-radius:999px;background:#F1F2F4;color:#121316;display:flex;align-items:center;justify-content:center;text-decoration:none;flex-shrink:0}
+.nav7 a.on{width:auto;background:#121316;color:#fff;padding:0 18px 0 6px;gap:10px;font-size:14px;font-weight:600}
+.nav7 a.on i{width:38px;height:38px;border-radius:50%;background:#22DD7E;color:#0B2A18;display:flex;align-items:center;justify-content:center;font-style:normal}
+.nav7 a.add{background:#22DD7E;color:#0B2A18}
+/* v7 · card com recorte no canto (o botão ↗ mora no recorte) */
+.cut{-webkit-mask:radial-gradient(circle 30px at calc(100% - 24px) calc(100% - 24px),transparent 29px,#000 30px);mask:radial-gradient(circle 30px at calc(100% - 24px) calc(100% - 24px),transparent 29px,#000 30px)}
+.cut-btn{position:absolute;width:44px;height:44px;border-radius:50%;background:#121316;color:#fff;display:flex;align-items:center;justify-content:center;text-decoration:none}
+/* v7 · ingresso/voo com picote */
+.tkt{position:relative;border-radius:22px;overflow:hidden;-webkit-mask:radial-gradient(circle 9px at 0 62%,transparent 8px,#000 9px) left/51% 100% no-repeat,radial-gradient(circle 9px at 100% 62%,transparent 8px,#000 9px) right/51% 100% no-repeat;mask:radial-gradient(circle 9px at 0 62%,transparent 8px,#000 9px) left/51% 100% no-repeat,radial-gradient(circle 9px at 100% 62%,transparent 8px,#000 9px) right/51% 100% no-repeat}
+.tkt .perf{position:absolute;left:14px;right:14px;top:62%;border-top:1.5px dashed currentColor;opacity:.25}
+.two{font-size:30px;font-weight:600;letter-spacing:-.025em;line-height:1.08}
+.two span{color:#A9AEB6}

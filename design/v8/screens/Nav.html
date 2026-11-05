@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Must — Navegação: barra, gestos e atalhos</title>
+
+<link rel="stylesheet" href="v8.css"><style>html,body{background:#E8E5DD}body{display:flex;justify-content:center;padding:24px 0}.app{box-shadow:0 30px 80px rgba(0,0,0,.18);border-radius:44px}</style>
+</head>
+<body>
+
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&amp;family=Schibsted+Grotesk:ital,wght@0,400..900;1,400..900&amp;family=Martian+Mono:wdth,wght@75..112.5,100..800&amp;display=swap">
+<style>
+body{margin:0;background:#fff}
+.row{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid rgba(18,18,18,.14)}
+.row .k{font-family:'Martian Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--or-deep);font-weight:600;width:78px;flex-shrink:0;padding-top:3px}
+.row .t{font-size:14px;font-weight:700}
+.row .d{font-size:12.5px;color:var(--mute);line-height:1.35}
+</style>
+
+<div class="app paper">
+  <span class="spec" style="left:20px;top:58px;color:var(--mute)">Navegação<br>4 abas + adicionar</span>
+  <div style="position:absolute;left:20px;right:20px;top:108px;display:flex;flex-direction:column;gap:4px">
+    <span class="disp" style="font-size:44px">Barra</span>
+    <span style="font-size:14px;color:var(--mute)">A aba ativa vira pílula laranja com nome; as outras são só ícone. O + é lima e sempre está lá.</span>
+  </div>
+
+  <nav class="nav" aria-label="Exemplo de navegação" style="position:absolute;left:20px;right:20px;top:200px;bottom:auto">
+    <a href="CapaJP.html" class="on"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>Hoje</a>
+    <a href="Guia.html" aria-label="Guia"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg></a>
+    <a href="Musts.html" aria-label="Musts"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6h14M5 12h14M5 18h9"/></svg></a>
+    <a href="Proximos.html" aria-label="Viagem"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h16v10H4zM8 8V5h8v3"/></svg></a>
+    <a href="Montar.html" class="add" aria-label="Adicionar"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></a>
+  </nav>
+
+  <div style="position:absolute;left:20px;right:20px;top:290px;display:flex;flex-direction:column">
+    <div class="row" style="border-top:0"><span class="k">Hoje</span><div><div class="t">Capa do dia → Agora → Linha → Guia</div><div class="d">Capa é o estado padrão. Toque no card "Agora" abre a parada; deslize pra cima abre a Linha do dia inteira.</div></div></div>
+    <div class="row"><span class="k">Guia</span><div><div class="t">Mapa + capítulos do bairro</div><div class="d">Mapa papel em relevo com o percurso de hoje; embaixo, os Musts do bairro por hora do dia e os vizinhos.</div></div></div>
+    <div class="row"><span class="k">Musts</span><div><div class="t">Listas → Lista por bairro → Lugar</div><div class="d">Índice gigante, agrupado por bairro, estado (agora / aberto / feito) à direita.</div></div></div>
+    <div class="row"><span class="k">Viagem</span><div><div class="t">Próximos · Carteira · Voos · Compras · Mapas offline</div><div class="d">O que ainda vai acontecer, em ordem. Passou, some.</div></div></div>
+    <div class="row"><span class="k">+ (lima)</span><div><div class="t">Toque: Montar o dia · Segurar: colar link ou texto</div><div class="d">Montar vem primeiro porque é o que você faz todo dia; adicionar lugar é menos frequente.</div></div></div>
+    <div class="row"><span class="k">Gestos</span><div><div class="t">Capa: deslizar pra baixo = Bom dia / Boa noite</div><div class="d">Antes das 10h abre o briefing; depois das 21h abre o fechamento. Deslizar pra esquerda na capa = Dicas; pra direita = Bolso.</div></div></div>
+    <div class="row"><span class="k">Sempre</span><div><div class="t">Agora na tela bloqueada</div><div class="d">Live Activity com "saia às", próxima parada e o último trem. O app auxilia sem ser aberto.</div></div></div>
+  </div>
+</div>
+
+</body>
+</html>

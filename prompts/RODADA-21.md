@@ -21,6 +21,8 @@ Leia `CLAUDE.md` (principalmente "Premissa: visual e econômico em dados", "Tema
 | 4 | **Tema e selos** | Selo com a tinta do país (`TripTheme.stampInk`) onde ainda usa `StampPalette` neutro; coleção de selos na Viagem com a borda em `trip`. Conferir JP e BH nos prints. |
 | 5 | **Prontidão da viagem** | Checar e corrigir o que falta pra 11/11: `TripInfo` 11–24/11 (Tóquio → Kyoto 17–20 → Tóquio), seed JP completo, mapas offline de Tóquio e Kyoto disponíveis em Ajustes › Mapas offline, voos importáveis, checklist intl-japan ativo, Carteira com Suica/JR Pass, export do board funcionando. Gere `docs/checklist-viagem.md` com o que o Vinicius precisa fazer no iPhone antes de embarcar (baixar mapas no Wi-Fi, lote de fotos, permissão de avisos, exportar backup). |
 | 6 | **QA da rodada** | `qa-screens.sh` com JP e BH para Início, Hoje, Guia, Bairros, Lugar, Musts, Viagem, Carteira, Voos, Compras; suíte completa; resumo no `QA.md`. |
+| 7 | **Redesign v8** | Prompt `23-redesign-v8.md` inteiro (substitui o 22): identidade nova (3 cores, 3 fontes, numeral gigante), os cinco momentos do dia, 9 paradas com micro-paradas, Agora/Ir, Bom dia/Boa noite, Dicas, Bolso, barra nova, ícone. Telas em `design/v8/screens/`. |
+| 8 | **Itália · Roma** | Prompt `24-italia-roma.md`: região `it`, seed de Roma, azzurro, Bolso e regras romanas, telas IT. |
 
 ## Fora do escopo
 - Criar repositório remoto ou dar push (o Vinicius decide).

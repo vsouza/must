@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Must v8 — identidade: paleta, tipografia e texturas</title>
+
+<link rel="stylesheet" href="v8.css"><style>html,body{background:#E8E5DD}body{display:flex;justify-content:center;padding:24px 0}.app{box-shadow:0 30px 80px rgba(0,0,0,.18);border-radius:44px}</style>
+</head>
+<body>
+
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&amp;family=Schibsted+Grotesk:ital,wght@0,400..900;1,400..900&amp;family=Martian+Mono:wdth,wght@75..112.5,100..800&amp;display=swap">
+<style>
+body{margin:0;background:#fff}
+.sw{display:flex;flex-direction:column;gap:6px}
+.sw .c{height:64px;border-radius:14px;display:flex;align-items:flex-end;padding:8px 10px;box-sizing:border-box;font-family:'Martian Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;font-weight:600}
+.sw .n{font-size:12.5px;font-weight:700}
+.sw .d{font-size:11px;color:var(--mute);line-height:1.35}
+h4{margin:0;font-family:'Martian Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--or-deep);font-weight:600}
+.rule2{font-size:12.5px;line-height:1.4;color:var(--gr)}
+</style>
+
+<div style="width:1360px;height:760px;box-sizing:border-box;padding:40px 44px;background:var(--paper);color:var(--ink);font-family:'Schibsted Grotesk',sans-serif;position:relative;overflow:hidden;display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:36px">
+  <!-- coluna 1: marca e cores -->
+  <div style="display:flex;flex-direction:column;gap:18px">
+    <div style="display:flex;align-items:flex-end;gap:14px"><span class="num" style="font-size:120px;color:var(--or);line-height:.8">M</span><div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px"><span class="disp" style="font-size:40px">Must</span><span class="mono" style="color:var(--mute)">guia de bolso · v8</span></div></div>
+    <h4>Três cores. Um papel pra cada.</h4>
+    <div style="display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:10px">
+      <div class="sw"><div class="c" style="background:var(--ink);color:#fff">#121212</div><span class="n">Tinta</span><span class="d">texto, barra, telas de noite e de caminho</span></div>
+      <div class="sw"><div class="c" style="background:var(--paper);border:1px solid rgba(18,18,18,.14)">#F2F0EA</div><span class="n">Papel</span><span class="d">fundo de tudo que é lista e ficha</span></div>
+      <div class="sw"><div class="c" style="background:var(--or)">#FF4A1C</div><span class="n">Laranja</span><span class="d">a única cor: ação e "agora"</span></div>
+    </div>
+    <h4>Mais uma, do lugar · só na capa, na Boa noite e no anel do selo</h4>
+    <div style="display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:10px">
+      <div class="sw"><div class="c" style="background:#D7000F;color:#fff;position:relative">#D7000F<span class="num" style="position:absolute;right:6px;bottom:-14px;font-size:54px;color:#fff">3</span></div><span class="n">Japão</span><span class="d">vermelho + branco</span></div>
+      <div class="sw"><div class="c" style="background:#007A33;color:#fff;position:relative">#007A33<span class="num" style="position:absolute;right:6px;bottom:-14px;font-size:54px;color:#fff">7</span></div><span class="n">Brasil</span><span class="d">verde + branco</span></div>
+      <div class="sw"><div class="c" style="background:var(--paper);border:1px solid rgba(18,18,18,.14);position:relative">#F2F0EA<span class="num" style="position:absolute;right:6px;bottom:-14px;font-size:54px;color:var(--ink)">1</span></div><span class="n">Sem viagem</span><span class="d">papel + tinta</span></div>
+    </div>
+    <p class="rule2" style="margin:0">Cinza de apoio: #6B6B66 sobre papel, #A3A39C sobre tinta — só pra texto secundário. Texto sobre laranja é sempre preto (5,6:1); laranja como texto, só #C8330A sobre papel (4,7:1). Estados: agora = laranja; feito = tinta a 50 %; aberto/fechado = ponto preto ou cinza. Linhas de trem em preto, sem a cor oficial.</p>
+  </div>
+
+  <!-- coluna 2: tipografia -->
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <h4>Tipografia · três vozes</h4>
+    <div style="display:flex;flex-direction:column;gap:4px;padding-bottom:12px;border-bottom:1px solid rgba(18,18,18,.14)">
+      <span class="num" style="font-size:112px;line-height:.8">14:35</span>
+      <span class="n" style="font-size:13px;font-weight:700;margin-top:6px">Bricolage Grotesque · 800 · largura 78</span>
+      <span class="rule2">O numeral que sangra a tela, os índices das listas, o "Dia 3". Com personalidade, sem ser fonte de cartaz de cinema.</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;padding-bottom:12px;border-bottom:1px solid rgba(18,18,18,.14)">
+      <span class="disp" style="font-size:40px">Hoje é Shinjuku</span>
+      <span class="n" style="font-size:13px;font-weight:700;margin-top:4px">Bricolage Grotesque · 700 · largura 92</span>
+      <span class="rule2">Títulos e nomes de lugar. Mesma família, outra largura: uma só fonte faz display.</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;padding-bottom:12px;border-bottom:1px solid rgba(18,18,18,.14)">
+      <span style="font-size:17px;line-height:1.35">Tsukemen de fila: compre o ticket na máquina antes de entrar na fila. Só cash. O normal vem frio e é o clássico.</span>
+      <span class="n" style="font-size:13px;font-weight:700;margin-top:4px">Schibsted Grotesk · 400–700</span>
+      <span class="rule2">Texto de interface e de leitura. Aberta, legível a 12 px, números tabulares.</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <span class="mono" style="font-size:12px">Sáb · 15 nov · dia 3 de 14 · 18° sol · ¥ 4.250</span>
+      <span class="n" style="font-size:13px;font-weight:700;margin-top:4px">Martian Mono · 500–600 · caixa alta</span>
+      <span class="rule2">A ficha técnica dos cantos, horários, códigos. Sempre pequena, sempre espaçada.</span>
+    </div>
+  </div>
+
+  <!-- coluna 3: texturas e regras -->
+  <div style="display:flex;flex-direction:column;gap:14px">
+    <h4>Texturas · só três</h4>
+    <div style="position:relative;height:150px;border-radius:16px;background:var(--ink);color:#fff;overflow:hidden">
+      <span class="ring" style="width:220px;height:220px;left:-60px;top:-110px;opacity:.5" aria-hidden="true"></span>
+      <span class="ring" style="width:220px;height:220px;left:60px;top:20px;opacity:.5" aria-hidden="true"></span>
+      <span class="spec" style="left:14px;top:12px">1 · arcos<br>1 px · 25–55 %</span>
+      <span class="spec" style="right:14px;top:12px;text-align:right">3 · ficha técnica<br>nos cantos</span>
+      <span class="num" style="position:absolute;right:10px;bottom:-30px;font-size:120px;color:var(--lime)">2</span>
+      <span class="spec" style="left:14px;bottom:12px;color:var(--or)">2 · numeral que sangra</span>
+    </div>
+    <p class="rule2" style="margin:0">Nada de degradê, nem foto lavada atrás de texto. Foto só inteira e grande (Lugar, capa do bairro), com faixa preta sólida por baixo do texto.</p>
+    <h4>Regras que não quebram</h4>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="rule2"><b>1.</b> Uma cor sólida por tela de capa. O miolo é papel.</div>
+      <div class="rule2"><b>2.</b> Um numeral gigante por tela, no máximo. Ele conta algo (dia, hora, minutos, quantidade).</div>
+      <div class="rule2"><b>3.</b> Laranja é a única cor: verbo (toque aqui) e "agora". Nada mais recebe cor.</div>
+      <div class="rule2"><b>4.</b> A cor do país não entra em botão, lista nem mapa.</div>
+      <div class="rule2"><b>5.</b> Nenhum caractere japonês na interface. O nome local do lugar aparece só na ficha, pra mostrar a alguém.</div>
+      <div class="rule2"><b>6.</b> Listas: índice grande, nome, uma linha de meta, estado à direita. Sem foto quando a lista é longa.</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

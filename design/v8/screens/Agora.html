@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Must — Agora, parada atual e a próxima</title>
+
+<link rel="stylesheet" href="v8.css"><style>html,body{background:#E8E5DD}body{display:flex;justify-content:center;padding:24px 0}.app{box-shadow:0 30px 80px rgba(0,0,0,.18);border-radius:44px}</style>
+</head>
+<body>
+
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&amp;family=Schibsted+Grotesk:ital,wght@0,400..900;1,400..900&amp;family=Martian+Mono:wdth,wght@75..112.5,100..800&amp;display=swap">
+<style>
+body{margin:0;background:#fff}
+.ctx{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 11px;border-radius:999px;border:1px solid rgba(255,255,255,.3);font-size:12px;font-weight:600;white-space:nowrap;color:#fff}
+.ctx i{width:6px;height:6px;border-radius:50%;background:var(--lime);font-style:normal}
+</style>
+
+<div class="app ink">
+  <span class="ring" style="width:560px;height:560px;left:-200px;top:-120px;opacity:.28" aria-hidden="true"></span>
+  <span class="ring" style="width:560px;height:560px;left:40px;top:160px;opacity:.28" aria-hidden="true"></span>
+
+  <span class="spec" style="left:20px;top:58px;color:var(--mute-d)">Agora · 14:20<br>parada 2 de 9</span>
+  <span class="spec" style="right:20px;top:58px;text-align:right;color:var(--mute-d)">Shinjuku · 18°<br>offline ok</span>
+
+  <!-- saia às: o número do momento -->
+  <div style="position:absolute;left:20px;top:122px;display:flex;flex-direction:column;gap:0">
+    <span class="mono" style="color:var(--lime)">Saia às</span>
+    <span class="num" style="font-size:140px;color:var(--lime);margin-left:-6px;margin-top:18px;display:block;height:112px">14:35</span>
+  </div>
+  <span class="spec" style="right:20px;top:150px;text-align:right;color:var(--mute-d)">em 15 min<br>a pé · 9 min</span>
+
+  <div style="position:absolute;left:20px;right:20px;top:292px;display:flex;flex-direction:column;gap:6px">
+    <span class="disp" style="font-size:46px;color:#fff">Fuunji</span>
+    <span style="font-size:15px;color:var(--mute-d);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">tsukemen · fila ~20 min · ¥ 1.250 · até 15:00</span>
+    <div style="display:flex;gap:6px;margin-top:8px;overflow:hidden">
+      <span class="ctx"><i></i>7-Eleven 80 m · caixa</span>
+      <span class="ctx"><i></i>banheiro na estação</span>
+      <span class="ctx"><i></i>só cash</span>
+    </div>
+  </div>
+
+  <!-- trajeto -->
+  <div style="position:absolute;left:20px;right:20px;top:446px;display:flex;flex-direction:column;gap:8px">
+    <div style="display:flex;justify-content:space-between" class="mono"><span style="color:var(--mute-d)">Você</span><span style="color:var(--mute-d)">saída sul · 650 m</span><span style="color:var(--lime)">Fuunji</span></div>
+    <div style="position:relative;height:6px;border-radius:3px;background:rgba(255,255,255,.18)"><span style="position:absolute;left:0;top:0;height:6px;width:34%;border-radius:3px;background:var(--lime)"></span><span style="position:absolute;left:34%;top:-5px;width:16px;height:16px;border-radius:50%;background:#fff;margin-left:-8px;box-shadow:0 0 0 3px var(--ink)"></span></div>
+  </div>
+
+  <!-- depois -->
+  <a href="Lugar.html" class="card paper" style="position:absolute;left:20px;right:20px;top:506px;padding:14px 16px;display:flex;align-items:center;gap:14px;text-decoration:none">
+    <div style="display:flex;flex-direction:column;align-items:center;width:52px;flex-shrink:0"><span class="mono" style="color:var(--mute)">Depois</span><span class="tnum" style="font-size:16px">15:48</span></div>
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Shinjuku Gyoen · golden</span><span style="font-size:12px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Must photo · ¥ 500 · entrada até 16:00 · a pé 14 min</span></div>
+    <span class="tag" style="background:var(--or);color:var(--ink)">âncora</span>
+  </a>
+
+  <div style="position:absolute;left:20px;right:20px;top:600px;display:flex;gap:8px;overflow:hidden">
+    <span class="mono" style="color:var(--mute-d);align-self:center">e mais</span>
+    <span class="pill" style="height:30px;color:#fff;border-color:rgba(255,255,255,.3);font-size:12px">16:50 descanso</span>
+    <span class="pill" style="height:30px;color:#fff;border-color:rgba(255,255,255,.3);font-size:12px">18:10 Isetan</span>
+    <span class="pill" style="height:30px;color:#fff;border-color:rgba(255,255,255,.3);font-size:12px">19:30 Golden Gai</span>
+  </div>
+
+  <div style="position:absolute;left:20px;right:20px;bottom:104px;display:flex;gap:10px;align-items:center">
+    <a href="Dia.html" class="ic" aria-label="Trocar parada" style="width:56px;height:56px;color:#fff;border-color:rgba(255,255,255,.35)"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4M3 8l4-4 4 4M17 8v12M13 16l4 4 4-4"/></svg></a>
+    <a href="Transporte.html" class="btn or" style="flex:1">Ir · a pé 9 min<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
+    <a href="Dia.html" class="ic lm" aria-label="Marcar como feito" style="width:56px;height:56px;border:0"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></a>
+  </div>
+
+  <nav class="nav" aria-label="Navegação" style="background:var(--gr)">
+    <a href="CapaJP.html" class="on"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>Hoje</a>
+    <a href="Guia.html" aria-label="Guia"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg></a>
+    <a href="Musts.html" aria-label="Musts"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6h14M5 12h14M5 18h9"/></svg></a>
+    <a href="Proximos.html" aria-label="Viagem"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h16v10H4zM8 8V5h8v3"/></svg></a>
+    <a href="Montar.html" class="add" aria-label="Adicionar"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></a>
+  </nav>
+</div>
+
+</body>
+</html>

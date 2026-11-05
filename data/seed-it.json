@@ -1,0 +1,1682 @@
+{
+ "version": 1,
+ "region": "it",
+ "trip": {
+  "start": "2027-04-10",
+  "end": "2027-04-18",
+  "home": "Monti",
+  "cities": [
+   {
+    "id": "roma",
+    "name": "Roma",
+    "from": "2027-04-10",
+    "to": "2027-04-18",
+    "tz": "Europe/Rome",
+    "currency": "EUR",
+    "lat": 41.9028,
+    "lng": 12.4964
+   }
+  ]
+ },
+ "budget": {
+  "perDay": 120,
+  "currency": "EUR",
+  "walkMaxKm": 2.0,
+  "dayStart": "08:30"
+ },
+ "lists": [
+  {
+   "id": "eat",
+   "name": "eat",
+   "kanji": "食",
+   "icon": "pasta",
+   "color": "eat",
+   "sub": [
+    "Trattoria",
+    "Pizza",
+    "Street food",
+    "Gelato",
+    "Mercado",
+    "Padaria",
+    "Doces"
+   ]
+  },
+  {
+   "id": "drink",
+   "name": "drink",
+   "kanji": "飲",
+   "icon": "wine",
+   "color": "drink",
+   "sub": [
+    "Café",
+    "Aperitivo",
+    "Enoteca",
+    "Bar"
+   ]
+  },
+  {
+   "id": "see",
+   "name": "see",
+   "kanji": "観",
+   "icon": "column",
+   "color": "temple",
+   "sub": [
+    "Monumento",
+    "Praça",
+    "Mirante",
+    "Passeio",
+    "Mercado",
+    "Curiosidade"
+   ]
+  },
+  {
+   "id": "art",
+   "name": "art",
+   "kanji": "芸",
+   "icon": "frame",
+   "color": "art",
+   "kind": "art",
+   "sub": [
+    "Museu",
+    "Igreja",
+    "Galeria"
+   ]
+  },
+  {
+   "id": "photo",
+   "name": "photo",
+   "kanji": "写",
+   "icon": "camera",
+   "color": "photo",
+   "kind": "photo",
+   "sub": [
+    "Mirante",
+    "Rua",
+    "Arquitetura"
+   ]
+  },
+  {
+   "id": "shop",
+   "name": "shop",
+   "kanji": "買",
+   "icon": "bag",
+   "color": "shop",
+   "sub": [
+    "Vintage",
+    "Comidinhas",
+    "Design"
+   ]
+  },
+  {
+   "id": "listen",
+   "name": "listen",
+   "kanji": "聴",
+   "icon": "note",
+   "color": "listen",
+   "sub": [
+    "Jazz",
+    "Blues",
+    "Concerto"
+   ]
+  },
+  {
+   "id": "do",
+   "name": "do",
+   "kanji": "体",
+   "icon": "ticket",
+   "color": "night",
+   "kind": "experience",
+   "sub": [
+    "Aula",
+    "Tour",
+    "Passeio"
+   ]
+  },
+  {
+   "id": "sport",
+   "name": "sport",
+   "kanji": "走",
+   "icon": "run",
+   "color": "sport",
+   "kind": "sport",
+   "sub": [
+    "Corrida",
+    "Jogo"
+   ]
+  }
+ ],
+ "places": [
+  {
+   "id": "r01",
+   "name": "Roscioli Salumeria con Cucina",
+   "nameLocal": "Roscioli Salumeria con Cucina",
+   "listId": "eat",
+   "sub": "Trattoria",
+   "cityId": "roma",
+   "area": "Centro Storico",
+   "lat": 41.8936,
+   "lng": 12.4733,
+   "approx": true,
+   "placeId": null,
+   "price": 45,
+   "window": [
+    "dinner"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": true,
+   "notes": "A carbonara de referência. Balcão de salumeria na frente, mesas atrás.",
+   "source": {
+    "kind": "board"
+   },
+   "reservation": {
+    "at": "2027-04-11T20:00:00+02:00",
+    "party": 2,
+    "note": "reservar com 2 semanas · pedir carbonara e a burrata"
+   }
+  },
+  {
+   "id": "r02",
+   "name": "Da Enzo al 29",
+   "nameLocal": "Da Enzo al 29",
+   "listId": "eat",
+   "sub": "Trattoria",
+   "cityId": "roma",
+   "area": "Trastevere",
+   "lat": 41.8878,
+   "lng": 12.4783,
+   "approx": true,
+   "placeId": null,
+   "price": 30,
+   "window": [
+    "lunch",
+    "dinner"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Não aceita reserva de noite. Chegar 12:15 pro almoço. Cacio e pepe e carciofo alla giudia.",
+   "source": {
+    "kind": "board"
+   },
+   "queueMinutes": 40
+  },
+  {
+   "id": "r03",
+   "name": "Armando al Pantheon",
+   "nameLocal": "Armando al Pantheon",
+   "listId": "eat",
+   "sub": "Trattoria",
+   "cityId": "roma",
+   "area": "Centro Storico",
+   "lat": 41.8992,
+   "lng": 12.4766,
+   "approx": true,
+   "placeId": null,
+   "price": 38,
+   "window": [
+    "lunch",
+    "dinner"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Desde 1961. Amatriciana e o tiramisù.",
+   "source": {
+    "kind": "board"
+   },
+   "reservation": {
+    "at": "2027-04-15T13:00:00+02:00",
+    "party": 2,
+    "note": "reserva pelo site, abre 30 dias antes"
+   }
+  },
+  {
+   "id": "r04",
+   "name": "Felice a Testaccio",
+   "nameLocal": "Felice a Testaccio",
+   "listId": "eat",
+   "sub": "Trattoria",
+   "cityId": "roma",
+   "area": "Testaccio",
+   "lat": 41.8781,
+   "lng": 12.4759,
+   "approx": true,
+   "placeId": null,
+   "price": 35,
+   "window": [
+    "lunch",
+    "dinner"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Cacio e pepe montado na mesa. Reservar sempre.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r05",
+   "name": "Trapizzino",
+   "nameLocal": "Trapizzino",
+   "listId": "eat",
+   "sub": "Street food",
+   "cityId": "roma",
+   "area": "Testaccio",
+   "lat": 41.8772,
+   "lng": 12.4746,
+   "approx": true,
+   "placeId": null,
+   "price": 8,
+   "window": [
+    "lunch",
+    "dinner"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Pão com recheio de trattoria. Pollo alla cacciatora e polpette.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r06",
+   "name": "Pizzarium Bonci",
+   "nameLocal": "Pizzarium Bonci",
+   "listId": "eat",
+   "sub": "Pizza",
+   "cityId": "roma",
+   "area": "Prati",
+   "lat": 41.9067,
+   "lng": 12.4471,
+   "approx": true,
+   "placeId": null,
+   "price": 12,
+   "window": [
+    "lunch"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Pizza al taglio, paga por peso. A 10 min do Vaticano: almoço depois dos Musei.",
+   "source": {
+    "kind": "board"
+   },
+   "queueMinutes": 20
+  },
+  {
+   "id": "r07",
+   "name": "Supplizio",
+   "nameLocal": "Supplizio",
+   "listId": "eat",
+   "sub": "Street food",
+   "cityId": "roma",
+   "area": "Centro Storico",
+   "lat": 41.8975,
+   "lng": 12.47,
+   "approx": true,
+   "placeId": null,
+   "price": 6,
+   "window": [
+    "lunch"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Supplì clássico e o de cacio e pepe.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r08",
+   "name": "Mercato di Testaccio",
+   "nameLocal": "Mercato di Testaccio",
+   "listId": "eat",
+   "sub": "Mercado",
+   "cityId": "roma",
+   "area": "Testaccio",
+   "lat": 41.8766,
+   "lng": 12.4766,
+   "approx": true,
+   "placeId": null,
+   "price": 15,
+   "window": [
+    "lunch"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Box 15 (Mordi e Vai): panino com allesso. Fecha 15:30.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r09",
+   "name": "Antico Forno Roscioli",
+   "nameLocal": "Antico Forno Roscioli",
+   "listId": "eat",
+   "sub": "Padaria",
+   "cityId": "roma",
+   "area": "Centro Storico",
+   "lat": 41.894,
+   "lng": 12.4737,
+   "approx": true,
+   "placeId": null,
+   "price": 5,
+   "window": [
+    "morning"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Pizza bianca de manhã. Café da manhã do dia 2.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r10",
+   "name": "Giolitti",
+   "nameLocal": "Giolitti",
+   "listId": "eat",
+   "sub": "Gelato",
+   "cityId": "roma",
+   "area": "Centro Storico",
+   "lat": 41.9004,
+   "lng": 12.478,
+   "approx": true,
+   "placeId": null,
+   "price": 5,
+   "window": [
+    "afternoon",
+    "evening"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Pagar no caixa antes. Pistache e crema.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r11",
+   "name": "Fatamorgana",
+   "nameLocal": "Fatamorgana",
+   "listId": "eat",
+   "sub": "Gelato",
+   "cityId": "roma",
+   "area": "Monti",
+   "lat": 41.8946,
+   "lng": 12.492,
+   "approx": true,
+   "placeId": null,
+   "price": 5,
+   "window": [
+    "afternoon"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Sabores estranhos que funcionam: basilico com noz.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r12",
+   "name": "Gelateria del Teatro",
+   "nameLocal": "Gelateria del Teatro",
+   "listId": "eat",
+   "sub": "Gelato",
+   "cityId": "roma",
+   "area": "Centro Storico",
+   "lat": 41.9004,
+   "lng": 12.4697,
+   "approx": true,
+   "placeId": null,
+   "price": 5,
+   "window": [
+    "afternoon"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Perto de Navona. Lavanda e pêssego branco.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r13",
+   "name": "Pasticceria Regoli",
+   "nameLocal": "Pasticceria Regoli",
+   "listId": "eat",
+   "sub": "Doces",
+   "cityId": "roma",
+   "area": "Esquilino",
+   "lat": 41.8955,
+   "lng": 12.502,
+   "approx": true,
+   "placeId": null,
+   "price": 4,
+   "window": [
+    "morning"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Maritozzo com panna. Desde 1916. Fecha terça.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r14",
+   "name": "Da Cesare al Casaletto",
+   "nameLocal": "Da Cesare al Casaletto",
+   "listId": "eat",
+   "sub": "Trattoria",
+   "cityId": "roma",
+   "area": "Monteverde",
+   "lat": 41.869,
+   "lng": 12.448,
+   "approx": true,
+   "placeId": null,
+   "price": 32,
+   "window": [
+    "dinner"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Vale o tram. Fritti, gnocchi e a polpetta de bollito.",
+   "source": {
+    "kind": "board"
+   },
+   "reservation": {
+    "at": "2027-04-16T20:30:00+02:00",
+    "party": 2,
+    "note": "tram 8 até o fim da linha"
+   }
+  },
+  {
+   "id": "r15",
+   "name": "Piperno",
+   "nameLocal": "Piperno",
+   "listId": "eat",
+   "sub": "Trattoria",
+   "cityId": "roma",
+   "area": "Ghetto",
+   "lat": 41.8928,
+   "lng": 12.4762,
+   "approx": true,
+   "placeId": null,
+   "price": 45,
+   "window": [
+    "lunch"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Carciofi alla giudia desde 1860. Domingo só almoço.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r16",
+   "name": "Nonna Betta",
+   "nameLocal": "Nonna Betta",
+   "listId": "eat",
+   "sub": "Trattoria",
+   "cityId": "roma",
+   "area": "Ghetto",
+   "lat": 41.893,
+   "lng": 12.4776,
+   "approx": true,
+   "placeId": null,
+   "price": 28,
+   "window": [
+    "lunch",
+    "dinner"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Cozinha judaico-romana. Fecha sexta à noite e sábado.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r17",
+   "name": "Emma Pizzeria",
+   "nameLocal": "Emma Pizzeria",
+   "listId": "eat",
+   "sub": "Pizza",
+   "cityId": "roma",
+   "area": "Centro Storico",
+   "lat": 41.8946,
+   "lng": 12.4725,
+   "approx": true,
+   "placeId": null,
+   "price": 20,
+   "window": [
+    "dinner"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Pizza romana fina da família Roscioli.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r20",
+   "name": "Sant'Eustachio Il Caffè",
+   "nameLocal": "Sant'Eustachio Il Caffè",
+   "listId": "drink",
+   "sub": "Café",
+   "cityId": "roma",
+   "area": "Centro Storico",
+   "lat": 41.8983,
+   "lng": 12.4747,
+   "approx": true,
+   "placeId": null,
+   "price": 3,
+   "window": [
+    "morning"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Gran caffè: já vem com açúcar; pedir 'amaro' se quiser sem. No balcão é metade do preço.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r21",
+   "name": "La Casa del Caffè Tazza d'Oro",
+   "nameLocal": "La Casa del Caffè Tazza d'Oro",
+   "listId": "drink",
+   "sub": "Café",
+   "cityId": "roma",
+   "area": "Centro Storico",
+   "lat": 41.8994,
+   "lng": 12.4777,
+   "approx": true,
+   "placeId": null,
+   "price": 3,
+   "window": [
+    "morning",
+    "afternoon"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Granita di caffè con panna. Ao lado do Pantheon.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r22",
+   "name": "Freni e Frizioni",
+   "nameLocal": "Freni e Frizioni",
+   "listId": "drink",
+   "sub": "Aperitivo",
+   "cityId": "roma",
+   "area": "Trastevere",
+   "lat": 41.8898,
+   "lng": 12.4716,
+   "approx": true,
+   "placeId": null,
+   "price": 10,
+   "window": [
+    "evening"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Aperitivo com buffet das 19 às 22. Oficina mecânica antiga.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r23",
+   "name": "The Jerry Thomas Speakeasy",
+   "nameLocal": "The Jerry Thomas Speakeasy",
+   "listId": "drink",
+   "sub": "Bar",
+   "cityId": "roma",
+   "area": "Centro Storico",
+   "lat": 41.8972,
+   "lng": 12.468,
+   "approx": true,
+   "placeId": null,
+   "price": 15,
+   "window": [
+    "night"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Precisa de senha e reserva. Clássicos.",
+   "source": {
+    "kind": "board"
+   },
+   "reservation": {
+    "at": "2027-04-15T22:30:00+02:00",
+    "party": 2,
+    "note": "senha pelo site no dia"
+   }
+  },
+  {
+   "id": "r24",
+   "name": "Ai Tre Scalini",
+   "nameLocal": "Ai Tre Scalini",
+   "listId": "drink",
+   "sub": "Enoteca",
+   "cityId": "roma",
+   "area": "Monti",
+   "lat": 41.8947,
+   "lng": 12.4917,
+   "approx": true,
+   "placeId": null,
+   "price": 8,
+   "window": [
+    "evening"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Vinho de taça e tábua. Fica cheio às 20.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r25",
+   "name": "Il Goccetto",
+   "nameLocal": "Il Goccetto",
+   "listId": "drink",
+   "sub": "Enoteca",
+   "cityId": "roma",
+   "area": "Centro Storico",
+   "lat": 41.897,
+   "lng": 12.468,
+   "approx": true,
+   "placeId": null,
+   "price": 8,
+   "window": [
+    "evening"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Vinho no balcão com os locais. Sem mesa marcada.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r26",
+   "name": "Bar San Calisto",
+   "nameLocal": "Bar San Calisto",
+   "listId": "drink",
+   "sub": "Bar",
+   "cityId": "roma",
+   "area": "Trastevere",
+   "lat": 41.889,
+   "lng": 12.47,
+   "approx": true,
+   "placeId": null,
+   "price": 3,
+   "window": [
+    "afternoon",
+    "night"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Peroni a €2 na praça. O mais romano de todos.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r27",
+   "name": "Drink Kong",
+   "nameLocal": "Drink Kong",
+   "listId": "drink",
+   "sub": "Bar",
+   "cityId": "roma",
+   "area": "Esquilino",
+   "lat": 41.896,
+   "lng": 12.5,
+   "approx": true,
+   "placeId": null,
+   "price": 14,
+   "window": [
+    "night"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Coquetéis, Blade Runner. Top 50 do mundo.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r30",
+   "name": "Colosseo + Foro Romano",
+   "nameLocal": "Colosseo + Foro Romano",
+   "listId": "see",
+   "sub": "Monumento",
+   "cityId": "roma",
+   "area": "Monti",
+   "lat": 41.8902,
+   "lng": 12.4922,
+   "approx": true,
+   "placeId": null,
+   "price": 18,
+   "window": [
+    "morning"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Ingresso oficial (coopculture) abre 30 dias antes e esgota. Arena às 09:30.",
+   "source": {
+    "kind": "board"
+   },
+   "reservation": {
+    "at": "2027-04-14T09:30:00+02:00",
+    "party": 2,
+    "note": "ingresso com hora · entrar pelo Foro evita fila"
+   }
+  },
+  {
+   "id": "r31",
+   "name": "Pantheon",
+   "nameLocal": "Pantheon",
+   "listId": "see",
+   "sub": "Monumento",
+   "cityId": "roma",
+   "area": "Centro Storico",
+   "lat": 41.8986,
+   "lng": 12.4769,
+   "approx": true,
+   "placeId": null,
+   "price": 5,
+   "window": [
+    "morning"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "€5, compra online pra pular a fila. Chuva pelo óculo é o momento.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r32",
+   "name": "Fontana di Trevi",
+   "nameLocal": "Fontana di Trevi",
+   "listId": "see",
+   "sub": "Monumento",
+   "cityId": "roma",
+   "area": "Centro Storico",
+   "lat": 41.9009,
+   "lng": 12.4833,
+   "approx": true,
+   "placeId": null,
+   "price": 0,
+   "window": [
+    "morning",
+    "night"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Antes das 7h ou depois da meia-noite. Durante o dia é só gente.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r33",
+   "name": "Piazza Navona",
+   "nameLocal": "Piazza Navona",
+   "listId": "see",
+   "sub": "Praça",
+   "cityId": "roma",
+   "area": "Centro Storico",
+   "lat": 41.8992,
+   "lng": 12.4731,
+   "approx": true,
+   "placeId": null,
+   "price": 0,
+   "window": [
+    "afternoon"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Fontana dei Quattro Fiumi. Não comer nos restaurantes da praça.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r34",
+   "name": "Campo de' Fiori",
+   "nameLocal": "Campo de' Fiori",
+   "listId": "see",
+   "sub": "Mercado",
+   "cityId": "roma",
+   "area": "Centro Storico",
+   "lat": 41.8955,
+   "lng": 12.4722,
+   "approx": true,
+   "placeId": null,
+   "price": 0,
+   "window": [
+    "morning"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Mercado de manhã, bares à noite.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r35",
+   "name": "Giardino degli Aranci",
+   "nameLocal": "Giardino degli Aranci",
+   "listId": "see",
+   "sub": "Mirante",
+   "cityId": "roma",
+   "area": "Aventino",
+   "lat": 41.8843,
+   "lng": 12.48,
+   "approx": true,
+   "placeId": null,
+   "price": 0,
+   "window": [
+    "afternoon"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Vista da cúpula. Fecha ao pôr do sol.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r36",
+   "name": "Buco della serratura",
+   "nameLocal": "Buco della serratura",
+   "listId": "see",
+   "sub": "Curiosidade",
+   "cityId": "roma",
+   "area": "Aventino",
+   "lat": 41.883,
+   "lng": 12.4787,
+   "approx": true,
+   "placeId": null,
+   "price": 0,
+   "window": [
+    "afternoon"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "A fechadura dos Cavaleiros de Malta: a cúpula emoldurada. Fila de 10 min.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r37",
+   "name": "Via Appia Antica",
+   "nameLocal": "Via Appia Antica",
+   "listId": "see",
+   "sub": "Passeio",
+   "cityId": "roma",
+   "area": "Appia",
+   "lat": 41.856,
+   "lng": 12.515,
+   "approx": true,
+   "placeId": null,
+   "price": 0,
+   "window": [
+    "morning"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Domingo fecha pra carros. Bike na Appia Antica Caffè.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r38",
+   "name": "Castel Sant'Angelo",
+   "nameLocal": "Castel Sant'Angelo",
+   "listId": "see",
+   "sub": "Monumento",
+   "cityId": "roma",
+   "area": "Prati",
+   "lat": 41.9031,
+   "lng": 12.4663,
+   "approx": true,
+   "placeId": null,
+   "price": 15,
+   "window": [
+    "afternoon"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Terraço no fim da tarde.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r39",
+   "name": "Cupola di San Pietro",
+   "nameLocal": "Cupola di San Pietro",
+   "listId": "see",
+   "sub": "Mirante",
+   "cityId": "roma",
+   "area": "Vaticano",
+   "lat": 41.9022,
+   "lng": 12.4539,
+   "approx": true,
+   "placeId": null,
+   "price": 10,
+   "window": [
+    "morning"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "551 degraus (ou 320 com elevador). Ir às 7:30, antes dos grupos.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r40",
+   "name": "Terrazza del Pincio",
+   "nameLocal": "Terrazza del Pincio",
+   "listId": "see",
+   "sub": "Mirante",
+   "cityId": "roma",
+   "area": "Campo Marzio",
+   "lat": 41.9108,
+   "lng": 12.479,
+   "approx": true,
+   "placeId": null,
+   "price": 0,
+   "window": [
+    "evening"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Pôr do sol sobre a Piazza del Popolo.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r45",
+   "name": "Musei Vaticani + Cappella Sistina",
+   "nameLocal": "Musei Vaticani + Cappella Sistina",
+   "listId": "art",
+   "sub": "Museu",
+   "cityId": "roma",
+   "area": "Vaticano",
+   "lat": 41.9065,
+   "lng": 12.4536,
+   "approx": true,
+   "placeId": null,
+   "price": 20,
+   "window": [
+    "morning"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Entrar 08:00 e ir direto à Sistina, depois voltar. Ombros e joelhos cobertos.",
+   "source": {
+    "kind": "board"
+   },
+   "reservation": {
+    "at": "2027-04-13T08:00:00+02:00",
+    "party": 2,
+    "note": "primeira entrada · site oficial, €4 de taxa"
+   }
+  },
+  {
+   "id": "r46",
+   "name": "Galleria Borghese",
+   "nameLocal": "Galleria Borghese",
+   "listId": "art",
+   "sub": "Museu",
+   "cityId": "roma",
+   "area": "Villa Borghese",
+   "lat": 41.9142,
+   "lng": 12.4922,
+   "approx": true,
+   "placeId": null,
+   "price": 15,
+   "window": [
+    "morning"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Bernini (Apollo e Dafne) e Caravaggio. Só 2 horas, sem exceção.",
+   "source": {
+    "kind": "board"
+   },
+   "reservation": {
+    "at": "2027-04-12T11:00:00+02:00",
+    "party": 2,
+    "note": "reserva obrigatória · turno de 2 h · mochila no guarda-volumes"
+   }
+  },
+  {
+   "id": "r47",
+   "name": "Galleria Doria Pamphilj",
+   "nameLocal": "Galleria Doria Pamphilj",
+   "listId": "art",
+   "sub": "Museu",
+   "cityId": "roma",
+   "area": "Centro Storico",
+   "lat": 41.8978,
+   "lng": 12.4812,
+   "approx": true,
+   "placeId": null,
+   "price": 15,
+   "window": [
+    "afternoon"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Palácio privado, sem fila. Velázquez (Inocêncio X).",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r48",
+   "name": "Palazzo Massimo",
+   "nameLocal": "Palazzo Massimo",
+   "listId": "art",
+   "sub": "Museu",
+   "cityId": "roma",
+   "area": "Esquilino",
+   "lat": 41.9018,
+   "lng": 12.4985,
+   "approx": true,
+   "placeId": null,
+   "price": 12,
+   "window": [
+    "afternoon"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Afrescos da Villa di Livia. Vazio, perto da Termini.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r49",
+   "name": "Musei Capitolini",
+   "nameLocal": "Musei Capitolini",
+   "listId": "art",
+   "sub": "Museu",
+   "cityId": "roma",
+   "area": "Centro Storico",
+   "lat": 41.8931,
+   "lng": 12.4826,
+   "approx": true,
+   "placeId": null,
+   "price": 16,
+   "window": [
+    "afternoon"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "A Loba e a vista do Foro pelo Tabularium.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r50",
+   "name": "MAXXI",
+   "nameLocal": "MAXXI",
+   "listId": "art",
+   "sub": "Museu",
+   "cityId": "roma",
+   "area": "Flaminio",
+   "lat": 41.9287,
+   "lng": 12.4667,
+   "approx": true,
+   "placeId": null,
+   "price": 12,
+   "window": [
+    "afternoon"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Zaha Hadid. Tram 2 da Piazza del Popolo.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r51",
+   "name": "San Luigi dei Francesi",
+   "nameLocal": "San Luigi dei Francesi",
+   "listId": "art",
+   "sub": "Igreja",
+   "cityId": "roma",
+   "area": "Centro Storico",
+   "lat": 41.8995,
+   "lng": 12.4746,
+   "approx": true,
+   "placeId": null,
+   "price": 0,
+   "window": [
+    "morning",
+    "afternoon"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Três Caravaggios de graça. Moeda de €1 acende a luz. Fecha 12:30–14:30.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r52",
+   "name": "Santa Maria del Popolo",
+   "nameLocal": "Santa Maria del Popolo",
+   "listId": "art",
+   "sub": "Igreja",
+   "cityId": "roma",
+   "area": "Campo Marzio",
+   "lat": 41.9113,
+   "lng": 12.4765,
+   "approx": true,
+   "placeId": null,
+   "price": 0,
+   "window": [
+    "afternoon"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Caravaggio e a capela de Rafael.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r55",
+   "name": "Gianicolo",
+   "nameLocal": "Gianicolo",
+   "listId": "photo",
+   "sub": "Mirante",
+   "cityId": "roma",
+   "area": "Trastevere",
+   "lat": 41.89,
+   "lng": 12.462,
+   "approx": true,
+   "placeId": null,
+   "price": 0,
+   "window": [
+    "evening"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Golden sobre as cúpulas. Canhão ao meio-dia.",
+   "source": {
+    "kind": "board"
+   },
+   "extra": {
+    "direction": "leste",
+    "bestLight": "golden"
+   }
+  },
+  {
+   "id": "r56",
+   "name": "Ponte Sant'Angelo",
+   "nameLocal": "Ponte Sant'Angelo",
+   "listId": "photo",
+   "sub": "Rua",
+   "cityId": "roma",
+   "area": "Prati",
+   "lat": 41.9018,
+   "lng": 12.4668,
+   "approx": true,
+   "placeId": null,
+   "price": 0,
+   "window": [
+    "evening"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Blue hour com o castelo e São Pedro. Tripé pode.",
+   "source": {
+    "kind": "board"
+   },
+   "extra": {
+    "direction": "oeste",
+    "bestLight": "blue"
+   }
+  },
+  {
+   "id": "r57",
+   "name": "Via Margutta",
+   "nameLocal": "Via Margutta",
+   "listId": "photo",
+   "sub": "Rua",
+   "cityId": "roma",
+   "area": "Campo Marzio",
+   "lat": 41.9085,
+   "lng": 12.4795,
+   "approx": true,
+   "placeId": null,
+   "price": 0,
+   "window": [
+    "morning"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Rua dos ateliês. Luz lateral de manhã.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r58",
+   "name": "Quartiere Coppedè",
+   "nameLocal": "Quartiere Coppedè",
+   "listId": "photo",
+   "sub": "Arquitetura",
+   "cityId": "roma",
+   "area": "Trieste",
+   "lat": 41.9198,
+   "lng": 12.5024,
+   "approx": true,
+   "placeId": null,
+   "price": 0,
+   "window": [
+    "afternoon"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Art nouveau delirante. Tram 3 ou 19.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r59",
+   "name": "Giardino degli Aranci ao nascer do sol",
+   "nameLocal": "Giardino degli Aranci ao nascer do sol",
+   "listId": "photo",
+   "sub": "Mirante",
+   "cityId": "roma",
+   "area": "Aventino",
+   "lat": 41.8843,
+   "lng": 12.48,
+   "approx": true,
+   "placeId": null,
+   "price": 0,
+   "window": [
+    "morning"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Abre 7h. Ninguém.",
+   "source": {
+    "kind": "board"
+   },
+   "extra": {
+    "direction": "noroeste",
+    "bestLight": "golden"
+   }
+  },
+  {
+   "id": "r62",
+   "name": "Via del Governo Vecchio",
+   "nameLocal": "Via del Governo Vecchio",
+   "listId": "shop",
+   "sub": "Vintage",
+   "cityId": "roma",
+   "area": "Centro Storico",
+   "lat": 41.898,
+   "lng": 12.4695,
+   "approx": true,
+   "placeId": null,
+   "price": 60,
+   "window": [
+    "afternoon"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Brechós e vintage. Omero e Cecilia.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r63",
+   "name": "Mercato Monti",
+   "nameLocal": "Mercato Monti",
+   "listId": "shop",
+   "sub": "Vintage",
+   "cityId": "roma",
+   "area": "Monti",
+   "lat": 41.8945,
+   "lng": 12.495,
+   "approx": true,
+   "placeId": null,
+   "price": 40,
+   "window": [
+    "afternoon"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Só fim de semana. Designers locais.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r64",
+   "name": "Eataly Ostiense",
+   "nameLocal": "Eataly Ostiense",
+   "listId": "shop",
+   "sub": "Comidinhas",
+   "cityId": "roma",
+   "area": "Ostiense",
+   "lat": 41.8692,
+   "lng": 12.4823,
+   "approx": true,
+   "placeId": null,
+   "price": 50,
+   "window": [
+    "afternoon"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Pra levar: pasta Gentile, pecorino embalado a vácuo, pistache de Bronte.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r65",
+   "name": "Castroni",
+   "nameLocal": "Castroni",
+   "listId": "shop",
+   "sub": "Comidinhas",
+   "cityId": "roma",
+   "area": "Prati",
+   "lat": 41.907,
+   "lng": 12.465,
+   "approx": true,
+   "placeId": null,
+   "price": 40,
+   "window": [
+    "afternoon"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Café, chocolate e conservas. Desde 1932.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r66",
+   "name": "Volpetti",
+   "nameLocal": "Volpetti",
+   "listId": "shop",
+   "sub": "Comidinhas",
+   "cityId": "roma",
+   "area": "Testaccio",
+   "lat": 41.8778,
+   "lng": 12.477,
+   "approx": true,
+   "placeId": null,
+   "price": 40,
+   "window": [
+    "afternoon"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Queijos e salames embalados pra viagem (não pode carne na mala pro Brasil: só queijo curado).",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r70",
+   "name": "Alexanderplatz Jazz Club",
+   "nameLocal": "Alexanderplatz Jazz Club",
+   "listId": "listen",
+   "sub": "Jazz",
+   "cityId": "roma",
+   "area": "Prati",
+   "lat": 41.905,
+   "lng": 12.456,
+   "approx": true,
+   "placeId": null,
+   "price": 25,
+   "window": [
+    "night"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "O mais antigo da Itália. Reservar mesa.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r71",
+   "name": "Big Mama",
+   "nameLocal": "Big Mama",
+   "listId": "listen",
+   "sub": "Blues",
+   "cityId": "roma",
+   "area": "Trastevere",
+   "lat": 41.8875,
+   "lng": 12.471,
+   "approx": true,
+   "placeId": null,
+   "price": 15,
+   "window": [
+    "night"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Porão em Trastevere. Programação no site.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r72",
+   "name": "Auditorium Parco della Musica",
+   "nameLocal": "Auditorium Parco della Musica",
+   "listId": "listen",
+   "sub": "Concerto",
+   "cityId": "roma",
+   "area": "Flaminio",
+   "lat": 41.929,
+   "lng": 12.474,
+   "approx": true,
+   "placeId": null,
+   "price": 30,
+   "window": [
+    "night"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Renzo Piano. Ver agenda de Santa Cecilia.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r73",
+   "name": "Gregory's Jazz Club",
+   "nameLocal": "Gregory's Jazz Club",
+   "listId": "listen",
+   "sub": "Jazz",
+   "cityId": "roma",
+   "area": "Campo Marzio",
+   "lat": 41.905,
+   "lng": 12.483,
+   "approx": true,
+   "placeId": null,
+   "price": 20,
+   "window": [
+    "night"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Perto da Spagna. Pequeno, reservar.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r76",
+   "name": "Aula de pasta em Trastevere",
+   "nameLocal": "Aula de pasta em Trastevere",
+   "listId": "do",
+   "sub": "Aula",
+   "cityId": "roma",
+   "area": "Trastevere",
+   "lat": 41.888,
+   "lng": 12.472,
+   "approx": true,
+   "placeId": null,
+   "price": 65,
+   "window": [
+    "morning"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "3 h · fettuccine, ravioli e tiramisù. Colar o link da reserva.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r77",
+   "name": "Appia Antica de bicicleta",
+   "nameLocal": "Appia Antica de bicicleta",
+   "listId": "do",
+   "sub": "Passeio",
+   "cityId": "roma",
+   "area": "Appia",
+   "lat": 41.856,
+   "lng": 12.515,
+   "approx": true,
+   "placeId": null,
+   "price": 15,
+   "window": [
+    "morning"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Domingo. Catacumbas de San Callisto no caminho.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r78",
+   "name": "Vespa pelo centro ao amanhecer",
+   "nameLocal": "Vespa pelo centro ao amanhecer",
+   "listId": "do",
+   "sub": "Tour",
+   "cityId": "roma",
+   "area": "Centro Storico",
+   "lat": 41.8992,
+   "lng": 12.4731,
+   "approx": true,
+   "placeId": null,
+   "price": 90,
+   "window": [
+    "morning"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "2 h, 7h da manhã, antes do trânsito.",
+   "source": {
+    "kind": "board"
+   }
+  },
+  {
+   "id": "r80",
+   "name": "Corrida na Villa Borghese",
+   "nameLocal": "Corrida na Villa Borghese",
+   "listId": "sport",
+   "sub": "Corrida",
+   "cityId": "roma",
+   "area": "Villa Borghese",
+   "lat": 41.9129,
+   "lng": 12.4853,
+   "approx": true,
+   "placeId": null,
+   "price": 0,
+   "window": [
+    "morning"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "6 km plano, Pincio no fim.",
+   "source": {
+    "kind": "board"
+   },
+   "extra": {
+    "km": 6,
+    "bestBefore": "09:00"
+   }
+  },
+  {
+   "id": "r81",
+   "name": "Stadio Olimpico · Roma",
+   "nameLocal": "Stadio Olimpico · Roma",
+   "listId": "sport",
+   "sub": "Jogo",
+   "cityId": "roma",
+   "area": "Foro Italico",
+   "lat": 41.9339,
+   "lng": 12.4547,
+   "approx": true,
+   "placeId": null,
+   "price": 45,
+   "window": [
+    "evening"
+   ],
+   "saveForEnd": false,
+   "allowBudgetException": false,
+   "notes": "Ver se tem jogo da Roma ou da Lazio na semana.",
+   "source": {
+    "kind": "board"
+   }
+  }
+ ],
+ "expenses": [],
+ "days": [],
+ "events": [
+  {
+   "at": "2027-04-09T18:00:00-03:00",
+   "title": "CNF → GRU [A CONFIRMAR]",
+   "kind": "flight"
+  },
+  {
+   "at": "2027-04-09T22:30:00-03:00",
+   "title": "GRU → FCO [A CONFIRMAR]",
+   "kind": "flight",
+   "note": "chega no dia seguinte"
+  },
+  {
+   "at": "2027-04-18T21:00:00+02:00",
+   "title": "FCO → GRU [A CONFIRMAR]",
+   "kind": "flight"
+  }
+ ]
+}

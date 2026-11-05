@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Must — Início v7 · na viagem</title>
+
+<link rel="stylesheet" href="must-light.css"><style>html,body{background:#EEF0F3}body{display:flex;justify-content:center;padding:24px 0}.app{box-shadow:0 30px 80px rgba(0,0,0,.18);border-radius:44px}</style>
+</head>
+<body>
+
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;family=Instrument+Serif:ital@0;1&amp;family=Geist+Mono:wght@400;600&amp;family=Zen+Kaku+Gothic+New:wght@500;700&amp;display=swap">
+<style>
+body{margin:0;background:#fff}
+.sh{display:flex;justify-content:space-between;align-items:center}
+.sh b{font-size:17px;font-weight:600;display:flex;align-items:center;gap:8px}
+.sh b::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--trip)}
+.row7{display:flex;gap:10px;overflow:hidden;margin-right:-22px;padding-right:22px}
+.nbc{position:relative;flex:0 0 160px;height:136px;border-radius:24px;text-decoration:none;color:#fff}
+.nbc .g{position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,19,22,0) 35%,rgba(18,19,22,.78) 100%)}
+.nbc .t{position:absolute;left:14px;right:56px;bottom:14px;display:flex;flex-direction:column;gap:2px}
+.nbc .t b{font-size:18px;font-weight:600;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nbc .t span{font-size:11.5px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tk{flex:0 0 164px;height:128px;box-sizing:border-box;padding:13px 14px;display:flex;flex-direction:column;text-decoration:none}
+.tk .k{font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;opacity:.75;white-space:nowrap}
+.tk .h{font-family:'Geist Mono',monospace;font-size:24px;font-weight:600;letter-spacing:-.02em;margin-top:4px;line-height:1}
+.tk .n{font-size:13px;font-weight:600;margin-top:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tk .s{font-size:11px;opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stp{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Geist Mono',monospace;font-size:10px;font-weight:700;flex-shrink:0}
+</style>
+
+<div class="app trip-jp">
+  <div class="trip-wash"></div>
+
+  <!-- topo: data + bandeira, frase em dois tons, assistente -->
+  <div style="position:absolute;left:22px;right:22px;top:56px;display:flex;justify-content:space-between;align-items:flex-start">
+    <div style="display:flex;flex-direction:column;gap:8px;min-width:0">
+      <span style="display:flex;align-items:center;gap:8px;white-space:nowrap"><svg class="flag" viewBox="0 0 22 22" aria-label="Japão"><rect width="22" height="22" fill="#fff"/><circle cx="11" cy="11" r="5.2" fill="#BC002D"/></svg><span class="micro" style="color:var(--trip-ink)">Sáb 15 nov · Tóquio · dia 3/5</span></span>
+      <div class="two">Hoje é <b style="font-weight:600">Shinjuku</b><br><span>e Golden Gai à noite</span></div>
+    </div>
+    <a href="Assistente.html" class="ic glass" aria-label="Assistente" style="width:46px;height:46px"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4z"/></svg></a>
+  </div>
+
+  <!-- card do dia: foto, selo, agora; recorte com ↗ -->
+  <div style="position:absolute;left:22px;right:22px;top:166px;height:212px">
+    <div class="cut" style="position:absolute;inset:0;border-radius:28px;overflow:hidden;background:#2A2E35;color:#fff">
+      <span class="photo" style="background-image:url('https://picsum.photos/seed/must-shinjuku-night/800/600');filter:saturate(.85)"></span>
+      <span style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,19,22,.05) 0%,rgba(18,19,22,.35) 45%,rgba(18,19,22,.9) 100%)"></span>
+      <span class="stamp" style="position:absolute;right:16px;top:16px;width:58px;height:58px;color:#fff;font-size:17px;transform:rotate(-8deg);background:rgba(200,16,46,.6);border-color:#fff"><span style="display:flex;flex-direction:column;align-items:center;gap:2px;font-family:Archivo;font-weight:800;letter-spacing:.06em"><span style="font-size:13px;line-height:1">SJK</span><span style="font-size:6.5px;letter-spacing:.14em;line-height:1;text-transform:uppercase">Shinjuku</span></span></span>
+      <div style="position:absolute;left:18px;top:16px;display:flex;gap:6px">
+        <span class="tag" style="background:rgba(255,255,255,.2);color:#fff;backdrop-filter:blur(8px)">+ Shin-Okubo, Nakano</span>
+        <span class="tag" style="background:rgba(255,255,255,.2);color:#fff;backdrop-filter:blur(8px)">18° sol</span>
+      </div>
+      <div style="position:absolute;left:18px;right:80px;bottom:16px;display:flex;flex-direction:column;gap:4px">
+        <span class="micro" style="color:#22DD7E">Agora · 2 de 4</span>
+        <span style="font-size:24px;font-weight:600;letter-spacing:-.01em;line-height:1.05;white-space:nowrap">Fuunji · tsukemen</span>
+        <span style="font-size:13px;color:rgba(255,255,255,.82);white-space:nowrap">fila ~20 min · saia <b class="mono" style="color:#fff">14:35</b> · 9 min a pé</span>
+      </div>
+    </div>
+    <a href="ComoChegar.html" class="cut-btn" aria-label="Ir agora" style="right:2px;bottom:2px;background:#22DD7E;color:#0B2A18"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
+  </div>
+
+  <!-- próximos: só o que ainda não aconteceu -->
+  <div style="position:absolute;left:22px;right:22px;top:394px;display:flex;flex-direction:column;gap:12px">
+    <div class="sh"><b>Próximos</b><a href="Reservas.html" class="micro" style="text-decoration:none;color:#121316">ver todos · 4</a></div>
+    <div class="row7">
+      <a href="Reservas.html" class="tk tkt" style="background:var(--trip-soft);color:#121316">
+        <span class="perf"></span>
+        <span class="k" style="color:var(--trip-ink)">Reserva · hoje</span>
+        <span class="h">19:00</span>
+        <span class="n">Udatsu Sushi</span><span class="s">omakase · 2 pessoas</span>
+      </a>
+      <a href="Ingresso.html" class="tk tkt" style="background:linear-gradient(135deg,#DCCFFF,#8B5CF6);color:#2E1065">
+        <span class="perf"></span>
+        <span class="k">Ingresso · dom 16</span>
+        <span class="h">14:00</span>
+        <span class="n">teamLab Borderless</span><span class="s">QR offline · Azabudai</span>
+      </a>
+      <a href="Voos.html" class="tk tkt" style="background:#121316;color:#fff">
+        <span class="perf"></span>
+        <span class="k">Trem · ter 17</span>
+        <span class="h">09:12</span>
+        <span class="n">Shinkansen → Kyoto</span><span class="s">Nozomi · JR Pass</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- bairros: amanhã, pra onde? -->
+  <div style="position:absolute;left:22px;right:22px;top:566px;display:flex;flex-direction:column;gap:12px">
+    <div class="sh"><b>Amanhã, pra onde?</b><a href="Bairros.html" class="micro" style="text-decoration:none;color:#121316">mapa</a></div>
+    <div class="row7">
+      <a href="Bairros.html" class="nbc"><span class="cut" style="position:absolute;inset:0;border-radius:24px;overflow:hidden;background:#5A606B"><span class="photo" style="background-image:url('https://picsum.photos/seed/must-shibuya-crossing/400/400')"></span><span class="g"></span><span class="stamp" style="position:absolute;left:12px;top:12px;width:34px;height:34px;color:#fff;font-size:10px;border-width:1.8px;transform:rotate(-8deg);background:rgba(200,16,46,.55)"><span style="font-family:Archivo;font-weight:800;letter-spacing:.04em">SBY</span></span><span class="t"><b>Shibuya</b><span>9 musts · sol 19°</span></span></span><span class="cut-btn" style="right:2px;bottom:2px;width:40px;height:40px"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg></span></a>
+      <a href="Bairros.html" class="nbc"><span class="cut" style="position:absolute;inset:0;border-radius:24px;overflow:hidden;background:#5A606B"><span class="photo" style="background-image:url('https://picsum.photos/seed/must-ueno-park/400/400')"></span><span class="g"></span><span class="stamp" style="position:absolute;left:12px;top:12px;width:34px;height:34px;color:#fff;font-size:10px;border-width:1.8px;transform:rotate(-8deg);background:rgba(200,16,46,.55)"><span style="font-family:Archivo;font-weight:800;letter-spacing:.04em">UEN</span></span><span class="t"><b>Ueno</b><span>7 musts · museus</span></span></span><span class="cut-btn" style="right:2px;bottom:2px;width:40px;height:40px"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg></span></a>
+      <a href="Bairros.html" class="nbc"><span class="cut" style="position:absolute;inset:0;border-radius:24px;overflow:hidden;background:#5A606B"><span class="photo" style="background-image:url('https://picsum.photos/seed/must-ginza-street/400/400')"></span><span class="g"></span><span class="t"><b>Ginza</b><span>6 musts</span></span></span></a>
+    </div>
+  </div>
+
+  <!-- navegação v7 -->
+  <nav class="nav7" aria-label="Navegação">
+    <a href="Home7.html" class="on"><i><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7v9H4z"/></svg></i>Início</a>
+    <a href="Hoje.html" aria-label="Hoje"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></a>
+    <a href="Mapa.html" aria-label="Mapa"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg></a>
+    <a href="Musts.html" aria-label="Musts"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6h14M5 12h14M5 18h9"/></svg></a>
+    <a href="ColarTexto.html" class="add" aria-label="Adicionar"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></a>
+  </nav>
+</div>
+
+</body>
+</html>

@@ -50,7 +50,7 @@ O app tem que ser **bem visual** (foto em todo lugar que mostra um lugar ou bair
 - Commits pequenos, mensagem em português, um prompt = um ou mais commits.
 
 ## Como o trabalho está dividido
-Os prompts em `prompts/` são executados em ordem (01 → 22; depois da RODADA-21, o `prompts/22-inicio-v7.md`). Cada um diz o que entregar e como verificar. Antes de cada prompt, olhar os PNGs das telas citadas.
+Os prompts em `prompts/` são executados em ordem (01 → 24; a rodada atual é a `prompts/RODADA-22.md`, que faz o 23 e o 24 com agentes em paralelo; o 22 foi substituído). Cada um diz o que entregar e como verificar. Antes de cada prompt, olhar os PNGs das telas citadas.
 
 ## Tema da viagem (03/11/2026, pedido do Vinicius) — prompt 20
 - Ao entrar numa viagem/região, o app ganha a **bandeira do país** (círculo 22 pt ao lado da data, vetor, offline) e um **tom leve** do país: lavado no topo das telas principais, tinta dos selos, ponto dos títulos de seção e da aba ativa, rótulo da cidade.
@@ -68,3 +68,17 @@ Os prompts em `prompts/` são executados em ordem (01 → 22; depois da RODADA-2
 - O selo do bairro (`StationStamp`) mostra **sigla latina + nome**, nunca kanji: código de estação JR quando existe (Shinjuku SJK, Shibuya SBY, Ueno UEN, Harajuku HJK, Akihabara AKB, Ikebukuro IKB), senão 3 letras do nome (Ginza GNZ, Asakusa ASK). Selo pequeno: só a sigla. Mesmo padrão do Brasil (SAV / BH · 1897).
 - Rótulos de lugar/bairro na interface sempre em letras latinas (Nakano, Gyoen, Kabukichō). Kanji só onde tem uso prático: nome local do lugar pra mostrar a um taxista ou atendente (`nameLocal` no Lugar), nunca como enfeite.
 - `Area` ganha `stampCode` (sigla) e usa o nome latino como segunda linha; o `stampText` em kanji deixa de ser exibido.
+
+## Identidade v8 — "guia de bolso, o dia inteiro" (05/11/2026, pedido do Vinicius) — prompt 23
+- **Substitui** o visual v5–v7. Conceito e diagnóstico em `docs/conceito-v8.md`; telas em `design/v8/screens/`.
+- **Três cores**: tinta #121212, papel #F2F0EA, laranja #FF4A1C (a única cor: ação e "agora"). Cinzas só pra texto secundário (#6B6B66 sobre papel, #A3A39C sobre tinta). Sem lima, azul, cor por lista ou cor oficial de linha de trem.
+- **Cor do lugar** (`TripTheme`): só a capa do dia, a Boa noite e o anel do selo. Japão #D7000F + branco; Brasil #007A33 + branco; sem viagem: papel + tinta.
+- **Fontes**: Bricolage Grotesque (display e numeral gigante), Schibsted Grotesk (texto), Martian Mono (ficha técnica). Substituem Archivo, Geist Mono, Instrument Serif e Zen Kaku.
+- **Texturas**: arcos de 1 pt, um numeral gigante por tela (sempre com significado), micro-rótulos nos cantos. Sem degradê, sem foto lavada atrás de texto.
+- **O dia**: 9 paradas por padrão (ritmo 6/9/12), com micro-paradas tracejadas e deslocamentos como itens. Cinco momentos: Bom dia → Agora/Ir → Lugar/Dicas/Bolso → Guia/Linha/Listas → Boa noite. O app fala sozinho (Live Activity + 4 avisos locais).
+- **Ícone**: arcos + ponto laranja sobre tinta ("você está aqui"); nunca muda com a viagem. Nada em japonês na interface.
+
+## Itália · Roma (05/11/2026, pedido do Vinicius) — prompt 24
+- Terceira região `it` (Roma), moeda EUR, cor do lugar **azzurro #1F5FB4** + branco (não repete o verde do Brasil nem o vermelho do Japão). Seed em `data/seed-it.json` (63 Musts, 7 reservas); datas da viagem ainda **[A CONFIRMAR]** (placeholder abr/2027).
+- Regras locais no Bolso e no solver: bilhete BIT validado, coperto sem gorjeta, nasoni, igrejas com ombro e joelho cobertos, jantar nunca antes das 19:30, riposo 13–16, Borghese com turno de 2 h.
+- Telas em `design/v8/screens/*IT.png`. Fotos de referência (Wikimedia Commons, CC) em `design/v8/screens/photos/` — só pro design; no app as fotos vêm do Google/Commons com crédito.

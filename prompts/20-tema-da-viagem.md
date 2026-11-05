@@ -13,7 +13,7 @@ Leia `CLAUDE.md` e as telas `design/screens/Home6.png` (Japão) e `Home6BH.png` 
    - Coleção de selos na Viagem com a borda em `trip`.
 3. **Onde NÃO entra**: botões primários (continuam verde `#22DD7E`), links e seleção (azul `#2B7BFF`), texto (tinta `#121316`), cores das listas Must, cores das linhas de trem, pinos do mapa. A identidade não muda; muda o clima.
 4. **Bandeira**: círculo 22 pt ao lado da data no topo do Início (e na Viagem, no card de cada trecho de cidade), desenhada como vetor no app (não emoji — consistência), com contorno branco de 1,5 pt e sombra leve. Japão: disco vermelho em branco. Brasil: versão simplificada (verde, losango amarelo, círculo azul com faixa branca). Ela não precisa de rede.
-5. **Selo do Brasil**: sem kanji — sigla do bairro em Archivo 800 (SAV, PAM, STA, CEN…) com uma linha pequena "BH · 1897" (ano de fundação da cidade); o `Area` ganha `stampText` e `stampSub` opcionais (no Japão: kanji do bairro).
+5. **Selo (todos os países)**: sem kanji — sigla do bairro em Archivo 800 (Brasil: SAV, PAM, STA, CEN…; Japão: código JR da estação, SJK, SBY, UEN) com uma linha pequena "BH · 1897" (ano de fundação da cidade); o `Area` ganha `stampCode` e `stampSub` opcionais (no Japão: o nome latino do bairro, nunca kanji).
 6. Dark mode não existe; a lavagem respeita o "Reduzir transparência" (vira cor sólida `tripSoft2` em 120 pt).
 
 ## Verificar
