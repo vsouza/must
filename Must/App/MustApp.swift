@@ -71,7 +71,13 @@ struct AppRoot: View {
             }
             // Wi-Fi voltou: o que falta de hoje e amanhã baixa agora (prompt 18 · A.5). No celular, a política não deixa.
             .onChange(of: services.connectivity.prefetchNetwork) { _, network in
-                if PrefetchPolicy.allows(network) { runPrefetchPending() }
+                if PrefetchPolicy.allows(network) {
+                runPrefetchPending()
+                if isCurrent {
+                    let context = context, region = store.region
+                    Task { await services.sync.resolveBoardIfNeeded(context: context, region: region, network: network) }
+                }
+            }
             }
             // 07:00 com o app aberto (prompt 18 · A.5). Sem background task: fechado, fica pra próxima abertura.
             .task(id: store.region) { await prefetchAtSevenLoop() }
@@ -139,6 +145,8 @@ struct AppRoot: View {
         LaunchTiming.mark("sync terminou")
         guard store.region == region, store.generation == tree.generation, !Task.isCancelled else { return }
         OutsideBridge.refresh(context: context, region: region, services: services)
+        // Lugares do seed sem `placeId`: resolve no Wi-Fi (fotos, horários e dicas dependem disso).
+        await services.sync.resolveBoardIfNeeded(context: context, region: region, network: services.connectivity.prefetchNetwork)
     }
 
     /// Hoje e amanhã que ainda não estão salvos offline. A política (Wi-Fi, fora do Pouco Dados) decide se roda.

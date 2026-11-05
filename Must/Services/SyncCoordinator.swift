@@ -182,6 +182,22 @@ final class SyncCoordinator {
         }
     }
 
+    /// Board com lugar ainda não resolvido no Places (seed com coordenada chute): resolve no Wi-Fi, uma vez por sessão,
+    /// pelo mesmo `syncPlaces` do Ajustes (lote de 50, cota do `ApiBudget`). Sem isso nenhuma miniatura, capa de lista
+    /// ou foto da capa tem de onde vir — o Google só manda foto de lugar com `placeId` (05/11/2026: "as imagens
+    /// deveriam carregar"). No celular e no Modo de Pouco Dados não roda; o Lugar aberto resolve só ele.
+    @ObservationIgnored private var boardResolvedThisSession: Set<Region> = []
+
+    func resolveBoardIfNeeded(context: ModelContext, region: Region, network: PrefetchPolicy.Network) async {
+        guard PrefetchPolicy.allows(network), places.isConfigured, DevOverrides.liveData,
+              !boardResolvedThisSession.contains(region) else { return }
+        let unresolved = ((try? context.fetch(FetchDescriptor<Place>())) ?? []).contains { $0.placeId == nil || $0.approx }
+        guard unresolved else { boardResolvedThisSession.insert(region); return }
+        boardResolvedThisSession.insert(region)
+        Log.network.info("resolvendo o board no Places (Wi-Fi)")
+        await syncPlaces(context: context, region: region)
+    }
+
     /// Lugar aberto sem `placeId` (seed com coordenada chute, nunca sincronizado): resolve só ele, uma vez, antes da
     /// foto e das Dicas de quem foi — sem isso o Google não tem avaliação nem foto pra devolver. Uma Text Search e um
     /// Details; nada se o lugar já está resolvido, sem rede, sem chave ou com dados ao vivo desligados.
