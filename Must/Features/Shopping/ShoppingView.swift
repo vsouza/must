@@ -26,9 +26,11 @@ struct ShoppingView: View {
     private var brlPerUSD: Double { settingsList.first?.brlPerUSD ?? ShoppingFX.brlPerUSD }
     private var stores: [Place] { places.filter { $0.list?.id == "shop" } }
 
+    /// Regras da volta da região (Itália → Brasil em Roma).
+    /// TODO(v8:E): em Roma a conta ainda passa por ¥ (`ShoppingFX.brlPerUnit` em Must/Services/Shopping não conhece EUR).
     private func makeReport(_ items: [ShoppingItem]) -> ShoppingReport {
         ShoppingReport(items: items, fxRate: brlPerYen, brlPerUSD: brlPerUSD, regionCurrency: region.currency,
-                       timeZone: region.timeZone)
+                       rules: ShoppingRules.pack(for: region), timeZone: region.timeZone)
     }
 
     var body: some View {

@@ -24,7 +24,8 @@ struct ShoppingRule: Codable, Hashable, Sendable, Identifiable {
 }
 
 struct ShoppingLimits: Codable, Hashable, Sendable {
-    /// Compra mínima por loja/dia pra ter reembolso (¥).
+    /// Compra mínima por loja/dia pra ter reembolso, na moeda do país de origem (¥ 5.000 no Japão, € 70 na Itália).
+    /// O nome ficou do pacote do Japão pra não mudar o JSON.
     var taxFreeMinYen: Double
     /// Taxa de consumo embutida no preço (reembolsada na volta): geral e alimentos.
     var taxFreeRate: Double
@@ -66,6 +67,19 @@ enum ShoppingRules {
     /// Pacote Japão → Brasil (a volta). Carregado uma vez.
     static let jpBR: ShoppingRulePack = load(named: "jp-br", bundle: nil)
         ?? ShoppingRulePack(pair: "JP-BR", from: "JP", to: "BR", limits: .standard, rules: [])
+
+    /// Pacote Itália → Brasil (prompt 24 §2): tax-free da UE acima de € 70 por loja (Global Blue), carimbo no
+    /// aeroporto; queijo curado a vácuo pode, salame e presunto não (Vigiagro); vinho dentro dos 12 L.
+    static let itBR: ShoppingRulePack = load(named: "it-br", bundle: nil)
+        ?? ShoppingRulePack(pair: "IT-BR", from: "IT", to: "BR", limits: .standard, rules: [])
+
+    /// As regras da volta da região: Roma usa o pacote da Itália; Japão (e BH, que não tem viagem) o do Japão.
+    static func pack(for region: Region) -> ShoppingRulePack {
+        switch region {
+        case .it: itBR
+        case .jp, .bh: jpBR
+        }
+    }
 
     private final class BundleAnchor {}
 
