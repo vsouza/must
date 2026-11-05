@@ -221,16 +221,10 @@ struct AreaBubbleView: View {
             if selected {
                 Circle().strokeBorder(Color.must.ink, lineWidth: 2.5).padding(-5)
             }
-            VStack(spacing: 0) {
-                if let kanji = bubble.kanji {
-                    Text(kanji)
-                        .font(.must.kanji(d * 0.26))
-                        .foregroundStyle(bubble.color.text)
-                }
-                Text("\(bubble.count)")
-                    .font(.must.mono(d * 0.24, .bold))
-                    .foregroundStyle(bubble.color.text)
-            }
+            // v8: a bolha é tinta (`strong`); a contagem vai em papel. Sem kanji (nada em japonês na interface).
+            Text("\(bubble.count)")
+                .font(.must.mono(d * 0.24, .bold))
+                .foregroundStyle(V8.paper)
         }
         .frame(width: d, height: d)
         .overlay(alignment: .bottom) {
