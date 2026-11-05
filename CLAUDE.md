@@ -50,7 +50,7 @@ O app tem que ser **bem visual** (foto em todo lugar que mostra um lugar ou bair
 - Commits pequenos, mensagem em português, um prompt = um ou mais commits.
 
 ## Como o trabalho está dividido
-Os prompts em `prompts/` são executados em ordem (01 → 25; a rodada atual é a `prompts/RODADA-22.md` (23 + 24 com agentes em paralelo); depois dela, o `25-produto-dia-a-dia.md` em dois agentes; o 22 foi substituído). Cada um diz o que entregar e como verificar. Antes de cada prompt, olhar os PNGs das telas citadas.
+Os prompts em `prompts/` são executados em ordem (01 → 25; a rodada atual é a `prompts/RODADA-22.md` (23 + 24 com agentes em paralelo); depois dela, o `25-produto-dia-a-dia.md` e o `26-capa-inteligente.md` em paralelo; o 22 foi substituído). Cada um diz o que entregar e como verificar. Antes de cada prompt, olhar os PNGs das telas citadas.
 
 ## Tema da viagem (03/11/2026, pedido do Vinicius) — prompt 20
 - Ao entrar numa viagem/região, o app ganha a **bandeira do país** (círculo 22 pt ao lado da data, vetor, offline) e um **tom leve** do país: lavado no topo das telas principais, tinta dos selos, ponto dos títulos de seção e da aba ativa, rótulo da cidade.
@@ -86,3 +86,7 @@ Os prompts em `prompts/` são executados em ordem (01 → 25; a rodada atual é 
 ## Produto no dia a dia (05/11/2026, pedido do Vinicius) — prompt 25
 - Diagnóstico em `docs/produto-dia-a-dia.md`. Quatro capacidades novas: **Quero…** (vontade em linguagem natural → só lojas/lugares físicos na cidade de hoje → "Encaixar hoje"; lojas online nunca entram), **Mandar o dia** (cartaz 1080×1920 pro WhatsApp, link que abre no app sem servidor, PDF, "viajar junto" via CloudKit compartilhado), **SOS** (números do país, seguro cadastrado, hospital com inglês, endereço no idioma local, consulado; offline; nunca liga sozinho) e **Atalhos** (deslize da capa pra direita: Suica, ingressos, mapa offline, SOS, linhas perto, indicados fora do board).
 - O `+` da barra abre o Quero… primeiro; Link/Texto/Nome viram abas secundárias.
+
+## Capa inteligente (05/11/2026, pedido do Vinicius) — prompt 26
+- A capa sabe o bairro (GPS por célula), o que você deveria estar fazendo (dia aceito) e mostra até 4 cartões "Agora vale" escolhidos por um ranker local: plano, Musts perto e abertos, fecha logo, eventos de hoje, luz/tempo, indicados fora do board. Cada cartão diz o motivo.
+- Eventos sem API paga: Bandsintown + Ticketmaster Discovery + feeds públicos por cidade (validar URLs), cache de 6 h no Wi-Fi; Haiku low só pra estruturar feed sem estrutura, 1×/dia. Nunca inventa evento.

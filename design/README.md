@@ -50,3 +50,33 @@
 Fluxo principal: Início → Montar → Proposta → (Trocar) → Hoje → Lugar → Gasto (済) → Hoje. Mapa acompanha o Hoje. Musts → Lista → Lugar é o lado "catálogo". Nova lista → Adicionar lugares e Adicionar por link alimentam o board.
 | 20 | Tema da viagem (bandeira + tom) | `Home6.png` (JP) · `Home6BH.png` (BR) |
 | 22 | Início v7 (na viagem / antes da viagem) | `Home7.png` · `Home7Pre.png` |
+
+
+## v8 · rodada 23 (05/11/2026) — telas em `v8/screens/`
+Render 2x em PNG, HTML ao lado (links entre telas funcionam). Dados de exemplo; Park Hyatt, Billboard Live, Portugal e os amigos não estão nos seeds. Prompts: `prompts/27-em-cartaz-mapa-colecao.md`, `prompts/28-nova-viagem.md`, `prompts/RODADA-23.md`.
+
+| Tela | Arquivo | Abre a partir de | Prompt |
+|---|---|---|---|
+| Em cartaz (lista do que está em cartaz) | v8/screens/EmCartaz | chip da capa; aba Viagem | 27 §1 |
+| Lugar de museu › bloco Em cartaz | v8/screens/LugarEmCartaz | EmCartaz; Lugar | 27 §1 |
+| Capa com chip Em cartaz e botão Trocar viagem | v8/screens/CapaEmCartaz | Hoje | 26 §1 · §7 |
+| Linha do dia com item Em cartaz | v8/screens/DiaEmCartaz | Hoje › Linha | 27 §1 |
+| Mapa › card grande ao tocar no pino | v8/screens/MapaPino | Mapa; Dia › Mapa | 27 §2 |
+| Mapa › filtro por Must + busca "o melhor lámen agora" | v8/screens/MapaFiltro | Mapa; Quero | 27 §2 |
+| Coleção (cidade · lista · data, vitrine) | v8/screens/Colecao | aba Viagem; Colecionável novo | 27 §4 |
+| Colecionável (Stories 1080×1920 e Feed 1080×1080, variantes) | v8/screens/Colecionavel | Coleção; Mandar | 27 §4 |
+| Colecionável novo (ao marcar Feito) | v8/screens/ColecionavelNovo | Lugar › Feito | 27 §4 |
+| Lugar › amigos que foram + filmes gravados aqui | v8/screens/LugarAmigos | Lugar; Mapa (card) | 27 §5 · §6 |
+| Filmes do bairro | v8/screens/Filmes | LugarAmigos › "no bairro" | 27 §6 |
+| Filmes sem resultado (BH) | v8/screens/FilmesVazio | Filmes (BH) | 27 §6 |
+| Minhas viagens (folha) | v8/screens/TrocarViagem | botão no canto da capa | 27 §7 · 28 |
+| Nova viagem 1 · Pra onde? | v8/screens/NovaViagem1 | Minhas viagens › Nova viagem | 28 |
+| Nova viagem 2 · Quando? | v8/screens/NovaViagem2 | NovaViagem1 | 28 |
+| Nova viagem 3 · Quais cidades? | v8/screens/NovaViagem3 | NovaViagem2 | 28 |
+| Nova viagem 4 · Onde fica? (hospedagem) | v8/screens/NovaViagem4 | NovaViagem3 | 28 |
+| Nova viagem 5 · Como vai? (voos) | v8/screens/NovaViagem5 | NovaViagem4 | 28 |
+| Nova viagem 6 · O que não pode faltar? (Musts) | v8/screens/NovaViagem6 | NovaViagem5 | 28 |
+| Nova viagem 7 · Quanto gastar? (moeda e orçamento) | v8/screens/NovaViagem7 | NovaViagem6 | 28 |
+| Nova viagem 8 · Leve pro bolso (mapa offline) | v8/screens/NovaViagem8 | NovaViagem7 | 28 |
+| Nova viagem 9 · capa da viagem nova (contagem regressiva) | v8/screens/NovaViagem9 | NovaViagem8 | 28 |
+| Fontes nos botões (antes/depois + regra numérica) | v8/screens/BotoesFontes | — (prancha) | 27 §3 |
