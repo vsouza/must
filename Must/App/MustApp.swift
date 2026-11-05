@@ -23,6 +23,8 @@ struct MustApp: App {
                 .environment(services)
                 .environment(\.dayEngine, DayEngineV8(store: regionStore, services: services))
                 .preferredColorScheme(.light)
+                // Fonte padrão: `Text` sem fonte explícita sai em Schibsted (texto v8), não em SF.
+                .font(V8Font.text(15))
                 .dynamicTypeSize(...DynamicTypeSize.mustCap)
         }
     }
@@ -34,6 +36,7 @@ struct AppRoot: View {
     @Environment(Services.self) private var services
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.modelContext) private var context
+    @Environment(\.dayEngine) private var engine
 
     /// Geração do container desta árvore. Depois de uma troca (região, zerar), a árvore velha ainda recebe eventos
     /// por um instante (o `didSave` do board novo, a animação): `isCurrent` falso = não mexe em nada.
@@ -56,7 +59,7 @@ struct AppRoot: View {
                 showOnboarding = Self.shouldShowOnboarding(onboarded: store.isOnboarded)
                 services.location.start()
                 #if DEBUG
-                DebugLaunch.apply(to: router, context: context, region: store.region, services: services)
+                DebugLaunch.apply(to: router, context: context, region: store.region, services: services, engine: engine)
                 #endif
             }
             // Arranque: nada de rede antes do primeiro frame (prompt 18 · A.6). Abre com o que está salvo.
@@ -228,7 +231,7 @@ struct AppRoot: View {
 /// Buscar por nome (com `-debugAutocomplete fake` pras sugestões de "koffee mam").
 @MainActor
 enum DebugLaunch {
-    static func apply(to router: AppRouter, context: ModelContext, region: Region, services: Services) {
+    static func apply(to router: AppRouter, context: ModelContext, region: Region, services: Services, engine: any DayEngine) {
         let location = services.location
         if DebugFlags.has("-gallery") { router.cover = .gallery }
         // `-debugSyncOnly ids`: resolve só esses lugares no Places (prompt 19, QA das fotos reais).
@@ -327,11 +330,16 @@ enum DebugLaunch {
             let area = arg ?? "shinjuku"
             router.push(.bairros(areaId: area), on: .hoje)
             router.push(.montar(date: region.calendar.startOfDay(for: AppClock.now), focusArea: area), on: .hoje)
-        case "guia": // Shinjuku+ montado e aceito hoje, e o Guia do dia (prompt 18 · C.16)
-            acceptFocusToday(context: context, region: region, location: location, areaId: "shinjuku")
+        case "guia": // Shinjuku+ montado e aceito hoje (se ainda não há dia aceito), e o Guia do dia (prompt 18 · C.16)
+            if !hasAcceptedToday(context: context, region: region) {
+                acceptFocusToday(context: context, region: region, location: location, areaId: arg ?? "shinjuku")
+            }
             router.push(.guia(date: region.calendar.startOfDay(for: AppClock.now)), on: .hoje)
         // v8 (prompt 23 §2), contrato da rodada 22: uma entrada por tela, pros prints do `qa-screens.sh`.
         case "capa": router.select(.hoje)
+        case "aceitar-dia": // aceitar-dia:<bairro>: o motor v8 monta (ritmo 9, micro-paradas) e aceita hoje; abre a capa
+            acceptEngineToday(context: context, region: region, engine: engine, areaId: arg)
+            router.select(.hoje)
         case "bom-dia": router.push(.bomDia, on: .hoje)
         case "agora": router.push(.agora, on: .hoje)
         case "dia", "linha": router.push(.linha(date: region.calendar.startOfDay(for: AppClock.now)), on: .hoje)
@@ -344,6 +352,26 @@ enum DebugLaunch {
             router.push(.settings, on: .hoje)
             Task { await services.sync.syncPlaces(context: context, region: region) }
         default: break
+        }
+    }
+
+    /// Já há um dia aceito hoje (de um `aceitar-dia` anterior): os prints seguintes usam esse dia.
+    private static func hasAcceptedToday(context: ModelContext, region: Region) -> Bool {
+        let start = region.calendar.startOfDay(for: AppClock.now)
+        let days = (try? context.fetch(FetchDescriptor<PlannedDay>(predicate: #Predicate { $0.date == start }))) ?? []
+        return days.contains { $0.accepted }
+    }
+
+    /// O que o Montar faz com os padrões (ritmo 9, até 23:30, micro-paradas e golden): o dia do motor, aceito.
+    private static func acceptEngineToday(context: ModelContext, region: Region, engine: any DayEngine, areaId: String?) {
+        let settings = try? context.fetch(FetchDescriptor<Settings>()).first
+        let date = region.calendar.startOfDay(for: AppClock.now)
+        let budget = DayPlanner(date: date, region: region, settings: settings, existing: nil).budget
+        let until = region.calendar.date(byAdding: .minute, value: 23 * 60 + 30, to: date) ?? date
+        Task {
+            let plan = await engine.build(on: date, area: areaId, pace: .normal, budget: budget, until: until,
+                                          includes: [.micro, .goldenPhoto])
+            try? DayEngineV8.save(plan, region: region, context: context)
         }
     }
 

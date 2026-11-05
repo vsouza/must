@@ -40,8 +40,10 @@ ${=W} debugPlaces -string fake; ${=W} debugNearby -string fake; ${=W} debugFligh
 # ── v8 (prompt 23 e 24, rodada 22) ─────────────────────────────────────────────────────────────────
 # `ONLY=v8 scripts/qa-screens.sh` tira só estas (20 telas por região, comparar com design/v8/screens/*.png).
 # Cada agente da rodada 22 só mexe nas linhas das suas telas (C: capa…noite; D: guia…proximos; E: região it).
-v8shots() { # $1 = prefixo (jp|bh|it), $2 = lugar de exemplo, $3 = museu de exemplo, $4 = lista de exemplo
+v8shots() { # $1 = prefixo (jp|bh|it), $2 = lugar de exemplo, $3 = museu de exemplo, $4 = lista de exemplo, $5 = bairro do dia
   local r=$1
+  # Dia do motor aceito antes de tudo (capa, Agora, Linha, Guia e Boa noite precisam de um dia; o Guia não refaz). (F)
+  WAIT=12 shot $r-v8-aceitar -debugScreen aceitar-dia:$5
   shot $r-v8-capa -debugScreen capa                 # 01 CapaJP/CapaBR/CapaIT          (C)
   WAIT=9 shot $r-v8-capa-foto -debugScreen capa -capaFoto  # 01b CapaFoto (força a foto; sem a flag, os prints usam a cor) (C)
   shot $r-v8-bom-dia -debugScreen bom-dia           # 02 Manha                         (C)
@@ -63,6 +65,19 @@ v8shots() { # $1 = prefixo (jp|bh|it), $2 = lugar de exemplo, $3 = museu de exem
   shot $r-v8-ajustes -debugScreen ajustes           # Ajustes › Região                 (E)
   shot $r-v8-xxxl-capa -debugScreen capa -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
   shot $r-v8-xxxl-agora -debugScreen agora -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
+  # QA (F): as outras 4 principais em xxxLarge (o app limita em .xxxLarge) e o modo avião (`-debugNetwork offline`).
+  local XL="-UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL"
+  shot $r-v8-xxxl-dia -debugScreen dia ${=XL}
+  shot $r-v8-xxxl-lugar -debugScreen lugar:$2 ${=XL}
+  shot $r-v8-xxxl-bolso -debugScreen bolso ${=XL}
+  shot $r-v8-xxxl-dicas -debugScreen dicas ${=XL}
+  local OFF="-debugNetwork offline"
+  shot $r-v8-off-capa -debugScreen capa ${=OFF}
+  shot $r-v8-off-agora -debugScreen agora ${=OFF}
+  shot $r-v8-off-dia -debugScreen dia ${=OFF}
+  shot $r-v8-off-lugar -debugScreen lugar:$2 ${=OFF}
+  shot $r-v8-off-bolso -debugScreen bolso ${=OFF}
+  shot $r-v8-off-dicas -debugScreen dicas ${=OFF}
 }
 ${=W} skipOnboarding -bool YES
 ${=W} dev.simDateOn -bool YES; ${=W} dev.simSetAt -float 0; ${=W} dev.simGPSOn -bool YES
@@ -71,21 +86,22 @@ echo "→ v8 · Japão · sáb 15 nov 14:20 · Shinjuku (CapaJP, Agora, Dia)"
 ${=W} region jp
 ${=W} dev.simDate -float $(epoch 2026-11-15T14:20:00+09:00)
 ${=W} dev.simLat -float 35.6909; ${=W} dev.simLng -float 139.7003
-v8shots jp j05 j28 eat
+v8shots jp j05 j28 eat shinjuku
 
 echo "→ v8 · BH · sáb 7 nov 14:35 · Savassi (CapaBR)"
 ${=W} region bh
 ${=W} dev.simDate -float $(epoch 2026-11-07T14:35:00-03:00)
 ${=W} dev.simLat -float -19.9385; ${=W} dev.simLng -float -43.9343
-v8shots bh p01 p01 eat
+v8shots bh p01 p01 eat savassi
 
 echo "→ v8 · Roma · qui 15 abr 2027 11:40 · Trastevere (CapaIT); dia 4 em Monti pro DiaIT"
 ${=W} region it
 ${=W} dev.simDate -float $(epoch 2027-04-15T11:40:00+02:00)
 ${=W} dev.simLat -float 41.8897; ${=W} dev.simLng -float 12.4695
-v8shots it r02 r46 eat
+v8shots it r02 r46 eat trastevere
 ${=W} dev.simDate -float $(epoch 2027-04-14T14:00:00+02:00)
 ${=W} dev.simLat -float 41.8955; ${=W} dev.simLng -float 12.4925
+WAIT=12 shot it-v8-aceitar-monti -debugScreen aceitar-dia:monti
 shot it-v8-dia-monti -debugScreen dia
 
 if [ "${ONLY:-}" != "v8" ]; then
