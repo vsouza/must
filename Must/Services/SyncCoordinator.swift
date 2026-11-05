@@ -31,6 +31,10 @@ final class SyncCoordinator {
     @ObservationIgnored private let photos: any PhotoProviding
     @ObservationIgnored private var lastSync: Date?
     @ObservationIgnored private var detailsInFlight: Set<String> = []
+    /// Resolução sob demanda em voo (Lugar aberto): quem chega depois espera a mesma busca.
+    @ObservationIgnored private var resolveTasks: [String: Task<Void, Never>] = [:]
+    /// Lugares que o Places não achou nesta sessão: não repete a busca.
+    @ObservationIgnored private var notFoundThisSession: Set<String> = []
 
     static let interval: TimeInterval = 6 * 3600
     /// Máximo de lugares resolvidos por sincronização (cada um = busca + detalhes).
@@ -176,6 +180,42 @@ final class SyncCoordinator {
                 Log.network.error("detalhes \(place.id, privacy: .public): \(error.localizedDescription, privacy: .public)")
             }
         }
+    }
+
+    /// Lugar aberto sem `placeId` (seed com coordenada chute, nunca sincronizado): resolve só ele, uma vez, antes da
+    /// foto e das Dicas de quem foi — sem isso o Google não tem avaliação nem foto pra devolver. Uma Text Search e um
+    /// Details; nada se o lugar já está resolvido, sem rede, sem chave ou com dados ao vivo desligados.
+    func ensureResolved(_ place: Place, region: Region, cityName: String?) async {
+        guard place.placeId == nil || place.approx else { return }
+        guard places.isConfigured, DevOverrides.liveData, Connectivity.current != .offline,
+              !notFoundThisSession.contains(place.id) else { return }
+        if let running = resolveTasks[place.id] { await running.value; return }
+        let container = place.modelContext?.container
+        let task = Task { [places] in
+            defer { withExtendedLifetime(container) {} }
+            do {
+                let target = place.kind == .art ? (place.nameLocal ?? place.name) : place.name
+                let query = [target, place.area, cityName].compactMap { $0 }.joined(separator: " ")
+                let results = try await places.searchText(query, near: place.coordinate, radius: 30_000, languageCode: "pt-BR")
+                // Nome parecido primeiro; um resultado só também vale (a busca já é restrita à cidade).
+                guard let best = Self.bestMatch(results, for: target, allowAny: results.count == 1) else {
+                    notFoundThisSession.insert(place.id)
+                    Log.network.info("resolver \(place.id, privacy: .public): não achei no Places")
+                    return
+                }
+                place.placeId = best.id
+                place.lat = best.lat
+                place.lng = best.lng
+                place.approx = false
+                try await refresh(place, region: region)
+                try? place.modelContext?.save()
+            } catch {
+                Log.network.error("resolver \(place.id, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            }
+        }
+        resolveTasks[place.id] = task
+        await task.value
+        resolveTasks[place.id] = nil
     }
 
     private func refresh(_ place: Place, region: Region) async throws {

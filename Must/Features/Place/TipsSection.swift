@@ -41,7 +41,7 @@ struct TipsSection: View {
     private var emptyText: String {
         model.phase == .off
             ? "Dicas de pessoas estão desligadas (Ajustes → Dados)."
-            : "Nenhuma dica ainda. O Google precisa do lugar sincronizado no Places; Foursquare e Reddit, das chaves no Secrets.plist."
+            : "Nenhuma dica de quem foi pra esse lugar ainda. O Google não achou avaliações (ou o lugar no Places); o Foursquare está sem créditos e o Reddit, sem chave."
     }
 
     // MARK: Resumo

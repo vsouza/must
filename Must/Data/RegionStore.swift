@@ -35,11 +35,27 @@ final class RegionStore {
         self.directory = directory ?? Region.storeDirectory
         self.defaults = defaults
         self.seedBundle = seedBundle
+        Self.moveToBrazilOnce(defaults)
         let region = Region(rawValue: defaults.string(forKey: Self.regionKey) ?? "") ?? .bh
         self.region = region
         let (container, error) = Self.openContainer(for: region, in: self.directory, seedBundle: seedBundle)
         self.container = container
         self.lastError = error
+    }
+
+    /// Uma vez (05/11/2026, pedido do Vinicius: "vamos mudar o app pro brasil por hora, quero usar ele na rua"):
+    /// volta pro BH no automático e desliga data/GPS simulados do menu escondido, pra o teste de rua usar hora e GPS
+    /// reais. Depois disso, Ajustes › Região manda de novo. Nunca nos testes nem nos prints (`-debugScreen`).
+    static let brazilOnceKey = "region.v8.brasilParaRua"
+
+    static func moveToBrazilOnce(_ defaults: UserDefaults) {
+        guard defaults === UserDefaults.standard, !DebugFlags.isTestHost, DebugFlags.string("debugScreen") == nil,
+              !defaults.bool(forKey: brazilOnceKey) else { return }
+        defaults.set(true, forKey: brazilOnceKey)
+        defaults.set(Region.bh.rawValue, forKey: regionKey)
+        defaults.set(true, forKey: autoKey)
+        defaults.set(false, forKey: DevOverrides.Key.simDateOn)
+        defaults.set(false, forKey: DevOverrides.Key.simGPSOn)
     }
 
     /// Tema da viagem da região (bandeira, lavado, selos). `MustApp` injeta no ambiente, fora da `.id`.

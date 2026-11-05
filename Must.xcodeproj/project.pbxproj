@@ -118,6 +118,7 @@
 		48AA788A7B981CC9E7AECA9D /* Values.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A1B075763A86D919443CA48 /* Values.swift */; };
 		494A874D8E4AEE61CFDA0A51 /* MustWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = DC4442205EBAF11DB237C5A7 /* MustWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		4972B806326AA9F90ED514DF /* TripTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 405F4964FEA3D89D253DFB7F /* TripTheme.swift */; };
+		4C4BAD4FFC4A8FE4916290BA /* SwipeBack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42A529AE230489483D5F5535 /* SwipeBack.swift */; };
 		4D2F1173620C2F7B1D23E8F3 /* AreaFocus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21D13C6E53B0647BE3C78BA6 /* AreaFocus.swift */; };
 		4D94C5CC7CFC1C46929A5AD9 /* FallbackAssistant.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0587B780E1391484184097EA /* FallbackAssistant.swift */; };
 		4D9B608D2B88AC32A791505E /* GooglePlacePhotos.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45582657B5D39A3476143975 /* GooglePlacePhotos.swift */; };
@@ -148,6 +149,7 @@
 		5F5948805FF666ECE9573D24 /* TravelText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 368E3A56E58BFCDD87F59395 /* TravelText.swift */; };
 		617BB51AECC1EB27C59CC954 /* ScheduleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99212C9008FF3854ABD0FB65 /* ScheduleView.swift */; };
 		619192508D674C3CF00785FF /* DataUsage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12D88D49FA4A5E026FEAA007 /* DataUsage.swift */; };
+		61DF603FD77370E0F0DDA38E /* PhotoViewer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30E84B1E454DD30366D1DA28 /* PhotoViewer.swift */; };
 		635768838BFBA13DD9B56F11 /* BoardRows.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76824D324E16F3429F510F1D /* BoardRows.swift */; };
 		64B398891C6575CFBFC186E2 /* PlacesService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0DE882D97FE358B156A3EE9 /* PlacesService.swift */; };
 		6515A030A96591B235852AD9 /* ShoppingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12D1A0B2AC9C79AA10DC38BE /* ShoppingTests.swift */; };
@@ -494,6 +496,7 @@
 		2C553381C1ACF36D47BABC10 /* ShoppingRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShoppingRules.swift; sourceTree = "<group>"; };
 		2F12ADC96D7618625F1CFDF3 /* TicketFiles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketFiles.swift; sourceTree = "<group>"; };
 		2F209E1793AF9869B3B5D861 /* ExperienceStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperienceStore.swift; sourceTree = "<group>"; };
+		30E84B1E454DD30366D1DA28 /* PhotoViewer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoViewer.swift; sourceTree = "<group>"; };
 		320E13FD89A4E3EDFCCA580C /* CurrentAreaService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrentAreaService.swift; sourceTree = "<group>"; };
 		32C5A3C526057B2F0A5A397C /* MustShare.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = MustShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		331140FC48B59B2AAE15EDEF /* DayPlanV8.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayPlanV8.swift; sourceTree = "<group>"; };
@@ -524,6 +527,7 @@
 		4057F13FC1B1224A5960AEE0 /* BoardEditsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardEditsTests.swift; sourceTree = "<group>"; };
 		405F4964FEA3D89D253DFB7F /* TripTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripTheme.swift; sourceTree = "<group>"; };
 		40932B512799B8A0AEB85C71 /* MontarTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MontarTests.swift; sourceTree = "<group>"; };
+		42A529AE230489483D5F5535 /* SwipeBack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwipeBack.swift; sourceTree = "<group>"; };
 		42CF55FAA3B0427D227A1790 /* PlacePhotoStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlacePhotoStore.swift; sourceTree = "<group>"; };
 		43C14EF69A9E34835F4A98F9 /* LinkResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkResolver.swift; sourceTree = "<group>"; };
 		444EAB9A96A0EA348EFC1987 /* DevOverrides.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevOverrides.swift; sourceTree = "<group>"; };
@@ -1426,6 +1430,7 @@
 				1BC23A56B003D07E12A30C69 /* NotificationTaps.swift */,
 				10E1AAF40DE6541D6FB3D78D /* RootView.swift */,
 				5621525C6CB7D37030B2A19B /* Router.swift */,
+				42A529AE230489483D5F5535 /* SwipeBack.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -1544,6 +1549,7 @@
 			children = (
 				9910B338CBCFBBEB3855A06A /* KindGraphics.swift */,
 				56C3EA6D3C29FD87F4AC83FE /* KindPanels.swift */,
+				30E84B1E454DD30366D1DA28 /* PhotoViewer.swift */,
 				2566C0B7787EE54B4AC19DF1 /* Place3DView.swift */,
 				D5CD628C6E5C4741F99932D3 /* PlaceFicha.swift */,
 				62985D320484912E83C676DB /* PlacePanel.swift */,
@@ -2289,6 +2295,7 @@
 				D4FBDCBCB38A99686CE6275A /* PhotoBatch.swift in Sources */,
 				DC13D2C9E893ECC451062C85 /* PhotoDataRows.swift in Sources */,
 				7F456549CD866F3E56308A20 /* PhotoService.swift in Sources */,
+				61DF603FD77370E0F0DDA38E /* PhotoViewer.swift in Sources */,
 				D2EAD7E269EE8F2C9EFE64B3 /* PinsMemo.swift in Sources */,
 				DF4F19CE91B0B6F7DCC4A00D /* Place3DView.swift in Sources */,
 				75DB4EF8DC7B0C52900CE91F /* PlaceAutocomplete.swift in Sources */,
@@ -2348,6 +2355,7 @@
 				293AA86827E4B24BB3C9F966 /* StartupSync.swift in Sources */,
 				CD99F9CA26B40D92FA1EAD90 /* StreetViewCard.swift in Sources */,
 				8B37B3D68127F8BF77080F91 /* SunService.swift in Sources */,
+				4C4BAD4FFC4A8FE4916290BA /* SwipeBack.swift in Sources */,
 				1C6EE2A4E4AFBF73C4778C2D /* SyncCoordinator.swift in Sources */,
 				43707A7A8CA869C871DF553E /* TextConference.swift in Sources */,
 				A777A68FE9DB9C6ACE0B1C64 /* Ticket.swift in Sources */,

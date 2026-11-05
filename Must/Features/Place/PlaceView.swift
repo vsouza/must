@@ -25,6 +25,8 @@ struct PlaceView: View {
     /// Galeria do Google (páginas 1…4; a 0 é `heroPhoto`), carregada ao deslizar (prompt 19).
     @State private var galleryPhotos: [Int: CCPhoto] = [:]
     @State private var galleryPage = 0
+    /// Foto em tela cheia (toque na foto): a página da galeria em que abriu.
+    @State private var viewer: ViewerStart?
     @State private var tips = TipsModel()
     @State private var addedAt: Date?
     @State private var show3D = false
@@ -114,8 +116,15 @@ struct PlaceView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .onAppear { services.sync.refreshIfStale(place, region: region) }
-        .task(id: place.id) { await loadHero(place) }
+        .task(id: place.id) {
+            // Seed nunca sincronizado: resolve este lugar no Places antes da foto (e das Dicas de quem foi).
+            await services.sync.ensureResolved(place, region: region, cityName: trips.first?.city(id: place.cityId)?.name)
+            await loadHero(place)
+        }
         .task(id: "\(place.id)|\(tipsVisible)") { if tipsVisible { await loadTips(place) } }
+        .fullScreenCover(item: $viewer) { start in
+            PhotoViewer(pages: viewerPages(place), index: start.page)
+        }
         .fullScreenCover(isPresented: $show3D) {
             Place3DView(name: place.name, coordinate: place.coordinate, heading: place.extra?.photo?.facing)
         }
@@ -149,17 +158,33 @@ struct PlaceView: View {
 
     @ViewBuilder private func heroBackground(_ place: Place) -> some View {
         let count = pages(place)
-        if count > 1 {
-            TabView(selection: $galleryPage) {
-                ForEach(0..<count, id: \.self) { index in
-                    V8Photo(url: photoURL(place, page: index)).tag(index)
+        Group {
+            if count > 1 {
+                TabView(selection: $galleryPage) {
+                    ForEach(0..<count, id: \.self) { index in
+                        V8Photo(url: photoURL(place, page: index)).tag(index)
+                    }
                 }
+                .tabViewStyle(.page(indexDisplayMode: .never))
+                // Só a página que está na tela (nada de vizinha pré-carregada): uma `/media` por deslize.
+                .task(id: galleryPage) { await loadGalleryPage(place, index: galleryPage) }
+            } else {
+                V8Photo(url: photoURL(place))
             }
-            .tabViewStyle(.page(indexDisplayMode: .never))
-            // Só a página que está na tela (nada de vizinha pré-carregada): uma `/media` por deslize.
-            .task(id: galleryPage) { await loadGalleryPage(place, index: galleryPage) }
-        } else {
-            V8Photo(url: photoURL(place))
+        }
+        // Toque na foto: ela inteira, em tela cheia, com zoom (as mesmas URLs: nada novo baixa).
+        .contentShape(Rectangle())
+        .onTapGesture { if photoURL(place, page: galleryPage) != nil { viewer = ViewerStart(page: galleryPage) } }
+        .accessibilityAddTraits(.isButton)
+        .accessibilityLabel("Ver a foto inteira")
+    }
+
+    /// Páginas da galeria que já têm foto (as outras ainda não vieram: não abrem vazias no visualizador).
+    private func viewerPages(_ place: Place) -> [PhotoViewer.Page] {
+        (0..<pages(place)).compactMap { i in
+            guard let url = photoURL(place, page: i) else { return nil }
+            let photo = i > 0 ? galleryPhotos[i] : heroPhoto
+            return PhotoViewer.Page(id: i, url: url, credit: photo?.credit ?? "foto · Google")
         }
     }
 
@@ -667,6 +692,8 @@ struct PlaceView: View {
     // MARK: Rede (só o Lugar aberto)
 
     private func loadTips(_ place: Place) async {
+        // Sem `placeId` o Google não devolve avaliação: espera a resolução (a mesma busca da foto, se já estiver em voo).
+        await services.sync.ensureResolved(place, region: region, cityName: trips.first?.city(id: place.cityId)?.name)
         let query = TipsQuery(id: place.id, name: place.name, nameLocal: place.nameLocal,
                               city: trips.first?.city(id: place.cityId)?.name ?? region.displayName, region: region,
                               lat: place.lat, lng: place.lng, googlePlaceId: place.placeId, fsqId: place.fsqId,
@@ -700,4 +727,10 @@ struct PlaceView: View {
             Log.network.error("galeria \(place.id, privacy: .public): \(error.localizedDescription, privacy: .public)")
         }
     }
+}
+
+/// Abertura do visualizador de foto (página da galeria).
+private struct ViewerStart: Identifiable, Hashable {
+    var page: Int
+    var id: Int { page }
 }
