@@ -181,6 +181,9 @@ enum AssistantEngine {
         "um", "uma", "o", "a", "de", "do", "da", "em", "no", "na", "pra", "para", "por", "lugar", "lugares", "algum", "alguma",
         "barato", "barata", "caro", "bom", "boa", "perto", "comer", "beber", "tomar", "ir", "tem", "quero", "me", "sugere",
         "toquio", "tokyo", "kyoto", "japao", "bh", "belo", "horizonte",
+        // Roma: a cidade e o país não filtram nada. Trastevere e Vaticano ficam de fora de propósito: são bairros
+        // (`Place.area`), e "jantar em Trastevere" precisa achar os lugares de lá.
+        "roma", "rome", "italia", "italy",
     ]
 
     /// Busca por palavra (qualquer uma bate), ordenada por quantas bateram; "barato" ordena por preço.
@@ -210,7 +213,7 @@ enum AssistantEngine {
         }
         let left = s.budget - s.spentDay
         text += left >= 0 ? ". Sobram \(r.money(left)) da meta de \(r.money(s.budget))." : ". Passou \(r.money(-left)) da meta de \(r.money(s.budget))."
-        if s.region == .jp, s.totalSpent > 0 { text += " (≈ \((s.totalSpent * s.fxRate).formatted(.money("BRL"))))" }
+        if s.region.hasFX, s.totalSpent > 0 { text += " (≈ \((s.totalSpent * s.fxRate).formatted(.money("BRL"))))" }
         return text
     }
 
