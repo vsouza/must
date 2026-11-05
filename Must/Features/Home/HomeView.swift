@@ -175,8 +175,7 @@ struct HomeView: View {
                 .minimumScaleFactor(0.6)
             if let evening = content.evening {
                 Text(evening)
-                    .font(V8Font.display(28))
-                    .fontWeight(.medium)
+                    .font(V8Font.display(28, weight: 500))
                     .foregroundStyle(ink.opacity(0.9))
                     .lineLimit(2)
                     .minimumScaleFactor(0.7)
@@ -255,7 +254,7 @@ struct HomeView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
                 if let evening = content.evening {
-                    Text(evening).font(V8Font.display(24)).fontWeight(.medium).foregroundStyle(ink.opacity(0.9))
+                    Text(evening).font(V8Font.display(24, weight: 500)).foregroundStyle(ink.opacity(0.9))
                         .lineLimit(1).minimumScaleFactor(0.7)
                 }
                 agoraCard(content).frame(maxWidth: 236).padding(.top, 22)
