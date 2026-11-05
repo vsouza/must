@@ -5,7 +5,7 @@ import SwiftUI
 /// 01 · Hoje, a capa do dia (prompt 23 §2, `CapaJP/BR/IT.png`; com foto: `CapaFoto.png`).
 /// Cor do lugar, ficha técnica nos cantos, "Hoje é <bairro> / e <noite>", numeral do dia sangrando e o card "Agora".
 /// Gestos: pra cima = Linha do dia; pra baixo = Bom dia (antes das 10h) / Boa noite (depois das 21h);
-/// pra esquerda = Dicas; pra direita = Bolso. Tudo sai de `CapaState`, recalculado nos gatilhos.
+/// pra esquerda = Dicas; pra direita (ou o toque na alça da borda) = Atalhos, com o Bolso dentro (prompt 25 · D). Tudo sai de `CapaState`, recalculado nos gatilhos.
 /// Saíram da Home (v8): "Por perto" (fica em Guia/Lista), orçamento (Ajustes) e os cards v7.
 struct HomeView: View {
     @Environment(AppRouter.self) private var router
@@ -23,6 +23,10 @@ struct HomeView: View {
     @State private var state = CapaState()
     @State private var currentArea: Area?
     @State private var saveRefresh: Task<Void, Never>?
+    @State private var showAtalhos = false
+    /// O que o toque nos Atalhos pediu: roda quando o painel termina de fechar.
+    @State private var atalhoAction: AtalhosAction?
+    @Environment(\.openURL) private var openURL
 
     private var region: Region { store.region }
     private var today: Date { region.calendar.startOfDay(for: AppClock.now) }
@@ -54,8 +58,20 @@ struct HomeView: View {
         })
         .accessibilityAction(named: "Linha do dia") { go(.up) }
         .accessibilityAction(named: "Dicas") { go(.left) }
-        .accessibilityAction(named: "Bolso") { go(.right) }
-        .onAppear { refresh() }
+        .accessibilityAction(named: "Atalhos") { go(.right) }
+        .overlay(alignment: .trailing) { atalhosHandle }
+        .fullScreenCover(isPresented: $showAtalhos, onDismiss: runAtalhoAction) {
+            AtalhosPanel { action in
+                atalhoAction = action
+                withoutAnimation { showAtalhos = false }
+            }
+            .presentationBackground(.clear)
+        }
+        .onAppear {
+            refresh()
+            // `-debugScreen atalhos` (prints): abre o painel em cima da capa.
+            if DebugFlags.string("debugScreen") == "atalhos", !showAtalhos { openAtalhos() }
+        }
         .task { await clock() }
         .task(id: locationCell) { await resolveCurrentArea() }
         .task(id: state.areaId) {
@@ -102,8 +118,50 @@ struct HomeView: View {
     }
 
     private func go(_ swipe: CapaSwipe) {
-        guard let route = CapaSwipe.route(for: swipe, now: AppClock.now, region: region) else { return }
-        router.push(route, on: .hoje)
+        switch CapaSwipe.action(for: swipe, now: AppClock.now, region: region) {
+        case .atalhos: openAtalhos()
+        case .route(let route): router.push(route, on: .hoje)
+        case nil: break
+        }
+    }
+
+    // MARK: Atalhos (prompt 25 · D)
+
+    /// O painel anima sozinho (entra pela direita); a apresentação em si não tem animação (abre na hora).
+    private func openAtalhos() {
+        atalhoAction = nil
+        withoutAnimation { showAtalhos = true }
+    }
+
+    private func withoutAnimation(_ body: () -> Void) {
+        var t = Transaction()
+        t.disablesAnimations = true
+        withTransaction(t, body)
+    }
+
+    private func runAtalhoAction() {
+        guard let action = atalhoAction else { return }
+        atalhoAction = nil
+        switch action {
+        case .route(let route): router.push(route, on: .hoje)
+        case .sheet(let sheet): router.sheet = sheet
+        case .selectTab(let tab): router.select(tab)
+        case .url(let url): openURL(url)
+        }
+    }
+
+    /// Alça na borda direita da capa: o "toque no canto" que abre os Atalhos sem deslizar.
+    private var atalhosHandle: some View {
+        Button(action: openAtalhos) {
+            Capsule()
+                .fill(ink.opacity(0.35))
+                .frame(width: 5, height: 46)
+                .frame(width: 28, height: 96)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Atalhos")
+        .accessibilityHint("Suica, ingressos, mapa offline, SOS e linhas perto")
     }
 
     private func openAgora(_ content: CapaContent) {

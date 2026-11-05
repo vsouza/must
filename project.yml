@@ -50,6 +50,8 @@ targets:
         buildPhase: resources
       - path: data/hospitals.json
         buildPhase: resources
+      - path: data/brand-stores.json
+        buildPhase: resources
       - path: Must/Data/checklists/intl-japan.json
         buildPhase: resources
       - path: Must/Data/checklists/domestic-br.json
@@ -111,6 +113,8 @@ targets:
           UIApplicationSupportsMultipleScenes: false
         NSLocationWhenInUseUsageDescription: Pra mostrar o que está aberto perto de você
         NSCameraUsageDescription: Pra ler o QR e o código do ingresso
+        NSSpeechRecognitionUsageDescription: Pra entender o que você fala no Quero… (no aparelho quando o iPhone permite)
+        NSMicrophoneUsageDescription: Pra você falar o que quer no Quero… em vez de digitar
         NSSupportsLiveActivities: true
         MLNIdeographicFontFamilyName: Hiragino Sans
         UIAppFonts:

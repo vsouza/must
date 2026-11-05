@@ -43,6 +43,10 @@
 	<string>Pra ler o QR e o código do ingresso</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Pra mostrar o que está aberto perto de você</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Pra você falar o que quer no Quero… em vez de digitar</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Pra entender o que você fala no Quero… (no aparelho quando o iPhone permite)</string>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
 	<key>UIAppFonts</key>

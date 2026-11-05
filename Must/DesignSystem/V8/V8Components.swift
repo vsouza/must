@@ -106,11 +106,17 @@ struct V8NavBar: View {
     var active: MustTab
     var onSelect: (MustTab) -> Void
     var onPlus: () -> Void
+    /// Toque longo no `+` (prompt 25: o toque abre o Quero…, o longo monta o dia). `nil` = sem toque longo.
+    var onPlusHold: (() -> Void)?
+    /// O toque longo já disparou: o "soltar" que vem depois não abre o toque simples.
+    @State private var held = false
 
-    init(active: MustTab, onSelect: @escaping (MustTab) -> Void = { _ in }, onPlus: @escaping () -> Void = {}) {
+    init(active: MustTab, onSelect: @escaping (MustTab) -> Void = { _ in }, onPlus: @escaping () -> Void = {},
+         onPlusHold: (() -> Void)? = nil) {
         self.active = active
         self.onSelect = onSelect
         self.onPlus = onPlus
+        self.onPlusHold = onPlusHold
     }
 
     var body: some View {
@@ -137,7 +143,9 @@ struct V8NavBar: View {
                 .accessibilityLabel(tab.title)
                 .accessibilityAddTraits(on ? .isSelected : [])
             }
-            Button(action: onPlus) {
+            Button {
+                if held { held = false } else { onPlus() }
+            } label: {
                 V8Glyph(.plus)
                     .frame(width: 20, height: 20)
                     .foregroundStyle(V8.ink)
@@ -146,8 +154,18 @@ struct V8NavBar: View {
                     .contentShape(Circle())
             }
             .buttonStyle(MustPressStyle())
-            .accessibilityLabel("Adicionar")
-            .accessibilityHint("Montar o dia")
+            .simultaneousGesture(LongPressGesture(minimumDuration: 0.45).onEnded { _ in
+                held = true
+                onPlusHold?()
+                // Se o soltar não chegar como toque (arrastou pra fora), o próximo toque vale normal.
+                Task { @MainActor in
+                    try? await Task.sleep(for: .seconds(1))
+                    held = false
+                }
+            }, isEnabled: onPlusHold != nil)
+            .accessibilityLabel(onPlusHold == nil ? "Adicionar" : "Quero…")
+            .accessibilityHint(onPlusHold == nil ? "Montar o dia" : "o que você quer agora; toque longo monta o dia")
+            .accessibilityAction(named: "Montar o dia") { onPlusHold?() }
         }
         .padding(6)
         .frame(height: 66)
