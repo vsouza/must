@@ -144,16 +144,16 @@ private struct SettingsSections: View {
             Text("Por dia, em \(region.currencySymbol). Reservas aceitas ficam fora.")
         }
         .alert("Câmbio", isPresented: $editingFX) {
-            TextField("R$ por ¥100", text: $fxText).keyboardType(.decimalPad)
+            TextField("R$ por \(region.fxUnitLabel)", text: $fxText).keyboardType(.decimalPad)
             Button("Salvar") {
                 if let v = Self.parse(fxText), v > 0 {
-                    settings.fxRate = v / 100
+                    settings.fxRate = v / region.fxUnit
                     settings.fxDate = AppClock.now
                 }
             }
             Button("Cancelar", role: .cancel) {}
         } message: {
-            Text("Quantos reais valem ¥100 hoje?")
+            Text("Quantos reais valem \(region.fxUnitLabel) hoje?")
         }
     }
 
@@ -309,14 +309,14 @@ private struct SettingsSections: View {
             }
             .toggleStyle(.must)
             RowDivider()
-            if region == .jp {
+            if region.hasFX {
                 Button {
-                    fxText = (settings.fxRate * 100).formatted(.number.locale(region.locale).precision(.fractionLength(2)))
+                    fxText = (settings.fxRate * region.fxUnit).formatted(.number.locale(region.locale).precision(.fractionLength(2)))
                     editingFX = true
                 } label: {
                     FormRow("Moeda", subtitle: settings.fxDate.map { "câmbio salvo \(region.shortDay($0))" }
                             ?? "câmbio padrão · toque pra atualizar") {
-                        MonoValue("¥100 = \((settings.fxRate * 100).formatted(.money("BRL")))", chevron: true)
+                        MonoValue("\(region.fxUnitLabel) = \((settings.fxRate * region.fxUnit).formatted(.money("BRL")))", chevron: true)
                     }
                 }
                 .buttonStyle(.plain)

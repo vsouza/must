@@ -89,7 +89,7 @@ struct MapTilesAreaTests {
 
     @Test func catalogLoadsFromBundle() {
         let ids = MapPack.catalog.map(\.id)
-        #expect(ids.count == 9)
+        #expect(ids.count == 10) // + it-roma (prompt 24, v8/E)
         #expect(Set(ids).count == ids.count)
         for pack in MapPack.catalog {
             #expect(pack.bbox.count == 4 && pack.bbox[0] < pack.bbox[2] && pack.bbox[1] < pack.bbox[3], "\(pack.id)")

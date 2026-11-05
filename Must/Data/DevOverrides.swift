@@ -86,6 +86,9 @@ enum DevOverrides {
         ("Naka-Meguro", CLLocationCoordinate2D(latitude: 35.6442, longitude: 139.6985)),
         ("Shibuya", CLLocationCoordinate2D(latitude: 35.6580, longitude: 139.7016)),
         ("Kyoto", CLLocationCoordinate2D(latitude: 35.0037, longitude: 135.7788)),
+        ("Monti", CLLocationCoordinate2D(latitude: 41.8945, longitude: 12.4925)),
+        ("Trastevere", CLLocationCoordinate2D(latitude: 41.8890, longitude: 12.4700)),
+        ("Vaticano", CLLocationCoordinate2D(latitude: 41.9035, longitude: 12.4540)),
     ]
 }
 

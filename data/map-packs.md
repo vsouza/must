@@ -17,3 +17,19 @@ Application Support/tiles (fora do backup do iCloud). O mapa usa o arquivo da á
 2. sem arquivo, o mesmo PMTiles lido do R2 pela internet (range requests);
 3. sem `MAP_TILES_URL`, o Protomaps hospedado (`PROTOMAPS_KEY`);
 4. sem nada, só o fundo e as camadas do app (metrô, rota, pinos).
+
+## Roma (`it-roma`, prompt 24)
+
+O recorte `it-roma` (bbox `12.40, 41.83, 12.56, 41.95`: centro, Vaticano, Appia e Ostiense) já está no catálogo e o app
+mostra a seção "Itália" em Ajustes › Mapas offline. O arquivo **ainda não foi gerado nem subido** (download grande e
+upload pro R2 são decisão do Vinicius). Pra publicar:
+
+```sh
+scripts/tiles.sh "" it-roma        # build mais recente; ou scripts/tiles.sh 20270301 it-roma
+scripts/tiles-upload.sh it-roma    # sobe it-roma.pmtiles e o manifest.json atualizado
+```
+
+O `tiles.sh` reescreve o `manifest.json` com os `.pmtiles` de `dist/tiles/` e mantém as linhas do manifest anterior
+pras cidades que não foram recortadas agora. Numa máquina sem o `dist/tiles/manifest.json` de antes, baixe o atual
+primeiro (`curl -s $MAP_TILES_URL/manifest.json -o dist/tiles/manifest.json`), senão o manifest novo só terá Roma. Até subir,
+Roma usa o PMTiles hospedado (`PROTOMAPS_KEY`) ou só o fundo, como qualquer cidade sem arquivo.

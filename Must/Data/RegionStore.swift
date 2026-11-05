@@ -11,7 +11,7 @@ import SwiftUI
 @Observable
 final class RegionStore {
     static let regionKey = "region"
-    /// Região pelo GPS (padrão). Escolher BH ou Japão à mão desliga.
+    /// Região pelo GPS (padrão). Escolher BH, Japão ou Itália à mão desliga.
     nonisolated static let autoKey = "region.auto"
 
     private(set) var region: Region
@@ -23,7 +23,7 @@ final class RegionStore {
 
     /// Containers que já saíram (troca de região, zerar). Ficam vivos até o app fechar: a árvore velha ainda roda
     /// por um instante (animação da troca, `didSave` do board novo, tarefas em voo) e ler `context.container` de um
-    /// container solto derruba o app no SwiftData. Duas regiões: no máximo uns poucos containers, pouca memória.
+    /// container solto derruba o app no SwiftData. Três regiões: no máximo uns poucos containers, pouca memória.
     @ObservationIgnored private var retired: [ModelContainer] = []
     @ObservationIgnored private let directory: URL
     @ObservationIgnored private let defaults: UserDefaults
@@ -45,7 +45,7 @@ final class RegionStore {
     /// Tema da viagem da região (bandeira, lavado, selos). `MustApp` injeta no ambiente, fora da `.id`.
     var theme: TripTheme { TripTheme.forRegion(region) }
 
-    /// Automático: abre na região onde o GPS está (BH no Brasil, Japão lá).
+    /// Automático: abre na região onde o GPS está (BH no Brasil, Japão lá, Roma na Itália).
     var isAuto: Bool { Self.readAuto(defaults) }
 
     /// Sem valor = automático. `bool(forKey:)` entende o Bool gravado e o "NO"/"YES" do argumento de lançamento
@@ -64,7 +64,7 @@ final class RegionStore {
         }
     }
 
-    /// No automático, troca pra região do GPS (sem GPS ou fora das duas, fica como está).
+    /// No automático, troca pra região do GPS (sem GPS ou fora das três, fica como está).
     func followGPS(_ coordinate: CLLocationCoordinate2D) {
         guard isAuto, let detected = Region.detect(coordinate), detected != region else { return }
         Log.data.info("GPS em \(detected.rawValue, privacy: .public): abrindo essa região")
@@ -147,7 +147,7 @@ final class RegionStore {
     /// Container vazio → importa `seed-<região>.json` do bundle.
     static func seedIfEmpty(_ context: ModelContext, region: Region, bundle: Bundle) throws {
         let count = try context.fetchCount(FetchDescriptor<MustList>())
-        _ = context.settings(for: region)
+        applyRegionDefaults(context.settings(for: region), region: region)
         guard count == 0 else {
             try BoardCodec(context: context, region: region).migrateFlightEvents()
             try mergeSeed(context, region: region, bundle: bundle)
@@ -168,6 +168,15 @@ final class RegionStore {
         WalletStarter.ensure(context, region: region)
         try context.save()
         Log.data.info("seed \(region.rawValue, privacy: .public): \(summary.description, privacy: .public)")
+    }
+
+    /// `Settings(region:)` só conhece o câmbio do iene; a Itália começa com o câmbio de referência do euro.
+    /// Só enquanto o usuário não salvou um câmbio dele (`fxDate == nil`) e o valor ainda é o 1 do construtor.
+    // TODO(v8:E): `Settings.init` (Must/Models) poderia usar `region.defaultFXRate` direto; aí isto some.
+    static func applyRegionDefaults(_ settings: Settings, region: Region) {
+        if region.hasFX, settings.fxDate == nil, settings.fxRate == 1, region.defaultFXRate != 1 {
+            settings.fxRate = region.defaultFXRate
+        }
     }
 
     /// O que ainda está igual ao seed antigo acompanha o novo (prompt 13): "see" violeta com museus vira
