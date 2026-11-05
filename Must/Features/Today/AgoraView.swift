@@ -41,7 +41,10 @@ struct AgoraContent: Equatable {
         // Meta: o resto do rótulo ("tsukemen"), a nota sem o "Must eat" e o fim da parada.
         let labelParts = current.label.components(separatedBy: " · ").dropFirst()
         let noteParts = current.note.components(separatedBy: " · ").filter { !$0.lowercased().hasPrefix("must ") }
-        let meta = (Array(labelParts) + noteParts + ["até \(region.timeString(current.end))"]).joined(separator: " · ")
+        // "até" some quando a parada acaba bem antes do "saia às" (tempo livre até a próxima): dizia "até 16:30" com
+        // "saia às 17:05" na mesma tela. Até 10 min de folga, fica.
+        let until = dayNow.leaveAt.timeIntervalSince(current.end) <= 600 ? ["até \(region.timeString(current.end))"] : []
+        let meta = (Array(labelParts) + noteParts + until).joined(separator: " · ")
 
         let k = plan.position(of: current) ?? 1
         let idx = k - 1
