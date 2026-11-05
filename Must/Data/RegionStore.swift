@@ -21,6 +21,10 @@ final class RegionStore {
     /// Muda a cada container novo (troca de região ou zerar) — o root usa na `.id`.
     private(set) var generation = 0
 
+    /// Containers que já saíram (troca de região, zerar). Ficam vivos até o app fechar: a árvore velha ainda roda
+    /// por um instante (animação da troca, `didSave` do board novo, tarefas em voo) e ler `context.container` de um
+    /// container solto derruba o app no SwiftData. Duas regiões: no máximo uns poucos containers, pouca memória.
+    @ObservationIgnored private var retired: [ModelContainer] = []
     @ObservationIgnored private let directory: URL
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private let seedBundle: Bundle
@@ -72,6 +76,7 @@ final class RegionStore {
         Log.data.info("trocando região \(self.region.rawValue, privacy: .public) → \(newRegion.rawValue, privacy: .public)")
         defaults.set(newRegion.rawValue, forKey: Self.regionKey)
         let (container, error) = Self.openContainer(for: newRegion, in: directory, seedBundle: seedBundle)
+        retire(self.container)
         // 0,4 s: o tema (lavado, bandeira, selos) troca junto com a região (prompt 20).
         withAnimation(.easeInOut(duration: 0.4)) {
             self.container = container
@@ -84,8 +89,11 @@ final class RegionStore {
     /// Apaga o `.store` desta região e reimporta o seed. As outras regiões ficam intactas.
     func resetBoard() {
         Log.data.notice("zerando board \(self.region.rawValue, privacy: .public)")
-        // Solta o container atual antes de apagar os arquivos.
+        // Tira o container atual de uso antes de apagar os arquivos (ele fica vivo em `retired`: a árvore que sai
+        // ainda pode ler o contexto dele).
+        retire(container)
         container = Self.inMemoryContainer()
+        retire(container)
         let base = directory.appending(path: region.storeFileName)
         for suffix in ["", "-shm", "-wal"] {
             try? FileManager.default.removeItem(at: URL(filePath: base.path() + suffix))
@@ -96,6 +104,14 @@ final class RegionStore {
         self.lastError = error
         generation += 1
     }
+
+    private func retire(_ old: ModelContainer) {
+        guard !retired.contains(where: { $0 === old }) else { return }
+        retired.append(old)
+    }
+
+    /// Quantos containers estão guardados (teste).
+    var retiredCount: Int { retired.count }
 
     // MARK: Onboarding
 

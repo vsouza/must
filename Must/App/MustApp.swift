@@ -13,7 +13,7 @@ struct MustApp: App {
 
     var body: some Scene {
         WindowGroup {
-            AppRoot()
+            AppRoot(generation: regionStore.generation)
                 // Trocar região (ou zerar) recria a árvore inteira com o container novo.
                 .id("\(regionStore.region.rawValue)-\(regionStore.generation)")
                 .modelContainer(regionStore.container)
@@ -32,6 +32,11 @@ struct AppRoot: View {
     @Environment(Services.self) private var services
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.modelContext) private var context
+
+    /// Geração do container desta árvore. Depois de uma troca (região, zerar), a árvore velha ainda recebe eventos
+    /// por um instante (o `didSave` do board novo, a animação): `isCurrent` falso = não mexe em nada.
+    let generation: Int
+    private var isCurrent: Bool { store.generation == generation }
 
     @State private var router = AppRouter()
     @State private var showOnboarding = false
@@ -67,6 +72,7 @@ struct AppRoot: View {
             .task(id: store.region) { await prefetchAtSevenLoop() }
             // Widgets e Live Activity acompanham qualquer gravação (dia aceito, 済, troca, gasto).
             .onReceive(NotificationCenter.default.publisher(for: ModelContext.didSave)) { _ in
+                guard isCurrent else { return }
                 refreshOutsideSoon()
             }
             .onChange(of: scenePhase, initial: true) { _, phase in
@@ -97,6 +103,7 @@ struct AppRoot: View {
     /// região trocar nesse meio (GPS na primeira abertura no Japão), esta árvore já saiu. Ler o `context` dela
     /// depois disso derruba o app (SwiftData), então o trabalho leva o contexto e o container daqui.
     private func requestSync() {
+        guard isCurrent else { return }
         let tree = Tree(context: context, container: context.container, region: store.region, generation: store.generation)
         syncGate.request { await syncThenRefresh(tree) }
     }
@@ -125,6 +132,7 @@ struct AppRoot: View {
 
     /// Hoje e amanhã que ainda não estão salvos offline. A política (Wi-Fi, fora do Pouco Dados) decide se roda.
     private func runPrefetchPending() {
+        guard isCurrent else { return }
         let region = store.region
         let network = services.connectivity.prefetchNetwork
         let context = context
@@ -152,6 +160,7 @@ struct AppRoot: View {
 
     /// Junta várias gravações seguidas numa atualização só.
     private func refreshOutsideSoon() {
+        guard isCurrent else { return }
         outsideTask?.cancel()
         let region = store.region
         let generation = store.generation
@@ -172,7 +181,7 @@ struct AppRoot: View {
     /// Avisos do guia do dia aceito (prompt 18 · C.17): recalcula sem esperar a próxima gravação. Nunca pede permissão.
     private func refreshGuide() {
         // No host de testes o app não toca na Central de Notificações (a suíte usa um fake).
-        guard !DebugFlags.isTestHost else { return }
+        guard !DebugFlags.isTestHost, isCurrent else { return }
         let region = store.region
         let context = context
         let container = context.container
