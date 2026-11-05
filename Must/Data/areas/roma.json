@@ -1,0 +1,105 @@
+{
+  "version": 1,
+  "region": "it",
+  "cityId": "roma",
+  "note": "Bairros de Roma (prompt 24): sigla + nome latino. Centroides e tempos aproximados (a pé a 80 m/min, metrô e tram de dia). Os seis tempos do prompt (Centro↔Ghetto 6′, Ghetto↔Trastevere 8′, Monti↔Centro 12′, Prati↔Vaticano 8′, Testaccio↔Aventino 10′, Esquilino↔Monti 8′) são fixos; os outros são estimados e simétricos. Cores de Metro A/B e tram aproximadas (conferir no mapa da ATAC); cinza = ônibus.",
+  "areas": [
+    {"id": "centro-storico", "name": "Centro Storico", "cityId": "roma", "centroid": {"lat": 41.8985, "lng": 12.474}, "stationIds": ["bus-largo-argentina"], "aliases": ["Centro", "Pantheon", "Piazza Navona", "Navona", "Campo de' Fiori", "Campo de Fiori", "Fontana di Trevi", "Trevi"], "stampCode": "CEN", "stampText": "CEN", "stampSub": "ROMA · 753 a.C.",
+     "neighbors": [
+       {"areaId": "ghetto", "minutes": 6, "mode": "walk"},
+       {"areaId": "campo-marzio", "minutes": 10, "mode": "walk"},
+       {"areaId": "trastevere", "minutes": 10, "mode": "train", "line": {"code": "T8", "name": "Tram 8", "color": "#B5121B"}},
+       {"areaId": "monti", "minutes": 12, "mode": "walk"},
+       {"areaId": "prati", "minutes": 15, "mode": "walk"},
+       {"areaId": "esquilino", "minutes": 15, "mode": "bus", "line": {"code": "BUS", "name": "ônibus", "color": "#7A7F87"}}
+     ]},
+    {"id": "trastevere", "name": "Trastevere", "cityId": "roma", "centroid": {"lat": 41.889, "lng": 12.47}, "stationIds": ["t8-belli"], "aliases": ["Gianicolo", "Janiculum", "San Calisto"], "stampCode": "TRA", "stampText": "TRA", "stampSub": "ROMA · 753 a.C.",
+     "neighbors": [
+       {"areaId": "ghetto", "minutes": 8, "mode": "walk"},
+       {"areaId": "centro-storico", "minutes": 10, "mode": "train", "line": {"code": "T8", "name": "Tram 8", "color": "#B5121B"}},
+       {"areaId": "monteverde", "minutes": 12, "mode": "train", "line": {"code": "T8", "name": "Tram 8", "color": "#B5121B"}},
+       {"areaId": "testaccio", "minutes": 15, "mode": "walk"},
+       {"areaId": "vaticano", "minutes": 20, "mode": "walk"}
+     ]},
+    {"id": "monti", "name": "Monti", "cityId": "roma", "centroid": {"lat": 41.8945, "lng": 12.4925}, "stationIds": ["mb-cavour", "mb-colosseo"], "aliases": ["Rione Monti", "Colosseo", "Fori Imperiali", "Foro Romano"], "stampCode": "MON", "stampText": "MON", "stampSub": "ROMA · 753 a.C.",
+     "neighbors": [
+       {"areaId": "esquilino", "minutes": 8, "mode": "walk"},
+       {"areaId": "aventino", "minutes": 8, "mode": "train", "line": {"code": "MB", "name": "Metro B", "color": "#0067B1"}},
+       {"areaId": "centro-storico", "minutes": 12, "mode": "walk"},
+       {"areaId": "ghetto", "minutes": 14, "mode": "walk"},
+       {"areaId": "appia", "minutes": 25, "mode": "bus", "line": {"code": "118", "name": "ônibus 118", "color": "#7A7F87"}}
+     ]},
+    {"id": "prati", "name": "Prati", "cityId": "roma", "centroid": {"lat": 41.905, "lng": 12.4625}, "stationIds": ["ma-lepanto", "ma-ottaviano"], "aliases": ["Castel Sant'Angelo", "Borgo"], "stampCode": "PRA", "stampText": "PRA", "stampSub": "ROMA · 753 a.C.",
+     "neighbors": [
+       {"areaId": "vaticano", "minutes": 8, "mode": "walk"},
+       {"areaId": "campo-marzio", "minutes": 8, "mode": "train", "line": {"code": "MA", "name": "Metro A", "color": "#F7941D"}},
+       {"areaId": "flaminio", "minutes": 14, "mode": "train", "line": {"code": "MA", "name": "Metro A", "color": "#F7941D"}},
+       {"areaId": "centro-storico", "minutes": 15, "mode": "walk"}
+     ]},
+    {"id": "vaticano", "name": "Vaticano", "cityId": "roma", "centroid": {"lat": 41.9035, "lng": 12.454}, "stationIds": ["ma-cipro", "ma-ottaviano"], "aliases": ["Vatican", "San Pietro", "Città del Vaticano", "Borgo Pio"], "stampCode": "VAT", "stampText": "VAT", "stampSub": "ROMA · 753 a.C.",
+     "neighbors": [
+       {"areaId": "prati", "minutes": 8, "mode": "walk"},
+       {"areaId": "trastevere", "minutes": 20, "mode": "walk"}
+     ]},
+    {"id": "testaccio", "name": "Testaccio", "cityId": "roma", "centroid": {"lat": 41.8775, "lng": 12.476}, "stationIds": ["mb-piramide"], "aliases": ["Piramide"], "stampCode": "TES", "stampText": "TES", "stampSub": "ROMA · 753 a.C.",
+     "neighbors": [
+       {"areaId": "ostiense", "minutes": 6, "mode": "train", "line": {"code": "MB", "name": "Metro B", "color": "#0067B1"}},
+       {"areaId": "aventino", "minutes": 10, "mode": "walk"},
+       {"areaId": "trastevere", "minutes": 15, "mode": "walk"}
+     ]},
+    {"id": "ghetto", "name": "Ghetto", "cityId": "roma", "centroid": {"lat": 41.8927, "lng": 12.4772}, "stationIds": ["t8-arenula"], "aliases": ["Ghetto Ebraico", "Jewish Ghetto", "Portico d'Ottavia"], "stampCode": "GHE", "stampText": "GHE", "stampSub": "ROMA · 753 a.C.",
+     "neighbors": [
+       {"areaId": "centro-storico", "minutes": 6, "mode": "walk"},
+       {"areaId": "trastevere", "minutes": 8, "mode": "walk"},
+       {"areaId": "aventino", "minutes": 10, "mode": "walk"},
+       {"areaId": "monti", "minutes": 14, "mode": "walk"}
+     ]},
+    {"id": "campo-marzio", "name": "Campo Marzio", "cityId": "roma", "centroid": {"lat": 41.907, "lng": 12.4795}, "stationIds": ["ma-spagna"], "aliases": ["Spagna", "Piazza di Spagna", "Tridente", "Piazza del Popolo", "Via Margutta"], "stampCode": "CMA", "stampText": "CMA", "stampSub": "ROMA · 753 a.C.",
+     "neighbors": [
+       {"areaId": "prati", "minutes": 8, "mode": "train", "line": {"code": "MA", "name": "Metro A", "color": "#F7941D"}},
+       {"areaId": "centro-storico", "minutes": 10, "mode": "walk"},
+       {"areaId": "villa-borghese", "minutes": 10, "mode": "walk"},
+       {"areaId": "esquilino", "minutes": 10, "mode": "train", "line": {"code": "MA", "name": "Metro A", "color": "#F7941D"}},
+       {"areaId": "flaminio", "minutes": 12, "mode": "train", "line": {"code": "T2", "name": "Tram 2", "color": "#B5121B"}}
+     ]},
+    {"id": "aventino", "name": "Aventino", "cityId": "roma", "centroid": {"lat": 41.884, "lng": 12.4795}, "stationIds": ["mb-circo-massimo"], "aliases": ["Circo Massimo", "Bocca della Verità", "Giardino degli Aranci"], "stampCode": "AVE", "stampText": "AVE", "stampSub": "ROMA · 753 a.C.",
+     "neighbors": [
+       {"areaId": "monti", "minutes": 8, "mode": "train", "line": {"code": "MB", "name": "Metro B", "color": "#0067B1"}},
+       {"areaId": "testaccio", "minutes": 10, "mode": "walk"},
+       {"areaId": "ghetto", "minutes": 10, "mode": "walk"},
+       {"areaId": "appia", "minutes": 20, "mode": "bus", "line": {"code": "118", "name": "ônibus 118", "color": "#7A7F87"}}
+     ]},
+    {"id": "esquilino", "name": "Esquilino", "cityId": "roma", "centroid": {"lat": 41.8975, "lng": 12.501}, "stationIds": ["ma-vittorio-emanuele", "ma-termini", "mb-termini"], "aliases": ["Termini", "Piazza Vittorio", "Santa Maria Maggiore"], "stampCode": "ESQ", "stampText": "ESQ", "stampSub": "ROMA · 753 a.C.",
+     "neighbors": [
+       {"areaId": "monti", "minutes": 8, "mode": "walk"},
+       {"areaId": "campo-marzio", "minutes": 10, "mode": "train", "line": {"code": "MA", "name": "Metro A", "color": "#F7941D"}},
+       {"areaId": "centro-storico", "minutes": 15, "mode": "bus", "line": {"code": "BUS", "name": "ônibus", "color": "#7A7F87"}}
+     ]},
+    {"id": "flaminio", "name": "Flaminio", "cityId": "roma", "centroid": {"lat": 41.928, "lng": 12.47}, "stationIds": ["ma-flaminio", "t2-apollodoro"], "aliases": ["Foro Italico", "Stadio Olimpico", "MAXXI", "Auditorium", "Parioli"], "stampCode": "FLA", "stampText": "FLA", "stampSub": "ROMA · 753 a.C.",
+     "neighbors": [
+       {"areaId": "campo-marzio", "minutes": 12, "mode": "train", "line": {"code": "T2", "name": "Tram 2", "color": "#B5121B"}},
+       {"areaId": "prati", "minutes": 14, "mode": "train", "line": {"code": "MA", "name": "Metro A", "color": "#F7941D"}},
+       {"areaId": "villa-borghese", "minutes": 15, "mode": "walk"}
+     ]},
+    {"id": "ostiense", "name": "Ostiense", "cityId": "roma", "centroid": {"lat": 41.87, "lng": 12.4815}, "stationIds": ["mb-garbatella"], "aliases": ["Garbatella", "Centrale Montemartini"], "stampCode": "OST", "stampText": "OST", "stampSub": "ROMA · 753 a.C.",
+     "neighbors": [
+       {"areaId": "testaccio", "minutes": 6, "mode": "train", "line": {"code": "MB", "name": "Metro B", "color": "#0067B1"}},
+       {"areaId": "appia", "minutes": 20, "mode": "bus", "line": {"code": "BUS", "name": "ônibus", "color": "#7A7F87"}}
+     ]},
+    {"id": "appia", "name": "Appia", "cityId": "roma", "centroid": {"lat": 41.856, "lng": 12.515}, "stationIds": ["bus-appia-antica"], "aliases": ["Appia Antica", "Via Appia", "Via Appia Antica", "Caffarella", "Catacombe"], "stampCode": "APP", "stampText": "APP", "stampSub": "ROMA · 753 a.C.",
+     "neighbors": [
+       {"areaId": "aventino", "minutes": 20, "mode": "bus", "line": {"code": "118", "name": "ônibus 118", "color": "#7A7F87"}},
+       {"areaId": "ostiense", "minutes": 20, "mode": "bus", "line": {"code": "BUS", "name": "ônibus", "color": "#7A7F87"}},
+       {"areaId": "monti", "minutes": 25, "mode": "bus", "line": {"code": "118", "name": "ônibus 118", "color": "#7A7F87"}}
+     ]},
+    {"id": "villa-borghese", "name": "Villa Borghese", "cityId": "roma", "centroid": {"lat": 41.9135, "lng": 12.4875}, "stationIds": ["ma-spagna", "ma-flaminio"], "aliases": ["Borghese", "Pincio", "Galleria Borghese", "Trieste", "Coppedè", "Quartiere Coppedè"], "stampCode": "VBO", "stampText": "VBO", "stampSub": "ROMA · 753 a.C.",
+     "neighbors": [
+       {"areaId": "campo-marzio", "minutes": 10, "mode": "walk"},
+       {"areaId": "flaminio", "minutes": 15, "mode": "walk"}
+     ]},
+    {"id": "monteverde", "name": "Monteverde", "cityId": "roma", "centroid": {"lat": 41.87, "lng": 12.45}, "stationIds": ["t8-casaletto"], "aliases": ["Casaletto", "Monteverde Vecchio", "Villa Pamphili"], "stampCode": "MVE", "stampText": "MVE", "stampSub": "ROMA · 753 a.C.",
+     "neighbors": [
+       {"areaId": "trastevere", "minutes": 12, "mode": "train", "line": {"code": "T8", "name": "Tram 8", "color": "#B5121B"}}
+     ]}
+  ]
+}
