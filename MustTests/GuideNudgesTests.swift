@@ -290,3 +290,108 @@ struct GuideSchedulerTests {
         #expect(center.pending.count == 2)
     }
 }
+
+/// Avisos v8 (prompt 23 §4): bom dia 07:20, saia em 5 min pela Linha, golden, último trem (50 min antes ou 23:50),
+/// cada um desligável, no máximo um a cada 45 min.
+@MainActor
+struct GuideNudgesV8Tests {
+    private final class Token {}
+
+    private func memory() throws -> ModelContainer {
+        try ModelContainer(for: MustSchema.schema, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+    }
+
+    private func t(_ hhmm: String) -> Date { DayFixtures.time(hhmm) }
+
+    @Test func engineDayGivesMorningLeaveAndSpacedNudges() async throws {
+        let plan = await DayFixtures.build(pace: .normal)
+        let container = try memory()
+        let day = GuideNudgeScheduler.guideDay(plan, region: .jp, context: container.mainContext, origin: DayFixtures.naka)
+        let nudges = GuideNudges.plan(day, now: t("06:00"))
+        let morning = try #require(nudges.first)
+        #expect(morning.kind == .morning)
+        #expect(morning.fireAt == t("07:20"))
+        #expect(morning.title == "Bom dia — hoje é \(plan.title)")
+        #expect(morning.url == "must://bom-dia")
+        #expect(nudges.contains { $0.kind == .leave })
+        // Nunca dois a menos de 45 min.
+        let times = nudges.map(\.fireAt).sorted()
+        for (a, b) in zip(times, times.dropFirst()) { #expect(b.timeIntervalSince(a) >= 45 * 60) }
+        // "Saia em 5 min" é a hora de sair da Linha menos 5 min (fila e deslocamento já contados).
+        let leaves = Set(plan.stops.map { DayNowRules.leaveTime(to: $0, in: plan).addingTimeInterval(-5 * 60) })
+        for nudge in nudges where nudge.kind == .leave && nudge.fireAt > t("09:00") {
+            #expect(leaves.contains(nudge.fireAt), "\(nudge.title) \(Region.jp.timeString(nudge.fireAt))")
+        }
+    }
+
+    @Test func lastTrainNudgeIsFiftyMinutesBeforeTheRealOne() async throws {
+        let plan = await DayFixtures.build(pace: .intense)
+        let container = try memory()
+        let day = GuideNudgeScheduler.guideDay(plan, region: .jp, context: container.mainContext, origin: DayFixtures.naka)
+        let nudge = try #require(GuideNudges.plan(day, now: t("20:00")).first { $0.kind == .lastTrain })
+        #expect(nudge.fireAt == DayFixtures.lastTrain.at.addingTimeInterval(-50 * 60))
+        #expect(nudge.title == "Último trem em 50 min")
+        #expect(nudge.body.contains("Hibiya"))
+        // Dia que acaba cedo (normal: Udatsu até 20:45) não ganha aviso de último trem.
+        let early = await DayFixtures.build(pace: .normal)
+        let earlyDay = GuideNudgeScheduler.guideDay(early, region: .jp, context: container.mainContext, origin: DayFixtures.naka)
+        #expect(GuideNudges.plan(earlyDay, now: t("20:00")).allSatisfy { $0.kind != .lastTrain })
+    }
+
+    @Test func withoutTheRealTimeTheLastTrainNudgeIsAt2350() {
+        let tz = Region.bh.timeZone
+        let boards = BoardDates(timeZone: tz)
+        let date = boards.day(from: "2026-11-03")!
+        let late = boards.time("23:00", on: date)!
+        let day = GuideDay(date: date, dayStart: boards.time("09:30", on: date)!, timeZone: tz,
+                           origin: GuideNudgesTests.savassi, walkMaxKm: 1.5,
+                           stops: [GuideStop(placeId: "p1", name: "Bar", lat: GuideNudgesTests.centro.latitude, lng: GuideNudgesTests.centro.longitude,
+                                             start: boards.time("21:30", on: date)!, end: late, isPhoto: false, isDone: true, hours: nil)],
+                           lastTrain: nil, dayEnd: late)
+        let nudge = GuideNudges.plan(day, now: boards.time("20:00", on: date)!).first { $0.kind == .lastTrain }
+        #expect(nudge?.fireAt == boards.time("23:50", on: date)!)
+        #expect(nudge?.body == "confira o último trem pra casa")
+    }
+
+    @Test func eachNudgeCanBeTurnedOff() async throws {
+        let plan = await DayFixtures.build(pace: .intense)
+        let container = try memory()
+        var day = GuideNudgeScheduler.guideDay(plan, region: .jp, context: container.mainContext, origin: DayFixtures.naka)
+        day.enabled = [.leave]
+        let only = GuideNudges.plan(day, now: t("06:00"))
+        #expect(!only.isEmpty)
+        #expect(only.allSatisfy { $0.kind == .leave })
+        day.enabled = [.morning, .lastTrain]
+        #expect(Set(GuideNudges.plan(day, now: t("06:00")).map(\.kind)) == [.morning, .lastTrain])
+        day.enabled = []
+        #expect(GuideNudges.plan(day, now: t("06:00")).isEmpty)
+    }
+
+    @Test func settingsKeysAreOnePerKind() {
+        #expect(Set(GuideNudge.Kind.allCases.map(GuideNudgeScheduler.key)).count == GuideNudge.Kind.allCases.count)
+        #expect(GuideNudgeScheduler.key(.morning) == "guide.nudges.morning")
+    }
+
+    @Test func tomorrowsGoodMorningIsScheduledTonight() async throws {
+        let container = try memory()
+        let ctx = container.mainContext
+        try RegionStore.seedIfEmpty(ctx, region: .bh, bundle: Bundle(for: Token.self))
+        let boards = BoardDates(timeZone: Region.bh.timeZone)
+        let tomorrow = boards.day(from: "2026-11-04")!
+        let places = try ctx.fetch(FetchDescriptor<Place>()).filter { $0.lat != 0 }.sorted { $0.id < $1.id }.prefix(2)
+        let day = PlannedDay(date: tomorrow, kind: .free, budget: 200, walk: .normal, accepted: true)
+        ctx.insert(day)
+        for (i, place) in places.enumerated() {
+            let stop = Stop(place: place, at: boards.time(i == 0 ? "10:00" : "13:00", on: tomorrow)!, order: i)
+            ctx.insert(stop)
+            day.stops.append(stop)
+        }
+        let center = FakeNudgeCenter()
+        let tonight = boards.time("21:00", on: boards.day(from: "2026-11-03")!)!
+        await GuideNudgeScheduler.refresh(context: ctx, region: .bh, origin: nil, askPermission: false, enabled: true, now: tonight, center: center)
+        let morning = try #require(center.added.first { $0.kind == .morning })
+        #expect(morning.fireAt == boards.time("07:20", on: tomorrow)!)
+        #expect(morning.id.hasPrefix("guide.2026-11-04."))
+        #expect(center.added.allSatisfy { $0.kind == .morning })
+    }
+}

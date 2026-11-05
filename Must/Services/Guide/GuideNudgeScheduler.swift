@@ -68,6 +68,9 @@ struct UNNudgeCenter: NudgeScheduling {
         content.title = nudge.title
         content.body = nudge.body
         content.sound = .default
+        content.userInfo = ["placeId": nudge.placeId, "url": nudge.url ?? "must://hoje"]
+        // TODO(v8:orquestrador): tocar no aviso abre `url` (delegate do UNUserNotificationCenter → `AppRouter.handle`, com
+        // `must://bom-dia` e `must://agora` no roteador). Hoje o toque só abre o app.
         var components = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: nudge.fireAt)
         components.calendar = calendar
         components.timeZone = calendar.timeZone
@@ -83,13 +86,21 @@ enum GuideNudgeScheduler {
 
     static var isEnabled: Bool { UserDefaults.standard.object(forKey: enabledKey) as? Bool ?? true }
 
+    /// Liga/desliga de cada aviso (Ajustes › Avisos do guia). Ligados por padrão.
+    static func key(_ kind: GuideNudge.Kind) -> String { "\(enabledKey).\(kind.key)" }
+
+    static var enabledKinds: Set<GuideNudge.Kind> {
+        Set(GuideNudge.Kind.allCases.filter { UserDefaults.standard.object(forKey: key($0)) as? Bool ?? true })
+    }
+
     /// Recalcula os avisos do dia aceito de hoje e troca os `guide.*` pendentes. Sem dia aceito, ou desligado, tira os seus.
     /// `askPermission` só no aceite: a permissão é pedida ali, não em todo recálculo.
     static func refresh(context: ModelContext, region: Region, origin: CLLocationCoordinate2D?, askPermission: Bool,
-                        enabled: Bool = isEnabled, now: Date = AppClock.now, center: any NudgeScheduling = UNNudgeCenter()) async {
-        guard enabled else { await clear(center: center); return }
+                        enabled: Bool = isEnabled, kinds: Set<GuideNudge.Kind> = enabledKinds, now: Date = AppClock.now,
+                        center: any NudgeScheduling = UNNudgeCenter()) async {
+        guard enabled, !kinds.isEmpty else { await clear(center: center); return }
         let taken = await center.deliveredGuideDates()
-        let planned = day(context: context, region: region, origin: origin, now: now).map { GuideNudges.plan($0, now: now, taken: taken) } ?? []
+        let planned = plan(context: context, region: region, origin: origin, now: now, kinds: kinds, taken: taken)
         let pending = await center.pendingGuide()
         guard !planned.isEmpty else {
             center.remove(ids: pending.map(\.id))
@@ -119,43 +130,83 @@ enum GuideNudgeScheduler {
             return
         }
         let nudges = GuideNudges.plan(day, now: now)
+        Log.guide.notice("avisos: bairro \(day.areaName ?? "-", privacy: .public) · último trem \(day.lastTrain.map { GuideNudges.clock($0.at, region.timeZone) } ?? "-", privacy: .public)")
         Log.guide.notice("avisos: \(nudges.count) pro dia \(nudges.first?.id ?? "-", privacy: .public)")
         for n in nudges {
             Log.guide.notice("aviso \(GuideNudges.clock(n.fireAt, region.timeZone), privacy: .public) \(n.kind.label, privacy: .public) · \(n.title, privacy: .public) · \(n.body, privacy: .public)")
         }
     }
 
+    /// Avisos de hoje e o "Bom dia" de amanhã (07:20), se amanhã já tem dia aceito.
+    static func plan(context: ModelContext, region: Region, origin: CLLocationCoordinate2D?, now: Date,
+                     kinds: Set<GuideNudge.Kind> = Set(GuideNudge.Kind.allCases), taken: [Date] = []) -> [GuideNudge] {
+        var out: [GuideNudge] = []
+        if var today = day(context: context, region: region, origin: origin, now: now) {
+            today.enabled = kinds
+            out += GuideNudges.plan(today, now: now, taken: taken)
+        }
+        if kinds.contains(.morning), let next = region.calendar.date(byAdding: .day, value: 1, to: now),
+           var tomorrow = day(context: context, region: region, origin: nil, now: next) {
+            tomorrow.enabled = [.morning]
+            out += GuideNudges.plan(tomorrow, now: now, taken: taken + out.map(\.fireAt))
+        }
+        return out
+    }
+
     // MARK: Dia aceito → entrada pura
 
-    /// Dia aceito de hoje (no fuso da região) com as paradas, horário e origem. `nil` sem dia aceito.
+    /// Dia aceito (no fuso da região) no formato v8 (`DayEngineV8.accepted`): paradas com a hora de sair da Linha, o
+    /// bairro pro "Bom dia", o último trem. `nil` sem dia aceito.
     static func day(context: ModelContext, region: Region, origin: CLLocationCoordinate2D?, now: Date) -> GuideDay? {
         let cal = region.calendar
         let date = cal.startOfDay(for: now)
-        let planned = (try? context.fetch(FetchDescriptor<PlannedDay>(predicate: #Predicate { $0.date == date })))?.first
-        guard let planned, planned.accepted else { return nil }
+        guard let plan = DayEngineV8.accepted(on: date, region: region, context: context) else { return nil }
+        return guideDay(plan, region: region, context: context, origin: origin)
+    }
+
+    /// `DayPlan` → entrada dos avisos. Micro-parada no hotel (café, descanso) não vira "saia"; a que fica na porta da
+    /// parada seguinte fala da parada ("Saia em 5 min pro Fuunji", a água é na porta).
+    static func guideDay(_ plan: DayPlan, region: Region, context: ModelContext, origin: CLLocationCoordinate2D?) -> GuideDay {
+        let cal = region.calendar
+        let date = cal.startOfDay(for: plan.date)
         let settings = (try? context.fetch(FetchDescriptor<Settings>()))?.first
         let trip = (try? context.fetch(FetchDescriptor<TripInfo>()))?.first
+        let ids = Set(plan.stops.compactMap(\.placeId))
+        let places = Dictionary(((try? context.fetch(FetchDescriptor<Place>())) ?? []).filter { ids.contains($0.id) }.map { ($0.id, $0) },
+                                uniquingKeysWith: { first, _ in first })
         let city = trip?.city(on: date, calendar: cal)
         let center = CLLocationCoordinate2D(latitude: city?.lat ?? region.defaultCenter.latitude,
                                             longitude: city?.lng ?? region.defaultCenter.longitude)
-        // Mesma regra do DayPlanner: sai de onde está se estiver na cidade (até 40 km), senão do centro.
         var from = center
         if let origin, CLLocation(latitude: origin.latitude, longitude: origin.longitude)
             .distance(from: CLLocation(latitude: center.latitude, longitude: center.longitude)) < 40_000 {
             from = origin
         }
-        let stops: [GuideStop] = planned.orderedStops.compactMap { stop in
-            guard let place = stop.place else { return nil }
-            let duration = TimeInterval(SolverPlace(place).role.duration * 60)
-            return GuideStop(placeId: place.id, name: place.name, lat: place.lat, lng: place.lng, start: stop.at,
-                             end: stop.at.addingTimeInterval(duration), isPhoto: place.kind == .photo, isDone: stop.done,
-                             hours: place.hours)
+        var stops: [GuideStop] = []
+        for (i, s) in plan.stops.enumerated() {
+            guard s.micro != .breakfast, s.micro != .rest, let c = DayComposer.coordinate(s) else { continue }
+            let leg = plan.leg(before: s)
+            // Parada sem perna até ela (do lado da anterior): não tem "saia"; a primeira sai da origem.
+            guard leg != nil || stops.isEmpty else { continue }
+            var name = s.label, placeId = s.placeId ?? s.id
+            if s.kind == .micro, i + 1 < plan.stops.count, plan.stops[i + 1].kind != .micro, plan.leg(before: plan.stops[i + 1]) == nil {
+                name = plan.stops[i + 1].label
+                placeId = plan.stops[i + 1].placeId ?? placeId
+            }
+            let place = s.placeId.flatMap { places[$0] }
+            stops.append(GuideStop(placeId: placeId, name: name, lat: c.latitude, lng: c.longitude, start: s.start, end: s.end,
+                                   isPhoto: s.anchor == .golden || place?.kind == .photo, isDone: s.done, hours: place?.hours,
+                                   leaveAt: leg.map { _ in DayNowRules.leaveTime(to: s, in: plan) }, travelMinutes: leg?.minutes))
         }
+        let walk = (try? context.fetch(FetchDescriptor<PlannedDay>(predicate: #Predicate { $0.date == date })))?.first?.walk ?? .normal
         return GuideDay(date: date,
                         dayStart: cal.date(byAdding: .minute, value: settings?.dayStartMinutes ?? 9 * 60 + 30, to: date) ?? date,
                         timeZone: region.timeZone, origin: from,
-                        walkMaxKm: DaySolver.effectiveWalkMax(walkMaxKm: settings?.walkMaxKm ?? 1.5, walk: planned.walk),
-                        stops: stops)
+                        walkMaxKm: DaySolver.effectiveWalkMax(walkMaxKm: settings?.walkMaxKm ?? 1.5, walk: walk),
+                        stops: stops,
+                        morningAt: cal.date(byAdding: .minute, value: GuideNudges.morningMinute, to: date),
+                        areaName: plan.title.isEmpty ? nil : plan.title, stopCount: plan.stops.count,
+                        lastTrain: plan.lastTrain, dayEnd: plan.stops.last?.end)
     }
 
     /// Os pendentes já são estes? (mesmos ids, horas, títulos e textos)
@@ -181,6 +232,19 @@ extension GuideNudge.Kind {
         case .leave: "saída"
         case .golden: "golden"
         case .opens: "abre"
+        case .lastTrain: "último trem"
+        case .morning: "bom dia"
+        }
+    }
+
+    /// Sufixo da chave do liga/desliga.
+    var key: String {
+        switch self {
+        case .leave: "leave"
+        case .golden: "golden"
+        case .opens: "opens"
+        case .lastTrain: "lastTrain"
+        case .morning: "morning"
         }
     }
 }
