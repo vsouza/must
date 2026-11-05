@@ -1,0 +1,1233 @@
+{
+ "type": "FeatureCollection",
+ "name": "roma-lines",
+ "attribution": "traçado aproximado à mão (ATAC)",
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "line",
+    "id": "A",
+    "name": "Linha A",
+    "nameLatin": "Metro A · Battistini → Anagnina",
+    "operator": "ATAC",
+    "color": "#F7931D",
+    "approx": true,
+    "firstTrain": "05:30",
+    "lastTrain": "23:30"
+   },
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       12.4117,
+       41.9064
+      ],
+      [
+       12.4235,
+       41.9035
+      ],
+      [
+       12.433,
+       41.903
+      ],
+      [
+       12.443,
+       41.904
+      ],
+      [
+       12.4475,
+       41.9073
+      ],
+      [
+       12.4583,
+       41.9093
+      ],
+      [
+       12.4672,
+       41.9128
+      ],
+      [
+       12.4762,
+       41.9115
+      ],
+      [
+       12.4825,
+       41.9065
+      ],
+      [
+       12.4886,
+       41.9038
+      ],
+      [
+       12.496,
+       41.902
+      ],
+      [
+       12.5015,
+       41.9006
+      ],
+      [
+       12.5045,
+       41.895
+      ],
+      [
+       12.509,
+       41.8905
+      ],
+      [
+       12.5095,
+       41.886
+      ],
+      [
+       12.5155,
+       41.882
+      ],
+      [
+       12.5195,
+       41.8785
+      ],
+      [
+       12.525,
+       41.8745
+      ],
+      [
+       12.531,
+       41.8705
+      ],
+      [
+       12.537,
+       41.8635
+      ],
+      [
+       12.5425,
+       41.858
+      ],
+      [
+       12.552,
+       41.853
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "line",
+    "id": "B",
+    "name": "Linha B",
+    "nameLatin": "Metro B · Laurentina → Rebibbia",
+    "operator": "ATAC",
+    "color": "#0066B3",
+    "approx": true,
+    "firstTrain": "05:30",
+    "lastTrain": "23:30"
+   },
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       12.481,
+       41.827
+      ],
+      [
+       12.47,
+       41.829
+      ],
+      [
+       12.466,
+       41.833
+      ],
+      [
+       12.465,
+       41.838
+      ],
+      [
+       12.474,
+       41.849
+      ],
+      [
+       12.4785,
+       41.8555
+      ],
+      [
+       12.4855,
+       41.8605
+      ],
+      [
+       12.481,
+       41.8755
+      ],
+      [
+       12.488,
+       41.8835
+      ],
+      [
+       12.4925,
+       41.891
+      ],
+      [
+       12.4935,
+       41.8945
+      ],
+      [
+       12.5015,
+       41.9006
+      ],
+      [
+       12.5055,
+       41.905
+      ],
+      [
+       12.512,
+       41.908
+      ],
+      [
+       12.5205,
+       41.9135
+      ],
+      [
+       12.531,
+       41.9105
+      ],
+      [
+       12.542,
+       41.915
+      ],
+      [
+       12.542,
+       41.9225
+      ],
+      [
+       12.548,
+       41.9275
+      ],
+      [
+       12.556,
+       41.9305
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "line",
+    "id": "B1",
+    "name": "Linha B1",
+    "nameLatin": "Metro B1 · Bologna → Jonio",
+    "operator": "ATAC",
+    "color": "#0066B3",
+    "approx": true,
+    "firstTrain": "05:30",
+    "lastTrain": "23:30"
+   },
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       12.5205,
+       41.9135
+      ],
+      [
+       12.5205,
+       41.9195
+      ],
+      [
+       12.5225,
+       41.9265
+      ],
+      [
+       12.5265,
+       41.9355
+      ],
+      [
+       12.5275,
+       41.9435
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "line",
+    "id": "C",
+    "name": "Linha C",
+    "nameLatin": "Metro C · Colosseo → Pantano",
+    "operator": "ATAC",
+    "color": "#57B947",
+    "approx": true,
+    "firstTrain": "05:30",
+    "lastTrain": "23:30"
+   },
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       12.4925,
+       41.891
+      ],
+      [
+       12.4995,
+       41.88
+      ],
+      [
+       12.5095,
+       41.886
+      ],
+      [
+       12.5205,
+       41.882
+      ],
+      [
+       12.5285,
+       41.8885
+      ],
+      [
+       12.538,
+       41.8875
+      ],
+      [
+       12.546,
+       41.888
+      ],
+      [
+       12.556,
+       41.8855
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Battistini",
+    "lines": [
+     "A"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.4117,
+     41.9064
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Cornelia",
+    "lines": [
+     "A"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.4235,
+     41.9035
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Baldo degli Ubaldi",
+    "lines": [
+     "A"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.433,
+     41.903
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Valle Aurelia",
+    "lines": [
+     "A"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.443,
+     41.904
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Cipro",
+    "lines": [
+     "A"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.4475,
+     41.9073
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Ottaviano",
+    "lines": [
+     "A"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.4583,
+     41.9093
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Lepanto",
+    "lines": [
+     "A"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.4672,
+     41.9128
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Flaminio",
+    "lines": [
+     "A"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.4762,
+     41.9115
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Spagna",
+    "lines": [
+     "A"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.4825,
+     41.9065
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Barberini",
+    "lines": [
+     "A"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.4886,
+     41.9038
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Repubblica",
+    "lines": [
+     "A"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.496,
+     41.902
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Termini",
+    "lines": [
+     "A",
+     "B"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.5015,
+     41.9006
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Vittorio Emanuele",
+    "lines": [
+     "A"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.5045,
+     41.895
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Manzoni",
+    "lines": [
+     "A"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.509,
+     41.8905
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "San Giovanni",
+    "lines": [
+     "A",
+     "C"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.5095,
+     41.886
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Re di Roma",
+    "lines": [
+     "A"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.5155,
+     41.882
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Ponte Lungo",
+    "lines": [
+     "A"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.5195,
+     41.8785
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Furio Camillo",
+    "lines": [
+     "A"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.525,
+     41.8745
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Colli Albani",
+    "lines": [
+     "A"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.531,
+     41.8705
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Arco di Travertino",
+    "lines": [
+     "A"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.537,
+     41.8635
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Porta Furba",
+    "lines": [
+     "A"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.5425,
+     41.858
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Numidio Quadrato",
+    "lines": [
+     "A"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.552,
+     41.853
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Laurentina",
+    "lines": [
+     "B"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.481,
+     41.827
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "EUR Fermi",
+    "lines": [
+     "B"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.47,
+     41.829
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "EUR Palasport",
+    "lines": [
+     "B"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.466,
+     41.833
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "EUR Magliana",
+    "lines": [
+     "B"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.465,
+     41.838
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Marconi",
+    "lines": [
+     "B"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.474,
+     41.849
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Basilica San Paolo",
+    "lines": [
+     "B"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.4785,
+     41.8555
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Garbatella",
+    "lines": [
+     "B"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.4855,
+     41.8605
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Piramide",
+    "lines": [
+     "B"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.481,
+     41.8755
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Circo Massimo",
+    "lines": [
+     "B"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.488,
+     41.8835
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Colosseo",
+    "lines": [
+     "B",
+     "C"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.4925,
+     41.891
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Cavour",
+    "lines": [
+     "B"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.4935,
+     41.8945
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Castro Pretorio",
+    "lines": [
+     "B"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.5055,
+     41.905
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Policlinico",
+    "lines": [
+     "B"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.512,
+     41.908
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Bologna",
+    "lines": [
+     "B",
+     "B1"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.5205,
+     41.9135
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Tiburtina",
+    "lines": [
+     "B"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.531,
+     41.9105
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Quintiliani",
+    "lines": [
+     "B"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.542,
+     41.915
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Monti Tiburtini",
+    "lines": [
+     "B"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.542,
+     41.9225
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Pietralata",
+    "lines": [
+     "B"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.548,
+     41.9275
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Santa Maria del Soccorso",
+    "lines": [
+     "B"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.556,
+     41.9305
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Annibaliano",
+    "lines": [
+     "B1"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.5205,
+     41.9195
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Libia",
+    "lines": [
+     "B1"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.5225,
+     41.9265
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Conca d'Oro",
+    "lines": [
+     "B1"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.5265,
+     41.9355
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Jonio",
+    "lines": [
+     "B1"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.5275,
+     41.9435
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Porta Metronia",
+    "lines": [
+     "C"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.4995,
+     41.88
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Lodi",
+    "lines": [
+     "C"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.5205,
+     41.882
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Pigneto",
+    "lines": [
+     "C"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.5285,
+     41.8885
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Malatesta",
+    "lines": [
+     "C"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.538,
+     41.8875
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Teano",
+    "lines": [
+     "C"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.546,
+     41.888
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "kind": "station",
+    "name": "Gardenie",
+    "lines": [
+     "C"
+    ],
+    "approx": true
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.556,
+     41.8855
+    ]
+   }
+  }
+ ]
+}

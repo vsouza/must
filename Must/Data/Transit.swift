@@ -32,7 +32,7 @@ struct TransitMap: Sendable {
 }
 
 /// Lê `tokyo-lines.geojson` / `bh-lines.geojson` / `roma-lines.geojson` do bundle (uma vez por região).
-/// Roma ainda não tem o GeoJSON: o mapa fica sem as linhas (nunca as de BH).
+/// Roma: metrô A, B/B1 e C traçados à mão (`scripts/gen-transit.py`, `approx: true`).
 enum TransitLoader {
     @MainActor private static var cache: [Region: TransitMap] = [:]
 
@@ -40,7 +40,7 @@ enum TransitLoader {
         switch region {
         case .jp: "tokyo-lines"
         case .bh: "bh-lines"
-        case .it: "roma-lines" // TODO(v8:E): gerar roma-lines.geojson (Metro A/B/C + tram 8) com scripts/gen-transit.py
+        case .it: "roma-lines" // metrô A/B/B1/C aproximado (sem o tram 8)
         }
     }
 

@@ -270,7 +270,6 @@ struct SwapSheet: View {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text(p.name).mustPlace().lineLimit(1)
-                    if let local = placeLocal(p) { Text(local).font(.must.kanji(12, bold: false)).foregroundStyle(Color.must.secondary).lineLimit(1) }
                 }
                 Text(alt.note).font(.must.archivo(13)).foregroundStyle(highlighted ? MustColor.eat.text : Color.must.secondary).lineLimit(2)
                 if p.sourceKind == .instagram || p.sourceKind == .tiktok {
@@ -292,5 +291,4 @@ struct SwapSheet: View {
         }
     }
 
-    private func placeLocal(_ p: SolverPlace) -> String? { p.nameLocal }
 }

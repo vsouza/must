@@ -23,7 +23,7 @@ enum ShoppingFlightSync {
         if tf.receipts > 0 {
             out.append(ChecklistItem(id: "\(idPrefix)taxfree", phase: .airport,
                                      title: "Tax-free: \(tf.receipts) \(tf.receipts == 1 ? "recibo" : "recibos") no quiosque antes do check-in",
-                                     note: "reembolso de ¥ \(ShoppingReport.yen(tf.refund)) · com o passaporte"))
+                                     note: "reembolso de \(report.baseMoney(tf.refund)) · com o passaporte"))
         }
         if report.needsEDBV {
             out.append(ChecklistItem(id: "\(idPrefix)edbv", phase: .h72, title: "e-DBV se passar da cota",
@@ -64,8 +64,9 @@ enum ShoppingFlightSync {
     @MainActor
     static func refresh(context: ModelContext, region: Region) {
         let settings = context.settings(for: region)
-        let report = ShoppingReport(items: context.shoppingItems(), fxRate: settings.fxRate,
-                                    brlPerUSD: settings.brlPerUSD, timeZone: region.timeZone)
+        let report = ShoppingReport(items: context.shoppingItems(), fxRate: ShoppingFX.baseRate(for: region, userRate: settings.fxRate),
+                                    brlPerUSD: settings.brlPerUSD, regionCurrency: region.currency,
+                                    rules: ShoppingRules.pack(for: region), timeZone: region.timeZone)
         if apply(report, flights: context.flights()) { try? context.save() }
     }
 }
@@ -77,14 +78,14 @@ enum ShoppingPurchase {
     /// O gasto fica na moeda da região: item em outra moeda é convertido pelo câmbio e a nota guarda o valor original.
     static func sync(_ item: ShoppingItem, store: Place?, context: ModelContext, now: Date = AppClock.now,
                      regionCurrency: String = "JPY", brlPerYen: Double = ShoppingFX.brlPerYen,
-                     brlPerUSD: Double = ShoppingFX.brlPerUSD) {
+                     brlPerUSD: Double = ShoppingFX.brlPerUSD, brlPerEUR: Double = ShoppingFX.brlPerEUR) {
         if item.isBought {
             let date = item.boughtAt ?? now
             item.boughtAt = date
             let original = item.paid ?? item.estPrice
             let itemCurrency = item.currency ?? regionCurrency
             let amount = ShoppingFX.convert(original, from: itemCurrency, to: regionCurrency,
-                                            brlPerYen: brlPerYen, brlPerUSD: brlPerUSD)
+                                            brlPerYen: brlPerYen, brlPerUSD: brlPerUSD, brlPerEUR: brlPerEUR)
             let note = itemCurrency == regionCurrency ? "" : ShoppingReport.money(original, currency: itemCurrency)
             if let expense = expense(for: item, context: context) {
                 expense.amount = amount

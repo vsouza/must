@@ -553,3 +553,77 @@ iPhone: [ ] andar entre Shinjuku, Ginza e Shibuya e ver o bairro trocar (fora da
 - No simulador não há foto do Google no disco (lugares fake): as capas seguem do Commons lá. **iPhone:** rodar o lote de fotos no Wi-Fi e conferir que Musts/listas/bairros trocam pra foto dos seus lugares.
 
 **iPhone (Vinicius).** Ver `docs/checklist-viagem.md`. Além dele: abrir o app pela primeira vez no Japão (troca BH → Japão pelo GPS) e confirmar que não fecha; andar entre bairros e ver "Hoje em <bairro>" trocar; Colar texto com resposta real do ChatGPT; avisos do guia com o app fechado; Instruments (Hangs).
+
+## v8 (rodada 22, 05/11/2026)
+
+**Como rodar.**
+
+```sh
+xcodegen generate
+xcodebuild -project Must.xcodeproj -scheme Must -destination 'platform=iOS Simulator,name=Must-V8F' -derivedDataPath build/dd test
+DEVICE=Must-V8F DD=build/qa-dd ONLY=v8 scripts/qa-screens.sh build/qa-f   # ~100 prints em build/qa-f (não vão pro git)
+```
+
+O script usa fakes pras APIs pagas (Places, Nearby, AeroDataBox, tips) e, por região, monta e aceita o dia do motor às
+08:30 (`-debugScreen aceitar-dia:<bairro>` com `-dev.simDate` só naquela abertura) antes das telas: JP sáb/dom 15/11
+14:20 Shinjuku, BH sáb 07/11 14:35 Savassi, IT qui 15/04/2027 11:40 Trastevere e qua 14/04 14:00 Monti (DiaIT). Por região:
+as 20 telas do `ONLY=v8`, capa e Agora em xxxLarge, mais Linha, Lugar, Bolso e Dicas em xxxLarge e as 6 em modo avião
+(`-debugNetwork offline`). **Não edite o `qa-screens.sh` com ele rodando** (o zsh lê o arquivo aos poucos e quebra).
+
+**Conferido (print × `design/v8/screens/`).**
+
+| Tela | JP | BH | IT | Diferença que ficou |
+|---|---|---|---|---|
+| Capa (`CapaJP/BR/IT`) | ok | ok | ok | Dados do dia (paradas, gasto, "e … à noite") são os do motor sobre o seed, não os do mock; temperatura some em datas fora da previsão (Roma 2027). |
+| Capa com foto | ok | ok | ok | — |
+| Bom dia (`Manha`) | ok | ok | ok | Às 14:20 (o print não é às 07:20); "sem previsão no aparelho" quando a data simulada passa dos 16 dias do Open-Meteo. |
+| Agora | ok | ok | ok | O numeral com tracking −0,06em (igual ao CSS) encosta o "1" no "5" em "15:46" — decisão de design, não mexi. |
+| Linha do dia (`Dia`, `DiaIT`) | ok | ok | ok | Paradas e bairros saem do motor (Monti vira "Centro Storico + Monti", dia 5 em vez de 4 pelas datas placeholder). |
+| Montar / proposta | ok | ok | ok | Nenhum chip de grana fica marcado quando a meta da região (¥ 15.000) não é um dos três. Toggle é o do iOS 26. |
+| Guia | ok | ok | ok | Rótulos da faixa: paradas a poucos metros perdem o rótulo em vez de sobrepor (corrigido nesta rodada). |
+| Dicas | ok | ok | ok | — |
+| Bolso (`Utilidades`, `BolsoIT`) | ok | ok | ok | Valores em display ocupam mais altura que no design (entrelinha do SwiftUI > `.92` do CSS); a última fileira fica atrás da barra e rola. |
+| Lugar / sem foto / museu | ok | ok | ok | Museu IT sem a âncora da reserva: a Borghese é seg 12/04 e o print é qui 15/04. A foto do Commons às vezes não é do lugar (Da Enzo saiu uma garagem) — só o lote de fotos do Google resolve. |
+| Musts / Lista | ok | ok | ok | "0 abertos": os fakes do Places não têm horário. |
+| Próximos | ok | ok | ok | — |
+| Ir (`Transporte`) | ok | ok | ok | Sem rede do Routes os modos vêm da estimativa ("Metrô · 1 min" quando o lugar é perto). |
+| Boa noite (`Noite`) | ok | ok | ok | A barra de abas aparece (no PNG não): a tela não tem botão de voltar próprio, esconder a barra deixaria só o gesto. Numeral do gasto sem espaço ("€0", "¥11,3k"), como no PNG e no teste. |
+| Ajustes › Região | ok | ok | ok | — |
+
+- **Troca de região:** entre JP, BH e IT só mudam a capa (vermelho, verde, azzurro), a Boa noite e o anel do selo. Barra, botões laranja, cards tinta, Linha, Lista e Bolso são iguais nas três.
+- **€:** "€ 12,50" em todas as telas de Roma (`MoneyFormatStyle`), incluindo Linha, Lugar ("€ 30 / pessoa", "€ 1–3"), Bolso e capa. Única exceção de propósito: o numeral gigante da Boa noite.
+- **Dynamic Type xxxLarge** (capa, Agora, Linha, Lugar, Bolso, Dicas): numeral fixo e `accessibilityHidden`, nada sobreposto. Corrigido: a hora da Linha e do Bom dia virava "14:…" (agora encolhe) e o crédito da foto do Lugar quebrava em 5 linhas por cima da ficha (agora uma linha).
+- **Modo avião** (`-debugNetwork offline`): capa, Linha, Lugar, Bolso e Dicas completos com o que está no disco; Agora usa a estimativa de caminhada.
+
+**Corrigido nesta rodada (agente F).**
+- Texto: `V8Font.text` tinha `.monospacedDigit()`; no Schibsted o `tnum` também alarga vírgula, ponto e dois-pontos ("dia , numa tela só ."). Tirado; números alinhados ficam no mono. Schibsted virou a fonte padrão na raiz (`Text` sem fonte não sai mais em SF).
+- Títulos: Bricolage com `opsz` = tamanho (54) saía ~8 % mais largo que o design; agora `opsz` 96 (títulos) / 40 (seção), como o `v8.css`.
+- Capa e Agora antes da primeira parada diziam "Dia feito" / "O dia acabou": agora "Primeira · 1 de N · saia às" e "O dia começa às…". Agora não diz mais "até 16:30" com "saia às 17:05".
+- Widgets/Live Activity: Schibsted e Martian Mono (wdth 100) no lugar de Archivo/Geist; 済 virou ✓.
+- Texto invisível: letra dos pinos do mapa e contagem das bolhas de Bairros em papel sobre tinta.
+- Nada em japonês na interface: sem 済 (Home, Guia, mapa, Viagem, Luz, Importar, Gasto, lote), sem kanji nas listas/pinos/bolhas, `nameLocal` só na ficha do Lugar (saiu das linhas da Lista, Board, Proposta e lista do Mapa); campo de kanji da Nova lista removido.
+- Compras em Roma: a conta usa a moeda das regras (€) com o câmbio do euro de Ajustes; tax-free de € 70 por loja. `ShoppingEuroTests`.
+- Metrô de Roma no mapa: A, B/B1 e C traçados à mão pelas estações em `scripts/gen-transit.py` (sem rede, `approx: true`), `roma-lines.geojson`.
+- Lugar: o conteúdo some num fade antes dos botões. Guia: rótulos da faixa não sobrepõem nem ficam sob "Abrir o mapa".
+- `V8StubScreen` apagado; `TODO(v8:*)` resolvidos, menos os dois abaixo.
+
+**Ficou pendente.**
+- **Barra de status escura** sobre capa, Agora, Montar, Ir, Próximos, Bom dia e Boa noite: o app força `.preferredColorScheme(.light)` e o SwiftUI não tem estilo de barra por tela com a navigation bar escondida. Os caminhos possíveis (trocar o esquema de cor da janela por tela via `PreferenceKey`, ou um `UIHostingController` próprio na raiz com `preferredStatusBarStyle`) mexem na raiz de tudo; não fiz sem o aparelho pra conferir.
+- Tracking dos títulos: o `.disp` do CSS tem −0,03em; `Font` não carrega tracking, então só sai onde a tela pôs `.tracking`.
+- `TODO(v8:A)` no `GuiaTabView`: faixa do Guia com o mapa de verdade em tema escuro (hoje é o esquema desenhado).
+- `TODO(v8:E)` no `RegionStore`: `Settings.init` usar `region.defaultFXRate` — mexe no modelo SwiftData, fica.
+- Tram 8 de Roma não está no traçado.
+
+**Suíte.** `✔ Test run with 706 tests in 125 suites passed` (eram 701; +4 `ShoppingEuroTests`, +1 metrô de Roma). Build de aparelho (`generic/platform=iOS`, com assinatura do Personal Team, sem `CODE_SIGNING_ALLOWED=NO`): `** BUILD SUCCEEDED **`.
+
+**Só dá pra testar no iPhone.**
+- [ ] Live Activity "saia às" na tela bloqueada e na Dynamic Island: começa ao aceitar, avança com Feito, some no fim do dia.
+- [ ] Os 4 avisos locais (bom dia 07:20, saia em 5 min, golden em 20 min, último trem em 50 min) com o app fechado, no máximo um a cada 45 min; tocar abre Bom dia / Agora.
+- [ ] GPS real trocando a região (Brasil → BH, Japão, Itália) e o bairro da capa; Roma no aeroporto.
+- [ ] Fontes variáveis no aparelho (Bricolage wdth/opsz, Martian wdth 100) no app e nos widgets.
+- [ ] Barra de status sobre as telas tinta/laranja/cor do lugar (ver pendente).
+- [ ] Modo de Pouco Dados: nada de pré-download nem foto nova fora do Lugar aberto.
+- [ ] Rede real do Routes (trem/metrô entre paradas, "saia às" com o tempo de verdade) e o modo avião de verdade (`NWPathMonitor`).
+- [ ] Dynamic Type pelo Ajustes do iPhone (o simulador usou o argumento de launch).
+- [ ] Traçado do metrô de Roma por cima do mapa (é aproximado).
+- [ ] Lote de fotos do Google no Wi-Fi trocando as capas do Commons (Da Enzo e outros com foto errada).

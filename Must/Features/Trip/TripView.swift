@@ -178,7 +178,7 @@ struct TripView: View {
                 if cell.state == .today { Circle().strokeBorder(theme.tripColor, lineWidth: 2.5).padding(-4) }
             }
             .overlay(alignment: .topTrailing) {
-                if trip == nil, cell.state == .done { Text("済").font(.must.kanji(9)).foregroundStyle(Color.must.greenText).offset(x: 2, y: -2) }
+                if trip == nil, cell.state == .done { Image(systemName: "checkmark").font(.system(size: 8, weight: .bold)).foregroundStyle(Color.must.greenText).offset(x: 2, y: -2) }
             }
             .opacity(cell.state == .past ? 0.5 : 1)
             .accessibilityLabel("dia \(cell.number)")

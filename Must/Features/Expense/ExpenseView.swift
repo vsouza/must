@@ -168,7 +168,7 @@ struct ExpenseView: View {
         var parts: [String] = []
         if let detected = detectPlace(), detected.id == place.id { parts.append(detected.label) }
         if let list = place.list { parts.append(list.displayName) }
-        if place.isDone { parts.append("já tinha 済") }
+        if place.isDone { parts.append("já estava feito") }
         return parts.joined(separator: " · ")
     }
 
@@ -251,7 +251,7 @@ struct ExpenseView: View {
     private var buttonTitle: String {
         let money = region.money(amount)
         guard place != nil else { return "Registrar \(money)" }
-        return amount == 0 ? "Marcar 済 sem gasto" : "Registrar \(money) e marcar 済"
+        return amount == 0 ? "Marcar feito sem gasto" : "Registrar \(money) e marcar feito"
     }
 
     // MARK: Ações

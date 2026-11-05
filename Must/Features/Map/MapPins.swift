@@ -192,7 +192,7 @@ final class PinView: MLNAnnotationView {
             case .done:
                 setSize(28)
                 fill(PinStyle.green, stroke: nil)
-                text("済", font: PinStyle.kanji(13), color: PinStyle.greenText)
+                text("✓", font: PinStyle.mono(13, .bold), color: PinStyle.greenText)
             case .next:
                 setSize(34)
                 fill(PinStyle.ink, stroke: nil)
@@ -232,7 +232,8 @@ final class PinView: MLNAnnotationView {
         case .open:
             setSize(26)
             fill(strong, stroke: .white, width: 1.5)
-            text(kanji, font: PinStyle.kanji(12), color: UIColor(color.text))
+            // v8: `strong` é tinta; a letra vai em papel por cima (tinta sobre tinta sumia).
+            text(kanji, font: PinStyle.kanji(12), color: UIColor(V8.paper))
             let r: CGFloat = 18
             ring.path = UIBezierPath(ovalIn: CGRect(x: bounds.midX - r, y: bounds.midY - r, width: r * 2, height: r * 2)).cgPath
             ring.fillColor = UIColor.clear.cgColor

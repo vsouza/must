@@ -31,12 +31,6 @@ struct BoardRow: View {
                         .font(.must.archivo(15, .semibold))
                         .foregroundStyle(Color.must.ink)
                         .lineLimit(1)
-                    if let local = place.nameLocal, !local.isEmpty {
-                        Text(local)
-                            .font(.must.kanji(12, bold: false))
-                            .foregroundStyle(Color.must.secondary)
-                            .lineLimit(1)
-                    }
                 }
                 meta
                     .font(.must.archivo(12))

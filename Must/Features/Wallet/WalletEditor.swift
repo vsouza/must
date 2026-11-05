@@ -67,7 +67,7 @@ struct WalletEditor: View {
                 }
 
                 field("nome") { TextField("Suica", text: $name).font(.must.archivo(16, .semibold)) }
-                field("nome local (opcional)") { TextField("スイカ", text: $nameLocal).font(.must.archivo(16)) }
+                field("nome local (opcional)") { TextField("como está escrito no cartão", text: $nameLocal).font(.must.archivo(16)) }
                 field("linha de apoio (opcional)") { TextField("onde vale, de onde vem", text: $detail).font(.must.archivo(15)) }
 
                 if kind == .railPass {

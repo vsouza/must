@@ -83,6 +83,11 @@ extension CapaContent {
             let time = region.timeString(now.arriveBy ?? now.leaveAt)
             agora = Agora(title: "Agora · \(k) de \(plan.stops.count)", line: "\(DayText.head(now.current.label)) · \(verb) \(time)",
                           dayOver: false)
+        } else if let first = plan.stops.first(where: { !$0.done }), i.now < first.start, let k = plan.position(of: first) {
+            // Antes da primeira parada o motor não tem "agora" (`nil`), mas o dia não acabou: a primeira e a hora de sair.
+            let leave = DayNowRules.leaveTime(to: first, in: plan)
+            agora = Agora(title: "Primeira · \(k) de \(plan.stops.count)",
+                          line: "\(DayText.head(first.label)) · saia \(region.timeString(leave))", dayOver: false)
         } else if !plan.stops.isEmpty {
             agora = Agora(title: "Dia feito · \(plan.stops.count) paradas", line: "Boa noite", dayOver: true)
         }

@@ -327,3 +327,44 @@ struct ShoppingCurrencyTests {
         #expect(abs(report.spent - 10_000) < 0.5)
     }
 }
+
+/// Compras em Roma (rodada 22 · F): a conta é em €, não em ¥ convertido como R$.
+@MainActor
+struct ShoppingEuroTests {
+    static func report(_ items: [ShoppingItem], brlPerEUR: Double = 6.2) -> ShoppingReport {
+        ShoppingReport(items: items, fxRate: brlPerEUR, brlPerUSD: 5.5, regionCurrency: "EUR",
+                       rules: ShoppingRules.pack(for: .it), timeZone: Region.it.timeZone)
+    }
+
+    @Test func emRomaOTotalSaiEmEuroEACotaPeloCambioDoEuro() {
+        let item = ShoppingItem(name: "Pecorino", category: .food, estPrice: 100)
+        let report = Self.report([item])
+        #expect(report.baseCurrency == "EUR")
+        #expect(abs(report.regionAmount(yen: report.planned) - 100) < 0.01)
+        // € 100 × R$ 6,20 = R$ 620 ÷ 5,50 = US$ 112,7.
+        #expect(abs(report.plannedBRL - 620) < 0.01)
+        #expect(abs(report.usedUSD - 112.7) < 0.1)
+    }
+
+    @Test func taxFreeDaItaliaPedeSetentaEurosPorLoja() {
+        let below = ShoppingItem(name: "Vinho", storeName: "Enoteca", estPrice: 60, paid: 60, status: .bought,
+                                 taxFreeReceipt: true, boughtAt: ShoppingTests.day)
+        let report = Self.report([below])
+        #expect(report.taxFree.receipts == 0)
+        #expect(report.taxFree.belowMinStores == 1)
+        #expect(report.alerts.contains { $0.text.contains("€ 70") })
+    }
+
+    @Test func itemEmIeneNumaListaEmEuroConverte() {
+        // ¥ 10.000 × R$ 0,036 = R$ 360 ÷ R$ 6,20 = € 58,06.
+        let item = ShoppingItem(name: "Kit Kat", estPrice: 10_000, currency: "JPY")
+        #expect(abs(Self.report([item]).planned - 58.06) < 0.01)
+    }
+
+    @Test func cambioDoUsuarioVaiPraMoedaDaRegiao() {
+        #expect(ShoppingFX.baseRate(for: .it, userRate: 6.5) == 6.5)
+        #expect(ShoppingFX.baseRate(for: .jp, userRate: 0.04) == 0.04)
+        #expect(ShoppingFX.baseRate(for: .bh, userRate: 1) == ShoppingFX.brlPerYen)
+        #expect(ShoppingFX.convert(10, from: "EUR", to: "BRL", brlPerYen: 0.036, brlPerUSD: 5.5, brlPerEUR: 6) == 60)
+    }
+}

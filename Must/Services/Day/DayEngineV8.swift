@@ -205,7 +205,7 @@ struct DayEngineV8: DayEngine {
         let cal = region.calendar
         switch region {
         case .it:
-            // TODO(v8:E): `TransitLoader.fileName(.it)` cai no bh-lines; até ter as linhas de Roma, o metrô fixo do Bolso.
+            // O metrô de Roma tem um horário só pra cidade toda (23:30; sex/sáb 01:30): a regra do Bolso, sem procurar estação.
             return DayComposer.romeLastMetro(on: date, calendar: cal)
         case .jp, .bh:
             guard let last = LastTrains.home(region: region, near: near, transit: TransitLoader.load(region)),

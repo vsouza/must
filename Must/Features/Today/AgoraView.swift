@@ -41,7 +41,10 @@ struct AgoraContent: Equatable {
         // Meta: o resto do rótulo ("tsukemen"), a nota sem o "Must eat" e o fim da parada.
         let labelParts = current.label.components(separatedBy: " · ").dropFirst()
         let noteParts = current.note.components(separatedBy: " · ").filter { !$0.lowercased().hasPrefix("must ") }
-        let meta = (Array(labelParts) + noteParts + ["até \(region.timeString(current.end))"]).joined(separator: " · ")
+        // "até" some quando a parada acaba bem antes do "saia às" (tempo livre até a próxima): dizia "até 16:30" com
+        // "saia às 17:05" na mesma tela. Até 10 min de folga, fica.
+        let until = dayNow.leaveAt.timeIntervalSince(current.end) <= 600 ? ["até \(region.timeString(current.end))"] : []
+        let meta = (Array(labelParts) + noteParts + until).joined(separator: " · ")
 
         let k = plan.position(of: current) ?? 1
         let idx = k - 1
@@ -91,6 +94,8 @@ struct AgoraView: View {
     @State private var plan: DayPlan?
     @State private var content: AgoraContent?
     @State private var current: DayStop?
+    /// Antes da primeira parada: ela e a hora de sair pra ela.
+    @State private var upcoming: (stop: DayStop, leaveAt: Date)?
     @State private var loaded = false
 
     private var region: Region { store.region }
@@ -143,8 +148,13 @@ struct AgoraView: View {
         // "Agora" só entre as que faltam: a parada marcada como feita passa a vez pra próxima.
         let pending = effective.map { p in var p = p; p.stops = p.stops.filter { !$0.done }; return p }
         guard let effective, let pending, let dayNow = engine.now(in: pending, at: now) else {
+            // Antes da primeira parada o motor devolve `nil`: não é "o dia acabou", é "o dia começa às…".
+            upcoming = pending.flatMap { p in
+                p.stops.first.flatMap { now < $0.start ? ($0, DayNowRules.leaveTime(to: $0, in: p)) : nil }
+            }
             content = nil; current = nil; loaded = true; return
         }
+        upcoming = nil
         let place = dayNow.current.placeId.flatMap { id in places.first { $0.id == id } }
         let distance = place.flatMap { $0.distance(from: services.location.current) }
         current = dayNow.current
@@ -331,21 +341,35 @@ struct AgoraView: View {
 
     private var empty: some View {
         VStack(alignment: .leading, spacing: 14) {
-            SpecStack(lines: ["Agora · \(region.timeString(AppClock.now))", plan == nil ? "sem dia montado" : "dia feito"],
+            SpecStack(lines: ["Agora · \(region.timeString(AppClock.now))",
+                              plan == nil ? "sem dia montado" : upcoming != nil ? "antes da primeira parada" : "dia feito"],
                       color: V8.muteDark)
                 .padding(.top, 10)
             Spacer()
-            Text(plan == nil ? "Nada marcado agora." : "O dia acabou.")
-                .font(V8Font.display(40))
-                .foregroundStyle(V8.white)
-            Text(plan == nil ? "Monte o dia e o Agora mostra a hora de sair, o caminho e o que vem depois."
-                             : "Todas as paradas passaram. A Boa noite fecha o dia.")
-                .font(V8Font.text(15))
-                .foregroundStyle(V8.muteDark)
-            BigButton(title: plan == nil ? "Montar o dia" : "Boa noite", style: .orange, systemImage: "arrow.up.right") {
-                router.push(plan == nil ? .montar(date: today) : .boaNoite, on: .hoje)
+            if let upcoming {
+                Text("O dia começa às \(region.timeString(upcoming.stop.start)).")
+                    .font(V8Font.display(40))
+                    .foregroundStyle(V8.white)
+                Text("Primeira parada: \(upcoming.stop.label). Saia às \(region.timeString(upcoming.leaveAt)).")
+                    .font(V8Font.text(15))
+                    .foregroundStyle(V8.muteDark)
+                BigButton(title: "Ver o dia", style: .orange, systemImage: "arrow.up.right") {
+                    router.push(.linha(date: today), on: .hoje)
+                }
+                .padding(.top, 8)
+            } else {
+                Text(plan == nil ? "Nada marcado agora." : "O dia acabou.")
+                    .font(V8Font.display(40))
+                    .foregroundStyle(V8.white)
+                Text(plan == nil ? "Monte o dia e o Agora mostra a hora de sair, o caminho e o que vem depois."
+                                 : "Todas as paradas passaram. A Boa noite fecha o dia.")
+                    .font(V8Font.text(15))
+                    .foregroundStyle(V8.muteDark)
+                BigButton(title: plan == nil ? "Montar o dia" : "Boa noite", style: .orange, systemImage: "arrow.up.right") {
+                    router.push(plan == nil ? .montar(date: today) : .boaNoite, on: .hoje)
+                }
+                .padding(.top, 8)
             }
-            .padding(.top, 8)
             Color.clear.frame(height: 96)
         }
         .padding(.horizontal, 20)

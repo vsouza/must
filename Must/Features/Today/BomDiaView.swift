@@ -157,7 +157,8 @@ struct BomDiaView: View {
                     if let id = stop.placeId { router.push(.place(id: id), on: .hoje) }
                 } label: {
                     HStack(spacing: 12) {
-                        Text(region.timeString(stop.start)).font(V8Font.mono(13)).fontWeight(.semibold).frame(width: 56, alignment: .leading)
+                        Text(region.timeString(stop.start)).font(V8Font.mono(13, weight: .semibold))
+                            .lineLimit(1).minimumScaleFactor(0.6).frame(width: 56, alignment: .leading)
                         VStack(alignment: .leading, spacing: 1) {
                             Text(stop.label).font(V8Font.text(15, weight: .bold)).lineLimit(1)
                             Text(stop.note).font(V8Font.text(12)).opacity(0.75).lineLimit(1)

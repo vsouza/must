@@ -17,10 +17,10 @@ struct ShoppingRulesView: View {
     private var pack: ShoppingRulePack { ShoppingRules.pack(for: store.region) }
     private var settings: Settings? { settingsList.first }
 
-    /// TODO(v8:E): a conta do `ShoppingReport` (Must/Services/Shopping) é em ¥ e `ShoppingFX.brlPerUnit` não conhece EUR;
-    /// em Roma o impacto das regras de cota e álcool sai em ¥ convertido como R$ até a conta aceitar a moeda da região.
+    /// A conta na moeda das regras da região (¥ no Japão, € em Roma).
     private var report: ShoppingReport {
-        ShoppingReport(items: items, fxRate: settings?.fxRate ?? 0.036, brlPerUSD: settings?.brlPerUSD ?? 5.5,
+        ShoppingReport(items: items, fxRate: ShoppingFX.baseRate(for: store.region, userRate: settings?.fxRate),
+                       brlPerUSD: settings?.brlPerUSD ?? ShoppingFX.brlPerUSD, regionCurrency: store.region.currency,
                        rules: pack, timeZone: store.region.timeZone)
     }
 
@@ -220,7 +220,7 @@ extension ShoppingRuleSection {
 
     var title: String {
         switch self {
-        case .taxFree: "免 Tax-free no Japão · mudou em 1º nov"
+        case .taxFree: "Tax-free no Japão · mudou em 1º nov"
         case .carry: "Na mala"
         case .entering: "🇧🇷 Entrando no Brasil · Receita"
         case .food: "🌾 Comida · Vigiagro"

@@ -109,7 +109,7 @@ struct ShoppingItemEditor: View {
                 }
 
                 Toggle(isOn: $taxFree) {
-                    FormRow("Tem recibo tax-free", subtitle: "entra no reembolso da saída, se a loja/dia passar de ¥ 5.000")
+                    FormRow("Tem recibo tax-free", subtitle: "entra no reembolso da saída, se a loja/dia passar de \(ShoppingReport.money(ShoppingRules.pack(for: region).limits.taxFreeMinYen, currency: region == .it ? "EUR" : "JPY"))")
                 }
                 .toggleStyle(.must)
 
@@ -203,7 +203,8 @@ struct ShoppingItemEditor: View {
         target.flags = ShoppingChecks.flags(name: trimmedName, ingredients: ingredients, food: category == .food)
         ShoppingPurchase.sync(target, store: chosen, context: context, regionCurrency: region.currency,
                               brlPerYen: ShoppingFX.rate(for: region, userRate: settingsList.first?.fxRate),
-                              brlPerUSD: settingsList.first?.brlPerUSD ?? ShoppingFX.brlPerUSD)
+                              brlPerUSD: settingsList.first?.brlPerUSD ?? ShoppingFX.brlPerUSD,
+                              brlPerEUR: ShoppingFX.eurRate(for: region, userRate: settingsList.first?.fxRate))
         try? context.save()
         dismiss()
     }

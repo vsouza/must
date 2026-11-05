@@ -239,7 +239,6 @@
 		9C4014D3EA22E045B245B547 /* BomDiaTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B70DEBB2AAB73A25CCF4BC0 /* BomDiaTests.swift */; };
 		9CD2200A8546E3B5F71FEF4D /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4574509CFEC4FC14741A8455 /* Models.swift */; };
 		9F15F6515F09E91125A9D6D9 /* IntentParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB72F5E89393DFD046BC52D8 /* IntentParser.swift */; };
-		A00CC4E63754D7DA2894A9E6 /* V8StubScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 007CFD1E2AB9C43BFC440BBD /* V8StubScreen.swift */; };
 		A05689C2D9725E4029F56DE1 /* NearbyRanker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F810A340D5DA4290CC357972 /* NearbyRanker.swift */; };
 		A116493AD519770D568720CD /* ComoChegarModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB849EFC7F858645A51573C8 /* ComoChegarModel.swift */; };
 		A1C8C7FDDD35F192B7ADB5BC /* kyoto.json in Resources */ = {isa = PBXBuildFile; fileRef = FF1415EDD1ABCA2BF1F72647 /* kyoto.json */; };
@@ -343,6 +342,7 @@
 		D96A8AC25C1AEEACBBD1E5AB /* SunServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B514A86BB604B08856786EA /* SunServiceTests.swift */; };
 		D96FB29DF9EAB848655C99D8 /* ExperienceLinkSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BE657609A52624784F3B083 /* ExperienceLinkSheet.swift */; };
 		DA16FDCEB6166F241D005733 /* V8DayParts.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7B1042BAFD7D795F786B882 /* V8DayParts.swift */; };
+		DBAA61DBE665BD1CB4A05088 /* roma-lines.geojson in Resources */ = {isa = PBXBuildFile; fileRef = 3F563FA2B6651986FFE26BEE /* roma-lines.geojson */; };
 		DC13D2C9E893ECC451062C85 /* PhotoDataRows.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF67FCD358937B9720749661 /* PhotoDataRows.swift */; };
 		DC7CF09BCFAAC95A5746AA19 /* NetResilienceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 954DFD2565943C15811989EF /* NetResilienceTests.swift */; };
 		DC9065D7211FD2C3437A4DF2 /* PlaceResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE5FAB772ABA07FE675459CB /* PlaceResolver.swift */; };
@@ -439,7 +439,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		007CFD1E2AB9C43BFC440BBD /* V8StubScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V8StubScreen.swift; sourceTree = "<group>"; };
 		01C978BEB3995473BF8B3039 /* Blobs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Blobs.swift; sourceTree = "<group>"; };
 		03253802B39EE1C2C9B2E6D4 /* Extras.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extras.swift; sourceTree = "<group>"; };
 		0425F7B058E948914542FB70 /* BomDiaView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BomDiaView.swift; sourceTree = "<group>"; };
@@ -519,6 +518,7 @@
 		3EB0211FCC84D9ED73E17DAE /* PlacePanelFichaTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlacePanelFichaTests.swift; sourceTree = "<group>"; };
 		3ED71E74006BFAF0B24E307A /* ProximosTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProximosTests.swift; sourceTree = "<group>"; };
 		3F295BE963047F784C80504E /* ShoppingITTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShoppingITTests.swift; sourceTree = "<group>"; };
+		3F563FA2B6651986FFE26BEE /* roma-lines.geojson */ = {isa = PBXFileReference; path = "roma-lines.geojson"; sourceTree = "<group>"; };
 		3FDE801A14C62F4C64477CA9 /* V8TypeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V8TypeTests.swift; sourceTree = "<group>"; };
 		40115E243E085BD0D1D7F7DD /* Flight.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Flight.swift; sourceTree = "<group>"; };
 		4057F13FC1B1224A5960AEE0 /* BoardEditsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardEditsTests.swift; sourceTree = "<group>"; };
@@ -863,7 +863,6 @@
 			children = (
 				897C9F43BE0507A3E020BDFC /* V8Components.swift */,
 				35765003FEB4545A52A17799 /* V8Palette.swift */,
-				007CFD1E2AB9C43BFC440BBD /* V8StubScreen.swift */,
 				C57B659458753E4FDE33A97E /* V8TripTheme.swift */,
 				F1D99223C948A553AEFAAF72 /* V8Type.swift */,
 			);
@@ -1603,6 +1602,7 @@
 			children = (
 				91BE0666599C9AA1BFA54CBD /* bh-lines.geojson */,
 				073EE5D0C62BCB42F2F0FB7C /* last-trains.json */,
+				3F563FA2B6651986FFE26BEE /* roma-lines.geojson */,
 				FE11D8C2ED0A877468648D71 /* tokyo-lines.geojson */,
 			);
 			path = transit;
@@ -1989,6 +1989,7 @@
 				A1C8C7FDDD35F192B7ADB5BC /* kyoto.json in Resources */,
 				564FEC9F3F1D7592641B2DB1 /* last-trains.json in Resources */,
 				B2893949E814A8D6C3D61599 /* map-packs.json in Resources */,
+				DBAA61DBE665BD1CB4A05088 /* roma-lines.geojson in Resources */,
 				0053D0EDAE50D847D3DC3BE9 /* roma.json in Resources */,
 				B552F06B9A8678A705988367 /* seed-bh.json in Resources */,
 				0E36960D7152F3E4C5AC7940 /* seed-it.json in Resources */,
@@ -2387,7 +2388,6 @@
 				DA16FDCEB6166F241D005733 /* V8DayParts.swift in Sources */,
 				5C3EE9A409780995526B5459 /* V8Palette.swift in Sources */,
 				D888631912D3DA16446A93D4 /* V8ScreenParts.swift in Sources */,
-				A00CC4E63754D7DA2894A9E6 /* V8StubScreen.swift in Sources */,
 				42DC1169B9F38B16898ABE09 /* V8TripTheme.swift in Sources */,
 				07E14DE893B130ECBBEE2EC6 /* V8Type.swift in Sources */,
 				48AA788A7B981CC9E7AECA9D /* Values.swift in Sources */,

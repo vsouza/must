@@ -18,18 +18,14 @@ struct ShoppingView: View {
     @State private var adding = false
 
     private var region: Region { store.region }
-    /// R$ por ¥1: o câmbio que o usuário pôs em Ajustes só vale no Japão (no Brasil o `fxRate` é 1 e não converte ¥).
-    private var brlPerYen: Double {
-        guard region == .jp, let rate = settingsList.first?.fxRate, rate > 0 else { return ShoppingFX.brlPerYen }
-        return rate
-    }
+    /// R$ por 1 unidade da moeda das regras (¥ no Japão e em BH, € em Roma): o câmbio de Ajustes vale na região dele.
+    private var baseRate: Double { ShoppingFX.baseRate(for: region, userRate: settingsList.first?.fxRate) }
     private var brlPerUSD: Double { settingsList.first?.brlPerUSD ?? ShoppingFX.brlPerUSD }
     private var stores: [Place] { places.filter { $0.list?.id == "shop" } }
 
-    /// Regras da volta da região (Itália → Brasil em Roma).
-    /// TODO(v8:E): em Roma a conta ainda passa por ¥ (`ShoppingFX.brlPerUnit` em Must/Services/Shopping não conhece EUR).
+    /// Regras da volta da região (Itália → Brasil em Roma, com a conta em €).
     private func makeReport(_ items: [ShoppingItem]) -> ShoppingReport {
-        ShoppingReport(items: items, fxRate: brlPerYen, brlPerUSD: brlPerUSD, regionCurrency: region.currency,
+        ShoppingReport(items: items, fxRate: baseRate, brlPerUSD: brlPerUSD, regionCurrency: region.currency,
                        rules: ShoppingRules.pack(for: region), timeZone: region.timeZone)
     }
 

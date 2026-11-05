@@ -5,7 +5,8 @@ import UIKit
 /// Tipografia v8 (prompt 23 §1): três vozes, todas OFL no bundle (`Must/Resources/Fonts`).
 /// - **Bricolage Grotesque** (variável: opsz, wght, wdth): display (títulos, wdth 92 / 700) e numeral gigante
 ///   (wdth 78 / 800, tamanho fixo).
-/// - **Schibsted Grotesk** (variável: wght): texto 400–700 com números tabulares. Acompanha o Dynamic Type.
+/// - **Schibsted Grotesk** (variável: wght): texto 400–700. Acompanha o Dynamic Type. Sem `tnum`: no Schibsted o
+///   recurso tabular também alarga vírgula, ponto e dois-pontos ("dia , numa tela só ."); número alinhado vai em mono.
 /// - **Martian Mono** (variável: wght, wdth): ficha técnica, horários, códigos — wdth 100 (o arquivo vem em 112,5).
 ///
 /// Os eixos `wdth`/`opsz` não existem em `Font.custom`: display, numeral e mono são `CTFont` com
@@ -18,9 +19,12 @@ enum V8Font {
         display(size, width: width, weight: 700)
     }
 
-    /// Display com peso explícito (o subtítulo da capa usa 500).
+    /// Display com peso explícito (o subtítulo da capa usa 500). `.fontWeight` por cima de um `CTFont` variável refaz a
+    /// fonte pela família e perde o `wdth`: o peso vem sempre por aqui.
+    /// Tamanho óptico como no `v8.css`: 96 nos títulos (`.disp`), 40 nos de seção (`.sec h2`, 22 pt). Com `opsz` = tamanho
+    /// (54 → 54) o Bricolage abre o espaçamento e o título sai ~8 % mais largo que o design.
     static func display(_ size: CGFloat, width: CGFloat = 92, weight: CGFloat) -> Font {
-        Font(V8Fonts.bricolage(V8Fonts.scaled(size), weight: weight, width: width, opticalSize: size))
+        Font(V8Fonts.bricolage(V8Fonts.scaled(size), weight: weight, width: width, opticalSize: size >= 28 ? 96 : 40))
     }
 
     /// Numeral gigante e índices: Bricolage Grotesque wdth 78 / 800. Tamanho fixo (decorativo, `accessibilityHidden`).
@@ -28,9 +32,9 @@ enum V8Font {
         Font(V8Fonts.bricolage(size, weight: 800, width: 78, opticalSize: 96))
     }
 
-    /// Texto: Schibsted Grotesk 400–700, números tabulares. Acompanha o Dynamic Type.
+    /// Texto: Schibsted Grotesk 400–700. Acompanha o Dynamic Type. Sem `.monospacedDigit()` (ver acima).
     static func text(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
-        MustFonts.scaled(V8Fonts.Family.schibsted, size).weight(weight).monospacedDigit()
+        MustFonts.scaled(V8Fonts.Family.schibsted, size).weight(weight)
     }
 
     /// Ficha técnica: Martian Mono 500, wdth 100 (micro-rótulos em caixa alta, horários, códigos).

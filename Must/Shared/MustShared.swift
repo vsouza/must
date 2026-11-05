@@ -1,3 +1,4 @@
+import CoreText
 import ActivityKit
 import Foundation
 import SwiftUI
@@ -107,7 +108,20 @@ enum SharedStyle {
     static let greenGradient = LinearGradient(colors: [rgb(0xB9F5CF), rgb(0x22DD7E)], startPoint: .topLeading, endPoint: .bottomTrailing)
     static let blueGradient = LinearGradient(colors: [rgb(0x9FD6FF), rgb(0x2B7BFF)], startPoint: .topLeading, endPoint: .bottomTrailing)
 
-    static func archivo(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font { .custom("Archivo", fixedSize: size).weight(weight) }
-    static func mono(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font { .custom("Geist Mono", fixedSize: size).weight(weight).monospacedDigit() }
-    static func kanji(_ size: CGFloat) -> Font { .custom("ZenKakuGothicNew-Bold", fixedSize: size) }
+    // Fontes v8 (registradas no widget pelo `UIAppFonts` do `project.yml`): Schibsted Grotesk no texto, Martian Mono
+    // nos números e horários. Tamanho fixo: o widget não acompanha o Dynamic Type do app.
+    static func text(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font { .custom("Schibsted Grotesk", fixedSize: size).weight(weight) }
+    /// Martian Mono em wdth 100 (o arquivo abre em 112,5, largo demais), como `V8Font.mono` no app.
+    static func mono(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
+        let wght: Double = switch weight {
+        case .bold, .heavy, .black: 700
+        case .semibold: 600
+        default: 500
+        }
+        let axes: [NSNumber: NSNumber] = [NSNumber(value: 0x7767_6874 as UInt32): NSNumber(value: wght),
+                                          NSNumber(value: 0x7764_7468 as UInt32): 100]
+        let descriptor = CTFontDescriptorCreateWithAttributes([kCTFontNameAttribute: "MartianMono-SemiExpandedRegular",
+                                                               kCTFontVariationAttribute: axes] as CFDictionary)
+        return Font(CTFontCreateWithFontDescriptor(descriptor, size, nil))
+    }
 }

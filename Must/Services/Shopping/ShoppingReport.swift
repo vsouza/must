@@ -15,32 +15,47 @@ struct ShoppingImpact: Hashable, Sendable {
     var tone: ShoppingTone
 }
 
-/// Câmbio da lista, num lugar só. Tudo que é conta passa por aqui: cada item converte da própria moeda pra ¥ (a
-/// moeda das regras da volta) e pra R$ e US$ com estes valores. `Settings.fxRate` só vale no Japão (é o câmbio que o
-/// usuário editou); no Brasil ele é 1 e não serve pra converter ¥.
+/// Câmbio da lista, num lugar só. Tudo que é conta passa por aqui: cada item converte da própria moeda pra moeda das
+/// regras da volta (¥ no pacote do Japão, € no da Itália) e pra R$ e US$ com estes valores. `Settings.fxRate` é o
+/// câmbio que o usuário editou pra moeda da região (R$ por ¥1 no Japão, por €1 na Itália); no Brasil ele é 1.
 enum ShoppingFX {
     /// R$ por ¥1 quando não há cotação do usuário.
     static let brlPerYen = 0.036
+    /// R$ por €1 quando não há cotação do usuário (o mesmo valor de referência de `Region.it`).
+    static let brlPerEUR = Region.it.defaultFXRate
     /// R$ por US$ 1 (`Settings.brlPerUSD` começa aqui).
     static let brlPerUSD = 5.5
 
-    /// R$ por ¥1 da região: o câmbio do usuário (Ajustes) só vale no Japão; no Brasil usa o padrão.
+    /// R$ por ¥1 da região: o câmbio do usuário (Ajustes) só vale no Japão; fora dele usa o padrão.
     static func rate(for region: Region, userRate: Double?) -> Double {
         guard region == .jp, let rate = userRate, rate > 0 else { return brlPerYen }
         return rate
     }
 
+    /// R$ por €1 da região: o câmbio do usuário só vale na Itália; fora dela usa o padrão.
+    static func eurRate(for region: Region, userRate: Double?) -> Double {
+        guard region == .it, let rate = userRate, rate > 0 else { return brlPerEUR }
+        return rate
+    }
+
+    /// R$ por 1 unidade da moeda das regras da volta da região (o `fxRate` do `ShoppingReport`): € em Roma, ¥ no resto.
+    static func baseRate(for region: Region, userRate: Double?) -> Double {
+        region == .it ? eurRate(for: region, userRate: userRate) : rate(for: region, userRate: userRate)
+    }
+
     /// Converte um valor de uma moeda pra outra pelo câmbio (passa por R$).
-    static func convert(_ value: Double, from: String, to: String, brlPerYen: Double, brlPerUSD: Double) -> Double {
-        let brl = value * brlPerUnit(from, brlPerYen: brlPerYen, brlPerUSD: brlPerUSD)
-        return brl / brlPerUnit(to, brlPerYen: brlPerYen, brlPerUSD: brlPerUSD)
+    static func convert(_ value: Double, from: String, to: String, brlPerYen: Double, brlPerUSD: Double,
+                        brlPerEUR: Double = ShoppingFX.brlPerEUR) -> Double {
+        let brl = value * brlPerUnit(from, brlPerYen: brlPerYen, brlPerUSD: brlPerUSD, brlPerEUR: brlPerEUR)
+        return brl / brlPerUnit(to, brlPerYen: brlPerYen, brlPerUSD: brlPerUSD, brlPerEUR: brlPerEUR)
     }
 
     /// Quanto vale 1 unidade da moeda em R$. Moeda desconhecida conta como R$ (não some).
-    static func brlPerUnit(_ currency: String, brlPerYen: Double, brlPerUSD: Double) -> Double {
+    static func brlPerUnit(_ currency: String, brlPerYen: Double, brlPerUSD: Double, brlPerEUR: Double = ShoppingFX.brlPerEUR) -> Double {
         switch currency {
         case "JPY": brlPerYen
         case "USD": brlPerUSD
+        case "EUR": brlPerEUR
         default: 1
         }
     }
@@ -65,8 +80,11 @@ struct ShoppingReport {
     }
 
     let items: [ShoppingItem]
-    /// R$ por ¥1 (o câmbio do Japão em Ajustes, ou `ShoppingFX.brlPerYen`).
+    /// R$ por 1 unidade de `baseCurrency` (¥ no Japão, € na Itália: o câmbio de Ajustes, ou `ShoppingFX.baseRate`).
     let fxRate: Double
+    /// Moeda das regras da volta (a base das contas, dos mínimos do tax-free e do reembolso): ¥ ou €.
+    /// O nome "yen" nas funções ficou do pacote do Japão; com o pacote da Itália, é em euro.
+    let baseCurrency: String
     /// R$ por US$ 1 (`Settings.brlPerUSD`).
     let brlPerUSD: Double
     /// Moeda da região: a que aparece nos totais. Item sem moeda própria usa esta.
@@ -77,7 +95,8 @@ struct ShoppingReport {
     init(items: [ShoppingItem], fxRate: Double, brlPerUSD: Double, regionCurrency: String = "JPY",
          rules: ShoppingRulePack = ShoppingRules.jpBR, timeZone: TimeZone = Region.jp.timeZone) {
         self.items = items
-        self.fxRate = fxRate > 0 ? fxRate : ShoppingFX.brlPerYen
+        self.baseCurrency = rules.from == "IT" ? "EUR" : "JPY"
+        self.fxRate = fxRate > 0 ? fxRate : (baseCurrency == "EUR" ? ShoppingFX.brlPerEUR : ShoppingFX.brlPerYen)
         self.brlPerUSD = brlPerUSD > 0 ? brlPerUSD : ShoppingFX.brlPerUSD
         self.regionCurrency = regionCurrency
         self.rules = rules
@@ -91,16 +110,23 @@ struct ShoppingReport {
     /// Moeda do item: a própria, ou a da região.
     func currency(of item: ShoppingItem) -> String { item.currency ?? regionCurrency }
 
-    /// Valor do item (o pago ou o estimado) convertido pra ¥: a base das regras da volta.
-    func yen(of item: ShoppingItem) -> Double {
-        let brl = item.committedAmount * ShoppingFX.brlPerUnit(currency(of: item), brlPerYen: fxRate, brlPerUSD: brlPerUSD)
-        return brl / fxRate
+    /// R$ por 1 unidade da moeda: a base usa `fxRate`; as outras, o padrão de `ShoppingFX`.
+    func brlPerUnit(_ currency: String) -> Double {
+        currency == baseCurrency ? fxRate : ShoppingFX.brlPerUnit(currency, brlPerYen: ShoppingFX.brlPerYen, brlPerUSD: brlPerUSD)
     }
 
-    /// Um valor em ¥ convertido pra outra moeda (R$, US$ ou ¥).
-    func amount(yen: Double, in currency: String) -> Double {
-        yen * fxRate / ShoppingFX.brlPerUnit(currency, brlPerYen: fxRate, brlPerUSD: brlPerUSD)
+    /// Valor do item (o pago ou o estimado) convertido pra moeda base (¥/€): a base das regras da volta.
+    func yen(of item: ShoppingItem) -> Double {
+        item.committedAmount * brlPerUnit(currency(of: item)) / fxRate
     }
+
+    /// Um valor na moeda base convertido pra outra moeda (R$, US$, ¥ ou €).
+    func amount(yen: Double, in currency: String) -> Double {
+        yen * fxRate / brlPerUnit(currency)
+    }
+
+    /// Valor na moeda base com símbolo ("¥ 5.000", "€ 70").
+    func baseMoney(_ value: Double) -> String { Self.money(value, currency: baseCurrency) }
 
     /// Um valor em ¥ na moeda da região (o que os totais mostram).
     func regionAmount(yen: Double) -> Double { amount(yen: yen, in: regionCurrency) }
@@ -221,7 +247,7 @@ struct ShoppingReport {
         }
         if taxFree.belowMinStores > 0 {
             out.append(ShoppingAlert(id: "taxfree-min", ruleId: "taxfree-min",
-                                     text: "\(taxFree.belowMinStores) loja(s) abaixo de ¥ 5.000 · sem reembolso"))
+                                     text: "\(taxFree.belowMinStores) loja(s) abaixo de \(baseMoney(limits.taxFreeMinYen)) · sem reembolso"))
         }
         return out
     }
@@ -233,11 +259,11 @@ struct ShoppingReport {
         switch ruleId {
         case "taxfree-refund":
             let tf = taxFree
-            return ShoppingImpact(text: "ainda falta: \(tf.receipts) \(tf.receipts == 1 ? "recibo" : "recibos") · ¥ \(Self.yen(tf.refund)) de volta",
+            return ShoppingImpact(text: "ainda falta: \(tf.receipts) \(tf.receipts == 1 ? "recibo" : "recibos") · \(baseMoney(tf.refund)) de volta",
                                   tone: tf.receipts > 0 ? .ok : .warn)
-        case "taxfree-min":
+        case "taxfree-min", "taxfree-eu-min":
             let below = taxFree.belowMinStores
-            return below > 0 ? ShoppingImpact(text: "\(below) loja(s) abaixo de ¥ 5.000 · sem reembolso", tone: .no) : nil
+            return below > 0 ? ShoppingImpact(text: "\(below) loja(s) abaixo de \(baseMoney(limits.taxFreeMinYen)) · sem reembolso", tone: .no) : nil
         case "carry-powerbank":
             return named(["power bank", "powerbank", "bateria externa"]).map { ShoppingImpact(text: "sua lista: \($0) · na mão", tone: .ok) }
         case "carry-knife":
