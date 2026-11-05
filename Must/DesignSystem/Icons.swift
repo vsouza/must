@@ -17,7 +17,7 @@ extension Image {
     }
 }
 
-/// Ícone dimensionado (padrão 24pt, como o viewBox). Desenha 済 em Zen Kaku pro `feito`.
+/// Ícone dimensionado (padrão 24pt, como o viewBox). O `feito` (era 済 na v5) é um ✓ em vetor: nada de japonês na interface.
 struct MustIconView: View {
     var icon: MustIcon
     var size: CGFloat = 24
@@ -30,8 +30,8 @@ struct MustIconView: View {
     var body: some View {
         Group {
             if icon.isTextGlyph {
-                Text("済")
-                    .font(.must.kanji(size * 15 / 24))
+                CheckGlyph()
+                    .stroke(style: StrokeStyle(lineWidth: max(1.2, size * 1.8 / 24), lineCap: .round, lineJoin: .round))
                     .frame(width: size, height: size)
             } else {
                 Image(mustIcon: icon)

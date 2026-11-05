@@ -101,7 +101,7 @@ enum MustIcon: String, CaseIterable, Codable, Sendable, Identifiable {
         case .exportar: "exportar"
         case .falar: "falar"
         case .fechar: "fechar"
-        case .feito: "feito · 済"
+        case .feito: "feito"
         case .ficaProFim: "fica pro fim"
         case .filaEspera: "fila · espera"
         case .filtrar: "filtrar"
