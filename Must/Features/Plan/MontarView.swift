@@ -69,7 +69,7 @@ enum MontarOptions {
 
 /// 05 · Montar o dia (prompt 23 §2, `Montar.png`). Tinta. Bairro (chips com contagem + vizinhos), ritmo 6/9/12,
 /// grana, até que horas, incluir (micro-paradas, foto no golden, compras) e "Gerar o dia · N paradas", que chama o
-/// motor do dia (`\.dayEngine`) e mostra a proposta. Aceitar grava pela API do `DayPlanner` (solver).
+/// motor do dia (`\.dayEngine`) e mostra a proposta. Aceitar grava pelo motor (`DayEngine.accept`).
 struct MontarView: View {
     let date: Date
     /// Bairro do foco ("Ajustar" em Bairros): abre com ele escolhido.
@@ -158,7 +158,7 @@ struct MontarView: View {
         p.build(catalog: places.solverCatalog, trip: trips.first, settings: settingsList.first,
                 location: services.location.current, flights: dayFlights(p))
         let until = region.calendar.date(byAdding: .minute, value: untilMinutes, to: p.date) ?? p.date
-        generated = await engine.build(area: area, pace: pace, budget: p.budget, until: until, includes: includes)
+        generated = await engine.build(on: p.date, area: area, pace: pace, budget: p.budget, until: until, includes: includes)
         showProposal = true
     }
 

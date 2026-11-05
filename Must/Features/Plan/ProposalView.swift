@@ -3,9 +3,8 @@ import SwiftUI
 
 /// Proposta do Montar v8: a Linha do dia proposta (papel), com as micro-paradas e os deslocamentos do motor,
 /// a explicação do solver e Outra proposta / Aceitar o dia. Tocar num Must do board abre o Trocar.
-/// Aceitar grava pelo `DayPlanner` (solver).
-// TODO(v8:B): o Aceitar grava só as paradas do solver; quando o `DayPlanner` aceitar o `DayPlan` do motor (micro-paradas
-// e deslocamentos), trocar `planner.accept` por essa API — hoje o motor reconstrói o resto a partir do dia aceito.
+/// Aceitar grava o dia do motor (`DayEngine.accept`, com micro-paradas e deslocamentos); depois de um Trocar, o dia
+/// do motor fica velho e a tela volta pras paradas do solver, gravadas pelo `DayPlanner`.
 struct ProposalView: View {
     @Bindable var planner: DayPlanner
     /// Dia do motor (`DayEngine.build`). `nil` = mostra as paradas do solver.
@@ -23,12 +22,15 @@ struct ProposalView: View {
     @Query private var flights: [Flight]
 
     @State private var swapping: ProposedStop?
+    /// Houve Trocar: o `plan` do motor não tem a troca, então a tela e o Aceitar usam o solver.
+    @State private var swapped = false
+    @Environment(\.dayEngine) private var engine
     @State private var error: String?
 
     private var region: Region { store.region }
 
     /// O que a tela desenha: o dia do motor ou, sem ele, as paradas do solver no formato v8.
-    private var shown: DayPlan? { plan ?? planner.proposal.map { Self.dayPlan(from: $0, date: planner.date, budget: planner.budget) } }
+    private var shown: DayPlan? { (swapped ? nil : plan) ?? planner.proposal.map { Self.dayPlan(from: $0, date: planner.date, budget: planner.budget) } }
 
     var body: some View {
         ScrollView {
@@ -93,7 +95,7 @@ struct ProposalView: View {
             }
         }
         #endif
-        .sheet(item: $swapping) { stop in
+        .sheet(item: $swapping, onDismiss: { if plan != nil { swapped = true } }) { stop in
             SwapSheet(planner: planner, stop: stop, catalog: places.solverCatalog)
                 .presentationDetents([.large])
                 .presentationCornerRadius(32)
@@ -148,17 +150,23 @@ struct ProposalView: View {
 
     private func accept() {
         do {
-            try planner.accept(context: context)
+            let origin = services.location.current?.coordinate
+            let enginePlan = swapped ? nil : plan
+            if let enginePlan {
+                try engine.accept(enginePlan, region: planner.region, context: context, origin: origin)
+            } else {
+                try planner.accept(context: context)
+                // Avisos do guia (prompt 18 · C.17): a permissão de notificação é pedida só aqui (o `engine.accept` já pede).
+                let region = planner.region
+                Task { await GuideNudgeScheduler.refresh(context: context, region: region, origin: origin, askPermission: true) }
+            }
             router.tab = .hoje
             // Aceitou: a Linha do dia (ou o Guia, quando veio do "Ajustar" de Bairros).
-            router.paths[.hoje] = [planner.focusArea != nil && plan == nil ? .guia(date: planner.date) : .linha(date: planner.date)]
+            router.paths[.hoje] = [planner.focusArea != nil && enginePlan == nil ? .guia(date: planner.date) : .linha(date: planner.date)]
             // Baixa o que o dia pede (só no Wi-Fi; no celular fica "salva no Wi-Fi") (prompt 18 · A.5).
             let date = planner.date, network = services.connectivity.prefetchNetwork
             let region = planner.region
             Task { await services.prefetch.run(date: date, context: context, region: region, network: network) }
-            // Avisos do guia (prompt 18 · C.17): a permissão de notificação é pedida só aqui.
-            let origin = services.location.current?.coordinate
-            Task { await GuideNudgeScheduler.refresh(context: context, region: region, origin: origin, askPermission: true) }
         } catch {
             self.error = error.localizedDescription
         }

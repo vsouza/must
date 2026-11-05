@@ -278,7 +278,7 @@ struct IrView: View {
                 .foregroundStyle(V8.orange)
             VStack(alignment: .leading, spacing: 2) {
                 Text("Aviso quando for hora de sair").font(V8Font.text(15, weight: .bold)).foregroundStyle(V8.white)
-                // TODO(v8:B): Live Activity "saia às" (o motor/LiveActivity do B liga este cartão).
+                // A Live Activity "saia às" sai do dia aceito (`OutsideBridge.syncLiveActivity`); este cartão só avisa.
                 Text("Live Activity na tela bloqueada · desligar em Ajustes").font(V8Font.text(12.5)).foregroundStyle(V8.muteDark)
                     .fixedSize(horizontal: false, vertical: true)
             }
