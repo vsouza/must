@@ -305,6 +305,10 @@ enum DebugLaunch {
             GuideNudgeScheduler.logPreview(context: context, region: region, origin: location.current?.coordinate)
         case "bairros": // bairros (prompt 18 · C.14); bairros:shinjuku já abre a sheet do bairro (prints)
             router.push(.bairros(areaId: arg), on: .inicio)
+        case "ajustar": // o que o "Ajustar" da sheet do bairro abre: Bairros e, por cima, o Montar com o foco no bairro
+            let area = arg ?? "shinjuku"
+            router.push(.bairros(areaId: area), on: .inicio)
+            router.push(.montar(date: region.calendar.startOfDay(for: AppClock.now), focusArea: area), on: .inicio)
         case "guia": // Shinjuku+ montado e aceito hoje, e o Guia do dia (prompt 18 · C.16)
             acceptFocusToday(context: context, region: region, location: location, areaId: "shinjuku")
             router.push(.guia(date: region.calendar.startOfDay(for: AppClock.now)), on: .inicio)

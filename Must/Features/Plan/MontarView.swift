@@ -158,10 +158,15 @@ struct MontarView: View {
             }
             .padding(.top, 8)
             VStack(alignment: .leading, spacing: 6) {
-                Text("Montar o dia").mustTitle()
+                // Vindo do "Ajustar" da Bairros: o dia é do bairro (com os vizinhos), como o botão "Montar <bairro>+".
+                Text(focusName.map { "Montar \($0)+" } ?? "Montar o dia").mustTitle().lineLimit(2)
                 Text(subtitle(planner, preview: preview)).mustSerif(18).foregroundStyle(Color.must.secondary)
             }
         }
+    }
+
+    private var focusName: String? {
+        focusArea.flatMap { id in AreaCatalog.areas(for: region).first { $0.id == id }?.name }
     }
 
     private func weekdayShort(_ date: Date) -> String {
