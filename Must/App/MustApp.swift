@@ -5,6 +5,8 @@ import SwiftUI
 struct MustApp: App {
     @State private var regionStore = RegionStore()
     @State private var services = Services()
+    /// Só pra Quick Action "SOS" (prompt 25 · C.3): o SwiftUI não entrega atalhos do ícone.
+    @UIApplicationDelegateAdaptor(MustAppDelegate.self) private var appDelegate
 
     init() {
         LaunchTiming.appDidInit()
@@ -105,6 +107,9 @@ struct AppRoot: View {
                 guard isCurrent else { return }
                 let router = router, store = store
                 NotificationTaps.shared.handler = { router.handle(url: $0, region: store.region) }
+                QuickActions.shared.handler = { type in
+                    if type == QuickActions.sosType { router.handle(url: URL(string: "must://sos")!, region: store.region) }
+                }
             }
             // Abre na região onde você está (Ajustes › Região › Automático).
             .onChange(of: services.location.current.map { Region.detect($0.coordinate) }, initial: true) { _, _ in

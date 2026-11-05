@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Must · dia</title>
+<!--
+  Link do dia do Must (prompt 25 · B.2), página estática: desenha o mesmo cartaz do app a partir do payload que vem no
+  link (`#<payload>` ou `/d/<payload>`): base64url → deflate cru (COMPRESSION_ZLIB da Apple) → JSON `SharedDay`.
+  Sem servidor, sem chamada nenhuma além das fontes. Ainda não publicada: o domínio must.app não existe (não subir pro R2).
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&family=Schibsted+Grotesk:wght@400..700&family=Martian+Mono:wdth,wght@75..112.5,100..800&display=swap">
+<style>
+  :root { --ink: #121212; --paper: #F2F0EA; --mute: #6B6B66; --or: #FF4A1C; --cover: #D7000F; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--paper); color: var(--ink); font-family: 'Schibsted Grotesk', system-ui, sans-serif; }
+  main { max-width: 440px; margin: 0 auto; padding: 28px 16px 40px; display: flex; flex-direction: column; gap: 22px; }
+  .spec { font-family: 'Martian Mono', monospace; font-variation-settings: 'wdth' 100; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--mute); }
+  .poster { position: relative; width: 100%; aspect-ratio: 9 / 16; border-radius: 22px; overflow: hidden; background: var(--cover); color: #fff;
+            box-shadow: 0 20px 50px rgba(18,18,18,.25); container-type: inline-size; }
+  .poster .ring { position: absolute; width: 113cqw; height: 113cqw; left: -33cqw; top: -47cqw; border: 2px solid rgba(255,255,255,.5); border-radius: 50%; }
+  .poster .in { position: absolute; inset: 0; padding: 6.7cqw 6.7cqw 5.6cqw; display: flex; flex-direction: column; }
+  .poster .top { display: flex; justify-content: space-between; gap: 8px; }
+  .poster .micro { font-family: 'Martian Mono', monospace; font-variation-settings: 'wdth' 100; font-size: 3.3cqw; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
+  .poster h1 { margin: 7.8cqw 0 0; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-variation-settings: 'wdth' 92, 'opsz' 96;
+               font-size: 11.4cqw; letter-spacing: -.02em; line-height: 1; }
+  .poster ol { list-style: none; margin: 7.2cqw 0 0; padding: 0; display: flex; flex-direction: column; gap: 1.4cqw; font-size: 4.3cqw; line-height: 1.35; }
+  .poster li { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .poster li b { font-family: 'Martian Mono', monospace; font-variation-settings: 'wdth' 100; font-weight: 600; margin-right: 2cqw; }
+  .poster li.a span { font-weight: 600; }
+  .poster .num { position: absolute; right: -4cqw; bottom: -19cqw; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800;
+                 font-variation-settings: 'wdth' 78, 'opsz' 96; font-size: 80cqw; letter-spacing: -.06em; line-height: 1; opacity: .95; }
+  .poster .num.two { font-size: 64cqw; bottom: -15cqw; }
+  .poster svg { margin-top: auto; width: 49cqw; height: 37cqw; }
+  .poster .foot { margin-top: 3.9cqw; }
+  .btn { display: flex; align-items: center; justify-content: center; gap: 10px; height: 56px; border-radius: 999px; background: var(--ink); color: #fff;
+         font-weight: 700; font-size: 16px; text-decoration: none; }
+  p { margin: 0; font-size: 15px; line-height: 1.45; color: var(--mute); }
+  .err { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-variation-settings: 'wdth' 92; font-size: 30px; color: var(--ink); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --paper: #121212; --ink: #F2F0EA; --mute: #A3A39C; } .btn { color: #121212; } }
+</style>
+</head>
+<body>
+<main>
+  <span class="spec" id="spec">Must · guia de bolso</span>
+  <div id="out"></div>
+  <p id="note">Quem tem o Must abre este dia no app. Aqui, o cartaz.</p>
+  <a class="btn" id="open" href="#">Abrir no Must ↗</a>
+</main>
+<script>
+(() => {
+  const covers = { jp: '#D7000F', bh: '#007A33', it: '#1F5FB4' };
+  const zones = { jp: 'Asia/Tokyo', bh: 'America/Sao_Paulo', it: 'Europe/Rome' };
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  function payloadFromLocation() {
+    if (location.hash.length > 1) return location.hash.slice(1);
+    const m = location.pathname.match(/\/d\/([A-Za-z0-9_-]+)/);
+    return m ? m[1] : '';
+  }
+
+  async function decode(payload) {
+    if (!/^[A-Za-z0-9_-]{8,6000}$/.test(payload)) throw new Error('payload');
+    let b64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    while (b64.length % 4) b64 += '=';
+    const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+    const text = await new Response(stream).text();
+    if (text.length > 65536) throw new Error('grande demais');
+    const day = JSON.parse(text);
+    if (!covers[day.r] || !Array.isArray(day.s) || !day.s.length) throw new Error('não é um dia');
+    return day;
+  }
+
+  const hhmm = (min) => { const m = ((min % 1440) + 1440) % 1440; return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+
+  function dayLine(iso, region) {
+    const [y, mo, d] = iso.split('-').map(Number);
+    const date = new Date(Date.UTC(y, mo - 1, d, 12));
+    const wd = new Intl.DateTimeFormat('pt-BR', { weekday: 'short', timeZone: 'UTC' }).format(date).replace('.', '');
+    const mon = new Intl.DateTimeFormat('pt-BR', { month: 'short', timeZone: 'UTC' }).format(date).replace('.', '');
+    return wd.charAt(0).toUpperCase() + wd.slice(1) + ' · ' + d + ' ' + mon;
+  }
+
+  function sketch(stops) {
+    const pts = stops.filter((s) => typeof s.y === 'number' && typeof s.x === 'number');
+    if (pts.length < 2) return '';
+    const k = Math.cos(pts[0].y * Math.PI / 180);
+    const xs = pts.map((p) => p.x * k), ys = pts.map((p) => p.y);
+    const W = 176, H = 132, pad = 12;
+    const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+    const sx = Math.max(maxX - minX, 1e-5), sy = Math.max(maxY - minY, 1e-5);
+    const sc = Math.min((W - 2 * pad) / sx, (H - 2 * pad) / sy);
+    const ox = pad + (W - 2 * pad - sx * sc) / 2, oy = pad + (H - 2 * pad - sy * sc) / 2;
+    const xy = pts.map((p, i) => [ox + (xs[i] - minX) * sc, oy + (maxY - ys[i]) * sc]);
+    const line = xy.map(([x, y]) => x.toFixed(1) + ',' + y.toFixed(1)).join(' ');
+    const dots = xy.map(([x, y], i) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${pts[i].k === 'a' ? 5 : pts[i].k === 'u' ? 2.5 : 3.5}" fill="#fff"/>`).join('');
+    return `<svg viewBox="0 0 ${W} ${H}" aria-label="Percurso do dia"><rect x=".5" y=".5" width="${W - 1}" height="${H - 1}" rx="14" fill="none" stroke="rgba(255,255,255,.35)"/>` +
+           `<polyline points="${line}" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>${dots}</svg>`;
+  }
+
+  function render(day, payload) {
+    const numeral = day.n != null ? String(day.n) : String(Number(day.d.split('-')[2]));
+    const area = day.a || (day.t || '').split(' + ')[0];
+    const max = 12, shown = day.s.length > max ? day.s.slice(0, max - 1) : day.s;
+    const rows = shown.map((s) => `<li class="${esc(s.k)}"><b>${hhmm(s.b)}</b><span>${esc(s.l)}</span></li>`).join('') +
+                 (day.s.length > shown.length ? `<li>+ ${day.s.length - shown.length} paradas</li>` : '');
+    document.documentElement.style.setProperty('--cover', covers[day.r]);
+    document.title = `Must · Dia ${numeral} · ${area}`;
+    document.getElementById('spec').textContent = `Must · dia ${numeral} · ${area}`;
+    document.getElementById('out').innerHTML =
+      `<div class="poster" role="img" aria-label="Cartaz do dia ${esc(numeral)}, ${esc(area)}, ${day.s.length} paradas">` +
+      `<span class="ring"></span><span class="num${numeral.length > 1 ? ' two' : ''}" aria-hidden="true">${esc(numeral)}</span>` +
+      `<div class="in"><div class="top"><span class="micro">${esc(dayLine(day.d, day.r))}</span><span class="micro">${esc(day.c || '')}</span></div>` +
+      `<h1>Dia ${esc(numeral)}<br>${esc(area)}</h1><ol>${rows}</ol>${sketch(day.s)}<span class="micro foot">must · guia de bolso</span></div></div>`;
+    document.getElementById('note').textContent = `Horários no fuso de ${zones[day.r]}. Quem tem o Must abre este dia no app.`;
+    document.getElementById('open').href = 'must://d/' + payload;
+  }
+
+  const payload = payloadFromLocation();
+  decode(payload).then((day) => render(day, payload)).catch(() => {
+    document.getElementById('out').innerHTML = '<span class="err">Esse link não abriu.</span>';
+    document.getElementById('note').textContent = 'O dia vai dentro do link: se ele chegou cortado, peça pra mandar de novo.';
+    document.getElementById('open').style.display = 'none';
+  });
+})();
+</script>
+</body>
+</html>

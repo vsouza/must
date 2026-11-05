@@ -105,6 +105,8 @@ struct ProximosView: View {
             link("Compras", "lista, cota e regras da volta") { router.push(.compras) }
             link("Mapas offline", "baixar a cidade no Wi-Fi") { router.push(.offlineMaps) }
             link("Gasto e dias", "a viagem inteira") { router.push(.trip) }
+            // Prompt 25 · B.5: a viagem inteira em PDF (um dia por página), o cartaz e o link do dia.
+            link("Mandar a viagem", "PDF um dia por página · cartaz · link") { router.sheet = .mandar(date: nil) }
         }
     }
 

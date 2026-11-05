@@ -295,6 +295,18 @@ struct LockScreenStopView: View {
             }
             ProgressDetail(state: state)
             AfterLine(state: state)
+            // À noite, o SOS a um toque da tela bloqueada (prompt 25 · C.3). Só abre a tela; nunca liga.
+            if state.isNight() {
+                Link(destination: NextStopAttributes.sosURL) {
+                    HStack(spacing: 6) {
+                        Text("SOS").font(SharedStyle.mono(11, .semibold)).foregroundStyle(SharedStyle.v8Ink)
+                            .padding(.horizontal, 7).padding(.vertical, 3)
+                            .background(Capsule().fill(SharedStyle.v8Orange))
+                        Text("números do país · hospital · onde estou").font(SharedStyle.text(12)).foregroundStyle(SharedStyle.v8Mute)
+                            .lineLimit(1)
+                    }
+                }
+            }
         }
         .padding(18)
     }

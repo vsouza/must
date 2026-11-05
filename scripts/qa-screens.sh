@@ -80,6 +80,10 @@ v8shots() { # $1 = prefixo (jp|bh|it), $2 = lugar de exemplo, $3 = museu de exem
   shot $r-v8-off-lugar -debugScreen lugar:$2 ${=OFF}
   shot $r-v8-off-bolso -debugScreen bolso ${=OFF}
   shot $r-v8-off-dicas -debugScreen dicas ${=OFF}
+  # prompt 25 · agente 25/2: Mandar o dia (Compartilhar.png) e SOS (SOS.png); o SOS também em modo avião.
+  WAIT=8 shot $r-p25-compartilhar -debugScreen compartilhar  # Compartilhar (cartaz desenhado no aparelho)
+  shot $r-p25-sos -debugScreen sos                  # SOS
+  shot $r-p25-off-sos -debugScreen sos ${=OFF}      # SOS sem internet (último endereço conhecido)
 }
 ${=W} skipOnboarding -bool YES
 ${=W} dev.simDateOn -bool YES; ${=W} dev.simSetAt -float 0; ${=W} dev.simGPSOn -bool YES

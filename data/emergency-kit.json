@@ -1,0 +1,386 @@
+{
+  "version": 1,
+  "checked": "2026-11-05",
+  "countries": {
+    "BR": {
+      "name": "Brasil",
+      "primary": [
+        {
+          "id": "samu",
+          "number": "192",
+          "dial": "192",
+          "title": "SAMU · ambulância",
+          "detail": "urgência médica · grátis, 24 h",
+          "source": "https://www.gov.br/mcom/pt-br/noticias/2026/setembro/emergencia-voce-sabe-para-quem-ligar-quando-precisa-de-ajuda",
+          "verificar": false
+        },
+        {
+          "id": "pm",
+          "number": "190",
+          "dial": "190",
+          "title": "Polícia Militar",
+          "detail": "crime acontecendo, risco à segurança",
+          "source": "https://www.gov.br/mcom/pt-br/noticias/2026/setembro/emergencia-voce-sabe-para-quem-ligar-quando-precisa-de-ajuda",
+          "verificar": false
+        },
+        {
+          "id": "bombeiros",
+          "number": "193",
+          "dial": "193",
+          "title": "Corpo de Bombeiros",
+          "detail": "incêndio, acidente, resgate",
+          "source": "https://www.gov.br/mcom/pt-br/noticias/2026/setembro/emergencia-voce-sabe-para-quem-ligar-quando-precisa-de-ajuda",
+          "verificar": false
+        }
+      ],
+      "more": [
+        {
+          "id": "defesa-civil",
+          "number": "199",
+          "dial": "199",
+          "title": "Defesa Civil",
+          "detail": "enchente, deslizamento, área de risco",
+          "source": "https://www.gov.br/mcom/pt-br/noticias/2026/setembro/emergencia-voce-sabe-para-quem-ligar-quando-precisa-de-ajuda",
+          "verificar": false
+        },
+        {
+          "id": "policia-civil",
+          "number": "197",
+          "dial": "197",
+          "title": "Polícia Civil (MG)",
+          "detail": "ocorrência e investigação em Minas",
+          "source": "https://www.mg.gov.br/pagina/telefones-e-sites-uteis",
+          "verificar": false
+        },
+        {
+          "id": "disque-denuncia",
+          "number": "181",
+          "dial": "181",
+          "title": "Disque Denúncia (MG)",
+          "detail": "denúncia anônima · não é emergência",
+          "source": "https://www.mg.gov.br/pagina/telefones-e-sites-uteis",
+          "verificar": false
+        },
+        {
+          "id": "cvv",
+          "number": "188",
+          "dial": "188",
+          "title": "CVV · apoio emocional",
+          "detail": "grátis, 24 h, sigilo",
+          "source": "https://cvv.org.br/ligue-188-3/",
+          "verificar": false
+        },
+        {
+          "id": "pbh",
+          "number": "156",
+          "dial": "156",
+          "title": "Prefeitura de BH",
+          "detail": "serviços da cidade · fora de BH: (31) 3429-8750",
+          "source": "https://prefeitura.pbh.gov.br/transparencia/duvidas-frequentes/telefones-uteis",
+          "verificar": false
+        }
+      ],
+      "consulates": [],
+      "phrases": []
+    },
+    "JP": {
+      "name": "Japão",
+      "primary": [
+        {
+          "id": "119",
+          "number": "119",
+          "dial": "119",
+          "title": "Ambulância e bombeiros",
+          "detail": "diga \"kyūkyūsha\" (ambulância) · o app mostra seu endereço em japonês",
+          "source": "https://www.tfd.metro.tokyo.lg.jp/ts/sa/info_center.html",
+          "verificar": false
+        },
+        {
+          "id": "110",
+          "number": "110",
+          "dial": "110",
+          "title": "Polícia",
+          "detail": "emergência policial · grátis",
+          "source": "https://www.japan.travel/en/plan/hotline/",
+          "verificar": false
+        },
+        {
+          "id": "visitor-hotline",
+          "number": "050-3816-2787",
+          "dial": "+815038162787",
+          "title": "Japan Visitor Hotline",
+          "detail": "JNTO · 24 h · inglês, chinês e coreano",
+          "source": "https://www.japan.travel/en/plan/hotline/",
+          "verificar": false,
+          "badge": "24 h\ninglês"
+        }
+      ],
+      "more": [
+        {
+          "id": "7119",
+          "number": "#7119",
+          "dial": "#7119",
+          "title": "Dúvida médica · #7119",
+          "detail": "Tóquio e Kyoto · 24 h · inglês não garantido",
+          "source": "https://www.tfd.metro.tokyo.lg.jp/lfe/kyuu_adv/soudan-center.html",
+          "verificar": false
+        },
+        {
+          "id": "amda",
+          "number": "03-6233-9266",
+          "dial": "+81362339266",
+          "title": "AMDA · médico no seu idioma",
+          "detail": "indica hospital com idioma · seg–sex, 10h–16h",
+          "source": "https://www.amdamedicalcenter.com/u9j972nrfkeldd20awta-35/english",
+          "verificar": false
+        },
+        {
+          "id": "policia-ingles",
+          "number": "03-3501-0110",
+          "dial": "+81335010110",
+          "title": "Polícia de Tóquio em inglês",
+          "detail": "consulta em inglês · não é emergência",
+          "source": "https://www.japan.travel/en/plan/emergencies/",
+          "verificar": false
+        },
+        {
+          "id": "achados-perdidos",
+          "number": "0570-550-142",
+          "dial": "0570550142",
+          "title": "Achados e perdidos",
+          "detail": "central de objetos perdidos (JNTO)",
+          "source": "https://www.japan.travel/en/plan/hotline/",
+          "verificar": false
+        },
+        {
+          "id": "118",
+          "number": "118",
+          "dial": "118",
+          "title": "Guarda Costeira",
+          "detail": "acidente ou emergência no mar",
+          "source": "https://www.kaiho.mlit.go.jp/doc/tel118.html",
+          "verificar": false
+        }
+      ],
+      "consulates": [
+        {
+          "id": "consulado-toquio",
+          "cities": [
+            "tokyo"
+          ],
+          "name": "Consulado-Geral do Brasil em Tóquio",
+          "phone": "(03) 5488-5451",
+          "dial": "+81354885451",
+          "emergencyPhone": "090-6949-5328",
+          "emergencyDial": "+819069495328",
+          "address": "Ichigo Gotanda Bldg. 2F, 1-13-12 Higashi-Gotanda, Shinagawa-ku, Tokyo 141-0022",
+          "addressLocal": "〒141-0022 東京都品川区東五反田1-13-12 いちご五反田ビル2階",
+          "detail": "passaporte perdido, ARB · plantão também no WhatsApp",
+          "source": "https://www.gov.br/mre/pt-br/consulado-toquio/servicos-consulares/assistencia-a-brasileiros/emergencias",
+          "verificar": false
+        },
+        {
+          "id": "embaixada-toquio",
+          "cities": [
+            "tokyo"
+          ],
+          "name": "Embaixada do Brasil em Tóquio",
+          "phone": "(03) 3404-5211",
+          "dial": "+81334045211",
+          "emergencyPhone": null,
+          "emergencyDial": null,
+          "address": "2-11-12 Kita-Aoyama, Minato-ku, Tokyo 107-8633",
+          "addressLocal": "〒107-8633 東京都港区北青山2-11-12",
+          "detail": "embaixada · documentos e passaporte só no consulado",
+          "source": "https://www.gov.br/mre/pt-br/embaixada-toquio",
+          "verificar": false
+        },
+        {
+          "id": "consulado-nagoia",
+          "cities": [
+            "kyoto"
+          ],
+          "name": "Consulado-Geral do Brasil em Nagoia",
+          "phone": "(052) 222-1077",
+          "dial": "+81522221077",
+          "emergencyPhone": "080-8255-2410",
+          "emergencyDial": "+818082552410",
+          "address": "Shirakawa 8th Bldg. 2F, 1-10-29 Marunouchi, Naka-ku, Nagoya, Aichi 460-0002",
+          "addressLocal": "〒460-0002 愛知県名古屋市中区丸の内1-10-29 白川第8ビル2階",
+          "detail": "atende Kyoto · plantão à noite e fim de semana (WhatsApp)",
+          "source": "https://www.gov.br/mre/pt-br/consulado-nagoia/emergencias",
+          "verificar": false
+        }
+      ],
+      "phrases": [
+        {
+          "latin": "Tasukete kudasai",
+          "meaning": "me ajude, por favor",
+          "speech": "助けてください"
+        },
+        {
+          "latin": "Byōin wa doko desu ka",
+          "meaning": "onde é o hospital?",
+          "speech": "病院はどこですか"
+        },
+        {
+          "latin": "Kyūkyūsha o yonde kudasai",
+          "meaning": "chame uma ambulância, por favor",
+          "speech": "救急車を呼んでください"
+        },
+        {
+          "latin": "Keisatsu o yonde kudasai",
+          "meaning": "chame a polícia, por favor",
+          "speech": "警察を呼んでください"
+        },
+        {
+          "latin": "Eigo o hanaseru hito wa imasu ka",
+          "meaning": "alguém fala inglês?",
+          "speech": "英語を話せる人はいますか"
+        },
+        {
+          "latin": "Pasupōto o nakushimashita",
+          "meaning": "perdi o passaporte",
+          "speech": "パスポートをなくしました"
+        },
+        {
+          "latin": "Arerugī ga arimasu",
+          "meaning": "tenho alergia",
+          "speech": "アレルギーがあります"
+        }
+      ]
+    },
+    "IT": {
+      "name": "Itália",
+      "primary": [
+        {
+          "id": "112",
+          "number": "112",
+          "dial": "112",
+          "title": "Emergência · número único",
+          "detail": "polícia, ambulância, bombeiros · fala 16 idiomas",
+          "source": "https://comunicazione.regione.lazio.it/112/",
+          "verificar": false
+        },
+        {
+          "id": "113",
+          "number": "113",
+          "dial": "113",
+          "title": "Polícia",
+          "detail": "no Lazio cai na central do 112",
+          "source": "https://comunicazione.regione.lazio.it/112/",
+          "verificar": false
+        },
+        {
+          "id": "118",
+          "number": "118",
+          "dial": "118",
+          "title": "Ambulância",
+          "detail": "no Lazio cai na central do 112",
+          "source": "https://comunicazione.regione.lazio.it/112/",
+          "verificar": false
+        }
+      ],
+      "more": [
+        {
+          "id": "116117",
+          "number": "116117",
+          "dial": "116117",
+          "title": "Médico de plantão (não urgente)",
+          "detail": "guardia medica · grátis, 24 h, multilíngue",
+          "source": "https://regione.lazio.it/notizie/salute-attivo-in-tutta-la-regione-il-numero-116117",
+          "verificar": false
+        },
+        {
+          "id": "115",
+          "number": "115",
+          "dial": "115",
+          "title": "Bombeiros",
+          "detail": "no Lazio cai na central do 112",
+          "source": "https://comunicazione.regione.lazio.it/112/",
+          "verificar": false
+        },
+        {
+          "id": "1522",
+          "number": "1522",
+          "dial": "1522",
+          "title": "Violência contra a mulher",
+          "detail": "linha antiviolência nacional · grátis",
+          "source": "https://www.gov.br/mre/pt-br/consulado-roma/o-consulado/emergencias",
+          "verificar": false
+        }
+      ],
+      "consulates": [
+        {
+          "id": "consulado-roma",
+          "cities": [
+            "roma"
+          ],
+          "name": "Consulado-Geral do Brasil em Roma",
+          "phone": "06 688 9661",
+          "dial": "+39066889661",
+          "emergencyPhone": "+39 333 118 4682",
+          "emergencyDial": "+393331184682",
+          "address": "Piazza di Pasquino, 8 · 00186 Roma",
+          "addressLocal": null,
+          "detail": "passaporte perdido, documentos · plantão no WhatsApp",
+          "source": "https://www.gov.br/mre/pt-br/consulado-roma/o-consulado/emergencias",
+          "verificar": false
+        },
+        {
+          "id": "embaixada-roma",
+          "cities": [
+            "roma"
+          ],
+          "name": "Embaixada do Brasil em Roma",
+          "phone": "06 683981",
+          "dial": "+3906683981",
+          "emergencyPhone": null,
+          "emergencyDial": null,
+          "address": "Palazzo Pamphilj, Piazza Navona, 14 · 00186 Roma",
+          "addressLocal": null,
+          "detail": "embaixada · documentos e passaporte só no consulado",
+          "source": "https://www.gov.br/mre/pt-br/embaixada-roma/italiano/ambasciata/lambasciata",
+          "verificar": false
+        }
+      ],
+      "phrases": [
+        {
+          "latin": "Aiuto!",
+          "meaning": "socorro!",
+          "speech": "Aiuto!"
+        },
+        {
+          "latin": "Dov'è l'ospedale?",
+          "meaning": "onde é o hospital?",
+          "speech": "Dov'è l'ospedale?"
+        },
+        {
+          "latin": "Chiami un'ambulanza, per favore",
+          "meaning": "chame uma ambulância, por favor",
+          "speech": "Chiami un'ambulanza, per favore"
+        },
+        {
+          "latin": "Chiami la polizia, per favore",
+          "meaning": "chame a polícia, por favor",
+          "speech": "Chiami la polizia, per favore"
+        },
+        {
+          "latin": "Qualcuno parla inglese?",
+          "meaning": "alguém fala inglês?",
+          "speech": "Qualcuno parla inglese?"
+        },
+        {
+          "latin": "Ho perso il passaporto",
+          "meaning": "perdi o passaporte",
+          "speech": "Ho perso il passaporto"
+        },
+        {
+          "latin": "Sono allergico a…",
+          "meaning": "sou alérgico a…",
+          "speech": "Sono allergico a"
+        }
+      ]
+    }
+  }
+}
