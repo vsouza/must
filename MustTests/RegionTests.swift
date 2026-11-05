@@ -157,4 +157,10 @@ struct RegionTests {
         #expect(TransitLoader.fileName(for: .it) != TransitLoader.fileName(for: .bh))
         #expect(TransitLoader.fileName(for: .jp) == "tokyo-lines")
     }
+
+    @MainActor @Test func metroDeRomaEstaNoBundle() {
+        let map = TransitLoader.load(.it)
+        #expect(Set(map.lines.map(\.id)) == ["A", "B", "B1", "C"])
+        #expect(map.lines.allSatisfy { $0.approx && $0.lastTrain == "23:30" })
+    }
 }
