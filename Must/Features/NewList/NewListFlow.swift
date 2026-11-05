@@ -484,11 +484,13 @@ struct NewListView: View {
             list.icon = icon
             list.color = color
             list.photo = selectedPhoto?.listPhoto
+            ListCover.mark(list, chosen: selectedPhoto != nil, context: context)
         } else {
             let id = Self.uniqueId(for: trimmed, existing: Set(lists.map(\.id)))
             let list = MustList(id: id, name: trimmed, kanji: kanji.isEmpty ? nil : kanji, icon: icon, color: color,
                                 photo: selectedPhoto?.listPhoto, order: (lists.map(\.order).max() ?? -1) + 1)
             context.insert(list)
+            if selectedPhoto != nil { ListCover.mark(list, chosen: true, context: context) }
             createdId = id
             Log.data.info("nova lista \(id, privacy: .public)")
         }

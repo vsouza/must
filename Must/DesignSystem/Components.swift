@@ -337,22 +337,41 @@ struct Credit: View {
     }
 }
 
-/// Foto (Wikimedia Commons) com saturação .7 e o gradiente da cor por cima a 82%.
-/// Sem URL ou enquanto carrega: só o gradiente.
+/// Como as fotos aparecem (05/11, pedido do Vinicius: "muito sutil e sem vida").
+/// `vivid`: a foto em cor cheia e a cor do Must só onde tem texto (rampa de baixo pra cima).
+/// `classic`: o v5 do design (saturação .7 e o gradiente da cor a 82% por cima de tudo). `-photoStyle classic` em DEBUG.
+enum PhotoStyle: Sendable {
+    case vivid, classic
+
+    static let current: PhotoStyle = DebugFlags.string("photoStyle") == "classic" ? .classic : .vivid
+}
+
+/// Foto com a cor do Must. Sem URL ou enquanto carrega: só o gradiente (placeholder de cor).
+/// No estilo `vivid` a foto fica em cor cheia e a cor entra numa rampa (`ramp`: de onde começa a até onde fica sólida,
+/// em fração da altura) atrás do texto; `tintOpacity` 0 = sem cor nenhuma (foto do Google).
 struct TintedPhoto: View {
     var url: URL?
     var color: MustColor
     var tintOpacity: Double = 0.82
     /// 0.7 nas fotos de fundo; 1 na foto do Google (prompt 19: sem alterar a foto).
     var saturation: Double = 0.7
+    /// Estilo vivo: a cor começa em `ramp.lowerBound` e fica sólida em `ramp.upperBound` (0 = topo, 1 = base).
+    var ramp: ClosedRange<Double> = 0.32...0.74
+    /// Zoom lento (heroes grandes: Lugar).
+    var motion = false
     @State private var image: UIImage?
 
-    init(url: URL?, color: MustColor, tintOpacity: Double = 0.82, saturation: Double = 0.7) {
+    init(url: URL?, color: MustColor, tintOpacity: Double = 0.82, saturation: Double = 0.7, ramp: ClosedRange<Double> = 0.32...0.74,
+         motion: Bool = false) {
         self.url = url
         self.color = color
         self.tintOpacity = tintOpacity
         self.saturation = saturation
+        self.ramp = ramp
+        self.motion = motion
     }
+
+    private var vivid: Bool { PhotoStyle.current == .vivid }
 
     var body: some View {
         // A foto fica num overlay pra nunca mudar o tamanho proposto (scaledToFill passaria da largura).
@@ -360,9 +379,25 @@ struct TintedPhoto: View {
             .overlay {
                 if let url {
                     if let image {
-                        Image(uiImage: image).resizable().scaledToFill().saturation(saturation)
+                        Image(uiImage: image).resizable().scaledToFill()
+                            // Foto do Google (sem cor por cima) fica como veio; as de fundo ganham um pouco de vida.
+                            .saturation(vivid ? (tintOpacity > 0 ? max(saturation, 1.08) : 1) : saturation)
+                            .contrast(vivid && tintOpacity > 0 ? 1.04 : 1)
+                            .modifier(MaybeKenBurns(on: motion))
                     }
-                    color.gradient.opacity(tintOpacity)
+                    if vivid {
+                        if tintOpacity > 0 {
+                            // Um véu leve da cor em tudo (a foto conversa com a lista) e a cor cheia atrás do texto.
+                            color.strong.opacity(0.12)
+                            color.gradient
+                                .mask(LinearGradient(stops: [.init(color: .clear, location: ramp.lowerBound),
+                                                             .init(color: .black.opacity(0.94), location: ramp.upperBound),
+                                                             .init(color: .black, location: 1)],
+                                                     startPoint: .top, endPoint: .bottom))
+                        }
+                    } else {
+                        color.gradient.opacity(tintOpacity)
+                    }
                 }
             }
             .clipped()
@@ -371,6 +406,32 @@ struct TintedPhoto: View {
                 guard let url else { image = nil; return }
                 image = await PhotoLoader.load(url)
             }
+    }
+}
+
+/// Zoom lento na foto (Ken Burns) dos heroes: 1 → 1,07 em 22 s, vai e volta. Desligado com "Reduzir movimento".
+struct KenBurns: ViewModifier {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var zoomed = false
+
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(zoomed ? 1.07 : 1, anchor: .center)
+            .onAppear {
+                guard !reduceMotion, PhotoStyle.current == .vivid else { return }
+                withAnimation(.easeInOut(duration: 22).repeatForever(autoreverses: true)) { zoomed = true }
+            }
+    }
+}
+
+extension View {
+    func kenBurns() -> some View { modifier(KenBurns()) }
+}
+
+struct MaybeKenBurns: ViewModifier {
+    var on: Bool
+    func body(content: Content) -> some View {
+        if on { content.kenBurns() } else { content }
     }
 }
 

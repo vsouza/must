@@ -34,7 +34,7 @@ O app tem que ser **bem visual** (foto em todo lugar que mostra um lugar ou bair
 - Telas: `design/screens/*.png` (render) e `*.html` (HTML de referência, abrir no navegador; os links entre telas funcionam). `must-light.css` tem os tokens.
 - Fundo branco `#FFFFFF`, tinta `#121316`, secundário `#7A7F87`, superfícies `#F1F2F4` / `#F6F7F9`, borda `#EEF0F3`.
 - Acentos: verde `#22DD7E` (texto sobre ele `#0B2A18`) e azul `#2B7BFF` (texto `#0F3B8C`). Formas 3D (elipses com gradiente) atrás, cards de vidro empilhados e girados 1–2°.
-- Cor por Must (claro → forte, texto escuro): eat `#B9F5CF→#22DD7E/#0B2A18`, drink `#9FD6FF→#2B7BFF/#0F3B8C`, coffee `#FFD2BF→#FF7A45/#5A2200`, see `#DCCFFF→#8B5CF6/#2E1065`, temple `#B8F2EA→#14B8A6/#063F3A`, listen `#FFC6DA→#FF4D8D/#5A0F2E`, shop `#FFE3A3→#FFB020/#4A2E00`, night `#C9D2FF→#5B6CFF/#161C66`. Foto (Commons) por trás com o gradiente a 82% de opacidade.
+- Cor por Must (claro → forte, texto escuro): eat `#B9F5CF→#22DD7E/#0B2A18`, drink `#9FD6FF→#2B7BFF/#0F3B8C`, coffee `#FFD2BF→#FF7A45/#5A2200`, see `#DCCFFF→#8B5CF6/#2E1065`, temple `#B8F2EA→#14B8A6/#063F3A`, listen `#FFC6DA→#FF4D8D/#5A0F2E`, shop `#FFE3A3→#FFB020/#4A2E00`, night `#C9D2FF→#5B6CFF/#161C66`. **Fotos vivas (05/11/2026, pedido do Vinicius — substitui o "gradiente a 82%" do v5):** foto em cor cheia; a cor do Must só numa rampa atrás do texto (`TintedPhoto`, `PhotoStyle.vivid`); heroes escurecem só onde tem texto e têm zoom lento (desliga com Reduzir movimento). Capa de lista: foto escolhida à mão › foto do Google de um lugar da lista já no disco › Commons (`ListCover`, nunca baixa nada). `-photoStyle classic` (DEBUG) mostra o v5.
 - Fontes (bundle, OFL): **Archivo** (UI), **Instrument Serif Italic** (voz do usuário, legendas), **Geist Mono** (horas, ¥/R$, códigos de estação), **Zen Kaku Gothic New** (kanji). Escala: título 30/600, nome de lista 20, lugar 17/600, corpo 15, meta 13, serif 18–20, mono 13, micro 11 mono caixa alta com tracking .1em.
 - Ícones: set próprio em `design/icons/*.svg` (traço 1.6, viewBox 24). Importar como *custom SF Symbols*; `design/icons/README.md` dá o SF Symbol de fallback de cada um.
 - 済 (feito) é o selo do app: círculo verde com o kanji.
@@ -50,7 +50,7 @@ O app tem que ser **bem visual** (foto em todo lugar que mostra um lugar ou bair
 - Commits pequenos, mensagem em português, um prompt = um ou mais commits.
 
 ## Como o trabalho está dividido
-Os prompts em `prompts/` são executados em ordem (01 → 20; a rodada atual é o `prompts/18-guia-bairro-resiliencia.md`, depois 19 fotos e 20 tema da viagem). Cada um diz o que entregar e como verificar. Antes de cada prompt, olhar os PNGs das telas citadas.
+Os prompts em `prompts/` são executados em ordem (01 → 22; depois da RODADA-21, o `prompts/22-inicio-v7.md`). Cada um diz o que entregar e como verificar. Antes de cada prompt, olhar os PNGs das telas citadas.
 
 ## Tema da viagem (03/11/2026, pedido do Vinicius) — prompt 20
 - Ao entrar numa viagem/região, o app ganha a **bandeira do país** (círculo 22 pt ao lado da data, vetor, offline) e um **tom leve** do país: lavado no topo das telas principais, tinta dos selos, ponto dos títulos de seção e da aba ativa, rótulo da cidade.
@@ -63,3 +63,8 @@ Os prompts em `prompts/` são executados em ordem (01 → 20; a rodada atual é 
 - No app, montar as telas com stacks (`VStack`/`ScrollView`), nunca posições fixas: texto que quebra empurra o bloco seguinte. Metadados de linha única usam `lineLimit(1)` + truncamento; títulos no máximo 2 linhas.
 - Listas que continuam rolam por trás de um fade branco antes da tab bar ou dos botões; linhas de chips rolam na horizontal.
 - Fotos têm sempre placeholder de cor enquanto carregam (premissa offline).
+
+## Selos sem japonês (05/11/2026, pedido do Vinicius: "não falo japonês")
+- O selo do bairro (`StationStamp`) mostra **sigla latina + nome**, nunca kanji: código de estação JR quando existe (Shinjuku SJK, Shibuya SBY, Ueno UEN, Harajuku HJK, Akihabara AKB, Ikebukuro IKB), senão 3 letras do nome (Ginza GNZ, Asakusa ASK). Selo pequeno: só a sigla. Mesmo padrão do Brasil (SAV / BH · 1897).
+- Rótulos de lugar/bairro na interface sempre em letras latinas (Nakano, Gyoen, Kabukichō). Kanji só onde tem uso prático: nome local do lugar pra mostrar a um taxista ou atendente (`nameLocal` no Lugar), nunca como enfeite.
+- `Area` ganha `stampCode` (sigla) e usa o nome latino como segunda linha; o `stampText` em kanji deixa de ser exibido.

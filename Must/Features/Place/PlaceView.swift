@@ -258,9 +258,10 @@ struct PlaceView: View {
 
     @ViewBuilder private func heroPhotoView(_ place: Place, color: MustColor, page: Int) -> some View {
         if let url = photoURL(place, page: page) {
-            if page > 0 || heroPhoto?.source == "Google" {
+            // Estilo vivo: Commons como o Google (foto inteira, cor só na faixa de baixo); a lista "photo" segue prata.
+            if page > 0 || heroPhoto?.source == "Google" || (PhotoStyle.current == .vivid && place.kind != .photo) {
                 // Foto do Google sem tingir (prompt 19): a cor do Must só numa faixa de 30% embaixo, pra legibilidade.
-                TintedPhoto(url: url, color: color, tintOpacity: 0, saturation: 1)
+                TintedPhoto(url: url, color: color, tintOpacity: 0, saturation: 1, motion: page == 0)
                     .overlay(alignment: .bottom) {
                         color.gradient
                             .frame(height: 390 * 0.3)

@@ -75,6 +75,7 @@ struct ListView: View {
             }
         }
         .scrollIndicators(.hidden)
+        .task(id: "\(list?.places.count ?? 0)|\(list?.photo?.url ?? "")") { cover = list.flatMap(ListCover.photo(for:)) }
         .ignoresSafeArea(edges: .top)
         .background(Color.must.bg.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
@@ -82,7 +83,10 @@ struct ListView: View {
 
     // MARK: Header
 
-    private var photoURL: URL? { saveForEndOnly ? nil : list?.photo?.url.flatMap(URL.init(string:)) }
+    /// Capa (`ListCover`): calculada fora do `body`, ao abrir e quando a lista muda.
+    @State private var cover: CCPhoto?
+    private var photoURL: URL? { saveForEndOnly ? nil : cover.flatMap { URL(string: $0.largeURL ?? $0.url) } }
+    private var coverCredit: String? { cover?.source == "Google" ? cover?.credit : list?.photo?.credit }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -103,8 +107,8 @@ struct ListView: View {
                 }
             }
             .overlay(alignment: .bottomTrailing) {
-                if photoURL != nil, let credit = list?.photo?.credit {
-                    Credit(credit, color: color.text, url: list?.photo?.page.flatMap(URL.init(string:))).offset(y: 30)
+                if photoURL != nil, let credit = coverCredit {
+                    Credit(credit, color: color.text, url: cover?.pageURL).offset(y: 30)
                 }
             }
 
@@ -120,7 +124,8 @@ struct ListView: View {
         .padding(.top, 62)
         .background(alignment: .top) {
             // Foto tingida de 240 pt que some no branco.
-            TintedPhoto(url: photoURL, color: color)
+            // Vivo: foto em cima, cor sólida a partir do título (texto escuro sobre a cor).
+            TintedPhoto(url: photoURL, color: color, ramp: 0.16...0.46)
                 .frame(height: 300)
                 .mask(LinearGradient(stops: [.init(color: .black, location: 0), .init(color: .black, location: 0.45),
                                              .init(color: .clear, location: 1)], startPoint: .top, endPoint: .bottom))

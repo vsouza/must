@@ -20,6 +20,7 @@
 		04EA9E01239F949D45AC69AC /* GoogleRoutes.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAC14F513D4246399C640EB /* GoogleRoutes.swift */; };
 		0521A47DDA44A6BC83CF1484 /* FlightStatusService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D79598327FCB5430594A4364 /* FlightStatusService.swift */; };
 		0559AB1F0C1B67030230A3AF /* AssistantWarmTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34295159CAF70FE35C4BB47 /* AssistantWarmTests.swift */; };
+		05A5632ED59A7CF0441E64C7 /* ListCover.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92C27D0DDE386E2B958C43F5 /* ListCover.swift */; };
 		08762FC7D78835A8A4A998F7 /* DayPlanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16948024C7E738EE615EA8B4 /* DayPlanner.swift */; };
 		088CF8E8F058362B25207A1E /* ShoppingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C9849256E110EA3402843D3 /* ShoppingView.swift */; };
 		09F4A5266F9FEDE79B520665 /* ShoppingChecks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F1866C623B37239A292FF69 /* ShoppingChecks.swift */; };
@@ -242,6 +243,7 @@
 		AECAA7B9898D40D2B927ACEC /* TicketQR.swift in Sources */ = {isa = PBXBuildFile; fileRef = D864E1B49CCD1C49891750C2 /* TicketQR.swift */; };
 		B09AB4744C714F4C31A08095 /* Gallery.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8DF958C7A3147E7A4671A15 /* Gallery.swift */; };
 		B10CDC96A29FED4AEC51643A /* AssistantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 451CE3D61A18701D27DE164B /* AssistantView.swift */; };
+		B111AB2E859BB98654C85BBB /* ListCoverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A0E81635371E1D789015B1A /* ListCoverTests.swift */; };
 		B13ACFFE6371FA7BCA7C5EFC /* GuideNudgeScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70F3839B1D3C5EF7721DE77E /* GuideNudgeScheduler.swift */; };
 		B18F0CDC98115C8EA05C9875 /* ShoppingCards.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C1139E09E37CDF6847F53EC /* ShoppingCards.swift */; };
 		B1B94E1AB95A06BFEACB8499 /* KindExtraFields.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20A9F66DF0EFB2CF99A7AAAB /* KindExtraFields.swift */; };
@@ -515,6 +517,7 @@
 		773B0CE7A22D1F8DD58FFE79 /* PerformanceRodada21Tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PerformanceRodada21Tests.swift; sourceTree = "<group>"; };
 		7762045A378DADBDFF7270E0 /* CompassBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompassBridge.swift; sourceTree = "<group>"; };
 		78212F58245B84FF6D0AEC48 /* AreaFocusSolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AreaFocusSolverTests.swift; sourceTree = "<group>"; };
+		7A0E81635371E1D789015B1A /* ListCoverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListCoverTests.swift; sourceTree = "<group>"; };
 		7A5C8629E902F9A6B0F451A9 /* TripThemeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripThemeTests.swift; sourceTree = "<group>"; };
 		7B514A86BB604B08856786EA /* SunServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SunServiceTests.swift; sourceTree = "<group>"; };
 		7BA25CA47124E3E6E046ED06 /* map-packs.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "map-packs.json"; sourceTree = "<group>"; };
@@ -556,6 +559,7 @@
 		9212EEC5AD4AC6E139D9EBAB /* PlaceImport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceImport.swift; sourceTree = "<group>"; };
 		9249901293C5FA229AFF4AC2 /* seed-jp.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "seed-jp.json"; sourceTree = "<group>"; };
 		9278CE4A9CF30F816B6DC2F7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		92C27D0DDE386E2B958C43F5 /* ListCover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListCover.swift; sourceTree = "<group>"; };
 		9402F5580C133734764AAAE2 /* MontarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MontarView.swift; sourceTree = "<group>"; };
 		954DFD2565943C15811989EF /* NetResilienceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetResilienceTests.swift; sourceTree = "<group>"; };
 		95A3D3C984F41EDDC4BFE7CD /* Ticket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Ticket.swift; sourceTree = "<group>"; };
@@ -968,6 +972,7 @@
 		420EF28B6F2A4788DA77A29A /* Musts */ = {
 			isa = PBXGroup;
 			children = (
+				92C27D0DDE386E2B958C43F5 /* ListCover.swift */,
 				0C42FCB610CD3F0DCA2D3DAF /* MustsHubView.swift */,
 			);
 			path = Musts;
@@ -1033,6 +1038,7 @@
 				5092A6F919E95C25C7D6B97B /* JapanTransitTests.swift */,
 				8E95DBB5D221CACCD98CDFCB /* JSONMemoTests.swift */,
 				A68D631FD82CB44E32D3116B /* KindsTests.swift */,
+				7A0E81635371E1D789015B1A /* ListCoverTests.swift */,
 				673F8401797BB6988B424DF7 /* LocationGateTests.swift */,
 				152B888DEEFD8182E7E1B1CC /* MapCameraTests.swift */,
 				D9E45EB741EE7A4B0C62B1E9 /* MustTests.swift */,
@@ -1824,6 +1830,7 @@
 				55CF57919CDE99D67C54F835 /* JSONMemoTests.swift in Sources */,
 				01986439F3BF1AC9AE8AF29B /* JapanTransitTests.swift in Sources */,
 				C921CC2375678A03499F2454 /* KindsTests.swift in Sources */,
+				B111AB2E859BB98654C85BBB /* ListCoverTests.swift in Sources */,
 				24E0EB4DB56885E84049C095 /* LocationGateTests.swift in Sources */,
 				1983873D9D81C55F540630BB /* MapCameraTests.swift in Sources */,
 				25F1D69D524D1DB8234C3152 /* MustTests.swift in Sources */,
@@ -1970,6 +1977,7 @@
 				65557E5EAA15A5973E535155 /* LightRules.swift in Sources */,
 				9532122E8A862D8B7500C4BD /* LinkPlacesMap.swift in Sources */,
 				C4FB3B93CC5504167CDBA077 /* LinkResolver.swift in Sources */,
+				05A5632ED59A7CF0441E64C7 /* ListCover.swift in Sources */,
 				5E280721697733309D36E7A5 /* ListView.swift in Sources */,
 				C746B3886460D56AD5A787F8 /* LocationService.swift in Sources */,
 				EC5C18C548CABCD692B91098 /* Log.swift in Sources */,

@@ -127,7 +127,7 @@ final class PlacePhotoResolver {
     }
 
     /// `CCPhoto` da foto do Google: o crédito "foto · Google · autor" e o toque abre o link do autor.
-    static func photo(_ ref: PlacePhotoRef, file: URL, placeId: String) -> CCPhoto {
+    nonisolated static func photo(_ ref: PlacePhotoRef, file: URL, placeId: String) -> CCPhoto {
         CCPhoto(id: ref.name, url: file.absoluteString, largeURL: file.absoluteString,
                 owner: String((ref.author ?? "Google").prefix(28)), licenseName: "Google",
                 page: ref.authorURI ?? "https://www.google.com/maps/place/?q=place_id:\(placeId)", source: "Google")
