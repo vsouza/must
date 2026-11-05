@@ -173,18 +173,19 @@ struct PlanTomorrowView: View {
 
 // MARK: - Live Activity
 
+/// v8 (prompt 23 §4): "saia às" gigante em laranja, a parada, a seguinte e o último trem. Tinta + laranja, nada mais.
 struct NextStopLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: NextStopAttributes.self) { context in
             LockScreenStopView(state: context.state)
-                .activityBackgroundTint(SharedStyle.ink)
+                .activityBackgroundTint(SharedStyle.v8Ink)
                 .activitySystemActionForegroundColor(.white)
                 .widgetURL(URL(string: "must://hoje"))
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
                     HStack(spacing: 8) {
-                        NumberBadge(number: context.state.number)
+                        NumberBadge(number: context.state.number, anchor: context.state.isAnchor)
                         Text(context.state.name).font(SharedStyle.archivo(15, .semibold)).foregroundStyle(.white).lineLimit(1)
                     }
                 }
@@ -192,15 +193,21 @@ struct NextStopLiveActivity: Widget {
                     LeaveTime(state: context.state, size: 18)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    ProgressDetail(state: context.state)
+                    VStack(alignment: .leading, spacing: 6) {
+                        ProgressDetail(state: context.state)
+                        AfterLine(state: context.state)
+                    }
                 }
             } compactLeading: {
-                NumberBadge(number: context.state.number)
+                NumberBadge(number: context.state.number, anchor: context.state.isAnchor)
             } compactTrailing: {
-                Text(context.state.minutesAway.map { "\($0) min" } ?? "agora")
-                    .font(SharedStyle.mono(13, .semibold)).foregroundStyle(SharedStyle.green)
+                if let leave = context.state.leaveAt, leave > .now {
+                    Text(leave, style: .time).font(SharedStyle.mono(13, .semibold)).foregroundStyle(SharedStyle.v8Orange)
+                } else {
+                    Text("agora").font(SharedStyle.mono(13, .semibold)).foregroundStyle(SharedStyle.v8Orange)
+                }
             } minimal: {
-                NumberBadge(number: context.state.number)
+                NumberBadge(number: context.state.number, anchor: context.state.isAnchor)
             }
             .widgetURL(URL(string: "must://hoje"))
         }
@@ -209,9 +216,12 @@ struct NextStopLiveActivity: Widget {
 
 private struct NumberBadge: View {
     var number: Int
+    var anchor = false
     var body: some View {
-        Text("\(number)").font(SharedStyle.archivo(12, .bold)).foregroundStyle(SharedStyle.greenText)
-            .frame(width: 22, height: 22).background(Circle().fill(SharedStyle.green))
+        Text("\(number)").font(SharedStyle.archivo(12, .bold)).foregroundStyle(anchor ? SharedStyle.v8Ink : .white)
+            .frame(width: 22, height: 22)
+            .background(Circle().fill(anchor ? SharedStyle.v8Orange : SharedStyle.v8Ink))
+            .overlay(Circle().strokeBorder(.white.opacity(anchor ? 0 : 0.5), lineWidth: 1))
     }
 }
 
@@ -222,11 +232,11 @@ private struct LeaveTime: View {
     var body: some View {
         VStack(alignment: .trailing, spacing: 0) {
             if let leave = state.leaveAt, leave > .now {
-                Text(leave, style: .time).font(SharedStyle.mono(size, .semibold)).foregroundStyle(SharedStyle.green)
-                Text("saia às").font(SharedStyle.archivo(12)).foregroundStyle(.white.opacity(0.6))
+                Text(leave, style: .time).font(SharedStyle.mono(size, .semibold)).foregroundStyle(SharedStyle.v8Orange)
+                Text("saia às").font(SharedStyle.archivo(12)).foregroundStyle(SharedStyle.v8Mute)
             } else {
-                Text(state.at, style: .time).font(SharedStyle.mono(size, .semibold)).foregroundStyle(SharedStyle.green)
-                Text("saia agora").font(SharedStyle.archivo(12)).foregroundStyle(.white.opacity(0.6))
+                Text(state.arriveBy ?? state.at, style: .time).font(SharedStyle.mono(size, .semibold)).foregroundStyle(SharedStyle.v8Orange)
+                Text(state.arriveBy != nil ? "chegue às" : "saia agora").font(SharedStyle.archivo(12)).foregroundStyle(SharedStyle.v8Mute)
             }
         }
     }
@@ -240,12 +250,33 @@ private struct ProgressDetail: View {
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     Capsule().fill(.white.opacity(0.18))
-                    Capsule().fill(SharedStyle.blue).frame(width: geo.size.width * max(0.04, state.progress))
+                    Capsule().fill(SharedStyle.v8Orange).frame(width: geo.size.width * max(0.04, state.progress))
                 }
             }
-            .frame(height: 5)
+            .frame(height: 4)
             Text(state.detail).font(SharedStyle.mono(12)).foregroundStyle(.white.opacity(0.85)).lineLimit(1).fixedSize()
         }
+    }
+}
+
+/// "depois 15:48 Shinjuku Gyoen · último trem 00:12".
+private struct AfterLine: View {
+    var state: NextStopAttributes.ContentState
+
+    var body: some View {
+        HStack(spacing: 6) {
+            if let name = state.nextName, let at = state.nextAt {
+                Text("DEPOIS").font(SharedStyle.mono(10)).foregroundStyle(SharedStyle.v8Mute)
+                Text(at, style: .time).font(SharedStyle.mono(12, .semibold)).foregroundStyle(.white)
+                Text(name).font(SharedStyle.archivo(12)).foregroundStyle(.white.opacity(0.85)).lineLimit(1)
+            }
+            Spacer(minLength: 4)
+            if let last = state.lastTrainAt {
+                Text("ÚLTIMO TREM").font(SharedStyle.mono(10)).foregroundStyle(SharedStyle.v8Mute)
+                Text(last, style: .time).font(SharedStyle.mono(12, .semibold)).foregroundStyle(.white)
+            }
+        }
+        .lineLimit(1)
     }
 }
 
@@ -253,21 +284,17 @@ struct LockScreenStopView: View {
     var state: NextStopAttributes.ContentState
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Must · próxima parada").font(SharedStyle.archivo(13)).foregroundStyle(.white.opacity(0.6))
-                    HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Text(state.name).font(SharedStyle.archivo(20, .semibold)).foregroundStyle(.white).lineLimit(1)
-                        if let local = state.nameLocal {
-                            Text(local).font(.custom("ZenKakuGothicNew-Medium", fixedSize: 12)).foregroundStyle(.white.opacity(0.6)).lineLimit(1)
-                        }
-                    }
+                    Text("PARADA \(state.number) DE \(state.total)").font(SharedStyle.mono(11)).foregroundStyle(SharedStyle.v8Mute)
+                    Text(state.name).font(SharedStyle.archivo(20, .semibold)).foregroundStyle(.white).lineLimit(1)
                 }
                 Spacer()
-                LeaveTime(state: state, size: 22)
+                LeaveTime(state: state, size: 26)
             }
             ProgressDetail(state: state)
+            AfterLine(state: state)
         }
         .padding(18)
     }

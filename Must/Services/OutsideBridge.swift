@@ -62,36 +62,23 @@ enum OutsideBridge {
 
     // MARK: Live Activity
 
-    /// Começa quando há dia aceito com parada futura; atualiza a cada mudança; encerra no fim do dia.
+    /// Começa quando há dia aceito com parada pela frente; atualiza a cada mudança; encerra quando o dia acaba.
+    /// v8 (prompt 23 §4): a parada pra onde se vai, o "saia às" da Linha (`DayNowRules`), a seguinte e o último trem.
     static func syncLiveActivity(context: ModelContext, region: Region, services: Services) {
         let now = AppClock.now
         let cal = region.calendar
         let start = cal.startOfDay(for: now)
-        let day = try? context.fetch(FetchDescriptor<PlannedDay>(predicate: #Predicate { $0.date == start && $0.accepted })).first
-        let stops = day?.orderedStops.filter { $0.place != nil } ?? []
         let running = Activity<NextStopAttributes>.activities
-
-        guard let index = stops.firstIndex(where: { !$0.done }), let place = stops[index].place else {
-            end(running, reason: stops.isEmpty ? "sem dia" : "dia feito 済")
+        guard let plan = DayEngineV8.accepted(on: start, region: region, context: context) else {
+            end(running, reason: "sem dia")
             return
         }
-        let stop = stops[index]
-        let settings = context.settings(for: region)
-        var minutes: Int?
-        var detailParts: [String] = []
-        if let here = services.location.current {
-            let leg = DaySolver.leg(here.coordinate, place.coordinate, walkMax: settings.walkMaxKm)
-            minutes = services.eta.minutes(from: here.coordinate, to: place.coordinate, transit: leg.mode == .metro) ?? leg.minutes
-            detailParts.append(Walk.distanceText(here.distance(from: place.location)))
+        guard let state = liveState(plan, region: region, now: now, here: services.location.current, eta: services.eta) else {
+            end(running, reason: "dia feito 済")
+            return
         }
-        detailParts.append(stop.isAnchor ? "reserva \(region.timeString(stop.at))" : region.timeString(stop.at))
-        let leave = minutes.map { RoutesService.leaveAt(stop.at, travelMinutes: $0) }
-        let state = NextStopAttributes.ContentState(
-            number: index + 1, name: place.name, nameLocal: place.nameLocal, at: stop.at, leaveAt: leave, minutesAway: minutes,
-            detail: detailParts.joined(separator: " · "), done: stops.filter(\.done).count, total: stops.count
-        )
-        // Some depois da última parada + 2 h, ou à meia-noite.
-        let stale = min(stop.at.addingTimeInterval(2 * 3600), cal.date(byAdding: .day, value: 1, to: start) ?? stop.at)
+        // Some 2 h depois da hora da parada, ou depois do último trem.
+        let stale = max(state.at.addingTimeInterval(2 * 3600), plan.lastTrain?.at ?? .distantPast)
         let content = ActivityContent(state: state, staleDate: stale)
 
         if let activity = running.first {
@@ -117,11 +104,41 @@ enum OutsideBridge {
                 var style = Date.FormatStyle(locale: region.locale, calendar: cal).weekday(.abbreviated).day().month(.abbreviated)
                 style.timeZone = region.timeZone
                 _ = try Activity.request(attributes: NextStopAttributes(dayLabel: now.formatted(style)), content: content, pushType: nil)
-                Log.app.info("Live Activity iniciada: \(place.name, privacy: .public)")
+                Log.app.info("Live Activity iniciada: \(state.name, privacy: .public)")
             } catch {
                 Log.app.error("Live Activity: \(error.localizedDescription, privacy: .public)")
             }
         }
+    }
+
+    /// Estado da Live Activity num instante: a parada pra onde se vai, "saia às" (com o GPS e o ETA quando há), a seguinte e
+    /// o último trem. `nil` = nada mais pela frente.
+    static func liveState(_ plan: DayPlan, region: Region, now: Date, here: CLLocation?, eta: ETACache?) -> NextStopAttributes.ContentState? {
+        guard let head = DayNowRules.heading(in: plan, at: now) else { return nil }
+        let stop = head.stop
+        var minutes = plan.leg(before: stop)?.minutes
+        var leave = head.leaveAt
+        var detail: [String] = []
+        if let here, let target = DayComposer.coordinate(stop) {
+            let location = CLLocation(latitude: target.latitude, longitude: target.longitude)
+            let leg = DaySolver.leg(here.coordinate, target, walkMax: 1.5)
+            let real = eta?.minutes(from: here.coordinate, to: target, transit: leg.mode == .metro) ?? leg.minutes
+            minutes = real
+            leave = RoutesService.leaveAt(DayNowRules.arriveBy(stop) ?? stop.start, travelMinutes: real)
+            detail.append(Walk.distanceText(here.distance(from: location)))
+        }
+        let arrive = DayNowRules.arriveBy(stop)
+        switch stop.anchor {
+        case .reservation: detail.append("reserva \(region.timeString(stop.start))")
+        case .ticket: detail.append("ingresso \(region.timeString(stop.start))")
+        default: detail.append(arrive.map { "chegue \(region.timeString($0))" } ?? region.timeString(stop.start))
+        }
+        let following = head.index + 1 < plan.stops.count ? plan.stops[head.index + 1] : nil
+        return NextStopAttributes.ContentState(
+            number: head.index + 1, name: stop.label, nameLocal: nil, at: stop.start, leaveAt: leave, minutesAway: minutes,
+            detail: detail.joined(separator: " · "), done: plan.stops.filter(\.done).count, total: plan.stops.count,
+            arriveBy: arrive, nextName: following?.label, nextAt: following?.start,
+            lastTrainLine: plan.lastTrain?.line, lastTrainAt: plan.lastTrain?.at, isAnchor: stop.kind == .anchor)
     }
 
     private static func end(_ activities: [Activity<NextStopAttributes>], reason: String) {

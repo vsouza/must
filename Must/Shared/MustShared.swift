@@ -27,6 +27,17 @@ struct NextStopAttributes: ActivityAttributes {
         var detail: String
         var done: Int
         var total: Int
+        // v8 (prompt 23 §4): "saia às", a parada seguinte e o último trem. Opcionais: estados antigos continuam lendo.
+        /// "Chegue às" (lugar com fila e sem reserva: abertura).
+        var arriveBy: Date? = nil
+        /// Parada depois desta ("depois · 15:48 Shinjuku Gyoen").
+        var nextName: String? = nil
+        var nextAt: Date? = nil
+        /// Último trem do dia ("Hibiya Ginza → Naka-Meguro", 00:12).
+        var lastTrainLine: String? = nil
+        var lastTrainAt: Date? = nil
+        /// A parada é âncora (reserva, ingresso, golden): selo laranja.
+        var isAnchor: Bool = false
 
         var progress: Double { total == 0 ? 0 : Double(done) / Double(total) }
     }
@@ -88,6 +99,11 @@ enum SharedStyle {
     static let greenText = rgb(0x0B2A18)
     static let blue = rgb(0x2B7BFF)
     static let blueText = rgb(0x0F3B8C)
+    // v8: tinta, papel e laranja (a única cor: ação e "agora").
+    static let v8Ink = rgb(0x121212)
+    static let v8Paper = rgb(0xF2F0EA)
+    static let v8Orange = rgb(0xFF4A1C)
+    static let v8Mute = rgb(0xA3A39C)
     static let greenGradient = LinearGradient(colors: [rgb(0xB9F5CF), rgb(0x22DD7E)], startPoint: .topLeading, endPoint: .bottomTrailing)
     static let blueGradient = LinearGradient(colors: [rgb(0x9FD6FF), rgb(0x2B7BFF)], startPoint: .topLeading, endPoint: .bottomTrailing)
 
