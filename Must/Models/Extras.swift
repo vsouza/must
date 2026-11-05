@@ -384,8 +384,53 @@ struct PlaceExtra: Codable, Hashable, Sendable {
     var art: ArtEvent?
     var sport: SportSpot?
     var experience: ExperienceInfo?
+    /// Programação colada (link, texto ou foto do cartaz) de casa de show, estádio ou museu: "Em cartaz" (RODADA-23 · A).
+    /// Aditivo: arquivo antigo sem a chave decodifica com `[]`, e `[]` não é gravado.
+    var program: [EventSession] = []
+    /// De onde veio `program` (`link` | `poster`) e quando foi colado ("colado há N dias").
+    var programSource: ShowSource?
+    var programCheckedAt: Date?
 
-    var isEmpty: Bool { photo == nil && art == nil && sport == nil && experience == nil }
+    init(photo: PhotoSpot? = nil, art: ArtEvent? = nil, sport: SportSpot? = nil, experience: ExperienceInfo? = nil,
+         program: [EventSession] = [], programSource: ShowSource? = nil, programCheckedAt: Date? = nil) {
+        self.photo = photo
+        self.art = art
+        self.sport = sport
+        self.experience = experience
+        self.program = program
+        self.programSource = programSource
+        self.programCheckedAt = programCheckedAt
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case photo, art, sport, experience, program, programSource, programCheckedAt
+    }
+
+    init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        photo = try c.decodeIfPresent(PhotoSpot.self, forKey: .photo)
+        art = try c.decodeIfPresent(ArtEvent.self, forKey: .art)
+        sport = try c.decodeIfPresent(SportSpot.self, forKey: .sport)
+        experience = try c.decodeIfPresent(ExperienceInfo.self, forKey: .experience)
+        program = try c.decodeIfPresent([EventSession].self, forKey: .program) ?? []
+        programSource = try c.decodeIfPresent(ShowSource.self, forKey: .programSource)
+        programCheckedAt = try c.decodeIfPresent(Date.self, forKey: .programCheckedAt)
+    }
+
+    func encode(to encoder: any Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encodeIfPresent(photo, forKey: .photo)
+        try c.encodeIfPresent(art, forKey: .art)
+        try c.encodeIfPresent(sport, forKey: .sport)
+        try c.encodeIfPresent(experience, forKey: .experience)
+        if !program.isEmpty {
+            try c.encode(program, forKey: .program)
+            try c.encodeIfPresent(programSource, forKey: .programSource)
+            try c.encodeIfPresent(programCheckedAt, forKey: .programCheckedAt)
+        }
+    }
+
+    var isEmpty: Bool { photo == nil && art == nil && sport == nil && experience == nil && program.isEmpty }
 
     /// Sessões com ingresso (art, jogo ou experiência).
     var sessions: [EventSession] { (art?.sessions ?? []) + (sport?.sessions ?? []) + (experience?.sessions ?? []) }
@@ -399,5 +444,6 @@ struct PlaceExtra: Codable, Hashable, Sendable {
         if var a = art { mark(&a.sessions); art = a }
         if var s = sport { mark(&s.sessions); sport = s }
         if var e = experience { mark(&e.sessions); experience = e }
+        mark(&program)
     }
 }
