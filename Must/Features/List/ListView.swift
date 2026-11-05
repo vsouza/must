@@ -120,7 +120,8 @@ struct ListView: View {
         .padding(.top, 62)
         .background(alignment: .top) {
             // Foto tingida de 240 pt que some no branco.
-            TintedPhoto(url: photoURL, color: color)
+            // Vivo: foto em cima, cor sólida a partir do título (texto escuro sobre a cor).
+            TintedPhoto(url: photoURL, color: color, ramp: 0.16...0.46)
                 .frame(height: 300)
                 .mask(LinearGradient(stops: [.init(color: .black, location: 0), .init(color: .black, location: 0.45),
                                              .init(color: .clear, location: 1)], startPoint: .top, endPoint: .bottom))

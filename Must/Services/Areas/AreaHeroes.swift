@@ -10,6 +10,22 @@ struct AreaHeroes: Sendable {
     struct Candidate: Sendable {
         var name: String
         var coordinate: CLLocationCoordinate2D
+        /// Fotos do Google do lugar (as refs; o arquivo só existe se o Lugar já foi aberto ou baixado).
+        var placeId: String? = nil
+        var photoRefs: [PlacePhotoRef] = []
+    }
+
+    /// Foto do Google de um dos lugares do bairro que **já está no disco**: zero rede e bem mais viva que a do
+    /// Commons (05/11). Ganha da escolha guardada do Commons; nunca baixa nada.
+    static func googleOnDisk(_ candidates: [Candidate]) -> CCPhoto? {
+        for candidate in candidates.prefix(6) {
+            for ref in candidate.photoRefs.prefix(1) {
+                if let file = PlacePhotoStore.existing(ref) {
+                    return PlacePhotoResolver.photo(ref, file: file, placeId: candidate.placeId ?? "")
+                }
+            }
+        }
+        return nil
     }
 
     let photos: any PhotoProviding
@@ -19,6 +35,7 @@ struct AreaHeroes: Sendable {
 
     /// Foto guardada ou escolhida agora. `candidates` vêm na ordem de preferência (até 3 são tentados).
     func photo(region: Region, area: Area, candidates: [Candidate], cityName: String) async -> CCPhoto? {
+        if PhotoStyle.current == .vivid, let google = Self.googleOnDisk(candidates) { return google }
         let key = Self.cacheKey(region: region, areaId: area.id)
         if let saved = await DiskCache.shared.stale(key), let photo = try? JSONDecoder().decode(CCPhoto.self, from: saved) {
             return photo

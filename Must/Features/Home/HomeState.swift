@@ -163,7 +163,9 @@ final class HomeState {
         for id in visibleAreaIds {
             guard let entry = index.entry(id) else { continue }
             candidates[id] = entry.placeIds.compactMap { placeId in
-                placesById[placeId].map { AreaHeroes.Candidate(name: $0.name, coordinate: $0.coordinate) }
+                placesById[placeId].map {
+                    AreaHeroes.Candidate(name: $0.name, coordinate: $0.coordinate, placeId: $0.placeId, photoRefs: $0.photoRefs)
+                }
             }
         }
     }
