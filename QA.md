@@ -536,4 +536,15 @@ iPhone: [ ] andar entre Shinjuku, Ginza e Shibuya e ver o bairro trocar (fora da
 - Carteira em DEBUG: os itens de exemplo preenchem a Suica e o JR Pass de partida em vez de duplicar (conferido com instalação limpa).
 - Continua: o toque em "Ajustar" na Bairros não foi exercitado no simulador (sem ferramenta de toque; a lógica tem teste). `-region.auto NO` trocar a região uma vez segue sem explicação (não se repetiu). Colar texto no simulador leva ~15 s na primeira abertura depois de instalar (modelo no aparelho carregando).
 
+**Grupo 3 (05/11).** Suíte: 556 testes passam; build do aparelho ok.
+- **Mapa do Guia em branco com uma parada só** (corrigido): `MapLibreView` ignorava o `.fit` de um ponto e o mapa ficava no 0,0 (mar cinza). Acontecia à noite, com só a última parada do dia. Agora centra no ponto (zoom 15).
+- **Bairros:** sem bairro escolhido e sem você por perto, a câmera enquadra a cidade inteira (até 18 km do maior bairro, sem puxar Kyoto), como o `Bairros.png`; perto de você ou com bairro escolhido, a vizinhança (5,5 km). Laterais com mais folga (o nome "ROPPONGI" cortava). `BairrosCameraTests`. Na cidade inteira as bolhas de Shibuya/Harajuku/Shinjuku se encostam (são bairros a ~1 km um do outro).
+- **Barra de status sobre mapa:** véu branco (`StatusBarScrim`) em Mapa, Bairros e Guia; a hora não fica em cima dos nomes do mapa.
+- **Ajustar:** `-debugScreen ajustar:<bairro>` abre o que o botão abre (Bairros + Montar com foco). O Montar agora diz o foco no título ("Montar Shinjuku+").
+- **`-region.auto NO`** (explicado e corrigido): o argumento chega como String "NO"; `as? Bool` lia nil e o automático seguia ligado. `RegionStore.readAuto` usa `bool(forKey:)`. `RegionAutoTests`.
+- **Fotos do Commons:** a API arredonda a largura pra cima até um tamanho padrão do Wikimedia; 1024 virava 1280 px. Agora pede 960 e guarda em 800 px, JPEG 0,7 (`PhotoLoader.compact`), como a premissa. Fotos já no disco ficam como estão.
+- **`TransitLoader`:** já tinha cache por região (o `body` do mapa só faz uma busca no dicionário). Nada a fazer.
+- **Placeholder de foto** conferido com `-debugNetwork slow` e instalação limpa: Início (card e bairros), Musts e Lugar mostram a cor/gradiente até a foto chegar.
+- **Miniatura 240 px:** não usei nas listas de bairro de propósito. O menor cartão de bairro tem 116 pt (~350 px na tela); a de 240 px ficaria borrada, e não economiza rede (a foto grande já está no disco). Continua gerada.
+
 **iPhone (Vinicius).** Ver `docs/checklist-viagem.md`. Além dele: abrir o app pela primeira vez no Japão (troca BH → Japão pelo GPS) e confirmar que não fecha; andar entre bairros e ver "Hoje em <bairro>" trocar; Colar texto com resposta real do ChatGPT; avisos do guia com o app fechado; Instruments (Hangs).
