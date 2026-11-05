@@ -33,6 +33,10 @@ protocol PhotoProviding: Sendable {
 
 /// Wikimedia Commons (sem chave): busca por texto e por coordenada, só licenças livres. Cache 7 dias.
 struct CommonsPhotoService: PhotoProviding {
+    /// Largura pedida ao Commons. A API arredonda pra cima até um tamanho padrão do Wikimedia (…, 500, 960, 1280, …);
+    /// 1024 virava 1280. 960 é o padrão logo acima dos 800 px que guardamos (`PhotoLoader.storedPixels`).
+    static let requestWidth = 960
+
     var http = HTTP()
     var isConfigured: Bool { true }
 
@@ -61,7 +65,7 @@ struct CommonsPhotoService: PhotoProviding {
         comps.queryItems = [
             URLQueryItem(name: "action", value: "query"), URLQueryItem(name: "format", value: "json"),
             URLQueryItem(name: "prop", value: "imageinfo"), URLQueryItem(name: "iiprop", value: "url|extmetadata|mime"),
-            URLQueryItem(name: "iiurlwidth", value: "1024"),
+            URLQueryItem(name: "iiurlwidth", value: String(Self.requestWidth)),
         ] + params.map { URLQueryItem(name: $0.key, value: $0.value) }
         let data = try await http.get(comps.url!, headers: ["User-Agent": Self.userAgent], service: "commons")
         let photos = try Self.parse(data)

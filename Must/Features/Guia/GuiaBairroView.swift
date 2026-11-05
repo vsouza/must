@@ -45,6 +45,7 @@ struct GuiaBairroView: View {
         .scrollIndicators(.hidden)
         .tripWash()
         .background(Color.must.bg.ignoresSafeArea())
+        .overlay { StatusBarScrim() }
         .overlay(alignment: .topLeading) { backButton.padding(.leading, 16).padding(.top, 6) }
         .safeAreaInset(edge: .bottom) { if model.hasDay { bottomBar } }
         .navigationBarHidden(true)

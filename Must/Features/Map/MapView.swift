@@ -78,6 +78,7 @@ struct MapView: View {
                          headingSink: headingSink)
                 .ignoresSafeArea()
             CompassBridge(compass: services.location.compass, sink: headingSink)
+            StatusBarScrim()
             overlays
         }
         .onAppear(perform: appear)

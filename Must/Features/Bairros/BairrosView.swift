@@ -40,6 +40,7 @@ struct BairrosView: View {
                 edges(in: geo.size)
                 bubbles(in: geo.size)
                 you(in: geo.size)
+                StatusBarScrim()
             }
         }
         .overlay(alignment: .top) { topBar.padding(.horizontal, 16).padding(.top, 6) }

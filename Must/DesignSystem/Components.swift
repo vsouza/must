@@ -408,20 +408,34 @@ enum PhotoLoader {
         if url.isFileURL { return FileManager.default.fileExists(atPath: url.path()) }
         let key = "photo|\(url.absoluteString)"
         if await DiskCache.shared.exists(key) { return true }
-        guard let data = try? await HTTP(kind: .prefetch).get(url, headers: ["User-Agent": CommonsPhotoService.userAgent], service: "foto"),
-              UIImage(data: data) != nil else { return false }
+        guard let raw = try? await HTTP(kind: .prefetch).get(url, headers: ["User-Agent": CommonsPhotoService.userAgent], service: "foto"),
+              UIImage(data: raw) != nil else { return false }
+        let data = await compact(raw)
         await DiskCache.shared.store(data, for: key)
         trimInBackground()
         return true
     }
 
     private static func fetch(_ url: URL, key: String) async -> Data? {
-        guard let data = try? await HTTP().get(url, headers: ["User-Agent": CommonsPhotoService.userAgent], service: "foto") else {
+        guard let raw = try? await HTTP().get(url, headers: ["User-Agent": CommonsPhotoService.userAgent], service: "foto") else {
             return nil
         }
+        let data = await compact(raw)
         await DiskCache.shared.store(data, for: key)
         trimInBackground()
         return data
+    }
+
+    /// Lado maior da foto guardada no disco (premissa: 800 px, JPEG 0,7).
+    nonisolated static let storedPixels = 800
+
+    /// Foto maior que 800 px vira JPEG de 800 px, qualidade 0,7, fora do main. Menor (ou se não ficar menor), como veio.
+    nonisolated static func compact(_ data: Data) async -> Data {
+        await Task.detached(priority: .utility) {
+            guard let size = PlacePhotoStore.thumbnailSize(data), max(size.width, size.height) > storedPixels,
+                  let small = PlacePhotoStore.makeThumbnail(data, maxPixel: storedPixels), small.count < data.count else { return data }
+            return small
+        }.value
     }
 
     /// Teto de 300 MB (prompt 19 · item 3): as fotos do Commons entram no mesmo despejo LRU.
@@ -536,4 +550,24 @@ struct MustToggleStyle: ToggleStyle {
 
 extension ToggleStyle where Self == MustToggleStyle {
     static var must: MustToggleStyle { MustToggleStyle() }
+}
+
+// MARK: - Barra de status sobre mapa
+
+/// Véu branco sob a barra de status em telas de mapa em tela cheia: a hora e a bateria não ficam em cima dos nomes
+/// do mapa. Não recebe toque.
+struct StatusBarScrim: View {
+    var body: some View {
+        GeometryReader { geo in
+            LinearGradient(stops: [.init(color: Color.must.bg.opacity(0.88), location: 0),
+                                   .init(color: Color.must.bg.opacity(0.6), location: 0.55),
+                                   .init(color: Color.must.bg.opacity(0), location: 1)],
+                           startPoint: .top, endPoint: .bottom)
+                .frame(height: geo.safeAreaInsets.top + 18)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                .ignoresSafeArea(edges: .top)
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
 }
