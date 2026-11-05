@@ -154,7 +154,9 @@ struct ListTile: View {
     var photoURL: URL?
 
     private var color: MustColor { list.color }
-    private var url: URL? { photoURL ?? list.photo?.url.flatMap(URL.init(string:)) }
+    /// Capa (`ListCover`: à mão › Google no disco › Commons), calculada fora do `body`.
+    @State private var cover: CCPhoto?
+    private var url: URL? { photoURL ?? cover.flatMap { URL(string: $0.largeURL ?? $0.url) } ?? list.photo?.url.flatMap(URL.init(string:)) }
 
     var body: some View {
         ZStack(alignment: .topLeading) {
@@ -179,12 +181,13 @@ struct ListTile: View {
             }
         }
         .overlay(alignment: .bottomTrailing) {
-            if url != nil { Credit("CC", color: color.text).padding(.trailing, 8).padding(.bottom, 6) }
+            if url != nil { Credit(cover?.source == "Google" ? "G" : "CC", color: color.text).padding(.trailing, 8).padding(.bottom, 6) }
         }
         .frame(maxWidth: .infinity)
         .frame(height: height)
         .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         .accessibilityElement(children: .combine)
+        .task(id: "\(list.places.count)|\(list.photo?.url ?? "")") { if photoURL == nil { cover = ListCover.photo(for: list) } }
     }
 
     private var subtitle: String {

@@ -92,7 +92,11 @@ enum BoardEdits {
         list.kanji = kanji
         list.icon = icon
         list.color = color
-        if changePhoto { list.photo = photo }
+        if changePhoto {
+            list.photo = photo
+            // Escolhida à mão vale sempre; tirar a foto volta pra capa automática (`ListCover`).
+            ListCover.mark(list, chosen: photo != nil, context: context)
+        }
         for place in list.places where place.sub.map({ removed.contains($0) }) == true {
             place.sub = nil
         }
