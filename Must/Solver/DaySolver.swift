@@ -8,8 +8,10 @@ enum DaySolver {
     // MARK: Janelas
 
     /// Minutos desde a meia-noite [início, fim).
-    static func range(_ window: DayWindow, startEarly: Bool = false) -> Range<Int> {
-        switch window {
+    static func range(_ window: DayWindow, startEarly: Bool = false, region: Region? = nil) -> Range<Int> {
+        // Roma (prompt 24 §2): almoço 12:30–15, jantar 19:30–23.
+        if region == .it { return ItalyRules.range(window, startEarly: startEarly) }
+        return switch window {
         case .morning: (startEarly ? 8 * 60 + 30 : 9 * 60 + 30)..<(11 * 60 + 30)
         case .lunch: (11 * 60 + 30)..<(14 * 60 + 30)
         case .afternoon: (14 * 60 + 30)..<(18 * 60)
@@ -18,8 +20,8 @@ enum DaySolver {
         }
     }
 
-    static func window(at minute: Int) -> DayWindow {
-        DayWindow.allCases.first { range($0, startEarly: true).contains(minute) } ?? (minute < 9 * 60 ? .morning : .night)
+    static func window(at minute: Int, region: Region? = nil) -> DayWindow {
+        DayWindow.allCases.first { range($0, startEarly: true, region: region).contains(minute) } ?? (minute < 9 * 60 ? .morning : .night)
     }
 
     // MARK: Deslocamento
@@ -141,6 +143,12 @@ enum DaySolver {
         /// Foco por bairro (C.15): bairros aceitos e o bairro de cada candidato do catálogo (`nil` = sem foco).
         var focus: AreaFocusPlan?
         var focusArea: [String: String] = [:]
+        /// "até 23:30" (Montar v8), em minutos do dia. `nil` = sem limite.
+        var endMinute: Int?
+
+        /// Regras de Roma ligadas.
+        var italy: Bool { request.region == .it }
+        var region: Region? { request.region }
 
         init(_ request: DayRequest, catalog: [SolverPlace]) {
             self.request = request
@@ -154,12 +162,18 @@ enum DaySolver {
             walk = kind == .rest ? .low : (intent.walk ?? request.walk)
             startEarly = intent.startEarly ?? (kind == .temples || kind == .photo)
             plan = DaySolver.plan(for: kind)
+            if let pace = request.pace { plan = DaySolver.paced(plan, pace: pace, kind: kind) }
+            // "Foto no golden" (Montar v8): uma vaga de photo no golden da tarde, salvo dia de descanso.
+            if request.goldenPhoto, kind != .rest, !plan.slots.contains(where: { $0.timing == .goldenPM }) {
+                plan.slots.append(Slot(window: .afternoon, roles: [.photo], optional: true, timing: .goldenPM))
+            }
+            endMinute = request.endAt.map { Int($0.timeIntervalSince(request.date) / 60) }
             func ids(_ names: [String]) -> Set<String> {
                 Set(catalog.filter { p in names.contains { PlaceMatcher.similar($0, p.name) || p.name.localizedCaseInsensitiveContains($0) } }.map(\.id))
             }
             mustInclude = ids(intent.mustInclude)
             mustExclude = ids(intent.mustExclude)
-            if let focusRef = request.focus, let plan = AreaFocusPlan(focus: focusRef, areas: AreaCatalog.all) {
+            if let focusRef = request.focus, let plan = AreaFocusPlan(focus: focusRef, areas: AreaCatalog.all + AreaCatalog.areas(for: .it)) {
                 focus = plan
                 focusArea = Dictionary(catalog.compactMap { p in plan.areaId(for: p).map { (p.id, $0) } },
                                        uniquingKeysWith: { first, _ in first })
@@ -178,10 +192,10 @@ enum DaySolver {
 
         func date(_ minute: Int) -> Date { request.date.addingTimeInterval(TimeInterval(minute * 60)) }
 
-        /// Janela cortada na hora do voo (vazia se a janela inteira cai depois dele).
+        /// Janela cortada na hora do voo e no "até" do Montar (vazia se a janela inteira cai depois).
         func clamp(_ window: Range<Int>) -> Range<Int> {
-            guard let deadline = flightDeadlineMinute else { return window }
-            return window.lowerBound..<max(window.lowerBound, min(window.upperBound, deadline))
+            guard let limit = [flightDeadlineMinute, endMinute].compactMap({ $0 }).min() else { return window }
+            return window.lowerBound..<max(window.lowerBound, min(window.upperBound, limit))
         }
     }
 
@@ -209,6 +223,11 @@ enum DaySolver {
             }
         }
         if p.rules.fullDay && !forced { return ("dia inteiro — peça pra ir", false) }
+        if ctx.italy {
+            // Museu estatal fecha segunda; a Borghese abre, mas só com reserva (sem reserva hoje, fica fora).
+            if req.weekday == 1, ItalyRules.isStateMuseum(p) { return ("museu estatal fecha segunda", false) }
+            if ItalyRules.requiresReservation(p) { return ("só com reserva (turno de 2 h)", false) }
+        }
         if let blocked = p.rules.blocks(weekday: req.weekday) { return (blocked, false) }
         if p.rules.crowdedDays.contains(req.weekday) && !forced {
             return ("\(NotesRules.fullNames[req.weekday]) lota", false)
@@ -256,7 +275,9 @@ enum DaySolver {
                 leftOut.append(LeftOut(place: p, reason: "depois do voo"))
                 continue
             }
-            let duration = p.role == .eat ? 105 : p.role.duration
+            // Roma: reserva com turno (Borghese, 2 h) termina na hora do turno.
+            let shift = ctx.italy ? ItalyRules.shiftMinutes(p) : nil
+            let duration = shift ?? (p.role == .eat ? 105 : p.role.duration)
             var exception = false
             if spend + p.cost > ctx.budget, p.allowBudgetException, !hasException {
                 exception = true
@@ -265,12 +286,14 @@ enum DaySolver {
             } else {
                 spend += p.cost
             }
-            anchors.append(ProposedStop(place: p, at: r.at, end: ctx.date(minute + duration), window: window(at: minute),
-                                        reason: "reserva", isAnchor: true, isException: exception, legFromPrevious: nil))
+            anchors.append(ProposedStop(place: p, at: r.at, end: ctx.date(minute + duration), window: window(at: minute, region: ctx.region),
+                                        reason: shift != nil ? "reserva · turno" : "reserva",
+                                        isAnchor: true, isException: exception, legFromPrevious: nil))
         }
         anchors += ticketAnchors(catalog, ctx: ctx).filter { t in
             !anchors.contains { $0.place.id == t.place.id } && (ctx.flightDeadlineMinute.map { ctx.minute(t.at) < $0 } ?? true)
         }
+        if let appia = sundayAppia(catalog, anchors: anchors, ctx: ctx) { anchors.append(appia) }
         anchors.sort { $0.at < $1.at }
         // Bairros por onde o dia já passou (C.15): a ordem evita voltar a um bairro deixado.
         var areaTrail: [String] = anchors.compactMap { ctx.focusArea[$0.place.id] }
@@ -324,8 +347,8 @@ enum DaySolver {
             }
         }
         func slotStart(_ slot: Slot) -> Int {
-            if let t = slot.timing { return range(t, sun: ctx.sun, ctx: ctx)?.lowerBound ?? range(slot.window).lowerBound }
-            return range(slot.window).lowerBound
+            if let t = slot.timing { return range(t, sun: ctx.sun, ctx: ctx)?.lowerBound ?? range(slot.window, region: ctx.region).lowerBound }
+            return range(slot.window, region: ctx.region).lowerBound
         }
         slots = slots.enumerated().sorted { a, b in
             let ra = slotStart(a.element), rb = slotStart(b.element)
@@ -352,7 +375,7 @@ enum DaySolver {
                 if let light = timing.light, light != .hard, usedLights.contains(light) { continue }
                 windowRaw = r
             } else {
-                windowRaw = range(slot.window, startEarly: ctx.startEarly)
+                windowRaw = range(slot.window, startEarly: ctx.startEarly, region: ctx.region)
             }
             // Dia de voo: a janela para na partida − 4 h.
             let w = ctx.clamp(windowRaw)
@@ -425,6 +448,14 @@ enum DaySolver {
                         start = found
                     }
 
+                    // Roma: loja pequena no riposo (13–16) e igreja fechada no meio do dia passam pro fim da pausa.
+                    if ctx.italy, let closed = ItalyRules.middayClosure(p), (start..<(start + length)).overlaps(closed) {
+                        guard closed.upperBound < w.upperBound else {
+                            rejection[p.id] = ItalyRules.hasRiposo(p) ? "riposo 13–16" : "igreja fecha 12:30–15:30"
+                            continue
+                        }
+                        start = closed.upperBound
+                    }
                     guard start < w.upperBound else { rejection[p.id] = rejection[p.id] ?? "não cabe no horário"; continue }
                     if let open = p.hours?.isOpen(at: ctx.date(start), timeZone: req.timeZone), !open {
                         rejection[p.id] = "fechado às \(String(format: "%02d:%02d", (start / 60) % 24, start % 60))"
@@ -440,6 +471,11 @@ enum DaySolver {
                         length = min(length, close - start)
                     }
                     let end = start + length
+                    // "até 23:30" (Montar v8): a parada livre acaba até lá (15 min de folga).
+                    if let limit = ctx.endMinute, end > limit + 15 {
+                        rejection[p.id] = rejection[p.id] ?? "passa do horário do dia"
+                        continue
+                    }
                     if let a = nextAnchor {
                         let toAnchor = leg(here, CLLocationCoordinate2D(latitude: a.place.lat, longitude: a.place.lng), walkMax: walkMax, matrix: ctx.travel)
                         if end + toAnchor.minutes + 10 > ctx.minute(a.at) && start < ctx.minute(a.end) {
