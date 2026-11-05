@@ -621,7 +621,17 @@ struct PlaceView: View {
         .padding(.top, 14)
         // A barra v8 do RootView fica por cima de tudo: os botões sobem acima dela.
         .padding(.bottom, 24) // Lugar em tela cheia: sem barra de abas (`AppRouter.hidesNavBar`)
-        .background((onInk ? V8.ink : V8.paper).ignoresSafeArea())
+        .background {
+            // O conteúdo que rola some num fade antes dos botões (nada de corte seco no meio de um card).
+            let bg = onInk ? V8.ink : V8.paper
+            VStack(spacing: 0) {
+                LinearGradient(colors: [bg.opacity(0), bg], startPoint: .top, endPoint: .bottom).frame(height: 36)
+                bg
+            }
+            .padding(.top, -36)
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
+        }
     }
 
     @ViewBuilder private func doneButton(_ place: Place, onInk: Bool) -> some View {
