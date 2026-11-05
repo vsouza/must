@@ -41,7 +41,7 @@ ${=W} debugPlaces -string fake; ${=W} debugNearby -string fake; ${=W} debugFligh
 # `ONLY=v8 scripts/qa-screens.sh` tira só estas (20 telas por região, comparar com design/v8/screens/*.png).
 # Cada agente da rodada 22 só mexe nas linhas das suas telas (C: capa…noite; D: guia…proximos; E: região it).
 v8shots() { # $1 = prefixo (jp|bh|it), $2 = lugar de exemplo, $3 = museu de exemplo, $4 = lista de exemplo, $5 = bairro do dia,
-            # $6 = epoch das 08:30 do dia (o dia é montado de manhã, como no uso real)
+            # $6 = epoch das 08:30 do dia (o dia é montado de manhã, como no uso real), $7 = vontade do Quero… (prompt 25)
   local r=$1
   # Dia do motor aceito antes de tudo (capa, Agora, Linha, Guia e Boa noite precisam de um dia; o Guia não refaz). (F)
   # Montado às 08:30 (`-dev.simDate` só nesta abertura), pra que às 14:20 a capa e o Agora estejam no meio do dia.
@@ -65,6 +65,11 @@ v8shots() { # $1 = prefixo (jp|bh|it), $2 = lugar de exemplo, $3 = museu de exem
   shot $r-v8-ir -debugScreen ir:$2                  # 13 Transporte                    (C)
   shot $r-v8-noite -debugScreen noite               # 14 Noite                         (C)
   shot $r-v8-ajustes -debugScreen ajustes           # Ajustes › Região                 (E)
+  # prompt 25 · agente 25/1: Atalhos (painel sobre a capa) e Quero… (busca com o fake do Places, sem cota).
+  shot $r-v8-atalhos -debugScreen atalhos           # 25 · Atalhos                     (25/1)
+  WAIT=8 shot $r-v8-quero -debugScreen "quero:$7"   # 25 · Quero                       (25/1)
+  shot $r-v8-xxxl-atalhos -debugScreen atalhos -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
+  WAIT=8 shot $r-v8-off-quero -debugScreen "quero:$7" -debugNetwork offline
   shot $r-v8-xxxl-capa -debugScreen capa -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
   shot $r-v8-xxxl-agora -debugScreen agora -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
   # QA (F): as outras 4 principais em xxxLarge (o app limita em .xxxLarge) e o modo avião (`-debugNetwork offline`).
@@ -88,19 +93,19 @@ echo "→ v8 · Japão · sáb 15 nov 14:20 · Shinjuku (CapaJP, Agora, Dia)"
 ${=W} region jp
 ${=W} dev.simDate -float $(epoch 2026-11-15T14:20:00+09:00)
 ${=W} dev.simLat -float 35.6909; ${=W} dev.simLng -float 139.7003
-v8shots jp j05 j28 eat shinjuku $(epoch 2026-11-15T08:30:00+09:00)
+v8shots jp j05 j28 eat shinjuku $(epoch 2026-11-15T08:30:00+09:00) "quero comprar um Seiko"
 
 echo "→ v8 · BH · sáb 7 nov 14:35 · Savassi (CapaBR)"
 ${=W} region bh
 ${=W} dev.simDate -float $(epoch 2026-11-07T14:35:00-03:00)
 ${=W} dev.simLat -float -19.9385; ${=W} dev.simLng -float -43.9343
-v8shots bh p01 p01 eat savassi $(epoch 2026-11-07T08:30:00-03:00)
+v8shots bh p01 p01 eat savassi $(epoch 2026-11-07T08:30:00-03:00) "quero comer um pão de queijo"
 
 echo "→ v8 · Roma · qui 15 abr 2027 11:40 · Trastevere (CapaIT); dia 4 em Monti pro DiaIT"
 ${=W} region it
 ${=W} dev.simDate -float $(epoch 2027-04-15T11:40:00+02:00)
 ${=W} dev.simLat -float 41.8897; ${=W} dev.simLng -float 12.4695
-v8shots it r02 r46 eat trastevere $(epoch 2027-04-15T08:30:00+02:00)
+v8shots it r02 r46 eat trastevere $(epoch 2027-04-15T08:30:00+02:00) "quero comer uma carbonara"
 ${=W} dev.simDate -float $(epoch 2027-04-14T14:00:00+02:00)
 ${=W} dev.simLat -float 41.8955; ${=W} dev.simLng -float 12.4925
 WAIT=12 shot it-v8-aceitar-monti -debugScreen aceitar-dia:monti -dev.simDate $(epoch 2027-04-14T08:30:00+02:00) -dev.simSetAt 0
