@@ -64,7 +64,9 @@ enum DayText {
         if isNow { return "agora" }
         switch stop.kind {
         case .anchor: return "âncora"
-        case .micro: return stop.tag?.lowercased() == "café" ? "café" : "micro"
+        case .micro:
+            if stop.tag?.uppercased() == "EXP" { return "em cartaz" } // TODO(r23:A): vira DayMicroKind
+            return stop.tag?.lowercased() == "café" ? "café" : "micro"
         case .must:
             // "Must drink · vinho de taça" → "drink"
             let note = stop.note.lowercased()

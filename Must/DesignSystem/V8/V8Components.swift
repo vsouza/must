@@ -512,37 +512,77 @@ struct CutBand<Content: View>: View {
 
 // MARK: - Botões e pílulas
 
-/// Botão v8 (`.btn`): 56 pt, cápsula, Schibsted 16/700. `.orange` = ação principal (texto tinta), `.ink` = tinta (texto
-/// branco), `.line` = só contorno de 1,5 pt na cor do texto em volta (tinta no papel, branco na tinta).
+/// Botão v8 (`.btn`): mínimo 56 pt (compacto 44), cápsula, Schibsted 16/700 que desce 16 → 15 → 14 em uma linha
+/// (`ViewThatFits`, sem `minimumScaleFactor`); se não couber em 14, quebra em 2 linhas a 15 e a altura cresce. Altura
+/// ≥ 3,1 × fonte (cresce com o Dynamic Type); padding H = máx(14, 0,36 × altura). `.orange` = ação principal (texto
+/// tinta), `.ink` = tinta (texto branco), `.line` = só contorno de 1,5 pt na cor do texto em volta.
+/// Regra completa: `ButtonMetrics` e `BotoesFontes.png`.
 struct V8Button: View {
-    enum Style: Sendable { case orange, ink, line }
+    typealias Style = V8ButtonFace.Style
 
     var title: String
     var style: Style
     var icon: MustIcon?
+    var compact: Bool
     var action: () -> Void
 
-    init(_ title: String, _ style: Style = .orange, icon: MustIcon? = nil, action: @escaping () -> Void) {
+    init(_ title: String, _ style: Style = .orange, icon: MustIcon? = nil, compact: Bool = false, action: @escaping () -> Void) {
         self.title = title
         self.style = style
         self.icon = icon
+        self.compact = compact
         self.action = action
     }
 
     var body: some View {
         Button(action: action) {
-            label
+            V8ButtonFace(title, style, icon: icon, compact: compact)
         }
         .buttonStyle(MustPressStyle())
     }
+}
 
-    @ViewBuilder private var label: some View {
-        let content = HStack(spacing: 10) {
-            Text(title).font(V8Font.text(16, weight: .bold)).lineLimit(1).minimumScaleFactor(0.8)
-            if let icon { MustIconView(icon, size: 18) }
+/// O desenho do `V8Button` sem o `Button` (pra usar de rótulo de `ShareLink`, `Menu`, `NavigationLink`).
+struct V8ButtonFace: View {
+    enum Style: Sendable { case orange, ink, line }
+
+    var title: String
+    var style: Style
+    var icon: MustIcon?
+    var compact: Bool
+
+    @ScaledMetric(relativeTo: .body) private var scaled: CGFloat = 16
+
+    init(_ title: String, _ style: Style = .orange, icon: MustIcon? = nil, compact: Bool = false) {
+        self.title = title
+        self.style = style
+        self.icon = icon
+        self.compact = compact
+    }
+
+    private var base: CGFloat { compact ? ButtonMetrics.compactHeight : ButtonMetrics.buttonHeight }
+    private var steps: [CGFloat] { compact ? [14] : ButtonMetrics.steps }
+
+    private func line(_ size: CGFloat, lines: Int) -> some View {
+        HStack(spacing: 9) {
+            Text(title)
+                .font(V8Font.text(size, weight: .bold))
+                .lineLimit(lines)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: lines > 1)
+            if let icon { MustIconView(icon, size: size + 2) }
         }
-        .padding(.horizontal, 22)
-        .frame(maxWidth: .infinity, minHeight: 56)
+    }
+
+    var body: some View {
+        let pad = ButtonMetrics.horizontalPadding(height: base)
+        let minH = ButtonMetrics.height(base: base, font: compact ? scaled * 14 / 16 : scaled, kind: .button)
+        let content = ViewThatFits(in: .horizontal) {
+            ForEach(steps, id: \.self) { size in line(size, lines: 1) }
+            line(compact ? 14 : 15, lines: 2).padding(.vertical, 12)
+        }
+        .padding(.horizontal, pad)
+        .frame(maxWidth: .infinity, minHeight: minH)
         .contentShape(Capsule())
         switch style {
         case .orange: content.foregroundStyle(V8.ink).background(Capsule().fill(V8.orange))
@@ -552,18 +592,23 @@ struct V8Button: View {
     }
 }
 
-/// Pílula v8 (`.pill`: 34 pt, contorno de 1 pt na cor do texto, 13/600) — chips de contexto e filtros.
+/// Pílula v8 (`.pill`): 34 pt / 13·600 (pequena 32 / 12·600), contorno de 1 pt na cor do texto, padding H 14 — chips de
+/// contexto e filtros. Altura ≥ 2,6 × fonte (cresce com o Dynamic Type); linhas de pílulas rolam na horizontal.
 /// `active`: sobre papel vira **tinta** (filtros de Lista/Musts/Dicas); sobre tinta (`onInk`) vira **laranja**
 /// (modos do Ir). Assim a pílula ativa nunca some no fundo.
 struct V8Pill: View {
     var text: String
     var active: Bool
     var onInk: Bool
+    var small: Bool
 
-    init(_ text: String, active: Bool = false, onInk: Bool = false) {
+    @ScaledMetric(relativeTo: .body) private var scale: CGFloat = 1
+
+    init(_ text: String, active: Bool = false, onInk: Bool = false, small: Bool = false) {
         self.text = text
         self.active = active
         self.onInk = onInk
+        self.small = small
     }
 
     private var fill: Color {
@@ -577,15 +622,48 @@ struct V8Pill: View {
     }
 
     var body: some View {
+        let font: CGFloat = small ? 12 : 13
+        let base = small ? ButtonMetrics.smallPillHeight : ButtonMetrics.pillHeight
         Text(text)
-            .font(V8Font.text(13, weight: .semibold))
+            .font(V8Font.text(font, weight: .semibold))
             .lineLimit(1)
+            .fixedSize()
             .foregroundStyle(ink)
-            .padding(.horizontal, 13)
-            .frame(minHeight: 34)
+            .padding(.horizontal, 14)
+            .frame(minHeight: max(base, ButtonMetrics.pillRatio * font * scale))
             .background(Capsule().fill(fill))
             .overlay(Capsule().strokeBorder(active ? Color.clear : ink, lineWidth: 1))
             .contentShape(Capsule())
             .accessibilityAddTraits(active ? .isSelected : [])
+    }
+}
+
+/// Botão redondo v8 (`BotoesFontes.png`): 44 (glifo 18), 36 (glifo 16) ou 52 (glifo 20), contorno de 1,8 pt.
+struct V8RoundButton<Glyph: View>: View {
+    var diameter: CGFloat
+    var filled: Bool
+    var label: String
+    var action: () -> Void
+    @ViewBuilder var glyph: (CGFloat) -> Glyph
+
+    init(diameter: CGFloat = 44, filled: Bool = false, label: String, action: @escaping () -> Void,
+         @ViewBuilder glyph: @escaping (CGFloat) -> Glyph) {
+        self.diameter = diameter
+        self.filled = filled
+        self.label = label
+        self.action = action
+        self.glyph = glyph
+    }
+
+    var body: some View {
+        Button(action: action) {
+            glyph(ButtonMetrics.roundGlyph(diameter: diameter))
+                .frame(width: diameter, height: diameter)
+                .background(Circle().fill(filled ? V8.ink : .clear))
+                .overlay(Circle().strokeBorder(.foreground, lineWidth: 1.8))
+                .contentShape(Circle())
+        }
+        .buttonStyle(MustPressStyle())
+        .accessibilityLabel(label)
     }
 }
