@@ -80,6 +80,12 @@ struct LinhaDoDiaView: View {
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel("Dia \(numeral)")
                 Spacer(minLength: 12)
+                // Mandar o dia (prompt 25 · B.5): cartaz, link e PDF.
+                if plan != nil {
+                    RoundButton(systemImage: "paperplane", label: "Mandar o dia", style: .line, tint: V8.ink, size: 40) {
+                        router.sheet = .mandar(date: region.calendar.startOfDay(for: date))
+                    }
+                }
                 toggle
             }
         }

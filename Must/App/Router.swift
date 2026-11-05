@@ -64,6 +64,8 @@ enum Route: Hashable {
     // MARK: prompt 25 — contrato (telas-stub até os agentes 25/1 e 25/2 entregarem)
     /// SOS do país da região (agente 25/2). Também em Bolso, Atalhos e na Quick Action.
     case sos
+    /// Dia que alguém mandou (`must://d/<payload>`, agente 25/2): só leitura, o dia vem dentro do link.
+    case diaRecebido(payload: String)
 }
 
 /// Navegação do app: aba atual, pilha de cada aba e o que está apresentado por cima.
@@ -119,7 +121,7 @@ final class AppRouter {
     /// Telas v8 sem barra de abas (design): Montar (e a proposta), Ir/Como chegar e o Lugar em tela cheia.
     var hidesNavBar: Bool {
         switch paths[tab]?.last {
-        case .montar, .ir, .comoChegar, .place: true
+        case .montar, .ir, .comoChegar, .place, .sos: true
         default: false
         }
     }
@@ -186,6 +188,19 @@ final class AppRouter {
         case "import":
             // Caixa do Share Extension: o id é o nome da pasta (UUID); a tela confere se ainda existe.
             sheet = .ticketImport(inboxId: items.first { $0.name == "id" }?.value)
+        // Link do dia (prompt 25 · B.2): `must://d/<payload>`, o dia comprimido dentro do link (sem servidor).
+        case "d":
+            guard let payload = DayLink.payload(from: url) else { return }
+            sheet = nil
+            paths[.hoje] = []
+            tab = .hoje
+            push(.diaRecebido(payload: payload), on: .hoje)
+        // SOS (prompt 25 · C.3): Live Activity à noite e a Quick Action levam aqui.
+        case "sos":
+            sheet = nil
+            paths[.hoje] = []
+            tab = .hoje
+            push(.sos, on: .hoje)
         default:
             Log.app.info("link desconhecido: \(url.absoluteString, privacy: .public)")
         }
@@ -229,6 +244,7 @@ extension View {
             case .proximos: ProximosView()
             case .mapa: MapView()
             case .sos: SOSView()
+            case .diaRecebido(let payload): DiaRecebidoView(payload: payload)
             }
         }
     }
