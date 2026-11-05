@@ -197,7 +197,12 @@ enum WantSearch {
     static func same(_ a: WantResult, _ b: WantResult) -> Bool {
         if let x = a.googlePlaceId, x == b.googlePlaceId { return true }
         let d = CLLocation(latitude: a.lat, longitude: a.lng).distance(from: CLLocation(latitude: b.lat, longitude: b.lng))
-        return d < sameMeters && PlaceMatcher.similar(a.name, b.name)
+        guard d < sameMeters else { return false }
+        if PlaceMatcher.similar(a.name, b.name) { return true }
+        // "Mercado Central (queijo e cachaça)" no board × "Mercado Central de BH" da tabela: mesmas duas primeiras palavras.
+        func head(_ s: String) -> [String] { Array(WantCategory.fold(s).split(whereSeparator: { !$0.isLetter && !$0.isNumber }).prefix(2).map(String.init)) }
+        let x = head(a.name)
+        return x.count == 2 && x == head(b.name)
     }
 
     static func result(_ hit: PlaceHit, input: WantSearchInput, areas: [Area]) -> WantResult? {

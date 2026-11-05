@@ -98,3 +98,13 @@ struct WantSearchTests {
         #expect(Set(BrandStores.all.map(\.region)) == ["jp", "bh", "it"])
     }
 }
+
+extension WantSearchTests {
+    @Test func mesmoLugarDoBoardEDaTabelaApareceUmaVez() {
+        let board = WantResult(id: "board:p1", name: "Mercado Central (queijo e cachaça)", lat: -19.9233, lng: -43.9437, origin: .board)
+        let brand = WantResult(id: "brand:m", name: "Mercado Central de BH", lat: -19.9234, lng: -43.9436, origin: .brand, note: "cachaça")
+        let out = WantSearch.merge(board: [board], places: [], brand: [brand])
+        #expect(out.count == 1)
+        #expect(out.first?.origin == .board)
+    }
+}
