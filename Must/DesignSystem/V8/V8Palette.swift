@@ -19,6 +19,12 @@ enum V8 {
     static let graphite = Color(hex: 0x2B2B2B)
     /// Branco puro (cards de Must sobre papel, tinta da capa).
     static let white = Color.white
+    /// Osso #E8E5DD: superfície sobre papel (chips cinza, selos das micro-paradas, ícones de linha).
+    static let bone = Color(hex: Hex.bone)
+    /// Grafite claro #3A3A38: placeholder de foto (enquanto carrega ou sem foto).
+    static let photo = Color(hex: Hex.photo)
+    /// Filete sobre papel (tinta a 14 %), já misturado — pra borda de linha e divisória.
+    static let rule = Color(hex: Hex.rule)
 
     /// Valores exatos (0xRRGGBB), pros testes.
     enum Hex {
@@ -29,5 +35,12 @@ enum V8 {
         static let mute: UInt32 = 0x6B6B66
         static let muteDark: UInt32 = 0xA3A39C
         static let graphite: UInt32 = 0x2B2B2B
+        static let bone: UInt32 = 0xE8E5DD
+        static let photo: UInt32 = 0x3A3A38
+        static let rule: UInt32 = 0xD3D1CC
+        /// Tinta a 30 % sobre papel (borda de botão fantasma, toggle desligado).
+        static let ruleStrong: UInt32 = 0xAFADA9
+        /// As três cores da identidade (o resto é cinza de texto).
+        static let identity: [UInt32] = [ink, paper, orange]
     }
 }

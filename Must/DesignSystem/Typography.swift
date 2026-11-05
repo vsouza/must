@@ -26,12 +26,12 @@ extension View {
         font(.must.meta).foregroundStyle(Color.must.secondary)
     }
 
-    /// Instrument Serif Italic (voz do usuário, legendas), 18–20.
+    /// Voz do usuário, legendas (v5: Instrument Serif). v8: Schibsted Grotesk.
     func mustSerif(_ size: CGFloat = 19) -> some View {
         font(.must.serif(size))
     }
 
-    /// Geist Mono com algarismos tabulares (horas, ¥/R$, códigos).
+    /// Martian Mono com algarismos tabulares (horas, ¥/R$, códigos).
     func mustMono(_ size: CGFloat = 13, weight: Font.Weight = .regular) -> some View {
         font(.must.mono(size, weight))
     }
@@ -41,7 +41,7 @@ extension View {
         font(.must.micro).textCase(.uppercase).tracking(1.1).foregroundStyle(Color.must.secondary)
     }
 
-    /// Kanji em Zen Kaku Gothic New.
+    /// v5: kanji em Zen Kaku. v8: sem kanji na interface — sai em Schibsted (o texto que vier é o que aparece).
     func mustKanji(_ size: CGFloat = 17) -> some View {
         font(.must.kanji(size))
     }

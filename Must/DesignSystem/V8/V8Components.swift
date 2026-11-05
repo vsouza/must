@@ -1,12 +1,16 @@
 import SwiftUI
 
-// Componentes v8 (prompt 23 §1). Contrato da fase 0: assinaturas públicas estáveis e uma versão simples que já desenha
-// algo parecido com o design. O agente A é dono deste arquivo e troca o miolo; C e D programam contra as assinaturas.
-// `Pill` já existe (v5): a pílula v8 se chama `V8Pill` até o A apagar a antiga.
+// Componentes v8 (prompt 23 §1), fiéis a `design/v8/screens/*.png` e ao `v8.css`. Assinaturas do contrato da rodada 22
+// (fase 0): C e D programam contra elas; o miolo é do agente A.
 
 // MARK: - Texturas
 
-/// Arcos de 1 pt (2–3 círculos sobrepostos, 420–560 pt, opacidade 25–55 %, sangrando a tela). Decorativo.
+/// Arcos de 1 pt (`.ring` do `v8.css`): 2–3 círculos do mesmo tamanho (420–560 pt), opacidade 25–55 %, sobrepostos e
+/// sangrando a tela. Decorativo (não recebe toque, some do VoiceOver).
+///
+/// Use como fundo (`.background { Rings(...) }` ou primeira camada de um `ZStack`): ocupa o espaço proposto e desenha os
+/// círculos a partir do canto superior esquerdo. `offset` é onde fica o canto do **primeiro** círculo; os outros descem
+/// em diagonal como na capa (`CapaJP.png`: 420 pt em (−60,−150), (70,120), (−170,360)).
 struct Rings: View {
     var color: Color = V8.ink
     var count: Int = 3
@@ -23,46 +27,57 @@ struct Rings: View {
         self.offset = offset
     }
 
+    /// Posição de cada círculo em relação ao primeiro, em diâmetros (tirada da capa do design).
+    static let pattern: [CGPoint] = [CGPoint(x: 0, y: 0), CGPoint(x: 0.31, y: 0.64), CGPoint(x: -0.26, y: 1.21)]
+
     var body: some View {
-        ZStack {
-            ForEach(0..<max(count, 1), id: \.self) { i in
+        ZStack(alignment: .topLeading) {
+            ForEach(0..<min(max(count, 1), Self.pattern.count), id: \.self) { i in
                 Circle()
                     .stroke(color.opacity(opacity), lineWidth: 1)
-                    .frame(width: diameter + CGFloat(i) * 40, height: diameter + CGFloat(i) * 40)
-                    .offset(x: CGFloat(i) * 36, y: CGFloat(i) * 24)
+                    .frame(width: diameter, height: diameter)
+                    .offset(x: offset.width + Self.pattern[i].x * diameter, y: offset.height + Self.pattern[i].y * diameter)
             }
         }
-        .offset(offset)
+        // `minWidth/minHeight: 0`: o quadro fica do tamanho proposto mesmo com os círculos maiores que a tela (sangram).
+        .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .topLeading)
         .allowsHitTesting(false)
         .accessibilityHidden(true)
     }
 }
 
-/// Numeral gigante (um por tela, sempre com significado: dia, hora, minutos, quantidade). Sangra a borda.
-/// Decorativo: `accessibilityHidden` — o valor tem que aparecer também em texto normal na tela.
+/// Numeral gigante (`.num`: Bricolage wdth 78 / 800, tracking −.06em, entrelinha .78). Um por tela, sempre com
+/// significado (dia, hora, minutos, quantidade). **Sangra**: não encolhe pra caber — ocupa a largura proposta e passa da
+/// borda do lado oposto a `alignment`. Decorativo: `accessibilityHidden` — o valor tem que aparecer em texto na tela.
 struct BigNumeral: View {
     var text: String
     var size: CGFloat = 220
     var color: Color = V8.ink
+    var alignment: Alignment = .leading
 
-    init(_ text: String, size: CGFloat = 220, color: Color = V8.ink) {
+    init(_ text: String, size: CGFloat = 220, color: Color = V8.ink, alignment: Alignment = .leading) {
         self.text = text
         self.size = size
         self.color = color
+        self.alignment = alignment
     }
 
     var body: some View {
         Text(text)
             .font(V8Font.numeral(size))
+            .tracking(-0.06 * size)
             .foregroundStyle(color)
             .lineLimit(1)
-            .minimumScaleFactor(0.5)
-            .fixedSize(horizontal: false, vertical: true)
+            .fixedSize()
+            // Entrelinha .78: a caixa abraça os algarismos (da linha de base à altura das maiúsculas).
+            .frame(height: size * 0.78)
+            .frame(minWidth: 0, maxWidth: .infinity, alignment: alignment)
             .accessibilityHidden(true)
     }
 }
 
-/// Micro-rótulo de ficha técnica (Martian Mono 8,5 pt, caixa alta, tracking .1em), nos cantos das telas.
+/// Micro-rótulo de ficha técnica (`.spec`: Martian Mono 8,5 pt 500, caixa alta, tracking .1em, entrelinha 1,55),
+/// nos cantos das telas. Aceita quebra com `\n` (duas linhas, como no design).
 struct SpecLabel: View {
     var text: String
     var color: Color = V8.mute
@@ -76,14 +91,17 @@ struct SpecLabel: View {
         Text(text.uppercased())
             .font(V8Font.mono(8.5))
             .tracking(0.85)
+            .lineSpacing(4)
             .foregroundStyle(color)
-            .lineLimit(1)
+            .lineLimit(3)
+            .fixedSize(horizontal: false, vertical: true)
     }
 }
 
 // MARK: - Navegação
 
-/// Barra v8: cápsula preta 66 pt; aba ativa = pílula laranja com rótulo; inativas = ícone; `+` = círculo papel.
+/// Barra v8 (`Nav.png`, `.nav` do `v8.css`): cápsula preta de 66 pt; aba ativa = pílula laranja com ícone e rótulo
+/// (mais larga); inativas = só o ícone branco; `+` = círculo papel à direita (toque: Montar o dia).
 struct V8NavBar: View {
     var active: MustTab
     var onSelect: (MustTab) -> Void
@@ -96,43 +114,175 @@ struct V8NavBar: View {
     }
 
     var body: some View {
-        HStack(spacing: 6) {
+        NavRow(activeIndex: MustTab.allCases.firstIndex(of: active) ?? 0) {
             ForEach(MustTab.allCases) { tab in
+                let on = tab == active
                 Button { onSelect(tab) } label: {
-                    HStack(spacing: 6) {
-                        MustIconView(tab.icon, size: 20)
-                        if tab == active { Text(tab.title).font(V8Font.text(13, weight: .semibold)).lineLimit(1) }
+                    HStack(spacing: 9) {
+                        V8Glyph(tab.glyph).frame(width: 20, height: 20)
+                        if on {
+                            Text(tab.title)
+                                .font(V8Font.text(14, weight: .bold))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                        }
                     }
-                    .foregroundStyle(tab == active ? V8.ink : V8.white)
-                    .padding(.horizontal, tab == active ? 14 : 10)
-                    .frame(height: 46)
-                    .background(Capsule().fill(tab == active ? V8.orange : Color.clear))
+                    .foregroundStyle(on ? V8.ink : V8.white)
+                    .padding(.horizontal, on ? 14 : 0)
+                    .frame(maxWidth: .infinity, minHeight: 54, maxHeight: 54)
+                    .background(Capsule().fill(on ? V8.orange : Color.clear))
                     .contentShape(Capsule())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(MustPressStyle())
                 .accessibilityLabel(tab.title)
-                .accessibilityAddTraits(tab == active ? .isSelected : [])
-                if tab != MustTab.allCases.last { Spacer(minLength: 0) }
+                .accessibilityAddTraits(on ? .isSelected : [])
             }
             Button(action: onPlus) {
-                MustIconView(.adicionar, size: 20)
+                V8Glyph(.plus)
+                    .frame(width: 20, height: 20)
                     .foregroundStyle(V8.ink)
-                    .frame(width: 46, height: 46)
+                    .frame(width: 54, height: 54)
                     .background(Circle().fill(V8.paper))
+                    .contentShape(Circle())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(MustPressStyle())
             .accessibilityLabel("Adicionar")
+            .accessibilityHint("Montar o dia")
         }
-        .padding(.horizontal, 10)
+        .padding(6)
         .frame(height: 66)
         .background(Capsule().fill(V8.ink))
-        .padding(.horizontal, 16)
+        .shadow(color: V8.ink.opacity(0.28), radius: 22, x: 0, y: 18)
+        .padding(.horizontal, 18)
+        .dynamicTypeSize(...DynamicTypeSize.xxLarge)
+    }
+}
+
+/// Distribui a barra como o `flex` do CSS: aba ativa 2,2, as outras 1, o `+` fixo em 54 pt, 4 pt entre elas.
+private struct NavRow: Layout {
+    var activeIndex: Int
+    var gap: CGFloat = 4
+    var plus: CGFloat = 54
+    var activeFlex: CGFloat = 2.2
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        CGSize(width: proposal.width ?? 360, height: 54)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        guard !subviews.isEmpty else { return }
+        let tabs = subviews.count - 1
+        let free = max(0, bounds.width - plus - gap * CGFloat(subviews.count - 1))
+        let unit = free / (activeFlex + CGFloat(max(tabs - 1, 0)))
+        var x = bounds.minX
+        for (i, view) in subviews.enumerated() {
+            let w = i == tabs ? plus : (i == activeIndex ? unit * activeFlex : unit)
+            view.place(at: CGPoint(x: x, y: bounds.midY), anchor: .leading, proposal: ProposedViewSize(width: w, height: 54))
+            x += w + gap
+        }
+    }
+}
+
+extension MustTab {
+    /// Desenho da aba na barra v8 (`Nav.png`): relógio, mapa dobrado, linhas, maleta.
+    var glyph: V8Glyph.Kind {
+        switch self {
+        case .hoje: .clock
+        case .guia: .map
+        case .musts: .lines
+        case .viagem: .briefcase
+        }
+    }
+}
+
+/// Ícones de traço da v8 desenhados em vetor (viewBox 24, os `<svg>` do design). Herdam a cor do `foregroundStyle`.
+struct V8Glyph: View {
+    enum Kind: Sendable { case clock, map, lines, briefcase, plus, arrow, check, close, back, wallet, sparkle }
+
+    var kind: Kind
+    var lineWidth: CGFloat?
+
+    init(_ kind: Kind, lineWidth: CGFloat? = nil) {
+        self.kind = kind
+        self.lineWidth = lineWidth
+    }
+
+    private var defaultWidth: CGFloat {
+        switch kind {
+        case .clock: 2
+        case .plus, .arrow: 2.4
+        default: 1.8
+        }
+    }
+
+    var body: some View {
+        GlyphShape(kind: kind)
+            .stroke(style: StrokeStyle(lineWidth: lineWidth ?? defaultWidth, lineCap: .round, lineJoin: .round))
+            .aspectRatio(1, contentMode: .fit)
+            .accessibilityHidden(true)
+    }
+
+    struct GlyphShape: Shape {
+        var kind: Kind
+
+        func path(in rect: CGRect) -> Path {
+            let s = min(rect.width, rect.height) / 24
+            let o = CGPoint(x: rect.midX - 12 * s, y: rect.midY - 12 * s)
+            func p(_ x: CGFloat, _ y: CGFloat) -> CGPoint { CGPoint(x: o.x + x * s, y: o.y + y * s) }
+            func poly(_ points: [(CGFloat, CGFloat)], closed: Bool = false) -> Path {
+                var path = Path()
+                path.addLines(points.map { p($0.0, $0.1) })
+                if closed { path.closeSubpath() }
+                return path
+            }
+            var path = Path()
+            switch kind {
+            case .clock:
+                path.addEllipse(in: CGRect(x: o.x + 3.5 * s, y: o.y + 3.5 * s, width: 17 * s, height: 17 * s))
+                path.addPath(poly([(12, 7.5), (12, 12), (15, 14)]))
+            case .map:
+                path.addPath(poly([(3, 6), (9, 4), (15, 6), (21, 4), (21, 18), (15, 20), (9, 18), (3, 20)], closed: true))
+                path.addPath(poly([(9, 4), (9, 18)]))
+                path.addPath(poly([(15, 6), (15, 20)]))
+            case .lines:
+                path.addPath(poly([(5, 6), (19, 6)]))
+                path.addPath(poly([(5, 12), (19, 12)]))
+                path.addPath(poly([(5, 18), (14, 18)]))
+            case .briefcase:
+                path.addPath(poly([(4, 8), (20, 8), (20, 18), (4, 18)], closed: true))
+                path.addPath(poly([(8, 8), (8, 5), (16, 5), (16, 8)]))
+            case .plus:
+                path.addPath(poly([(12, 5), (12, 19)]))
+                path.addPath(poly([(5, 12), (19, 12)]))
+            case .arrow:
+                path.addPath(poly([(7, 17), (17, 7)]))
+                path.addPath(poly([(9, 7), (17, 7), (17, 15)]))
+            case .check:
+                path.addPath(poly([(5, 12.5), (10, 17.5), (19, 7)]))
+            case .close:
+                path.addPath(poly([(6, 6), (18, 18)]))
+                path.addPath(poly([(18, 6), (6, 18)]))
+            case .back:
+                path.addPath(poly([(15, 5), (8, 12), (15, 19)]))
+            case .wallet:
+                path.addRoundedRect(in: CGRect(x: o.x + 3.5 * s, y: o.y + 6 * s, width: 17 * s, height: 12 * s),
+                                    cornerSize: CGSize(width: 2 * s, height: 2 * s))
+                path.addPath(poly([(3.5, 10), (20.5, 10)]))
+                path.addPath(poly([(15, 14), (17, 14)]))
+            case .sparkle:
+                path.addPath(poly([(12, 3), (13.8, 7.6), (18, 9), (13.8, 10.4), (12, 15), (10.2, 10.4), (6, 9), (10.2, 7.6)],
+                                  closed: true))
+            }
+            return path
+        }
     }
 }
 
 // MARK: - Cards e linhas
 
-/// Cartão de bilhete (Próximos): picote nas laterais e linha tracejada entre as duas metades.
+/// Cartão de bilhete (`Proximos.png`): picote em meia-lua nas duas laterais e linha tracejada entre as metades.
+/// `top` costuma ter a etiqueta (tinta, Martian Mono) e o horário; `bottom`, o nome e a meta.
+/// Tons: `.orange` (reserva de hoje), `.paper` (ingresso, trem, voo), `.ink` (grafite, sobre fundo tinta ou papel).
 struct TicketCard<Top: View, Bottom: View>: View {
     enum Tone: Sendable { case orange, paper, ink }
 
@@ -146,6 +296,10 @@ struct TicketCard<Top: View, Bottom: View>: View {
         self.bottom = bottom()
     }
 
+    /// Raio do picote e dos cantos.
+    static var notch: CGFloat { 11 }
+    static var corner: CGFloat { 24 }
+
     private var fill: Color {
         switch tone {
         case .orange: V8.orange
@@ -154,26 +308,71 @@ struct TicketCard<Top: View, Bottom: View>: View {
         }
     }
 
+    private var ink: Color { tone == .ink ? V8.white : V8.ink }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            top.padding(16)
-            Line().stroke(style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
-                .foregroundStyle(V8.ink.opacity(0.3))
+            top
+                .padding(.horizontal, 16)
+                .padding(.top, 14)
+                .padding(.bottom, 10)
+            DashedLine()
+                .stroke(style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
+                .foregroundStyle(ink.opacity(0.35))
                 .frame(height: 1)
-                .padding(.horizontal, 14)
-            bottom.padding(16)
+                .padding(.horizontal, Self.notch + 4)
+                .anchorPreference(key: NotchAnchorKey.self, value: .bounds) { $0 }
+            bottom
+                .padding(.horizontal, 16)
+                .padding(.top, 10)
+                .padding(.bottom, 16)
         }
-        .foregroundStyle(tone == .ink ? V8.white : V8.ink)
-        .background(RoundedRectangle(cornerRadius: 18).fill(fill))
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .foregroundStyle(ink)
+        .backgroundPreferenceValue(NotchAnchorKey.self) { anchor in
+            GeometryReader { geo in
+                TicketShape(notchY: anchor.map { geo[$0].midY } ?? geo.size.height / 2,
+                            notch: Self.notch, corner: Self.corner)
+                    .fill(fill)
+            }
+        }
+        .contentShape(TicketContentShape(corner: Self.corner))
     }
+}
 
-    private struct Line: Shape {
-        func path(in rect: CGRect) -> Path {
-            var p = Path()
-            p.move(to: CGPoint(x: rect.minX, y: rect.midY))
-            p.addLine(to: CGPoint(x: rect.maxX, y: rect.midY))
-            return p
-        }
+private struct NotchAnchorKey: PreferenceKey {
+    static var defaultValue: Anchor<CGRect>? { nil }
+    static func reduce(value: inout Anchor<CGRect>?, nextValue: () -> Anchor<CGRect>?) {
+        value = value ?? nextValue()
+    }
+}
+
+/// Retângulo arredondado com duas meias-luas cortadas nas laterais, na altura `notchY`.
+struct TicketShape: Shape {
+    var notchY: CGFloat
+    var notch: CGFloat
+    var corner: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+        let card = Path(roundedRect: rect, cornerRadius: corner, style: .continuous)
+        var holes = Path()
+        holes.addEllipse(in: CGRect(x: rect.minX - notch, y: notchY - notch, width: 2 * notch, height: 2 * notch))
+        holes.addEllipse(in: CGRect(x: rect.maxX - notch, y: notchY - notch, width: 2 * notch, height: 2 * notch))
+        return card.subtracting(holes)
+    }
+}
+
+private struct TicketContentShape: Shape {
+    var corner: CGFloat
+    func path(in rect: CGRect) -> Path { Path(roundedRect: rect, cornerRadius: corner, style: .continuous) }
+}
+
+private struct DashedLine: Shape {
+    func path(in rect: CGRect) -> Path {
+        var p = Path()
+        p.move(to: CGPoint(x: rect.minX, y: rect.midY))
+        p.addLine(to: CGPoint(x: rect.maxX, y: rect.midY))
+        return p
     }
 }
 
@@ -198,9 +397,19 @@ enum IndexRowState: Hashable, Sendable {
         case .none: ""
         }
     }
+
+    /// Agora, aberto e reserva chamam atenção (laranja escuro); o resto é cinza.
+    var isLive: Bool {
+        switch self {
+        case .now, .open, .reservation: true
+        default: false
+        }
+    }
 }
 
-/// Linha de índice (Musts, Lista): índice grande em laranja escuro, nome, uma linha de meta, estado à direita.
+/// Linha de índice (`Lista.png`, `.li` do `v8.css`): índice grande em laranja escuro (Bricolage wdth 80 / 800), nome
+/// 16/700, uma linha de meta, e à direita o estado (ponto + Martian Mono caixa alta) e a distância/hora. Filete em cima.
+/// Feito = a linha inteira a 50 %.
 struct IndexRow: View {
     var index: String
     var title: String
@@ -216,27 +425,52 @@ struct IndexRow: View {
         self.trailing = trailing
     }
 
+    private var stateColor: Color { state.isLive ? V8.orangeDeep : V8.mute }
+
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 14) {
+        HStack(alignment: .center, spacing: 14) {
             Text(index)
-                .font(V8Font.numeral(34))
+                .font(Font(V8Fonts.bricolage(30, weight: 800, width: 80, opticalSize: 96)))
+                .tracking(-1.2)
                 .foregroundStyle(V8.orangeDeep)
-                .frame(minWidth: 44, alignment: .leading)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+                .frame(width: 38, alignment: .leading)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(V8Font.text(17, weight: .semibold)).foregroundStyle(V8.ink).lineLimit(2)
-                Text(meta).font(V8Font.text(13)).foregroundStyle(V8.mute).lineLimit(1)
-            }
-            Spacer(minLength: 8)
-            VStack(alignment: .trailing, spacing: 2) {
-                if state != .none {
-                    Text(state.label.uppercased()).font(V8Font.mono(10))
-                        .foregroundStyle(state == .now ? V8.orangeDeep : V8.mute)
+                Text(title)
+                    .font(V8Font.text(16, weight: .bold))
+                    .tracking(-0.16)
+                    .foregroundStyle(V8.ink)
+                    .lineLimit(2)
+                if !meta.isEmpty {
+                    Text(meta).font(V8Font.text(12)).foregroundStyle(V8.mute).lineLimit(1).truncationMode(.tail)
                 }
-                if let trailing { Text(trailing).font(V8Font.mono(10)).foregroundStyle(V8.mute) }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            if state != .none || trailing != nil {
+                VStack(alignment: .trailing, spacing: 3) {
+                    if state != .none {
+                        HStack(spacing: 5) {
+                            Circle().fill(state.isLive ? V8.orange : V8.mute).frame(width: 6, height: 6)
+                            Text(state.label.uppercased())
+                                .font(V8Font.mono(10, weight: .semibold))
+                                .tracking(0.8)
+                                .foregroundStyle(stateColor)
+                        }
+                    }
+                    if let trailing {
+                        Text(trailing).font(V8Font.mono(10, weight: .semibold)).foregroundStyle(V8.ink)
+                    }
+                }
+                .lineLimit(1)
+                .fixedSize()
             }
         }
         .padding(.vertical, 12)
+        .overlay(alignment: .top) { Rectangle().fill(V8.ink.opacity(0.14)).frame(height: 1) }
+        .opacity(state == .done ? 0.5 : 1)
+        .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }
 }
@@ -251,7 +485,8 @@ struct CutBand<Content: View>: View {
         content
             .foregroundStyle(V8.white)
             .padding(.horizontal, 20)
-            .padding(.vertical, 18)
+            .padding(.top, 16)
+            .padding(.bottom, 20)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(V8.ink)
     }
@@ -259,7 +494,8 @@ struct CutBand<Content: View>: View {
 
 // MARK: - Botões e pílulas
 
-/// Botão v8: laranja (ação principal), tinta, ou só contorno.
+/// Botão v8 (`.btn`): 56 pt, cápsula, Schibsted 16/700. `.orange` = ação principal (texto tinta), `.ink` = tinta (texto
+/// branco), `.line` = só contorno de 1,5 pt na cor do texto em volta (tinta no papel, branco na tinta).
 struct V8Button: View {
     enum Style: Sendable { case orange, ink, line }
 
@@ -277,22 +513,30 @@ struct V8Button: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 8) {
-                Text(title).font(V8Font.text(15, weight: .semibold)).lineLimit(1)
-                if let icon { MustIconView(icon, size: 16) }
-            }
-            .foregroundStyle(style == .ink ? V8.white : V8.ink)
-            .padding(.horizontal, 20)
-            .frame(maxWidth: .infinity, minHeight: 52)
-            .background(Capsule().fill(style == .orange ? V8.orange : style == .ink ? V8.ink : Color.clear))
-            .overlay(Capsule().strokeBorder(style == .line ? V8.ink.opacity(0.4) : Color.clear, lineWidth: 1))
-            .contentShape(Capsule())
+            label
         }
         .buttonStyle(MustPressStyle())
     }
+
+    @ViewBuilder private var label: some View {
+        let content = HStack(spacing: 10) {
+            Text(title).font(V8Font.text(16, weight: .bold)).lineLimit(1).minimumScaleFactor(0.8)
+            if let icon { MustIconView(icon, size: 18) }
+        }
+        .padding(.horizontal, 22)
+        .frame(maxWidth: .infinity, minHeight: 56)
+        .contentShape(Capsule())
+        switch style {
+        case .orange: content.foregroundStyle(V8.ink).background(Capsule().fill(V8.orange))
+        case .ink: content.foregroundStyle(V8.white).background(Capsule().fill(V8.ink))
+        case .line: content.overlay(Capsule().strokeBorder(.foreground, lineWidth: 1.5))
+        }
+    }
 }
 
-/// Pílula v8 (chips de contexto, filtros). `active` = laranja.
+/// Pílula v8 (`.pill`: 34 pt, contorno de 1 pt na cor do texto, 13/600) — chips de contexto e filtros.
+/// `active`: sobre papel vira **tinta** (filtros de Lista/Musts/Dicas); sobre tinta (`onInk`) vira **laranja**
+/// (modos do Ir). Assim a pílula ativa nunca some no fundo.
 struct V8Pill: View {
     var text: String
     var active: Bool
@@ -304,14 +548,26 @@ struct V8Pill: View {
         self.onInk = onInk
     }
 
+    private var fill: Color {
+        guard active else { return .clear }
+        return onInk ? V8.orange : V8.ink
+    }
+
+    private var ink: Color {
+        if active { return onInk ? V8.ink : V8.white }
+        return onInk ? V8.white : V8.ink
+    }
+
     var body: some View {
         Text(text)
-            .font(V8Font.text(13, weight: .medium))
+            .font(V8Font.text(13, weight: .semibold))
             .lineLimit(1)
-            .foregroundStyle(active ? V8.ink : onInk ? V8.white : V8.ink)
+            .foregroundStyle(ink)
             .padding(.horizontal, 13)
-            .padding(.vertical, 8)
-            .background(Capsule().fill(active ? V8.orange : Color.clear))
-            .overlay(Capsule().strokeBorder(active ? Color.clear : (onInk ? V8.white : V8.ink).opacity(0.3), lineWidth: 1))
+            .frame(minHeight: 34)
+            .background(Capsule().fill(fill))
+            .overlay(Capsule().strokeBorder(active ? Color.clear : ink, lineWidth: 1))
+            .contentShape(Capsule())
+            .accessibilityAddTraits(active ? .isSelected : [])
     }
 }

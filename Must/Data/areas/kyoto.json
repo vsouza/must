@@ -4,7 +4,7 @@
   "cityId": "kyoto",
   "note": "Centroides e tempos aproximados. Ônibus da cidade em cinza (cor do modo, não de linha). Cores JR Nara e JR Sagano aproximadas (conferir no mapa).",
   "areas": [
-    {"id": "kyoto-station", "name": "Kyoto Station", "nameLocal": "京都駅", "cityId": "kyoto", "centroid": {"lat": 34.9858, "lng": 135.7588},
+    {"id": "kyoto-station", "name": "Kyoto Station", "nameLocal": "京都駅", "stampCode": "KYT", "stampSub": "Kyoto Station", "cityId": "kyoto", "centroid": {"lat": 34.9858, "lng": 135.7588},
      "stationIds": ["jr-kyoto"], "aliases": ["Kyoto", "Kyoto Stn"],
      "neighbors": [
        {"areaId": "gion", "minutes": 20, "mode": "bus", "line": {"code": "BUS", "name": "ônibus da cidade", "color": "#7A7F87"}},
@@ -13,30 +13,30 @@
        {"areaId": "arashiyama", "minutes": 16, "mode": "train", "line": {"code": "JR-SA", "name": "JR Sagano", "color": "#4C9E55"}},
        {"areaId": "fushimi", "minutes": 5, "mode": "train", "line": {"code": "JR-NR", "name": "JR Nara", "color": "#A3C65A"}}
      ]},
-    {"id": "gion", "name": "Gion", "nameLocal": "祇園", "cityId": "kyoto", "centroid": {"lat": 35.0037, "lng": 135.7756},
+    {"id": "gion", "name": "Gion", "nameLocal": "祇園", "stampCode": "GON", "stampSub": "Gion", "cityId": "kyoto", "centroid": {"lat": 35.0037, "lng": 135.7756},
      "stationIds": ["gion-shijo"], "aliases": ["Gion Shijo"],
      "neighbors": [
        {"areaId": "kyoto-station", "minutes": 20, "mode": "bus", "line": {"code": "BUS", "name": "ônibus da cidade", "color": "#7A7F87"}},
        {"areaId": "higashiyama", "minutes": 10, "mode": "walk"},
        {"areaId": "kawaramachi", "minutes": 12, "mode": "walk"}
      ]},
-    {"id": "higashiyama", "name": "Higashiyama", "nameLocal": "東山", "cityId": "kyoto", "centroid": {"lat": 34.9990, "lng": 135.7800},
+    {"id": "higashiyama", "name": "Higashiyama", "nameLocal": "東山", "stampCode": "HGS", "stampSub": "Higashiyama", "cityId": "kyoto", "centroid": {"lat": 34.9990, "lng": 135.7800},
      "stationIds": ["kiyomizu-gojo"], "aliases": ["Kiyomizu", "Kiyomizu-dera"],
      "neighbors": [
        {"areaId": "kyoto-station", "minutes": 20, "mode": "bus", "line": {"code": "BUS", "name": "ônibus da cidade", "color": "#7A7F87"}},
        {"areaId": "gion", "minutes": 10, "mode": "walk"}
      ]},
-    {"id": "arashiyama", "name": "Arashiyama", "nameLocal": "嵐山", "cityId": "kyoto", "centroid": {"lat": 35.0094, "lng": 135.6722},
+    {"id": "arashiyama", "name": "Arashiyama", "nameLocal": "嵐山", "stampCode": "ARS", "stampSub": "Arashiyama", "cityId": "kyoto", "centroid": {"lat": 35.0094, "lng": 135.6722},
      "stationIds": ["jr-sa-saga-arashiyama"], "aliases": ["Saga-Arashiyama"],
      "neighbors": [
        {"areaId": "kyoto-station", "minutes": 16, "mode": "train", "line": {"code": "JR-SA", "name": "JR Sagano", "color": "#4C9E55"}}
      ]},
-    {"id": "fushimi", "name": "Fushimi", "nameLocal": "伏見", "cityId": "kyoto", "centroid": {"lat": 34.9671, "lng": 135.7727},
+    {"id": "fushimi", "name": "Fushimi", "nameLocal": "伏見", "stampCode": "FSM", "stampSub": "Fushimi", "cityId": "kyoto", "centroid": {"lat": 34.9671, "lng": 135.7727},
      "stationIds": ["jr-nr-inari"], "aliases": ["Fushimi Inari", "Inari"],
      "neighbors": [
        {"areaId": "kyoto-station", "minutes": 5, "mode": "train", "line": {"code": "JR-NR", "name": "JR Nara", "color": "#A3C65A"}}
      ]},
-    {"id": "kawaramachi", "name": "Kawaramachi", "nameLocal": "河原町", "cityId": "kyoto", "centroid": {"lat": 35.0036, "lng": 135.7685},
+    {"id": "kawaramachi", "name": "Kawaramachi", "nameLocal": "河原町", "stampCode": "KWR", "stampSub": "Kawaramachi", "cityId": "kyoto", "centroid": {"lat": 35.0036, "lng": 135.7685},
      "stationIds": ["kawaramachi-shijo"], "aliases": ["Karasuma Oike", "Nakagyo", "Shijo Kawaramachi"],
      "neighbors": [
        {"areaId": "kyoto-station", "minutes": 15, "mode": "bus", "line": {"code": "BUS", "name": "ônibus da cidade", "color": "#7A7F87"}},

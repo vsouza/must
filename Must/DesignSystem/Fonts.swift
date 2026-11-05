@@ -1,57 +1,65 @@
 import SwiftUI
 
-/// Famílias empacotadas no bundle (OFL). Archivo e Geist Mono são variáveis:
-/// usamos o nome da família + `.weight(_:)`.
+/// Famílias empacotadas no bundle (OFL, ver `Must/Resources/Fonts/README.md`). Identidade v8: Bricolage Grotesque,
+/// Schibsted Grotesk e Martian Mono. Os nomes antigos (`archivo`, `geistMono`, `instrumentSerif…`, `zenKaku…`) ficam
+/// como apelidos pras telas que ainda não foram redesenhadas: apontam pras fontes v8 equivalentes.
 enum MustFontFamily {
-    static let archivo = "Archivo"
-    static let instrumentSerifItalic = "InstrumentSerif-Italic"
-    static let instrumentSerif = "InstrumentSerif-Regular"
-    static let geistMono = "Geist Mono"
-    static let zenKakuMedium = "ZenKakuGothicNew-Medium"
-    static let zenKakuBold = "ZenKakuGothicNew-Bold"
+    static let bricolage = V8Fonts.Family.bricolage
+    static let schibsted = V8Fonts.Family.schibsted
+    static let martianMono = V8Fonts.Family.martian
+
+    /// v5 → v8: texto da interface.
+    static let archivo = schibsted
+    /// v5 → v8: sem serifa na identidade v8; a "voz do usuário" vira texto.
+    static let instrumentSerifItalic = schibsted
+    static let instrumentSerif = schibsted
+    /// v5 → v8: ficha técnica.
+    static let geistMono = martianMono
+    /// v5 → v8: nada de kanji na interface; o que ainda pede essa fonte sai em Schibsted (nome PostScript, pro UIKit).
+    static let zenKakuMedium = "SchibstedGrotesk-Medium"
+    static let zenKakuBold = "SchibstedGrotesk-Bold"
 
     /// PostScript names usados pra checar se a fonte foi registrada.
-    static let postScriptNames = [
-        "Archivo-SemiBold",
-        "InstrumentSerif-Italic",
-        "GeistMono-Regular",
-        "ZenKakuGothicNew-Medium",
-        "ZenKakuGothicNew-Bold",
-    ]
+    static let postScriptNames = V8Fonts.PostScript.all
 }
 
-/// Escala do Must (CLAUDE.md): título 30/600, nome de lista 20, lugar 17/600,
-/// corpo 15, meta 13, serif 18–20, mono 13, micro 11 mono caixa alta.
+/// Escala do Must (v5, mantida pra telas antigas): título 30/600, nome de lista 20, lugar 17/600, corpo 15, meta 13,
+/// serif 18–20, mono 13, micro 11 mono caixa alta — agora nas fontes v8 (título e nome de lista em Bricolage display,
+/// texto em Schibsted, mono em Martian Mono).
 ///
 /// Texto até 30 pt acompanha o Dynamic Type (`relativeTo:` pelo tamanho); o app limita em `.xxxLarge`
-/// (`DynamicTypeSize.mustCap`), sem os tamanhos de acessibilidade. Kanji (selos de bairro, círculos) e números de vitrine
-/// (> 30 pt) ficam fixos: vivem dentro de formas de tamanho fixo.
+/// (`DynamicTypeSize.mustCap`), sem os tamanhos de acessibilidade. Números de vitrine (> 30 pt) ficam fixos.
 struct MustFonts: Sendable {
-    let title = MustFonts.scaled(MustFontFamily.archivo, 30).weight(.semibold)
-    let listName = MustFonts.scaled(MustFontFamily.archivo, 20).weight(.semibold)
-    let place = MustFonts.scaled(MustFontFamily.archivo, 17).weight(.semibold)
-    let body = MustFonts.scaled(MustFontFamily.archivo, 15)
-    let meta = MustFonts.scaled(MustFontFamily.archivo, 13)
-    let serif = MustFonts.scaled(MustFontFamily.instrumentSerifItalic, 19)
-    let mono = MustFonts.scaled(MustFontFamily.geistMono, 13).monospacedDigit()
+    let title = MustFonts.scaled(MustFontFamily.bricolage, 30).weight(.bold)
+    let listName = MustFonts.scaled(MustFontFamily.bricolage, 20).weight(.bold)
+    let place = MustFonts.scaled(MustFontFamily.schibsted, 17).weight(.semibold)
+    let body = MustFonts.scaled(MustFontFamily.schibsted, 15)
+    let meta = MustFonts.scaled(MustFontFamily.schibsted, 13)
+    let serif = MustFonts.scaled(MustFontFamily.schibsted, 19)
+    let mono = MustFonts.scaled(MustFontFamily.martianMono, 13).weight(.medium).monospacedDigit()
     /// Use com `.textCase(.uppercase)` e `.tracking(1.1)` (≈ .1em em 11pt) — ver `Typography.swift`.
-    let micro = MustFonts.scaled(MustFontFamily.geistMono, 11)
-    let kanji = Font.custom(MustFontFamily.zenKakuBold, fixedSize: 17)
+    let micro = MustFonts.scaled(MustFontFamily.martianMono, 11).weight(.medium)
+    /// v5 → v8: sem kanji; sobra o tamanho fixo em Schibsted.
+    let kanji = Font.custom(MustFontFamily.schibsted, fixedSize: 17).weight(.bold)
 
+    /// Fonte de interface (v5 "Archivo"): Schibsted Grotesk; acima de 30 pt e em negrito, Bricolage display.
     func archivo(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
-        Self.scaled(MustFontFamily.archivo, size).weight(weight)
+        if size > 30, weight == .bold || weight == .heavy || weight == .black || weight == .semibold {
+            return V8Font.display(size)
+        }
+        return Self.scaled(MustFontFamily.schibsted, size).weight(weight)
     }
 
     func serif(_ size: CGFloat) -> Font {
-        Self.scaled(MustFontFamily.instrumentSerifItalic, size)
+        Self.scaled(MustFontFamily.schibsted, size)
     }
 
     func mono(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
-        Self.scaled(MustFontFamily.geistMono, size).weight(weight).monospacedDigit()
+        V8Font.mono(size, weight: weight == .regular ? .medium : weight)
     }
 
     func kanji(_ size: CGFloat, bold: Bool = true) -> Font {
-        .custom(bold ? MustFontFamily.zenKakuBold : MustFontFamily.zenKakuMedium, fixedSize: size)
+        Font.custom(MustFontFamily.schibsted, fixedSize: size).weight(bold ? .bold : .medium)
     }
 
     /// Fonte que cresce com o Dynamic Type a partir do estilo mais perto do tamanho; acima de 30 pt, fixa.

@@ -7,7 +7,7 @@ import Foundation
 struct Area: Codable, Hashable, Sendable, Identifiable {
     var id: String
     var name: String
-    /// Kanji do bairro (Japão). BH: `nil`.
+    /// Nome local do bairro (kanji no Japão), só pra mostrar a alguém. Nunca vai pro selo. BH: `nil`.
     var nameLocal: String?
     /// Grupo de cidade: `tokyo` (Tóquio 1 e 2), `kyoto`, `bh`. Ver `AreaCatalog.cityGroup`.
     var cityId: String
@@ -18,15 +18,21 @@ struct Area: Codable, Hashable, Sendable, Identifiable {
     /// Outros nomes que o board usa pro mesmo bairro ("Shibuya Stream" → Shibuya).
     var aliases: [String]
     var neighbors: [Neighbor]
-    /// Texto do selo quando não é o kanji (BH: a sigla).
+    /// v7: texto do selo (sigla do BH). Substituído por `stampCode`; lido só como fallback.
     var stampText: String?
-    /// Linha pequena do selo ("BH · 1897").
+    /// Linha pequena do selo: o nome latino do bairro no Japão ("Shinjuku"), "BH · 1897" no Brasil.
     var stampSub: String?
     /// Foto principal escolhida uma vez no aparelho (URL do Commons). `nil` até escolher.
     var heroPhotoRef: String?
+    /// Sigla latina do selo (chave `"stampCode"` no JSON): código de estação JR quando existe (Shinjuku SJK,
+    /// Shibuya SBY), senão 3 letras do nome (Ginza GNZ). Nunca kanji.
+    var stampCode: String? = nil
 
-    /// Texto do selo: a sigla quando há, senão o kanji, senão o nome.
-    var seal: String { stampText ?? nameLocal ?? name }
+    /// Texto do selo: a sigla latina (tabela › v7 › 3 letras do nome). Nunca o kanji.
+    var seal: String { stampCode ?? stampText ?? AreaCode.derive(name) ?? name }
+
+    /// Linha pequena do selo: a da tabela, senão o nome latino.
+    var sealSub: String { stampSub ?? name }
 
     var mainStation: String? { stationIds.first }
 

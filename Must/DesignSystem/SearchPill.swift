@@ -10,7 +10,7 @@ struct SearchPill<Trailing: View>: View {
         HStack(spacing: 8) {
             MustIconView(.buscar, size: 16).foregroundStyle(Color.must.secondary)
             TextField(placeholder, text: $text)
-                .font(.must.archivo(14))
+                .font(V8Font.text(14))
                 .foregroundStyle(Color.must.ink)
                 .submitLabel(.search)
                 .autocorrectionDisabled()
@@ -22,9 +22,8 @@ struct SearchPill<Trailing: View>: View {
         }
         .padding(.horizontal, 14)
         .frame(height: 44)
-        .background(Capsule().fill(Color(hex: 0xF1F2F4, opacity: 0.9)))
-        .overlay(Capsule().strokeBorder(Color.white.opacity(0.7)))
-        .shadow(color: Color(hex: 0x121316, opacity: 0.06), radius: 12, x: 0, y: 8)
+        .background(Capsule().fill(V8.white))
+        .overlay(Capsule().strokeBorder(V8.rule, lineWidth: 1))
     }
 }
 

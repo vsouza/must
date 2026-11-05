@@ -104,14 +104,11 @@ targets:
         NSLocationWhenInUseUsageDescription: Pra mostrar o que está aberto perto de você
         NSCameraUsageDescription: Pra ler o QR e o código do ingresso
         NSSupportsLiveActivities: true
-        MLNIdeographicFontFamilyName: Zen Kaku Gothic New
+        MLNIdeographicFontFamilyName: Hiragino Sans
         UIAppFonts:
-          - Archivo.ttf
-          - InstrumentSerif-Regular.ttf
-          - InstrumentSerif-Italic.ttf
-          - GeistMono.ttf
-          - ZenKakuGothicNew-Medium.ttf
-          - ZenKakuGothicNew-Bold.ttf
+          - BricolageGrotesque.ttf
+          - SchibstedGrotesk.ttf
+          - MartianMono.ttf
         CFBundleURLTypes:
           - CFBundleURLName: dev.viniso.must
             CFBundleURLSchemes:
@@ -156,12 +153,9 @@ targets:
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
         UIAppFonts:
-          - Archivo.ttf
-          - InstrumentSerif-Regular.ttf
-          - InstrumentSerif-Italic.ttf
-          - GeistMono.ttf
-          - ZenKakuGothicNew-Medium.ttf
-          - ZenKakuGothicNew-Bold.ttf
+          - BricolageGrotesque.ttf
+          - SchibstedGrotesk.ttf
+          - MartianMono.ttf
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.viniso.must.widgets

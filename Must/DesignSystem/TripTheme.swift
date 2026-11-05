@@ -1,41 +1,29 @@
 import SwiftUI
 
-/// Tema da viagem (prompt 20): bandeira e tom leve do país da região. Muda o clima, não a identidade:
-/// botões verdes, links azuis, tinta, cores das listas, linhas de trem e pinos do mapa **não** usam este tema
-/// (ver `MustTests/TripThemeTests`). Usado no lavado do topo, nos selos (`StampPalette`), no rótulo da cidade,
-/// no ponto dos títulos de seção e na aba ativa.
+/// Cor do lugar (v8, prompt 23 §1 e prompt 24 §1). Muda **só** a capa do dia, a Boa noite e o anel do selo
+/// (`cover`/`coverInk`, em `V8/V8TripTheme.swift`) e a bandeira. Barra, botões, listas, mapa e abas nunca mudam com a
+/// região (ver `MustTests/TripThemeTests`).
+///
+/// Simplifica o tema do prompt 20 (lavado do topo e quatro tons por país): na v8 não há lavado nem tinta do país em
+/// rótulos. As propriedades antigas (`tripColor`, `labelColor`, `stampInkColor`, `washes`) ficam pras telas que ainda
+/// não foram redesenhadas, já neutras (tinta/cinza), exceto a tinta do selo, que é a cor do lugar.
 ///
 /// Cores em `UInt32` (0xRRGGBB) pra que o teste compare valores exatos. A tabela é aberta: um país novo entra
-/// aqui com bandeira e quatro tons (ISO 3166-1 alfa-2). Região sem entrada cai no `neutral` (sem lavado).
+/// aqui com bandeira (`TripFlag`) e uma cor (ISO 3166-1 alfa-2). Região sem entrada cai no `neutral` (papel + tinta).
 struct TripTheme: Equatable, Sendable {
-    /// ISO 3166-1 alfa-2 ("JP", "BR"). Vazio no `neutral`.
+    /// ISO 3166-1 alfa-2 ("JP", "BR", "IT"). Vazio no `neutral`.
     let country: String
-    /// Vermelho/verde da bandeira: ponto da aba, ponto dos títulos, borda da coleção.
-    let trip: UInt32
-    /// Texto pequeno em tom do país (rótulo da cidade e do dia).
-    let tripInk: UInt32
-    /// Topo do lavado (300 pt, ou cor sólida de 120 pt com "Reduzir transparência").
-    let tripSoft: UInt32
-    /// Meio do lavado, e a cor sólida quando não há transparência.
-    let tripSoft2: UInt32
-    /// Tinta dos selos sobre papel (e o fundo do selo sobre foto, a 55%).
-    let stampInk: UInt32
-    /// Só o `neutral` não lava o topo.
-    var washes: Bool { !country.isEmpty }
+    /// Cor do lugar: fundo da capa, da Boa noite e anel do selo.
+    let coverRGB: UInt32
 
-    /// Identidade do Must, pra região sem país na tabela: mesma tinta verde do app, sem lavado.
-    static let neutral = TripTheme(country: "", trip: 0x22DD7E, tripInk: 0x0B5A33,
-                                   tripSoft: 0xFFFFFF, tripSoft2: 0xFFFFFF, stampInk: 0x121316)
-
-    static let japan = TripTheme(country: "JP", trip: 0xBC002D, tripInk: 0x8A0021,
-                                 tripSoft: 0xFDECEF, tripSoft2: 0xFFF6F7, stampInk: 0xC8102E)
-
-    static let brazil = TripTheme(country: "BR", trip: 0x009C3B, tripInk: 0x00692A,
-                                  tripSoft: 0xE6F6EC, tripSoft2: 0xFFF9DB, stampInk: 0x00692A)
-
-    /// Itália (prompt 24): azzurro. Contrato da fase 0; o agente A ajusta os tons.
-    static let italy = TripTheme(country: "IT", trip: 0x1F5FB4, tripInk: 0x17478A,
-                                 tripSoft: 0xE8EFF9, tripSoft2: 0xF5F8FD, stampInk: 0x1F5FB4)
+    /// Sem viagem: papel + tinta.
+    static let neutral = TripTheme(country: "", coverRGB: V8.Hex.paper)
+    /// Japão: vermelho #D7000F + branco.
+    static let japan = TripTheme(country: "JP", coverRGB: 0xD7000F)
+    /// Brasil: verde #007A33 + branco.
+    static let brazil = TripTheme(country: "BR", coverRGB: 0x007A33)
+    /// Itália (prompt 24): azzurro #1F5FB4 + branco (não repete o verde do Brasil nem o vermelho do Japão).
+    static let italy = TripTheme(country: "IT", coverRGB: 0x1F5FB4)
 
     /// Tabela por país (ISO 3166-1 alfa-2). Acrescente aqui um país novo.
     static let byCountry: [String: TripTheme] = [
@@ -53,11 +41,19 @@ struct TripTheme: Equatable, Sendable {
     /// Tema da região (o país de cada região está em `Region.country`).
     static func forRegion(_ region: Region) -> TripTheme { forCountry(region.country) }
 
-    var tripColor: Color { Color(hex: trip) }
-    var tripInkColor: Color { Color(hex: tripInk) }
-    var stampInkColor: Color { Color(hex: stampInk) }
-    /// Rótulo micro da cidade e do dia: tom do país; sem país, o secundário de sempre.
-    var labelColor: Color { washes ? tripInkColor : Color.must.secondary }
+    /// Há viagem (país na tabela)? Sem viagem, a capa é papel com tinta.
+    var hasTrip: Bool { !country.isEmpty }
+
+    // MARK: Compatibilidade (telas v5–v7 que ainda leem o tema do prompt 20)
+
+    /// v8: nada lava o topo das telas.
+    var washes: Bool { false }
+    /// Ponto da aba / do título de seção (v5): a cor do lugar não entra em aba nem lista → tinta.
+    var tripColor: Color { V8.ink }
+    /// Rótulo micro da cidade e do dia (v5): cinza de texto secundário.
+    var labelColor: Color { V8.mute }
+    /// Tinta do selo: o anel na cor do lugar (sem viagem, tinta).
+    var stampInkColor: Color { hasTrip ? Color(hex: coverRGB) : V8.ink }
 }
 
 // MARK: - Ambiente
@@ -74,59 +70,15 @@ extension EnvironmentValues {
     }
 }
 
-// MARK: - Lavado
+// MARK: - Lavado (v5, desligado)
 
-/// Lavado do topo (`tripSoft → tripSoft2 → transparente`, 300 pt). Com "Reduzir transparência" vira a cor
-/// sólida `tripSoft2` em 120 pt. Atrás de tudo: nunca cobre conteúdo.
+/// Lavado do topo do prompt 20. Na v8 não há lavado (a cor do lugar só entra na capa, na Boa noite e no anel do
+/// selo): a view não desenha nada. Fica pra que as telas antigas compilem até serem redesenhadas.
 struct TripWash: View {
-    enum Shape: Equatable, Sendable {
-        case none
-        case gradient(height: CGFloat)
-        case solid(color: UInt32, height: CGFloat)
-    }
-
-    /// Forma do lavado pro tema e a preferência do sistema. Função pura, pra teste.
-    static func shape(for theme: TripTheme, reduceTransparency: Bool) -> Shape {
-        guard theme.washes else { return .none }
-        return reduceTransparency ? .solid(color: theme.tripSoft2, height: 120) : .gradient(height: 300)
-    }
-
-    @Environment(\.tripTheme) private var theme
-    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
-
-    var body: some View {
-        switch Self.shape(for: theme, reduceTransparency: reduceTransparency) {
-        case .none:
-            EmptyView()
-        case .gradient(let height):
-            LinearGradient(
-                stops: [
-                    .init(color: Color(hex: theme.tripSoft), location: 0),
-                    .init(color: Color(hex: theme.tripSoft2), location: 0.45),
-                    .init(color: Color(hex: theme.tripSoft2).opacity(0), location: 1),
-                ],
-                startPoint: .top, endPoint: .bottom
-            )
-            .frame(height: height)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            .allowsHitTesting(false)
-            .animation(.easeInOut(duration: 0.4), value: theme)
-        case .solid(let color, let height):
-            Color(hex: color)
-                .frame(height: height)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                .allowsHitTesting(false)
-                .animation(.easeInOut(duration: 0.4), value: theme)
-        }
-    }
+    var body: some View { EmptyView() }
 }
 
 extension View {
-    /// Lavado do tema no topo da tela. Aplique **antes** do `.background` de fundo da tela: o lavado fica
-    /// por cima do fundo branco e por baixo do conteúdo (o `.background` seguinte fica por trás dele).
-    func tripWash() -> some View {
-        background(alignment: .top) {
-            TripWash().ignoresSafeArea()
-        }
-    }
+    /// v8: não faz nada (sem lavado). Mantido pras telas antigas.
+    func tripWash() -> some View { self }
 }

@@ -1,5 +1,9 @@
 import SwiftUI
 
+// Componentes v5–v7 mantidos pras telas que ainda não foram redesenhadas, **redesenhados na identidade v8**
+// (tinta, papel, laranja; Schibsted/Martian/Bricolage; sem degradê, sem vidro, sem sombra colorida).
+// Componentes novos da v8 ficam em `V8/V8Components.swift`.
+
 // MARK: - Feedback de toque
 
 /// Encolhe um pouco ao pressionar. Usado por todos os botões do Must.
@@ -14,7 +18,7 @@ struct MustPressStyle: ButtonStyle {
 
 // MARK: - Pill
 
-/// Pílula 13/600, padding 9×13. `isOn` vira escura.
+/// Pílula 13/600, 34 pt, contorno de 1 pt (`.pill` do `v8.css`). `isOn` = tinta; `.green` (v5) = laranja.
 struct Pill: View {
     enum Style: Sendable { case `default`, dark, green }
 
@@ -37,34 +41,35 @@ struct Pill: View {
             if let icon { MustIconView(icon, size: 14) }
             Text(text).lineLimit(1)
         }
-        .font(.must.archivo(13, .semibold))
+        .font(V8Font.text(13, weight: .semibold))
         .foregroundStyle(foreground)
-        .padding(.vertical, 9)
         .padding(.horizontal, 13)
+        .frame(minHeight: 34)
         .background(background, in: Capsule())
+        .overlay(Capsule().strokeBorder(resolved == .default ? V8.ink : Color.clear, lineWidth: 1))
         .contentShape(Capsule())
     }
 
     private var foreground: Color {
         switch resolved {
-        case .default: Color.must.ink
-        case .dark: .white
-        case .green: Color.must.greenText
+        case .default: V8.ink
+        case .dark: V8.white
+        case .green: V8.ink
         }
     }
 
     private var background: Color {
         switch resolved {
-        case .default: Color.must.surface
-        case .dark: Color.must.ink
-        case .green: Color.must.green
+        case .default: Color.clear
+        case .dark: V8.ink
+        case .green: V8.orange
         }
     }
 }
 
 // MARK: - Botões
 
-/// Botão principal 52pt, raio 999, 15/700.
+/// Botão principal 56 pt, cápsula, 16/700 (`.btn` do `v8.css`). `.green` (v5) = laranja (ação); `.dark` = tinta.
 struct PrimaryButton: View {
     enum Style: Sendable { case green, dark }
 
@@ -84,23 +89,24 @@ struct PrimaryButton: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 9) {
+            HStack(spacing: 10) {
                 if let icon, !iconTrailing { MustIconView(icon, size: 18) }
-                Text(title)
+                Text(title).lineLimit(1)
                 if let icon, iconTrailing { MustIconView(icon, size: 18) }
             }
-            .font(.must.archivo(15, .bold))
-            .foregroundStyle(style == .green ? Color.must.greenText : .white)
+            .font(V8Font.text(16, weight: .bold))
+            .foregroundStyle(style == .green ? V8.ink : V8.white)
+            .padding(.horizontal, 22)
             .frame(maxWidth: .infinity)
-            .frame(height: 52)
-            .background(style == .green ? Color.must.green : Color.must.ink, in: Capsule())
+            .frame(minHeight: 56)
+            .background(style == .green ? V8.orange : V8.ink, in: Capsule())
             .contentShape(Capsule())
         }
         .buttonStyle(MustPressStyle())
     }
 }
 
-/// Botão fantasma 48pt: fundo branco, borda #E4E6EA, 14/600.
+/// Botão fantasma 48 pt: só contorno de 1,5 pt em tinta (`.btn.line`), 15/600.
 struct GhostButton: View {
     var title: String
     var icon: MustIcon?
@@ -116,21 +122,21 @@ struct GhostButton: View {
         Button(action: action) {
             HStack(spacing: 8) {
                 if let icon { MustIconView(icon, size: 17) }
-                Text(title)
+                Text(title).lineLimit(1)
             }
-            .font(.must.archivo(14, .semibold))
-            .foregroundStyle(Color.must.ink)
+            .font(V8Font.text(15, weight: .semibold))
+            .foregroundStyle(V8.ink)
+            .padding(.horizontal, 18)
             .frame(maxWidth: .infinity)
-            .frame(height: 48)
-            .background(Color.white, in: Capsule())
-            .overlay(Capsule().strokeBorder(Color.must.lineStrong, lineWidth: 1))
+            .frame(minHeight: 48)
+            .overlay(Capsule().strokeBorder(V8.ink, lineWidth: 1.5))
             .contentShape(Capsule())
         }
         .buttonStyle(MustPressStyle())
     }
 }
 
-/// Botão redondo de ícone, 40pt.
+/// Botão redondo de ícone, 44 pt por padrão no design (`.ic`): `.gray` = contorno, `.dark` = tinta, `.glass` = papel.
 struct IconButton: View {
     enum Style: Sendable { case gray, dark, glass }
 
@@ -151,7 +157,7 @@ struct IconButton: View {
     var body: some View {
         Button(action: action) {
             MustIconView(symbol, size: size * 0.45)
-                .foregroundStyle(style == .dark ? .white : Color.must.ink)
+                .foregroundStyle(style == .dark ? V8.white : V8.ink)
                 .frame(width: size, height: size)
                 .background { background }
                 .contentShape(Circle())
@@ -162,14 +168,14 @@ struct IconButton: View {
 
     @ViewBuilder private var background: some View {
         switch style {
-        case .gray: Circle().fill(Color.must.surface)
-        case .dark: Circle().fill(Color.must.ink)
-        case .glass: Color.clear.glass(cornerRadius: size / 2)
+        case .gray: Circle().strokeBorder(V8.ink, lineWidth: 1)
+        case .dark: Circle().fill(V8.ink)
+        case .glass: Circle().fill(V8.paper)
         }
     }
 }
 
-/// FAB preto 54pt (Assistente).
+/// Botão redondo preto 54 pt (Assistente).
 struct Fab: View {
     var symbol: MustIcon = .assistente
     var action: () -> Void
@@ -182,10 +188,10 @@ struct Fab: View {
     var body: some View {
         Button(action: action) {
             MustIconView(symbol, size: 22)
-                .foregroundStyle(.white)
+                .foregroundStyle(V8.white)
                 .frame(width: 54, height: 54)
-                .background(Circle().fill(Color.must.ink))
-                .shadow(color: Color(hex: 0x121316, opacity: 0.25), radius: 15, x: 0, y: 12)
+                .background(Circle().fill(V8.ink))
+                .shadow(color: V8.ink.opacity(0.28), radius: 22, x: 0, y: 18)
         }
         .buttonStyle(MustPressStyle())
         .accessibilityLabel(symbol.label)
@@ -194,7 +200,8 @@ struct Fab: View {
 
 // MARK: - Rótulos
 
-/// Tag 12pt sobre `surface`, com ponto colorido opcional.
+/// Etiqueta (`.tag` do `v8.css`): Martian Mono 9/600 caixa alta, cantos de 6 pt, com ponto opcional.
+/// `.default` = osso, `.dark` = tinta, `.green` (v5) = laranja.
 struct Tag: View {
     var text: String
     var dot: Color?
@@ -208,23 +215,25 @@ struct Tag: View {
 
     var body: some View {
         HStack(spacing: 5) {
-            if let dot { Circle().fill(dot).frame(width: 7, height: 7) }
-            Text(text).lineLimit(1)
+            if let dot { Circle().fill(dot).frame(width: 6, height: 6) }
+            Text(text.uppercased()).lineLimit(1)
         }
-        .font(.must.archivo(12))
-        .foregroundStyle(style == .dark ? .white : (style == .green ? Color.must.greenText : Color.must.ink))
+        .font(V8Font.mono(9, weight: .semibold))
+        .tracking(0.72)
+        .foregroundStyle(style == .dark ? V8.white : V8.ink)
         .padding(.vertical, 5)
-        .padding(.horizontal, 9)
-        .background(style == .dark ? Color.must.ink : (style == .green ? Color.must.green : Color.must.surface), in: Capsule())
+        .padding(.horizontal, 8)
+        .background(style == .dark ? V8.ink : (style == .green ? V8.orange : V8.bone),
+                    in: RoundedRectangle(cornerRadius: 6, style: .continuous))
     }
 }
 
-/// Mono 11 caixa alta, tracking .1em.
+/// Micro-rótulo: Martian Mono 10/500 caixa alta, tracking .08em, secundário (`.mono` do `v8.css`).
 struct Micro: View {
     var text: String
-    var color: Color = Color.must.secondary
+    var color: Color = V8.mute
 
-    init(_ text: String, color: Color = Color.must.secondary) {
+    init(_ text: String, color: Color = V8.mute) {
         self.text = text
         self.color = color
     }
@@ -233,12 +242,12 @@ struct Micro: View {
         Text(text)
             .font(.must.micro)
             .textCase(.uppercase)
-            .tracking(1.1)
+            .tracking(0.8)
             .foregroundStyle(color)
     }
 }
 
-/// Número grande em Geist Mono (tabular), 600, tracking −.03em.
+/// Número grande (horas, ¥/R$): Martian Mono 600 tabular, tracking −.03em.
 struct MonoNumber: View {
     var value: String
     var size: CGFloat = 44
@@ -257,14 +266,14 @@ struct MonoNumber: View {
     }
 }
 
-// MARK: - Selo 済
+// MARK: - Selo de feito
 
-/// 済 em círculo verde (feito) ou número em círculo preto (por fazer).
+/// Feito (círculo laranja com ✓) ou número em círculo preto (por fazer). Era o 済 da v5 — sem japonês na v8.
 struct KanjiSeal: View {
     enum Look: Sendable {
-        /// Verde forte (selo do app).
+        /// Laranja (feito em destaque).
         case strong
-        /// Verde claro, como as paradas feitas do Hoje.
+        /// Osso, como as paradas feitas da Linha (50 %).
         case soft
     }
 
@@ -283,15 +292,16 @@ struct KanjiSeal: View {
     var body: some View {
         ZStack {
             if done {
-                Circle().fill(look == .strong ? Color.must.green : Color(hex: 0xB9F5CF))
-                Text("済")
-                    .font(.must.kanji(size * 0.5))
-                    .foregroundStyle(look == .strong ? Color.must.greenText : Color(hex: 0x22B866))
+                Circle().fill(look == .strong ? V8.orange : V8.bone)
+                CheckGlyph()
+                    .stroke(look == .strong ? V8.ink : V8.mute,
+                            style: StrokeStyle(lineWidth: max(1.6, size * 0.08), lineCap: .round, lineJoin: .round))
+                    .frame(width: size * 0.5, height: size * 0.5)
             } else {
-                Circle().fill(Color.must.ink)
+                Circle().fill(V8.ink)
                 Text(number.map(String.init) ?? "")
-                    .font(.must.archivo(size * 0.45, .bold))
-                    .foregroundStyle(.white)
+                    .font(V8Font.numeral(size * 0.5))
+                    .foregroundStyle(V8.white)
             }
         }
         .frame(width: size, height: size)
@@ -299,15 +309,29 @@ struct KanjiSeal: View {
     }
 }
 
+/// ✓ em vetor (viewBox 24): o "feito" da v8.
+struct CheckGlyph: Shape {
+    func path(in rect: CGRect) -> Path {
+        let s = min(rect.width, rect.height) / 24
+        let ox = rect.midX - 12 * s, oy = rect.midY - 12 * s
+        var p = Path()
+        p.move(to: CGPoint(x: ox + 5 * s, y: oy + 12.5 * s))
+        p.addLine(to: CGPoint(x: ox + 10 * s, y: oy + 17.5 * s))
+        p.addLine(to: CGPoint(x: ox + 19 * s, y: oy + 7 * s))
+        return p
+    }
+}
+
 // MARK: - Fotos
 
-/// Chip de crédito "foto · Wikimedia CC BY 2.0 · @autor". Com `url`, abre a página da foto.
+/// Chip de crédito "foto · Wikimedia CC BY 2.0 · @autor" (`.credit`): Martian Mono 8 caixa alta, branco sobre tinta 55 %.
+/// Com `url`, abre a página da foto. `color` (v5) fica na assinatura e é ignorado.
 struct Credit: View {
     var text: String
-    var color: Color = Color.must.ink
+    var color: Color = V8.white
     var url: URL?
 
-    init(_ text: String, color: Color = Color.must.ink, url: URL? = nil) {
+    init(_ text: String, color: Color = V8.white, url: URL? = nil) {
         self.text = text
         self.color = color
         self.url = url
@@ -323,39 +347,41 @@ struct Credit: View {
 
     private var chip: some View {
         Text(text)
-            .font(.must.mono(9))
+            .font(V8Font.mono(8))
             .textCase(.uppercase)
-            .tracking(0.54)
+            .tracking(0.8)
             .lineLimit(1)
             .truncationMode(.tail)
             .frame(maxWidth: 260)
             .fixedSize(horizontal: true, vertical: false)
-            .foregroundStyle(color)
-            .padding(.vertical, 3)
+            .foregroundStyle(V8.white.opacity(0.85))
+            .padding(.vertical, 4)
             .padding(.horizontal, 7)
-            .background(Color.white.opacity(0.55), in: Capsule())
+            .background(V8.ink.opacity(0.55), in: RoundedRectangle(cornerRadius: 6, style: .continuous))
     }
 }
 
-/// Como as fotos aparecem (05/11, pedido do Vinicius: "muito sutil e sem vida").
-/// `vivid`: a foto em cor cheia e a cor do Must só onde tem texto (rampa de baixo pra cima).
-/// `classic`: o v5 do design (saturação .7 e o gradiente da cor a 82% por cima de tudo). `-photoStyle classic` em DEBUG.
+/// Como as fotos aparecem. v8: foto inteira, em cor cheia, sempre (`vivid`). `classic` (v5) não existe mais;
+/// o caso fica pra que `-photoStyle classic` não quebre nada.
 enum PhotoStyle: Sendable {
     case vivid, classic
 
-    static let current: PhotoStyle = DebugFlags.string("photoStyle") == "classic" ? .classic : .vivid
+    static let current: PhotoStyle = .vivid
 }
 
-/// Foto com a cor do Must. Sem URL ou enquanto carrega: só o gradiente (placeholder de cor).
-/// No estilo `vivid` a foto fica em cor cheia e a cor entra numa rampa (`ramp`: de onde começa a até onde fica sólida,
-/// em fração da altura) atrás do texto; `tintOpacity` 0 = sem cor nenhuma (foto do Google).
+/// Foto de um lugar ou lista. v8: a foto inteira, sem saturar nem tingir. Sem URL ou enquanto carrega: placeholder de
+/// cor (osso quando há texto por cima — `tintOpacity > 0` —, grafite quando é só a foto).
+///
+/// Telas v5–v7 escrevem texto **por cima** da foto com a tinta: pra continuarem legíveis até serem redesenhadas, com
+/// `tintOpacity > 0` entra uma faixa de papel por baixo do texto (`ramp`). As telas v8 usam `tintOpacity: 0` e põem o
+/// texto numa `CutBand` (faixa preta sólida).
 struct TintedPhoto: View {
     var url: URL?
     var color: MustColor
     var tintOpacity: Double = 0.82
-    /// 0.7 nas fotos de fundo; 1 na foto do Google (prompt 19: sem alterar a foto).
+    /// v5. Ignorado: a foto fica como veio.
     var saturation: Double = 0.7
-    /// Estilo vivo: a cor começa em `ramp.lowerBound` e fica sólida em `ramp.upperBound` (0 = topo, 1 = base).
+    /// Onde a faixa de papel começa e fica sólida (0 = topo, 1 = base). Só com `tintOpacity > 0`.
     var ramp: ClosedRange<Double> = 0.32...0.74
     /// Zoom lento (heroes grandes: Lugar).
     var motion = false
@@ -371,37 +397,28 @@ struct TintedPhoto: View {
         self.motion = motion
     }
 
-    private var vivid: Bool { PhotoStyle.current == .vivid }
+    private var carriesText: Bool { tintOpacity > 0 }
 
     var body: some View {
         // A foto fica num overlay pra nunca mudar o tamanho proposto (scaledToFill passaria da largura).
-        color.gradient
+        (carriesText ? V8.bone : V8.photo)
             .overlay {
-                if let url {
+                if url != nil {
                     if let image {
                         Image(uiImage: image).resizable().scaledToFill()
-                            // Foto do Google (sem cor por cima) fica como veio; as de fundo ganham um pouco de vida.
-                            .saturation(vivid ? (tintOpacity > 0 ? max(saturation, 1.08) : 1) : saturation)
-                            .contrast(vivid && tintOpacity > 0 ? 1.04 : 1)
                             .modifier(MaybeKenBurns(on: motion))
                     }
-                    if vivid {
-                        if tintOpacity > 0 {
-                            // Um véu leve da cor em tudo (a foto conversa com a lista) e a cor cheia atrás do texto.
-                            color.strong.opacity(0.12)
-                            color.gradient
-                                .mask(LinearGradient(stops: [.init(color: .clear, location: ramp.lowerBound),
-                                                             .init(color: .black.opacity(0.94), location: ramp.upperBound),
-                                                             .init(color: .black, location: 1)],
-                                                     startPoint: .top, endPoint: .bottom))
-                        }
-                    } else {
-                        color.gradient.opacity(tintOpacity)
+                    if carriesText {
+                        V8.paper
+                            .mask(LinearGradient(stops: [.init(color: .clear, location: ramp.lowerBound),
+                                                         .init(color: .black.opacity(0.94), location: ramp.upperBound),
+                                                         .init(color: .black, location: 1)],
+                                                 startPoint: .top, endPoint: .bottom))
                     }
                 }
             }
             .clipped()
-            // Cache primeiro (prompt 18 · A.4): sem imagem e sem rede, fica o gradiente, sem spinner.
+            // Cache primeiro (prompt 18 · A.4): sem imagem e sem rede, fica o placeholder, sem spinner.
             .task(id: url) {
                 guard let url else { image = nil; return }
                 image = await PhotoLoader.load(url)
@@ -418,7 +435,7 @@ struct KenBurns: ViewModifier {
         content
             .scaleEffect(zoomed ? 1.07 : 1, anchor: .center)
             .onAppear {
-                guard !reduceMotion, PhotoStyle.current == .vivid else { return }
+                guard !reduceMotion else { return }
                 withAnimation(.easeInOut(duration: 22).repeatForever(autoreverses: true)) { zoomed = true }
             }
     }
@@ -505,6 +522,7 @@ enum PhotoLoader {
     }
 }
 
+
 // MARK: - Navegação
 
 enum MustTab: String, CaseIterable, Identifiable, Sendable {
@@ -532,41 +550,13 @@ enum MustTab: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
-/// Tab bar flutuante: pílula branca 62pt com sombra, 22pt das bordas.
+/// Barra v5 (pílula branca). Na v8 a barra é a `V8NavBar` (cápsula preta, aba ativa laranja): esta virou um apelido
+/// dela, pra que quem ainda usa `MustTabBar(selected:)` saia com a barra nova.
 struct MustTabBar: View {
     @Binding var selected: MustTab
-    @Environment(\.tripTheme) private var theme
 
     var body: some View {
-        HStack(spacing: 0) {
-            ForEach(MustTab.allCases) { tab in
-                Button {
-                    selected = tab
-                } label: {
-                    VStack(spacing: 3) {
-                        MustIconView(tab.icon, size: 22)
-                        Text(tab.title)
-                            .font(.must.archivo(11, selected == tab ? .semibold : .regular))
-                        // Ponto da aba ativa na cor do país (prompt 20); sem tema, o verde do app. Reserva o espaço nas outras.
-                        Circle()
-                            .fill(theme.tripColor)
-                            .frame(width: 4, height: 4)
-                            .opacity(selected == tab ? 1 : 0)
-                    }
-                    .foregroundStyle(selected == tab ? Color.must.ink : Color.must.secondary)
-                    .frame(maxWidth: .infinity, minHeight: 44)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityAddTraits(selected == tab ? .isSelected : [])
-            }
-        }
-        .padding(.horizontal, 10)
-        .frame(height: 62)
-        .background(Capsule().fill(Color.white))
-        .overlay(Capsule().strokeBorder(Color.must.line, lineWidth: 1))
-        .shadow(color: Color(hex: 0x121316, opacity: 0.14), radius: 18, x: 0, y: 12)
-        .padding(.horizontal, 22)
+        V8NavBar(active: selected, onSelect: { selected = $0 })
     }
 }
 
@@ -574,7 +564,7 @@ struct MustTabBar: View {
 struct SheetHandle: View {
     var body: some View {
         Capsule()
-            .fill(Color(hex: 0xD9DCE1))
+            .fill(V8.ink.opacity(0.2))
             .frame(width: 36, height: 5)
             .padding(.top, 8)
             .accessibilityHidden(true)
@@ -583,19 +573,18 @@ struct SheetHandle: View {
 
 // MARK: - Toggle
 
-/// Toggle 46×28, verde quando ligado.
+/// Toggle 84×48 do design reduzido a 46×28: laranja com bolinha tinta quando ligado; filete com bolinha branca desligado.
 struct MustToggleStyle: ToggleStyle {
     func makeBody(configuration: Configuration) -> some View {
         HStack {
             configuration.label
             Spacer(minLength: 12)
             Capsule()
-                .fill(configuration.isOn ? Color.must.green : Color(hex: 0xDDE0E5))
+                .fill(configuration.isOn ? V8.orange : Color(hex: V8.Hex.ruleStrong))
                 .frame(width: 46, height: 28)
                 .overlay(alignment: configuration.isOn ? .trailing : .leading) {
                     Circle()
-                        .fill(.white)
-                        .shadow(color: Color(hex: 0x121316, opacity: 0.15), radius: 2, x: 0, y: 1)
+                        .fill(configuration.isOn ? V8.ink : V8.white)
                         .frame(width: 22, height: 22)
                         .padding(3)
                 }
@@ -616,14 +605,14 @@ extension ToggleStyle where Self == MustToggleStyle {
 
 // MARK: - Barra de status sobre mapa
 
-/// Véu branco sob a barra de status em telas de mapa em tela cheia: a hora e a bateria não ficam em cima dos nomes
+/// Véu de papel sob a barra de status em telas de mapa em tela cheia: a hora e a bateria não ficam em cima dos nomes
 /// do mapa. Não recebe toque.
 struct StatusBarScrim: View {
     var body: some View {
         GeometryReader { geo in
-            LinearGradient(stops: [.init(color: Color.must.bg.opacity(0.88), location: 0),
-                                   .init(color: Color.must.bg.opacity(0.6), location: 0.55),
-                                   .init(color: Color.must.bg.opacity(0), location: 1)],
+            LinearGradient(stops: [.init(color: V8.paper.opacity(0.92), location: 0),
+                                   .init(color: V8.paper.opacity(0.6), location: 0.55),
+                                   .init(color: V8.paper.opacity(0), location: 1)],
                            startPoint: .top, endPoint: .bottom)
                 .frame(height: geo.safeAreaInsets.top + 18)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)

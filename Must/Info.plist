@@ -37,7 +37,7 @@
 		<string>maps</string>
 	</array>
 	<key>MLNIdeographicFontFamilyName</key>
-	<string>Zen Kaku Gothic New</string>
+	<string>Hiragino Sans</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Pra ler o QR e o código do ingresso</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
@@ -46,12 +46,9 @@
 	<true/>
 	<key>UIAppFonts</key>
 	<array>
-		<string>Archivo.ttf</string>
-		<string>InstrumentSerif-Regular.ttf</string>
-		<string>InstrumentSerif-Italic.ttf</string>
-		<string>GeistMono.ttf</string>
-		<string>ZenKakuGothicNew-Medium.ttf</string>
-		<string>ZenKakuGothicNew-Bold.ttf</string>
+		<string>BricolageGrotesque.ttf</string>
+		<string>SchibstedGrotesk.ttf</string>
+		<string>MartianMono.ttf</string>
 	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>

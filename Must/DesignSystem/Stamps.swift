@@ -1,25 +1,23 @@
 import SwiftUI
 
-/// Cores dos selos (prompt 20): ponto único. Sobre papel a tinta é a do país (`stampInk`); sobre foto o selo
-/// é branco com fundo `stampInk` a 55% (card do dia) ou 50% (cartões de bairro). Sem tema (`neutral`), a tinta
-/// é a tinta do app, como antes.
+/// Cores dos selos (v8): o **anel** é a cor do lugar (`TripTheme.cover`; sem viagem, tinta). O miolo é papel com tinta
+/// por cima — sobre foto também (disco de papel sólido, nada de foto lavada atrás de texto).
 enum StampPalette {
-    /// Selo sobre foto escurecida: anel e texto.
+    /// Texto do selo sobre a foto quando o selo não tem fundo (`filled: false`).
     static let onPhoto = Color.white
 
-    /// Tinta do selo sobre papel.
+    /// Anel do selo: a cor do lugar.
     static func ink(_ theme: TripTheme) -> Color { theme.stampInkColor }
 
-    /// Fundo do selo sobre foto: a tinta do país na opacidade pedida.
-    static func photoFill(_ theme: TripTheme, opacity: Double) -> Color {
-        theme.stampInkColor.opacity(opacity)
-    }
+    /// Fundo do selo sobre foto: papel sólido (a opacidade da v5 fica na assinatura, mas não lava mais a foto).
+    static func photoFill(_ theme: TripTheme, opacity: Double) -> Color { V8.paper }
 }
 
-/// Selo de estação/bairro (eki stamp, D.18): círculo de borda dupla com linha tracejada por dentro, kanji
-/// (ou sigla no BH) e uma linha pequena. Rotação leve (−6° a −10°). Ver `.stamp` em `design/screens/must-light.css`.
+/// Selo de estação/bairro (eki stamp): anel duplo na **cor do lugar** e, no meio, a **sigla latina** (código JR quando
+/// existe — Shinjuku SJK, Shibuya SBY — senão 3 letras do nome; BH: SAV) com uma linha pequena embaixo (o nome do bairro,
+/// ou "BH · 1897"). Nunca kanji (CLAUDE.md › "Selos sem japonês"). Selo pequeno: só a sigla. Rotação leve.
 ///
-/// `surface`: `.photo` (branco sobre foto, com fundo do país se `filled`) ou `.paper` (tinta do país).
+/// `surface`: `.photo` (disco de papel sobre a foto; `filled: false` deixa sem disco, texto branco) ou `.paper`.
 struct StationStamp: View {
     enum Surface: Sendable {
         case photo
@@ -30,11 +28,12 @@ struct StationStamp: View {
     var sub: String?
     var size: CGFloat = 74
     var surface: Surface = .photo
-    /// Sobre foto: `true` põe o fundo do país (`fillOpacity`); `false` deixa o selo sem fundo.
+    /// Sobre foto: `true` põe o disco de papel; `false` deixa o selo sem fundo (texto branco).
     var filled: Bool = true
+    /// v5 (opacidade do fundo do país). Ignorado na v8: o disco é sólido.
     var fillOpacity: Double = 0.55
     var rotation: Double = -8
-    /// Cor do anel quando a coleção pede a borda do país (Viagem: `trip`). `nil` = a tinta do selo.
+    /// v5 (borda do país na coleção). Ignorado na v8: o anel é sempre a cor do lugar.
     var border: Color?
 
     @Environment(\.tripTheme) private var theme
@@ -51,53 +50,93 @@ struct StationStamp: View {
         self.border = border
     }
 
-    /// Kanji (Zen Kaku Gothic New) quando o texto não é sigla ASCII (BH: SAV, LOU…).
+    /// Texto com escrita japonesa/chinesa/coreana (kanji, kana, hangul, largura cheia). Selo nunca mostra isso.
     static func usesKanji(_ text: String) -> Bool {
-        !text.unicodeScalars.allSatisfy { $0.isASCII }
+        text.unicodeScalars.contains { scalar in
+            switch scalar.value {
+            case 0x2E80...0x9FFF, 0xAC00...0xD7AF, 0xF900...0xFAFF, 0xFF00...0xFFEF, 0x20000...0x2FFFF: true
+            default: false
+            }
+        }
     }
 
-    private var ring: Color { border ?? (surface == .photo ? StampPalette.onPhoto : StampPalette.ink(theme)) }
+    /// Sigla que o selo mostra: o texto, se for latino; senão a sigla do `sub` (3 letras); senão "MUST".
+    static func code(_ text: String, sub: String?) -> String {
+        if !text.isEmpty, !usesKanji(text) { return text }
+        if let sub, !usesKanji(sub), let derived = AreaCode.derive(sub) { return derived }
+        return "MUST"
+    }
+
+    /// Selo pequeno (< 50 pt) mostra só a sigla.
+    private var showsSub: Bool { size >= 50 && sub.map { !$0.isEmpty && !Self.usesKanji($0) } == true }
+
+    private var ring: Color { StampPalette.ink(theme) }
 
     private var fill: Color? {
-        guard surface == .photo, filled else { return nil }
-        return StampPalette.photoFill(theme, opacity: fillOpacity)
+        switch surface {
+        case .paper: nil
+        case .photo: filled ? StampPalette.photoFill(theme, opacity: fillOpacity) : nil
+        }
+    }
+
+    private var label: Color {
+        surface == .photo && !filled ? StampPalette.onPhoto : V8.ink
     }
 
     var body: some View {
-        let kanji = Self.usesKanji(text)
+        let code = Self.code(text, sub: sub)
         ZStack {
             if let fill { Circle().fill(fill) }
-            Circle().strokeBorder(ring, lineWidth: max(1.5, size * 0.034))
+            Circle().strokeBorder(ring, lineWidth: max(1.5, size * 0.04))
             Circle()
-                .inset(by: size * 0.054)
-                .strokeBorder(ring.opacity(0.6), style: StrokeStyle(lineWidth: 1, dash: [3, 2.5]))
-            VStack(spacing: size * 0.03) {
-                Text(text)
-                    .font(kanji ? .must.kanji(size * 0.3) : .must.archivo(size * 0.23, .heavy))
-                    .tracking(kanji ? 0 : size * 0.008)
+                .inset(by: size * 0.075)
+                .strokeBorder(ring.opacity(0.7), style: StrokeStyle(lineWidth: 1, dash: [3, 2.5]))
+            VStack(spacing: size * 0.02) {
+                Text(code)
+                    .font(V8Font.numeral(size * (showsSub ? 0.3 : 0.36)))
+                    .tracking(size * 0.004)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.6)
-                if let sub {
-                    Text(sub)
-                        .font(.must.archivo(max(7, size * 0.11), .bold))
-                        .tracking(size * 0.02)
-                        .textCase(.uppercase)
+                    .minimumScaleFactor(0.5)
+                if showsSub, let sub {
+                    Text(sub.uppercased())
+                        .font(Font(V8Fonts.martian(max(6, size * 0.085), weight: 600)))
+                        .tracking(size * 0.008)
                         .lineLimit(1)
-                        .minimumScaleFactor(0.6)
+                        .minimumScaleFactor(0.5)
                 }
             }
-            .foregroundStyle(ring)
-            .padding(size * 0.14)
+            .foregroundStyle(label)
+            .padding(size * 0.17)
         }
         .frame(width: size, height: size)
         .rotationEffect(.degrees(rotation))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(sub.map { "\(text), \($0)" } ?? text)
+        .accessibilityLabel(showsSub ? "\(code), \(sub ?? "")" : code)
     }
 }
 
-/// Chip de linha de transporte (D.19): bolinha com o código (JY, JC, H, BUS…) na cor oficial e o nome.
-/// Ver `.line-chip` em `design/screens/must-light.css`.
+/// Sigla de bairro (3 letras latinas). A tabela curada (`stampCode` em `Must/Data/areas/*.json`) manda; isto é o
+/// fallback: primeira letra + as próximas consoantes (Ginza → GNZ, Asakusa → ASK), em caixa alta, sem acento.
+enum AreaCode {
+    static func derive(_ name: String) -> String? {
+        let folded = name.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "pt_BR"))
+        let letters = folded.unicodeScalars.filter { ("a"..."z").contains(Character($0)) }.map(Character.init)
+        guard let first = letters.first else { return nil }
+        let vowels: Set<Character> = ["a", "e", "i", "o", "u", "y"]
+        var code = [first]
+        for c in letters.dropFirst() where !vowels.contains(c) && c != code.last {
+            code.append(c)
+            if code.count == 3 { break }
+        }
+        if code.count < 3 {
+            for c in letters.dropFirst() where code.count < 3 && !code.contains(c) { code.append(c) }
+        }
+        return String(code.prefix(3)).uppercased()
+    }
+}
+
+/// Chip de linha de transporte (v8): **badge preto com a sigla** (JY, JC, H, BUS…) e o nome. Sem cor oficial de linha
+/// (a identidade v8 tem três cores); `color` fica na assinatura e é ignorado.
 struct LineChip: View {
     var code: String
     var name: String
@@ -113,32 +152,41 @@ struct LineChip: View {
         self.init(code: line.code, name: line.name, color: line.rgb)
     }
 
-    /// Texto escuro sobre cor clara (linha H, cinza), branco sobre o resto.
-    static func codeColor(for rgb: UInt32) -> Color {
-        let r = Double((rgb >> 16) & 0xFF) / 255, g = Double((rgb >> 8) & 0xFF) / 255, b = Double(rgb & 0xFF) / 255
-        let luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
-        return luminance > 0.62 ? Color.must.ink : .white
-    }
+    /// Texto da sigla: branco sobre o badge preto, qualquer que seja a linha.
+    static func codeColor(for rgb: UInt32) -> Color { V8.white }
 
     var body: some View {
         HStack(spacing: 6) {
-            Text(code)
-                .font(.must.mono(9, .bold))
-                .lineLimit(1)
-                .minimumScaleFactor(0.6)
-                .foregroundStyle(Self.codeColor(for: color))
-                .frame(width: code.count > 2 ? 26 : 20, height: 20)
-                .background(Circle().fill(Color(hex: color)))
+            LineBadge(code)
             Text(name)
-                .font(.must.archivo(12, .semibold))
-                .foregroundStyle(Color.must.ink)
+                .font(V8Font.text(12, weight: .semibold))
+                .foregroundStyle(V8.ink)
                 .lineLimit(1)
         }
         .padding(.leading, 4)
         .padding(.trailing, 10)
         .padding(.vertical, 4)
-        .background(Capsule().fill(.white))
-        .overlay(Capsule().strokeBorder(Color.must.line))
+        .background(Capsule().fill(V8.white))
+        .overlay(Capsule().strokeBorder(V8.rule))
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// Badge da linha: sigla em Martian Mono branco sobre tinta, cantos de 5 pt.
+struct LineBadge: View {
+    var code: String
+
+    init(_ code: String) { self.code = code }
+
+    var body: some View {
+        Text(code.uppercased())
+            .font(Font(V8Fonts.martian(9, weight: 700)))
+            .tracking(0.5)
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
+            .foregroundStyle(V8.white)
+            .padding(.horizontal, 5)
+            .frame(minWidth: 22, minHeight: 18)
+            .background(RoundedRectangle(cornerRadius: 5, style: .continuous).fill(V8.ink))
     }
 }

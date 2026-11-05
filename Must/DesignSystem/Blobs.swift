@@ -5,14 +5,9 @@ struct Blob: Sendable, Hashable {
     enum Fill: Sendable, Hashable {
         case green, blue, sky, white
 
+        /// v8: sem formas 3D — o preenchimento é transparente (as telas antigas que ainda desenham elipses somem com elas).
         var gradient: LinearGradient {
-            let colors: [Color] = switch self {
-            case .green: [Color(hex: 0xB9F5CF), Color(hex: 0x22DD7E)]
-            case .blue: [Color(hex: 0x7FC9FF), Color(hex: 0x2B7BFF)]
-            case .sky: [Color(hex: 0xDDEFFF), Color(hex: 0x9CCBFF)]
-            case .white: [.white, .white]
-            }
-            return LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing)
+            LinearGradient(colors: [.clear, .clear], startPoint: .topLeading, endPoint: .bottomTrailing)
         }
     }
 
@@ -26,7 +21,7 @@ struct Blob: Sendable, Hashable {
     var blur: CGFloat = 0
 }
 
-/// Fundo de formas 3D (elipses com gradiente) atrás do conteúdo. Nunca anima.
+/// Fundo de formas 3D da v5 (elipses com gradiente). Desligado na v8 (ver `body`); fica pra compilar as telas antigas.
 struct BlobBackground: View {
     enum Style: Sendable {
         case home, musts, hoje, lugar, assistente
@@ -63,25 +58,11 @@ struct BlobBackground: View {
 
     var style: Style
 
+    /// v8: a única textura são os arcos (`Rings`). O fundo de blobs da v5 não desenha nada.
     var body: some View {
-        GeometryReader { geo in
-            let s = geo.size.width / 390
-            ZStack(alignment: .topLeading) {
-                ForEach(Array(style.blobs.enumerated()), id: \.offset) { _, blob in
-                    Ellipse()
-                        .fill(blob.fill.gradient)
-                        .frame(width: blob.rx * 2 * s, height: blob.ry * 2 * s)
-                        .blur(radius: blob.blur * s)
-                        .rotationEffect(.degrees(blob.rotation))
-                        .opacity(blob.opacity)
-                        .position(x: blob.cx * s, y: blob.cy * s)
-                }
-            }
-            .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
-        }
-        .ignoresSafeArea()
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
+        Color.clear
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
     }
 }
 

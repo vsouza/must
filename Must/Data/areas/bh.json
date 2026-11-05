@@ -6,7 +6,7 @@
   "areas": [
     {"id": "savassi", "name": "Savassi", "cityId": "bh", "centroid": {"lat": -19.9385, "lng": -43.9343},
      "stationIds": ["bus-savassi"], "aliases": ["Praça da Savassi", "Savassi (Praça)"],
-     "stampText": "SAV", "stampSub": "BH · 1897",
+     "stampCode": "SAV", "stampSub": "BH · 1897",
      "neighbors": [
        {"areaId": "lourdes", "minutes": 10, "mode": "walk"},
        {"areaId": "funcionarios", "minutes": 13, "mode": "walk"},
@@ -18,7 +18,7 @@
      ]},
     {"id": "lourdes", "name": "Lourdes", "cityId": "bh", "centroid": {"lat": -19.9335, "lng": -43.9385},
      "stationIds": ["bus-lourdes"], "aliases": ["Praça da Liberdade"],
-     "stampText": "LOU", "stampSub": "BH · 1897",
+     "stampCode": "LOU", "stampSub": "BH · 1897",
      "neighbors": [
        {"areaId": "savassi", "minutes": 10, "mode": "walk"},
        {"areaId": "santo-agostinho", "minutes": 10, "mode": "walk"},
@@ -27,7 +27,7 @@
      ]},
     {"id": "funcionarios", "name": "Funcionários", "cityId": "bh", "centroid": {"lat": -19.9295, "lng": -43.9320},
      "stationIds": ["bus-funcionarios"], "aliases": [],
-     "stampText": "FUN", "stampSub": "BH · 1897",
+     "stampCode": "FUN", "stampSub": "BH · 1897",
      "neighbors": [
        {"areaId": "savassi", "minutes": 13, "mode": "walk"},
        {"areaId": "lourdes", "minutes": 11, "mode": "walk"},
@@ -37,7 +37,7 @@
      ]},
     {"id": "centro", "name": "Centro", "cityId": "bh", "centroid": {"lat": -19.9208, "lng": -43.9378},
      "stationIds": ["bus-centro"], "aliases": ["Centro-Sul", "Praça Sete"],
-     "stampText": "CEN", "stampSub": "BH · 1897",
+     "stampCode": "CEN", "stampSub": "BH · 1897",
      "neighbors": [
        {"areaId": "savassi", "minutes": 15, "mode": "bus", "line": {"code": "BUS", "name": "ônibus", "color": "#7A7F87"}},
        {"areaId": "lourdes", "minutes": 12, "mode": "bus", "line": {"code": "BUS", "name": "ônibus", "color": "#7A7F87"}},
@@ -47,7 +47,7 @@
      ]},
     {"id": "santa-tereza", "name": "Santa Tereza", "cityId": "bh", "centroid": {"lat": -19.9263, "lng": -43.9124},
      "stationIds": ["bus-santa-tereza"], "aliases": ["Santa Teresa"],
-     "stampText": "STA", "stampSub": "BH · 1897",
+     "stampCode": "STA", "stampSub": "BH · 1897",
      "neighbors": [
        {"areaId": "savassi", "minutes": 20, "mode": "bus", "line": {"code": "BUS", "name": "ônibus", "color": "#7A7F87"}},
        {"areaId": "funcionarios", "minutes": 15, "mode": "bus", "line": {"code": "BUS", "name": "ônibus", "color": "#7A7F87"}},
@@ -55,14 +55,14 @@
      ]},
     {"id": "pampulha", "name": "Pampulha", "cityId": "bh", "centroid": {"lat": -19.8576, "lng": -43.9686},
      "stationIds": ["bus-pampulha"], "aliases": ["Lagoa da Pampulha", "Orla"],
-     "stampText": "PAM", "stampSub": "BH · 1897",
+     "stampCode": "PAM", "stampSub": "BH · 1897",
      "neighbors": [
        {"areaId": "savassi", "minutes": 35, "mode": "bus", "line": {"code": "BUS", "name": "ônibus", "color": "#7A7F87"}},
        {"areaId": "centro", "minutes": 40, "mode": "bus", "line": {"code": "BUS", "name": "ônibus", "color": "#7A7F87"}}
      ]},
     {"id": "santo-agostinho", "name": "Santo Agostinho", "cityId": "bh", "centroid": {"lat": -19.9352, "lng": -43.9318},
      "stationIds": ["bus-santo-agostinho"], "aliases": [],
-     "stampText": "SAG", "stampSub": "BH · 1897",
+     "stampCode": "SAG", "stampSub": "BH · 1897",
      "neighbors": [
        {"areaId": "savassi", "minutes": 7, "mode": "walk"},
        {"areaId": "lourdes", "minutes": 10, "mode": "walk"},
@@ -71,7 +71,7 @@
      ]},
     {"id": "mangabeiras", "name": "Mangabeiras", "cityId": "bh", "centroid": {"lat": -19.9590, "lng": -43.9450},
      "stationIds": ["bus-mangabeiras"], "aliases": ["Parque das Mangabeiras"],
-     "stampText": "MAN", "stampSub": "BH · 1897",
+     "stampCode": "MAN", "stampSub": "BH · 1897",
      "neighbors": [
        {"areaId": "savassi", "minutes": 20, "mode": "bus", "line": {"code": "BUS", "name": "ônibus", "color": "#7A7F87"}},
        {"areaId": "santo-agostinho", "minutes": 18, "mode": "bus", "line": {"code": "BUS", "name": "ônibus", "color": "#7A7F87"}}
