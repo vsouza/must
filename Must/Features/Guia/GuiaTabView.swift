@@ -290,6 +290,7 @@ struct GuiaRouteBand: View {
         GeometryReader { geo in
             let size = geo.size
             let projected = project(size: size)
+            let labels = labelPositions(projected, size: size)
             ZStack(alignment: .topLeading) {
                 V8.ink
                 grid(size: size)
@@ -309,12 +310,10 @@ struct GuiaRouteBand: View {
                         .fill(point.isNow ? V8.orange : V8.paper)
                         .frame(width: point.isNow ? 26 : (point.small ? 12 : 22), height: point.isNow ? 26 : (point.small ? 12 : 22))
                         .position(at)
-                    if !point.small {
-                        // Alterna embaixo/em cima; perto do pé da faixa (onde fica "Abrir o mapa") o rótulo vai pra cima.
-                        let below = index.isMultiple(of: 2) ? at.y + 28 <= size.height - 70 : at.y - 26 < 100
+                    if let label = labels[index] {
                         SpecLabel(point.label, color: V8.paper)
                             .fixedSize()
-                            .position(x: min(max(at.x, 50), size.width - 50), y: at.y + (below ? 28 : -26))
+                            .position(label)
                     }
                 }
             }
@@ -357,6 +356,34 @@ struct GuiaRouteBand: View {
             }
         }
         .stroke(V8.white.opacity(0.16), lineWidth: 1)
+    }
+
+    /// Onde vai o rótulo de cada parada: embaixo ou em cima do ponto (alternando; perto do pé da faixa, onde fica
+    /// "Abrir o mapa", só em cima). Rótulo que encostaria num já posto (paradas a poucos metros uma da outra) tenta o
+    /// outro lado e, se ainda encosta, fica sem rótulo. A parada de agora escolhe primeiro.
+    private func labelPositions(_ projected: [(Point, CGPoint)], size: CGSize) -> [Int: CGPoint] {
+        let order = projected.indices.sorted { a, b in projected[a].0.isNow && !projected[b].0.isNow }
+        var placed: [CGRect] = []
+        var out: [Int: CGPoint] = [:]
+        for index in order {
+            let (point, at) = projected[index]
+            guard !point.small else { continue }
+            let width = CGFloat(point.label.count) * 7.4 + 8
+            let x = min(max(at.x, width / 2 + 8), size.width - width / 2 - 8)
+            let preferBelow = index.isMultiple(of: 2)
+            for below in [preferBelow, !preferBelow] {
+                let y = at.y + (below ? 28 : -26)
+                guard y <= size.height - 70, y >= 96 else { continue }
+                let rect = CGRect(x: x - width / 2, y: y - 9, width: width, height: 18)
+                // O ponto dos outros também conta (rótulo por cima de uma bolinha confunde).
+                let dots = projected.map { CGRect(x: $0.1.x - 11, y: $0.1.y - 11, width: 22, height: 22) }
+                guard !placed.contains(where: { $0.intersects(rect) }), !dots.contains(where: { $0.intersects(rect) }) else { continue }
+                placed.append(rect)
+                out[index] = CGPoint(x: x, y: y)
+                break
+            }
+        }
+        return out
     }
 
     /// Projeção simples (equiretangular com cos da latitude) no retângulo útil da faixa (abaixo dos rótulos do topo).
