@@ -96,38 +96,41 @@ struct DayPosterView: View {
     private var cover: Color { Color(hex: poster.coverRGB) }
 
     var body: some View {
-        ZStack(alignment: .topLeading) {
-            cover
-            Circle()
-                .stroke(ink.opacity(0.5), lineWidth: 2)
-                .frame(width: 408, height: 408)
-                .offset(x: -120, y: -168)
-            numeral
-            VStack(alignment: .leading, spacing: 0) {
-                HStack {
-                    micro(poster.dayLine)
-                    Spacer(minLength: 8)
-                    micro(poster.city)
-                }
-                Text("Dia \(poster.numeral)\n\(poster.area)")
-                    .font(Font(V8Fonts.bricolage(41, weight: 700, width: 92, opticalSize: 96)))
-                    .tracking(-0.8)
-                    .lineSpacing(-4)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.6)
-                    .padding(.top, 28)
-                stops.padding(.top, 26)
-                Spacer(minLength: 12)
-                bottom
-                micro("must · guia de bolso").padding(.top, 14)
+        // Fundo, anel e numeral ficam no `background`: o anel (408 pt) e o numeral sangram sem alargar o cartaz.
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                micro(poster.dayLine)
+                Spacer(minLength: 8)
+                micro(poster.city)
             }
-            .foregroundStyle(ink)
-            .padding(.horizontal, 24)
-            .padding(.top, 24)
-            .padding(.bottom, 20)
+            Text("Dia \(poster.numeral)\n\(poster.area)")
+                .font(Font(V8Fonts.bricolage(41, weight: 700, width: 92, opticalSize: 96)))
+                .tracking(-0.8)
+                .lineSpacing(-4)
+                .lineLimit(2)
+                .minimumScaleFactor(0.6)
+                .padding(.top, 28)
+            stops.padding(.top, 26)
+            Spacer(minLength: 12)
+            bottom
+            micro("must · guia de bolso").padding(.top, 14)
+        }
+        .foregroundStyle(ink)
+        .padding(.horizontal, 24)
+        .padding(.top, 24)
+        .padding(.bottom, 20)
+        .frame(width: Self.size.width, height: Self.size.height, alignment: .topLeading)
+        .background(alignment: .topLeading) {
+            ZStack(alignment: .topLeading) {
+                cover
+                Circle()
+                    .stroke(ink.opacity(0.5), lineWidth: 2)
+                    .frame(width: 408, height: 408)
+                    .offset(x: -120, y: -168)
+                numeral
+            }
             .frame(width: Self.size.width, height: Self.size.height, alignment: .topLeading)
         }
-        .frame(width: Self.size.width, height: Self.size.height)
         .clipped()
         .environment(\.colorScheme, .light)
     }

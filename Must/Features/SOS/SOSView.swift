@@ -311,10 +311,13 @@ enum SOSText {
     /// "pronto-socorro 24 h · atende em inglês · 1,1 km".
     static func hospitalLine(_ h: Hospital, meters: CLLocationDistance?, region: Region) -> String {
         var parts: [String] = []
-        if h.er24h { parts.append("pronto-socorro 24 h") }
+        // Nota que já diz que é pronto-socorro ("pronto-socorro de trauma do SUS") vai no lugar do selo genérico.
+        let note = h.note.flatMap { $0.components(separatedBy: " · ").first }?.trimmingCharacters(in: .whitespaces) ?? ""
+        let noteSaysER = note.localizedCaseInsensitiveContains("pronto") || note.hasPrefix("PS ")
+        if noteSaysER { parts.append(note) } else if h.er24h { parts.append("pronto-socorro 24 h") }
         if h.english && region.country != "BR" { parts.append("atende em inglês") }
         if let meters { parts.append(distance(meters)) }
-        if parts.count < 3, let note = h.note, !note.isEmpty { parts.append(note) }
+        if !noteSaysER, parts.count < 3, !note.isEmpty { parts.append(note) }
         return parts.joined(separator: " · ")
     }
 

@@ -132,5 +132,8 @@ struct EmergencyKitTests {
         let h = Hospital(id: "x", name: "St. Luke's", er24h: true, english: true, address: "", lat: 0, lng: 0, source: "https://x")
         #expect(SOSText.hospitalLine(h, meters: 1_120, region: .jp) == "pronto-socorro 24 h · atende em inglês · 1,1 km")
         #expect(SOSText.hospitalLine(h, meters: 430, region: .bh) == "pronto-socorro 24 h · 430 m")
+        var joao = h
+        joao.note = "pronto-socorro de trauma do SUS · referência em MG"
+        #expect(SOSText.hospitalLine(joao, meters: 1_480, region: .bh) == "pronto-socorro de trauma do SUS · 1,5 km")
     }
 }
