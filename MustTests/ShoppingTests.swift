@@ -329,6 +329,7 @@ struct ShoppingCurrencyTests {
 }
 
 /// Compras em Roma (rodada 22 · F): a conta é em €, não em ¥ convertido como R$.
+@MainActor
 struct ShoppingEuroTests {
     static func report(_ items: [ShoppingItem], brlPerEUR: Double = 6.2) -> ShoppingReport {
         ShoppingReport(items: items, fxRate: brlPerEUR, brlPerUSD: 5.5, regionCurrency: "EUR",
