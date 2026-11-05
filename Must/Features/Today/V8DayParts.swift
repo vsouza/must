@@ -168,6 +168,7 @@ struct DayStopRow: View {
                     .foregroundStyle(V8.mute)
             }
             .lineLimit(1)
+            .minimumScaleFactor(0.6) // xxxLarge: "14:23" encolhe em vez de virar "14:…"
             .frame(width: 56, alignment: .leading)
             .padding(.top, isMicro ? 10 : 16)
             .opacity(state == .done ? 0.5 : 1)

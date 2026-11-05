@@ -197,6 +197,15 @@ struct PlaceView: View {
         .padding(.horizontal, 20)
     }
 
+    private func creditLine(_ text: String, color: Color) -> some View {
+        Text(text.uppercased())
+            .font(V8Font.mono(8.5))
+            .tracking(0.85)
+            .foregroundStyle(color)
+            .lineLimit(1)
+            .minimumScaleFactor(0.5)
+    }
+
     @ViewBuilder private func creditPill(_ place: Place) -> some View {
         let photo = galleryPage > 0 ? galleryPhotos[galleryPage] : heroPhoto
         let source = photo?.source ?? (photo == nil ? "Google" : "Wikimedia Commons")
@@ -204,10 +213,11 @@ struct PlaceView: View {
         Button {
             if let url = photo?.pageURL { UIApplication.shared.open(url) }
         } label: {
+            // Uma linha cada, encolhendo no Dynamic Type grande (em xxxLarge o crédito quebrava em 5 linhas sobre a ficha).
             VStack(alignment: .trailing, spacing: 2) {
-                SpecLabel(text, color: V8.white)
+                creditLine(text, color: V8.white)
                 if let owner = photo?.owner, !owner.isEmpty {
-                    SpecLabel("@\(owner)\(photo?.licenseName.isEmpty == false ? " · \(photo!.licenseName)" : "")", color: V8.white.opacity(0.8))
+                    creditLine("@\(owner)\(photo?.licenseName.isEmpty == false ? " · \(photo!.licenseName)" : "")", color: V8.white.opacity(0.8))
                 }
             }
             .padding(.horizontal, 10)
