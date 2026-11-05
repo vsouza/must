@@ -366,6 +366,15 @@ enum DebugLaunch {
         case "quero": router.sheet = .quero(text: arg) // quero:quero comprar um Seiko
         case "compartilhar", "mandar": router.sheet = .mandar(date: region.calendar.startOfDay(for: AppClock.now))
         case "sos": router.push(.sos, on: .hoje)
+        // RODADA-23 + prompt 26 (contrato): uma entrada por tela nova.
+        case "emcartaz": router.push(.emCartaz, on: .hoje)
+        case "filmes": router.push(.filmes(placeId: arg ?? "j105"), on: .musts)
+        case "colecao": router.push(.colecao, on: .viagem)
+        case "colecionavel-novo": router.push(.colecao, on: .viagem); CollectibleCelebration.present(for: arg ?? "p01")
+        case "trocar-viagem": router.select(.hoje); router.sheet = .viagens
+        case "mapa-pino", "mapa-filtro": router.push(.mapa, on: .hoje) // o agente C lê o debugScreen pra abrir o card/filtro
+        case "lugar-amigos", "lugar-emcartaz": router.push(.place(id: arg ?? "j28"), on: .musts)
+        case "capa-inteligente": router.select(.hoje)
         case "sincronizar":
             router.push(.settings, on: .hoje)
             Task { await services.sync.syncPlaces(context: context, region: region) }

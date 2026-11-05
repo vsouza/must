@@ -48,6 +48,7 @@ struct RootView: View {
             case .buscarNome(let query, let listId): BuscarNomeView(initialQuery: query, preferredListId: listId)
             case .quero(let text): QueroView(initialText: text)
             case .mandar(let date): MandarView(date: date)
+            case .viagens: TripSwitcherSheet()
             }
         }
         .fullScreenCover(item: $router.cover) { cover in

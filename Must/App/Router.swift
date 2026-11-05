@@ -64,6 +64,13 @@ enum Route: Hashable {
     // MARK: prompt 25 — contrato (telas-stub até os agentes 25/1 e 25/2 entregarem)
     /// SOS do país da região (agente 25/2). Também em Bolso, Atalhos e na Quick Action.
     case sos
+    // MARK: RODADA-23 (prompt 27) — contrato
+    /// Em cartaz hoje/na viagem (agente B).
+    case emCartaz
+    /// Filmes gravados perto do lugar (agente B).
+    case filmes(placeId: String)
+    /// Coleção dos feitos (agente D).
+    case colecao
     /// Dia que alguém mandou (`must://d/<payload>`, agente 25/2): só leitura, o dia vem dentro do link.
     case diaRecebido(payload: String)
 }
@@ -86,6 +93,8 @@ final class AppRouter {
         case quero(text: String?)
         /// Mandar o dia (prompt 25 · B, agente 25/2): cartaz, link, PDF. `date` nil = a viagem inteira.
         case mandar(date: Date?)
+        /// Minhas viagens (prompt 27 §7, agente E).
+        case viagens
 
         var id: String {
             switch self {
@@ -98,6 +107,7 @@ final class AppRouter {
             case .buscarNome(let query, let list): "buscar-\(query)-\(list ?? "")"
             case .quero(let text): "quero-\(text ?? "")"
             case .mandar(let date): "mandar-\(date?.timeIntervalSince1970 ?? 0)"
+            case .viagens: "viagens"
             }
         }
     }
@@ -244,6 +254,9 @@ extension View {
             case .proximos: ProximosView()
             case .mapa: MapView()
             case .sos: SOSView()
+            case .emCartaz: EmCartazView()
+            case .filmes(let placeId): FilmsView(placeId: placeId)
+            case .colecao: CollectionView()
             case .diaRecebido(let payload): DiaRecebidoView(payload: payload)
             }
         }
