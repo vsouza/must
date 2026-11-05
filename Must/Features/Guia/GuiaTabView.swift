@@ -310,9 +310,11 @@ struct GuiaRouteBand: View {
                         .frame(width: point.isNow ? 26 : (point.small ? 12 : 22), height: point.isNow ? 26 : (point.small ? 12 : 22))
                         .position(at)
                     if !point.small {
+                        // Alterna embaixo/em cima; perto do pé da faixa (onde fica "Abrir o mapa") o rótulo vai pra cima.
+                        let below = index.isMultiple(of: 2) ? at.y + 28 <= size.height - 70 : at.y - 26 < 100
                         SpecLabel(point.label, color: V8.paper)
                             .fixedSize()
-                            .position(x: min(max(at.x, 50), size.width - 50), y: at.y + (index.isMultiple(of: 2) ? 28 : -26))
+                            .position(x: min(max(at.x, 50), size.width - 50), y: at.y + (below ? 28 : -26))
                     }
                 }
             }
