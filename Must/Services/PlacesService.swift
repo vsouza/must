@@ -180,3 +180,77 @@ extension PlaceHours {
     /// Cache vence em 7 dias.
     var isStale: Bool { (fetchedAt ?? .distantPast) < Date().addingTimeInterval(-7 * 86_400) }
 }
+
+// MARK: - Text Search com tipo (Quero…, prompt 25 · A.2)
+
+/// Pedido do Text Search do Quero…: lugar físico perto de hoje, por distância, com tipo e "aberto agora" opcionais.
+struct PlacesTextQuery: Sendable, Hashable {
+    var text: String
+    var lat: Double
+    var lng: Double
+    /// Raio do `locationBias` (círculo), em metros.
+    var radius: Double = 6_000
+    /// Tipo único da Tabela A; com ele, `strictTypeFiltering` (só lugares desse tipo).
+    var includedType: String?
+    var openNow = false
+    var rankByDistance = true
+    var languageCode = "pt-BR"
+    var maxResults = 10
+}
+
+/// Um resultado do Text Search do Quero… (field mask Pro: sem horário nem preço; esses vêm do Details em cache).
+struct PlaceHit: Sendable, Hashable, Codable, Identifiable {
+    var id: String
+    var name: String
+    var address: String?
+    var lat: Double?
+    var lng: Double?
+    var types: [String] = []
+    var primaryType: String?
+    var businessStatus: String?
+    var photos: [PlacePhotoRef] = []
+}
+
+extension PlacesService {
+    /// Só o que a lista do Quero… usa (SKU Text Search Pro). Horário/preço ficam de fora: vêm do Details em cache.
+    static let wantMask = "places.id,places.displayName,places.formattedAddress,places.location,places.types,places.primaryType,places.businessStatus,places.photos"
+
+    func searchPlaces(_ query: PlacesTextQuery) async throws -> [PlaceHit] {
+        guard let apiKey else { throw ServiceError.missingKey("GOOGLE_PLACES_KEY") }
+        let data = try await GoogleAPI.run(.placesPro) {
+            try await http.post(URL(string: "https://places.googleapis.com/v1/places:searchText")!, json: Self.body(for: query),
+                                headers: headers(apiKey, mask: Self.wantMask), service: "places.want")
+        }
+        return try Self.parseHits(data)
+    }
+
+    /// Corpo do pedido (testado): `locationBias` em círculo, tipo com `strictTypeFiltering`, `openNow`, `rankPreference`.
+    static func body(for q: PlacesTextQuery) -> [String: Any] {
+        var body: [String: Any] = [
+            "textQuery": q.text,
+            "languageCode": q.languageCode,
+            "pageSize": q.maxResults,
+            "locationBias": ["circle": ["center": ["latitude": q.lat, "longitude": q.lng], "radius": min(q.radius, 50_000)]],
+        ]
+        if let type = q.includedType {
+            body["includedType"] = type
+            body["strictTypeFiltering"] = true
+        }
+        if q.openNow { body["openNow"] = true }
+        if q.rankByDistance { body["rankPreference"] = "DISTANCE" }
+        return body
+    }
+
+    static func parseHits(_ data: Data) throws -> [PlaceHit] {
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else { throw ServiceError.decoding("places") }
+        let places = json["places"] as? [[String: Any]] ?? []
+        return places.compactMap { p in
+            guard let id = p["id"] as? String else { return nil }
+            let loc = p["location"] as? [String: Any]
+            return PlaceHit(id: id, name: (p["displayName"] as? [String: Any])?["text"] as? String ?? id,
+                            address: p["formattedAddress"] as? String, lat: loc?["latitude"] as? Double, lng: loc?["longitude"] as? Double,
+                            types: p["types"] as? [String] ?? [], primaryType: p["primaryType"] as? String,
+                            businessStatus: p["businessStatus"] as? String, photos: GooglePlacePhotos.refs(from: p))
+        }
+    }
+}
