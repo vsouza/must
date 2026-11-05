@@ -162,6 +162,72 @@ enum EventExtractor {
         return nil
     }
 
+    // MARK: Sessões e tipo (RODADA-23 · A: "Em cartaz")
+
+    static let monthNames: [String: Int] = [
+        "jan": 1, "fev": 2, "feb": 2, "mar": 3, "abr": 4, "apr": 4, "mai": 5, "may": 5, "jun": 6, "jul": 7, "ago": 8, "aug": 8,
+        "set": 9, "sep": 9, "out": 10, "oct": 10, "nov": 11, "dez": 12, "dec": 12,
+    ]
+
+    /// Datas com hora no texto ("20/11 21h", "sáb 22 nov · 20:30", "2026-11-20 21:00", "11月20日 19:00"), uma sessão por linha
+    /// com data. O título é o resto da linha (ou `fallbackTitle`). Sem hora, a linha é ignorada: nada é inventado.
+    static func sessions(in text: String, timeZone: TimeZone, now: Date = AppClock.now, fallbackTitle: String = "Sessão",
+                         url: URL? = nil) -> [EventSession] {
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = timeZone
+        let year = cal.component(.year, from: now)
+        func date(_ y: Int?, _ m: Int, _ d: Int, _ h: Int, _ min: Int) -> Date? {
+            guard (1...12).contains(m), (1...31).contains(d), (0...23).contains(h), (0...59).contains(min) else { return nil }
+            var date = cal.date(from: DateComponents(year: y ?? year, month: m, day: d, hour: h, minute: min))
+            if y == nil, let d0 = date, d0 < now.addingTimeInterval(-30 * 86_400) {
+                date = cal.date(from: DateComponents(year: year + 1, month: m, day: d, hour: h, minute: min))
+            }
+            return date
+        }
+        // (regex, ordem dos grupos: ano?, mês, dia, hora, minuto) — índice 0 = ausente; mês pode ser nome.
+        let patterns: [(String, (year: Int, month: Int, day: Int, hour: Int, minute: Int))] = [
+            (#"(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})[T\s·,–-]{0,4}(\d{1,2})[:h](\d{2})"#, (1, 2, 3, 4, 5)),
+            (#"(\d{1,2})/(\d{1,2})(?:/(\d{2,4}))?[^\n\d]{0,14}(\d{1,2})(?::|h)(\d{2})?"#, (3, 2, 1, 4, 5)),
+            (#"(\d{1,2})\s*(?:de\s+)?([A-Za-zçÇ]{3,9})\.?(?:\s+de\s+(\d{4}))?[^\n\d]{0,14}(\d{1,2})(?::|h)(\d{2})?"#, (3, 2, 1, 4, 5)),
+            (#"(\d{1,2})月(\d{1,2})日[^\n\d]{0,6}(\d{1,2})[:時](\d{2})?"#, (0, 1, 2, 3, 4)),
+        ]
+        var out: [EventSession] = []
+        var seen = Set<Date>()
+        for line in text.components(separatedBy: .newlines) {
+            for (pattern, g) in patterns {
+                guard let re = try? NSRegularExpression(pattern: pattern), let m = re.firstMatch(in: line, range: NSRange(line.startIndex..., in: line)) else { continue }
+                func group(_ i: Int) -> String? {
+                    guard i > 0, i <= m.numberOfRanges - 1, let r = Range(m.range(at: i), in: line) else { return nil }
+                    return String(line[r])
+                }
+                let monthText = group(g.month)
+                let month = monthText.flatMap { Int($0) } ?? monthText.flatMap { monthNames[String($0.lowercased().prefix(3))] }
+                guard let month, let day = group(g.day).flatMap({ Int($0) }), let hour = group(g.hour).flatMap({ Int($0) }) else { continue }
+                let minute = group(g.minute).flatMap { Int($0) } ?? 0
+                let y = group(g.year).flatMap { Int($0) }.map { $0 < 100 ? 2000 + $0 : $0 }
+                guard let at = date(y, month, day, hour, minute), seen.insert(at).inserted else { continue }
+                let matched = Range(m.range, in: line).map { String(line[$0]) } ?? ""
+                let rest = line.replacingOccurrences(of: matched, with: " ")
+                    .replacingOccurrences(of: #"(?i)\b(seg|ter|qua|qui|sex|sáb|sab|dom)\w*\.?"#, with: " ", options: .regularExpression)
+                    .trimmingCharacters(in: CharacterSet(charactersIn: " ·–—-:|,•\t"))
+                let title = rest.count >= 3 ? String(rest.prefix(80)) : fallbackTitle
+                out.append(EventSession(at: at, title: title, price: prices(in: line).adult, url: url))
+                break
+            }
+        }
+        return out.sorted { ($0.at, $0.title) < ($1.at, $1.title) }
+    }
+
+    /// Show, jogo ou exposição pelo que o texto diz.
+    static func showKind(_ text: String) -> ShowKind {
+        let t = text.lowercased()
+        func has(_ words: [String]) -> Bool { words.contains { t.contains($0) } }
+        if has(["exposição", "exposicao", "mostra", "retrospectiva", "exhibition", "retrospective", "展", "美術館"]) { return .exhibition }
+        if has(["partida", "jogo ", "match", "campeonato", "estádio", "estadio", "vs.", " x "]) { return .match }
+        if has(["show", "turnê", "turne", "concert", "ao vivo", "live", "ライブ", "公演"]) { return .show }
+        return .other
+    }
+
     // MARK: No aparelho (Foundation Models)
 
     static let instructions = """
