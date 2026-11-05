@@ -259,7 +259,7 @@ private struct SettingsSections: View {
 
     private var data: some View {
         FormSection("Dados") {
-            Button { router.push(.googleUsage, on: .inicio) } label: {
+            Button { router.push(.googleUsage, on: .hoje) } label: {
                 FormRow("Google Maps", subtitle: placesSubtitle) {
                     HStack(spacing: 8) {
                         Circle().fill(Secrets.googlePlacesKey == nil ? Color(hex: 0xC5C9D0) : Color.must.green).frame(width: 8, height: 8)

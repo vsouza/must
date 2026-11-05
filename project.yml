@@ -42,6 +42,8 @@ targets:
         buildPhase: resources
       - path: data/seed-jp.json
         buildPhase: resources
+      - path: data/seed-it.json
+        buildPhase: resources
       - path: data/map-packs.json
         buildPhase: resources
       - path: Must/Data/checklists/intl-japan.json
@@ -206,6 +208,8 @@ targets:
       - path: data/seed-bh.json
         buildPhase: resources
       - path: data/seed-jp.json
+        buildPhase: resources
+      - path: data/seed-it.json
         buildPhase: resources
       - path: data/map-packs.json
         buildPhase: resources

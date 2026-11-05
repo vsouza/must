@@ -88,7 +88,7 @@ struct MapView: View {
         .onChange(of: here.map { [$0.coordinate.latitude, $0.coordinate.longitude] }) { _, _ in reevaluate(force: false) }
         .onChange(of: layers) { _, _ in reevaluate(force: true) }
         .onChange(of: stops.filter(\.done).count) { _, _ in reevaluate(force: true) }
-        .onChange(of: scenePhase) { _, phase in if phase == .active && router.tab == .mapa { reevaluate(force: true) } }
+        .onChange(of: scenePhase) { _, phase in if phase == .active && router.tab == .guia { reevaluate(force: true) } }
     }
 
     // MARK: Câmera (prompt 11)
@@ -439,7 +439,7 @@ struct MapView: View {
             PlaceSheetCard(place: place, number: index.map { $0 + 1 }, stop: index.map { stops[$0] },
                            leg: legFromHere(to: place), region: region, now: now,
                            onClose: { selectedId = nil },
-                           onOpen: { router.push(.place(id: place.id), on: .mapa) },
+                           onOpen: { router.push(.place(id: place.id), on: .guia) },
                            onDay: { router.select(.hoje) })
         } else if let far = farTarget {
             let index = stops.firstIndex { $0.place?.id == far.place.id }
@@ -448,7 +448,7 @@ struct MapView: View {
                            distance: far.target.meters,
                            walkMinutes: walkMinutes(to: far.place),
                            onClose: { cam.forceNeighborhood(here?.coordinate ?? fallbackCenter) },
-                           onOpen: { router.push(.place(id: far.place.id), on: .mapa) },
+                           onOpen: { router.push(.place(id: far.place.id), on: .guia) },
                            onDay: { router.select(.hoje) })
         } else if !near.isEmpty || nextStop != nil {
             VStack(alignment: .leading, spacing: 0) {
@@ -601,7 +601,7 @@ struct MapView: View {
 
     private func select(_ pin: MapPin) {
         guard let id = pin.placeId else { return }
-        if selectedId == id { router.push(.place(id: id), on: .mapa) } else { selectedId = id }
+        if selectedId == id { router.push(.place(id: id), on: .guia) } else { selectedId = id }
     }
 
     private func search() {

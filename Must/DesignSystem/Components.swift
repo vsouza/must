@@ -508,25 +508,26 @@ enum PhotoLoader {
 // MARK: - Navegação
 
 enum MustTab: String, CaseIterable, Identifiable, Sendable {
-    case inicio, hoje, mapa, musts
+    /// Abas v8 (prompt 23 §2, `Nav.png`): Hoje (capa), Guia, Musts, Viagem (Próximos) + `+`.
+    case hoje, guia, musts, viagem
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
-        case .inicio: "Início"
         case .hoje: "Hoje"
-        case .mapa: "Mapa"
+        case .guia: "Guia"
         case .musts: "Musts"
+        case .viagem: "Viagem"
         }
     }
 
     var icon: MustIcon {
         switch self {
-        case .inicio: .inicio
         case .hoje: .hoje
-        case .mapa: .mapa
+        case .guia: .mapa
         case .musts: .mustsLista
+        case .viagem: .calendario
         }
     }
 }

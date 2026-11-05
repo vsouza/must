@@ -93,6 +93,7 @@ enum AreaCatalog {
         switch region {
         case .jp: jp
         case .bh: bh
+        case .it: AreasIT.all
         }
     }
 

@@ -3,7 +3,8 @@ import Foundation
 
 /// Uma região por vez. Cada uma tem o próprio container, moeda, fuso, cidades, board e gastos.
 enum Region: String, CaseIterable, Codable, Sendable, Identifiable {
-    case bh, jp
+    /// `it` (Roma, prompt 24): na fase 0 da rodada 22 só o enum, o fuso e o calendário; o agente E completa o resto.
+    case bh, jp, it
 
     var id: String { rawValue }
 
@@ -13,6 +14,7 @@ enum Region: String, CaseIterable, Codable, Sendable, Identifiable {
         switch self {
         case .bh: "Belo Horizonte"
         case .jp: "Japão"
+        case .it: "Roma"
         }
     }
 
@@ -20,6 +22,7 @@ enum Region: String, CaseIterable, Codable, Sendable, Identifiable {
         switch self {
         case .bh: "BH"
         case .jp: "Japão"
+        case .it: "Roma"
         }
     }
 
@@ -30,6 +33,7 @@ enum Region: String, CaseIterable, Codable, Sendable, Identifiable {
         switch self {
         case .bh: "BR"
         case .jp: "JP"
+        case .it: "IT"
         }
     }
 
@@ -38,6 +42,7 @@ enum Region: String, CaseIterable, Codable, Sendable, Identifiable {
         switch self {
         case .bh: "BRL"
         case .jp: "JPY"
+        case .it: "EUR"
         }
     }
 
@@ -45,6 +50,7 @@ enum Region: String, CaseIterable, Codable, Sendable, Identifiable {
         switch self {
         case .bh: "R$"
         case .jp: "¥"
+        case .it: "€"
         }
     }
 
@@ -55,6 +61,7 @@ enum Region: String, CaseIterable, Codable, Sendable, Identifiable {
         switch self {
         case .bh: TimeZone(identifier: "America/Sao_Paulo")!
         case .jp: TimeZone(identifier: "Asia/Tokyo")!
+        case .it: TimeZone(identifier: "Europe/Rome")!
         }
     }
 
@@ -63,6 +70,7 @@ enum Region: String, CaseIterable, Codable, Sendable, Identifiable {
         switch self {
         case .bh: .eat
         case .jp: .drink
+        case .it: .drink
         }
     }
 
@@ -70,6 +78,7 @@ enum Region: String, CaseIterable, Codable, Sendable, Identifiable {
         switch self {
         case .bh: 200
         case .jp: 15_000
+        case .it: 120
         }
     }
 
@@ -85,6 +94,7 @@ enum Region: String, CaseIterable, Codable, Sendable, Identifiable {
         switch self {
         case .bh: CLLocationCoordinate2D(latitude: -19.9245, longitude: -43.9352)
         case .jp: CLLocationCoordinate2D(latitude: 35.6762, longitude: 139.6503)
+        case .it: CLLocationCoordinate2D(latitude: 41.8955, longitude: 12.4823)
         }
     }
 

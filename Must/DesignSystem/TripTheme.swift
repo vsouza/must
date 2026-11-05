@@ -33,10 +33,15 @@ struct TripTheme: Equatable, Sendable {
     static let brazil = TripTheme(country: "BR", trip: 0x009C3B, tripInk: 0x00692A,
                                   tripSoft: 0xE6F6EC, tripSoft2: 0xFFF9DB, stampInk: 0x00692A)
 
+    /// Itália (prompt 24): azzurro. Contrato da fase 0; o agente A ajusta os tons.
+    static let italy = TripTheme(country: "IT", trip: 0x1F5FB4, tripInk: 0x17478A,
+                                 tripSoft: 0xE8EFF9, tripSoft2: 0xF5F8FD, stampInk: 0x1F5FB4)
+
     /// Tabela por país (ISO 3166-1 alfa-2). Acrescente aqui um país novo.
     static let byCountry: [String: TripTheme] = [
         "JP": .japan,
         "BR": .brazil,
+        "IT": .italy,
     ]
 
     /// Tema do país; país fora da tabela cai no `neutral`.

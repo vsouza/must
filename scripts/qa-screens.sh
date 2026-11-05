@@ -37,6 +37,57 @@ epoch() { python3 -c "import datetime,sys;print(int(datetime.datetime.fromisofor
 # Fakes globais: nenhuma chamada paga durante o script (Places, Nearby, AeroDataBox, tips de pessoas).
 ${=W} debugPlaces -string fake; ${=W} debugNearby -string fake; ${=W} debugFlight -string fake; ${=W} debugTips -string fake
 
+# ── v8 (prompt 23 e 24, rodada 22) ─────────────────────────────────────────────────────────────────
+# `ONLY=v8 scripts/qa-screens.sh` tira só estas (20 telas por região, comparar com design/v8/screens/*.png).
+# Cada agente da rodada 22 só mexe nas linhas das suas telas (C: capa…noite; D: guia…proximos; E: região it).
+v8shots() { # $1 = prefixo (jp|bh|it), $2 = lugar de exemplo, $3 = museu de exemplo, $4 = lista de exemplo
+  local r=$1
+  shot $r-v8-capa -debugScreen capa                 # 01 CapaJP/CapaBR/CapaIT          (C)
+  shot $r-v8-capa-foto -debugScreen capa -capaFoto  # 01b CapaFoto                     (C)
+  shot $r-v8-bom-dia -debugScreen bom-dia           # 02 Manha                         (C)
+  shot $r-v8-agora -debugScreen agora               # 03 Agora                         (C)
+  shot $r-v8-dia -debugScreen dia                   # 04 Dia / DiaIT                   (C)
+  shot $r-v8-montar -debugScreen montar             # 05 Montar                        (C)
+  shot $r-v8-guia -debugScreen guia                 # 06 Guia                          (D)
+  shot $r-v8-dicas -debugScreen dicas               # 07 Dicas                         (D)
+  shot $r-v8-bolso -debugScreen bolso               # 08 Utilidades / BolsoIT          (D)
+  shot $r-v8-lugar -debugScreen lugar:$2            # 09 LugarFoto / LugarIT           (D)
+  shot $r-v8-lugar-sem-foto -debugScreen lugar:$2 -debugNoPhotos  # 09 Lugar (sem foto no disco) (D)
+  shot $r-v8-museu -debugScreen museu:$3            # 09 MuseuFoto / MuseuIT           (D)
+  shot $r-v8-musts -debugScreen musts               # 10 Musts                         (D)
+  shot $r-v8-lista -debugScreen lista:$4            # 11 Lista                         (D)
+  shot $r-v8-proximos -debugScreen proximos         # 12 Proximos                      (D)
+  shot $r-v8-ir -debugScreen ir:$2                  # 13 Transporte                    (C)
+  shot $r-v8-noite -debugScreen noite               # 14 Noite                         (C)
+  shot $r-v8-ajustes -debugScreen ajustes           # Ajustes › Região                 (E)
+  shot $r-v8-xxxl-capa -debugScreen capa -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
+  shot $r-v8-xxxl-agora -debugScreen agora -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
+}
+${=W} skipOnboarding -bool YES
+${=W} dev.simDateOn -bool YES; ${=W} dev.simSetAt -float 0; ${=W} dev.simGPSOn -bool YES
+
+echo "→ v8 · Japão · sáb 15 nov 14:20 · Shinjuku (CapaJP, Agora, Dia)"
+${=W} region jp
+${=W} dev.simDate -float $(epoch 2026-11-15T14:20:00+09:00)
+${=W} dev.simLat -float 35.6909; ${=W} dev.simLng -float 139.7003
+v8shots jp j05 j28 eat
+
+echo "→ v8 · BH · sáb 7 nov 14:35 · Savassi (CapaBR)"
+${=W} region bh
+${=W} dev.simDate -float $(epoch 2026-11-07T14:35:00-03:00)
+${=W} dev.simLat -float -19.9385; ${=W} dev.simLng -float -43.9343
+v8shots bh p01 p01 eat
+
+echo "→ v8 · Roma · qui 15 abr 2027 11:40 · Trastevere (CapaIT); dia 4 em Monti pro DiaIT"
+${=W} region it
+${=W} dev.simDate -float $(epoch 2027-04-15T11:40:00+02:00)
+${=W} dev.simLat -float 41.8897; ${=W} dev.simLng -float 12.4695
+v8shots it r02 r46 eat
+${=W} dev.simDate -float $(epoch 2027-04-14T14:00:00+02:00)
+${=W} dev.simLat -float 41.8955; ${=W} dev.simLng -float 12.4925
+shot it-v8-dia-monti -debugScreen dia
+
+if [ "${ONLY:-}" != "v8" ]; then
 echo "→ BH · sábado 31 out 09:30 · Savassi"
 ${=W} skipOnboarding -bool YES; ${=W} region bh
 ${=W} dev.simDateOn -bool YES; ${=W} dev.simDate -float $(epoch 2026-10-31T09:30:00-03:00); ${=W} dev.simSetAt -float 0
@@ -179,6 +230,8 @@ ${=W} region bh
 ${=W} dev.simDate -float $(epoch 2026-10-31T09:30:00-03:00)
 ${=W} dev.simLat -float -19.9385; ${=W} dev.simLng -float -43.9343
 shot bh-bairros -debugScreen bairros
+
+fi # ONLY=v8
 
 echo "→ limpando simulações e chaves de debug"
 for k in dev.simDateOn dev.simDate dev.simSetAt dev.simGPSOn dev.simLat dev.simLng dev.simCloud skipOnboarding \

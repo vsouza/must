@@ -73,7 +73,7 @@ struct DiscoverView: View {
                 .padding(.top, 22)
 
                 if !enabled {
-                    notice("Sugestões por perto estão desligadas.", action: ("Abrir Ajustes", { router.push(.settings, on: .inicio) }))
+                    notice("Sugestões por perto estão desligadas.", action: ("Abrir Ajustes", { router.push(.settings, on: .hoje) }))
                         .padding(.top, 26)
                 } else if let first = items.first {
                     hero(first).padding(.top, 26)
@@ -276,7 +276,7 @@ struct DiscoverView: View {
         .contentShape(Rectangle())
 
         if let id = c.boardPlaceId {
-            return AnyView(Button { router.push(.place(id: id), on: .inicio) } label: { content }.buttonStyle(MustPressStyle()))
+            return AnyView(Button { router.push(.place(id: id), on: .hoje) } label: { content }.buttonStyle(MustPressStyle()))
         }
         return AnyView(Button {
             if let list = DiscoverBuilder.suggestedList(for: c, lists: lists) { add(c, to: list) }

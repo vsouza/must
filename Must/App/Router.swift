@@ -40,6 +40,26 @@ enum Route: Hashable {
     case bairros(areaId: String? = nil)
     /// Guia do dia (prompt 18 · C.16): a visão por bairro do dia aceito, meia-noite do dia.
     case guia(date: Date)
+
+    // MARK: v8 (prompt 23 §2) — contrato da rodada 22, telas-stub até os agentes C e D entregarem.
+    /// 02 · Bom dia (07–09h). Agente C.
+    case bomDia
+    /// 03 · Agora (no caminho). Agente C.
+    case agora
+    /// 04 · Linha do dia (meia-noite do dia). Agente C.
+    case linha(date: Date)
+    /// 13 · Ir (no caminho) até um lugar do board. Agente C.
+    case ir(placeId: String)
+    /// 14 · Boa noite (22h+). Agente C.
+    case boaNoite
+    /// 07 · Dicas pra hoje. Agente D.
+    case dicas
+    /// 08 · Bolso (utilidades offline). Agente D.
+    case bolso
+    /// 12 · Próximos (Viagem). Agente D.
+    case proximos
+    /// Mapa do dia (toggle Linha/Mapa e Guia); era a aba Mapa no v5.
+    case mapa
 }
 
 /// Navegação do app: aba atual, pilha de cada aba e o que está apresentado por cima.
@@ -79,7 +99,7 @@ final class AppRouter {
         var id: Self { self }
     }
 
-    var tab: MustTab = .inicio
+    var tab: MustTab = .hoje
     var paths: [MustTab: [Route]] = [:]
     var sheet: Sheet?
     var cover: Cover?
@@ -116,7 +136,8 @@ final class AppRouter {
             paths[.hoje] = []
         case "mapa":
             sheet = nil
-            select(.mapa)
+            paths[.hoje] = []
+            push(.mapa, on: .hoje)
         case "montar":
             sheet = nil
             let dates = BoardDates(timeZone: region.timeZone)
@@ -164,6 +185,15 @@ extension View {
             case .regrasVolta: ShoppingRulesView()
             case .bairros(let areaId): BairrosView(initialArea: areaId)
             case .guia(let date): GuiaBairroView(date: date)
+            case .bomDia: BomDiaView()
+            case .agora: AgoraView()
+            case .linha(let date): LinhaDoDiaView(date: date)
+            case .ir(let placeId): IrView(placeId: placeId)
+            case .boaNoite: BoaNoiteView()
+            case .dicas: DicasView()
+            case .bolso: BolsoView()
+            case .proximos: ProximosView()
+            case .mapa: MapView()
             }
         }
     }

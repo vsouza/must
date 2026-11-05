@@ -159,8 +159,8 @@ struct HomeView: View {
 
             Spacer(minLength: 8)
 
-            IconButton(.calendario, label: "Viagem") { router.push(.trip, on: .inicio) }
-            Button { router.push(.settings, on: .inicio) } label: {
+            IconButton(.calendario, label: "Viagem") { router.push(.trip, on: .hoje) }
+            Button { router.push(.settings, on: .hoje) } label: {
                 Text("V")
                     .font(.must.archivo(15, .bold))
                     .foregroundStyle(.white)
@@ -247,7 +247,7 @@ struct HomeView: View {
                     progress(day.stops)
                     Spacer(minLength: 4)
                     if let placeId = day.currentPlaceId {
-                        Button { router.push(.comoChegar(placeId: placeId), on: .inicio) } label: {
+                        Button { router.push(.comoChegar(placeId: placeId), on: .hoje) } label: {
                             Text("Ir agora")
                                 .font(.must.archivo(14, .semibold))
                                 .foregroundStyle(Color.must.greenText)
@@ -271,7 +271,7 @@ struct HomeView: View {
         .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         .shadow(color: Color.must.ink.opacity(0.22), radius: 25, y: 22)
         .contentShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .onTapGesture { router.push(.guia(date: today), on: .inicio) }
+        .onTapGesture { router.push(.guia(date: today), on: .hoje) }
         .accessibilityAddTraits(.isButton)
     }
 
@@ -310,13 +310,13 @@ struct HomeView: View {
                     .padding(.top, 2)
                 VStack(spacing: 8) {
                     ForEach(state.pick) { entry in
-                        Button { router.push(.bairros(areaId: entry.id), on: .inicio) } label: { pickRow(entry) }
+                        Button { router.push(.bairros(areaId: entry.id), on: .hoje) } label: { pickRow(entry) }
                             .buttonStyle(MustPressStyle())
                     }
                 }
                 .padding(.top, 16)
                 Spacer(minLength: 14)
-                Button { router.push(.bairros(areaId: nil), on: .inicio) } label: {
+                Button { router.push(.bairros(areaId: nil), on: .hoje) } label: {
                     Text("Montar por bairro")
                         .font(.must.archivo(15, .semibold))
                         .foregroundStyle(Color.must.greenText)
@@ -408,7 +408,7 @@ struct HomeView: View {
                         .foregroundStyle(Color.must.ink)
                 }
                 Spacer()
-                Button { router.push(.bairros(areaId: nil), on: .inicio) } label: {
+                Button { router.push(.bairros(areaId: nil), on: .hoje) } label: {
                     Text("ver todos")
                         .font(.must.mono(11))
                         .textCase(.uppercase)
@@ -418,7 +418,7 @@ struct HomeView: View {
             }
             HStack(spacing: 10) {
                 ForEach(state.tomorrow) { card in
-                    Button { router.push(.bairros(areaId: card.id), on: .inicio) } label: { areaCard(card) }
+                    Button { router.push(.bairros(areaId: card.id), on: .hoje) } label: { areaCard(card) }
                         .buttonStyle(MustPressStyle())
                 }
             }
@@ -486,10 +486,10 @@ struct HomeView: View {
     private var nearbyRow: some View {
         Button {
             if nearbyHint != nil {
-                router.push(.discover, on: .inicio)
+                router.push(.discover, on: .hoje)
             } else {
                 router.mapShowsOpenNow = true
-                router.select(.mapa)
+                router.select(.guia)
             }
         } label: {
             HStack(spacing: 12) {
@@ -540,7 +540,7 @@ struct HomeView: View {
     /// "gasto hoje ¥ 4.250 · orçamento fica em Ajustes" (o orçamento e a meta estão em Ajustes › Dia).
     private var spendLine: some View {
         let amount = Text(region.money(state.spentToday)).font(.must.mono(12, .semibold)).foregroundStyle(Color.must.ink)
-        return Button { router.push(.settings, on: .inicio) } label: {
+        return Button { router.push(.settings, on: .hoje) } label: {
             Text("gasto hoje \(amount) · orçamento fica em Ajustes")
                 .font(.must.archivo(12))
                 .foregroundStyle(Color.must.secondary)

@@ -131,6 +131,8 @@ struct RegionSheet: View {
                 text += " · 11–24 nov"
             }
             return text
+        case .it:
+            return "board Roma · € · Metro A/B/C + bus · pt-BR" + (store.region == .it ? " · agora" : "") // TODO(v8:E)
         }
     }
 

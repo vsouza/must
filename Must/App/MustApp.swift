@@ -231,10 +231,10 @@ enum DebugLaunch {
         let parts = screen.split(separator: ":", maxSplits: 1).map(String.init)
         let arg = parts.count > 1 ? parts[1] : nil
         switch parts[0] {
-        case "ajustes", "regiao": router.push(.settings, on: .inicio)
+        case "ajustes", "regiao": router.push(.settings, on: .hoje)
         case "mapas-offline": // mapas-offline:bh já começa a baixar BH
-            router.push(.settings, on: .inicio)
-            router.push(.offlineMaps, on: .inicio)
+            router.push(.settings, on: .hoje)
+            router.push(.offlineMaps, on: .hoje)
             if let pack = MapPack.catalog.first(where: { $0.id == arg }) { services.maps.download(pack) }
         case "musts": router.select(.musts)
         case "board": router.push(.board(edit: arg == "editar"), on: .musts) // board:editar já em modo edição
@@ -245,7 +245,8 @@ enum DebugLaunch {
         case "painel": router.push(.place(id: arg ?? "j18"), on: .musts) // rola até o painel do tipo (PlaceView)
         case "3d": router.push(.place(id: arg ?? "p01"), on: .musts) // abre o Lugar › 3D (PlaceView)
         case "luz": router.push(.light(date: region.calendar.startOfDay(for: AppClock.now)), on: .hoje)
-        case "dicas": router.push(.place(id: (arg ?? "p01").replacingOccurrences(of: ":fim", with: "")), on: .musts) // rola até as Dicas (PlaceView)
+        case "dicas": // v8: sem arg, a tela Dicas (prompt 23 · 07); dicas:<lugar> rola até as Dicas do Lugar
+            if let arg { router.push(.place(id: arg.replacingOccurrences(of: ":fim", with: "")), on: .musts) } else { router.push(.dicas, on: .hoje) }
         case "editar": router.sheet = .editPlace(id: arg ?? "p01")
         case "nova-lista": router.select(.musts); router.cover = .newList
         case "adicionar": router.sheet = .addLink(url: arg, listId: nil)
@@ -263,11 +264,11 @@ enum DebugLaunch {
             prefetchDays(services: services, context: context, region: region)
         case "inicio-aceito": // dia de hoje aceito, e fica na Início (prints do card do dia, prompt 18 · B)
             acceptToday(context: context, region: region, location: location)
-            router.select(.inicio)
+            router.select(.hoje)
             prefetchDays(services: services, context: context, region: region)
         case "inicio": // sem dia montado (prints do "Hoje, pra onde?"): tira o dia de hoje de prints anteriores
             clearToday(context: context, region: region)
-            router.select(.inicio)
+            router.select(.hoje)
         case "mapa":
             // mapa:aceitar monta e aceita hoje e amanhã antes (rota e pinos numerados).
             if arg == "aceitar" {
@@ -275,54 +276,64 @@ enum DebugLaunch {
                 acceptToday(context: context, region: region, location: location, offset: 1)
                 prefetchDays(services: services, context: context, region: region)
             }
-            router.select(.mapa)
+            router.select(.guia)
         case "assistente": router.sheet = .assistant
-        case "viagem": router.push(.trip, on: .inicio)
-        case "reservas": router.push(.reservations, on: .inicio)
+        case "viagem": router.push(.trip, on: .hoje)
+        case "reservas": router.push(.reservations, on: .hoje)
         case "experiencias":
             ExperienceDemo.ensure(context: context, region: region)
             router.push(.experiences, on: .musts)
-        case "descobrir": router.push(.discover, on: .inicio)
-        case "voos": router.push(.schedule(tab: .voos), on: .inicio)
-        case "viagem-voos": router.push(.trip, on: .inicio); router.push(.schedule(tab: .voos), on: .inicio)
-        case "viagem-reservas": router.push(.trip, on: .inicio); router.push(.schedule(tab: .reservas), on: .inicio)
+        case "descobrir": router.push(.discover, on: .hoje)
+        case "voos": router.push(.schedule(tab: .voos), on: .hoje)
+        case "viagem-voos": router.push(.trip, on: .hoje); router.push(.schedule(tab: .voos), on: .hoje)
+        case "viagem-reservas": router.push(.trip, on: .hoje); router.push(.schedule(tab: .reservas), on: .hoje)
         case "carteira": // itens de exemplo (Suica, JR Pass, eSIM, Visit Japan Web com QR) e a Carteira
             WalletDemo.ensure(context: context, region: region)
-            router.push(.carteira, on: .inicio)
+            router.push(.carteira, on: .hoje)
         case "ingresso-entrada": router.sheet = .ticketImport(inboxId: nil)
         case "ingresso-revisar": // PDF de exemplo na caixa (como o Share Extension faria) e a conferência
             router.sheet = .ticketImport(inboxId: TicketSamples.stashSamplePDF())
         case "ingresso": // ingresso: cria a experiência de exemplo (Tsukiji) e abre o Ingresso
             TicketDemo.ensure(context: context, region: region)
-            router.push(.ticket(placeId: TicketDemo.placeId, ticketId: TicketDemo.ticketId), on: .inicio)
+            router.push(.ticket(placeId: TicketDemo.placeId, ticketId: TicketDemo.ticketId), on: .hoje)
         case "como-chegar": // como-chegar:j01 (Naka-Meguro → Udatsu, GPS e hora simulados); com -debugRoutes fake, sem rede
             router.push(.comoChegar(placeId: arg ?? "j01"), on: .hoje)
         case "como-chegar-encontro": // ingresso: o ponto de encontro (Ir ao encontro)
             TicketDemo.ensure(context: context, region: region)
-            router.push(.comoChegar(placeId: TicketDemo.placeId, meeting: true), on: .inicio)
-        case "uso-google": router.push(.googleUsage, on: .inicio)
+            router.push(.comoChegar(placeId: TicketDemo.placeId, meeting: true), on: .hoje)
+        case "uso-google": router.push(.googleUsage, on: .hoje)
         case "compras": // lista de exemplo (câmera, Portra, Kit Kat, ramen tonkotsu, saquê, faca, pomada) e Compras
             ShoppingDemo.ensure(context: context)
-            router.push(.compras, on: .inicio)
+            router.push(.compras, on: .hoje)
         case "compras-regras":
             ShoppingDemo.ensure(context: context)
-            router.push(.regrasVolta, on: .inicio)
+            router.push(.regrasVolta, on: .hoje)
         case "buscar-nome": // buscar-nome:koffee mam (com -debugAutocomplete fake); buscar-nome:koffee mam:escolher já escolhe a 1ª
             router.sheet = .buscarNome(query: (arg ?? "").replacingOccurrences(of: ":escolher", with: ""), listId: nil)
         case "avisos": // avisos do guia do dia aceito, no log (prompt 18 · C.17); não agenda nada
             router.select(.hoje)
             GuideNudgeScheduler.logPreview(context: context, region: region, origin: location.current?.coordinate)
         case "bairros": // bairros (prompt 18 · C.14); bairros:shinjuku já abre a sheet do bairro (prints)
-            router.push(.bairros(areaId: arg), on: .inicio)
+            router.push(.bairros(areaId: arg), on: .hoje)
         case "ajustar": // o que o "Ajustar" da sheet do bairro abre: Bairros e, por cima, o Montar com o foco no bairro
             let area = arg ?? "shinjuku"
-            router.push(.bairros(areaId: area), on: .inicio)
-            router.push(.montar(date: region.calendar.startOfDay(for: AppClock.now), focusArea: area), on: .inicio)
+            router.push(.bairros(areaId: area), on: .hoje)
+            router.push(.montar(date: region.calendar.startOfDay(for: AppClock.now), focusArea: area), on: .hoje)
         case "guia": // Shinjuku+ montado e aceito hoje, e o Guia do dia (prompt 18 · C.16)
             acceptFocusToday(context: context, region: region, location: location, areaId: "shinjuku")
-            router.push(.guia(date: region.calendar.startOfDay(for: AppClock.now)), on: .inicio)
+            router.push(.guia(date: region.calendar.startOfDay(for: AppClock.now)), on: .hoje)
+        // v8 (prompt 23 §2), contrato da rodada 22: uma entrada por tela, pros prints do `qa-screens.sh`.
+        case "capa": router.select(.hoje)
+        case "bom-dia": router.push(.bomDia, on: .hoje)
+        case "agora": router.push(.agora, on: .hoje)
+        case "dia", "linha": router.push(.linha(date: region.calendar.startOfDay(for: AppClock.now)), on: .hoje)
+        case "ir": router.push(.ir(placeId: arg ?? "j05"), on: .hoje)
+        case "noite": router.push(.boaNoite, on: .hoje)
+        case "bolso": router.push(.bolso, on: .hoje)
+        case "proximos": router.select(.viagem)
+        case "museu": router.push(.place(id: arg ?? "r46"), on: .musts)
         case "sincronizar":
-            router.push(.settings, on: .inicio)
+            router.push(.settings, on: .hoje)
             Task { await services.sync.syncPlaces(context: context, region: region) }
         default: break
         }

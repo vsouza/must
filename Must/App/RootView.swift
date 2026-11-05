@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Tab bar flutuante (Início / Hoje / Mapa / Musts), cada aba com a própria NavigationStack.
+/// Barra v8 (Hoje / Guia / Musts / Viagem + `+`), cada aba com a própria NavigationStack.
 struct RootView: View {
     @Environment(AppRouter.self) private var router
     /// Abas já visitadas: cada uma é montada na primeira vez e fica viva depois (troca de aba não recria).
@@ -23,7 +23,8 @@ struct RootView: View {
                 }
             }
 
-            MustTabBar(selected: Binding(get: { router.tab }, set: { router.select($0) }))
+            V8NavBar(active: router.tab, onSelect: { router.select($0) },
+                     onPlus: { router.sheet = .addLink(url: nil, listId: nil) })
                 .padding(.bottom, 4)
                 .ignoresSafeArea(.keyboard)
         }
@@ -56,10 +57,10 @@ struct RootView: View {
 
     @ViewBuilder private func root(for tab: MustTab) -> some View {
         switch tab {
-        case .inicio: HomeView()
-        case .hoje: TodayView()
-        case .mapa: MapView()
+        case .hoje: HomeView() // capa do dia (agente C)
+        case .guia: GuiaTabView() // Guia do bairro (agente D)
         case .musts: MustsHubView()
+        case .viagem: ProximosView() // Próximos (agente D)
         }
     }
 }

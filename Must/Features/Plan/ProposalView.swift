@@ -227,7 +227,7 @@ struct ProposalView: View {
         do {
             try planner.accept(context: context)
             router.paths[.hoje] = []
-            router.paths[.inicio] = []
+            router.paths[.hoje] = []
             router.tab = .hoje
             // Dia montado por bairro ("Ajustar" em Bairros): vai pro Guia, como o "Montar" da sheet.
             if planner.focusArea != nil { router.push(.guia(date: planner.date), on: .hoje) }
