@@ -36,7 +36,7 @@ struct SnapshotProvider: TimelineProvider {
 private struct OpenAppHint: View {
     var body: some View {
         Text("Abra o Must uma vez pra aparecer aqui.")
-            .font(SharedStyle.archivo(12))
+            .font(SharedStyle.text(12))
             .foregroundStyle(SharedStyle.secondary)
     }
 }
@@ -63,12 +63,12 @@ struct TodayWidgetView: View {
         if let s = snapshot {
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Gasto hoje").font(SharedStyle.archivo(13)).foregroundStyle(SharedStyle.secondary)
+                    Text("Gasto hoje").font(SharedStyle.text(13)).foregroundStyle(SharedStyle.secondary)
                     Text(s.spentText).font(SharedStyle.mono(28, .semibold)).foregroundStyle(SharedStyle.ink)
                         .lineLimit(1).minimumScaleFactor(0.6)
                     let progress = Text(s.hasDay ? "\(s.doneCount) de \(s.totalCount) feitos" : "sem dia montado").bold()
                     Text("de \(s.budgetText) · \(progress)")
-                        .font(SharedStyle.archivo(12)).foregroundStyle(SharedStyle.secondary)
+                        .font(SharedStyle.text(12)).foregroundStyle(SharedStyle.secondary)
                     Spacer(minLength: 0)
                     HStack(spacing: 5) {
                         ForEach(Array(s.seals.prefix(6).enumerated()), id: \.offset) { i, seal in
@@ -76,13 +76,13 @@ struct TodayWidgetView: View {
                                 switch seal {
                                 case .done:
                                     Circle().fill(SharedStyle.green)
-                                    Text("済").font(SharedStyle.kanji(10)).foregroundStyle(SharedStyle.greenText)
+                                    Image(systemName: "checkmark").font(.system(size: 9, weight: .bold)).foregroundStyle(SharedStyle.greenText)
                                 case .next:
                                     Circle().fill(SharedStyle.ink)
-                                    Text("\(i + 1)").font(SharedStyle.archivo(10, .bold)).foregroundStyle(.white)
+                                    Text("\(i + 1)").font(SharedStyle.text(10, .bold)).foregroundStyle(.white)
                                 case .future:
                                     Circle().fill(SharedStyle.surface)
-                                    Text("\(i + 1)").font(SharedStyle.archivo(10, .bold)).foregroundStyle(SharedStyle.secondary)
+                                    Text("\(i + 1)").font(SharedStyle.text(10, .bold)).foregroundStyle(SharedStyle.secondary)
                                 }
                             }
                             .frame(width: 22, height: 22)
@@ -90,9 +90,9 @@ struct TodayWidgetView: View {
                     }
                 }
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Próxima").font(SharedStyle.archivo(12)).foregroundStyle(SharedStyle.blueText)
+                    Text("Próxima").font(SharedStyle.text(12)).foregroundStyle(SharedStyle.blueText)
                     Spacer(minLength: 0)
-                    Text(s.nextName ?? "Montar o dia").font(SharedStyle.archivo(15, .semibold)).foregroundStyle(SharedStyle.ink).lineLimit(2)
+                    Text(s.nextName ?? "Montar o dia").font(SharedStyle.text(15, .semibold)).foregroundStyle(SharedStyle.ink).lineLimit(2)
                     Text([s.nextTime, s.nextMinutes.map { "\($0) min" }].compactMap { $0 }.joined(separator: " · "))
                         .font(SharedStyle.mono(12, .semibold)).foregroundStyle(SharedStyle.blueText)
                 }
@@ -127,11 +127,11 @@ struct NearbyWidgetView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text("Perto de você\(snapshot?.tempNow.map { " · \($0)°" } ?? "")")
-                .font(SharedStyle.archivo(12)).foregroundStyle(SharedStyle.greenText)
+                .font(SharedStyle.text(12)).foregroundStyle(SharedStyle.greenText)
             Spacer(minLength: 0)
             Text("\(snapshot?.nearbyCount ?? 0)").font(SharedStyle.mono(44, .semibold)).foregroundStyle(SharedStyle.ink)
-            Text("musts abertos").font(SharedStyle.archivo(14, .semibold)).foregroundStyle(SharedStyle.ink)
-            Text(snapshot?.area ?? "—").font(SharedStyle.archivo(12)).foregroundStyle(SharedStyle.greenText).lineLimit(1)
+            Text("musts abertos").font(SharedStyle.text(14, .semibold)).foregroundStyle(SharedStyle.ink)
+            Text(snapshot?.area ?? "—").font(SharedStyle.text(12)).foregroundStyle(SharedStyle.greenText).lineLimit(1)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -158,11 +158,11 @@ struct PlanTomorrowView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("Amanhã\(snapshot?.tomorrowWeather.map { " · \($0)" } ?? "")")
-                .font(SharedStyle.archivo(12)).foregroundStyle(.white.opacity(0.6)).lineLimit(1)
+                .font(SharedStyle.text(12)).foregroundStyle(.white.opacity(0.6)).lineLimit(1)
             Spacer(minLength: 0)
-            Text("Montar o dia").font(SharedStyle.archivo(16, .semibold)).foregroundStyle(.white)
-            Text(snapshot?.tomorrowLine ?? "toque pra montar").font(SharedStyle.archivo(11)).foregroundStyle(.white.opacity(0.7)).lineLimit(1)
-            Text("Montar").font(SharedStyle.archivo(12, .semibold)).foregroundStyle(SharedStyle.greenText)
+            Text("Montar o dia").font(SharedStyle.text(16, .semibold)).foregroundStyle(.white)
+            Text(snapshot?.tomorrowLine ?? "toque pra montar").font(SharedStyle.text(11)).foregroundStyle(.white.opacity(0.7)).lineLimit(1)
+            Text("Montar").font(SharedStyle.text(12, .semibold)).foregroundStyle(SharedStyle.greenText)
                 .padding(.horizontal, 12).padding(.vertical, 6)
                 .background(Capsule().fill(SharedStyle.green))
                 .padding(.top, 2)
@@ -186,7 +186,7 @@ struct NextStopLiveActivity: Widget {
                 DynamicIslandExpandedRegion(.leading) {
                     HStack(spacing: 8) {
                         NumberBadge(number: context.state.number, anchor: context.state.isAnchor)
-                        Text(context.state.name).font(SharedStyle.archivo(15, .semibold)).foregroundStyle(.white).lineLimit(1)
+                        Text(context.state.name).font(SharedStyle.text(15, .semibold)).foregroundStyle(.white).lineLimit(1)
                     }
                 }
                 DynamicIslandExpandedRegion(.trailing) {
@@ -218,7 +218,7 @@ private struct NumberBadge: View {
     var number: Int
     var anchor = false
     var body: some View {
-        Text("\(number)").font(SharedStyle.archivo(12, .bold)).foregroundStyle(anchor ? SharedStyle.v8Ink : .white)
+        Text("\(number)").font(SharedStyle.text(12, .bold)).foregroundStyle(anchor ? SharedStyle.v8Ink : .white)
             .frame(width: 22, height: 22)
             .background(Circle().fill(anchor ? SharedStyle.v8Orange : SharedStyle.v8Ink))
             .overlay(Circle().strokeBorder(.white.opacity(anchor ? 0 : 0.5), lineWidth: 1))
@@ -233,10 +233,10 @@ private struct LeaveTime: View {
         VStack(alignment: .trailing, spacing: 0) {
             if let leave = state.leaveAt, leave > .now {
                 Text(leave, style: .time).font(SharedStyle.mono(size, .semibold)).foregroundStyle(SharedStyle.v8Orange)
-                Text("saia às").font(SharedStyle.archivo(12)).foregroundStyle(SharedStyle.v8Mute)
+                Text("saia às").font(SharedStyle.text(12)).foregroundStyle(SharedStyle.v8Mute)
             } else {
                 Text(state.arriveBy ?? state.at, style: .time).font(SharedStyle.mono(size, .semibold)).foregroundStyle(SharedStyle.v8Orange)
-                Text(state.arriveBy != nil ? "chegue às" : "saia agora").font(SharedStyle.archivo(12)).foregroundStyle(SharedStyle.v8Mute)
+                Text(state.arriveBy != nil ? "chegue às" : "saia agora").font(SharedStyle.text(12)).foregroundStyle(SharedStyle.v8Mute)
             }
         }
     }
@@ -268,7 +268,7 @@ private struct AfterLine: View {
             if let name = state.nextName, let at = state.nextAt {
                 Text("DEPOIS").font(SharedStyle.mono(10)).foregroundStyle(SharedStyle.v8Mute)
                 Text(at, style: .time).font(SharedStyle.mono(12, .semibold)).foregroundStyle(.white)
-                Text(name).font(SharedStyle.archivo(12)).foregroundStyle(.white.opacity(0.85)).lineLimit(1)
+                Text(name).font(SharedStyle.text(12)).foregroundStyle(.white.opacity(0.85)).lineLimit(1)
             }
             Spacer(minLength: 4)
             if let last = state.lastTrainAt {
@@ -288,7 +288,7 @@ struct LockScreenStopView: View {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("PARADA \(state.number) DE \(state.total)").font(SharedStyle.mono(11)).foregroundStyle(SharedStyle.v8Mute)
-                    Text(state.name).font(SharedStyle.archivo(20, .semibold)).foregroundStyle(.white).lineLimit(1)
+                    Text(state.name).font(SharedStyle.text(20, .semibold)).foregroundStyle(.white).lineLimit(1)
                 }
                 Spacer()
                 LeaveTime(state: state, size: 26)
