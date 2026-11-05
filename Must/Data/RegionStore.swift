@@ -12,7 +12,7 @@ import SwiftUI
 final class RegionStore {
     static let regionKey = "region"
     /// Região pelo GPS (padrão). Escolher BH ou Japão à mão desliga.
-    static let autoKey = "region.auto"
+    nonisolated static let autoKey = "region.auto"
 
     private(set) var region: Region
     private(set) var container: ModelContainer
@@ -42,7 +42,13 @@ final class RegionStore {
     var theme: TripTheme { TripTheme.forRegion(region) }
 
     /// Automático: abre na região onde o GPS está (BH no Brasil, Japão lá).
-    var isAuto: Bool { defaults.object(forKey: Self.autoKey) as? Bool ?? true }
+    var isAuto: Bool { Self.readAuto(defaults) }
+
+    /// Sem valor = automático. `bool(forKey:)` entende o Bool gravado e o "NO"/"YES" do argumento de lançamento
+    /// (`-region.auto NO` chega como String; `as? Bool` lia nil e o automático continuava ligado).
+    nonisolated static func readAuto(_ defaults: UserDefaults) -> Bool {
+        defaults.object(forKey: autoKey) == nil ? true : defaults.bool(forKey: autoKey)
+    }
 
     /// Ajustes › Região: `nil` = automático pelo GPS; uma região = fixa nela.
     func choose(_ newRegion: Region?, near coordinate: CLLocationCoordinate2D?) {
