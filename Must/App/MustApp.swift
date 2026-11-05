@@ -348,6 +348,11 @@ enum DebugLaunch {
         case "bolso": router.push(.bolso, on: .hoje)
         case "proximos": router.select(.viagem)
         case "museu": router.push(.place(id: arg ?? "r46"), on: .musts)
+        // prompt 25 (contrato): Atalhos é um painel sobre a capa (o agente 25/1 lê `-debugScreen atalhos`).
+        case "atalhos": router.select(.hoje)
+        case "quero": router.sheet = .quero(text: arg) // quero:quero comprar um Seiko
+        case "compartilhar", "mandar": router.sheet = .mandar(date: region.calendar.startOfDay(for: AppClock.now))
+        case "sos": router.push(.sos, on: .hoje)
         case "sincronizar":
             router.push(.settings, on: .hoje)
             Task { await services.sync.syncPlaces(context: context, region: region) }

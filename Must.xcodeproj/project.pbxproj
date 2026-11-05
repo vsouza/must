@@ -94,6 +94,7 @@
 		34D24804DAFF68EE0520CCB8 /* RegionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8E14B85DA86388832F3C18B /* RegionSheet.swift */; };
 		34D6081A5CB2767A55D164EE /* DayFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF11D40BC1FD6464D2737BB /* DayFlowTests.swift */; };
 		376D811B6D3C9CDF92D39F6E /* TravelOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABE00570D9BDE416E0F7C77E /* TravelOptions.swift */; };
+		37C9D506259F305316E093F3 /* SOSView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3878708DC3E7F204DE560538 /* SOSView.swift */; };
 		39B2257026FA7AEBB083FA2F /* Board.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D95D7682A4AE8EC7C64CFBE /* Board.swift */; };
 		39B6A7E0DF540A19D82124C0 /* WalletItemSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5AF0D2662E476416DB5D54F /* WalletItemSheet.swift */; };
 		3A0EF3BCBD64F07CAA51B1C7 /* Areas.swift in Sources */ = {isa = PBXBuildFile; fileRef = 110E0567BD73A4C21332461A /* Areas.swift */; };
@@ -288,6 +289,7 @@
 		B2893949E814A8D6C3D61599 /* map-packs.json in Resources */ = {isa = PBXBuildFile; fileRef = 7BA25CA47124E3E6E046ED06 /* map-packs.json */; };
 		B369709BE73796C1EF00ABCA /* EditPlaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC25B14DB4001E11FC55A852 /* EditPlaceView.swift */; };
 		B4961DBFF091160A910EB743 /* BuscarNomeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34B77A2A3A62BB77CAE9126D /* BuscarNomeTests.swift */; };
+		B538C016B20E0E702CDA105E /* MandarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21B785A4BA0E1E32A7C47547 /* MandarView.swift */; };
 		B552F06B9A8678A705988367 /* seed-bh.json in Resources */ = {isa = PBXBuildFile; fileRef = 50B7B2806BAB98E03649662B /* seed-bh.json */; };
 		B58925D640704EDD8E0F3A74 /* MartianMono.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8B67BB698E0083068BE34A90 /* MartianMono.ttf */; };
 		B6CBBAED191C9ED0014DC878 /* ExtractedTicket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C832B556BB2DF99EF2A23CD /* ExtractedTicket.swift */; };
@@ -331,6 +333,7 @@
 		D231D6F4EDD025C86BFBBCA2 /* AreaCoverPrefetch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84263FD4BE0F1E37ADFB243C /* AreaCoverPrefetch.swift */; };
 		D29C5CF20D1B44D9934100FE /* DayEngineV8.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC19F17EC684D6D909D90867 /* DayEngineV8.swift */; };
 		D2EAD7E269EE8F2C9EFE64B3 /* PinsMemo.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED37DC2EAF419B2E07BF858A /* PinsMemo.swift */; };
+		D3441F7126460F2DD33BB6B1 /* QueroView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14F1FF680FC1F945C2FC0E92 /* QueroView.swift */; };
 		D3A579AEC4FC44D334EF3D4F /* TicketLeaveReminder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BB210A83EBD126A299726C3 /* TicketLeaveReminder.swift */; };
 		D4278192CDBEFA9CF526F6BC /* PlaceFicha.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5CD628C6E5C4741F99932D3 /* PlaceFicha.swift */; };
 		D460975DE94DE0127A234DAA /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE8D645E4788CC466551C27A /* ShareViewController.swift */; };
@@ -464,6 +467,7 @@
 		12D88D49FA4A5E026FEAA007 /* DataUsage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataUsage.swift; sourceTree = "<group>"; };
 		1332B2144F43EC270FFE4560 /* DiscoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoverView.swift; sourceTree = "<group>"; };
 		13AF5C7BDF5D20AC67F3D861 /* PocketRulesIT.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PocketRulesIT.swift; sourceTree = "<group>"; };
+		14F1FF680FC1F945C2FC0E92 /* QueroView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueroView.swift; sourceTree = "<group>"; };
 		152B888DEEFD8182E7E1B1CC /* MapCameraTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapCameraTests.swift; sourceTree = "<group>"; };
 		158DBD6828FAD7F280C029D6 /* TipsModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipsModel.swift; sourceTree = "<group>"; };
 		15EAB5484E9E593810CF42F8 /* TipsSources.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipsSources.swift; sourceTree = "<group>"; };
@@ -479,6 +483,7 @@
 		1FD05E7F456F946A1303382D /* PlaceAutocomplete.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceAutocomplete.swift; sourceTree = "<group>"; };
 		20884CC264F303FB66B5E0E6 /* BoardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardView.swift; sourceTree = "<group>"; };
 		20A9F66DF0EFB2CF99A7AAAB /* KindExtraFields.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KindExtraFields.swift; sourceTree = "<group>"; };
+		21B785A4BA0E1E32A7C47547 /* MandarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MandarView.swift; sourceTree = "<group>"; };
 		21D13C6E53B0647BE3C78BA6 /* AreaFocus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AreaFocus.swift; sourceTree = "<group>"; };
 		23249DD22EE3CC5D75564551 /* Log.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Log.swift; sourceTree = "<group>"; };
 		237B6CBB2609F264714CEBF9 /* ColarTextoModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColarTextoModel.swift; sourceTree = "<group>"; };
@@ -511,6 +516,7 @@
 		36F805C942D29E1682813E17 /* GuiaBairroView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuiaBairroView.swift; sourceTree = "<group>"; };
 		3840ECE0F90F2549AFD6169B /* TicketEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketEditor.swift; sourceTree = "<group>"; };
 		3847B720AFE775247C5B85A9 /* BoardCodecTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardCodecTests.swift; sourceTree = "<group>"; };
+		3878708DC3E7F204DE560538 /* SOSView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SOSView.swift; sourceTree = "<group>"; };
 		38B2DF8690DB2CE16127BA08 /* PhotoBatch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoBatch.swift; sourceTree = "<group>"; };
 		3A5C5943257B1D5B2724BAFF /* ChatModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatModel.swift; sourceTree = "<group>"; };
 		3A7F51EA8B63130EF27E29DC /* Tools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tools.swift; sourceTree = "<group>"; };
@@ -1137,6 +1143,14 @@
 			path = Notifications;
 			sourceTree = "<group>";
 		};
+		431CD11DC8584635BF1C6CF3 /* Quero */ = {
+			isa = PBXGroup;
+			children = (
+				14F1FF680FC1F945C2FC0E92 /* QueroView.swift */,
+			);
+			path = Quero;
+			sourceTree = "<group>";
+		};
 		45046294FBAA4EBC8D2681AD /* Intelligence */ = {
 			isa = PBXGroup;
 			children = (
@@ -1406,6 +1420,14 @@
 			path = Night;
 			sourceTree = "<group>";
 		};
+		8E031CDC025ECFB1DE5951ED /* Share */ = {
+			isa = PBXGroup;
+			children = (
+				21B785A4BA0E1E32A7C47547 /* MandarView.swift */,
+			);
+			path = Share;
+			sourceTree = "<group>";
+		};
 		8F44AD6EC73FE9C8F9E7F426 /* Transporte */ = {
 			isa = PBXGroup;
 			children = (
@@ -1444,6 +1466,14 @@
 				4C1BEA3A52142382A4E16718 /* ColarTextoView.swift */,
 			);
 			path = ColarTexto;
+			sourceTree = "<group>";
+		};
+		98B9D53D4FE599C04833D530 /* SOS */ = {
+			isa = PBXGroup;
+			children = (
+				3878708DC3E7F204DE560538 /* SOSView.swift */,
+			);
+			path = SOS;
 			sourceTree = "<group>";
 		};
 		98F7F177F81CE4D361680BE9 /* Shared */ = {
@@ -1490,8 +1520,11 @@
 				B796295EF3113E3572446502 /* Place */,
 				DFEE2B36A35E159B693A08F0 /* Plan */,
 				11B4F39A4421AD711F80691D /* Pocket */,
+				431CD11DC8584635BF1C6CF3 /* Quero */,
 				C1481F368CBA77F5F1961CEE /* Settings */,
+				8E031CDC025ECFB1DE5951ED /* Share */,
 				6F35F3B2FB43B71080590300 /* Shopping */,
+				98B9D53D4FE599C04833D530 /* SOS */,
 				EADBCFE56648516B93AA277C /* Ticket */,
 				9230CA9B6D042F9986431967 /* Tips */,
 				FEDF3038C50A9EEE9A79400A /* Today */,
@@ -2261,6 +2294,7 @@
 				5E280721697733309D36E7A5 /* ListView.swift in Sources */,
 				C746B3886460D56AD5A787F8 /* LocationService.swift in Sources */,
 				EC5C18C548CABCD692B91098 /* Log.swift in Sources */,
+				B538C016B20E0E702CDA105E /* MandarView.swift in Sources */,
 				BE7EA14453396069B295FA83 /* MapCamera.swift in Sources */,
 				EF70CD60DFBE8BCECCFFDF76 /* MapLibreView.swift in Sources */,
 				3D42EA7CF1194F6D3A4315F0 /* MapPacks.swift in Sources */,
@@ -2322,6 +2356,7 @@
 				7FEFB06ED86DB4F51C54E50E /* Proximos.swift in Sources */,
 				E6D8852D1C078A85988DC997 /* ProximosDemo.swift in Sources */,
 				E0A0247E08B36E6FE2D8086D /* ProximosView.swift in Sources */,
+				D3441F7126460F2DD33BB6B1 /* QueroView.swift in Sources */,
 				03D4B6D26FF305F7648737A3 /* RegexIntentParser.swift in Sources */,
 				6B3A9B753F8DDA7395A53C4C /* Region.swift in Sources */,
 				7610F6501B586B2494A3093C /* RegionPicker.swift in Sources */,
@@ -2333,6 +2368,7 @@
 				5C31CF333FD9EAD6D2801698 /* Router.swift in Sources */,
 				FBCFC52FA3C2B92EBB0B4ACC /* RoutesSamples.swift in Sources */,
 				84BC80D387C9068BA8B64472 /* RoutesService.swift in Sources */,
+				37C9D506259F305316E093F3 /* SOSView.swift in Sources */,
 				87A771375F4DF10DBDDCB9C3 /* SavedPlacesImporter.swift in Sources */,
 				617BB51AECC1EB27C59CC954 /* ScheduleView.swift in Sources */,
 				0117D190175ECE479F119A5C /* SearchPill.swift in Sources */,

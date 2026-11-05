@@ -60,6 +60,10 @@ enum Route: Hashable {
     case proximos
     /// Mapa do dia (toggle Linha/Mapa e Guia); era a aba Mapa no v5.
     case mapa
+
+    // MARK: prompt 25 — contrato (telas-stub até os agentes 25/1 e 25/2 entregarem)
+    /// SOS do país da região (agente 25/2). Também em Bolso, Atalhos e na Quick Action.
+    case sos
 }
 
 /// Navegação do app: aba atual, pilha de cada aba e o que está apresentado por cima.
@@ -76,6 +80,10 @@ final class AppRouter {
         case ticketImport(inboxId: String?)
         /// Buscar por nome (prompt 17 · A): sheet, cobre a tab bar. `query` pré-preenche o campo.
         case buscarNome(query: String, listId: String?)
+        /// Quero… (prompt 25 · A, agente 25/1): vontade → lugar físico → parada. O `+` da barra abre aqui.
+        case quero(text: String?)
+        /// Mandar o dia (prompt 25 · B, agente 25/2): cartaz, link, PDF. `date` nil = a viagem inteira.
+        case mandar(date: Date?)
 
         var id: String {
             switch self {
@@ -86,6 +94,8 @@ final class AppRouter {
             case .assistant: "assistant"
             case .ticketImport(let id): "import-\(id ?? "")"
             case .buscarNome(let query, let list): "buscar-\(query)-\(list ?? "")"
+            case .quero(let text): "quero-\(text ?? "")"
+            case .mandar(let date): "mandar-\(date?.timeIntervalSince1970 ?? 0)"
             }
         }
     }
@@ -218,6 +228,7 @@ extension View {
             case .bolso: BolsoView()
             case .proximos: ProximosView()
             case .mapa: MapView()
+            case .sos: SOSView()
             }
         }
     }
