@@ -251,7 +251,7 @@ struct BomDiaView: View {
         .padding(.top, 30)
         .padding(.bottom, 96)
         .background {
-            LinearGradient(colors: [V8.orange.opacity(0), V8.orange], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.35))
+            LinearGradient(colors: [V8.orange.opacity(0), V8.orange], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.25))
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
         }

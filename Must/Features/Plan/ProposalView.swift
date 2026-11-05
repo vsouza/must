@@ -1,9 +1,15 @@
 import SwiftData
 import SwiftUI
 
-/// "Seu dia, proposto": previsto / andar / metrô, paradas com Trocar, explicação, Ajustar / Aceitar.
+/// Proposta do Montar v8: a Linha do dia proposta (papel), com as micro-paradas e os deslocamentos do motor,
+/// a explicação do solver e Outra proposta / Aceitar o dia. Tocar num Must do board abre o Trocar.
+/// Aceitar grava pelo `DayPlanner` (solver).
+// TODO(v8:B): o Aceitar grava só as paradas do solver; quando o `DayPlanner` aceitar o `DayPlan` do motor (micro-paradas
+// e deslocamentos), trocar `planner.accept` por essa API — hoje o motor reconstrói o resto a partir do dia aceito.
 struct ProposalView: View {
     @Bindable var planner: DayPlanner
+    /// Dia do motor (`DayEngine.build`). `nil` = mostra as paradas do solver.
+    var plan: DayPlan?
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
@@ -21,39 +27,65 @@ struct ProposalView: View {
 
     private var region: Region { store.region }
 
+    /// O que a tela desenha: o dia do motor ou, sem ele, as paradas do solver no formato v8.
+    private var shown: DayPlan? { plan ?? planner.proposal.map { Self.dayPlan(from: $0, date: planner.date, budget: planner.budget) } }
+
     var body: some View {
-        ZStack(alignment: .bottom) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    topBar.padding(.top, 8)
-                    if let proposal = planner.proposal {
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("Seu dia, proposto").mustTitle()
-                            Text(subtitle(proposal)).mustSerif(18).foregroundStyle(Color.must.secondary)
-                        }
-                        .padding(.top, 22)
-                        miniCards(proposal).padding(.top, 22)
-                        stopsCard(proposal).padding(.top, -14)
-                        explanation(proposal).padding(.top, -14).padding(.horizontal, 12)
-                        if let error { Text(error).font(.must.meta).foregroundStyle(Color(hex: 0xC2261D)).padding(.top, 8) }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(alignment: .top) {
+                    RoundButton(systemImage: "chevron.left", label: "Voltar ao Montar", style: .line, tint: V8.ink) { dismiss() }
+                    Spacer(minLength: 12)
+                    if let shown {
+                        SpecStack(lines: [DayText.dayLine(planner.date, region: region),
+                                          "\(shown.countLine) · previsto \(region.money(shown.plannedCost))"],
+                                  color: V8.mute, alignment: .trailing)
+                            .padding(.top, 4)
                     }
-                    Color.clear.frame(height: 190)
                 }
-                .padding(.horizontal, 22)
+                .padding(.top, 10)
+                HStack(alignment: .lastTextBaseline, spacing: 10) {
+                    Text("Seu dia").font(V8Font.display(44)).foregroundStyle(V8.ink)
+                    if let shown { BigNumeral("\(shown.stops.count)", size: 84, color: V8.orange).fixedSize() }
+                }
+                .padding(.top, 18)
+                .accessibilityElement(children: .combine)
+                if let shown {
+                    Text(shown.title).font(V8Font.text(15)).foregroundStyle(V8.mute).padding(.top, 2)
+                    VStack(alignment: .leading, spacing: 6) {
+                        if shown.stops.isEmpty {
+                            Text("Nada coube nesse pedido: troque o bairro ou o ritmo.").font(V8Font.text(15)).foregroundStyle(V8.mute)
+                        }
+                        ForEach(Array(shown.stops.enumerated()), id: \.element.id) { i, stop in
+                            DayStopRow(stop: stop, index: i + 1, state: .upcoming, region: region, onTap: swapAction(stop))
+                            if let leg = shown.leg(after: stop) { DayLegRow(leg: leg) }
+                        }
+                        if let last = shown.lastTrain {
+                            DayLegRow(leg: DayLeg(mode: .train, minutes: 0, from: "", to: "",
+                                                  detail: "último trem \(last.line) \(region.timeString(last.at))"),
+                                      color: V8.orangeDeep)
+                        }
+                    }
+                    .padding(.top, 22)
+                }
+                if let explanation = planner.proposal?.explanation, !explanation.isEmpty {
+                    Text(explanation)
+                        .font(V8Font.text(15))
+                        .foregroundStyle(V8.ink)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(16)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(V8.ink.opacity(0.14)))
+                        .padding(.top, 18)
+                }
+                if let error { Text(error).font(V8Font.text(13)).foregroundStyle(V8.orangeDeep).padding(.top, 8) }
+                Color.clear.frame(height: 190)
             }
-            .scrollIndicators(.hidden)
-            actions
+            .padding(.horizontal, 20)
         }
-        .background {
-            ZStack {
-                Color.must.bg
-                BlobBackground(style: .custom([
-                    Blob(cx: 345, cy: 170, rx: 95, ry: 70, rotation: -20, fill: .green),
-                    Blob(cx: 10, cy: 250, rx: 60, ry: 45, rotation: 10, fill: .blue),
-                ]))
-            }
-            .ignoresSafeArea()
-        }
+        .scrollIndicators(.hidden)
+        .overlay(alignment: .bottom) { actions }
+        .background(V8.paper.ignoresSafeArea())
         #if DEBUG
         .onAppear {
             if DebugFlags.string("debugScreen") == "trocar" {
@@ -69,169 +101,58 @@ struct ProposalView: View {
         }
     }
 
-    // MARK: Topo
+    /// Must do board que está na proposta do solver: abre o Trocar.
+    private func swapAction(_ stop: DayStop) -> (() -> Void)? {
+        guard let id = stop.placeId, let proposed = planner.proposal?.stops.first(where: { $0.place.id == id }) else { return nil }
+        return { swapping = proposed }
+    }
 
-    private var topBar: some View {
-        HStack {
-            IconButton(.voltar, style: .glass, label: "Voltar") { dismiss() }
-            Spacer()
-            Micro("\(PlaceHours.weekdayShort[region.calendar.component(.weekday, from: planner.date) - 1]) · \(region.shortDay(planner.date)) · \((planner.intent.kind ?? planner.kind).label)")
-            Spacer()
-            IconButton(.outraProposta, style: .glass, label: "Outra proposta") {
+    /// Paradas do solver como `DayPlan` (sem micro-paradas; deslocamentos pelo `legFromPrevious`).
+    static func dayPlan(from proposal: DayProposal, date: Date, budget: Double) -> DayPlan {
+        let stops = proposal.stops.map { s in
+            DayStop(id: s.place.id, placeId: s.place.id, kind: s.isAnchor ? .anchor : .must, start: s.at, end: s.end,
+                    label: s.place.name, note: [s.place.sub, s.reason].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · "),
+                    tag: s.isAnchor ? "RES" : nil, area: nil, cost: s.place.cost)
+        }
+        var legs: [DayLeg] = []
+        for (i, s) in proposal.stops.enumerated() where i > 0 {
+            guard let leg = s.legFromPrevious else { continue }
+            legs.append(DayLeg(mode: leg.mode == .walk ? .walk : .metro, minutes: leg.minutes,
+                               from: proposal.stops[i - 1].place.id, to: s.place.id, detail: ""))
+        }
+        return DayPlan(date: date, title: proposal.stops.compactMap(\.place.area).first ?? "", dayNumber: nil, area: nil,
+                       stops: stops, legs: legs, lastTrain: nil, pace: .normal, budget: budget)
+    }
+
+    private var actions: some View {
+        HStack(spacing: 10) {
+            BigButton(title: "Outra", style: .line, systemImage: "arrow.triangle.2.circlepath", lineColor: V8.ink, lineFill: V8.paper) {
                 withAnimation(.snappy) {
                     planner.reshuffle(catalog: places.solverCatalog, trip: trips.first, settings: settingsList.first,
                                       location: services.location.current, flights: FlightRules.dayFlights(flights, on: planner.date, region: region))
                 }
             }
-        }
-    }
-
-    private func subtitle(_ p: DayProposal) -> String {
-        let budget = p.request.intent.budget ?? p.request.budget
-        let stops = p.stops.count == 1 ? "1 parada" : "\(p.stops.count) paradas"
-        let fit = p.predictedSpend <= budget ? "dentro dos \(region.money(budget))" : "\(region.money(p.predictedSpend - budget)) acima da meta"
-        return "\(stops) · \(Walk.kmText(p.walkKm)) a pé · \(fit)"
-    }
-
-    private func miniCards(_ p: DayProposal) -> some View {
-        HStack(spacing: 10) {
-            mini("previsto", region.money(p.predictedSpend), fill: AnyShapeStyle(MustColor.eat.gradient), text: MustColor.eat.text)
-            mini("andar", Walk.kmText(p.walkKm), fill: AnyShapeStyle(MustGradient.sky(opacity: (1, 0.95))), text: Color.must.blueText)
-            mini("metrô", "\(p.transitLegs)×", fill: AnyShapeStyle(Color.must.surface2), text: Color.must.secondary)
-        }
-    }
-
-    private func mini(_ label: String, _ value: String, fill: AnyShapeStyle, text: Color) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Micro(label, color: text)
-            Text(value).font(.must.mono(20, .semibold)).foregroundStyle(Color.must.ink).lineLimit(2).minimumScaleFactor(0.7)
-        }
-        .padding(.horizontal, 14)
-        .padding(.top, 16)
-        .padding(.bottom, 34)
-        .frame(maxWidth: .infinity, alignment: .topLeading)
-        .background(fill, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-    }
-
-    // MARK: Paradas
-
-    private func stopsCard(_ p: DayProposal) -> some View {
-        VStack(spacing: 0) {
-            if p.stops.isEmpty {
-                Text("Nada coube hoje. Tenta outro tipo de dia, mais orçamento ou ligar mais listas.").mustMeta().padding(.vertical, 24)
-            }
-            ForEach(Array(p.stops.enumerated()), id: \.element.id) { index, stop in
-                if index > 0 && !stop.isAnchor && !p.stops[index - 1].isAnchor { RowDivider() }
-                row(stop)
-            }
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 4)
-        .background(Color.white, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(Color.must.line))
-    }
-
-    private func row(_ stop: ProposedStop) -> some View {
-        let p = stop.place
-        var meta: [String] = []
-        if stop.isAnchor {
-            meta.append("âncora")
-            if stop.isException { meta.append("\(p.cost > 0 ? region.money(p.cost) : "") fora do dia") }
-        } else {
-            meta.append(listName(p))
-            if let sub = p.sub { meta.append(sub) }
-            if let q = p.queueMinutes, q > 0 { meta.append("fila ~\(q) min") }
-            else if ["só hoje", "antes da multidão", "você pediu"].contains(stop.reason) { meta.append(stop.reason) }
-            if p.price != nil { meta.append(region.money(p.cost)) }
-            if stop.isException { meta.append("fora da meta") }
-        }
-        return HStack(alignment: .center, spacing: 14) {
-            PlaceThumb(placeId: p.placeId, refs: p.photoRefs, color: p.listColor, size: 40)
-            Text(region.timeString(stop.at))
-                .font(.must.mono(15, stop.isAnchor ? .semibold : .regular))
-                .foregroundStyle(stop.isAnchor ? Color.must.blueText : Color.must.secondary)
-                .lineLimit(1).fixedSize()
-                .frame(minWidth: 52, alignment: .leading)
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 6) {
-                    Text(p.name).mustPlace().lineLimit(1)
-                    if stop.isAnchor {
-                        Tag("reserva", style: .dark)
-                    } else if p.role == .eat, stop.window.isMeal {
-                        Text(stop.window.label).font(.must.archivo(12, .semibold)).foregroundStyle(MustColor.eat.text)
-                            .padding(.horizontal, 8).padding(.vertical, 3)
-                            .background(Capsule().fill(MustColor.eat.light))
-                    }
-                }
-                Text(meta.joined(separator: " · "))
-                    .font(.must.archivo(13))
-                    .foregroundStyle(stop.isAnchor ? Color.must.blueText : Color.must.secondary)
-                    .lineLimit(2)
-            }
-            Spacer(minLength: 6)
-            if stop.isAnchor {
-                MustIconView(.reservaAncora, size: 18).foregroundStyle(Color.must.blueText).frame(width: 40)
-                    .accessibilityLabel("Reserva fixa")
-            } else {
-                IconButton(.trocar, label: "Trocar \(p.name)") { swapping = stop }
-            }
-        }
-        .padding(.vertical, 14)
-        .padding(.horizontal, stop.isAnchor ? 14 : 0)
-        .background {
-            if stop.isAnchor {
-                RoundedRectangle(cornerRadius: 20, style: .continuous).fill(Color(hex: 0xCFE3FF)).padding(.horizontal, -4)
-            }
-        }
-        .padding(.horizontal, stop.isAnchor ? -14 : 0)
-        .contentShape(Rectangle())
-        .onTapGesture { router.push(.place(id: p.id), on: router.tab) }
-    }
-
-    private func listName(_ p: SolverPlace) -> String {
-        places.first { $0.id == p.id }?.list?.displayName ?? "Must \(p.listId)"
-    }
-
-    private func explanation(_ p: DayProposal) -> some View {
-        HStack(alignment: .top, spacing: 14) {
-            MustIconView(.assistente, size: 16)
-                .foregroundStyle(.white)
-                .frame(width: 32, height: 32)
-                .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(MustGradient.avatar))
-            Text(p.explanation).mustSerif(19).foregroundStyle(Color.must.ink)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .glass(cornerRadius: 22)
-        .rotationEffect(.degrees(1))
-    }
-
-    // MARK: Ações
-
-    private var actions: some View {
-        HStack(spacing: 10) {
-            GhostButton("Ajustar") { dismiss() }.frame(width: 120)
-            PrimaryButton("Aceitar o dia", icon: .ok, iconTrailing: true) { accept() }
+            .frame(maxWidth: 140)
+            BigButton(title: "Aceitar o dia", style: .orange, systemImage: "checkmark") { accept() }
                 .disabled(planner.proposal?.stops.isEmpty ?? true)
         }
-        .padding(.horizontal, 22)
+        .padding(.horizontal, 20)
         .padding(.top, 24)
         .padding(.bottom, 92)
         .background {
-            LinearGradient(colors: [.white.opacity(0), .white], startPoint: .top, endPoint: .center).ignoresSafeArea()
+            LinearGradient(colors: [V8.paper.opacity(0), V8.paper], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.25))
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
         }
     }
 
     private func accept() {
         do {
             try planner.accept(context: context)
-            router.paths[.hoje] = []
-            router.paths[.hoje] = []
             router.tab = .hoje
-            // Dia montado por bairro ("Ajustar" em Bairros): vai pro Guia, como o "Montar" da sheet.
-            if planner.focusArea != nil { router.push(.guia(date: planner.date), on: .hoje) }
-            // Aceitou: baixa o que o dia pede (só no Wi-Fi; no celular fica "salva no Wi-Fi") (prompt 18 · A.5).
+            // Aceitou: a Linha do dia (ou o Guia, quando veio do "Ajustar" de Bairros).
+            router.paths[.hoje] = [planner.focusArea != nil && plan == nil ? .guia(date: planner.date) : .linha(date: planner.date)]
+            // Baixa o que o dia pede (só no Wi-Fi; no celular fica "salva no Wi-Fi") (prompt 18 · A.5).
             let date = planner.date, network = services.connectivity.prefetchNetwork
             let region = planner.region
             Task { await services.prefetch.run(date: date, context: context, region: region, network: network) }

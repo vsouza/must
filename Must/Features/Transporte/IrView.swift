@@ -308,7 +308,7 @@ struct IrView: View {
         .padding(.top, 24)
         .padding(.bottom, 92)
         .background {
-            LinearGradient(colors: [V8.ink.opacity(0), V8.ink], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.4))
+            LinearGradient(colors: [V8.ink.opacity(0), V8.ink], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.25))
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
         }

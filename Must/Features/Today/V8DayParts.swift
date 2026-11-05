@@ -90,6 +90,8 @@ struct BigButton: View {
     var systemImage: String?
     /// Cor do contorno e do texto no estilo `.line`.
     var lineColor: Color = V8.ink
+    /// Fundo do estilo `.line` (o fundo da tela, quando há lista rolando por trás).
+    var lineFill: Color = .clear
     var action: () -> Void
 
     var body: some View {
@@ -101,7 +103,7 @@ struct BigButton: View {
             .foregroundStyle(style == .ink ? V8.white : style == .line ? lineColor : V8.ink)
             .padding(.horizontal, 20)
             .frame(maxWidth: .infinity, minHeight: 56)
-            .background(Capsule().fill(style == .orange ? V8.orange : style == .ink ? V8.ink : .clear))
+            .background(Capsule().fill(style == .orange ? V8.orange : style == .ink ? V8.ink : lineFill))
             .overlay(Capsule().strokeBorder(style == .line ? lineColor : .clear, lineWidth: 1.5))
             .contentShape(Capsule())
         }
