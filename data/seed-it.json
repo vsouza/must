@@ -29,7 +29,7 @@
    "id": "eat",
    "name": "eat",
    "kanji": "食",
-   "icon": "pasta",
+   "icon": "ramen",
    "color": "eat",
    "sub": [
     "Trattoria",
@@ -45,7 +45,7 @@
    "id": "drink",
    "name": "drink",
    "kanji": "飲",
-   "icon": "wine",
+   "icon": "sake-vinho",
    "color": "drink",
    "sub": [
     "Café",
@@ -58,7 +58,7 @@
    "id": "see",
    "name": "see",
    "kanji": "観",
-   "icon": "column",
+   "icon": "museu",
    "color": "temple",
    "sub": [
     "Monumento",
@@ -73,7 +73,7 @@
    "id": "art",
    "name": "art",
    "kanji": "芸",
-   "icon": "frame",
+   "icon": "arte-galeria",
    "color": "art",
    "kind": "art",
    "sub": [
@@ -86,7 +86,7 @@
    "id": "photo",
    "name": "photo",
    "kanji": "写",
-   "icon": "camera",
+   "icon": "camera-foto",
    "color": "photo",
    "kind": "photo",
    "sub": [
@@ -99,7 +99,7 @@
    "id": "shop",
    "name": "shop",
    "kanji": "買",
-   "icon": "bag",
+   "icon": "compras",
    "color": "shop",
    "sub": [
     "Vintage",
@@ -111,7 +111,7 @@
    "id": "listen",
    "name": "listen",
    "kanji": "聴",
-   "icon": "note",
+   "icon": "musica-ao-vivo",
    "color": "listen",
    "sub": [
     "Jazz",
@@ -123,7 +123,7 @@
    "id": "do",
    "name": "do",
    "kanji": "体",
-   "icon": "ticket",
+   "icon": "reserva-ancora",
    "color": "night",
    "kind": "experience",
    "sub": [
@@ -136,7 +136,7 @@
    "id": "sport",
    "name": "sport",
    "kanji": "走",
-   "icon": "run",
+   "icon": "a-pe",
    "color": "sport",
    "kind": "sport",
    "sub": [
@@ -384,7 +384,7 @@
    "price": 5,
    "window": [
     "afternoon",
-    "evening"
+    "night"
    ],
    "saveForEnd": false,
    "allowBudgetException": false,
@@ -621,7 +621,8 @@
    "placeId": null,
    "price": 10,
    "window": [
-    "evening"
+    "dinner",
+    "night"
    ],
    "saveForEnd": false,
    "allowBudgetException": false,
@@ -672,7 +673,8 @@
    "placeId": null,
    "price": 8,
    "window": [
-    "evening"
+    "dinner",
+    "night"
    ],
    "saveForEnd": false,
    "allowBudgetException": false,
@@ -695,7 +697,8 @@
    "placeId": null,
    "price": 8,
    "window": [
-    "evening"
+    "dinner",
+    "night"
    ],
    "saveForEnd": false,
    "allowBudgetException": false,
@@ -1001,7 +1004,7 @@
    "placeId": null,
    "price": 0,
    "window": [
-    "evening"
+    "dinner"
    ],
    "saveForEnd": false,
    "allowBudgetException": false,
@@ -1219,7 +1222,7 @@
    "placeId": null,
    "price": 0,
    "window": [
-    "evening"
+    "dinner"
    ],
    "saveForEnd": false,
    "allowBudgetException": false,
@@ -1228,8 +1231,13 @@
     "kind": "board"
    },
    "extra": {
-    "direction": "leste",
-    "bestLight": "golden"
+    "photo": {
+     "facing": 90,
+     "bestLight": [
+      "golden-pm"
+     ],
+     "crowdNote": "Canhão ao meio-dia."
+    }
    }
   },
   {
@@ -1246,7 +1254,7 @@
    "placeId": null,
    "price": 0,
    "window": [
-    "evening"
+    "dinner"
    ],
    "saveForEnd": false,
    "allowBudgetException": false,
@@ -1255,8 +1263,13 @@
     "kind": "board"
    },
    "extra": {
-    "direction": "oeste",
-    "bestLight": "blue"
+    "photo": {
+     "facing": 270,
+     "bestLight": [
+      "blue"
+     ],
+     "tripodAllowed": true
+    }
    }
   },
   {
@@ -1289,7 +1302,7 @@
    "listId": "photo",
    "sub": "Arquitetura",
    "cityId": "roma",
-   "area": "Trieste",
+   "area": "Villa Borghese",
    "lat": 41.9198,
    "lng": 12.5024,
    "approx": true,
@@ -1328,8 +1341,12 @@
     "kind": "board"
    },
    "extra": {
-    "direction": "noroeste",
-    "bestLight": "golden"
+    "photo": {
+     "facing": 315,
+     "bestLight": [
+      "golden-am"
+     ]
+    }
    }
   },
   {
@@ -1631,8 +1648,13 @@
     "kind": "board"
    },
    "extra": {
-    "km": 6,
-    "bestBefore": "09:00"
+    "sport": {
+     "activity": "run",
+     "distanceKm": 6,
+     "loop": false,
+     "surface": "terra e asfalto",
+     "routeNote": "Plano, termina no Pincio. Melhor antes das 9h."
+    }
    }
   },
   {
@@ -1642,20 +1664,26 @@
    "listId": "sport",
    "sub": "Jogo",
    "cityId": "roma",
-   "area": "Foro Italico",
+   "area": "Flaminio",
    "lat": 41.9339,
    "lng": 12.4547,
    "approx": true,
    "placeId": null,
    "price": 45,
    "window": [
-    "evening"
+    "dinner",
+    "night"
    ],
    "saveForEnd": false,
    "allowBudgetException": false,
    "notes": "Ver se tem jogo da Roma ou da Lazio na semana.",
    "source": {
     "kind": "board"
+   },
+   "extra": {
+    "sport": {
+     "activity": "watch"
+    }
    }
   }
  ],

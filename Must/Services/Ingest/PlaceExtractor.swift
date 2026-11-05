@@ -107,6 +107,7 @@ enum PlaceExtractor {
     /// Nomes que não são lugar: cidades, palavras de legenda, dias da semana e meses (pt/en/ja).
     private static let stopwords: Set<String> = [
         "tokyo", "tóquio", "japan", "japão", "japao", "kyoto", "osaka", "brasil", "brazil", "belo horizonte", "bh", "minas",
+        "roma", "rome", "itália", "italia", "italy", "trastevere", "vaticano",
         "the", "best", "top", "melhor", "melhores", "dica", "dicas", "reel", "reels", "video", "vídeo", "link", "bio",
         "follow", "siga", "salva", "salve", "hoje", "amanhã", "ontem", "instagram", "tiktok", "youtube", "shorts",
         "eu", "você", "a gente", "aqui", "lá", "esse", "essa", "isso", "não", "sim", "obrigado", "obrigada",
@@ -152,7 +153,7 @@ enum PlaceExtractor {
 
     private static func humanize(_ handle: String) -> String {
         let parts = handle.replacingOccurrences(of: ".", with: " ").replacingOccurrences(of: "_", with: " ")
-            .split(separator: " ").filter { !["tokyo", "jp", "japan", "official", "oficial", "bh"].contains($0.lowercased()) }
+            .split(separator: " ").filter { !["tokyo", "jp", "japan", "official", "oficial", "bh", "roma", "rome", "italy", "italia"].contains($0.lowercased()) }
         return parts.map { $0.prefix(1).uppercased() + $0.dropFirst() }.joined(separator: " ")
     }
 

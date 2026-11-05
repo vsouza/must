@@ -14,13 +14,18 @@ struct ShoppingRulesView: View {
     @State private var editingRate = false
     @State private var rateText = ""
 
-    private var pack: ShoppingRulePack { ShoppingRules.jpBR }
+    private var pack: ShoppingRulePack { ShoppingRules.pack(for: store.region) }
     private var settings: Settings? { settingsList.first }
 
+    /// TODO(v8:E): a conta do `ShoppingReport` (Must/Services/Shopping) é em ¥ e `ShoppingFX.brlPerUnit` não conhece EUR;
+    /// em Roma o impacto das regras de cota e álcool sai em ¥ convertido como R$ até a conta aceitar a moeda da região.
     private var report: ShoppingReport {
         ShoppingReport(items: items, fxRate: settings?.fxRate ?? 0.036, brlPerUSD: settings?.brlPerUSD ?? 5.5,
-                       timeZone: store.region.timeZone)
+                       rules: pack, timeZone: store.region.timeZone)
     }
+
+    /// "Japão → Brasil" / "Itália → Brasil".
+    private var routeLabel: String { "\(pack.from == "IT" ? "Itália" : "Japão") → Brasil" }
 
     var body: some View {
         let report = self.report
@@ -29,7 +34,7 @@ struct ShoppingRulesView: View {
                 HStack {
                     IconButton(.voltar, label: "Voltar") { dismiss() }
                     Spacer()
-                    Micro("Japão → Brasil · conferido \(Self.shortDate(checkedAt))")
+                    Micro("\(routeLabel) · conferido \(Self.shortDate(checkedAt))")
                     Spacer()
                     Color.clear.frame(width: 40, height: 40)
                 }
@@ -58,7 +63,7 @@ struct ShoppingRulesView: View {
             Button("Salvar") { saveRate() }
             Button("Cancelar", role: .cancel) {}
         } message: {
-            Text("Quantos reais valem US$ 1. É ela que converte os ¥ da lista em dólar pra cota do Brasil.")
+            Text("Quantos reais valem US$ 1. É ela que converte os \(store.region.currencySymbol) da lista em dólar pra cota do Brasil.")
         }
     }
 
@@ -68,7 +73,7 @@ struct ShoppingRulesView: View {
         let rules = pack.rules(in: section)
         return VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 8) {
-                Text(section.title).font(.must.archivo(16, .semibold)).foregroundStyle(Color.must.ink)
+                Text(section.title(from: pack.from)).font(.must.archivo(16, .semibold)).foregroundStyle(Color.must.ink)
             }
             .padding(.bottom, 10)
             Rectangle().fill(Color.must.ink.opacity(0.08)).frame(height: 1)
@@ -194,6 +199,9 @@ struct ShoppingRulesView: View {
         for rule in rules {
             guard let url = URL(string: rule.sourceURL), !out.contains(where: { $0.url == url }) else { continue }
             let label: String = if rule.sourceURL.contains("mof.go.jp") { "MOF (Japão)" }
+                else if rule.sourceURL.contains("globalblue") { "Global Blue" }
+                else if rule.sourceURL.contains("adm.gov.it") { "Agenzia delle Dogane (Itália)" }
+                else if rule.sourceURL.contains("anac") { "ANAC" }
                 else if rule.sourceURL.contains("receitafederal") { "Receita Federal" }
                 else if rule.sourceURL.contains("agricultura") { "MAPA · Vigiagro" }
                 else { url.host() ?? rule.sourceURL }
@@ -204,6 +212,12 @@ struct ShoppingRulesView: View {
 }
 
 extension ShoppingRuleSection {
+    /// Título da seção; o tax-free depende do país de onde se volta (`ShoppingRulePack.from`).
+    func title(from country: String) -> String {
+        if self == .taxFree, country == "IT" { return "Tax-free na UE · Global Blue" }
+        return title
+    }
+
     var title: String {
         switch self {
         case .taxFree: "免 Tax-free no Japão · mudou em 1º nov"

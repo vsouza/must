@@ -51,7 +51,7 @@ struct BoardCodecTests {
 
     // MARK: Decodificação
 
-    @Test(arguments: [(Region.bh, 50, 8), (Region.jp, 105, 8)])
+    @Test(arguments: [(Region.bh, 50, 8), (Region.jp, 105, 8), (Region.it, 63, 9)])
     func decodesSeeds(region: Region, places: Int, lists: Int) throws {
         let board = try Self.seed(region)
         #expect(board.version == 1)
@@ -78,7 +78,7 @@ struct BoardCodecTests {
 
     // MARK: Import
 
-    @Test(arguments: [(Region.bh, 50, 8), (Region.jp, 105, 8)])
+    @Test(arguments: [(Region.bh, 50, 8), (Region.jp, 105, 8), (Region.it, 63, 9)])
     func importsSeed(region: Region, places: Int, lists: Int) throws {
         let codec = try Self.makeCodec(region)
         let summary = try codec.import(board: Self.seed(region))
@@ -116,7 +116,7 @@ struct BoardCodecTests {
         #expect(codec.context.settings(for: .bh).perDayBudget == 200)
     }
 
-    @Test(arguments: [Region.bh, .jp]) // TODO(v8:E): voltar pra Region.allCases quando o seed-it decodificar
+    @Test(arguments: Region.allCases)
     func importIsIdempotent(region: Region) throws {
         let codec = try Self.makeCodec(region)
         let board = try Self.seed(region)
@@ -186,7 +186,7 @@ struct BoardCodecTests {
 
     // MARK: Export / round-trip
 
-    @Test(arguments: [Region.bh, .jp]) // TODO(v8:E): voltar pra Region.allCases quando o seed-it decodificar
+    @Test(arguments: Region.allCases)
     func exportMatchesSeed(region: Region) throws {
         let codec = try Self.makeCodec(region)
         let seed = try Self.seed(region)
@@ -211,7 +211,7 @@ struct BoardCodecTests {
         }
     }
 
-    @Test(arguments: [Region.bh, .jp]) // TODO(v8:E): voltar pra Region.allCases quando o seed-it decodificar
+    @Test(arguments: Region.allCases)
     func exportReimportDoesNotDuplicate(region: Region) throws {
         let codec = try Self.makeCodec(region)
         try codec.import(board: Self.seed(region))
@@ -223,7 +223,7 @@ struct BoardCodecTests {
         #expect(try codec.export() == first)
     }
 
-    @Test(arguments: [Region.bh, .jp]) // TODO(v8:E): voltar pra Region.allCases quando o seed-it decodificar
+    @Test(arguments: Region.allCases)
     func roundTripIntoFreshContainer(region: Region) throws {
         let codec = try Self.makeCodec(region)
         try codec.import(board: Self.seed(region))

@@ -101,7 +101,7 @@ struct RegionSheet: View {
         .confirmationDialog("Zerar o board de \(store.region.displayName)?", isPresented: $confirmReset, titleVisibility: .visible) {
             Button("Zerar \(store.region.shortName)", role: .destructive) { confirmResetAgain = true }
         } message: {
-            Text("Apaga lugares, gastos e dias desta região e volta pro seed. A outra região não muda.")
+            Text("Apaga lugares, gastos e dias desta região e volta pro seed. As outras regiões não mudam.")
         }
         .alert("Tem certeza?", isPresented: $confirmResetAgain) {
             Button("Apagar e reimportar o seed", role: .destructive) {
@@ -132,7 +132,13 @@ struct RegionSheet: View {
             }
             return text
         case .it:
-            return "board Roma · € · Metro A/B/C + bus · pt-BR" + (store.region == .it ? " · agora" : "") // TODO(v8:E)
+            var text = "board Roma · € · Metro A/B + tram + bus"
+            if store.region == .it, let trip = trips.first, let start = trip.start, let end = trip.end {
+                text += " · \(region.dayNumber(start))–\(region.dayNumber(end)) \(region.monthShort(end)) · datas a confirmar"
+            } else if store.region != .it {
+                text += " · abr 2027 a confirmar"
+            }
+            return text
         }
     }
 
@@ -166,8 +172,8 @@ struct RegionSheet: View {
                         .tint(Color.must.ink)
                     HStack(spacing: 8) {
                         Button { DevOverrides.simulate(date: simDate); simDateOn = true } label: { Pill("Usar", style: .green) }
-                        if store.region == .jp, let preset = BoardDates(timeZone: Region.jp.timeZone).time("10:00", on: BoardDates(timeZone: Region.jp.timeZone).day(from: "2026-11-15")!) {
-                            Button { simDate = preset } label: { Pill("15 nov 10:00") }
+                        if let preset = datePreset {
+                            Button { simDate = preset.date } label: { Pill(preset.label) }
                         }
                         Button { simDate = Date() } label: { Pill("agora") }
                         Spacer()
@@ -201,11 +207,20 @@ struct RegionSheet: View {
     // MARK: GPS simulado
 
     private var presets: [(name: String, coordinate: CLLocationCoordinate2D)] {
-        let regionPresets = DevOverrides.gpsPresets.filter { preset in
-            let isJapan = preset.coordinate.latitude > 0
-            return (store.region == .jp) == isJapan
+        DevOverrides.gpsPresets.filter { Region.detect($0.coordinate) == store.region }
+    }
+
+    /// Dia de teste da viagem: Japão 15 nov (Udatsu), Roma 14 abr (dia 4, Monti + Colosseo, do `DiaIT.png`).
+    private var datePreset: (label: String, date: Date)? {
+        let (day, label): (String, String)
+        switch store.region {
+        case .jp: (day, label) = ("2026-11-15", "15 nov 10:00")
+        case .it: (day, label) = ("2027-04-14", "14 abr 10:00")
+        case .bh: return nil
         }
-        return regionPresets
+        let dates = BoardDates(timeZone: store.region.timeZone)
+        guard let start = dates.day(from: day), let at = dates.time("10:00", on: start) else { return nil }
+        return (label, at)
     }
 
     private var gpsLabel: String {

@@ -1,12 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Must board",
-  "description": "Formato de importação/exportação do board. Um arquivo por região (bh, jp). Tudo que o app sabe de um lugar cabe aqui; o que vem do Google Places (horários, preço, placeId) é cache e pode ser nulo.",
+  "description": "Formato de importação/exportação do board. Um arquivo por região (bh, jp, it). Tudo que o app sabe de um lugar cabe aqui; o que vem do Google Places (horários, preço, placeId) é cache e pode ser nulo.",
   "type": "object",
   "required": ["version", "region", "lists", "places"],
   "properties": {
     "version": {"const": 1},
-    "region": {"enum": ["bh", "jp"]},
+    "region": {"enum": ["bh", "jp", "it"]},
     "trip": {
       "type": "object",
       "properties": {
@@ -15,10 +15,10 @@
         "home": {"type": "string", "description": "bairro/base onde dorme; usado pra 'último metrô pra casa'"},
         "cities": {"type": "array", "items": {"type": "object", "required": ["id", "name"], "properties": {
           "id": {"type": "string"}, "name": {"type": "string"}, "from": {"type": "string", "format": "date"}, "to": {"type": "string", "format": "date"},
-          "tz": {"type": "string"}, "currency": {"enum": ["BRL", "JPY"]}, "lat": {"type": "number"}, "lng": {"type": "number"}}}}
+          "tz": {"type": "string"}, "currency": {"enum": ["BRL", "JPY", "EUR"]}, "lat": {"type": "number"}, "lng": {"type": "number"}}}}
       }
     },
-    "budget": {"type": "object", "properties": {"perDay": {"type": "number"}, "currency": {"enum": ["BRL", "JPY"]}, "walkMaxKm": {"type": "number"}, "dayStart": {"type": "string", "pattern": "^[0-2][0-9]:[0-5][0-9]$"}}},
+    "budget": {"type": "object", "properties": {"perDay": {"type": "number"}, "currency": {"enum": ["BRL", "JPY", "EUR"]}, "walkMaxKm": {"type": "number"}, "dayStart": {"type": "string", "pattern": "^[0-2][0-9]:[0-5][0-9]$"}}},
     "lists": {"type": "array", "items": {"type": "object", "required": ["id", "name", "color"], "properties": {
       "id": {"type": "string"}, "name": {"type": "string", "description": "sem o prefixo 'Must'"}, "kanji": {"type": "string", "maxLength": 1},
       "icon": {"type": "string", "description": "nome do arquivo em design/icons sem .svg"},
@@ -46,7 +46,7 @@
       "extra": {"type": ["object", "null"], "description": "dados do tipo da lista (photo, art, sport ou experience)", "properties": {
         "experience": {"type": "object", "description": "experiência com hora marcada; sessions usam o mesmo formato de art/sport", "properties": {
           "supplier": {"enum": ["viator", "getYourGuide", "klook", "airbnb", "other"]}, "productCode": {"type": "string"}, "url": {"type": "string", "format": "uri"},
-          "durationMinutes": {"type": "integer"}, "priceFrom": {"type": "number"}, "currency": {"enum": ["BRL", "JPY", "USD"]}, "rating": {"type": "number"}, "reviewCount": {"type": "integer"},
+          "durationMinutes": {"type": "integer"}, "priceFrom": {"type": "number"}, "currency": {"enum": ["BRL", "JPY", "EUR", "USD"]}, "rating": {"type": "number"}, "reviewCount": {"type": "integer"},
           "meetingPoint": {"type": "string"}, "meetingLat": {"type": "number"}, "meetingLng": {"type": "number"}, "languages": {"type": "array", "items": {"type": "string"}},
           "groupMax": {"type": "integer"}, "freeCancellationHours": {"type": "integer"},
           "sessions": {"type": "array", "items": {"type": "object", "required": ["at", "title"], "properties": {"at": {"type": "string", "format": "date-time"}, "title": {"type": "string"}, "price": {"type": "number"}, "soldOut": {"type": "boolean"}, "url": {"type": "string", "format": "uri"}, "bought": {"type": "boolean"}, "note": {"type": "string"}}}}}},

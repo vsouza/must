@@ -1,6 +1,6 @@
 import Foundation
 
-/// Moeda no estilo do Must: "R$ 200", "R$ 12,50", "¥ 15.000" (sempre separadores pt-BR).
+/// Moeda no estilo do Must: "R$ 200", "R$ 12,50", "¥ 15.000", "€ 12,50" (sempre separadores pt-BR, que são os europeus).
 struct MoneyFormatStyle: FormatStyle, Sendable {
     var currency: String
     var showsSymbol = true
@@ -18,6 +18,7 @@ struct MoneyFormatStyle: FormatStyle, Sendable {
         switch currency {
         case "BRL": "R$"
         case "JPY": "¥"
+        case "EUR": "€"
         default: currency
         }
     }

@@ -9,6 +9,7 @@
     {"id": "jp-osaka", "region": "jp", "title": "Osaka", "subtitle": "Umeda, Namba e o castelo", "center": [34.68, 135.50], "bbox": [135.40, 34.60, 135.60, 34.75]},
     {"id": "jp-yokohama", "region": "jp", "title": "Yokohama · Kamakura", "subtitle": "bate-volta ao sul de Tóquio", "center": [35.40, 139.60], "bbox": [139.48, 35.28, 139.72, 35.52]},
     {"id": "jp-nikko", "region": "jp", "title": "Nikko", "subtitle": "Toshogu e lago Chuzenji", "center": [36.75, 139.56], "bbox": [139.40, 36.70, 139.65, 36.80]},
-    {"id": "jp-himeji", "region": "jp", "title": "Himeji", "subtitle": "castelo e Koko-en", "center": [34.83, 134.69], "bbox": [134.66, 34.80, 134.72, 34.86]}
+    {"id": "jp-himeji", "region": "jp", "title": "Himeji", "subtitle": "castelo e Koko-en", "center": [34.83, 134.69], "bbox": [134.66, 34.80, 134.72, 34.86]},
+    {"id": "it-roma", "region": "it", "title": "Roma", "subtitle": "centro, Vaticano, Appia e Ostiense", "center": [41.895, 12.48], "bbox": [12.40, 41.83, 12.56, 41.95]}
   ]
 }

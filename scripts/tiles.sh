@@ -2,7 +2,8 @@
 # Gera os mapas offline (Protomaps PMTiles, OpenStreetMap) por cidade em dist/tiles/, a partir do build diário.
 # Os recortes vêm de data/map-packs.json (o app lê o mesmo arquivo). Depois, scripts/tiles-upload.sh sobe pro R2.
 # Precisa da CLI `pmtiles` (brew install pmtiles).
-# Uso: scripts/tiles.sh [AAAAMMDD] [id ...]   (sem ids: todos)
+# Uso: scripts/tiles.sh [AAAAMMDD] [id ...]   (sem ids: todos; data vazia "" = build mais recente)
+#   ex.: scripts/tiles.sh "" it-roma   (Roma, prompt 24). O manifest mantém as cidades que não foram recortadas.
 set -e
 cd "$(dirname "$0")/.."
 DAY=${1:-$(curl -s https://build-metadata.protomaps.dev/builds.json | python3 -I -c "import json,sys;print(json.load(sys.stdin)[-1]['key'].split('.')[0])")}
@@ -32,7 +33,10 @@ except Exception: pass
 packs = []
 for p in json.load(open(catalog))["packs"]:
     f = os.path.join(out, p["id"] + ".pmtiles")
-    if not os.path.exists(f): continue
+    if not os.path.exists(f):
+        # Cidade que não foi recortada agora (ex.: só it-roma): mantém a linha do manifest anterior, que já está no R2.
+        if p["id"] in old: packs.append(old[p["id"]])
+        continue
     h = hashlib.sha256()
     with open(f, "rb") as fh:
         for chunk in iter(lambda: fh.read(1 << 22), b""): h.update(chunk)

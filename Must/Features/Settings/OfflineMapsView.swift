@@ -99,11 +99,19 @@ struct OfflineMapsView: View {
 
     // MARK: Cidades
 
+    static func sectionTitle(_ region: Region) -> String {
+        switch region {
+        case .bh: "Minas Gerais"
+        case .jp: "Japão"
+        case .it: "Itália"
+        }
+    }
+
     private func section(_ region: Region) -> some View {
         let packs = MapPack.catalog.filter { $0.region == region }
         let missing = packs.filter { !maps.isInstalled($0.id) && maps.phases[$0.id] == nil }
         let missingBytes = missing.compactMap { maps.bytes($0.id) }.reduce(0, +)
-        return FormSection(region == .bh ? "Minas Gerais" : "Japão") {
+        return FormSection(Self.sectionTitle(region)) {
             ForEach(Array(packs.enumerated()), id: \.element.id) { index, pack in
                 if index > 0 { RowDivider() }
                 row(pack)

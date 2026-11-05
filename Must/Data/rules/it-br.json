@@ -1,0 +1,108 @@
+{
+  "pair": "IT-BR",
+  "from": "IT",
+  "to": "BR",
+  "limits": {
+    "taxFreeMinYen": 70,
+    "taxFreeRate": 0.22,
+    "taxFreeRateFood": 0.10,
+    "airAllowanceUSD": 1000,
+    "freeShopUSD": 1000,
+    "excessRate": 0.5,
+    "liquorLitres": 12,
+    "identicalAboveUSD": 10,
+    "identicalAboveMax": 3,
+    "identicalBelowMax": 10,
+    "personalCameras": 1
+  },
+  "rules": [
+    {
+      "id": "taxfree-eu-min",
+      "section": "taxFree",
+      "tone": "warn",
+      "text": "Tax-free na UE só acima de **€ 70 por loja** (mesmo recibo, mesmo dia). Peça o formulário **Global Blue** no caixa.",
+      "checkedAt": "2026-11-05",
+      "sourceURL": "https://www.globalblue.com/"
+    },
+    {
+      "id": "taxfree-eu-passport",
+      "section": "taxFree",
+      "tone": "ok",
+      "text": "Leve o **passaporte** na compra: o formulário sai no seu nome. O IVA é 22% (10% em comida); a Global Blue fica com uma parte.",
+      "checkedAt": "2026-11-05",
+      "sourceURL": "https://www.globalblue.com/"
+    },
+    {
+      "id": "taxfree-eu-stamp",
+      "section": "taxFree",
+      "tone": "warn",
+      "text": "**Carimbo da alfândega no aeroporto** (Fiumicino, antes do check-in, com as compras sem uso). Sem carimbo, não tem reembolso.",
+      "checkedAt": "2026-11-05",
+      "sourceURL": "https://www.adm.gov.it/"
+    },
+    {
+      "id": "carry-powerbank",
+      "section": "carry",
+      "tone": "no",
+      "text": "**Power bank só na mão.**",
+      "checkedAt": "2026-11-05",
+      "sourceURL": "https://www.gov.br/receitafederal/"
+    },
+    {
+      "id": "carry-wine",
+      "section": "carry",
+      "tone": "warn",
+      "text": "Vinho e azeite **na despachada**, embrulhados (líquido acima de 100 ml não passa na mão).",
+      "checkedAt": "2026-11-05",
+      "sourceURL": "https://www.gov.br/anac/"
+    },
+    {
+      "id": "entering-allowance",
+      "section": "entering",
+      "tone": "ok",
+      "text": "Cota **US$ 1.000** por pessoa (aéreo) + **US$ 1.000** no free shop da chegada. Excedente paga 50% pela e-DBV.",
+      "checkedAt": "2026-11-05",
+      "sourceURL": "https://www.gov.br/receitafederal/"
+    },
+    {
+      "id": "entering-camera",
+      "section": "entering",
+      "tone": "ok",
+      "text": "**1 câmera de uso pessoal** pode ficar fora — na dúvida, declare.",
+      "checkedAt": "2026-11-05",
+      "sourceURL": "https://www.gov.br/receitafederal/"
+    },
+    {
+      "id": "entering-liquor",
+      "section": "entering",
+      "tone": "ok",
+      "text": "Vinho dentro dos **12 L** de bebida alcoólica; acima de US$ 10, no máximo **3 iguais**. Abaixo de US$ 10, até 10 iguais ou 20 unidades.",
+      "checkedAt": "2026-11-05",
+      "sourceURL": "https://www.gov.br/receitafederal/"
+    },
+    {
+      "id": "food-cured-meat",
+      "section": "food",
+      "tone": "no",
+      "text": "**Salame, presunto** (prosciutto, mortadela, guanciale) **não entram**, nem embalados a vácuo.",
+      "checkedAt": "2026-11-05",
+      "sourceURL": "https://www.gov.br/agricultura/"
+    },
+    {
+      "id": "food-cheese",
+      "section": "food",
+      "tone": "ok",
+      "text": "**Queijo curado embalado a vácuo** (parmigiano, pecorino) pode, com rótulo. Queijo fresco (burrata, mozzarella) não.",
+      "checkedAt": "2026-11-05",
+      "sourceURL": "https://www.gov.br/agricultura/"
+    },
+    {
+      "id": "food-packaged",
+      "section": "food",
+      "tone": "ok",
+      "text": "Industrializado, **lacrado e rotulado** (massa seca, café, chocolate, azeite) passa. Na dúvida, declare.",
+      "checkedAt": "2026-11-05",
+      "sourceURL": "https://www.gov.br/agricultura/"
+    }
+  ]
+}

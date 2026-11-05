@@ -31,12 +31,17 @@ struct TransitMap: Sendable {
     func line(_ id: String) -> TransitLine? { lines.first { $0.id == id } }
 }
 
-/// Lê `tokyo-lines.geojson` / `bh-lines.geojson` do bundle (uma vez por região).
+/// Lê `tokyo-lines.geojson` / `bh-lines.geojson` / `roma-lines.geojson` do bundle (uma vez por região).
+/// Roma ainda não tem o GeoJSON: o mapa fica sem as linhas (nunca as de BH).
 enum TransitLoader {
     @MainActor private static var cache: [Region: TransitMap] = [:]
 
     static func fileName(for region: Region) -> String {
-        region == .jp ? "tokyo-lines" : "bh-lines"
+        switch region {
+        case .jp: "tokyo-lines"
+        case .bh: "bh-lines"
+        case .it: "roma-lines" // TODO(v8:E): gerar roma-lines.geojson (Metro A/B/C + tram 8) com scripts/gen-transit.py
+        }
     }
 
     @MainActor
