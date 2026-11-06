@@ -14,25 +14,24 @@ struct TripRow: Equatable, Identifiable, Sendable {
 }
 
 enum TripSwitcherModel {
-    /// Datas das viagens com data (hoje só o Japão: 11–24 nov 2026, `CLAUDE.md`).
-    static func tripRange(_ region: Region) -> ClosedRange<Date>? {
-        guard region == .jp else { return nil }
-        let cal = region.calendar
-        guard let start = cal.date(from: DateComponents(year: 2026, month: 11, day: 11)),
-              let end = cal.date(from: DateComponents(year: 2026, month: 11, day: 24)) else { return nil }
-        return start...end
-    }
+    /// Datas da viagem (registro; Japão: 11–24 nov 2026, `CLAUDE.md`). Sem as duas datas: `nil` (em plano).
+    static func tripRange(_ region: Region) -> ClosedRange<Date>? { region.trip.range }
 
+    /// "Japão · Tóquio e Kyoto", "Belo Horizonte · casa", "Roma", "Portugal · Lisboa e Porto".
     static func title(_ region: Region) -> String {
-        switch region {
-        case .jp: "Japão · Tóquio e Kyoto"
-        case .bh: "Belo Horizonte · casa"
-        case .it: "Roma"
-        }
+        let trip = region.trip
+        if trip.kind == .home { return "\(trip.name) · casa" }
+        var names: [String] = []
+        for city in trip.cities where !names.contains(city.name) { names.append(city.name) }
+        names.removeAll { $0 == trip.name }
+        guard !names.isEmpty else { return trip.name }
+        let list = names.count == 1 ? names[0] : names.dropLast().joined(separator: ", ") + " e " + names[names.count - 1]
+        return "\(trip.name) · \(list)"
     }
 
-    static func rows(active: Region, now: Date, gps: Region?, doneCount: Int) -> [TripRow] {
-        Region.allCases.map { region in
+    /// Uma linha por viagem do registro (sem as arquivadas), na ordem dele.
+    static func rows(trips: [Trip] = BuiltInTrip.all, active: Region, now: Date, gps: Region?, doneCount: Int) -> [TripRow] {
+        trips.filter { !$0.archived }.map(Region.init(trip:)).map { region in
             let range = tripRange(region)
             let cal = region.calendar
             let today = cal.startOfDay(for: now)
@@ -51,7 +50,7 @@ enum TripSwitcherModel {
                     parts.append("terminou")
                 }
             } else {
-                parts.append(region == .bh ? "sempre disponível" : "sem datas")
+                parts.append(region.trip.kind == .home ? "sempre disponível" : "sem datas")
             }
             if region == active { parts.append(doneCount == 1 ? "1 feito" : "\(doneCount) feitos") }
             let tag: TripRow.Tag = inside ? .agora : (gps == region ? .gps : .plano)
@@ -60,11 +59,17 @@ enum TripSwitcherModel {
         }
     }
 
-    /// "11–24 nov 2026".
+    /// "11–24 nov 2026"; atravessando o mês, "28 fev–3 mar 2027".
     static func rangeText(_ range: ClosedRange<Date>, region: Region) -> String {
         let cal = region.calendar
         let a = cal.component(.day, from: range.lowerBound), b = cal.component(.day, from: range.upperBound)
-        let month = range.upperBound.formatted(Date.FormatStyle(locale: region.locale, calendar: cal).month(.abbreviated).year())
-        return "\(a)–\(b) \(month.replacingOccurrences(of: ".", with: ""))".replacingOccurrences(of: " de ", with: " ")
+        let style = Date.FormatStyle(locale: region.locale, calendar: cal, timeZone: cal.timeZone)
+        func clean(_ s: String) -> String { s.replacingOccurrences(of: ".", with: "").replacingOccurrences(of: " de ", with: " ") }
+        let month = clean(range.upperBound.formatted(style.month(.abbreviated).year()))
+        if cal.component(.month, from: range.lowerBound) != cal.component(.month, from: range.upperBound) {
+            let first = clean(range.lowerBound.formatted(style.month(.abbreviated)))
+            return "\(a) \(first)–\(b) \(month)"
+        }
+        return "\(a)–\(b) \(month)"
     }
 }

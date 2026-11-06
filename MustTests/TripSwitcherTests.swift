@@ -32,8 +32,8 @@ struct TripSwitcherTests {
         #expect(jp?.subtitle == "11–24 nov 2026 · em 6 dias")
     }
 
-    @Test func novaViagemFicaEscondida() {
-        #expect(TripSwitcherSheet.newTripEnabled == false)
+    @Test func novaViagemAparece() {
+        #expect(TripSwitcherSheet.newTripEnabled)
     }
 
     @Test func trocarNaoApagaNada() throws {

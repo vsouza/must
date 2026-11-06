@@ -25,6 +25,8 @@ struct MustApp: App {
                 .environment(services)
                 .environment(\.dayEngine, DayEngineV8(store: regionStore, services: services))
                 .environment(\.showEvents, Self.showEvents(regionStore)).environment(\.films, WikidataFilms.shared)
+                // Nova viagem (prompt 28): o fluxo entrega o rascunho, o store grava e abre.
+                .environment(\.tripCreator, StoreTripCreator(store: regionStore))
                 .preferredColorScheme(.light)
                 // Fonte padrão: `Text` sem fonte explícita sai em Schibsted (texto v8), não em SF.
                 .font(V8Font.text(15))
@@ -125,9 +127,14 @@ struct AppRoot: View {
                     if type == QuickActions.sosType { router.handle(url: URL(string: "must://sos")!, region: store.region) }
                 }
             }
-            // Abre na região onde você está (Ajustes › Região › Automático).
-            .onChange(of: services.location.current.map { Region.detect($0.coordinate) }, initial: true) { _, _ in
+            // Abre a viagem certa pra onde você está (Ajustes › Região › Automático; prompt 28 §3.10:
+            // datas de hoje › país do GPS › casa).
+            .onChange(of: services.location.current.flatMap { store.autoPick(near: $0.coordinate)?.rawValue }, initial: true) { _, _ in
                 if let c = services.location.current?.coordinate { store.followGPS(c) }
+            }
+            // Viagem nova: abre quando a folha do fluxo fecha (o passo 9 mostra o "Pronto" antes).
+            .onChange(of: router.cover == nil) { _, closed in
+                if closed, store.pendingTrip != nil { store.openPending() }
             }
     }
 

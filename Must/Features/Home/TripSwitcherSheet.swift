@@ -2,20 +2,26 @@ import CoreLocation
 import SwiftData
 import SwiftUI
 
-/// Minhas viagens (`TrocarViagem.png`), aberta pelo botão no canto superior esquerdo da capa: as três regiões, a ativa marcada.
-/// Tocar troca pelo `RegionStore` (fade de 0,4 s) e não apaga nada. "Nova viagem" fica escondida até o prompt 28.
+/// Minhas viagens (`TrocarViagem.png`), aberta pelo botão no canto superior esquerdo da capa: as viagens do registro
+/// (`trips.json`, prompt 28), a ativa marcada, e a linha Nova viagem. Tocar troca pelo `TripStore` (fade de 0,4 s) e
+/// não apaga nada. Deslizar uma linha: Arquivar (some, os dados ficam) e Apagar (confirma; apaga só o `.store` dela).
+/// A de casa não arquiva nem apaga.
 struct TripSwitcherSheet: View {
-    /// Liga com o prompt 28 (Nova viagem). Até lá, a linha tracejada não aparece.
-    static let newTripEnabled = false
+    /// Prompt 28: a linha tracejada Nova viagem abre o fluxo (`router.cover = .novaViagem()`).
+    static let newTripEnabled = true
 
     @Environment(\.dismiss) private var dismiss
     @Environment(RegionStore.self) private var store
     @Environment(Services.self) private var services
+    @Environment(AppRouter.self) private var router
     @Query private var places: [Place]
+    @State private var confirmDelete: TripRow?
 
     private var rows: [TripRow] {
-        let gps = services.location.current.flatMap { Region.detect($0.coordinate) }
-        return TripSwitcherModel.rows(active: store.region, now: AppClock.now, gps: gps, doneCount: places.filter(\.isDone).count)
+        // "GPS": a viagem que o automático abriria aqui (só com posição).
+        let gps = services.location.current.flatMap { store.autoPick(near: $0.coordinate) }
+        return TripSwitcherModel.rows(trips: store.trips, active: store.region, now: AppClock.now, gps: gps,
+                                      doneCount: places.filter(\.isDone).count)
     }
 
     var body: some View {
@@ -29,16 +35,35 @@ struct TripSwitcherSheet: View {
             .padding(.top, 22)
             .padding(.bottom, 14)
             Rectangle().fill(V8.rule).frame(height: 1)
-            ForEach(rows) { row in
-                Button { select(row) } label: { TripRowView(row: row) }
-                    .buttonStyle(MustPressStyle())
-                    .accessibilityElement(children: .ignore)
-                    .accessibilityLabel("\(row.title). \(row.subtitle). \(row.tag.rawValue)\(row.isActive ? ". Ativa" : "")")
-                    .accessibilityAddTraits(row.isActive ? .isSelected : [])
-                Rectangle().fill(V8.rule).frame(height: 1)
+            List {
+                ForEach(rows) { row in
+                    Button { select(row) } label: { TripRowView(row: row) }
+                        .buttonStyle(MustPressStyle())
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel("\(row.title). \(row.subtitle). \(row.tag.rawValue)\(row.isActive ? ". Ativa" : "")")
+                        .accessibilityAddTraits(row.isActive ? .isSelected : [])
+                        .accessibilityActions { if row.region.trip.kind != .home { swipeButtons(row) } }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            if row.region.trip.kind != .home { swipeButtons(row) }
+                        }
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(V8.paper)
+                        .listRowSeparatorTint(V8.rule)
+                        .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
+                }
             }
-            if Self.newTripEnabled { newTripRow.padding(.top, 14) }
-            Text("Trocar não apaga nada · cada viagem tem o próprio board, gastos e mapas\nModo automático: o GPS escolhe quando você pousa (Ajustes › Região)")
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .scrollDisabled(rows.count <= 4)
+            .environment(\.defaultMinListRowHeight, 1)
+            .frame(height: CGFloat(rows.count) * 81)
+            if Self.newTripEnabled {
+                Button { newTrip() } label: { newTripRow }
+                    .buttonStyle(MustPressStyle())
+                    .accessibilityLabel("Nova viagem. Destino, datas, cidades, voos, Musts")
+                    .padding(.top, 14)
+            }
+            Text("Trocar não apaga nada · cada viagem tem o próprio board, gastos e mapas\nDeslize pra arquivar ou apagar · automático: datas de hoje, depois o GPS (Ajustes › Região)")
                 .font(V8Font.mono(10))
                 .tracking(1)
                 .textCase(.uppercase)
@@ -53,6 +78,31 @@ struct TripSwitcherSheet: View {
         .presentationDetents([.fraction(0.62), .large])
         .presentationDragIndicator(.visible)
         .presentationCornerRadius(32)
+        .confirmationDialog(confirmDelete.map { "Apagar \($0.title)?" } ?? "", isPresented: Binding(
+            get: { confirmDelete != nil }, set: { if !$0 { confirmDelete = nil } }), titleVisibility: .visible) {
+            Button("Apagar viagem", role: .destructive) {
+                if let row = confirmDelete { store.delete(row.region.rawValue) }
+                confirmDelete = nil
+            }
+            Button("Cancelar", role: .cancel) { confirmDelete = nil }
+        } message: {
+            Text("Apaga o board, os gastos e os ingressos desta viagem neste iPhone. As outras viagens ficam como estão.")
+        }
+    }
+
+    @ViewBuilder private func swipeButtons(_ row: TripRow) -> some View {
+        Button("Apagar", role: .destructive) { confirmDelete = row }
+        Button("Arquivar") { store.archive(row.region.rawValue) }.tint(V8.ink)
+    }
+
+    /// Fecha a folha e abre o fluxo Nova viagem (prompt 28), depois da animação da folha.
+    private func newTrip() {
+        dismiss()
+        let router = router
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(350))
+            router.cover = .novaViagem()
+        }
     }
 
     private func select(_ row: TripRow) {
