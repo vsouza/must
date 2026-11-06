@@ -93,6 +93,17 @@ v8shots() { # $1 = prefixo (jp|bh|it), $2 = lugar de exemplo, $3 = museu de exem
   shot $r-r23-colecao -debugScreen colecao          # Coleção (marca alguns feitos no DEBUG)
   WAIT=6 shot $r-r23-colecionavel-novo -debugScreen colecionavel-novo:$2  # o momento, com o card girado
   shot $r-r23-xxxl-colecao -debugScreen colecao ${=XL}
+  # RODADA-23 · agente B: Em cartaz, Lugar (em cartaz, amigos, filmes) e Filmes (BH cai no FilmesVazio). Só JP e BH.
+  if [ "$r" != "it" ]; then
+    shot $r-r23-emcartaz -debugScreen emcartaz                    # EmCartaz
+    shot $r-r23-lugar-emcartaz -debugScreen lugar-emcartaz:$3     # LugarEmCartaz
+    shot $r-r23-lugar-amigos -debugScreen lugar-amigos:$3 -dev.simSetAt 0   # LugarAmigos (amigos + filmes)
+    shot $r-r23-filmes -debugScreen filmes:$3                     # Filmes / FilmesVazio (BH)
+    shot $r-r23-xxxl-emcartaz -debugScreen emcartaz ${=XL}
+    shot $r-r23-xxxl-filmes -debugScreen filmes:$3 ${=XL}
+    shot $r-r23-off-emcartaz -debugScreen emcartaz ${=OFF}
+    shot $r-r23-off-filmes -debugScreen filmes:$3 ${=OFF}
+  fi
 }
 ${=W} skipOnboarding -bool YES
 ${=W} dev.simDateOn -bool YES; ${=W} dev.simSetAt -float 0; ${=W} dev.simGPSOn -bool YES
