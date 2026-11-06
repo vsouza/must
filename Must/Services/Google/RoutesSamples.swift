@@ -97,7 +97,7 @@ extension TravelOptions {
         }
         let km = DaySolver.streetKm(from, to)
         out.append(TravelOption(mode: .taxi, source: .routes, minutes: 9, meters: Int(km * 1000), departs: nil, arrives: nil,
-                                fare: region == .jp ? TaxiEstimate.jpy(km: km) : TaxiEstimate.brl(km: km), fareCurrency: region.currency))
+                                fare: TaxiEstimate.fare(km: km, region: region), fareCurrency: region.currency))
         return out
     }
 }

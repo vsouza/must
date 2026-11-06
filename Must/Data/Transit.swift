@@ -37,16 +37,15 @@ enum TransitLoader {
     @MainActor private static var cache: [Region: TransitMap] = [:]
 
     static func fileName(for region: Region) -> String {
-        switch region {
-        case .jp: "tokyo-lines"
-        case .bh: "bh-lines"
-        case .it: "roma-lines" // metrô A/B/B1/C aproximado (sem o tram 8)
-        }
+        // `transit.lines` do país (`data/countries/<cc>.json`): tokyo-lines, bh-lines, roma-lines (metrô A/B/B1/C
+        // aproximado, sem o tram 8). País sem tabela: nenhuma linha.
+        region.profile.transit?.lines ?? ""
     }
 
     @MainActor
     static func load(_ region: Region, bundle: Bundle = .main) -> TransitMap {
         if let cached = cache[region] { return cached }
+        guard !fileName(for: region).isEmpty else { cache[region] = .empty; return .empty }
         let map = bundle.url(forResource: fileName(for: region), withExtension: "geojson")
             .flatMap { try? Data(contentsOf: $0) }
             .map(parse) ?? .empty

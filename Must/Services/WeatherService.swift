@@ -66,7 +66,7 @@ struct WeatherService: WeatherProviding {
             URLQueryItem(name: "timezone", value: region.timeZone.identifier),
             URLQueryItem(name: "forecast_days", value: "16"),
         ]
-        if region == .jp { comps.queryItems?.append(URLQueryItem(name: "models", value: "jma_seamless,best_match")) }
+        if let models = region.profile.transit?.weatherModels { comps.queryItems?.append(URLQueryItem(name: "models", value: models)) }
         do {
             let data = try await http.get(comps.url!, service: "weather")
             var forecast = try Self.parse(data, timeZone: region.timeZone)

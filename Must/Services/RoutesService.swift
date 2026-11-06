@@ -81,7 +81,7 @@ enum LastTrains {
     /// Pro fim do dia em `near` (última parada).
     @MainActor
     static func home(region: Region, near: CLLocationCoordinate2D?, transit: TransitMap) -> LastTrain? {
-        if region == .bh {
+        if region.profile.transit?.lastTrainFromLine == true {
             return transit.lines.first?.lastTrain.map { LastTrain(label: "Metrô até", time: $0) }
         }
         guard let table, let near else { return nil }
