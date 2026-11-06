@@ -1,12 +1,15 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Must board",
-  "description": "Formato de importação/exportação do board. Um arquivo por região (bh, jp, it). Tudo que o app sabe de um lugar cabe aqui; o que vem do Google Places (horários, preço, placeId) é cache e pode ser nulo.",
+  "description": "Formato de importação/exportação do board. Um arquivo por viagem. Versão 2 (prompt 28): a viagem vem em tripId + countryCode (viagens criadas no app, ex. portugal-k3f9); a versão 1, com region (bh, jp, it), continua sendo lida (seeds e exports antigos). Tudo que o app sabe de um lugar cabe aqui; o que vem do Google Places (horários, preço, placeId) é cache e pode ser nulo.",
   "type": "object",
-  "required": ["version", "region", "lists", "places"],
+  "required": ["version", "lists", "places"],
+  "anyOf": [{"required": ["tripId"]}, {"required": ["region"]}],
   "properties": {
-    "version": {"const": 1},
-    "region": {"enum": ["bh", "jp", "it"]},
+    "version": {"enum": [1, 2]},
+    "tripId": {"type": "string", "pattern": "^[a-z0-9-]+$", "description": "id da viagem (bh, jp, it nas de fábrica; <slug>-<4 letras> nas criadas no app). Versão 2."},
+    "countryCode": {"type": "string", "pattern": "^[A-Z]{2}$", "description": "país da viagem, ISO 3166-1 alfa-2. Versão 2."},
+    "region": {"enum": ["bh", "jp", "it"], "description": "legado (versão 1): a viagem de fábrica do arquivo."},
     "trip": {
       "type": "object",
       "properties": {

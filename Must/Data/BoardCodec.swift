@@ -11,9 +11,9 @@ enum BoardError: LocalizedError, Equatable {
     var errorDescription: String? {
         switch self {
         case .unsupportedVersion(let v):
-            "Esse board é da versão \(v); o Must só lê a versão 1."
+            "Esse board é da versão \(v); o Must lê as versões 1 e 2."
         case .wrongRegion(let file, let current):
-            "Esse board é de \(file.displayName), mas a região atual é \(current.displayName). Troque a região no menu escondido antes de importar."
+            "Esse board é de \(file.displayName), mas a viagem aberta é \(current.displayName). Troque de viagem (Minhas viagens) antes de importar."
         case .unknownList(let place, let list):
             "O lugar “\(place)” aponta pra lista “\(list)”, que não existe no arquivo nem no board."
         case .unreadable(let detail):
@@ -85,7 +85,7 @@ struct BoardCodec {
     /// - `merge: false`: os campos do arquivo substituem os do aparelho.
     @discardableResult
     func `import`(board: Board, merge: Bool = true) throws -> ImportSummary {
-        guard board.version == 1 else { throw BoardError.unsupportedVersion(board.version) }
+        guard Board.readableVersions.contains(board.version) else { throw BoardError.unsupportedVersion(board.version) }
         guard board.region == region else { throw BoardError.wrongRegion(file: board.region, current: region) }
 
         var summary = ImportSummary()
@@ -368,7 +368,7 @@ struct BoardCodec {
         }
 
         return Board(
-            version: 1,
+            version: Board.currentVersion,
             region: region,
             trip: boardTrip,
             budget: BoardBudget(perDay: settings.perDayBudget, currency: region.currency,

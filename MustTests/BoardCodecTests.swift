@@ -153,6 +153,54 @@ struct BoardCodecTests {
         #expect(city.currency == "BRL")
     }
 
+    // MARK: Schema v2 (prompt 28): tripId + countryCode; v1 com region continua lido
+
+    @Test func arquivoAntigoComRegionAindaEntra() throws {
+        let json = #"{"version": 1, "region": "it", "lists": [], "places": []}"#
+        let board = try BoardCodec.decode(Data(json.utf8))
+        #expect(board.version == 1)
+        #expect(board.region == .it)
+        let codec = try Self.makeCodec(.it)
+        #expect(throws: Never.self) { try codec.import(board: board) }
+    }
+
+    @Test func arquivoNovoComTripId() throws {
+        let json = #"{"version": 2, "tripId": "jp", "countryCode": "JP", "lists": [], "places": []}"#
+        let board = try BoardCodec.decode(Data(json.utf8))
+        #expect(board.region == .jp)
+        #expect(board.version == 2)
+    }
+
+    @Test func exportGravaV2ComTripIdEPais() throws {
+        let codec = try Self.makeCodec(.bh)
+        try codec.import(board: Self.seed(.bh))
+        let data = try BoardCodec.encode(codec.export())
+        let object = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+        #expect(object["version"] as? Int == 2)
+        #expect(object["tripId"] as? String == "bh")
+        #expect(object["countryCode"] as? String == "BR")
+        #expect(object["region"] == nil)
+        // E relê igual.
+        #expect(try BoardCodec.decode(data).region == .bh)
+    }
+
+    @Test func viagemDesconhecidaNaoEntraNaAberta() throws {
+        let json = #"{"version": 2, "tripId": "franca-ab12", "countryCode": "FR", "lists": [], "places": []}"#
+        let board = try BoardCodec.decode(Data(json.utf8))
+        #expect(board.region.rawValue == "franca-ab12")
+        #expect(board.region.country == "FR")
+        let codec = try Self.makeCodec(.bh)
+        #expect(throws: BoardError.self) { try codec.import(board: board) }
+    }
+
+    @Test func semViagemNenhumaEhErroDeLeitura() {
+        #expect(throws: BoardError.self) { try BoardCodec.decode(Data(#"{"version": 2, "lists": [], "places": []}"#.utf8)) }
+        #expect(throws: BoardError.unsupportedVersion(3)) {
+            let board = try BoardCodec.decode(Data(#"{"version": 3, "tripId": "bh", "lists": [], "places": []}"#.utf8))
+            try Self.makeCodec(.bh).import(board: board)
+        }
+    }
+
     @Test func wrongRegionIsRejected() throws {
         let codec = try Self.makeCodec(.bh)
         #expect(throws: BoardError.wrongRegion(file: .jp, current: .bh)) {
