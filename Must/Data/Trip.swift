@@ -131,7 +131,9 @@ enum BuiltInTrip {
     /// 11–24 nov 2026, Tóquio → Kyoto → Tóquio (`CLAUDE.md`).
     static let jp = Trip(id: "jp", name: "Japão", shortName: "Japão", countryCode: "JP", currency: "JPY",
                          timeZone: "Asia/Tokyo", colorHex: nil, kind: .trip, start: "2026-11-11", end: "2026-11-24",
-                         cities: [.init(id: "tokyo1", name: "Tóquio", lat: 35.6762, lng: 139.6503, tz: "Asia/Tokyo")],
+                         cities: [.init(id: "tokyo1", name: "Tóquio", lat: 35.6762, lng: 139.6503, tz: "Asia/Tokyo"),
+                                  .init(id: "kyoto", name: "Kyoto", lat: 35.0116, lng: 135.7681, tz: "Asia/Tokyo"),
+                                  .init(id: "tokyo2", name: "Tóquio", lat: 35.6762, lng: 139.6503, tz: "Asia/Tokyo")],
                          home: nil, createdAt: createdAt.addingTimeInterval(-2), archived: false, seedId: "jp")
 
     /// Datas [A CONFIRMAR] (prompt 24): fica em plano, sem datas no registro.

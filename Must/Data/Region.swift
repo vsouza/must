@@ -1,20 +1,45 @@
 import CoreLocation
 import Foundation
 
-/// Uma região por vez. Cada uma tem o próprio container, moeda, fuso, cidades, board e gastos.
-enum Region: String, CaseIterable, Codable, Sendable, Identifiable {
-    /// `it`: Roma (prompt 24), terceira região — EUR, `Europe/Rome`, container `must-it.store`, seed `seed-it.json`.
-    case bh, jp, it
+/// A viagem aberta (prompt 28): o que a UI lê de uma viagem — a `Trip` do registro e o `CountryProfile` do país.
+/// Era o `enum Region` (bh | jp | it); virou valor pra que viagens criadas no app (`must-<slug>-<4 letras>.store`)
+/// funcionem igual. `.bh`, `.jp` e `.it` continuam existindo como as viagens de fábrica, com os mesmos ids, arquivos e
+/// chaves de UserDefaults (`onboarded.<id>`, `region`). Igualdade e hash pelo id; Codable como o id (`"jp"`).
+struct Region: RawRepresentable, Hashable, Codable, Sendable, Identifiable, CaseIterable {
+    let trip: Trip
+    /// O que muda por país (`data/countries/<cc>.json`); genérico quando o país não tem arquivo.
+    let profile: CountryProfile
+    let timeZone: TimeZone
 
-    var id: String { rawValue }
+    init(trip: Trip) {
+        self.trip = trip
+        profile = CountryProfile.forCountry(trip.countryCode, currency: trip.currency, timeZone: trip.timeZone)
+        timeZone = trip.tz
+    }
+
+    /// Id de viagem: as de fábrica e as do registro já lido neste processo (`KnownTrips`). Desconhecido: `nil`.
+    init?(rawValue: String) {
+        guard let trip = KnownTrips.shared.trip(rawValue) ?? BuiltInTrip.trip(rawValue) else { return nil }
+        self.init(trip: trip)
+    }
+
+    /// Belo Horizonte (casa), `must-bh.store`, seed `seed-bh.json`.
+    static let bh = Region(trip: BuiltInTrip.bh)
+    /// Japão, 11–24 nov 2026, `must-jp.store`.
+    static let jp = Region(trip: BuiltInTrip.jp)
+    /// `it`: Roma (prompt 24), EUR, `Europe/Rome`, container `must-it.store`, seed `seed-it.json`.
+    static let it = Region(trip: BuiltInTrip.it)
+
+    /// As de fábrica (os prints, o menu escondido e os testes). A lista de viagens de verdade é `TripStore.trips`.
+    static var allCases: [Region] { [.bh, .jp, .it] }
+
+    var rawValue: String { trip.id }
+    var id: String { trip.id }
+
+    static func == (a: Region, b: Region) -> Bool { a.trip.id == b.trip.id }
+    func hash(into hasher: inout Hasher) { hasher.combine(trip.id) }
 
     static let appGroup = "group.dev.viniso.must"
-
-    /// A viagem de fábrica desta região (prompt 28: o registro `trips.json` é semeado com estas).
-    var trip: Trip { KnownTrips.shared.trip(rawValue) ?? BuiltInTrip.trip(rawValue)! }
-
-    /// O que muda por país (`data/countries/<cc>.json`).
-    var profile: CountryProfile { CountryProfile.forCountry(country, currency: currency, timeZone: trip.timeZone) }
 
     var displayName: String { trip.name }
 
@@ -26,7 +51,7 @@ enum Region: String, CaseIterable, Codable, Sendable, Identifiable {
     var countryName: String { profile.name }
 
     /// País da região (ISO 3166-1 alfa-2): a bandeira e o tom da viagem vêm daqui (`TripTheme`).
-    var country: String { BuiltInTrip.trip(rawValue)?.countryCode ?? trip.countryCode }
+    var country: String { trip.countryCode.uppercased() }
 
     /// Código ISO 4217.
     var currency: String { trip.currency }
@@ -35,8 +60,6 @@ enum Region: String, CaseIterable, Codable, Sendable, Identifiable {
 
     /// A UI é sempre pt-BR; o locale define separadores e formato de data.
     var locale: Locale { Locale(identifier: "pt_BR") }
-
-    var timeZone: TimeZone { trip.tz }
 
     /// Cor de destaque da região (sheet Região).
     var color: MustColor { country == "BR" ? .eat : .drink }
@@ -87,9 +110,10 @@ enum Region: String, CaseIterable, Codable, Sendable, Identifiable {
         return URL.applicationSupportDirectory
     }
 
-    /// `seed-<região>.json` no bundle.
+    /// `seed-<região>.json` no bundle. Só as de fábrica têm seed; viagem criada no app nasce vazia (prompt 28 §3.8).
     func seedURL(in bundle: Bundle = .main) -> URL? {
-        bundle.url(forResource: "seed-\(rawValue)", withExtension: "json")
+        guard let seed = trip.seedId else { return nil }
+        return bundle.url(forResource: "seed-\(seed)", withExtension: "json")
     }
 
     /// "-03:00" / "+09:00"

@@ -41,7 +41,7 @@ struct RegionSheet: View {
                     .padding(.top, 20)
                     .padding(.bottom, 14)
 
-                    ForEach(Region.allCases) { region in
+                    ForEach(store.trips.map(Region.init(trip:))) { region in
                         RegionOption(region: region, selected: region == store.region,
                                      subtitle: subtitle(for: region)) { select(region) }
                     }
@@ -139,6 +139,11 @@ struct RegionSheet: View {
                 text += " · abr 2027 a confirmar"
             }
             return text
+        default:
+            // Viagem criada no app (prompt 28).
+            var text = "board \(region.displayName) · \(region.currencySymbol)"
+            if let range = region.trip.range { text += " · \(TripSwitcherModel.rangeText(range, region: region))" }
+            return text + (store.region == region ? " · agora" : "")
         }
     }
 
@@ -212,7 +217,7 @@ struct RegionSheet: View {
         switch store.region {
         case .jp: (day, label) = ("2026-11-15", "15 nov 10:00")
         case .it: (day, label) = ("2027-04-14", "14 abr 10:00")
-        case .bh: return nil
+        default: return nil
         }
         let dates = BoardDates(timeZone: store.region.timeZone)
         guard let start = dates.day(from: day), let at = dates.time("10:00", on: start) else { return nil }
