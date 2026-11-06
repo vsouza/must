@@ -139,7 +139,7 @@ struct MontarView: View {
         Task { await p.prefetchTravel(catalog: places.solverCatalog, trip: trips.first, settings: settingsList.first,
                                       location: services.location.current, flights: dayFlights(p)) }
         #if DEBUG
-        if let screen = DebugFlags.string("debugScreen"), ["proposta", "trocar"].contains(screen) {
+        if let screen = DebugFlags.string("debugScreen"), ["proposta", "trocar", "outra"].contains(screen) {
             Task { await generate(p) }
         }
         #endif
@@ -158,8 +158,18 @@ struct MontarView: View {
         p.build(catalog: places.solverCatalog, trip: trips.first, settings: settingsList.first,
                 location: services.location.current, flights: dayFlights(p))
         let until = region.calendar.date(byAdding: .minute, value: untilMinutes, to: p.date) ?? p.date
-        generated = await engine.build(on: p.date, area: area, pace: pace, budget: p.budget, until: until, includes: includes)
+        generated = await engine.build(on: p.date, area: area, pace: pace, budget: p.budget, until: until, includes: includes,
+                                       seed: p.seed)
         showProposal = true
+    }
+
+    /// "Outra" da proposta: semente nova no solver (o Trocar e o Aceitar usam ele) e no motor (o que a tela mostra).
+    private func another(_ p: DayPlanner) async {
+        p.reshuffle(catalog: places.solverCatalog, trip: trips.first, settings: settingsList.first,
+                    location: services.location.current, flights: dayFlights(p))
+        let until = region.calendar.date(byAdding: .minute, value: untilMinutes, to: p.date) ?? p.date
+        generated = await engine.build(on: p.date, area: area, pace: pace, budget: p.budget, until: until, includes: includes,
+                                       seed: p.seed)
     }
 
     private func parse(_ p: DayPlanner) async {
@@ -210,7 +220,7 @@ struct MontarView: View {
             .ignoresSafeArea()
         }
         .navigationDestination(isPresented: $showProposal) {
-            ProposalView(planner: planner, plan: generated).toolbar(.hidden, for: .navigationBar)
+            ProposalView(planner: planner, plan: generated, another: { await another(planner) }).toolbar(.hidden, for: .navigationBar)
         }
         .sheet(isPresented: $editingStart) { startSheet(planner) }
     }

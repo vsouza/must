@@ -53,6 +53,7 @@ v8shots() { # $1 = prefixo (jp|bh|it), $2 = lugar de exemplo, $3 = museu de exem
   shot $r-v8-dia -debugScreen dia                   # 04 Dia / DiaIT                   (C)
   shot $r-v8-montar -debugScreen montar             # 05 Montar                        (C)
   WAIT=9 shot $r-v8-proposta -debugScreen proposta  # 05b Montar › Gerar (proposta)    (C)
+  WAIT=11 shot $r-v8-outra -debugScreen outra        # 05c proposta › Outra: o que mudou (destaque + resumo)
   shot $r-v8-guia -debugScreen guia                 # 06 Guia                          (D)
   shot $r-v8-dicas -debugScreen dicas               # 07 Dicas                         (D)
   shot $r-v8-bolso -debugScreen bolso               # 08 Utilidades / BolsoIT          (D)

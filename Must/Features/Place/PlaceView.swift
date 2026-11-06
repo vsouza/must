@@ -453,8 +453,8 @@ struct PlaceView: View {
             let mode = leg.mode == .walk ? "a pé" : (region == .it ? "bus/metrô" : "metrô")
             cells.append(.init(label: "saia de \(origin.name)", value: "\(region.timeString(leave)) · \(mode)"))
         }
-        if let price = place.price, price > 0 {
-            cells.append(.init(label: "ingresso", value: region.money(price)))
+        if let cost = PlaceFicha.cost(place, region: region, now: now) {
+            cells.append(.init(label: "ingresso", value: cost.value))
         }
         return cells
     }
@@ -470,7 +470,8 @@ struct PlaceView: View {
                             Text(cell.value)
                                 .font(V8Font.text(17, weight: .semibold))
                                 .foregroundStyle(onInk ? V8.white : V8.ink)
-                                .lineLimit(1)
+                                // O custo pode ter inteira, meia e o dia grátis: até 2 linhas.
+                                .lineLimit(["entrada", "ingresso"].contains(cell.label) ? 2 : 1)
                                 .truncationMode(.tail)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)

@@ -9,6 +9,9 @@ struct ProposalView: View {
     @Bindable var planner: DayPlanner
     /// Dia do motor (`DayEngine.build`). `nil` = mostra as paradas do solver.
     var plan: DayPlan?
+    /// "Outra": o Montar embaralha o solver e remonta o dia do motor com a semente nova (atualiza `plan`).
+    /// `nil` (prints, testes) = só o solver.
+    var another: (() async -> Void)? = nil
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
@@ -26,6 +29,14 @@ struct ProposalView: View {
     @State private var swapped = false
     @Environment(\.dayEngine) private var engine
     @State private var error: String?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// "Outra" montando (o motor pode esperar até 2 s pelos tempos reais).
+    @State private var rolling = false
+    /// Paradas que entraram ou mudaram de lugar na última troca: destacadas por uns segundos.
+    @State private var changed: Set<String> = []
+    /// "2 trocas · entrou Fuunji · saiu Afuri" (fica até a próxima troca).
+    @State private var changeNote: ProposalDiff?
+    @State private var highlightGeneration = 0
 
     private var region: Region { store.region }
 
@@ -54,13 +65,19 @@ struct ProposalView: View {
                 .accessibilityElement(children: .combine)
                 if let shown {
                     Text(shown.title).font(V8Font.text(15)).foregroundStyle(V8.mute).padding(.top, 2)
+                    if let changeNote { ChangeBanner(diff: changeNote).padding(.top, 16).transition(.opacity) }
                     VStack(alignment: .leading, spacing: 6) {
                         if shown.stops.isEmpty {
                             Text("Nada coube nesse pedido: troque o bairro ou o ritmo.").font(V8Font.text(15)).foregroundStyle(V8.mute)
                         }
                         ForEach(Array(shown.stops.enumerated()), id: \.element.id) { i, stop in
-                            DayStopRow(stop: stop, index: i + 1, state: .upcoming, region: region, onTap: swapAction(stop))
-                            if let leg = shown.leg(after: stop) { DayLegRow(leg: leg) }
+                            VStack(alignment: .leading, spacing: 6) {
+                                DayStopRow(stop: stop, index: i + 1, state: .upcoming, region: region, onTap: swapAction(stop))
+                                    .changeHighlight(changed.contains(stop.id))
+                                if let leg = shown.leg(after: stop) { DayLegRow(leg: leg) }
+                            }
+                            .transition(reduceMotion ? .opacity
+                                        : .asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity), removal: .opacity))
                         }
                         if let last = shown.lastTrain {
                             DayLegRow(leg: DayLeg(mode: .train, minutes: 0, from: "", to: "",
@@ -69,6 +86,7 @@ struct ProposalView: View {
                         }
                     }
                     .padding(.top, 22)
+                    .animation(reduceMotion ? .easeInOut(duration: 0.2) : .snappy(duration: 0.45), value: shown.stops.map(\.id))
                 }
                 if let explanation = planner.proposal?.explanation, !explanation.isEmpty {
                     Text(explanation)
@@ -86,12 +104,17 @@ struct ProposalView: View {
             .padding(.horizontal, 20)
         }
         .scrollIndicators(.hidden)
+        .onChange(of: shown?.stops ?? []) { old, new in markChanges(from: old, to: new) }
         .overlay(alignment: .bottom) { actions }
         .background(V8.paper.ignoresSafeArea())
         #if DEBUG
         .onAppear {
             if DebugFlags.string("debugScreen") == "trocar" {
                 swapping = planner.proposal?.stops.first { $0.place.role == .eat && !$0.isAnchor }
+            }
+            // Prints do "Outra" (o que mudou): aperta sozinho depois de 1,5 s.
+            if DebugFlags.string("debugScreen") == "outra" {
+                Task { try? await Task.sleep(for: .seconds(1.5)); anotherDay() }
             }
         }
         #endif
@@ -128,13 +151,10 @@ struct ProposalView: View {
 
     private var actions: some View {
         HStack(spacing: 10) {
-            BigButton(title: "Outra", style: .line, systemImage: "arrow.triangle.2.circlepath", lineColor: V8.ink, lineFill: V8.paper) {
-                withAnimation(.snappy) {
-                    planner.reshuffle(catalog: places.solverCatalog, trip: trips.first, settings: settingsList.first,
-                                      location: services.location.current, flights: FlightRules.dayFlights(flights, on: planner.date, region: region))
-                }
-            }
+            BigButton(title: rolling ? "Montando…" : "Outra", style: .line, systemImage: rolling ? nil : "arrow.triangle.2.circlepath",
+                      lineColor: V8.ink, lineFill: V8.paper) { anotherDay() }
             .frame(maxWidth: 140)
+            .disabled(rolling)
             BigButton(title: "Aceitar o dia", style: .orange, systemImage: "checkmark") { accept() }
                 .disabled(planner.proposal?.stops.isEmpty ?? true)
         }
@@ -145,6 +165,39 @@ struct ProposalView: View {
             LinearGradient(colors: [V8.paper.opacity(0), V8.paper], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.25))
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
+        }
+    }
+
+    /// "Outra": embaralha e remonta; a troca aparece com a animação das linhas (`markChanges`).
+    private func anotherDay() {
+        if let another {
+            rolling = true
+            Task {
+                await another()
+                swapped = false // o dia novo do motor já é o da semente nova (o solver do planner bate com ele)
+                rolling = false
+            }
+        } else {
+            planner.reshuffle(catalog: places.solverCatalog, trip: trips.first, settings: settingsList.first,
+                              location: services.location.current, flights: FlightRules.dayFlights(flights, on: planner.date, region: region))
+            if plan != nil { swapped = true }
+        }
+    }
+
+    /// Compara as paradas de antes e depois: destaca o que entrou/mudou e escreve o resumo da troca.
+    private func markChanges(from old: [DayStop], to new: [DayStop]) {
+        guard !old.isEmpty else { return }
+        let diff = ProposalDiff(old: old, new: new)
+        changed = diff.changedIds
+        withAnimation(.easeOut(duration: 0.25)) { changeNote = diff }
+        if diff.changedIds.isEmpty { return }
+        UIAccessibility.post(notification: .announcement, argument: diff.spoken)
+        highlightGeneration += 1
+        let generation = highlightGeneration
+        Task {
+            try? await Task.sleep(for: .seconds(2.6))
+            guard generation == highlightGeneration else { return }
+            withAnimation(.easeOut(duration: 0.8)) { changed = [] }
         }
     }
 
@@ -291,4 +344,100 @@ struct SwapSheet: View {
         }
     }
 
+}
+
+/// O que mudou entre duas propostas (o "Outra" ou um Trocar): paradas que entraram, saíram ou trocaram de lugar.
+/// Puro, pra teste. Compara por id da linha (`p-<lugar>`, `m-<tipo>`) e pelo lugar dentro dela (o café da manhã pode
+/// ser outro café com o mesmo id de micro-parada).
+struct ProposalDiff: Equatable, Sendable {
+    /// Ids (na proposta nova) das linhas que entraram ou trocaram de lugar.
+    var changedIds: Set<String>
+    var added: [String]
+    var removed: [String]
+
+    init(old: [DayStop], new: [DayStop]) {
+        let before = Dictionary(old.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        let after = Set(new.map(\.id))
+        let fresh = new.filter { stop in
+            guard let was = before[stop.id] else { return true }
+            return was.placeId != stop.placeId || was.label != stop.label
+        }
+        changedIds = Set(fresh.map(\.id))
+        added = fresh.filter { $0.kind != .micro }.map { Self.short($0.label) }
+        let replacedMicro = Set(fresh.map(\.id))
+        removed = old.filter { stop in
+            (!after.contains(stop.id) || replacedMicro.contains(stop.id)) && stop.kind != .micro
+        }.map { Self.short($0.label) }
+    }
+
+    /// "Fuunji · tsukemen" → "Fuunji".
+    static func short(_ label: String) -> String {
+        label.components(separatedBy: " · ").first ?? label
+    }
+
+    var count: Int { changedIds.count }
+
+    /// "Mesmo dia · nada melhor com esse pedido" / "2 trocas".
+    var title: String {
+        switch count {
+        case 0: "Mesmo dia · nada melhor com esse pedido"
+        case 1: "1 troca"
+        default: "\(count) trocas"
+        }
+    }
+
+    /// "entrou Fuunji, Afuri · saiu Ichiran"
+    var detail: String? {
+        var parts: [String] = []
+        if !added.isEmpty { parts.append("entrou " + added.prefix(3).joined(separator: ", ") + (added.count > 3 ? "…" : "")) }
+        if !removed.isEmpty { parts.append("saiu " + removed.prefix(3).joined(separator: ", ") + (removed.count > 3 ? "…" : "")) }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    }
+
+    var spoken: String { [title, detail].compactMap { $0 }.joined(separator: ". ") }
+}
+
+/// Resumo da troca acima da linha: laranja quando mudou algo, cinza quando o dia ficou igual.
+private struct ChangeBanner: View {
+    var diff: ProposalDiff
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: diff.count == 0 ? "equal" : "arrow.triangle.2.circlepath")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(diff.count == 0 ? V8.mute : V8.orange)
+                .padding(.top, 2)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(diff.title.uppercased()).font(V8Font.mono(11)).tracking(1.1).foregroundStyle(V8.ink)
+                if let detail = diff.detail {
+                    Text(detail).font(V8Font.text(14)).foregroundStyle(V8.mute)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(RoundedRectangle(cornerRadius: 16, style: .continuous)
+            .strokeBorder(diff.count == 0 ? V8.ink.opacity(0.14) : V8.orange.opacity(0.7), lineWidth: 1))
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private extension View {
+    /// Linha que acabou de entrar: fundo laranja leve e um filete na esquerda, que somem devagar.
+    func changeHighlight(_ on: Bool) -> some View {
+        padding(.vertical, on ? 4 : 0)
+            .background(alignment: .leading) {
+                if on {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(V8.orange.opacity(0.12))
+                        .overlay(alignment: .leading) {
+                            Capsule().fill(V8.orange).frame(width: 3).padding(.vertical, 6)
+                        }
+                        .padding(.horizontal, -8)
+                        .transition(.opacity)
+                }
+            }
+    }
 }
