@@ -296,7 +296,7 @@ struct TicketRevisarView: View {
 
     /// Valor em reais/ienes inteiro: "24.000" → 24000 (separador de milhar não conta).
     private func price() -> Binding<String> {
-        Binding(get: { model.draft?.price.map { String(Int($0.rounded())) } ?? "" },
+        Binding(get: { NumberInput.intText(model.draft?.price) },
                 set: { value in
                     let amount = TicketMoney.parse(value)
                     model.edit(.price) { $0.price = value.isEmpty ? nil : amount }

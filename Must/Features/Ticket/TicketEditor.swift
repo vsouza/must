@@ -172,7 +172,7 @@ struct TicketEditor: View {
         // Minuto inteiro: o board guarda ISO sem fração.
         let c = region.calendar.dateComponents([.year, .month, .day, .hour, .minute], from: at)
         let when = region.calendar.date(from: c) ?? at
-        let paid = Double(paidText.filter { $0.isNumber || $0 == "," }.replacingOccurrences(of: ",", with: "."))
+        let paid = NumberInput.double(paidText.filter { ($0.isASCII && $0.isNumber) || $0 == "," }.replacingOccurrences(of: ",", with: "."))
         let trimmed = { (s: String) in s.trimmingCharacters(in: .whitespacesAndNewlines) }
         let cancelValue = hasCancel ? region.calendar.date(from: region.calendar.dateComponents([.year, .month, .day, .hour, .minute], from: cancelUntil)) : nil
         let result = Ticket(id: ticket?.id ?? UUID().uuidString, at: when, sessionId: sessionId,

@@ -16,7 +16,8 @@ struct ListView: View {
     @Environment(\.modelContext) private var context
 
     @Query(sort: \MustList.order) private var lists: [MustList]
-    @Query(sort: \Place.name) private var allPlaces: [Place]
+    /// Só os "fica pro fim" (o resto vem de `list.places`): antes era o board inteiro, ordenado, a cada redesenho (rodada 23 · G).
+    @Query(filter: #Predicate<Place> { $0.saveForEnd }, sort: \Place.name) private var saveForEndPlaces: [Place]
     @Query private var trips: [TripInfo]
     @Query private var settingsList: [Settings]
 
@@ -43,16 +44,18 @@ struct ListView: View {
     private var list: MustList? { lists.first { $0.id == listId } }
 
     private var basePlaces: [Place] {
-        if saveForEndOnly { return allPlaces.filter(\.saveForEnd) }
+        if saveForEndOnly { return saveForEndPlaces }
         guard let list else { return [] }
         return list.places.filter { sub == nil || $0.sub == sub }
     }
 
     var body: some View {
         let location = services.location.current
-        let snapshot = openNow.snapshot(for: basePlaces, now: now, timeZone: region.timeZone, location: location)
+        // Uma leitura da relação por redesenho (antes `basePlaces` era recalculado seis vezes no mesmo `body`).
+        let base = basePlaces
+        let snapshot = openNow.snapshot(for: base, now: now, timeZone: region.timeZone, location: location)
         let cheapLimit = (settingsList.first?.perDayBudget ?? region.defaultBudget) * 0.35
-        let visible = basePlaces.filter { place in
+        let visible = base.filter { place in
             if openOnly && !snapshot.isOpen(place.id) { return false }
             if cheapOnly, (place.price ?? 0) > cheapLimit { return false }
             return true
@@ -60,11 +63,11 @@ struct ListView: View {
         let currentPlaceId = currentStopPlaceId()
         let groups = ListGrouping.groups(places: visible, region: region, location: location, nearSort: nearSort, pinned: currentPlaceId,
                                          distance: { snapshot.distance($0) }, isOpen: { snapshot.isOpen($0) })
-        let showPhotos = !noPhotos && basePlaces.count <= Self.photoLimit
+        let showPhotos = !noPhotos && base.count <= Self.photoLimit
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 0) {
-                header(open: basePlaces.filter { snapshot.isOpen($0.id) }.count).padding(.top, 8)
-                titleRow.padding(.top, 22)
+                header(count: base.count, open: base.filter { snapshot.isOpen($0.id) }.count).padding(.top, 8)
+                titleRow(count: base.count).padding(.top, 22)
                 if !saveForEndOnly { filters.padding(.top, 20) }
                 ForEach(groups) { group in
                     groupHeader(group).padding(.top, 28)
@@ -73,7 +76,7 @@ struct ListView: View {
                             + (group.places.firstIndex { $0.id == place.id } ?? 0) + 1
                         Button { router.push(.place(id: place.id), on: router.tab) } label: {
                             ListPlaceRow(index: "\(number)", place: place, meta: ListGrouping.meta(place, region: region),
-                                         state: state(place, open: snapshot.isOpen(place.id), currentPlaceId: currentPlaceId),
+                                         state: state(place, openState: snapshot.states[place.id], currentPlaceId: currentPlaceId),
                                          trailing: trailing(place, distance: snapshot.distance(place.id)), showPhoto: showPhotos)
                         }
                         .buttonStyle(.plain)
@@ -94,18 +97,18 @@ struct ListView: View {
 
     // MARK: Topo
 
-    private func header(open: Int) -> some View {
+    private func header(count: Int, open: Int) -> some View {
         let listName = saveForEndOnly ? "fica pro fim" : (list?.displayName ?? "")
         let city = trips.first?.city(on: now, calendar: region.calendar)?.name ?? region.shortName
         return HStack(alignment: .top) {
             V8CornerButton(systemName: "chevron.left", label: "Voltar") { dismiss() }
             Spacer(minLength: 12)
-            V8SpecStack(lines: ["\(listName) · \(city)", "\(basePlaces.count) lugares · \(open) abertos"], alignment: .trailing)
+            V8SpecStack(lines: ["\(listName) · \(city)", "\(count) lugares · \(open) abertos"], alignment: .trailing)
                 .padding(.top, 14)
         }
     }
 
-    private var titleRow: some View {
+    private func titleRow(count: Int) -> some View {
         HStack(alignment: .lastTextBaseline, spacing: 10) {
             Text(saveForEndOnly ? "Fica pro fim" : (sub ?? list?.name.capitalized ?? "Lista"))
                 .font(V8Font.display(52))
@@ -114,7 +117,7 @@ struct ListView: View {
                 .lineLimit(2)
                 .minimumScaleFactor(0.6)
                 .accessibilityAddTraits(.isHeader)
-            BigNumeral("\(basePlaces.count)", size: 74, color: V8.orange)
+            BigNumeral("\(count)", size: 74, color: V8.orange)
             SpecLabel("por bairro").padding(.bottom, 10)
         }
     }
@@ -170,12 +173,12 @@ struct ListView: View {
         return dayEngine.now(in: plan, at: now)?.current.placeId
     }
 
-    private func state(_ place: Place, open: Bool, currentPlaceId: String?) -> IndexRowState {
+    /// `openState` vem do `OpenNowIndex` (já calculado no minuto): a linha não relê o horário de cada lugar ao rolar.
+    private func state(_ place: Place, openState: OpenState?, currentPlaceId: String?) -> IndexRowState {
         if place.isDone { return .done }
         if place.id == currentPlaceId { return .now }
         if let r = place.reservation, region.calendar.isDate(r.at, inSameDayAs: now), r.at > now { return .reservation(region.timeString(r.at)) }
-        if open { return .open }
-        switch place.openState(at: now, timeZone: region.timeZone) {
+        switch openState ?? place.openState(at: now, timeZone: region.timeZone) {
         case .closed(_, let time): return time.map { .opensAt(ListGrouping.hourLabel($0)) } ?? .closed
         case .open: return .open
         case .unknown: return .none

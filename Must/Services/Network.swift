@@ -184,18 +184,13 @@ struct HTTP: Sendable {
     }
 
     private func fetchOnce(_ request: URLRequest, service: String) async throws -> Data {
-        #if DEBUG
-        // `-debugNetwork slow`: 3 s de latência e 30% de falha por tentativa (pra ver a UI sem travar).
-        if DebugFlags.string("debugNetwork") == "slow" {
-            try await pause(.seconds(3))
-            if Double.random(in: 0..<1) < 0.3 { throw URLError(.timedOut) }
-        }
-        #endif
         let started = Date()
         let data: Data
         let response: URLResponse
+        let session = activeSession
         do {
-            (data, response) = try await activeSession.data(for: request)
+            // `-debugNetwork slow|flaky|dropping` (DEBUG): latência, falha, resposta cortada (`NetworkChaos`).
+            (data, response) = try await NetworkChaos.perform(request, pause: pause) { try await session.data(for: request) }
         } catch let error as URLError where error.code == .notConnectedToInternet {
             throw ServiceError.offline
         }

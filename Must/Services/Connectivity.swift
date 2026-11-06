@@ -8,6 +8,7 @@ import Synchronization
 /// estado num cofre thread-safe (`current`), que o `HTTP` lê de qualquer thread antes de sair.
 /// `-debugNetwork offline` força offline (simulador); `slow` fica no `HTTP` (latência e falha).
 /// `-debugNetwork wifi` e `celular` fingem o tipo de rede (prompt 18 · A.5: pré-download só no Wi-Fi).
+/// `-debugNetwork dropping` (rodada 23 · G) alterna online/offline a cada `-debugNetworkPeriod` s (`NetworkChaos`).
 @MainActor
 @Observable
 final class Connectivity {
@@ -41,10 +42,37 @@ final class Connectivity {
         isExpensive = mode == "celular"
         if mode == "offline" { Self.mirror.withLock { $0 = .offline } }
         if mode == "wifi" { Self.mirrorWiFi.withLock { $0 = true } }
+        dropping = mode == "dropping" && !DebugFlags.isTestHost
+    }
+
+    /// `-debugNetwork dropping`: o estado segue o relógio do `NetworkChaos`, não o `NWPathMonitor`.
+    @ObservationIgnored private let dropping: Bool
+    @ObservationIgnored private var dropTask: Task<Void, Never>?
+
+    private func startDropping() {
+        guard dropTask == nil else { return }
+        dropTask = Task { @MainActor [weak self] in
+            while !Task.isCancelled {
+                let next: Status = NetworkChaos.droppingIsOffline() ? .offline : .online
+                self?.applyDropping(next)
+                try? await Task.sleep(for: .milliseconds(250))
+            }
+        }
+    }
+
+    private func applyDropping(_ next: Status) {
+        if status != next {
+            Log.network.info("debugNetwork dropping → \(next.rawValue, privacy: .public)")
+            status = next
+        }
+        isWiFi = next == .online
+        Self.mirror.withLock { $0 = next }
+        Self.mirrorWiFi.withLock { $0 = next == .online }
     }
 
     /// Liga o monitor (uma vez). Com `-debugNetwork` forçado não liga: o estado fica travado.
     func start() {
+        if dropping { startDropping(); return }
         guard monitor == nil, !forced, !DebugFlags.isTestHost else { return }
         let path = NWPathMonitor()
         path.pathUpdateHandler = { update in
@@ -58,13 +86,15 @@ final class Connectivity {
     }
 
     func stop() {
+        dropTask?.cancel()
+        dropTask = nil
         monitor?.cancel()
         monitor = nil
     }
 
     /// Só o caminho de atualização (e o teste) chamam isto.
     func apply(_ next: Status, expensive: Bool, wifi: Bool) {
-        guard !forced else { return }
+        guard !forced, !dropping else { return }
         if status != next { status = next }
         if isExpensive != expensive { isExpensive = expensive }
         if isWiFi != wifi { isWiFi = wifi }

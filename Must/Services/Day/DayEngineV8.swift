@@ -1,6 +1,7 @@
 import CoreLocation
 import Foundation
 import SwiftData
+import Synchronization
 
 /// Pedido do Montar v8, como o motor recebe.
 struct DayAsk: Sendable, Hashable {
@@ -347,10 +348,20 @@ struct DayPlanPrefs: Codable, Hashable, Sendable {
     }
 
     static func load(region: Region, date: Date, defaults: UserDefaults = .standard) -> DayPlanPrefs {
-        guard let data = defaults.data(forKey: key(region: region, date: date)),
-              let prefs = try? JSONDecoder().decode(DayPlanPrefs.self, from: data) else { return DayPlanPrefs() }
+        let key = key(region: region, date: date)
+        guard let data = defaults.data(forKey: key) else { return DayPlanPrefs() }
+        // A Lista, a capa e a Linha leem isto no `body` (via `DayEngine.plan`): decodificar o dia inteiro (alguns KB) a cada
+        // redesenho é o "JSON no body" que a premissa proíbe. Memo pelo próprio dado (rodada 23 · G): mudou, decodifica.
+        if let hit = decoded.withLock({ $0[key] }), hit.data == data { return hit.prefs }
+        guard let prefs = try? JSONDecoder().decode(DayPlanPrefs.self, from: data) else { return DayPlanPrefs() }
+        decoded.withLock { cache in
+            if cache.count > 16 { cache.removeAll() }
+            cache[key] = (data, prefs)
+        }
         return prefs
     }
+
+    private static let decoded = Mutex<[String: (data: Data, prefs: DayPlanPrefs)]>([:])
 
     static func save(_ prefs: DayPlanPrefs, region: Region, date: Date, defaults: UserDefaults = .standard) {
         guard let data = try? JSONEncoder().encode(prefs) else { return }

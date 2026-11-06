@@ -238,7 +238,9 @@ struct TripView: View {
 
     private func cityCard(_ city: City, trip: TripInfo, isCurrent: Bool, isLast: Bool, index: Int) -> some View {
         let cityPlaces = places.filter { $0.cityId == city.id }
-        let range = (city.from ?? .distantPast)...(city.to ?? .distantFuture)
+        // Board importado com a volta antes da ida (`to` < `from`) derrubava a Viagem: `a...b` com a > b é trap.
+        let lower = city.from ?? .distantPast
+        let range = lower...max(lower, city.to ?? .distantFuture)
         let reservations = cityPlaces.filter { $0.reservation.map { range.contains($0.at) } ?? false }
         let cityEvents = events.filter { range.contains($0.at) }
         let repeated = trip.cities.prefix(index).contains { $0.name == city.name }

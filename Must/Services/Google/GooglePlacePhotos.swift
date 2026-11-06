@@ -48,6 +48,8 @@ struct GooglePlacePhotos: PlacePhotosProviding {
         guard let uri = (try? JSONSerialization.jsonObject(with: json) as? [String: Any])?["photoUri"] as? String,
               let imageURL = URL(string: uri) else { throw ServiceError.decoding("places.media") }
         let image = try await client.get(imageURL, service: "places.photo.file")
+        // Resposta cortada (metrô, rede caindo) gravada aqui ficava quebrada 30 dias: a foto é baixada uma vez só.
+        guard PlacePhotoStore.isCompleteImage(image) else { throw ServiceError.decoding("places.photo.file incompleta") }
         return try PlacePhotoStore.save(image, for: ref)
     }
 

@@ -380,6 +380,7 @@ struct MontarView: View {
                 .focused($textFocused)
                 .submitLabel(.done)
                 .onSubmit { Task { await parse(planner) } }
+                .accessibilityIdentifier("montar.ask")
                 .padding(.vertical, 16)
         }
     }

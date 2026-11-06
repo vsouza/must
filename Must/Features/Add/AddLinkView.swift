@@ -172,6 +172,7 @@ struct AddLinkView: View {
         HStack(spacing: 12) {
             MustIconView(.colarLink, size: 18).foregroundStyle(Color.must.ink)
             TextField("instagram.com/reel/…", text: $model.input)
+                .accessibilityIdentifier("add.link")
                 .font(.must.mono(15))
                 .keyboardType(.URL)
                 .textInputAutocapitalization(.never)
@@ -243,6 +244,7 @@ struct AddLinkView: View {
             }
             Text(message).font(.must.archivo(15, .semibold)).foregroundStyle(Color.must.ink)
             TextField("cola aqui o texto da legenda", text: $model.pastedText, axis: .vertical)
+                .accessibilityIdentifier("add.caption")
                 .font(.must.serif(18))
                 .lineLimit(3...8)
                 .padding(14)

@@ -103,7 +103,8 @@ struct CaptionFetcher: Sendable {
         var request = URLRequest(url: url, timeoutInterval: 12)
         request.setValue(Self.userAgent, forHTTPHeaderField: "User-Agent")
         request.setValue("pt-BR,pt;q=0.9,en;q=0.8,ja;q=0.7", forHTTPHeaderField: "Accept-Language")
-        return try await session.data(for: request)
+        let session = session
+        return try await NetworkChaos.perform(request) { try await session.data(for: request) }
     }
 }
 

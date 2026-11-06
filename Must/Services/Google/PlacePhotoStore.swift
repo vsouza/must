@@ -74,6 +74,23 @@ enum PlacePhotoStore {
         return url
     }
 
+    /// A imagem chegou inteira (rodada 23 · G). O `ImageIO` aceita JPEG cortado no meio (desenha meio cinza), então JPEG
+    /// precisa terminar no marcador EOI (FF D9) e PNG no IEND; o resto, o status do `ImageIO`.
+    static func isCompleteImage(_ data: Data) -> Bool {
+        guard data.count > 8, let source = CGImageSourceCreateWithData(data as CFData, nil), CGImageSourceGetCount(source) > 0,
+              CGImageSourceGetStatusAtIndex(source, 0) == .statusComplete else { return false }
+        let bytes = [UInt8](data.prefix(8))
+        if bytes[0] == 0xFF, bytes[1] == 0xD8 {
+            // Alguns servidores põem bytes nulos depois do EOI: ignora o rabo de zeros.
+            let tail = data.suffix(64).reversed().drop { $0 == 0 }
+            return Array(tail.prefix(2)) == [0xD9, 0xFF]
+        }
+        if bytes == [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A] {
+            return data.suffix(12).range(of: Data("IEND".utf8)) != nil
+        }
+        return CGImageSourceGetStatus(source) == .statusComplete
+    }
+
     /// JPEG de `maxPixel` no lado maior, qualidade 0,7 (premissa: 240 px, JPEG).
     static func makeThumbnail(_ data: Data, maxPixel: Int) -> Data? {
         guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
