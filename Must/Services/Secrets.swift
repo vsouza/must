@@ -12,6 +12,9 @@ enum Secrets {
         case redditClientId = "REDDIT_CLIENT_ID"
         /// RapidAPI (AeroDataBox): status de voo. Só ela; sem chave, o voo mostra o horário programado.
         case aerodatabox = "AERODATABOX_KEY"
+        /// Eventos (prompt 26): chaves opcionais; sem elas a fonte some sem erro.
+        case bandsintown = "BANDSINTOWN_APP_ID"
+        case ticketmaster = "TICKETMASTER_KEY"
     }
 
     static subscript(key: Key) -> String? {
@@ -29,6 +32,8 @@ enum Secrets {
     static var foursquareKey: String? { self[.foursquare] }
     static var redditClientId: String? { self[.redditClientId] }
     static var aerodataboxKey: String? { self[.aerodatabox] }
+    static var bandsintownAppId: String? { self[.bandsintown] }
+    static var ticketmasterKey: String? { self[.ticketmaster] }
 
     private static let values: [String: String] = load(from: .main)
 

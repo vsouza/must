@@ -1,0 +1,88 @@
+{
+  "_comment": "Fontes de eventos (prompt 26). So RSS/Atom/JSON publicos; nada de ler HTML. Validado em 05/11/2026 com GET direto (HTTP 200 + XML). Feed quebrado e ignorado em silencio.",
+  "validatedAt": "2026-11-05",
+  "feeds": [
+    {
+      "id": "tokyocheapo",
+      "name": "Tokyo Cheapo",
+      "region": "jp",
+      "url": "https://tokyocheapo.com/events/feed/",
+      "lang": "en",
+      "kind": "events"
+    },
+    {
+      "id": "sescmg",
+      "name": "Sesc Minas",
+      "region": "bh",
+      "url": "https://www.sescmg.com.br/feed/",
+      "lang": "pt",
+      "kind": "agenda"
+    },
+    {
+      "id": "romeing",
+      "name": "Romeing",
+      "region": "it",
+      "url": "https://www.romeing.it/feed/",
+      "lang": "en",
+      "kind": "guide"
+    }
+  ],
+  "dropped": [
+    {
+      "name": "Time Out Tokyo",
+      "url": "https://www.timeout.com/tokyo/feed",
+      "why": "404 (sem feed publico)"
+    },
+    {
+      "name": "Time Out Roma",
+      "url": "https://www.timeout.com/rome/feed",
+      "why": "404"
+    },
+    {
+      "name": "Tokyo Weekender",
+      "url": "https://www.tokyoweekender.com/feed/",
+      "why": "403 (Cloudflare)"
+    },
+    {
+      "name": "Sympla",
+      "url": "https://www.sympla.com.br/feed",
+      "why": "sem feed: so HTML (fora, nada de scraping)"
+    },
+    {
+      "name": "Curta Mais",
+      "url": "https://www.curtamais.com.br/belohorizonte/feed/",
+      "why": "devolve HTML, nao feed"
+    },
+    {
+      "name": "Palacio das Artes",
+      "url": "https://www.palaciodasartes.com.br/feed/",
+      "why": "404"
+    },
+    {
+      "name": "Fundacao Clovis Salgado",
+      "url": "https://fcs.mg.gov.br/feed/",
+      "why": "feed parado desde 2024"
+    },
+    {
+      "name": "BHAZ",
+      "url": "https://bhaz.com.br/feed/",
+      "why": "403 nas categorias (Cloudflare), noticia geral"
+    },
+    {
+      "name": "RomaToday",
+      "url": "https://www.romatoday.it/rss",
+      "why": "noticia geral, nao agenda"
+    },
+    {
+      "name": "Turismo Roma",
+      "url": "https://www.turismoroma.it/en/rss.xml",
+      "why": "feed parado desde 2019"
+    }
+  ],
+  "keys": {
+    "bandsintown": "BANDSINTOWN_APP_ID",
+    "ticketmaster": "TICKETMASTER_KEY"
+  },
+  "ttlHours": 6,
+  "maxItemAgeDays": 45
+}
