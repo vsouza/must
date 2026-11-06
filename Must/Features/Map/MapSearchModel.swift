@@ -154,7 +154,10 @@ final class MapSearchModel {
         out.append(("open", openOnly ? "aberto agora" : "qualquer hora"))
         out.append(("quality", Self.qualityChip(intent.quality)))
         out.append(("radius", "até \(Self.km(output?.radiusKm ?? intent.radiusKm ?? MapSearch.defaultRadiusKm))"))
-        if output?.offline == true { out.append(("offline", "offline · só o seu board")) }
+        // Offline logo depois do objeto: tem que aparecer sem rolar.
+        if let output, output.offline {
+            out.insert(("offline", output.sources.contains(.places) ? "offline · board e cache" : "offline · só o seu board"), at: 1)
+        }
         return out
     }
 

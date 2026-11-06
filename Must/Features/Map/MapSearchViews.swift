@@ -159,10 +159,11 @@ struct MapResultsCard: View {
                     ProgressView().controlSize(.small).tint(V8.ink)
                 } else {
                     Text(countLine.uppercased()).font(V8Font.mono(11)).tracking(1.1).foregroundStyle(V8.mute).lineLimit(1)
+                        .minimumScaleFactor(0.7)
                 }
             }
-            .padding(.top, 14)
-            .padding(.bottom, 6)
+            .padding(.top, 10)
+            .padding(.bottom, 4)
             if items.isEmpty, !searching {
                 Text(emptyText).font(V8Font.text(15)).foregroundStyle(V8.mute).padding(.vertical, 14)
                     .fixedSize(horizontal: false, vertical: true)
@@ -174,14 +175,14 @@ struct MapResultsCard: View {
             }
             HStack(spacing: 10) {
                 V8Button("Ver no Quero…", .line, action: onQuero).foregroundStyle(V8.ink)
-                V8Button(encaixarTitle, .orange, icon: canEncaixar ? .rota : nil, action: onEncaixar)
+                V8Button(encaixarTitle, .orange, action: onEncaixar)
                     .disabled(!canEncaixar)
                     .opacity(canEncaixar ? 1 : 0.45)
             }
-            .padding(.top, 14)
+            .padding(.top, 12)
         }
         .padding(.horizontal, 20)
-        .padding(.bottom, 20)
+        .padding(.bottom, 18)
         .background(RoundedRectangle(cornerRadius: 40, style: .continuous).fill(V8.paper))
         .overlay(RoundedRectangle(cornerRadius: 40, style: .continuous).strokeBorder(V8.ink.opacity(0.06)))
         .shadow(color: V8.ink.opacity(0.18), radius: 24, y: 10)
@@ -204,14 +205,15 @@ struct MapResultsCard: View {
                 Text(Walk.distanceText(c.result.distance)).font(V8Font.mono(11, weight: .semibold)).foregroundStyle(V8.ink)
                 if let q = c.queueMinutes, q > 0 {
                     Text("~\(q) min fila").font(V8Font.mono(11, weight: .semibold)).foregroundStyle(V8.orangeDeep)
-                } else {
-                    Text(c.onBoard ? "no board" : "fora do board").font(V8Font.mono(11)).foregroundStyle(V8.mute)
+                } else if !c.onBoard {
+                    // Do board já diz na meta ("no seu board").
+                    Text("fora do board").font(V8Font.mono(11)).foregroundStyle(V8.mute)
                 }
             }
             .lineLimit(1)
             .fixedSize()
         }
-        .padding(.vertical, 11)
+        .padding(.vertical, 8)
         .padding(.horizontal, 6)
         .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(chosen && items.count > 1 ? V8.ink.opacity(0.05) : .clear))
         .overlay(alignment: .top) { Rectangle().fill(V8.ink.opacity(0.14)).frame(height: 1).opacity(index == 1 ? 0 : 1) }

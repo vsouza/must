@@ -293,6 +293,8 @@ enum MapSearch {
             output.ranked = rank(pool, quality: quality, radiusKm: fallbackRadiusKm, openOnly: input.openOnly)
         }
         output.sources = sources
+        // Sem rede é sempre "offline" (mesmo que o cache tenha respondido): a tela diz de onde veio.
+        if !input.online { output.offline = true }
         output.byRating = quality == .melhor && output.ranked.first?.rating != nil
         return output
     }

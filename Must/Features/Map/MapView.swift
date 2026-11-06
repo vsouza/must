@@ -43,7 +43,10 @@ struct MapView: View {
     static let nearRadius: CLLocationDistance = 500
     /// Altura livre embaixo com o card do pino ou dos resultados aberto (card + barra de abas).
     static let cardBottom: CGFloat = 96 + 400
-    static let resultsTop: CGFloat = 250
+    /// Topo livre com o card aberto (barra de voltar + fechar + ficha técnica).
+    static let cardTop: CGFloat = 190
+    /// Topo livre com a busca (campo + chips + pílulas).
+    static let resultsTop: CGFloat = 240
 
     private var region: Region { store.region }
     private var now: Date { AppClock.now }
@@ -161,7 +164,9 @@ struct MapView: View {
     // MARK: Cena
 
     private var scene: MapScene {
-        var scene = MapScene(region: region, layers: layers.union([.search]), pins: displayPins, metro: transit)
+        // Com a busca aberta, os números são os dos resultados (`MapaFiltro.png`): o dia (pinos e rota) sai da frente.
+        let shown = search.top.isEmpty || selectedId != nil ? layers : layers.subtracting([.today, .tomorrow])
+        var scene = MapScene(region: region, layers: shown.union([.search]), pins: displayPins, metro: transit)
         let legs = Array(zip(stops, stops.dropFirst()))
         for (a, b) in legs {
             guard let pa = a.place, let pb = b.place else { continue }
@@ -357,6 +362,9 @@ struct MapView: View {
     }
 
     /// Card do pino aberto (`MapaPino.png`): fechar + ficha técnica em cima, o card embaixo. O mapa continua vivo no meio.
+    /// TODO(r23:C): o design não tem a barra de abas com o card aberto; `AppRouter.hidesNavBar` (fora da fronteira) decide
+    /// pela rota, então o card sobe 96 pt acima da barra. Se o orquestrador quiser, `hidesNavBar` pode ler um "card do mapa
+    /// aberto" do router.
     private func cardOverlay(_ place: Place) -> some View {
         VStack(spacing: 0) {
             HStack(alignment: .top) {
@@ -366,6 +374,9 @@ struct MapView: View {
                 V8SpecStack(lines: MapCardFacts.spec(area: areaName, pin: pinPosition(place), list: place.list?.name),
                             color: V8.ink, alignment: .trailing)
                     .multilineTextAlignment(.trailing)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 6)
+                    .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(V8.paper.opacity(0.88)))
                     .padding(.top, 12)
             }
             .padding(.horizontal, 20)
@@ -583,7 +594,7 @@ struct MapView: View {
     private func fitResults() {
         let points = search.top.map(\.result.coordinate) + [here?.coordinate].compactMap { $0 }
         guard !search.top.isEmpty else { return }
-        cam.fit(points, top: Self.resultsTop, bottom: 96 + 370)
+        cam.fit(points, top: Self.resultsTop, bottom: 470)
     }
 
     /// Encaixar hoje (a mesma conta do Quero…): grava o lugar (o do board ou um novo na lista da vontade) e a parada.
@@ -859,12 +870,12 @@ struct MapView: View {
     private func open(_ id: String, show: Bool) {
         guard let place = places.first(where: { $0.id == id }) else { return }
         withAnimation(.spring(duration: 0.32)) { selectedId = id }
-        guard show else { cam.reveal(place.coordinate, top: 120, bottom: Self.cardBottom); return }
+        guard show else { cam.reveal(place.coordinate, top: Self.cardTop, bottom: Self.cardBottom); return }
         cam.show(place.coordinate)
         Task {
             try? await Task.sleep(for: .milliseconds(650))
             guard selectedId == id else { return }
-            cam.reveal(place.coordinate, top: 120, bottom: Self.cardBottom)
+            cam.reveal(place.coordinate, top: Self.cardTop, bottom: Self.cardBottom)
         }
     }
 

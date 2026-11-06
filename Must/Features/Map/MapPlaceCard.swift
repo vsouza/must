@@ -112,6 +112,7 @@ struct MapPlaceCard: View {
                         .tracking(1)
                         .foregroundStyle(V8.mute)
                         .lineLimit(1)
+                        .minimumScaleFactor(0.7)
                     Text(cell.value)
                         .font(V8Font.text(16, weight: .bold))
                         .foregroundStyle(V8.ink)
@@ -153,14 +154,19 @@ struct MapPlaceCard: View {
 
     private var actions: some View {
         HStack(spacing: 10) {
-            V8Button(goMinutes.map { "Ir agora · \($0) min" } ?? "Ir agora", .orange, icon: .rota, action: onGo)
-                .layoutPriority(1)
+            // Letra grande: "Ir · 21 min" sem ícone antes de cortar o texto.
+            ViewThatFits(in: .horizontal) {
+                V8Button(goMinutes.map { "Ir agora · \($0) min" } ?? "Ir agora", .orange, icon: .rota, action: onGo)
+                V8Button(goMinutes.map { "Ir · \($0) min" } ?? "Ir", .orange, action: onGo)
+            }
+            .layoutPriority(1)
             Button(action: onDone) {
                 Text(place.isDone ? "Feito ✓" : "Feito")
                     .font(V8Font.text(16, weight: .bold))
                     .foregroundStyle(V8.white)
                     .lineLimit(1)
-                    .padding(.horizontal, 20)
+                    .fixedSize()
+                    .padding(.horizontal, 22)
                     .frame(minHeight: 56)
                     .background(Capsule().fill(V8.ink))
                     .contentShape(Capsule())
