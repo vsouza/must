@@ -54,8 +54,22 @@ final class CapaState {
             tempText: i.nowWeather.map { "\(Int($0.temp.rounded()))°" },
             sky: (i.nowWeather?.code ?? i.todayWeather?.code).map(DayText.sky),
             sunset: sunset,
-            spentToday: spent > 0 ? spent : nil
+            spentToday: spent > 0 ? spent : nil,
+            upcoming: Self.upcoming(i, calendar: cal)
         ))
+    }
+
+    /// Viagem (não a casa) que ainda não começou: a capa vira contagem regressiva até o dia 1.
+    static func upcoming(_ i: Inputs, calendar cal: Calendar) -> CapaContent.Upcoming? {
+        // Só nas viagens criadas no app: as de fábrica seguem com a capa de antes (Japão antes de 11 nov incluso).
+        guard !i.region.trip.isBuiltIn, i.region.trip.kind != .home, let trip = i.trip, let start = trip.start, cal.startOfDay(for: i.now) < start else { return nil }
+        let nights = trip.end.map { cal.dateComponents([.day], from: start, to: $0).day ?? 0 } ?? 0
+        let musts = (try? i.context.fetchCount(FetchDescriptor<Place>())) ?? 0
+        let budget = (try? i.context.fetch(FetchDescriptor<Settings>()).first?.perDayBudget) ?? 0
+        var names: [String] = []
+        for c in trip.cities where !names.contains(c.name) { names.append(c.name) }
+        return .init(start: start, firstCity: trip.cities.first?.name ?? i.region.displayName, cities: names.count,
+                     nights: nights, musts: musts, budget: budget)
     }
 
     static func cityName(_ region: Region) -> String {

@@ -156,3 +156,35 @@ enum NewTripWriter {
         BoardList(id: "do", name: "do", kanji: nil, icon: "reserva-ancora", color: .night, photo: nil, sub: ["Aula", "Tour", "Passeio"], kind: .experience),
     ]
 }
+
+#if DEBUG
+extension NewTripDraft {
+    /// A viagem do desenho (`NovaViagem1…9.png`): Portugal, Lisboa 5 noites + Porto 3, 12–20 mar 2027.
+    static var debugPortugal: NewTripDraft {
+        var d = NewTripDraft()
+        d.name = "Portugal"
+        d.countryCode = "PT"
+        d.currency = "EUR"
+        d.timeZoneId = "Europe/Lisbon"
+        d.colorHex = "#0A5C48"
+        d.start = BoardDates.parseDateTime("2027-03-12T00:00:00Z")
+        d.end = BoardDates.parseDateTime("2027-03-20T00:00:00Z")
+        d.cities = [
+            .init(id: "lisboa", name: "Lisboa", latitude: 38.7223, longitude: -9.1393, nights: 5, neighborhoodOnly: "Chiado"),
+            .init(id: "porto", name: "Porto", latitude: 41.1579, longitude: -8.6291, nights: 3, neighborhoodOnly: "Ribeira"),
+        ]
+        d.flights = [.init(number: "TP 82", from: "GRU", to: "LIS", departure: BoardDates.parseDateTime("2027-03-11T22:05:00-03:00"),
+                           arrival: nil, isReturn: false)]
+        d.places = [
+            .init(name: "Time Out Market", cityId: "lisboa", listId: "eat", latitude: 38.7069, longitude: -9.1459),
+            .init(name: "Miradouro da Senhora do Monte", cityId: "lisboa", listId: "photo", latitude: 38.7194, longitude: -9.1326),
+            .init(name: "Pastéis de Belém", cityId: "lisboa", listId: "eat", latitude: 38.6975, longitude: -9.2033),
+            .init(name: "Livraria Lello", cityId: "porto", listId: "shop", latitude: 41.1469, longitude: -8.6149),
+            .init(name: "Ponte Dom Luís I", cityId: "porto", listId: "see", latitude: 41.1399, longitude: -8.6094),
+        ]
+        d.perDayBudget = 120
+        d.fxRate = 6.3
+        return d
+    }
+}
+#endif

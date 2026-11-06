@@ -9,7 +9,7 @@ struct TripStoreTests {
     private final class Token {}
 
     private func makeStore() throws -> (RegionStore, URL, () -> Void) {
-        let dir = FileManager.default.temporaryDirectory.appending(path: "tripstore-\(UUID().uuidString)")
+        let dir = FileManager.default.temporaryDirectory.appending(path: "tripstore Application Support \(UUID().uuidString)")
         let suite = "tripstore-\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: suite))
         let store = RegionStore(directory: dir, defaults: defaults, seedBundle: Bundle(for: Token.self))
@@ -49,7 +49,7 @@ struct TripStoreTests {
     @Test func criaPortugalNumStoreNovoSemMexerNasOutras() throws {
         let (store, dir, cleanup) = try makeStore()
         defer { cleanup() }
-        let before = try FileManager.default.contentsOfDirectory(atPath: dir.path()).filter { $0.hasSuffix(".store") }
+        let before = try FileManager.default.contentsOfDirectory(atPath: dir.path(percentEncoded: false)).filter { $0.hasSuffix(".store") }
         let creator = StoreTripCreator(store: store)
         #expect(creator.existingCountryCodes() == ["JP", "IT"])
         let trip = try store.create(portugal())
@@ -90,7 +90,7 @@ struct TripStoreTests {
         // Viagem nova não tem seed: só os três lugares do passo 6.
         #expect(places.allSatisfy { $0.id.hasPrefix("n") })
 
-        let after = try FileManager.default.contentsOfDirectory(atPath: dir.path()).filter { $0.hasSuffix(".store") }
+        let after = try FileManager.default.contentsOfDirectory(atPath: dir.path(percentEncoded: false)).filter { $0.hasSuffix(".store") }
         #expect(Set(after) == Set(before).union([trip.storeFileName]))
         // Reabrir o app: volta na viagem nova, com os dados.
         let reopened = RegionStore(directory: dir, defaults: try #require(UserDefaults(suiteName: "x-\(UUID())")), seedBundle: Bundle(for: Token.self))
@@ -104,7 +104,7 @@ struct TripStoreTests {
         store.archive(trip.id)
         #expect(!store.trips.contains { $0.id == trip.id })
         #expect(store.region == .bh) // estava aberta: volta pra casa
-        #expect(FileManager.default.fileExists(atPath: dir.appending(path: trip.storeFileName).path()))
+        #expect(FileManager.default.fileExists(atPath: dir.appending(path: trip.storeFileName).path(percentEncoded: false)))
         // Casa não arquiva.
         store.archive("bh")
         #expect(store.trips.contains { $0.id == "bh" })
@@ -116,18 +116,36 @@ struct TripStoreTests {
         store.switchTo(.jp)
         let trip = try store.create(portugal(), openNow: true)
         store.delete(trip.id)
-        #expect(!FileManager.default.fileExists(atPath: dir.appending(path: trip.storeFileName).path()))
-        #expect(FileManager.default.fileExists(atPath: dir.appending(path: "must-jp.store").path()))
-        #expect(FileManager.default.fileExists(atPath: dir.appending(path: "must-bh.store").path()))
+        #expect(!FileManager.default.fileExists(atPath: dir.appending(path: trip.storeFileName).path(percentEncoded: false)))
+        #expect(FileManager.default.fileExists(atPath: dir.appending(path: "must-jp.store").path(percentEncoded: false)))
+        #expect(FileManager.default.fileExists(atPath: dir.appending(path: "must-bh.store").path(percentEncoded: false)))
         #expect(store.trips.map(\.id) == ["bh", "jp", "it"])
         #expect(Region(rawValue: trip.id) == nil)
         #expect(store.region == .bh)
         // Casa não apaga.
         store.delete("bh")
-        #expect(FileManager.default.fileExists(atPath: dir.appending(path: "must-bh.store").path()))
+        #expect(FileManager.default.fileExists(atPath: dir.appending(path: "must-bh.store").path(percentEncoded: false)))
         // O Japão continua com o board dele.
         store.switchTo(.jp)
         #expect(try store.container.mainContext.fetchCount(FetchDescriptor<Place>()) == 105)
+    }
+
+    @Test func capaDaViagemQueAindaNaoComecou() throws {
+        let (store, _, cleanup) = try makeStore()
+        defer { cleanup() }
+        let trip = try store.create(portugal(), openNow: true)
+        let region = try #require(store.region(for: trip.id))
+        let start = try #require(region.calendar.date(from: DateComponents(year: 2027, month: 3, day: 12)))
+        let now = try #require(BoardDates.parseDateTime("2026-11-05T12:00:00Z"))
+        let content = CapaContent.build(.init(region: region, now: now, plan: nil, dayNow: nil, areaName: nil, cityName: "Lisboa",
+                                              tripDay: nil, tempText: nil, sky: nil, sunset: nil, spentToday: nil,
+                                              upcoming: .init(start: start, firstCity: "Lisboa", cities: 2, nights: 8, musts: 12, budget: 120)))
+        #expect(content.numeral == "127")
+        #expect(content.topLeft.first == "Faltam 127 dias")
+        #expect(content.lead == "Primeiro dia")
+        #expect(content.area == "Lisboa")
+        #expect(content.midLeft == ["2 cidades · 8 noites", "12 Musts"])
+        #expect(content.midRight == ["€ 120 por dia", "€ 1.080 no total"])
     }
 
     @Test func viagemDeRegistroAbreComOMinhasViagens() throws {

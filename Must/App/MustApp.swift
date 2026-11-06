@@ -73,6 +73,11 @@ struct AppRoot: View {
                 showOnboarding = Self.shouldShowOnboarding(onboarded: store.isOnboarded)
                 services.location.start()
                 #if DEBUG
+                // `-debugTrip portugal` (prompt 28, prints): cria uma vez a viagem de Portugal do desenho e abre nela.
+                if DebugFlags.string("debugTrip") == "portugal", !store.trips.contains(where: { $0.countryCode == "PT" }) {
+                    _ = try? store.create(NewTripDraft.debugPortugal, openNow: true)
+                    return
+                }
                 DebugLaunch.apply(to: router, context: context, region: store.region, services: services, engine: engine)
                 #endif
             }

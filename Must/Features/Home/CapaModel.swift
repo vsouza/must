@@ -25,6 +25,8 @@ struct CapaContent: Equatable, Sendable {
     /// Card "Agora · 2 de 9" / "Fuunji · saia 14:35". `nil` sem dia montado.
     var agora: Agora?
     var hasPlan: Bool
+    /// Rótulo acima do bairro: "Hoje é"; viagem que ainda não começou: "Primeiro dia" (`NovaViagem9.png`).
+    var lead: String = "Hoje é"
 
     struct Agora: Equatable, Sendable {
         var title: String
@@ -51,10 +53,39 @@ extension CapaContent {
         var sunset: Date?
         /// Gasto de hoje (Expense); `nil` usa o do plano.
         var spentToday: Double?
+        /// Viagem que ainda não começou (prompt 28 · NovaViagem9): início, primeira cidade e as contas da ficha.
+        var upcoming: Upcoming? = nil
+    }
+
+    struct Upcoming: Sendable {
+        var start: Date
+        var firstCity: String
+        var cities: Int
+        var nights: Int
+        var musts: Int
+        var budget: Double
+    }
+
+    /// Capa da viagem que ainda não começou: "Faltam 127 dias", numeral da contagem, "Primeiro dia · Lisboa".
+    static func countdown(_ i: Inputs, _ u: Upcoming) -> CapaContent {
+        let region = i.region
+        let cal = region.calendar
+        let left = max(0, cal.dateComponents([.day], from: cal.startOfDay(for: i.now), to: cal.startOfDay(for: u.start)).day ?? 0)
+        let topLeft = [left == 1 ? "Falta 1 dia" : "Faltam \(left) dias", DayText.dayLine(u.start, region: region)]
+        let total = u.budget * Double(u.nights + 1) // dias = noites + 1 (12–20 mar: 9 dias)
+        return CapaContent(topLeft: topLeft, topRight: [u.firstCity, "o tempo chega perto da data"],
+                           midLeft: ["\(u.cities == 1 ? "1 cidade" : "\(u.cities) cidades") · \(u.nights == 1 ? "1 noite" : "\(u.nights) noites")",
+                                     u.musts == 1 ? "1 Must" : "\(u.musts) Musts"],
+                           midRight: u.budget > 0 ? ["\(region.money(u.budget)) por dia", "\(region.money(total)) no total"] : [],
+                           country: Self.countryName(region), area: u.firstCity, evening: nil, numeral: "\(left)",
+                           agora: nil, hasPlan: false, lead: "Primeiro dia")
     }
 
     static func build(_ i: Inputs) -> CapaContent {
         let region = i.region
+        if let upcoming = i.upcoming, i.plan == nil, region.calendar.startOfDay(for: i.now) < upcoming.start {
+            return countdown(i, upcoming)
+        }
         let topLeft = [DayText.dayLine(i.now, region: region),
                        i.tripDay.map { "dia \(i.plan?.dayNumber ?? $0.index) de \($0.total)" }
                            ?? (DayText.isWeekend(i.now, region: region) ? "fim de semana" : "dia de semana")]
