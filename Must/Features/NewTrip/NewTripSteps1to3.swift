@@ -416,39 +416,12 @@ struct NewTripStep3: View {
     }
 
     private func row(_ i: Int, _ city: NewTripDraft.City) -> some View {
-        HStack(spacing: 10) {
-            VStack(spacing: 0) {
-                Button { model.moveCity(id: city.id, by: -1) } label: {
-                    Image(systemName: "chevron.up").font(.system(size: 11, weight: .bold)).frame(width: 28, height: 22)
-                }
-                .disabled(i == 0).accessibilityLabel("Subir \(city.name)")
-                Button { model.moveCity(id: city.id, by: 1) } label: {
-                    Image(systemName: "chevron.down").font(.system(size: 11, weight: .bold)).frame(width: 28, height: 22)
-                }
-                .disabled(i == model.draft.cities.count - 1).accessibilityLabel("Descer \(city.name)")
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 10) { reorder(i, city); info(i, city); Spacer(minLength: 4); nights(city) }
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 10) { reorder(i, city); info(i, city) }
+                nights(city)
             }
-            .foregroundStyle(V8.mute).buttonStyle(.plain)
-            Text("\(i + 1)").font(V8Font.numeral(34)).foregroundStyle(V8.orangeDeep).frame(width: 30)
-                .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(city.name).font(V8Font.text(21, weight: .bold)).foregroundStyle(V8.ink).lineLimit(1)
-                Text(detail(i, city)).font(V8Font.text(14)).foregroundStyle(V8.mute).lineLimit(2)
-            }
-            Spacer(minLength: 4)
-            HStack(spacing: 8) {
-                V8RoundButton(diameter: 44, label: "Menos uma noite em \(city.name)", action: {
-                    model.setNights(city.nights - 1, cityId: city.id)
-                }) { size in Capsule().fill(.foreground).frame(width: 12, height: 2).frame(width: size, height: size) }
-                VStack(spacing: 2) {
-                    Text("\(city.nights)").font(V8Font.mono(22, weight: .bold)).foregroundStyle(V8.ink)
-                    SpecLabel(city.nights == 1 ? "noite" : "noites")
-                }
-                .frame(minWidth: 46)
-                V8RoundButton(diameter: 44, label: "Mais uma noite em \(city.name)", action: {
-                    model.setNights(city.nights + 1, cityId: city.id)
-                }) { size in V8Glyph(.plus).frame(width: size, height: size) }
-            }
-            .foregroundStyle(V8.ink)
         }
         .padding(.vertical, 16)
         .overlay(alignment: .bottom) { Rectangle().fill(V8.rule).frame(height: 1) }
@@ -456,6 +429,46 @@ struct NewTripStep3: View {
             Button("Tirar \(city.name)", role: .destructive) { model.removeCity(id: city.id) }
         }
         .accessibilityElement(children: .contain)
+    }
+
+    @ViewBuilder private func reorder(_ i: Int, _ city: NewTripDraft.City) -> some View {
+        VStack(spacing: 0) {
+            Button { model.moveCity(id: city.id, by: -1) } label: {
+                Image(systemName: "chevron.up").font(.system(size: 11, weight: .bold)).frame(width: 28, height: 22)
+            }
+            .disabled(i == 0).accessibilityLabel("Subir \(city.name)")
+            Button { model.moveCity(id: city.id, by: 1) } label: {
+                Image(systemName: "chevron.down").font(.system(size: 11, weight: .bold)).frame(width: 28, height: 22)
+            }
+            .disabled(i == model.draft.cities.count - 1).accessibilityLabel("Descer \(city.name)")
+        }
+        .foregroundStyle(V8.mute).buttonStyle(.plain)
+        Text("\(i + 1)").font(V8Font.numeral(34)).foregroundStyle(V8.orangeDeep).frame(width: 30)
+            .accessibilityHidden(true)
+    }
+
+    private func info(_ i: Int, _ city: NewTripDraft.City) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(city.name).font(V8Font.text(21, weight: .bold)).foregroundStyle(V8.ink).lineLimit(2)
+            Text(detail(i, city)).font(V8Font.text(14)).foregroundStyle(V8.mute).lineLimit(3)
+        }
+    }
+
+    private func nights(_ city: NewTripDraft.City) -> some View {
+        HStack(spacing: 8) {
+            V8RoundButton(diameter: 44, label: "Menos uma noite em \(city.name)", action: {
+                model.setNights(city.nights - 1, cityId: city.id)
+            }) { size in Capsule().fill(.foreground).frame(width: 12, height: 2).frame(width: size, height: size) }
+            VStack(spacing: 2) {
+                Text("\(city.nights)").font(V8Font.mono(22, weight: .bold)).foregroundStyle(V8.ink)
+                SpecLabel(city.nights == 1 ? "noite" : "noites").fixedSize()
+            }
+            .frame(minWidth: 46)
+            V8RoundButton(diameter: 44, label: "Mais uma noite em \(city.name)", action: {
+                model.setNights(city.nights + 1, cityId: city.id)
+            }) { size in V8Glyph(.plus).frame(width: size, height: size) }
+        }
+        .foregroundStyle(V8.ink)
     }
 
     private func detail(_ i: Int, _ city: NewTripDraft.City) -> String {

@@ -42,6 +42,7 @@ struct NewTripStepFrame<Content: View>: View {
         .padding(.horizontal, 20)
         .padding(.top, 8).padding(.bottom, 12)
         .background(V8.paper.ignoresSafeArea())
+        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
     }
 
     private var header: some View {
@@ -60,14 +61,20 @@ struct NewTripStepFrame<Content: View>: View {
         }
     }
 
+    private var backButton: some View {
+        V8Button("Voltar", .line) { model.step == 1 ? onClose() : onBack() }.foregroundStyle(V8.ink)
+    }
+
+    private var nextButton: some View {
+        V8Button(primaryTitle, .orange, icon: .avancar, action: onNext)
+            .opacity(primaryEnabled ? 1 : 0.4)
+            .disabled(!primaryEnabled)
+    }
+
     private var footer: some View {
-        HStack(spacing: 12) {
-            V8Button("Voltar", .line) { model.step == 1 ? onClose() : onBack() }
-                .foregroundStyle(V8.ink)
-                .frame(maxWidth: 140)
-            V8Button(primaryTitle, .orange, icon: .avancar, action: onNext)
-                .opacity(primaryEnabled ? 1 : 0.4)
-                .disabled(!primaryEnabled)
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 12) { backButton.frame(maxWidth: 140); nextButton }
+            VStack(spacing: 10) { nextButton; backButton }
         }
     }
 }

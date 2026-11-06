@@ -23,6 +23,7 @@ struct NewTripFlow: View {
         #if DEBUG
         if DebugFlags.string("debugScreen")?.hasPrefix("novaviagem") == true {
             let m = NewTripModel(draft: NewTripModel.sampleDraft, step: startStep)
+            m.placesSource = "do texto colado"
             if startStep >= 9 { m.createState = .done("debug") }
             return m
         }

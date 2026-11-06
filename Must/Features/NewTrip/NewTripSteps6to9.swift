@@ -196,7 +196,7 @@ struct NewTripStep7: View {
             NewTripSection(text: "Por dia, por pessoa").padding(.top, 26)
             HStack(alignment: .bottom, spacing: 8) {
                 Text("\(Int(model.draft.perDayBudget ?? 0))").font(V8Font.numeral(150)).tracking(-9).foregroundStyle(V8.orange)
-                    .lineLimit(1).minimumScaleFactor(0.4).accessibilityHidden(true)
+                    .lineLimit(1).minimumScaleFactor(0.4).frame(height: 150 * 0.78).accessibilityHidden(true)
                 Text(symbol).font(V8Font.display(44)).foregroundStyle(V8.ink).padding(.bottom, 10)
                 Spacer(minLength: 0)
                 NewTripStepper(minusLabel: "Menos", plusLabel: "Mais", filledPlus: true,
@@ -289,7 +289,7 @@ struct NewTripStep8: View {
                     Text("no celular, nada baixa sozinho").font(V8Font.text(15)).foregroundStyle(V8.mute)
                 }
                 Spacer()
-                Toggle("Só no Wi-Fi", isOn: $m.draft.wifiOnly).labelsHidden().tint(V8.orange)
+                Toggle("Só no Wi-Fi", isOn: $m.draft.wifiOnly).labelsHidden().tint(V8.orange).padding(.trailing, 2)
             }
             .padding(.vertical, 16)
             if lowData {
@@ -440,7 +440,7 @@ struct NewTripReady: View {
                     Spacer(minLength: 8)
                     if let per = model.draft.perDayBudget, per > 0 {
                         let sym = NewTripCatalog.currencySymbol(model.draft.currency)
-                        SpecLabel("\(sym) \(Int(per)) por dia\n\(sym) \(Int(model.totalBudget ?? 0)) no total", color: .white).multilineTextAlignment(.trailing)
+                        SpecLabel("\(sym) \(Int(per)) por dia\n\(sym) \((model.totalBudget ?? 0).formatted(.number.locale(NewTripCatalog.locale).precision(.fractionLength(0)))) no total", color: .white).multilineTextAlignment(.trailing)
                     }
                 }
                 Spacer(minLength: 28)
