@@ -30,11 +30,7 @@ struct RegionPicker: View {
 
     /// Rótulo curto do chip: "BH", "Japão", "Itália".
     static func label(_ region: Region) -> String {
-        switch region {
-        case .bh: "BH"
-        case .jp: "Japão"
-        case .it: "Itália"
-        }
+        region.trip.kind == .home ? region.shortName : region.countryName
     }
 
     private var subtitle: String {

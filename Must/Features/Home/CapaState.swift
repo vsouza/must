@@ -59,11 +59,7 @@ final class CapaState {
     }
 
     static func cityName(_ region: Region) -> String {
-        switch region {
-        case .bh: "Belo Horizonte"
-        case .jp: "Japão"
-        case .it: "Roma"
-        }
+        region.displayName
     }
 
     /// Foto do bairro: Google de um Must do bairro no disco › Commons já escolhida e baixada. Nunca baixa nada,

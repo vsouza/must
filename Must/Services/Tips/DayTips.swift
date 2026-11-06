@@ -115,7 +115,7 @@ enum DayTips {
         if cash { detailParts.append("Só cash.") }
         var title: String
         var corner = stop.kind == .photo ? "golden" : (stop.queueMinutes ?? 0 > 0 ? "fila" : (cash ? "cash" : "dica"))
-        let ramen = region == .jp && [stop.sub, stop.name, stop.notes].compactMap { $0 }.joined(separator: " ")
+        let ramen = region.profile.day?.ramenTips == true && [stop.sub, stop.name, stop.notes].compactMap { $0 }.joined(separator: " ")
             .range(of: "ramen|tsukemen", options: [.caseInsensitive, .regularExpression]) != nil
 
         if stop.kind == .photo, let golden = stop.golden {

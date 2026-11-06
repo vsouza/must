@@ -100,11 +100,8 @@ struct OfflineMapsView: View {
     // MARK: Cidades
 
     static func sectionTitle(_ region: Region) -> String {
-        switch region {
-        case .bh: "Minas Gerais"
-        case .jp: "Japão"
-        case .it: "Itália"
-        }
+        // BH: o pacote é do estado; as viagens, do país.
+        region == .bh ? "Minas Gerais" : region.countryName
     }
 
     private func section(_ region: Region) -> some View {

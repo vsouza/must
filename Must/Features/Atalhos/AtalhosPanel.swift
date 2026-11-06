@@ -165,7 +165,7 @@ struct AtalhosPanel: View {
     private func tap(_ card: AtalhoCard) {
         switch card.kind {
         case .wallet:
-            if region == .jp, transitCard?.balance != nil { close(.url(WalletRules.walletURL)) } else { close(.route(.carteira)) }
+            if region.profile.transit?.storedValueCard != nil, transitCard?.balance != nil { close(.url(WalletRules.walletURL)) } else { close(.route(.carteira)) }
         case .today:
             let items = todayItems
             if items.count == 1, let first = items.first, let ticket = first.ticketId {
@@ -216,7 +216,7 @@ struct AtalhosPanel: View {
                 }
             } else {
                 SectionHead(title: "Linhas perto", trailing: nil)
-                Text(region == .bh ? "Sem metrô a pé daqui · ônibus e app no Ir de cada lugar." : "Nenhuma estação a pé daqui.")
+                Text(region.profile.transit?.noStationText ?? "Nenhuma estação a pé daqui.")
                     .font(V8Font.text(14)).foregroundStyle(V8.mute).fixedSize(horizontal: false, vertical: true)
             }
         }

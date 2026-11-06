@@ -48,9 +48,9 @@ enum AtalhosRules {
 
     /// Suica no Japão (saldo anotado, abre o Wallet); fora do Japão não há Suica: o cartão de transporte anotado, ou a Carteira.
     static func walletCard(region: Region, transitName: String?, balance: Double?, notedNote: String?, walletCount: Int) -> AtalhoCard {
-        if region == .jp {
+        if let card = region.profile.transit?.storedValueCard {
             let value = balance.map { region.money($0) } ?? "anotar saldo"
-            return AtalhoCard(kind: .wallet, label: "Wallet", title: "\(transitName ?? "Suica")\n\(value)",
+            return AtalhoCard(kind: .wallet, label: "Wallet", title: "\(transitName ?? card)\n\(value)",
                               detail: balance == nil ? "abre a Carteira · anotar" : "abre o Wallet · \(notedNote ?? "recarregar")", tone: .ink)
         }
         if let transitName {
@@ -80,11 +80,7 @@ enum AtalhosRules {
 
     /// Os números do país (o kit completo é do SOS).
     static func sosCard(region: Region) -> AtalhoCard {
-        let numbers = switch region {
-        case .jp: "119 · 110 · seguro · hospital"
-        case .bh: "192 · 190 · 193 · seguro"
-        case .it: "112 · seguro · hospital"
-        }
+        let numbers = region.profile.sos?.numbersLabel ?? "112 · seguro · hospital"
         return AtalhoCard(kind: .sos, label: "Emergência", title: "SOS", detail: numbers, tone: .alert)
     }
 
@@ -131,7 +127,7 @@ enum AtalhosRules {
         if name.hasPrefix("JR ") { name.removeFirst(3) }
         if let dot = name.range(of: " · ") {
             let head = String(name[..<dot.lowerBound]), tail = String(name[dot.upperBound...])
-            name = region == .bh ? tail : head
+            name = region.profile.transit?.shortLineFromTail == true ? tail : head
         }
         return name
     }

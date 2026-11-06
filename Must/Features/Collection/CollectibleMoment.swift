@@ -179,7 +179,7 @@ struct CollectibleCelebrationHost: ViewModifier {
         content
             .overlay {
                 if let item = current {
-                    CollectibleMomentView(item: item, regionName: store.region == .it ? "na Itália" : "no \(store.region.countryName)",
+                    CollectibleMomentView(item: item, regionName: store.region.profile.inName,
                                           money: item.spent.map { store.region.money($0) },
                                           tint: CollectibleTint.color(store.region),
                                           onSeeCollection: { dismiss(); router.select(.viagem); router.push(.colecao, on: .viagem) },

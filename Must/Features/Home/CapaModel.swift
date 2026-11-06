@@ -109,11 +109,7 @@ extension CapaContent {
     }
 
     static func countryName(_ region: Region) -> String {
-        switch region {
-        case .jp: "Japão"
-        case .bh: "Brasil"
-        case .it: "Itália"
-        }
+        region.countryName
     }
 }
 

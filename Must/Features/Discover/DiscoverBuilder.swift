@@ -45,7 +45,7 @@ enum DiscoverBuilder {
     @discardableResult
     static func addToBoard(_ candidate: NearbyCandidate, list: MustList, region: Region, now: Date, context: ModelContext) -> Place {
         let trip = (try? context.fetch(FetchDescriptor<TripInfo>()))?.first
-        let cityId = trip?.city(on: now, calendar: region.calendar)?.id ?? trip?.cities.first?.id ?? (region == .jp ? "tokyo1" : "bh")
+        let cityId = trip?.city(on: now, calendar: region.calendar)?.id ?? trip?.cities.first?.id ?? region.trip.cities.first?.id ?? ""
         let place = Place(id: "n-\(UUID().uuidString.prefix(8).lowercased())", name: candidate.place.name, cityId: cityId,
                           lat: candidate.place.lat, lng: candidate.place.lng)
         place.list = list

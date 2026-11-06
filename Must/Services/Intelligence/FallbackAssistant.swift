@@ -105,7 +105,7 @@ enum FallbackAssistant {
             list.append("O que tem no roteiro de hoje?")
         }
         list.append(s.spentDay > s.budget ? "Quanto passei da meta hoje?" : "Quanto gastei hoje?")
-        list.append(s.region == .jp ? "Qual o último metrô pra casa?" : "Vai chover amanhã?")
+        list.append(s.region.profile.day?.assistantQuestion ?? "Vai chover amanhã?")
         return list
     }
 }

@@ -906,7 +906,7 @@ struct MapView: View {
                 ?? here.flatMap { h in unplannedPlaces.min { $0.location.distance(from: h) < $1.location.distance(from: h) } }
             if let target { open(target.id, show: false) }
         case "mapa-filtro":
-            search.text = arg ?? (region == .bh ? "o melhor pão de queijo perto de mim agora" : "o melhor lámen perto de mim, agora")
+            search.text = arg ?? (region.profile.day?.mapSearchExample ?? "o melhor café perto de mim, agora")
             submitSearch()
         default: break
         }

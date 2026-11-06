@@ -271,7 +271,7 @@ struct TodayView: View {
                     Text("\(index + 1)").font(.must.archivo(14, .semibold)).foregroundStyle(Color.must.secondary)
                         .frame(width: 30, height: 30).background(Circle().fill(Color.must.surface))
                 }
-                if !isLast || region == .bh { Rectangle().fill(Color.must.line).frame(width: 2, height: 22) }
+                if !isLast || region.trip.kind == .home { Rectangle().fill(Color.must.line).frame(width: 2, height: 22) }
             }
             VStack(alignment: .leading, spacing: 4) {
                 HStack(alignment: .firstTextBaseline) {
