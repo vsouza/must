@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Agenda</title>
+<entry><title>Mostra de cinema no Palladium</title><link rel="alternate" href="https://exemplo.com.br/mostra"/><published>2026-11-03T10:00:00Z</published><summary>De 12 de novembro a 20 de novembro, entrada franca.</summary></entry>
+</feed>

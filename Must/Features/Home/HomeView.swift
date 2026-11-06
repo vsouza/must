@@ -15,12 +15,16 @@ struct HomeView: View {
     @Environment(\.tripTheme) private var theme
     @Environment(\.dayEngine) private var engine
     @Environment(\.modelContext) private var context
+    @Environment(\.eventsFeed) private var events
+    @Environment(\.showEvents) private var showEvents
 
     @Query private var places: [Place]
     @Query private var expenses: [Expense]
     @Query private var trips: [TripInfo]
 
     @State private var state = CapaState()
+    /// "Agora vale" (prompt 26): cartões, linha de estado e card da noite.
+    @State private var suggest = CapaSuggestState()
     @State private var currentArea: Area?
     @State private var saveRefresh: Task<Void, Never>?
     @State private var showAtalhos = false
@@ -46,7 +50,7 @@ struct HomeView: View {
     var body: some View {
         Group {
             if let content = state.content {
-                if usesPhoto { photoCover(content) } else { colorCover(content) }
+                if smartMode { smartCover(content) } else if usesPhoto { photoCover(content) } else { colorCover(content) }
             } else {
                 theme.cover.ignoresSafeArea()
             }
@@ -73,7 +77,11 @@ struct HomeView: View {
             if DebugFlags.string("debugScreen") == "atalhos", !showAtalhos { openAtalhos() }
         }
         .task { await clock() }
-        .task(id: locationCell) { await resolveCurrentArea() }
+        .task(id: locationCell) {
+            await resolveCurrentArea()
+            await loadIndicated()
+        }
+        .task(id: region) { await refreshEvents() }
         .task(id: state.areaId) {
             await state.loadPhoto(region: region, places: places, services: services, forced: forcePhoto)
         }
@@ -89,6 +97,44 @@ struct HomeView: View {
         state.refresh(.init(region: region, now: now, engine: engine, context: context, trip: trip, expenses: expenses,
                             currentArea: currentArea, nowWeather: services.sync.now(region: region, trip: trip),
                             todayWeather: services.sync.weather(on: now, region: region, trip: trip)))
+        recomputeSuggestions(now: now)
+    }
+
+    // MARK: Agora vale (prompt 26)
+
+    /// Capa inteligente: sem dia aceito, ou você saiu do bairro do plano. Com o plano em dia, a capa clássica.
+    private var smartMode: Bool { CapaSuggestState.isSmart(plan: state.plan, currentArea: currentArea) }
+
+    private func recomputeSuggestions(now: Date) {
+        events.loadCached(region: region)
+        suggest.recompute(.init(
+            region: region, now: now, here: services.location.current?.coordinate, currentArea: currentArea, places: places,
+            plan: state.plan, dayNow: state.dayNow, events: events.events, boardShows: showEvents.today(region: region, at: now),
+            forecast: services.sync.weather(on: now, region: region, trip: trips.first),
+            eventSourceName: { [events] in events.sourceName(forId: $0) }))
+    }
+
+    /// Cache de "por perto" da célula (só leitura, nunca chama fonte): vira o "indicado" fora do board.
+    private func loadIndicated() async {
+        guard let here = services.location.current else { return }
+        let batch = await services.nearby.cached(lat: here.coordinate.latitude, lng: here.coordinate.longitude, region: region)
+        suggest.indicated = batch?.places.filter { !$0.sources.contains(.board) } ?? []
+        recomputeSuggestions(now: AppClock.now)
+    }
+
+    /// Eventos: o cache já está na tela; a rede (6 h, Wi-Fi, fora do Pouco Dados) atualiza em segundo plano.
+    private func refreshEvents() async {
+        recomputeSuggestions(now: AppClock.now)
+        let center = services.location.current?.coordinate ?? currentArea?.centroid.clCoordinate ?? region.defaultCenter
+        await events.refresh(region: region, center: center, status: services.connectivity.status, wifi: services.connectivity.isWiFi)
+        recomputeSuggestions(now: AppClock.now)
+    }
+
+    private func openSuggestion(_ card: Suggestion) {
+        if card.kind == .plan { router.push(.agora, on: .hoje); return }
+        if let id = card.placeId { router.push(.place(id: id), on: .hoje); return }
+        if let url = card.url { openURL(url); return }
+        if let c = card.coordinate { MapsLinks.openApple(to: c, name: card.title) }
     }
 
     private func scheduleRefresh() {
@@ -188,32 +234,85 @@ struct HomeView: View {
             Spacer(minLength: 16).frame(maxHeight: 64)
             title(content)
             Spacer(minLength: 16)
-            HStack {
-                Spacer(minLength: 0)
+            VStack(alignment: .trailing, spacing: 12) {
+                emCartazChip
                 agoraCard(content).frame(maxWidth: 236)
             }
+            .frame(maxWidth: .infinity, alignment: .trailing)
             Color.clear.frame(height: 96)
         }
         .padding(.horizontal, 20)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         // Texturas no fundo: não entram na conta do layout (o numeral e os arcos sangram a tela).
-        .background {
-            ZStack {
-                theme.cover
-                Rings(color: ink, count: 3, diameter: 420, opacity: 0.55, offset: CGSize(width: 60, height: 40))
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                BigNumeral(content.numeral, size: 430, color: ink)
-                    .fixedSize()
-                    .offset(x: -12, y: 96)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
-            }
-            .ignoresSafeArea()
-            .accessibilityHidden(true)
+        .background { coverBackground(content, numeralAt: .bottomLeading) }
+    }
+
+    private func coverBackground(_ content: CapaContent, numeralAt: Alignment) -> some View {
+        ZStack {
+            theme.cover
+            Rings(color: ink, count: 3, diameter: 420, opacity: 0.55, offset: CGSize(width: 60, height: 40))
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            BigNumeral(content.numeral, size: 430, color: ink)
+                .fixedSize()
+                .offset(x: numeralAt == .bottomLeading ? -12 : 150, y: 96)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: numeralAt)
         }
+        .ignoresSafeArea()
+        .accessibilityHidden(true)
+    }
+
+    /// "Em cartaz · 2 hoje" (feeds + board); só aparece com algo hoje.
+    @ViewBuilder private var emCartazChip: some View {
+        if suggest.showsToday > 0 { EmCartazChip(count: suggest.showsToday) { router.push(.emCartaz, on: .hoje) } }
+    }
+
+    // MARK: Capa inteligente (prompt 26 · `CapaInteligente.png`)
+
+    /// "Você está em <bairro>", a linha de estado, "Agora vale" (até 4 cartões), "Noite, pra onde?" e o numeral.
+    private func smartCover(_ content: CapaContent) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            topRow(content).padding(.horizontal, 20).padding(.top, 10)
+            Spacer(minLength: 12).frame(maxHeight: 72)
+            VStack(alignment: .leading, spacing: 10) {
+                countryLine(content, suffix: "você está em")
+                Text(currentArea?.name ?? content.area)
+                    .font(V8Font.display(54))
+                    .foregroundStyle(ink)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.6)
+                Text(suggest.stateLine)
+                    .font(V8Font.text(18))
+                    .foregroundStyle(ink.opacity(0.92))
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.8)
+            }
+            .padding(.horizontal, 20)
+            .accessibilityElement(children: .combine)
+            Spacer(minLength: 20).frame(maxHeight: 48)
+            if !suggest.cards.isEmpty {
+                AgoraValeRow(cards: suggest.cards, sources: suggest.sources, ink: ink, open: openSuggestion,
+                             dismiss: { suggest.dismiss($0, region: region, now: AppClock.now) })
+            }
+            Spacer(minLength: 16)
+            VStack(alignment: .trailing, spacing: 12) {
+                if let night = suggest.night {
+                    NightCard(night: night) { router.push(.montar(date: today, focusArea: suggest.nightAreaId), on: .hoje) }
+                } else {
+                    agoraCard(content)
+                }
+                emCartazChip
+            }
+            .padding(.horizontal, 20)
+            Color.clear.frame(height: 96)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background { coverBackground(content, numeralAt: .bottomTrailing) }
     }
 
     private func topRow(_ content: CapaContent, onPhoto: Bool = false) -> some View {
         HStack(alignment: .top, spacing: 12) {
+            RoundButton(systemImage: "arrow.left.arrow.right", label: "Minhas viagens", style: .line, tint: ink) { router.sheet = .viagens }
+                .padding(.top, -8)
             SpecStack(lines: content.topLeft, color: ink).modifier(PhotoChip(on: onPhoto))
             Spacer(minLength: 8)
             SpecStack(lines: content.topRight, color: ink, alignment: .trailing).modifier(PhotoChip(on: onPhoto)).padding(.top, 2)

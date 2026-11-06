@@ -145,11 +145,7 @@ struct RegionSheet: View {
     private func select(_ region: Region) {
         guard region != store.region else { return }
         dismiss()
-        // Troca depois que a sheet sai; o root recria a árvore com `.id(region)`.
-        Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(250))
-            store.choose(region, near: nil)
-        }
+        RegionSwitch.afterDismiss(region, store: store)
     }
 
     // MARK: Data simulada
@@ -360,5 +356,17 @@ private struct RegionOption: View {
         }
         .buttonStyle(MustPressStyle())
         .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+}
+
+/// Troca de região depois que a sheet sai (menu escondido e "Minhas viagens"): o root recria a árvore com `.id(region)`,
+/// e o `RegionStore` troca o container com o fade de 0,4 s sem apagar nada. Escolher à mão desliga o automático.
+@MainActor
+enum RegionSwitch {
+    static func afterDismiss(_ region: Region, store: RegionStore) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(250))
+            store.choose(region, near: nil)
+        }
     }
 }

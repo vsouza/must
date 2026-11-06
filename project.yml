@@ -46,6 +46,8 @@ targets:
         buildPhase: resources
       - path: data/map-packs.json
         buildPhase: resources
+      - path: data/events-sources.json
+        buildPhase: resources
       - path: data/emergency-kit.json
         buildPhase: resources
       - path: data/hospitals.json
