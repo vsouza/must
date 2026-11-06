@@ -91,4 +91,24 @@ final class PerformanceTests: MustUITestCase {
         }
         assertAlive("mapa", config)
     }
+
+    // MARK: Digitação
+
+    /// Custo de digitar no Novo lugar pela Lista (o caminho do relato): CPU e relógio de 120 teclas, no Japão (board maior).
+    func testTypingNewPlaceFromList() {
+        let config = Config(area: .jp, net: .offline)
+        launch(config, screen: "lista:eat")
+        guard let add = scrollTo({ button(startingWith: ["Adicionar à mão"], timeout: 1) }) else { return XCTFail("sem Adicionar à mão") }
+        safeTap(add)
+        guard let name = element("edit.name") else { return XCTFail("Novo lugar não abriu") }
+        name.enter("x")
+        let measured = options(3)
+        measured.invocationOptions = [.manuallyStop]
+        measure(metrics: [XCTCPUMetric(application: app), XCTClockMetric(), XCTMemoryMetric(application: app)], options: measured) {
+            for _ in 0..<4 { name.enter("Ramen Ichiran 一蘭 ação 🍜 ") }
+            stopMeasuring()
+            clear(name)
+        }
+        assertAlive("digitar no Novo lugar", config)
+    }
 }
