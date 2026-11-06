@@ -154,7 +154,7 @@ final class BairrosModel {
                 return MapCameraCommand(target: .fit(points: points, top: 150, bottom: areaId == nil ? 220 : 470, sides: 72))
             }
         }
-        return MapCameraCommand(target: .center(lat: c.latitude, lng: c.longitude, widthMeters: region == .jp ? 9_000 : 6_000))
+        return MapCameraCommand(target: .center(lat: c.latitude, lng: c.longitude, widthMeters: region.profile.transit?.areaMapWidth ?? 6_000))
     }
 
     /// Recalcula bolhas, arestas e índice. Chamado pela tela nos gatilhos (lugares, minuto, posição ≥ 50 m).

@@ -455,6 +455,7 @@
 		DFEF67076FB254230F0E2657 /* EmCartazModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC4A5496784A2DA852377E9F /* EmCartazModel.swift */; };
 		E01B83D8F0899D3101B309D4 /* AddLinkModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27618FF94A526CC1D58D3E7D /* AddLinkModel.swift */; };
 		E0A0247E08B36E6FE2D8086D /* ProximosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CB585AFBCB8973E3B46F059 /* ProximosView.swift */; };
+		E0BF777BB309AE8D5B4BD79E /* GeneratedAreas.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E949E43766D47C72D4AE4B4 /* GeneratedAreas.swift */; };
 		E12912B2424A4D9E74CC51F7 /* Documents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4845D90197D61866104D474E /* Documents.swift */; };
 		E139A103BE2029BC3E3CCBC2 /* TravelMatrixTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ECE91A8AC13EB4F448E14CE /* TravelMatrixTests.swift */; };
 		E1BF5C2C5E118C7D6B223CE5 /* TipsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E02237E72F8D1584EB69BA1E /* TipsTests.swift */; };
@@ -491,9 +492,7 @@
 		F14C2B41E73AD5CFAE3F60DE /* FriendsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 370D0CA48E024F76392572E5 /* FriendsTests.swift */; };
 		F1C160F671944E20315E0C83 /* ZipReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BED80B917EEE92F364A1FB5 /* ZipReader.swift */; };
 		F1D2509EE6E8625E993C8B87 /* CapaState.swift in Sources */ = {isa = PBXBuildFile; fileRef = B33450AC1C2525B66F4DDED6 /* CapaState.swift */; };
-		F2254F9E711B048260604C0B /* PocketRulesBR.swift in Sources */ = {isa = PBXBuildFile; fileRef = 637BE61D1912563C84C65895 /* PocketRulesBR.swift */; };
 		F278D8EC2232AA045A793307 /* CollectibleCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEFFE664CC38F279D998894C /* CollectibleCardView.swift */; };
-		F2C719409B7AA398BC092E05 /* PocketRulesIT.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13AF5C7BDF5D20AC67F3D861 /* PocketRulesIT.swift */; };
 		F2E9A74E2D9F1099F8DF1A53 /* BuscarNomeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FF43B0D7C49597680F405C1 /* BuscarNomeModel.swift */; };
 		F336F8A25F24267E7720B969 /* TipsModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 158DBD6828FAD7F280C029D6 /* TipsModel.swift */; };
 		F38D395F85801D13E2ADC4F9 /* SOSTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A7566B89D919661CCD45CCF /* SOSTests.swift */; };
@@ -508,7 +507,6 @@
 		F90D034EE7D3BFF8620D6C41 /* TicketSamples.swift in Sources */ = {isa = PBXBuildFile; fileRef = 905208A627DD7236B71981BE /* TicketSamples.swift */; };
 		F90E22DBD9BEC35970663643 /* MapCardFacts.swift in Sources */ = {isa = PBXBuildFile; fileRef = C19753175267A3F77CA73538 /* MapCardFacts.swift */; };
 		F922FBFB3A97A41ADECAF17F /* colar-texto-amostra.txt in Resources */ = {isa = PBXBuildFile; fileRef = D887738AD1C78720E2B6DF1D /* colar-texto-amostra.txt */; };
-		F92BFA88D59699384FE4BAFB /* PocketRulesJP.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BF0ACA4DD19BF7E365D2E96 /* PocketRulesJP.swift */; };
 		FB5ABEA4690DA8D17FCF2B13 /* TripSharing.swift in Sources */ = {isa = PBXBuildFile; fileRef = C357927156A4E1A7515C2CA7 /* TripSharing.swift */; };
 		FB8D97DCE1C6B26E13ECA871 /* SOSQuickAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CBC7567CFD052587BA81D39 /* SOSQuickAction.swift */; };
 		FBA71EC9E0B46B8DA2707B7F /* Flight.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40115E243E085BD0D1D7F7DD /* Flight.swift */; };
@@ -595,7 +593,6 @@
 		12D88D49FA4A5E026FEAA007 /* DataUsage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataUsage.swift; sourceTree = "<group>"; };
 		1332B2144F43EC270FFE4560 /* DiscoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoverView.swift; sourceTree = "<group>"; };
 		13650DD58C410E7C58B9CB69 /* DayPoster.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayPoster.swift; sourceTree = "<group>"; };
-		13AF5C7BDF5D20AC67F3D861 /* PocketRulesIT.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PocketRulesIT.swift; sourceTree = "<group>"; };
 		14EE015D01CFA6FF04C99D5C /* MustUITestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MustUITestCase.swift; sourceTree = "<group>"; };
 		14F1FF680FC1F945C2FC0E92 /* QueroView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueroView.swift; sourceTree = "<group>"; };
 		152B888DEEFD8182E7E1B1CC /* MapCameraTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapCameraTests.swift; sourceTree = "<group>"; };
@@ -723,6 +720,7 @@
 		4D992925DC54DAC9FB74D5CB /* AIPlaceExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIPlaceExtractor.swift; sourceTree = "<group>"; };
 		4E4BD87DCADB35A5CAEE421B /* VideoReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoReaderTests.swift; sourceTree = "<group>"; };
 		4E63098BC20939AB29E6FFFA /* MicroStops.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicroStops.swift; sourceTree = "<group>"; };
+		4E949E43766D47C72D4AE4B4 /* GeneratedAreas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneratedAreas.swift; sourceTree = "<group>"; };
 		4ED7B13AFB24194D16FBE4EC /* ImportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportView.swift; sourceTree = "<group>"; };
 		4F85FDAC58E26C57ACABA07A /* BoardQuery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardQuery.swift; sourceTree = "<group>"; };
 		5026350BD8BA165B4E150D9A /* MustShare.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MustShare.entitlements; sourceTree = "<group>"; };
@@ -743,7 +741,6 @@
 		59E7929EF53EBA041A2D5E78 /* TicketRevisarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketRevisarView.swift; sourceTree = "<group>"; };
 		5A1B075763A86D919443CA48 /* Values.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Values.swift; sourceTree = "<group>"; };
 		5BA09BB900AE438DC86D9821 /* bh.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = bh.json; sourceTree = "<group>"; };
-		5BF0ACA4DD19BF7E365D2E96 /* PocketRulesJP.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PocketRulesJP.swift; sourceTree = "<group>"; };
 		5CE4364063A688311F003AF8 /* tokyo.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = tokyo.json; sourceTree = "<group>"; };
 		5DD79087D09EAE2E006DDB19 /* Wallet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Wallet.swift; sourceTree = "<group>"; };
 		5E03D1F4996DAA65D5C6C5A1 /* WikidataFilms.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WikidataFilms.swift; sourceTree = "<group>"; };
@@ -754,7 +751,6 @@
 		6221CDECA41AE4E770C02080 /* Secrets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Secrets.swift; sourceTree = "<group>"; };
 		62985D320484912E83C676DB /* PlacePanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlacePanel.swift; sourceTree = "<group>"; };
 		62AC6FD638195A396A098578 /* CurrentAreaTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrentAreaTests.swift; sourceTree = "<group>"; };
-		637BE61D1912563C84C65895 /* PocketRulesBR.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PocketRulesBR.swift; sourceTree = "<group>"; };
 		641406D94759EFD74130F34E /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
 		6443CDD102740D0228DBFA6E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		6520EC9BC1F8EF500D501D86 /* TripStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripStats.swift; sourceTree = "<group>"; };
@@ -1394,6 +1390,7 @@
 				84263FD4BE0F1E37ADFB243C /* AreaCoverPrefetch.swift */,
 				11B1F60B561117721593C451 /* AreaHeroes.swift */,
 				320E13FD89A4E3EDFCCA580C /* CurrentAreaService.swift */,
+				4E949E43766D47C72D4AE4B4 /* GeneratedAreas.swift */,
 			);
 			path = Areas;
 			sourceTree = "<group>";
@@ -1791,9 +1788,6 @@
 				F4F154F0FA0C43621F70D409 /* Formatting.swift */,
 				7F491CD7ECF7543E2E1DEDEA /* NumberInput.swift */,
 				98CF84C99B67669BBB7B1DF1 /* PocketRules.swift */,
-				637BE61D1912563C84C65895 /* PocketRulesBR.swift */,
-				13AF5C7BDF5D20AC67F3D861 /* PocketRulesIT.swift */,
-				5BF0ACA4DD19BF7E365D2E96 /* PocketRulesJP.swift */,
 				DA6E59F40F1B2D3D5518007E /* Region.swift */,
 				A7FBEB4202ADD7DA375DEE4B /* RegionStore.swift */,
 				2C553381C1ACF36D47BABC10 /* ShoppingRules.swift */,
@@ -2861,6 +2855,7 @@
 				68FFD48FEA27A165F68F21CF /* FriendsProviding.swift in Sources */,
 				4D14BEB30174F19ACEA4E6F0 /* FriendsSection.swift in Sources */,
 				B09AB4744C714F4C31A08095 /* Gallery.swift in Sources */,
+				E0BF777BB309AE8D5B4BD79E /* GeneratedAreas.swift in Sources */,
 				736ED6B65BFF4FC38AAA284F /* Glass.swift in Sources */,
 				4D9B608D2B88AC32A791505E /* GooglePlacePhotos.swift in Sources */,
 				04EA9E01239F949D45AC69AC /* GoogleRoutes.swift in Sources */,
@@ -2961,9 +2956,6 @@
 				23E5F5CBB10426C71A2EDFBB /* PlaceView.swift in Sources */,
 				64B398891C6575CFBFC186E2 /* PlacesService.swift in Sources */,
 				B8FF27D93EA7293EB4E07793 /* PocketRules.swift in Sources */,
-				F2254F9E711B048260604C0B /* PocketRulesBR.swift in Sources */,
-				F2C719409B7AA398BC092E05 /* PocketRulesIT.swift in Sources */,
-				F92BFA88D59699384FE4BAFB /* PocketRulesJP.swift in Sources */,
 				1A5E979AAB0079430F8E5DE3 /* PocketSheets.swift in Sources */,
 				AE9AB758A0F0F8E6774BEFB8 /* ProposalView.swift in Sources */,
 				7FEFB06ED86DB4F51C54E50E /* Proximos.swift in Sources */,

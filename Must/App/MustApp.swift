@@ -166,6 +166,23 @@ struct AppRoot: View {
         OutsideBridge.refresh(context: context, region: region, services: services)
         // Lugares do seed sem `placeId`: resolve no Wi-Fi (fotos, horários e dicas dependem disso).
         await services.sync.resolveBoardIfNeeded(context: context, region: region, network: services.connectivity.prefetchNetwork)
+        guard store.region == region, store.generation == tree.generation, !Task.isCancelled else { return }
+        await rebuildGeneratedAreas(context: context, region: region)
+    }
+
+    /// Viagem criada no app (prompt 28 §3.5): bairros gerados dos Musts. O geocoder só roda com rede e só pras células
+    /// novas; sem rede, os nomes vêm do board ("Alfama") ou "Lisboa · 2".
+    private func rebuildGeneratedAreas(context: ModelContext, region: Region) async {
+        guard !region.trip.isBuiltIn else { return }
+        let places = (try? context.fetch(FetchDescriptor<Place>())) ?? []
+        let inputs = places.compactMap { p -> GeneratedAreas.Input? in
+            guard p.lat != 0 || p.lng != 0 else { return nil }
+            return GeneratedAreas.Input(id: p.id, lat: p.lat, lng: p.lng, cityId: p.cityId, areaName: p.area)
+        }
+        let cityNames = Dictionary(context.tripInfo().cities.map { ($0.id, $0.name) }, uniquingKeysWith: { a, _ in a })
+        let online = !services.connectivity.isOffline
+        await GeneratedAreaStore.shared.rebuild(trip: region.rawValue, places: inputs, cityNames: cityNames,
+                                                geocode: online ? GeneratedAreaStore.deviceGeocoder : nil)
     }
 
     #if DEBUG
