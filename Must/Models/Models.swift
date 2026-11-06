@@ -364,7 +364,8 @@ final class Settings {
         self.cloudBoost = false
         self.transcribeVideos = false
         self.flickrPhotos = true
-        self.fxRate = region == .jp ? 0.036 : 1
+        // Câmbio de referência do país (`data/countries/<cc>.json`, `fx`): ¥1 = R$ 0,036, €1 = R$ 6,20, real = 1.
+        self.fxRate = region.defaultFXRate
         self.fxDate = nil
     }
 

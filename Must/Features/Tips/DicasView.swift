@@ -137,7 +137,7 @@ struct DicasView: View {
             if let last = plan.lastTrain { result.lastTrain = (last.line, region.timeString(last.at)) }
         }
         if result.lastTrain == nil {
-            if region == .it {
+            if region.profile.has(.cityLastMetro) {
                 result.lastTrain = ("metrô", PocketRules.lastMetro(at: now, region: region))
             } else if let last = LastTrains.home(region: region, near: services.location.current?.coordinate, transit: TransitLoader.load(region)) {
                 result.lastTrain = (last.label.replacingOccurrences(of: "Último ", with: ""), last.time)

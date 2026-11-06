@@ -20,6 +20,9 @@ enum EventsFakes {
             return [ShowEvent(id: "ticketmaster:fake-it-1", placeId: nil, kind: .show, title: "Jazz a Trastevere", venue: "Trastevere",
                               lat: 41.8897, lng: 12.4695, startsAt: at(21), runsUntil: nil, sessions: [], priceText: "€ 15",
                               url: nil, source: .ticketmaster, checkedAt: now)]
+        default:
+            // Viagem criada no app: os fakes são só das de fábrica.
+            return []
         }
     }
 }

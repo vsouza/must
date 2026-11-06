@@ -110,6 +110,9 @@ struct RegionTests {
         #expect(try store.container.mainContext.fetchCount(FetchDescriptor<Place>()) == 63)
     }
 
+    /// 1º out 2026: fora das datas do Japão (11–24 nov), pra regra do GPS valer (prompt 28 §3.10).
+    static let foraDasViagens = Date(timeIntervalSince1970: 1_790_000_000)
+
     @Test func automaticoAbreRomaNaItalia() throws {
         let dir = FileManager.default.temporaryDirectory.appending(path: "must-tests-\(UUID().uuidString)")
         let suite = "must-tests-\(UUID().uuidString)"
@@ -120,12 +123,12 @@ struct RegionTests {
         }
         let store = RegionStore(directory: dir, defaults: defaults, seedBundle: Bundle(for: Token.self))
         #expect(store.isAuto)
-        store.followGPS(CLLocationCoordinate2D(latitude: 41.8890, longitude: 12.4700))
+        store.followGPS(CLLocationCoordinate2D(latitude: 41.8890, longitude: 12.4700), now: Self.foraDasViagens)
         #expect(store.region == .it)
         // Escolher à mão desliga o automático.
         store.choose(.jp, near: nil)
         #expect(!store.isAuto)
-        store.followGPS(CLLocationCoordinate2D(latitude: 41.8890, longitude: 12.4700))
+        store.followGPS(CLLocationCoordinate2D(latitude: 41.8890, longitude: 12.4700), now: Self.foraDasViagens)
         #expect(store.region == .jp)
     }
 

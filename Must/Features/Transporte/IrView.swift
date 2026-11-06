@@ -46,7 +46,7 @@ enum IrSteps {
             }
         }
         if cashOnly {
-            let atm = region == .jp ? "Caixa 7 Bank no 7-Eleven do caminho" : "Passe num caixa no caminho"
+            let atm = region.profile.money?.atmLine ?? "Passe num caixa no caminho"
             steps.append(IrStep(id: steps.count + 1, title: atm, subtitle: "saque antes: o \(placeName) é só cash", onTheWay: true))
         }
         let arrival = arrives.map { "chega \(region.timeString($0))" }

@@ -36,7 +36,7 @@ struct WalletView: View {
                     Text("Carteira").mustTitle()
                     Text("cartões, passes e documentos — toque e vai direto pro Wallet ou pro app")
                         .mustSerif(18).foregroundStyle(Color.must.secondary)
-                    if region == .jp {
+                    if region.profile.money?.shoppingList == true {
                         Button { router.push(.compras, on: router.tab) } label: {
                             Tag(shopping.isEmpty ? "Compras da viagem" : "Compras da viagem · \(shopping.count)")
                         }

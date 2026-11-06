@@ -46,7 +46,7 @@ actor VideoReader {
 
         /// Idioma da fala pela região (BH fala português; Japão, japonês).
         static func locale(for region: Region) -> Locale {
-            Locale(identifier: region == .jp ? "ja-JP" : "pt-BR")
+            Locale(identifier: region.profile.day?.videoLocale ?? "pt-BR")
         }
     }
 

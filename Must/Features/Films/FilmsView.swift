@@ -113,7 +113,7 @@ struct FilmsView: View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Nada filmado aqui, ainda.").font(V8Font.display(34)).tracking(-1).foregroundStyle(V8.ink)
                 .fixedSize(horizontal: false, vertical: true)
-            Text("O Wikidata tem pouco de \(region == .bh ? "Belo Horizonte" : region.displayName). O bloco “Filmes gravados aqui” some do Lugar quando não há resultado: nada de caixa vazia.")
+            Text("O Wikidata tem pouco de \(region.displayName). O bloco “Filmes gravados aqui” some do Lugar quando não há resultado: nada de caixa vazia.")
                 .font(V8Font.text(16)).foregroundStyle(V8.mute).fixedSize(horizontal: false, vertical: true)
             ViewThatFits(in: .horizontal) {
                 HStack(spacing: 12) { buttons }

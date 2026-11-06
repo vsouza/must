@@ -214,9 +214,9 @@ final class QueroModel {
 
     /// Rodapé: o que ficou de fora por construção.
     func footer(region: Region) -> String {
-        let site = intent?.brand.map { "\(WantCategory.fold($0).replacingOccurrences(of: " ", with: "")).\(region == .jp ? "jp" : region == .it ? "it" : "com.br")" }
+        let site = intent?.brand.map { "\(WantCategory.fold($0).replacingOccurrences(of: " ", with: "")).\(region.profile.day?.storeTLD ?? "com")" }
         let online = [site, "lojas online"].compactMap { $0 }.joined(separator: " e ")
-        let home = region == .bh ? "entrega em casa não é a ideia" : "entrega no Airbnb não é opção"
+        let home = region.profile.day?.deliveryNote ?? "entrega no Airbnb não é opção"
         return verb == .comprar || verb == nil ? "fora: \(online) · \(home)" : "fora: sites, delivery e lugares fechados de vez"
     }
 }

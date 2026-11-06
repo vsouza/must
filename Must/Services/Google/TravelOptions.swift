@@ -47,7 +47,7 @@ enum TravelOptions {
             taxiMinutes = drive.minutes
             source = .routes
         }
-        let fare = region == .jp ? TaxiEstimate.jpy(km: km) : TaxiEstimate.brl(km: km)
+        let fare = TaxiEstimate.fare(km: km, region: region)
         out.append(TravelOption(mode: .taxi, source: source, minutes: taxiMinutes, meters: Int(km * 1000), departs: nil, arrives: nil,
                                 fare: fare, fareCurrency: region.currency))
         return out

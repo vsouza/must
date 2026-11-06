@@ -1,0 +1,245 @@
+{
+  "code": "PT",
+  "name": "Portugal",
+  "preposition": "em",
+  "currency": "EUR",
+  "currencySymbol": "€",
+  "timeZone": "Europe/Lisbon",
+  "localLocale": "pt_PT",
+  "colorHex": "#0A5C48",
+  "defaultBudget": 100,
+  "budgetPresets": [
+    60,
+    100,
+    180
+  ],
+  "fx": {
+    "defaultBRLPerUnit": 6.2,
+    "unit": 1
+  },
+  "bounds": [
+    {
+      "minLat": 36.8,
+      "maxLat": 42.2,
+      "minLng": -9.6,
+      "maxLng": -6.1
+    },
+    {
+      "minLat": 32.3,
+      "maxLat": 33.2,
+      "minLng": -17.4,
+      "maxLng": -16.2
+    },
+    {
+      "minLat": 36.9,
+      "maxLat": 39.8,
+      "minLng": -31.4,
+      "maxLng": -24.9
+    }
+  ],
+  "center": {
+    "lat": 38.7223,
+    "lng": -9.1393
+  },
+  "meals": {
+    "morning": [
+      570,
+      750
+    ],
+    "morningEarly": 510,
+    "lunch": [
+      750,
+      900
+    ],
+    "afternoon": [
+      900,
+      1170
+    ],
+    "dinner": [
+      1170,
+      1350
+    ],
+    "night": [
+      1290,
+      1470
+    ]
+  },
+  "rules": [
+    "passportReminder"
+  ],
+  "transit": {
+    "googleTransit": true,
+    "legMode": "metro",
+    "legLabel": "metrô, elétrico ou bus",
+    "placeLabel": "metrô",
+    "taxiFare": "brl",
+    "weatherLabel": "Open-Meteo",
+    "lastTrainFromLine": false,
+    "noStationText": "Nenhuma estação a pé daqui.",
+    "shortLineFromTail": false,
+    "areaMapWidth": 6000
+  },
+  "money": {
+    "cashCommon": false,
+    "paymentLabel": "cartão e MB Way",
+    "paymentMethods": [
+      "cash",
+      "card"
+    ],
+    "amountQuickKey": ",",
+    "atmChip": "Multibanco no caminho",
+    "atmLine": "Passe num Multibanco no caminho",
+    "atmFilter": "Multibanco",
+    "lowBalance": "",
+    "showsBRL": false
+  },
+  "day": {
+    "microStops": "café, pastelaria, descanso",
+    "konbiniChips": false,
+    "assistantQuestion": "Vai chover amanhã?",
+    "mapSearchExample": "o melhor pastel de nata perto de mim, agora",
+    "deliveryNote": "entrega no Airbnb não é opção",
+    "storeTLD": "pt",
+    "subreddits": [
+      "portugal",
+      "lisboa"
+    ],
+    "ramenTips": false,
+    "micro": {
+      "breakfast": {
+        "label": "Bica e pastel de nata",
+        "note": "micro · no balcão da pastelaria",
+        "tag": "café",
+        "cost": 3
+      },
+      "water": {
+        "label": "Água e um lanche",
+        "note": "micro · antes da fila",
+        "tag": "água",
+        "cost": 2
+      },
+      "rest": {
+        "label": "Descanso no hotel",
+        "note": "micro · 40 min · carregar o celular · trocar de roupa",
+        "tag": "zz"
+      },
+      "shop": {
+        "label": "Mercearia · pra levar",
+        "note": "micro · conservas e doces no caminho",
+        "tag": "€",
+        "cost": 10
+      },
+      "treat": {
+        "label": "Gelado no caminho",
+        "note": "micro · uma bola",
+        "tag": "doce",
+        "cost": 3
+      }
+    }
+  },
+  "sos": {
+    "numbersLabel": "112 · seguro · hospital",
+    "hospitalCities": [],
+    "whereAmITitle": "Onde estou",
+    "whereAmIFontSize": 40
+  },
+  "pocket": {
+    "name": "Portugal",
+    "speechLanguage": "pt-PT",
+    "fallbackBRLPerUnit": 6.2,
+    "exchangeUnit": 1,
+    "storedRateMin": 1.5,
+    "exchangeFormat": "€ {n}",
+    "cards": [
+      {
+        "kind": "exchange",
+        "label": "Câmbio · hoje",
+        "detail": "toque pra converter",
+        "tone": "ink"
+      },
+      {
+        "kind": "phrases",
+        "label": "Frases",
+        "value": "Obrigado",
+        "detail": "o português de lá · com áudio"
+      },
+      {
+        "kind": "tipping",
+        "label": "Gorjeta",
+        "value": "Opcional",
+        "detail": "arredondar ou 5–10 % se gostou",
+        "more": [
+          "Não vem na conta; deixar troco é o costume.",
+          "O couvert (pão, azeitona, queijo) que chega à mesa é cobrado: recuse se não quiser."
+        ]
+      },
+      {
+        "kind": "water",
+        "label": "Água",
+        "value": "Da torneira",
+        "detail": "potável nas cidades · peça um copo"
+      },
+      {
+        "kind": "caution",
+        "label": "Atenção",
+        "value": "Elétrico 28",
+        "detail": "cheio e com batedor de carteira",
+        "tone": "orange"
+      }
+    ],
+    "phrases": [
+      {
+        "latin": "Obrigado / obrigada",
+        "meaning": "obrigado (homem / mulher)",
+        "speech": "Obrigado"
+      },
+      {
+        "latin": "Se faz favor",
+        "meaning": "por favor / com licença",
+        "speech": "Se faz favor"
+      },
+      {
+        "latin": "A conta, se faz favor",
+        "meaning": "a conta, por favor",
+        "speech": "A conta, se faz favor"
+      },
+      {
+        "latin": "Uma bica",
+        "meaning": "um café expresso (em Lisboa)",
+        "speech": "Uma bica, se faz favor"
+      },
+      {
+        "latin": "Casa de banho",
+        "meaning": "banheiro",
+        "speech": "Onde é a casa de banho?"
+      }
+    ],
+    "tips": [
+      {
+        "id": "pt-couvert",
+        "moment": "anytime",
+        "title": "O couvert é cobrado",
+        "detail": "Pão, azeitona e queijo na mesa entram na conta. Se não quiser, devolva logo.",
+        "etiquette": true
+      },
+      {
+        "id": "pt-almoco",
+        "moment": "morning",
+        "title": "Almoço entre 12:30 e 14:30",
+        "detail": "Cozinha fecha à tarde; o prato do dia sai mais em conta no almoço."
+      },
+      {
+        "id": "pt-ladeira",
+        "moment": "afternoon",
+        "title": "Lisboa e Porto são ladeira",
+        "detail": "Calçada portuguesa escorrega: sapato com sola de borracha."
+      },
+      {
+        "id": "pt-jantar",
+        "moment": "night",
+        "title": "Jantar depois das 19:30",
+        "detail": "Antes disso muita casa ainda está fechada."
+      }
+    ]
+  }
+}

@@ -7,5 +7,5 @@ enum AreasIT {
     /// Grupo de cidade dos bairros (o `cityId` dos lugares do `seed-it.json`).
     static let cityId = "roma"
 
-    static let all: [Area] = AreaCatalog.load(["roma"])
+    static var all: [Area] { AreaCatalog.curated["IT"] ?? [] }
 }

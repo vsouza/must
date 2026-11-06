@@ -17,7 +17,7 @@ struct TripFlag: View {
     }
 
     /// Países com bandeira desenhada. Os outros não mostram nada (o `neutral` não tem país).
-    static let countries: Set<String> = ["JP", "BR", "IT"]
+    static let countries: Set<String> = ["JP", "BR", "IT", "PT"]
 
     static func drawsFlag(for country: String) -> Bool {
         countries.contains(country.uppercased())
@@ -28,6 +28,7 @@ struct TripFlag: View {
         case "JP": "Bandeira do Japão"
         case "BR": "Bandeira do Brasil"
         case "IT": "Bandeira da Itália"
+        case "PT": "Bandeira de Portugal"
         default: ""
         }
     }
@@ -39,6 +40,7 @@ struct TripFlag: View {
                 switch country {
                 case "JP": Self.drawJapan(&context, scale: scale)
                 case "BR": Self.drawBrazil(&context, scale: scale)
+                case "PT": Self.drawPortugal(&context, scale: scale)
                 default: Self.drawItaly(&context, scale: scale)
                 }
             }
@@ -80,6 +82,18 @@ struct TripFlag: View {
         band.move(to: p(6.8, 10.2))
         band.addCurve(to: p(15.2, 11.6), control1: p(9.5, 9.4), control2: p(12.8, 9.8))
         context.stroke(band, with: .color(.white), style: StrokeStyle(lineWidth: 0.9 * scale, lineCap: .round))
+    }
+
+    /// Verde #046A38 (2/5) e vermelho #DA291C (3/5), com o disco amarelo #FFE900 na divisa (versão simplificada da esfera).
+    private static func drawPortugal(_ context: inout GraphicsContext, scale: CGFloat) {
+        let height = 22 * scale
+        let split = 22 * scale * 2 / 5
+        context.fill(Path(CGRect(x: 0, y: 0, width: split, height: height)), with: .color(Color(hex: 0x046A38)))
+        context.fill(Path(CGRect(x: split, y: 0, width: 22 * scale - split, height: height)), with: .color(Color(hex: 0xDA291C)))
+        let r = 3.6 * scale
+        let center = CGPoint(x: split, y: 11 * scale)
+        context.stroke(Path(ellipseIn: CGRect(x: center.x - r, y: center.y - r, width: 2 * r, height: 2 * r)),
+                       with: .color(Color(hex: 0xFFE900)), lineWidth: 1.4 * scale)
     }
 
     /// Três faixas verticais iguais: verde #008C45, branco, vermelho #CD212A.

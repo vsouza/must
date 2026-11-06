@@ -22,7 +22,7 @@ enum ExperienceStore {
         let list = list(in: context)
         let trip = (try? context.fetch(FetchDescriptor<TripInfo>()))?.first
         let cityId = draft.session.flatMap { trip?.city(on: $0.at, calendar: region.calendar)?.id }
-            ?? trip?.cities.first?.id ?? (region == .jp ? "tokyo1" : "bh")
+            ?? trip?.cities.first?.id ?? region.trip.cities.first?.id ?? ""
         let center = region.defaultCenter
         let place = Place(id: "x-\(UUID().uuidString.prefix(8).lowercased())", name: draft.name, cityId: cityId,
                           lat: center.latitude, lng: center.longitude)

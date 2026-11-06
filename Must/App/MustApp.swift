@@ -25,6 +25,8 @@ struct MustApp: App {
                 .environment(services)
                 .environment(\.dayEngine, DayEngineV8(store: regionStore, services: services))
                 .environment(\.showEvents, Self.showEvents(regionStore)).environment(\.films, WikidataFilms.shared)
+                // Nova viagem (prompt 28): o fluxo entrega o rascunho, o store grava e abre.
+                .environment(\.tripCreator, StoreTripCreator(store: regionStore))
                 .preferredColorScheme(.light)
                 // Fonte padrão: `Text` sem fonte explícita sai em Schibsted (texto v8), não em SF.
                 .font(V8Font.text(15))
@@ -71,6 +73,11 @@ struct AppRoot: View {
                 showOnboarding = Self.shouldShowOnboarding(onboarded: store.isOnboarded)
                 services.location.start()
                 #if DEBUG
+                // `-debugTrip portugal` (prompt 28, prints): cria uma vez a viagem de Portugal do desenho e abre nela.
+                if DebugFlags.string("debugTrip") == "portugal", !store.trips.contains(where: { $0.countryCode == "PT" }) {
+                    _ = try? store.create(NewTripDraft.debugPortugal, openNow: true)
+                    return
+                }
                 DebugLaunch.apply(to: router, context: context, region: store.region, services: services, engine: engine)
                 #endif
             }
@@ -125,9 +132,14 @@ struct AppRoot: View {
                     if type == QuickActions.sosType { router.handle(url: URL(string: "must://sos")!, region: store.region) }
                 }
             }
-            // Abre na região onde você está (Ajustes › Região › Automático).
-            .onChange(of: services.location.current.map { Region.detect($0.coordinate) }, initial: true) { _, _ in
+            // Abre a viagem certa pra onde você está (Ajustes › Região › Automático; prompt 28 §3.10:
+            // datas de hoje › país do GPS › casa).
+            .onChange(of: services.location.current.flatMap { store.autoPick(near: $0.coordinate)?.rawValue }, initial: true) { _, _ in
                 if let c = services.location.current?.coordinate { store.followGPS(c) }
+            }
+            // Viagem nova: abre quando a folha do fluxo fecha (o passo 9 mostra o "Pronto" antes).
+            .onChange(of: router.cover == nil) { _, closed in
+                if closed, store.pendingTrip != nil { store.openPending() }
             }
     }
 
@@ -166,6 +178,23 @@ struct AppRoot: View {
         OutsideBridge.refresh(context: context, region: region, services: services)
         // Lugares do seed sem `placeId`: resolve no Wi-Fi (fotos, horários e dicas dependem disso).
         await services.sync.resolveBoardIfNeeded(context: context, region: region, network: services.connectivity.prefetchNetwork)
+        guard store.region == region, store.generation == tree.generation, !Task.isCancelled else { return }
+        await rebuildGeneratedAreas(context: context, region: region)
+    }
+
+    /// Viagem criada no app (prompt 28 §3.5): bairros gerados dos Musts. O geocoder só roda com rede e só pras células
+    /// novas; sem rede, os nomes vêm do board ("Alfama") ou "Lisboa · 2".
+    private func rebuildGeneratedAreas(context: ModelContext, region: Region) async {
+        guard !region.trip.isBuiltIn else { return }
+        let places = (try? context.fetch(FetchDescriptor<Place>())) ?? []
+        let inputs = places.compactMap { p -> GeneratedAreas.Input? in
+            guard p.lat != 0 || p.lng != 0 else { return nil }
+            return GeneratedAreas.Input(id: p.id, lat: p.lat, lng: p.lng, cityId: p.cityId, areaName: p.area)
+        }
+        let cityNames = Dictionary(context.tripInfo().cities.map { ($0.id, $0.name) }, uniquingKeysWith: { a, _ in a })
+        let online = !services.connectivity.isOffline
+        await GeneratedAreaStore.shared.rebuild(trip: region.rawValue, places: inputs, cityNames: cityNames,
+                                                geocode: online ? GeneratedAreaStore.deviceGeocoder : nil)
     }
 
     #if DEBUG

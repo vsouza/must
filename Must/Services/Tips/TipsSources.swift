@@ -120,7 +120,7 @@ struct RedditTips: TipsProviding {
     var isConfigured: Bool { clientId != nil }
 
     static func subreddits(_ region: Region) -> [String] {
-        region == .jp ? ["JapanTravel", "Tokyo", "Kyoto"] : ["belohorizonte", "brasil"]
+        region.profile.day?.subreddits ?? []
     }
 
     func tips(for query: TipsQuery) async throws -> TipsBatch {

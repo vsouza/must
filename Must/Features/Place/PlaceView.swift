@@ -450,7 +450,7 @@ struct PlaceView: View {
         if let origin {
             let leg = DaySolver.leg(origin.point, place.coordinate, walkMax: walkMax)
             let leave = arrive.addingTimeInterval(-Double(leg.minutes) * 60)
-            let mode = leg.mode == .walk ? "a pé" : (region == .it ? "bus/metrô" : "metrô")
+            let mode = leg.mode == .walk ? "a pé" : (region.profile.transit?.placeLabel ?? "metrô")
             cells.append(.init(label: "saia de \(origin.name)", value: "\(region.timeString(leave)) · \(mode)"))
         }
         if let cost = PlaceFicha.cost(place, region: region, now: now) {
@@ -519,9 +519,9 @@ struct PlaceView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
                 Button { tipsVisible = true; scrollToTips = true } label: { V8FilterChip(title: tipsLabel, on: false, onInk: onInk) }
-                if PocketRules.cashOnly(notes: place.notes) || region == .jp {
+                if PocketRules.cashOnly(notes: place.notes) || region.profile.money?.cashCommon == true {
                     Button { router.push(.bolso) } label: {
-                        V8FilterChip(title: region == .jp ? "Caixa · 7 Bank" : "Caixa perto", on: false, onInk: onInk)
+                        V8FilterChip(title: region.profile.money?.atmFilter ?? "Caixa perto", on: false, onInk: onInk)
                     }
                 }
                 Button { router.push(.montar(date: region.calendar.startOfDay(for: now))) } label: {

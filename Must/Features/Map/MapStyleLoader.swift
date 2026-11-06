@@ -81,7 +81,7 @@ enum MapStyleLoader {
             style["sources"] = [String: Any]()
             layers = layers.filter { $0["source"] == nil }
         }
-        if region == .jp {
+        if region.profile.transit?.localMapFont == true {
             layers = layers.map { layer in
                 guard var layout = layer["layout"] as? [String: Any], layout["text-font"] != nil else { return layer }
                 var layer = layer

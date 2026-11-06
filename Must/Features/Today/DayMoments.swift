@@ -184,7 +184,7 @@ enum MorningChecklist {
         var items: [MorningItem] = []
         let stops = plan?.stops ?? []
 
-        if region != .bh {
+        if region.profile.has(.passportReminder) {
             let ticket = stops.contains { $0.kind == .anchor && ($0.tag?.uppercased() == "QR" || $0.note.lowercased().contains("ingresso")) }
             let taxFree = stops.contains { ($0.label + " " + $0.note).lowercased().contains("tax-free") }
             var reasons: [String] = []
@@ -195,7 +195,7 @@ enum MorningChecklist {
             }
         }
 
-        if region == .jp, let card = transitCard, card.balance < transitCardFloor {
+        if region.profile.transit?.storedValueCard != nil, let card = transitCard, card.balance < transitCardFloor {
             items.append(MorningItem(kind: .transitCard, text: "\(card.name) \(region.money(card.balance)) · recarregar",
                                      short: "recarregar \(card.name)"))
         }

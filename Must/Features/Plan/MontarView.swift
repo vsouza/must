@@ -35,11 +35,7 @@ enum MontarOptions {
     }
 
     static func budgets(_ region: Region) -> [Double] {
-        switch region {
-        case .jp: [8_000, 12_000, 20_000]
-        case .bh: [100, 200, 400]
-        case .it: [60, 120, 200]
-        }
+        region.profile.presets
     }
 
     /// "Até que horas": 21:00 → 22:00 → 23:30 → 01:00 (minutos depois da meia-noite do dia).
@@ -59,11 +55,7 @@ enum MontarOptions {
     }
 
     static func microLine(_ region: Region) -> String {
-        switch region {
-        case .jp: "Micro-paradas (café, konbini, descanso)"
-        case .bh: "Micro-paradas (café, padaria, descanso)"
-        case .it: "Micro-paradas (café, gelato, descanso)"
-        }
+        "Micro-paradas (\(region.profile.day?.microStops ?? "café, descanso"))"
     }
 }
 

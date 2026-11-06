@@ -219,8 +219,9 @@ enum DayComposer {
                 let mode: DayLegMode
                 switch (hop.mode, region) {
                 case (.bus, _): mode = .bus
-                // JR é trem; Tokyo Metro/Toei, metrô.
-                case (_, .jp): mode = hop.line?.code.hasPrefix("J") == true ? .train : .metro
+                // JR é trem; Tokyo Metro/Toei, metrô (`transit.trainLinePrefix` do país).
+                case (_, _) where region.profile.transit?.trainLinePrefix != nil:
+                    mode = hop.line?.code.hasPrefix(region.profile.transit?.trainLinePrefix ?? "") == true ? .train : .metro
                 default: mode = .metro
                 }
                 let what = hop.line.map { "\($0.code) \($0.name.replacingOccurrences(of: "JR ", with: ""))" } ?? hop.mode.label
@@ -229,11 +230,10 @@ enum DayComposer {
             if leg.km > 25 { return (.train, "trem regional · \(from.name) → \(to.name) · \(m) min") }
         }
         if leg.km > 25 { return (.train, "trem regional · \(m) min") }
-        switch region {
-        case .jp: return (.train, "trem ou metrô · \(m) min")
-        case .it: return (.metro, "metrô ou bus · \(m) min")
-        case .bh: return (.taxi, "app ou táxi · \(m) min")
-        }
+        // Sem tabela: o modo e o rótulo do país ("trem ou metrô", "metrô ou bus", "app ou táxi").
+        let transit = region.profile.transit
+        let mode = transit?.legMode.flatMap(DayLegMode.init(rawValue:)) ?? .taxi
+        return (mode, "\(transit?.legLabel ?? "app ou táxi") · \(m) min")
     }
 
     // MARK: Título

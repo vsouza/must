@@ -55,7 +55,7 @@ struct TravelOption: Sendable, Hashable, Identifiable {
 enum GoogleRoutes {
     /// A API do Google não tem trem/metrô do Japão: TRANSIT em Tóquio volta `{}` (testado em 02/11/2026; o app do
     /// Google Maps tem, a API não). Lá o transporte vem do MapKit e a matriz pede só a pé (não gasta cota à toa).
-    static func hasTransit(in region: Region) -> Bool { region != .jp }
+    static func hasTransit(in region: Region) -> Bool { region.profile.transit?.googleTransit ?? true }
     static func matrixModes(for region: Region) -> [String] { hasTransit(in: region) ? ["WALK", "TRANSIT"] : ["WALK"] }
 
     static let routesURL = URL(string: "https://routes.googleapis.com/directions/v2:computeRoutes")!
@@ -256,6 +256,11 @@ enum TaxiEstimate {
     static func jpy(km: Double) -> Double {
         let extra = max(0, km - 1.052)
         return ((500 + extra * 80 / 0.255) / 10).rounded() * 10
+    }
+
+    /// Tarifa do país (`transit.taxiFare`: "jpy" = a de Tóquio; o resto usa a conta de BH, como antes).
+    static func fare(km: Double, region: Region) -> Double {
+        region.profile.transit?.taxiFare == "jpy" ? jpy(km: km) : brl(km: km)
     }
 
     /// BH: bandeirada e quilômetro rodado aproximados (R$ 6,00 + R$ 2,50/km).

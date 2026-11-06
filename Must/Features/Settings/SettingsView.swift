@@ -275,7 +275,7 @@ private struct SettingsSections: View {
             RowDivider()
             flightRow
             RowDivider()
-            FormRow("Tempo", subtitle: region == .jp ? "Open-Meteo + JMA" : "Open-Meteo") {
+            FormRow("Tempo", subtitle: region.profile.transit?.weatherLabel ?? "Open-Meteo") {
                 MonoValue(weatherStatus, color: Color.must.secondary)
             }
             RowDivider()

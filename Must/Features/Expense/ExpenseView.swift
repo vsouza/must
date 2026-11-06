@@ -131,7 +131,7 @@ struct ExpenseView: View {
 
     private var fitLine: String {
         var parts: [String] = []
-        if region == .jp, let fx = settingsList.first?.fxRate, amount > 0 {
+        if region.profile.money?.showsBRL == true, let fx = settingsList.first?.fxRate, amount > 0 {
             parts.append("≈ \((amount * fx).formatted(.money("BRL")))")
         }
         let left = budget - spentToday - amount
@@ -191,7 +191,7 @@ struct ExpenseView: View {
     // MARK: Teclado
 
     private var keypad: some View {
-        let extra = region == .jp ? "000" : ","
+        let extra = region.profile.money?.amountQuickKey ?? ","
         let keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", extra, "0", "⌫"]
         return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3), spacing: 10) {
             ForEach(keys, id: \.self) { key in
@@ -233,7 +233,7 @@ struct ExpenseView: View {
 
     private var payment: some View {
         HStack(spacing: 8) {
-            ForEach(region == .jp ? PaymentMethod.allCases : [.cash, .card], id: \.self) { m in
+            ForEach(region.profile.money?.paymentMethods?.compactMap(PaymentMethod.init(rawValue:)) ?? [.cash, .card], id: \.self) { m in
                 Button { method = m } label: {
                     Text(m == .cash ? "pago em dinheiro" : m.label)
                         .font(.must.archivo(14))
@@ -264,7 +264,7 @@ struct ExpenseView: View {
             category = p.defaultCategory
             if let price = NumberInput.rounded(p.price), price > 0 { digits = String(price) }
         }
-        if region == .jp { method = .cash }
+        if region.profile.money?.cashCommon == true { method = .cash }
     }
 
     private func save() {

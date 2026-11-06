@@ -23,10 +23,10 @@ struct WalletCardFacts: Equatable {
                                    alert: false)
         case .creditCard:
             // Japão: o cartão cobra em reais, então o gasto (em ienes) vem convertido, com o câmbio da região.
-            if region == .jp, fxRate > 0 {
+            if region.profile.money?.showsBRL == true, fxRate > 0 {
                 return WalletCardFacts(label: "gasto na viagem",
                                        value: (cardSpend * fxRate).formatted(.money("BRL")),
-                                       tag: "câmbio ¥100 = \((100 * fxRate).formatted(.money("BRL")))",
+                                       tag: "câmbio \(region.fxUnitLabel) = \((region.fxUnit * fxRate).formatted(.money("BRL")))",
                                        alert: false)
             }
             return WalletCardFacts(label: "gasto na viagem", value: region.money(cardSpend), tag: nil, alert: false)

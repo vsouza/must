@@ -75,10 +75,8 @@ enum ShoppingRules {
 
     /// As regras da volta da região: Roma usa o pacote da Itália; Japão (e BH, que não tem viagem) o do Japão.
     static func pack(for region: Region) -> ShoppingRulePack {
-        switch region {
-        case .it: itBR
-        case .jp, .bh: jpBR
-        }
+        // `shoppingPack` do país (`data/countries/<cc>.json`). Sem pacote (BH herda o do Japão, como antes): o do Japão.
+        region.profile.shoppingPack == "it-br" ? itBR : jpBR
     }
 
     private final class BundleAnchor {}

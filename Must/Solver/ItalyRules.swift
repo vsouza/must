@@ -1,6 +1,7 @@
 import Foundation
 
-/// Regras de Roma no solver (prompt 24 §2), só com `DayRequest.region == .it`. Puras, sem rede.
+/// Regras de Roma no solver (prompt 24 §2). Ligadas pelo perfil do país (`data/countries/IT.json`, `rules`; as janelas
+/// em `meals`). Puras, sem rede.
 /// - almoço 12:30–15, jantar 19:30–23 (jantar nunca antes das 19:30);
 /// - riposo 13–16 nas lojas pequenas; igrejas fecham 12:30–15:30;
 /// - museus estatais fecham segunda (a Borghese não, mas só entra com reserva);
@@ -15,15 +16,9 @@ enum ItalyRules {
     static let appiaStart = 9 * 60 + 30
     static let appiaMinutes = 150
 
-    /// Janelas italianas (minutos desde a meia-noite, [início, fim)).
+    /// Janelas italianas (minutos desde a meia-noite, [início, fim)): as do perfil do país.
     static func range(_ window: DayWindow, startEarly: Bool) -> Range<Int> {
-        switch window {
-        case .morning: (startEarly ? 8 * 60 : 9 * 60)..<(12 * 60 + 30)
-        case .lunch: (12 * 60 + 30)..<(15 * 60)
-        case .afternoon: (15 * 60)..<(19 * 60 + 30)
-        case .dinner: (19 * 60 + 30)..<(23 * 60)
-        case .night: (21 * 60 + 30)..<(24 * 60 + 30)
-        }
+        DaySolver.range(window, startEarly: startEarly, region: .it)
     }
 
     private static func text(_ p: SolverPlace) -> String {

@@ -205,7 +205,7 @@ struct WalletEditor: View {
         guard !loaded else { return }
         loaded = true
         guard let item else {
-            lowText = region == .jp ? "1000" : ""
+            lowText = region.profile.money?.lowBalance ?? ""
             return
         }
         kind = item.kind

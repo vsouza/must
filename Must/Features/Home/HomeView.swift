@@ -324,7 +324,7 @@ struct HomeView: View {
     private func title(_ content: CapaContent) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             countryLine(content, suffix: nil)
-            MonoLabel("Hoje é", size: 10, color: ink.opacity(0.85))
+            MonoLabel(content.lead, size: 10, color: ink.opacity(0.85))
             Text(content.area)
                 .font(V8Font.display(54))
                 .foregroundStyle(ink)
@@ -339,7 +339,7 @@ struct HomeView: View {
             }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Dia \(content.numeral). Hoje é \(content.area)\(content.evening.map { ", \($0)" } ?? "")")
+        .accessibilityLabel("Dia \(content.numeral). \(content.lead) \(content.area)\(content.evening.map { ", \($0)" } ?? "")")
     }
 
     private func countryLine(_ content: CapaContent, suffix: String?) -> some View {

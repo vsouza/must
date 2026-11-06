@@ -70,9 +70,10 @@ struct AgoraContent: Equatable {
     static func chips(stop: DayStop, placeNotes: String?, region: Region, legBefore: DayLeg?) -> [String] {
         var chips: [String] = []
         let cash = CashOnly.detect(stop.label, stop.note, placeNotes)
-        if cash { chips.append(region == .jp ? "caixa 7 Bank no konbini" : "saque antes") }
-        if region == .jp, let mode = legBefore?.mode, mode == .train || mode == .metro { chips.append("banheiro na estação") }
-        if region == .jp, legBefore == nil || legBefore?.mode == .walk { chips.append("konbini no caminho") }
+        let money = region.profile.money, konbini = region.profile.day?.konbiniChips == true
+        if cash { chips.append(money?.atmChip ?? "saque antes") }
+        if konbini, let mode = legBefore?.mode, mode == .train || mode == .metro { chips.append("banheiro na estação") }
+        if konbini, legBefore == nil || legBefore?.mode == .walk { chips.append("konbini no caminho") }
         if cash { chips.append("só cash") }
         return chips
     }

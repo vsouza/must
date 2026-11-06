@@ -90,17 +90,26 @@ struct AreaFile: Codable, Sendable {
 enum AreaCatalog {
     private final class BundleAnchor {}
 
-    static let jp: [Area] = load(["tokyo", "kyoto"])
-    static let bh: [Area] = load(["bh"])
-    /// Todas as tabelas (o solver por área acha o bairro de um lugar e os vizinhos por aqui).
-    static let all: [Area] = jp + bh + AreasIT.all
+    /// Tabelas curadas por país (`curatedAreas` em `data/countries/<cc>.json`): JP tokyo+kyoto, BR bh, IT roma.
+    static let curated: [String: [Area]] = CountryProfile.bundled.reduce(into: [:]) { out, entry in
+        if let files = entry.value.curatedAreas, !files.isEmpty { out[entry.key] = load(files) }
+    }
+    static var jp: [Area] { curated["JP"] ?? [] }
+    static var bh: [Area] { curated["BR"] ?? [] }
+    /// Todas as tabelas curadas (o solver por área acha o bairro de um lugar e os vizinhos por aqui).
+    static let all: [Area] = ["JP", "BR", "IT"].flatMap { curated[$0] ?? [] }
 
+    /// Bairros da viagem: as de fábrica usam a tabela curada do país; as criadas no app, os gerados dos Musts
+    /// (`GeneratedAreas`, prompt 28 §3.5).
     static func areas(for region: Region) -> [Area] {
-        switch region {
-        case .jp: jp
-        case .bh: bh
-        case .it: AreasIT.all
-        }
+        if region.trip.isBuiltIn { return curated[region.country] ?? [] }
+        return GeneratedAreaStore.shared.areas(for: region.rawValue)
+    }
+
+    /// Só os gerados (vazio nas de fábrica): o solver soma com `all` pro foco por bairro.
+    static func generated(for region: Region?) -> [Area] {
+        guard let region, !region.trip.isBuiltIn else { return [] }
+        return GeneratedAreaStore.shared.areas(for: region.rawValue)
     }
 
     /// Tóquio 1 e 2 são a mesma cidade pro bairro (o solver já trata assim).

@@ -2,21 +2,21 @@ import Foundation
 
 // Bolso e Dicas por país (prompt 23 §2 · 07/08, prompt 24 §2). Conteúdo curado, 100 % offline: nada aqui chama rede.
 // Os valores que mudam no dia (câmbio guardado, saldo anotado da Suica, último trem da tabela) entram pelo
-// `PocketContext`; o resto é texto fixo por país em `PocketRulesJP/BR/IT.swift`.
+// `PocketContext`; o resto é dado do país em `data/countries/<cc>.json` (campo `pocket`, prompt 28).
 
 /// Tom de um card (v8: três cores — tinta, laranja, branco sobre papel).
-enum PocketTone: String, Sendable, Hashable {
+enum PocketTone: String, Codable, Sendable, Hashable {
     case ink, orange, white
 }
 
 /// O que cada card do Bolso é (o toque abre o conversor, as frases ou o detalhe).
-enum PocketCardKind: String, Sendable, Hashable, CaseIterable {
+enum PocketCardKind: String, Codable, Sendable, Hashable, CaseIterable {
     case exchange, transitCard, ticket, phrases, lastTrain, taxFree, nearby, etiquette, lockers
     case tipping, water, churches, caution, riposo, booking
 }
 
 /// Um card da grade 2×N do Bolso.
-struct PocketCard: Identifiable, Hashable, Sendable {
+struct PocketCard: Identifiable, Codable, Hashable, Sendable {
     var kind: PocketCardKind
     /// Micro-rótulo ("TAX-FREE"). Já em caixa alta na tela.
     var label: String
@@ -33,7 +33,7 @@ struct PocketCard: Identifiable, Hashable, Sendable {
 
 /// Frase com áudio (sintetizador do aparelho, offline). A tela mostra só letras latinas e o sentido em pt-BR;
 /// `speech` (na escrita local) vai só pro `AVSpeechSynthesizer`, nunca aparece.
-struct PocketPhrase: Identifiable, Hashable, Sendable {
+struct PocketPhrase: Identifiable, Codable, Hashable, Sendable {
     var latin: String
     var meaning: String
     var speech: String
@@ -42,7 +42,7 @@ struct PocketPhrase: Identifiable, Hashable, Sendable {
 }
 
 /// Momento do dia de uma dica do país (Dicas por momento).
-enum TipMoment: String, Sendable, Hashable, CaseIterable {
+enum TipMoment: String, Codable, Sendable, Hashable, CaseIterable {
     case morning, beforeQueue, afternoon, night, back, anytime
 
     /// Rótulo à direita do card ("NOITE", "VOLTA").
@@ -59,7 +59,7 @@ enum TipMoment: String, Sendable, Hashable, CaseIterable {
 }
 
 /// Dica fixa do país ("Não tem lixeira na rua…"). `etiquette` = entra no filtro Etiqueta.
-struct CountryTip: Identifiable, Hashable, Sendable {
+struct CountryTip: Identifiable, Codable, Hashable, Sendable {
     var id: String
     var moment: TipMoment
     var title: String
@@ -86,7 +86,7 @@ struct PocketContext: Sendable, Hashable {
 }
 
 /// Conteúdo fixo de um país.
-struct PocketCountry: Sendable {
+struct PocketCountry: Codable, Hashable, Sendable {
     /// "Japão" (filtro e rótulo dos cards "Sabia que").
     var name: String
     /// Idioma do sintetizador ("ja-JP").
@@ -95,18 +95,36 @@ struct PocketCountry: Sendable {
     var fallbackBRLPerUnit: Double
     /// Quanto o câmbio mostra de cara (¥ 100, € 1, R$ 1 → US$).
     var exchangeUnit: Double
+    /// Câmbio guardado só vale abaixo de `storedRateMax` / acima de `storedRateMin` (o Japão guarda R$ por ¥1, ~0,036;
+    /// a Itália R$ por €1, ~6,4); fora disso, o `fallbackBRLPerUnit`.
+    var storedRateMin: Double?
+    var storedRateMax: Double?
+    /// "¥{n}", "€ {n}", "US$ {n}": a unidade do card de câmbio.
+    var exchangeFormat: String?
+    /// Moeda do conversor quando não é a da viagem (BH converte dólar).
+    var exchangeCurrency: String?
+    var exchangeSymbol: String?
+    /// "Yamanote → Hibiya · Shinjuku → Naka-Meguro" no card do último trem (tabela do Japão).
+    var shortTrainLabel: Bool?
     var cards: [PocketCard]
     var phrases: [PocketPhrase]
     var tips: [CountryTip]
+
+    /// País sem Bolso curado: só o câmbio (e nenhuma frase ou dica inventada).
+    static func generic(_ profile: CountryProfile) -> PocketCountry {
+        PocketCountry(name: profile.name, speechLanguage: (profile.localLocale ?? "pt_BR").replacingOccurrences(of: "_", with: "-"),
+                      fallbackBRLPerUnit: profile.defaultFXRate, exchangeUnit: profile.fxUnit,
+                      exchangeFormat: "\(profile.symbol) {n}",
+                      cards: [PocketCard(kind: .exchange, label: "Câmbio · hoje", value: "", detail: "toque pra converter", tone: .ink)],
+                      phrases: [], tips: [])
+    }
 }
 
 enum PocketRules {
+    /// O Bolso do país da viagem (`CountryProfile.pocket`); sem perfil curado, o genérico.
     static func country(_ region: Region) -> PocketCountry {
-        switch region {
-        case .jp: jp
-        case .bh: br
-        case .it: it
-        }
+        let profile = region.profile
+        return profile.pocket ?? .generic(profile)
     }
 
     /// Cards do Bolso, na ordem da grade (câmbio e o cartão/bilhete de transporte primeiro).
@@ -121,15 +139,15 @@ enum PocketRules {
             case .transitCard:
                 if let balance = context.transitBalance {
                     card.value = region.money(balance)
-                } else if region == .jp {
+                } else if region.profile.transit?.storedValueCard != nil {
                     card.value = "anotar"
                 }
             case .lastTrain:
-                if region == .it {
+                if region.profile.has(.cityLastMetro) {
                     card.value = lastMetro(at: context.now, region: region)
                 } else if let last = context.lastTrain {
                     card.value = last.time
-                    if region == .jp { card.detail = shortTrainLabel(last.label) }
+                    if country.shortTrainLabel == true { card.detail = shortTrainLabel(last.label) }
                 }
             default: break
             }
@@ -143,23 +161,19 @@ enum PocketRules {
     /// Câmbio que vale: o guardado se faz sentido pro país, senão o padrão (nenhuma API nova).
     /// O Japão guarda R$ por ¥1 (~0,036); a Itália R$ por €1 (~6,4); BH não converte (usa R$ por US$ 1).
     static func rate(_ region: Region, stored: Double?) -> Double {
-        let fallback = country(region).fallbackBRLPerUnit
+        let pocket = country(region)
+        let fallback = pocket.fallbackBRLPerUnit
         guard let stored, stored > 0 else { return fallback }
-        switch region {
-        case .jp: return stored < 1 ? stored : fallback
-        case .it: return stored > 1.5 ? stored : fallback
-        case .bh: return stored > 1.5 ? stored : fallback
-        }
+        if let max = pocket.storedRateMax, stored >= max { return fallback }
+        if let min = pocket.storedRateMin, stored <= min { return fallback }
+        return stored
     }
 
     /// "¥100\nR$ 3,60" — duas linhas, a unidade e o valor em reais. BH: "US$ 1\nR$ 5,50".
     static func exchangeValue(_ region: Region, rate: Double, unit: Double) -> String {
         let brl = (unit * rate).formatted(.money("BRL"))
-        switch region {
-        case .jp: return "¥\(Int(unit))\n\(brl)"
-        case .it: return "€ \(Int(unit))\n\(brl)"
-        case .bh: return "US$ \(Int(unit))\n\(brl)"
-        }
+        let format = country(region).exchangeFormat ?? "\(region.currencySymbol) {n}"
+        return "\(format.replacingOccurrences(of: "{n}", with: "\(Int(unit))"))\n\(brl)"
     }
 
     /// Converte `value` na moeda da região pra reais (e de volta com `reverse`).
@@ -204,5 +218,32 @@ enum PocketRules {
     static func cashOnly(notes: String) -> Bool {
         let n = notes.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: Locale(identifier: "pt_BR"))
         return ["so cash", "cash only", "levar dinheiro", "so dinheiro", "nao aceita cartao", "dinheiro vivo"].contains { n.contains($0) }
+    }
+}
+
+// MARK: - JSON (`data/countries/<cc>.json`, campo `pocket`)
+
+extension PocketCard {
+    private enum CodingKeys: String, CodingKey { case kind, label, value, detail, tone, more }
+
+    /// `tone` e `more` são opcionais no JSON (padrão: branco, sem detalhe).
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(kind: try c.decode(PocketCardKind.self, forKey: .kind), label: try c.decode(String.self, forKey: .label),
+                  value: try c.decodeIfPresent(String.self, forKey: .value) ?? "",
+                  detail: try c.decodeIfPresent(String.self, forKey: .detail) ?? "",
+                  tone: try c.decodeIfPresent(PocketTone.self, forKey: .tone) ?? .white,
+                  more: try c.decodeIfPresent([String].self, forKey: .more) ?? [])
+    }
+}
+
+extension CountryTip {
+    private enum CodingKeys: String, CodingKey { case id, moment, title, detail, etiquette }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(id: try c.decode(String.self, forKey: .id), moment: try c.decode(TipMoment.self, forKey: .moment),
+                  title: try c.decode(String.self, forKey: .title), detail: try c.decode(String.self, forKey: .detail),
+                  etiquette: try c.decodeIfPresent(Bool.self, forKey: .etiquette) ?? false)
     }
 }

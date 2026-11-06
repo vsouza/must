@@ -92,8 +92,8 @@ enum PlaceFicha {
         if queueFirst, let q = place.queueMinutes, q > 0 { cells.append(Cell(label: "fila agora", value: "~\(q) min")) }
         if let cost = cost(place, region: region, now: now) { cells.append(cost) }
         let eats = ["eat", "drink", "coffee"].contains(place.list?.id ?? "")
-        if region == .it && eats {
-            cells.append(Cell(label: "coperto", value: "€ 1–3 · sem gorjeta"))
+        if eats, let charge = region.profile.money?.tableCharge {
+            cells.append(Cell(label: "coperto", value: charge))
         } else {
             cells.append(Cell(label: "pagamento", value: payment(place, region: region)))
         }
@@ -139,7 +139,7 @@ enum PlaceFicha {
         }
         if let price = place.price {
             if price <= 0 { return Cell(label: label, value: free(place.extra?.art?.freeNote)) }
-            return Cell(label: label, value: region.money(price) + (eats && region == .it && listId == "eat" ? " / pessoa" : ""))
+            return Cell(label: label, value: region.money(price) + (eats && region.profile.has(.perPersonPrice) && listId == "eat" ? " / pessoa" : ""))
         }
         if let level = place.priceLevel {
             return Cell(label: label, value: level <= 0 ? free(nil) : String(repeating: region.currencySymbol, count: min(level, 4)))
@@ -154,11 +154,7 @@ enum PlaceFicha {
 
     static func payment(_ place: Place, region: Region) -> String {
         if PocketRules.cashOnly(notes: place.notes) { return "só cash" }
-        switch region {
-        case .bh: return "cartão e Pix"
-        case .jp: return "cartão e cash"
-        case .it: return "cartão"
-        }
+        return region.profile.money?.paymentLabel ?? "cartão"
     }
 
     static func hours(_ place: Place, region: Region, now: Date) -> String {
@@ -197,6 +193,6 @@ enum PlaceFicha {
     /// "fila ~20 min" / "sem reserva · fila ~40 min" (Roma, onde reserva é a regra).
     static func queueTag(_ place: Place, region: Region) -> String? {
         guard let q = place.queueMinutes, q > 0 else { return nil }
-        return region == .it && place.reservation == nil ? "sem reserva · fila ~\(q) min" : "fila ~\(q) min"
+        return region.profile.has(.perPersonPrice) && place.reservation == nil ? "sem reserva · fila ~\(q) min" : "fila ~\(q) min"
     }
 }

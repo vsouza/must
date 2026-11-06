@@ -432,7 +432,7 @@ final class TicketImportModel {
             context.insert(list)
         }
         let trip = try context.fetch(FetchDescriptor<TripInfo>()).first
-        let cityId = trip?.city(on: draft.at, calendar: region.calendar)?.id ?? trip?.cities.first?.id ?? (region == .jp ? "tokyo1" : "bh")
+        let cityId = trip?.city(on: draft.at, calendar: region.calendar)?.id ?? trip?.cities.first?.id ?? region.trip.cities.first?.id ?? ""
         let center = region.defaultCenter
         let coordinate: CLLocationCoordinate2D? = {
             guard let lat = candidate?.lat, let lng = candidate?.lng else { return nil }

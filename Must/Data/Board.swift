@@ -1,9 +1,18 @@
 import Foundation
 
-/// Espelho Codable de `data/board.schema.json` (versão 1).
+/// Espelho Codable de `data/board.schema.json` (versão 2, prompt 28).
 /// Datas "date" ficam como String "yyyy-MM-dd"; "date-time" viram `Date`
-/// (ISO 8601 com fuso; exportadas no fuso da região).
+/// (ISO 8601 com fuso; exportadas no fuso da viagem).
+///
+/// v2: a viagem vem em `tripId` + `countryCode` (viagens criadas no app). Arquivo v1 com `region: bh|jp|it` (os seeds,
+/// exports antigos) continua sendo lido. `region` é a viagem do arquivo; id que este aparelho não conhece vira uma
+/// viagem só com id e país, pra mensagem de "board de outra viagem".
 struct Board: Codable, Equatable, Sendable {
+    /// Versão que o app grava.
+    static let currentVersion = 2
+    /// Versões que o importador aceita.
+    static let readableVersions = 1...2
+
     var version: Int
     var region: Region
     var trip: BoardTrip?
@@ -16,6 +25,70 @@ struct Board: Codable, Equatable, Sendable {
     var events: [BoardEvent]?
     /// Reservas de voo (PNR, pernas, franquia, checklist). Prompt 15 · C.
     var flights: [BoardFlight]?
+
+    private enum CodingKeys: String, CodingKey {
+        case version, region, tripId, countryCode, trip, budget, lists, places, expenses, days, events, flights
+    }
+
+    init(version: Int, region: Region, trip: BoardTrip? = nil, budget: BoardBudget? = nil, lists: [BoardList], places: [BoardPlace],
+         expenses: [BoardExpense]? = nil, days: [BoardDay]? = nil, events: [BoardEvent]? = nil, flights: [BoardFlight]? = nil) {
+        self.version = version
+        self.region = region
+        self.trip = trip
+        self.budget = budget
+        self.lists = lists
+        self.places = places
+        self.expenses = expenses
+        self.days = days
+        self.events = events
+        self.flights = flights
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        version = try c.decode(Int.self, forKey: .version)
+        let id = try c.decodeIfPresent(String.self, forKey: .tripId) ?? c.decodeIfPresent(String.self, forKey: .region)
+        guard let id, !id.isEmpty else {
+            throw DecodingError.keyNotFound(CodingKeys.tripId, .init(codingPath: c.codingPath, debugDescription: "falta tripId (ou region)"))
+        }
+        let country = try c.decodeIfPresent(String.self, forKey: .countryCode)
+        region = Region(rawValue: id) ?? Region(trip: Self.unknownTrip(id: id, countryCode: country))
+        trip = try c.decodeIfPresent(BoardTrip.self, forKey: .trip)
+        budget = try c.decodeIfPresent(BoardBudget.self, forKey: .budget)
+        lists = try c.decode([BoardList].self, forKey: .lists)
+        places = try c.decode([BoardPlace].self, forKey: .places)
+        expenses = try c.decodeIfPresent([BoardExpense].self, forKey: .expenses)
+        days = try c.decodeIfPresent([BoardDay].self, forKey: .days)
+        events = try c.decodeIfPresent([BoardEvent].self, forKey: .events)
+        flights = try c.decodeIfPresent([BoardFlight].self, forKey: .flights)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(version, forKey: .version)
+        if version >= 2 {
+            try c.encode(region.rawValue, forKey: .tripId)
+            try c.encode(region.country, forKey: .countryCode)
+        } else {
+            try c.encode(region.rawValue, forKey: .region)
+        }
+        try c.encodeIfPresent(trip, forKey: .trip)
+        try c.encodeIfPresent(budget, forKey: .budget)
+        try c.encode(lists, forKey: .lists)
+        try c.encode(places, forKey: .places)
+        try c.encodeIfPresent(expenses, forKey: .expenses)
+        try c.encodeIfPresent(days, forKey: .days)
+        try c.encodeIfPresent(events, forKey: .events)
+        try c.encodeIfPresent(flights, forKey: .flights)
+    }
+
+    /// Viagem que este aparelho não tem (board exportado de outra): só id e país, nunca vai pro registro.
+    static func unknownTrip(id: String, countryCode: String?) -> Trip {
+        let profile = CountryProfile.forCountry(countryCode ?? "ZZ")
+        return Trip(id: id, name: id, shortName: nil, countryCode: profile.code, currency: profile.currency,
+                    timeZone: profile.timeZone, colorHex: nil, kind: .trip, start: nil, end: nil, cities: [], home: nil,
+                    createdAt: Date(timeIntervalSince1970: 0), archived: false, seedId: nil)
+    }
 }
 
 /// Reserva de voo. As pernas são os trechos; o checklist guarda o que já foi marcado.

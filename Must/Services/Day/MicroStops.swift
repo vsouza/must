@@ -16,32 +16,29 @@ enum MicroStops {
         var cost: Double?
     }
 
-    /// O que a micro-parada diz, por região (Japão, Roma, BH).
+    /// O que a micro-parada diz, por país (`data/countries/<cc>.json`, `day.micro`). País sem perfil: o genérico.
     static func words(_ kind: DayMicroKind, region: Region) -> Words {
-        switch (kind, region) {
-        case (.breakfast, .jp): Words(label: "Café perto do hotel", note: "micro · café da manhã · a pé do hotel", tag: "café", cost: 800)
-        case (.breakfast, .it): Words(label: "Cornetto e cappuccino no bar", note: "micro · no balcão, de pé", tag: "café", cost: 2.5)
-        case (.breakfast, .bh): Words(label: "Café da manhã", note: "micro · pão de queijo e café · perto de casa", tag: "café", cost: 20)
-        case (.water, .jp): Words(label: "Konbini · água e onigiri", note: "micro · antes da fila", tag: "7", cost: 400)
-        case (.water, .it): Words(label: "Nasone · água fresca", note: "micro · de graça · tape o cano pra beber", tag: "água", cost: nil)
-        case (.water, .bh): Words(label: "Água e um lanche", note: "micro · antes da fila", tag: "água", cost: 10)
-        case (.rest, .bh): Words(label: "Descanso em casa", note: "micro · 40 min · carregar o celular · trocar de roupa", tag: "zz", cost: nil)
-        case (.rest, _): Words(label: "Descanso no hotel", note: "micro · 40 min · carregar o celular · trocar de roupa", tag: "zz", cost: nil)
-        case (.shop, .jp): Words(label: "Depachika · doces pra levar", note: "micro · tax-free acima de ¥ 5.000 com passaporte", tag: "¥", cost: 1_500)
-        case (.shop, .it): Words(label: "Alimentari · pra levar", note: "micro · tax-free só acima de € 70 por loja", tag: "€", cost: 10)
-        case (.shop, .bh): Words(label: "Compra rápida", note: "micro · mercado ou farmácia no caminho", tag: "R$", cost: nil)
-        case (.view, _): Words(label: "Vista no caminho", note: "micro · foto rápida no caminho", tag: "foto", cost: nil)
-        case (.treat, .it): Words(label: "Gelato no caminho", note: "micro · uma bola no copinho", tag: "gl", cost: 3.5)
-        case (.treat, .jp): Words(label: "Taiyaki no caminho", note: "micro · doce de rua", tag: "doce", cost: 300)
-        case (.treat, .bh): Words(label: "Sorvete no caminho", note: "micro · uma bola", tag: "doce", cost: 12)
-        case (.show, _): Words(label: "Em cartaz", note: "micro · em cartaz", tag: "cartaz", cost: nil)
+        switch kind {
+        case .view: return Words(label: "Vista no caminho", note: "micro · foto rápida no caminho", tag: "foto", cost: nil)
+        case .show: return Words(label: "Em cartaz", note: "micro · em cartaz", tag: "cartaz", cost: nil)
+        default: break
+        }
+        if let w = region.profile.day?.micro?[kind.rawValue] {
+            return Words(label: w.label, note: w.note, tag: w.tag, cost: w.cost)
+        }
+        return switch kind {
+        case .breakfast: Words(label: "Café da manhã", note: "micro · café perto do hotel", tag: "café", cost: nil)
+        case .water: Words(label: "Água e um lanche", note: "micro · antes da fila", tag: "água", cost: nil)
+        case .shop: Words(label: "Compra rápida", note: "micro · mercado ou farmácia no caminho", tag: region.currencySymbol, cost: nil)
+        case .treat: Words(label: "Doce no caminho", note: "micro · uma pausa", tag: "doce", cost: nil)
+        default: Words(label: "Descanso no hotel", note: "micro · 40 min · carregar o celular · trocar de roupa", tag: "zz", cost: nil)
         }
     }
 
     /// Ordem de tentativa. Compras na volta (Montar) passa a compra rápida pra frente; Roma ganha o gelato da tarde.
     static func priority(_ input: DayComposer.Input) -> [DayMicroKind] {
         var order: [DayMicroKind] = [.breakfast, .water, .rest]
-        if input.region == .it { order.append(.treat) }
+        if input.region.profile.has(.treatMicroStop) { order.append(.treat) }
         order.append(.view)
         if input.includes.contains(.shopping) { order.insert(.shop, at: 1) } else { order.append(.shop) }
         // Por último: só ocupa buraco que sobrou (e só se o board tem exposição em temporada).

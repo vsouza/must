@@ -206,6 +206,24 @@ struct City: Codable, Hashable, Sendable, Identifiable {
     var currency: String
     var lat: Double
     var lng: Double
+    /// Hospedagem da cidade (Nova viagem, passo 4; prompt 28 §4). Aditivo no JSON de `TripInfo.cities`: ausente = nil.
+    var lodging: CityLodging? = nil
 
     var timeZone: TimeZone { TimeZone(identifier: tz) ?? .current }
+    /// Cidade digitada à mão sem coordenada ainda (0, 0): resolver depois.
+    var hasCoordinate: Bool { lat != 0 || lng != 0 }
+}
+
+/// Onde dorme numa cidade: hotel/Airbnb com endereço, ou só o bairro. Ponto de partida do dia e da Boa noite.
+struct CityLodging: Codable, Hashable, Sendable {
+    var name: String?
+    var address: String?
+    var lat: Double?
+    var lng: Double?
+    /// "Só o bairro" (sem endereço).
+    var neighborhood: String?
+    var checkIn: Date?
+    var checkOut: Date?
+    /// Lido de um e-mail/PDF colado (selo "lido do e-mail").
+    var fromEmail: Bool?
 }

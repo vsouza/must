@@ -239,10 +239,11 @@ struct MapLibreView: UIViewRepresentable {
             stations.iconImageName = NSExpression(forConstantValue: "station")
             stations.iconAllowsOverlap = NSExpression(forConstantValue: true)
             stations.text = NSExpression(mglJSONObject: ["step", ["zoom"], "", 14.5, ["upcase", ["get", "name"]]])
-            let font = parent.scene.region == .jp ? MapStyleLoader.japaneseFont : "Archivo SemiBold"
+            let localFont = parent.scene.region.profile.transit?.localMapFont == true
+            let font = localFont ? MapStyleLoader.japaneseFont : "Archivo SemiBold"
             stations.textFontNames = NSExpression(forConstantValue: [font])
             stations.textFontSize = NSExpression(forConstantValue: 9)
-            stations.textLetterSpacing = NSExpression(forConstantValue: parent.scene.region == .jp ? 0.04 : 0.16)
+            stations.textLetterSpacing = NSExpression(forConstantValue: localFont ? 0.04 : 0.16)
             stations.textColor = NSExpression(forConstantValue: Self.ink)
             stations.textHaloColor = NSExpression(forConstantValue: UIColor(red: 0xE9 / 255, green: 0xEB / 255, blue: 0xEF / 255, alpha: 1))
             stations.textHaloWidth = NSExpression(forConstantValue: 1.2)
