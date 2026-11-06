@@ -44,6 +44,36 @@ struct EmergencyKitTests {
         #expect(!it.phrases.isEmpty)
     }
 
+    @Test func portugal112SNS24EConsuladoPelaCidade() throws {
+        let pt = try #require(kit.countries["PT"], "Portugal tem kit (06/11/2026)")
+        #expect(pt.primary.map(\.number) == ["112", "808 24 24 24", "800 250 250"])
+        #expect(pt.primary.allSatisfy { !$0.verificar })
+        // Viagem criada no app: id de cidade é UUID, vale o nome.
+        #expect(pt.consulate(cityId: UUID().uuidString, cityName: "Porto")?.id == "consulado-porto")
+        #expect(pt.consulate(cityId: UUID().uuidString, cityName: "Guimarães")?.id == "consulado-porto")
+        #expect(pt.consulate(cityId: nil, cityName: "Vila Nova de Gaia")?.id == "consulado-porto")
+        #expect(pt.consulate(cityId: "x", cityName: "Lisboa")?.id == "consulado-lisboa")
+        #expect(pt.consulate(cityId: nil, cityName: "Faro")?.id == "consulado-lisboa", "sem curadoria: o primeiro")
+        #expect(pt.passportText.contains("PSP"))
+        #expect(pt.consulates.allSatisfy { $0.telURL != nil })
+        #expect(!pt.phrases.isEmpty)
+        let hospitals = HospitalCatalog.bundled.cities
+        for city in ["lisboa", "porto"] {
+            let list = try #require(hospitals[city])
+            #expect(list.count >= 2)
+            for h in list {
+                #expect((36.8...42.2).contains(h.lat) && (-9.6 ... -6.1).contains(h.lng), "\(h.id) fora de Portugal")
+                #expect(h.telURL != nil)
+            }
+        }
+    }
+
+    @Test func chaveDaCidadeTiraAcentoEJuntaComHifen() {
+        #expect(EmergencyKit.cityKeys(cityId: "tokyo2", cityName: "Tóquio") == ["tokyo", "toquio"])
+        #expect(EmergencyKit.cityKeys(cityId: nil, cityName: "Viana do Castelo") == ["viana-do-castelo"])
+        #expect(EmergencyKit.cityKeys(cityId: "roma", cityName: "Roma") == ["roma"])
+    }
+
     @Test func trocarARegiaoTrocaOsNumeros() {
         let first = Region.allCases.map { kit.kit(for: $0)?.primary.first?.number }
         #expect(first == ["192", "119", "112"]) // bh, jp, it

@@ -23,7 +23,9 @@ struct SOSView: View {
     private let sos = SOSStore()
     private var region: Region { store.region }
     private var kit: CountryKit? { EmergencyKit.bundled.kit(for: region) }
-    private var cityId: String? { trips.first?.city(on: AppClock.now, calendar: region.calendar)?.id }
+    private var todayCity: City? { trips.first?.city(on: AppClock.now, calendar: region.calendar) }
+    private var cityId: String? { todayCity?.id }
+    private var cityName: String? { todayCity?.name }
     private var location: CLLocation? { services.location.current }
     private var isHome: Bool { region.country == "BR" }
 
@@ -72,7 +74,7 @@ struct SOSView: View {
         }
         .task(id: LocationKey(location)) { await refreshAddress() }
         .sheet(item: $sheet) { which in
-            SOSSheetView(which: which, region: region, kit: kit, cityId: cityId, location: location,
+            SOSSheetView(which: which, region: region, kit: kit, cityId: cityId, cityName: cityName, location: location,
                          profile: $profile, address: address, speaker: speaker) { new in
                 profile = new
                 try? sos.save(new)
@@ -128,7 +130,7 @@ struct SOSView: View {
 
     @ViewBuilder
     private func lines(_ kit: CountryKit) -> some View {
-        let hospitals = HospitalCatalog.bundled.nearest(region: region, to: location, cityId: cityId)
+        let hospitals = HospitalCatalog.bundled.nearest(region: region, to: location, cityId: cityId, cityName: cityName)
         VStack(spacing: 0) {
             insuranceLine
             if let first = hospitals.first {
@@ -137,7 +139,7 @@ struct SOSView: View {
                         check: first.hospital.needsCheck) { sheet = .hospitals }
             }
             whereLine
-            if !isHome, let consulate = kit.consulate(cityId: cityId) {
+            if !isHome, let consulate = kit.consulate(cityId: cityId, cityName: cityName) {
                 SOSLine(key: "Consulado BR", value: consulate.name,
                         detail: [consulate.phone, consulate.detail].filter { !$0.isEmpty }.joined(separator: " · "),
                         check: consulate.needsCheck) { sheet = .consulate }

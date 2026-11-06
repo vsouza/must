@@ -82,13 +82,15 @@ struct EmergencyPhrase: Codable, Hashable, Sendable, Identifiable {
 /// O kit de um país.
 struct CountryKit: Codable, Hashable, Sendable {
     var name: String
+    /// O que fazer quando perde o passaporte (polícia do país, depois o consulado). Sem: frase genérica.
+    var passportNote: String? = nil
     /// Os três botões grandes, nesta ordem: ambulância, polícia, o terceiro (hotline em inglês / bombeiros).
     var primary: [EmergencyNumber]
     var more: [EmergencyNumber] = []
     var consulates: [Consulate] = []
     var phrases: [EmergencyPhrase] = []
 
-    enum CodingKeys: String, CodingKey { case name, primary, more, consulates, phrases }
+    enum CodingKeys: String, CodingKey { case name, passportNote, primary, more, consulates, phrases }
 
     init(name: String, primary: [EmergencyNumber], more: [EmergencyNumber] = [], consulates: [Consulate] = [], phrases: [EmergencyPhrase] = []) {
         self.name = name
@@ -101,6 +103,7 @@ struct CountryKit: Codable, Hashable, Sendable {
     init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         name = try c.decode(String.self, forKey: .name)
+        passportNote = try c.decodeIfPresent(String.self, forKey: .passportNote)
         primary = try c.decode([EmergencyNumber].self, forKey: .primary)
         more = try c.decodeIfPresent([EmergencyNumber].self, forKey: .more) ?? []
         consulates = try c.decodeIfPresent([Consulate].self, forKey: .consulates) ?? []
@@ -109,10 +112,15 @@ struct CountryKit: Codable, Hashable, Sendable {
 
     func number(_ id: String) -> EmergencyNumber? { (primary + more).first { $0.id == id } }
 
-    /// Consulado da cidade (Tóquio 1 e 2 contam como `tokyo`); sem cidade, o primeiro.
-    func consulate(cityId: String?) -> Consulate? {
-        let city = cityId.map(AreaCatalog.cityGroup(forCityId:))
-        return consulates.first { c in city.map { c.cities.contains($0) } ?? false } ?? consulates.first
+    /// Consulado da cidade (Tóquio 1 e 2 contam como `tokyo`). Viagem criada no app tem id de cidade sem significado:
+    /// aí vale o nome ("Porto", "Guimarães" → `guimaraes`). Sem cidade conhecida, o primeiro.
+    func consulate(cityId: String?, cityName: String? = nil) -> Consulate? {
+        let keys = EmergencyKit.cityKeys(cityId: cityId, cityName: cityName)
+        return consulates.first { c in keys.contains { c.cities.contains($0) } } ?? consulates.first
+    }
+
+    var passportText: String {
+        passportNote ?? "Perdeu o passaporte: boletim na polícia e depois o consulado, com foto e o BO."
     }
 }
 
@@ -135,6 +143,21 @@ struct EmergencyKit: Codable, Hashable, Sendable {
             Log.app.error("emergency-kit.json inválido: \(error.localizedDescription, privacy: .public)")
             return nil
         }
+    }
+
+    /// Chaves de cidade pra casar com as listas curadas: o grupo do id (`tokyo1` → `tokyo`) e o nome sem acento, minúsculo
+    /// e com hífen ("Vila Nova de Gaia" → `vila-nova-de-gaia`).
+    static func cityKeys(cityId: String?, cityName: String?) -> [String] {
+        var keys: [String] = []
+        if let cityId, !cityId.isEmpty { keys.append(AreaCatalog.cityGroup(forCityId: cityId)) }
+        if let cityName {
+            let slug = cityName.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "pt_BR"))
+                .lowercased()
+                .split(whereSeparator: { !$0.isLetter && !$0.isNumber })
+                .joined(separator: "-")
+            if !slug.isEmpty, !keys.contains(slug) { keys.append(slug) }
+        }
+        return keys
     }
 
     static func telURL(_ dial: String) -> URL? {
@@ -197,13 +220,13 @@ struct HospitalCatalog: Codable, Hashable, Sendable {
     }
 
     /// Os da região do mais perto pro mais longe. Sem posição: os da cidade de hoje primeiro, na ordem curada.
-    func nearest(region: Region, to location: CLLocation?, cityId: String?) -> [(hospital: Hospital, meters: CLLocationDistance?)] {
+    func nearest(region: Region, to location: CLLocation?, cityId: String?, cityName: String? = nil)
+        -> [(hospital: Hospital, meters: CLLocationDistance?)] {
         let all = hospitals(for: region)
         if let location {
             return all.map { ($0, location.distance(from: $0.location)) }.sorted { ($0.1 ?? 0) < ($1.1 ?? 0) }
         }
-        let city = cityId.map(AreaCatalog.cityGroup(forCityId:))
-        let own = city.flatMap { cities[$0] } ?? []
+        let own = EmergencyKit.cityKeys(cityId: cityId, cityName: cityName).lazy.compactMap { self.cities[$0] }.first ?? []
         let rest = all.filter { h in !own.contains { $0.id == h.id } }
         return (own + rest).map { ($0, nil) }
     }

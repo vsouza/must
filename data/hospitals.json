@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "checked": "2026-11-05",
+  "checked": "2026-11-06",
   "cities": {
     "bh": [
       {
@@ -364,6 +364,78 @@
         "approx": false,
         "note": "conveniado ao SSN · PS 24 h · longe do centro",
         "source": "https://www.policlinicogemelli.it/servizi-paziente/pronto-soccorso/",
+        "verificar": false
+      }
+    ],
+    "lisboa": [
+      {
+        "id": "santa-maria",
+        "name": "Hospital de Santa Maria",
+        "public": true,
+        "er24h": true,
+        "english": false,
+        "address": "Av. Prof. Egas Moniz · Lisboa (metrô Cidade Universitária)",
+        "addressLocal": null,
+        "phone": "21 780 5111",
+        "dial": "+351217805111",
+        "lat": 38.74833,
+        "lng": -9.16056,
+        "approx": false,
+        "note": "urgência geral do SNS · se não for grave, ligue antes ao SNS 24 (808 24 24 24)",
+        "source": "https://www.ulssm.min-saude.pt/contactos/",
+        "verificar": false
+      },
+      {
+        "id": "sao-jose",
+        "name": "Hospital de São José",
+        "public": true,
+        "er24h": true,
+        "english": false,
+        "address": "Rua José António Serrano · 1150-199 Lisboa (Martim Moniz)",
+        "addressLocal": null,
+        "phone": "21 884 1000",
+        "dial": "+351218841000",
+        "lat": 38.7169,
+        "lng": -9.1371,
+        "approx": false,
+        "note": "urgência polivalente do SNS, no centro · ligue antes ao SNS 24 se não for grave",
+        "source": "https://pt.wikipedia.org/wiki/Hospital_de_S%C3%A3o_Jos%C3%A9",
+        "verificar": true
+      }
+    ],
+    "porto": [
+      {
+        "id": "santo-antonio",
+        "name": "Hospital de Santo António",
+        "public": true,
+        "er24h": true,
+        "english": false,
+        "address": "Largo Prof. Abel Salazar · 4099-001 Porto",
+        "addressLocal": null,
+        "phone": "22 207 7500",
+        "dial": "+351222077500",
+        "lat": 41.1472,
+        "lng": -8.61806,
+        "approx": false,
+        "note": "urgência do SNS no centro do Porto · telefone é a central",
+        "source": "https://diariodarepublica.pt/dr/detalhe/anuncio-procedimento/19750-2024-888712915",
+        "verificar": false
+      },
+      {
+        "id": "sao-joao",
+        "name": "Hospital de São João",
+        "public": true,
+        "er24h": true,
+        "english": false,
+        "address": "Alameda Prof. Hernâni Monteiro · 4200-319 Porto",
+        "addressLocal": null,
+        "phone": "22 551 2100",
+        "dial": "+351225512100",
+        "lat": 41.181378,
+        "lng": -8.60104,
+        "approx": false,
+        "note": "hospital universitário do SNS (metrô Hospital São João) · telefone é a central",
+        "source": "https://diariodarepublica.pt/dr/detalhe/anuncio-procedimento/19805-2026-1154234912",
         "verificar": false
       }
     ]

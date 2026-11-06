@@ -139,7 +139,10 @@
   },
   "sos": {
     "numbersLabel": "112 · seguro · hospital",
-    "hospitalCities": [],
+    "hospitalCities": [
+      "lisboa",
+      "porto"
+    ],
     "whereAmITitle": "Onde estou",
     "whereAmIFontSize": 40
   },

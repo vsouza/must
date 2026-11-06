@@ -13,6 +13,7 @@ struct SOSSheetView: View {
     var region: Region
     var kit: CountryKit?
     var cityId: String?
+    var cityName: String?
     var location: CLLocation?
     @Binding var profile: SOSProfile
     var address: LastAddress?
@@ -22,10 +23,10 @@ struct SOSSheetView: View {
     var body: some View {
         switch which {
         case .profile: SOSProfileSheet(region: region, profile: profile, onSave: onSave).presentationDetents([.large])
-        case .hospitals: SOSHospitalsSheet(region: region, cityId: cityId, location: location).presentationDetents([.large])
+        case .hospitals: SOSHospitalsSheet(region: region, cityId: cityId, cityName: cityName, location: location).presentationDetents([.large])
         case .consulate:
-            if let consulate = kit?.consulate(cityId: cityId) {
-                SOSConsulateSheet(consulate: consulate, all: kit?.consulates ?? []).presentationDetents([.medium, .large])
+            if let kit, let consulate = kit.consulate(cityId: cityId, cityName: cityName) {
+                SOSConsulateSheet(consulate: consulate, all: kit.consulates, passportText: kit.passportText).presentationDetents([.medium, .large])
             }
         case .numbers: SOSNumbersSheet(kit: kit).presentationDetents([.medium, .large])
         case .phrases: SOSPhrasesSheet(region: region, phrases: kit?.phrases ?? [], speaker: speaker).presentationDetents([.medium, .large])
@@ -171,6 +172,7 @@ struct SOSProfileSheet: View {
 struct SOSHospitalsSheet: View {
     var region: Region
     var cityId: String?
+    var cityName: String?
     var location: CLLocation?
 
     @Environment(Services.self) private var services
@@ -179,7 +181,7 @@ struct SOSHospitalsSheet: View {
     @State private var searched = false
 
     var body: some View {
-        let list = HospitalCatalog.bundled.nearest(region: region, to: location, cityId: cityId)
+        let list = HospitalCatalog.bundled.nearest(region: region, to: location, cityId: cityId, cityName: cityName)
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 SOSSheetHeader(lines: ["SOS · hospitais", location == nil ? "sem GPS · ordem da lista" : "do mais perto"], title: "Hospital perto")
@@ -247,12 +249,13 @@ struct SOSHospitalsSheet: View {
 struct SOSConsulateSheet: View {
     var consulate: Consulate
     var all: [Consulate]
+    var passportText: String
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 SOSSheetHeader(lines: ["SOS · consulado do Brasil", "passaporte, documentos, presos"], title: "Consulado BR")
-                Text("Perdeu o passaporte: boletim na polícia (110 no Japão, 112 na Itália) e depois o consulado, com foto e o BO.")
+                Text(passportText)
                     .font(V8Font.text(14)).foregroundStyle(V8.mute).fixedSize(horizontal: false, vertical: true).padding(.top, 6)
                 VStack(spacing: 0) {
                     ForEach([consulate] + all.filter { $0.id != consulate.id }) { c in

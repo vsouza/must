@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "checked": "2026-11-05",
+  "checked": "2026-11-06",
   "countries": {
     "BR": {
       "name": "Brasil",
@@ -85,6 +85,7 @@
     },
     "JP": {
       "name": "Japão",
+      "passportNote": "Perdeu o passaporte: boletim na polícia (110 ou o kōban mais perto) e depois o consulado, com foto e o BO.",
       "primary": [
         {
           "id": "119",
@@ -252,6 +253,7 @@
     },
     "IT": {
       "name": "Itália",
+      "passportNote": "Perdeu o passaporte: denúncia na polícia ou nos Carabinieri (112) e depois o consulado, com foto e a denúncia.",
       "primary": [
         {
           "id": "112",
@@ -379,6 +381,173 @@
           "latin": "Sono allergico a…",
           "meaning": "sou alérgico a…",
           "speech": "Sono allergico a"
+        }
+      ]
+    },
+    "PT": {
+      "name": "Portugal",
+      "passportNote": "Perdeu o passaporte: queixa na PSP (na cidade) ou na GNR e depois o consulado, com foto e a queixa.",
+      "primary": [
+        {
+          "id": "112",
+          "number": "112",
+          "dial": "112",
+          "title": "Emergência · número único",
+          "detail": "ambulância (INEM), polícia, bombeiros · grátis, 24 h, atende em inglês",
+          "source": "https://www.gov.pt/guias/contactos-de-emergencia-em-portugal",
+          "verificar": false
+        },
+        {
+          "id": "sns24",
+          "number": "808 24 24 24",
+          "dial": "808242424",
+          "title": "SNS 24 · linha de saúde",
+          "detail": "não é grave? triagem por telefone e indica onde ir · 24 h",
+          "source": "https://www.sns24.gov.pt/",
+          "verificar": false,
+          "badge": "SNS\n24"
+        },
+        {
+          "id": "ciav",
+          "number": "800 250 250",
+          "dial": "800250250",
+          "title": "Antivenenos",
+          "detail": "intoxicação, remédio, picada · grátis, 24 h",
+          "source": "https://www.inem.pt/2019/07/01/800-250-250-o-contacto-com-o-centro-de-informacao-antivenenos-do-inem-passa-a-ser-gratuito/",
+          "verificar": false,
+          "badge": "INEM"
+        }
+      ],
+      "more": [
+        {
+          "id": "144",
+          "number": "144",
+          "dial": "144",
+          "title": "Emergência social",
+          "detail": "violência, sem abrigo, risco · grátis, 24 h",
+          "source": "https://www2.gov.pt/pt/guias/cuidador-informal/linha-de-emergencia-social",
+          "verificar": false
+        },
+        {
+          "id": "116000",
+          "number": "116 000",
+          "dial": "116000",
+          "title": "Criança desaparecida",
+          "detail": "grátis, 24 h",
+          "source": "https://www.gov.pt/guias/contactos-de-emergencia-em-portugal",
+          "verificar": false
+        },
+        {
+          "id": "116111",
+          "number": "116 111",
+          "dial": "116111",
+          "title": "Apoio à criança",
+          "detail": "grátis, 24 h",
+          "source": "https://www.gov.pt/guias/contactos-de-emergencia-em-portugal",
+          "verificar": false
+        }
+      ],
+      "consulates": [
+        {
+          "id": "consulado-lisboa",
+          "cities": [
+            "lisboa",
+            "sintra",
+            "cascais",
+            "estoril",
+            "setubal",
+            "leiria",
+            "obidos",
+            "nazare",
+            "fatima",
+            "tomar",
+            "santarem",
+            "castelo-branco",
+            "portalegre",
+            "funchal",
+            "ponta-delgada"
+          ],
+          "name": "Consulado-Geral do Brasil em Lisboa",
+          "phone": "plantão +351 962 520 581",
+          "dial": "+351962520581",
+          "emergencyPhone": null,
+          "emergencyDial": null,
+          "address": "Rua António Maria Cardoso, 39 · Chiado · 1200-026 Lisboa",
+          "addressLocal": null,
+          "detail": "só óbito, prisão ou hospital · o resto por e-mail cg.lisboa@itamaraty.gov.br",
+          "source": "https://www.gov.br/mre/pt-br/consulado-lisboa/consulado-geral-do-brasil-em-lisboa-assistencia-consular/como-solicitar-assistencia",
+          "verificar": false
+        },
+        {
+          "id": "consulado-porto",
+          "cities": [
+            "porto",
+            "vila-nova-de-gaia",
+            "matosinhos",
+            "braga",
+            "guimaraes",
+            "aveiro",
+            "coimbra",
+            "viseu",
+            "guarda",
+            "braganca",
+            "viana-do-castelo",
+            "vila-real",
+            "peso-da-regua",
+            "pinhao"
+          ],
+          "name": "Consulado-Geral do Brasil no Porto",
+          "phone": "plantão +351 962 073 793",
+          "dial": "+351962073793",
+          "emergencyPhone": null,
+          "emergencyDial": null,
+          "address": "Porto · atendimento só com agendamento no e-consular",
+          "addressLocal": null,
+          "detail": "24 h, só emergência · e-mail ascons.porto@itamaraty.gov.br",
+          "source": "https://www.gov.br/mre/pt-br/consulado-porto/servicos-consulares/assistencia-consular/solicitando-assistencia",
+          "verificar": false
+        }
+      ],
+      "phrases": [
+        {
+          "latin": "Socorro!",
+          "meaning": "socorro!",
+          "speech": "Socorro!"
+        },
+        {
+          "latin": "Onde fica a urgência?",
+          "meaning": "onde é o pronto-socorro?",
+          "speech": "Onde fica a urgência?"
+        },
+        {
+          "latin": "Chame uma ambulância, se faz favor",
+          "meaning": "chame uma ambulância, por favor",
+          "speech": "Chame uma ambulância, se faz favor"
+        },
+        {
+          "latin": "Onde há uma farmácia de serviço?",
+          "meaning": "onde tem farmácia de plantão?",
+          "speech": "Onde há uma farmácia de serviço?"
+        },
+        {
+          "latin": "Fui assaltado",
+          "meaning": "fui roubado",
+          "speech": "Fui assaltado"
+        },
+        {
+          "latin": "Onde fica a esquadra da polícia?",
+          "meaning": "onde é a delegacia?",
+          "speech": "Onde fica a esquadra da polícia?"
+        },
+        {
+          "latin": "Perdi o passaporte",
+          "meaning": "perdi o passaporte",
+          "speech": "Perdi o passaporte"
+        },
+        {
+          "latin": "Sou alérgico a…",
+          "meaning": "sou alérgico a…",
+          "speech": "Sou alérgico a"
         }
       ]
     }
