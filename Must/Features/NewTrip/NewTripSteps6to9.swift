@@ -468,12 +468,12 @@ struct NewTripReady: View {
         guard let start = model.draft.start else { return "" }
         var style = Date.FormatStyle(timeZone: NewTripModel.calendar.timeZone).locale(NewTripCatalog.locale).weekday(.abbreviated).day().month(.abbreviated).year()
         style.timeZone = NewTripModel.calendar.timeZone
-        return start.formatted(style).replacingOccurrences(of: ",", with: " ·").replacingOccurrences(of: ".", with: "")
+        return start.formatted(style).replacingOccurrences(of: ",", with: " ·").replacingOccurrences(of: ".", with: "").replacingOccurrences(of: " de ", with: " ")
     }
 
     private func ticket(_ f: NewTripDraft.FlightDraft) -> some View {
         let z = Airports.airport(f.from)?.timeZone ?? TimeZone(identifier: model.draft.timeZoneId) ?? .current
-        let day = f.departure.map { $0.formatted(Date.FormatStyle(timeZone: z).locale(NewTripCatalog.locale).day().month(.abbreviated)).replacingOccurrences(of: ".", with: "") } ?? ""
+        let day = f.departure.map { $0.formatted(Date.FormatStyle(timeZone: z).locale(NewTripCatalog.locale).day().month(.abbreviated)).replacingOccurrences(of: ".", with: "").replacingOccurrences(of: " de ", with: " ") } ?? ""
         let hour = f.departure.map { $0.formatted(Date.FormatStyle(timeZone: z).locale(NewTripCatalog.locale).hour().minute()) } ?? ""
         return HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {

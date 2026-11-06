@@ -11,7 +11,7 @@ private func stamp(_ date: Date?, in zone: TimeZone, withDay: Bool = true) -> St
     guard let date else { return "—" }
     var style = Date.FormatStyle(timeZone: zone).locale(NewTripCatalog.locale)
     style = withDay ? style.day().month(.abbreviated).hour().minute() : style.hour().minute()
-    return date.formatted(style).replacingOccurrences(of: ".", with: "").replacingOccurrences(of: ",", with: " ·")
+    return date.formatted(style).replacingOccurrences(of: ".", with: "").replacingOccurrences(of: " de ", with: " ").replacingOccurrences(of: ",", with: " ·")
 }
 
 /// Pílula-botão (contorno) com ícone opcional, como os "Colar reserva / Só o bairro".
@@ -23,7 +23,7 @@ private struct NewTripAction: View {
         Button(action: action) {
             HStack(spacing: 8) {
                 if let icon { Image(systemName: icon).font(.system(size: 14, weight: .semibold)) }
-                Text(title).font(V8Font.text(16, weight: .semibold)).lineLimit(1)
+                Text(title).font(V8Font.text(16, weight: .semibold)).lineLimit(1).fixedSize()
             }
             .foregroundStyle(V8.ink)
             .padding(.horizontal, 18).frame(minHeight: 48)

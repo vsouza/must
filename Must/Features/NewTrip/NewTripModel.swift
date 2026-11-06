@@ -376,7 +376,7 @@ final class NewTripModel {
         func fmt(_ d: Date) -> String {
             var style = short
             style.timeZone = Self.calendar.timeZone
-            return d.formatted(style).replacingOccurrences(of: ",", with: "").replacingOccurrences(of: ".", with: "").uppercased()
+            return d.formatted(style).replacingOccurrences(of: ",", with: "").replacingOccurrences(of: ".", with: "").replacingOccurrences(of: " de ", with: " ").uppercased()
         }
         switch step {
         case 1: return "PAÍS E COR"

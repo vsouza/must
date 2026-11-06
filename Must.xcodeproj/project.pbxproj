@@ -106,6 +106,7 @@
 		32DE61453E8E3ACE3798E321 /* BolsoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D5AF2353CFC137BC12A870 /* BolsoView.swift */; };
 		3444C3BC5BAE06660F12D3A7 /* GuiaTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEC5ED5660BA5BEB5DD5D5B3 /* GuiaTabView.swift */; };
 		345D55FBAF0D045350FAF93E /* FlightTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2FCC18F2FD107CBB17F43DD /* FlightTests.swift */; };
+		34B9F078469879EBFCB17A34 /* NewTripModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AECE3D08DF1181FD3719702C /* NewTripModelTests.swift */; };
 		34D24804DAFF68EE0520CCB8 /* RegionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8E14B85DA86388832F3C18B /* RegionSheet.swift */; };
 		34D6081A5CB2767A55D164EE /* DayFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF11D40BC1FD6464D2737BB /* DayFlowTests.swift */; };
 		3619F6D38403652B6D73676A /* DayPosterRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F81BD5A9B6CE2DE97F9632E3 /* DayPosterRenderer.swift */; };
@@ -906,6 +907,7 @@
 		ACC7F7B284159B621FBB7D75 /* TicketImportModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketImportModel.swift; sourceTree = "<group>"; };
 		AD63AB2A6501C8501629D06E /* InFlightCancelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InFlightCancelTests.swift; sourceTree = "<group>"; };
 		AE10154FF30232C2CDF2745F /* DayTips.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayTips.swift; sourceTree = "<group>"; };
+		AECE3D08DF1181FD3719702C /* NewTripModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewTripModelTests.swift; sourceTree = "<group>"; };
 		AF4F94C13523A4CCA7E209DE /* ButtonMetrics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ButtonMetrics.swift; sourceTree = "<group>"; };
 		AF67FCD358937B9720749661 /* PhotoDataRows.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoDataRows.swift; sourceTree = "<group>"; };
 		AF88B4FA5C634D9BAC15E982 /* SolverItalyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolverItalyTests.swift; sourceTree = "<group>"; };
@@ -1535,6 +1537,7 @@
 				D9E45EB741EE7A4B0C62B1E9 /* MustTests.swift */,
 				1F7ACC6606F867AC81E9F0B9 /* NearbyTests.swift */,
 				954DFD2565943C15811989EF /* NetResilienceTests.swift */,
+				AECE3D08DF1181FD3719702C /* NewTripModelTests.swift */,
 				6C519B4D5927F28CDE89D882 /* OpenNowIndexTests.swift */,
 				773B0CE7A22D1F8DD58FFE79 /* PerformanceRodada21Tests.swift */,
 				E8255AE0AB8B4482CA3A9462 /* PlaceEmCartazTests.swift */,
@@ -2646,6 +2649,7 @@
 				25F1D69D524D1DB8234C3152 /* MustTests.swift in Sources */,
 				1612B6C290795ADC55501C26 /* NearbyTests.swift in Sources */,
 				DC7CF09BCFAAC95A5746AA19 /* NetResilienceTests.swift in Sources */,
+				34B9F078469879EBFCB17A34 /* NewTripModelTests.swift in Sources */,
 				1612EC462351FC012815E04D /* OpenNowIndexTests.swift in Sources */,
 				56361064085B906D48A9E969 /* PerformanceRodada21Tests.swift in Sources */,
 				883D9CE61B3D1FCD6AE4F679 /* PlaceEmCartazTests.swift in Sources */,

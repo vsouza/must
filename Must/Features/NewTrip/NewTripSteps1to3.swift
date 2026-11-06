@@ -306,13 +306,13 @@ struct NewTripStep2: View {
     private var monthTitle: String {
         var style = Date.FormatStyle().locale(NewTripCatalog.locale).month(.wide).year()
         style.timeZone = cal.timeZone
-        return model.visibleMonth.formatted(style)
+        return model.visibleMonth.formatted(style).replacingOccurrences(of: " de ", with: " ")
     }
 
     private func short(_ d: Date) -> String {
         var style = Date.FormatStyle().locale(NewTripCatalog.locale).weekday(.abbreviated).day().month(.abbreviated)
         style.timeZone = cal.timeZone
-        return d.formatted(style).replacingOccurrences(of: ",", with: "").replacingOccurrences(of: ".", with: "")
+        return d.formatted(style).replacingOccurrences(of: ",", with: "").replacingOccurrences(of: ".", with: "").replacingOccurrences(of: " de ", with: " ")
     }
 
     private var weekdays: some View {
@@ -464,7 +464,7 @@ struct NewTripStep3: View {
             var style = Date.FormatStyle(timeZone: NewTripModel.calendar.timeZone).locale(NewTripCatalog.locale).day()
             let day = r.from.formatted(style)
             style = style.month(.abbreviated)
-            parts.append("\(day) → \(r.to.formatted(style).replacingOccurrences(of: ".", with: ""))")
+            parts.append("\(day) → \(r.to.formatted(style).replacingOccurrences(of: ".", with: "").replacingOccurrences(of: " de ", with: " "))")
         }
         parts.append("fuso \(NewTripCatalog.zoneLabel(city.timeZoneId ?? model.draft.timeZoneId))")
         return parts.joined(separator: " · ")
