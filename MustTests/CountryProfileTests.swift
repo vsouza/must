@@ -83,10 +83,21 @@ struct CountryProfileTests {
         }
     }
 
-    @Test(arguments: [("JP", PocketRules.jp), ("BR", PocketRules.br), ("IT", PocketRules.it)])
-    func bolsoMigradoSemPerder(code: String, expected: PocketCountry) throws {
+    /// O Bolso saiu de `PocketRulesJP/BR/IT.swift` pro JSON (a F0 conferiu igual campo a campo antes de apagar o código).
+    @Test(arguments: [("JP", 8, 20, 8, "ja-JP"), ("BR", 8, 20, 7, "pt-BR"), ("IT", 10, 20, 8, "it-IT")])
+    func bolsoMigradoSemPerder(code: String, cards: Int, phrases: Int, tips: Int, speech: String) throws {
         let pocket = try #require(CountryProfile.bundled[code]?.pocket)
-        #expect(pocket == expected)
+        #expect(pocket.cards.count == cards)
+        #expect(pocket.phrases.count == phrases)
+        #expect(pocket.tips.count == tips)
+        #expect(pocket.speechLanguage == speech)
+        #expect(pocket.cards.first?.kind == .exchange)
+    }
+
+    @Test func bolsoGenericoSoTemOCambio() {
+        let fr = PocketCountry.generic(CountryProfile.forCountry("FR", currency: "EUR", timeZone: "Europe/Paris"))
+        #expect(fr.cards.map(\.kind) == [.exchange])
+        #expect(fr.phrases.isEmpty && fr.tips.isEmpty)
     }
 
     @Test func paisSemPerfilUsaOGenerico() {

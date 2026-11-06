@@ -67,8 +67,9 @@ struct PocketConverterSheet: View {
     @State private var toBRL = true
     @FocusState private var focused: Bool
 
-    private var foreign: String { region == .bh ? "USD" : region.currency }
-    private var foreignSymbol: String { region == .bh ? "US$" : region.currencySymbol }
+    /// Moeda do conversor: a do país, salvo quando o Bolso converte outra (BH: dólar).
+    private var foreign: String { PocketRules.country(region).exchangeCurrency ?? region.currency }
+    private var foreignSymbol: String { PocketRules.country(region).exchangeSymbol ?? region.currencySymbol }
 
     private var value: Double {
         NumberInput.double(text.replacingOccurrences(of: ".", with: "").replacingOccurrences(of: ",", with: ".")) ?? 0

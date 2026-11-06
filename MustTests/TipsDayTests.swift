@@ -18,7 +18,7 @@ struct TipsDayTests {
                                   current: stop("j05", "Fuunji", sub: "Ramen", notes: "Tsukemen. Só cash.", queue: 20),
                                   next: stop("j104", "Shinjuku Gyoen", kind: .photo, golden: now.addingTimeInterval(8000), closes: "16:00"),
                                   night: stop("j105", "Golden Gai", notes: "Cover de ¥ 500 a 1.000 por bar.", hour: 21),
-                                  lastTrain: ("Yamanote", "00:40"), country: PocketRules.jp, saved: [], time: Region.jp.timeString)
+                                  lastTrain: ("Yamanote", "00:40"), country: PocketRules.country(.jp), saved: [], time: Region.jp.timeString)
         let today = DayTips.filtered(cards, by: .now)
         #expect(today.first?.tone == .orange)
         #expect(today.first?.title == "Compre o ticket na máquina antes de entrar na fila")
@@ -38,7 +38,7 @@ struct TipsDayTests {
         let morning = ISO8601DateFormatter().date(from: "2027-04-15T09:00:00+02:00")!
         let cards = DayTips.build(now: morning, region: .it, current: nil, next: nil, night: nil,
                                   lastTrain: ("metrô", PocketRules.lastMetro(at: morning, region: .it)),
-                                  country: PocketRules.it, saved: ["it-coperto"], time: Region.it.timeString)
+                                  country: PocketRules.country(.it), saved: ["it-coperto"], time: Region.it.timeString)
         let today = DayTips.filtered(cards, by: .now)
         #expect(today.contains { $0.title.contains("Cappuccino só até as 11h") })
         #expect(today.contains { $0.title.contains("Aperitivo") })

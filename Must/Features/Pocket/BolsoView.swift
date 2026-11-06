@@ -72,7 +72,7 @@ struct BolsoView: View {
 
     private var header: some View {
         HStack(alignment: .top) {
-            V8SpecStack(lines: [region == .jp ? "Utilidades" : "Bolso · \(region.shortName)", "Tudo funciona offline"])
+            V8SpecStack(lines: [region.profile.day?.pocketTitle ?? "Bolso · \(region.shortName)", "Tudo funciona offline"])
                 .padding(.top, 14)
             Spacer(minLength: 12)
             V8CornerButton(systemName: "xmark", label: "Fechar") { dismiss() }

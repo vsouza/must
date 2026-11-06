@@ -2,7 +2,7 @@ import Foundation
 
 // Bolso e Dicas por país (prompt 23 §2 · 07/08, prompt 24 §2). Conteúdo curado, 100 % offline: nada aqui chama rede.
 // Os valores que mudam no dia (câmbio guardado, saldo anotado da Suica, último trem da tabela) entram pelo
-// `PocketContext`; o resto é texto fixo por país em `PocketRulesJP/BR/IT.swift`.
+// `PocketContext`; o resto é dado do país em `data/countries/<cc>.json` (campo `pocket`, prompt 28).
 
 /// Tom de um card (v8: três cores — tinta, laranja, branco sobre papel).
 enum PocketTone: String, Codable, Sendable, Hashable {
@@ -95,18 +95,36 @@ struct PocketCountry: Codable, Hashable, Sendable {
     var fallbackBRLPerUnit: Double
     /// Quanto o câmbio mostra de cara (¥ 100, € 1, R$ 1 → US$).
     var exchangeUnit: Double
+    /// Câmbio guardado só vale abaixo de `storedRateMax` / acima de `storedRateMin` (o Japão guarda R$ por ¥1, ~0,036;
+    /// a Itália R$ por €1, ~6,4); fora disso, o `fallbackBRLPerUnit`.
+    var storedRateMin: Double?
+    var storedRateMax: Double?
+    /// "¥{n}", "€ {n}", "US$ {n}": a unidade do card de câmbio.
+    var exchangeFormat: String?
+    /// Moeda do conversor quando não é a da viagem (BH converte dólar).
+    var exchangeCurrency: String?
+    var exchangeSymbol: String?
+    /// "Yamanote → Hibiya · Shinjuku → Naka-Meguro" no card do último trem (tabela do Japão).
+    var shortTrainLabel: Bool?
     var cards: [PocketCard]
     var phrases: [PocketPhrase]
     var tips: [CountryTip]
+
+    /// País sem Bolso curado: só o câmbio (e nenhuma frase ou dica inventada).
+    static func generic(_ profile: CountryProfile) -> PocketCountry {
+        PocketCountry(name: profile.name, speechLanguage: (profile.localLocale ?? "pt_BR").replacingOccurrences(of: "_", with: "-"),
+                      fallbackBRLPerUnit: profile.defaultFXRate, exchangeUnit: profile.fxUnit,
+                      exchangeFormat: "\(profile.symbol) {n}",
+                      cards: [PocketCard(kind: .exchange, label: "Câmbio · hoje", value: "", detail: "toque pra converter", tone: .ink)],
+                      phrases: [], tips: [])
+    }
 }
 
 enum PocketRules {
+    /// O Bolso do país da viagem (`CountryProfile.pocket`); sem perfil curado, o genérico.
     static func country(_ region: Region) -> PocketCountry {
-        switch region {
-        case .jp: jp
-        case .bh: br
-        case .it: it
-        }
+        let profile = region.profile
+        return profile.pocket ?? .generic(profile)
     }
 
     /// Cards do Bolso, na ordem da grade (câmbio e o cartão/bilhete de transporte primeiro).
@@ -121,15 +139,15 @@ enum PocketRules {
             case .transitCard:
                 if let balance = context.transitBalance {
                     card.value = region.money(balance)
-                } else if region == .jp {
+                } else if region.profile.transit?.storedValueCard != nil {
                     card.value = "anotar"
                 }
             case .lastTrain:
-                if region == .it {
+                if region.profile.has(.cityLastMetro) {
                     card.value = lastMetro(at: context.now, region: region)
                 } else if let last = context.lastTrain {
                     card.value = last.time
-                    if region == .jp { card.detail = shortTrainLabel(last.label) }
+                    if country.shortTrainLabel == true { card.detail = shortTrainLabel(last.label) }
                 }
             default: break
             }
@@ -143,23 +161,19 @@ enum PocketRules {
     /// Câmbio que vale: o guardado se faz sentido pro país, senão o padrão (nenhuma API nova).
     /// O Japão guarda R$ por ¥1 (~0,036); a Itália R$ por €1 (~6,4); BH não converte (usa R$ por US$ 1).
     static func rate(_ region: Region, stored: Double?) -> Double {
-        let fallback = country(region).fallbackBRLPerUnit
+        let pocket = country(region)
+        let fallback = pocket.fallbackBRLPerUnit
         guard let stored, stored > 0 else { return fallback }
-        switch region {
-        case .jp: return stored < 1 ? stored : fallback
-        case .it: return stored > 1.5 ? stored : fallback
-        case .bh: return stored > 1.5 ? stored : fallback
-        }
+        if let max = pocket.storedRateMax, stored >= max { return fallback }
+        if let min = pocket.storedRateMin, stored <= min { return fallback }
+        return stored
     }
 
     /// "¥100\nR$ 3,60" — duas linhas, a unidade e o valor em reais. BH: "US$ 1\nR$ 5,50".
     static func exchangeValue(_ region: Region, rate: Double, unit: Double) -> String {
         let brl = (unit * rate).formatted(.money("BRL"))
-        switch region {
-        case .jp: return "¥\(Int(unit))\n\(brl)"
-        case .it: return "€ \(Int(unit))\n\(brl)"
-        case .bh: return "US$ \(Int(unit))\n\(brl)"
-        }
+        let format = country(region).exchangeFormat ?? "\(region.currencySymbol) {n}"
+        return "\(format.replacingOccurrences(of: "{n}", with: "\(Int(unit))"))\n\(brl)"
     }
 
     /// Converte `value` na moeda da região pra reais (e de volta com `reverse`).
