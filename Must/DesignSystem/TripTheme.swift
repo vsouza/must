@@ -25,12 +25,11 @@ struct TripTheme: Equatable, Sendable {
     /// Itália (prompt 24): azzurro #1F5FB4 + branco (não repete o verde do Brasil nem o vermelho do Japão).
     static let italy = TripTheme(country: "IT", coverRGB: 0x1F5FB4)
 
-    /// Tabela por país (ISO 3166-1 alfa-2). Acrescente aqui um país novo.
-    static let byCountry: [String: TripTheme] = [
-        "JP": .japan,
-        "BR": .brazil,
-        "IT": .italy,
-    ]
+    /// Tabela por país (ISO 3166-1 alfa-2): a cor do lugar vem de `data/countries/<cc>.json` (`colorHex`, prompt 28).
+    /// País novo = arquivo novo; nada a mudar aqui.
+    static let byCountry: [String: TripTheme] = CountryProfile.bundled.reduce(into: [:]) { out, entry in
+        if let rgb = entry.value.coverRGB { out[entry.key] = TripTheme(country: entry.key, coverRGB: rgb) }
+    }
 
     /// Tema do país; país fora da tabela cai no `neutral`.
     static func forCountry(_ iso: String?) -> TripTheme {
@@ -38,8 +37,15 @@ struct TripTheme: Equatable, Sendable {
         return theme
     }
 
-    /// Tema da região (o país de cada região está em `Region.country`).
-    static func forRegion(_ region: Region) -> TripTheme { forCountry(region.country) }
+    /// Tema da viagem: a cor que ela escolheu (Nova viagem, passo 1), senão a do país. País sem cor nem escolha: neutro.
+    static func forRegion(_ region: Region) -> TripTheme { forTrip(region.trip) }
+
+    static func forTrip(_ trip: Trip) -> TripTheme {
+        if let hex = trip.colorHex, let rgb = CountryProfile.rgb(hex) {
+            return TripTheme(country: trip.countryCode.uppercased(), coverRGB: rgb)
+        }
+        return forCountry(trip.countryCode)
+    }
 
     /// Há viagem (país na tabela)? Sem viagem, a capa é papel com tinta.
     var hasTrip: Bool { !country.isEmpty }
