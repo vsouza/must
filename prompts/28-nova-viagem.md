@@ -1,6 +1,6 @@
 # Prompt 28 · Nova viagem: criar uma viagem do zero e "Minhas viagens" (05/11/2026)
 
-Pedido do Vinicius: desenhar o fluxo como se ele fosse criar uma viagem nova do zero. Telas: `design/v8/screens/TrocarViagem.png` (Minhas viagens) e `NovaViagem1.png` … `NovaViagem9.png`. O exemplo do desenho é **Portugal (Lisboa e Porto), 12–20 mar 2027**, uma viagem que não existe nos seeds. **Não comece antes do Vinicius decidir a migração (seção 3):** este prompt é a especificação e a proposta; o que depende dele está marcado **[DECISÃO]**. Depende do prompt 27 (item 7, o botão de trocar viagem e a folha).
+Pedido do Vinicius: desenhar o fluxo como se ele fosse criar uma viagem nova do zero. Telas: `design/v8/screens/TrocarViagem.png` (Minhas viagens) e `NovaViagem1.png` … `NovaViagem9.png`. O exemplo do desenho é **Portugal (Lisboa e Porto), 12–20 mar 2027**, uma viagem que não existe nos seeds. **Aprovado pelo Vinicius em 06/11/2026** ("pode fazer a migração do prompt 28, aprovado"): migração `Region` → `Trip` como na seção 3, com as recomendações em cada **[DECISÃO]**: áreas geradas dos Musts (§3.5), mapa offline opção (a) (§3.6), `MKLocalSearchCompleter` (§3.7) e a regra de 3 passos do GPS (§3.10). Depende do prompt 27 (item 7, o botão de trocar viagem e a folha).
 
 ## 1. O fluxo (9 telas)
 Cada tela é uma pergunta; Voltar e Continuar sempre no pé; barra de progresso de 8 segmentos; qualquer passo pode ser pulado e completado depois (Viagem › editar). O que cada passo grava está na seção 4.
