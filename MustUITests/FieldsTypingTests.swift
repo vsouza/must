@@ -192,4 +192,42 @@ final class FieldsTypingTests: MustUITestCase {
             assertAlive("campos do tipo art com números gigantes", config)
         }
     }
+
+    /// Mapa › busca "o melhor X agora" (agente C): digitar, buscar, limpar; e a voz (tocar Falar, negar/aceitar o aviso).
+    func testMapaBusca() {
+        for config in matrix() {
+            launch(config, screen: "mapa-filtro")
+            let field = app.textFields["Buscar no mapa"]
+            guard field.waitForExistence(timeout: 10) else { XCTFail("[\(config)] Mapa sem a busca"); continue }
+            sleep(2)
+            field.tap()
+            clear(field)
+            hammer(field, config, rounds: 2)
+            field.typeText("\n")
+            sleep(2)
+            assertAlive("Mapa buscar", config)
+            for query in ["o melhor lámen perto de mim agora", "pão de queijo", "東京 ramen", "🍜", String(Self.longText.prefix(300))] {
+                guard field.waitForExistence(timeout: 3) else { break }
+                field.tap()
+                if app.buttons["Limpar a busca"].exists { app.buttons["Limpar a busca"].tap() } else { clear(field) }
+                field.typeText(query + "\n")
+                guard assertAlive("Mapa \(query.prefix(20))", config) else { break }
+            }
+            // Voz: o simulador pede permissão (microfone/fala); o app não pode cair com nenhuma resposta.
+            let mic = app.buttons["Falar"]
+            if mic.waitForExistence(timeout: 2), mic.isHittable {
+                mic.tap()
+                let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+                for label in ["Não Permitir", "Don’t Allow", "Don't Allow", "OK", "Permitir"] {
+                    let b = springboard.buttons[label]
+                    if b.waitForExistence(timeout: 2) { b.tap() }
+                }
+                sleep(1)
+                if app.buttons["Parar de ouvir"].exists { app.buttons["Parar de ouvir"].tap() }
+            }
+            assertAlive("Mapa voz", config)
+            swipeSheetDown()
+            assertAlive("Mapa fim", config)
+        }
+    }
 }
