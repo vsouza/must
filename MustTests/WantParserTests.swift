@@ -70,4 +70,52 @@ struct WantParserTests {
         let t = parse("comer um tonkatsu bom perto")
         #expect(WantSearch.text(for: t, category: WantCategory.of(t)) == "tonkatsu")
     }
+
+    // MARK: Mapa (prompt 27 §2.c): qualidade e raio
+
+    @Test func oMelhorLamenPertoDeMimAgora() {
+        let w = parse("o melhor lámen perto de mim agora")
+        #expect(w.verb == .comer)
+        #expect(w.object == "lámen")
+        #expect(w.when == .hoje)
+        #expect(w.quality == .melhor)
+        #expect(w.radiusKm == nil)
+        #expect(w.near)
+        // "lámen" é o ramen: um tipo só, vai no pedido.
+        let c = WantCategory.of(w)
+        #expect(c?.includedType == "restaurant")
+        #expect(c?.keywords.contains("ramen") == true)
+    }
+
+    @Test func procurarNaoPrendeOVerbo() {
+        let w = parse("quero procurar um lámen perto de mim agora, o melhor possível")
+        #expect(w.verb == .comer)
+        #expect(!w.verbWasExplicit)
+        #expect(w.object == "lámen")
+        #expect(w.quality == .melhor)
+        #expect(w.when == .hoje)
+    }
+
+    @Test func bhOMelhorPaoDeQueijo() {
+        let w = parse("o melhor pão de queijo perto de mim agora")
+        #expect(w.object == "pão de queijo")
+        #expect(w.category == "pão de queijo")
+        #expect(w.quality == .melhor)
+        #expect(w.when == .hoje)
+    }
+
+    @Test func baratoERaio() {
+        let w = parse("um café barato até 2 km")
+        #expect(w.object == "café")
+        #expect(w.quality == .barato)
+        #expect(w.radiusKm == 2)
+        let m = parse("ramen a 500 m daqui")
+        #expect(m.object == "ramen")
+        #expect(m.radiusKm == 0.5)
+        let x = parse("sushi num raio de 1,5 km")
+        #expect(x.object == "sushi")
+        #expect(x.radiusKm == 1.5)
+        #expect(parse("comer um tonkatsu").quality == .qualquer)
+        #expect(parse("comer um tonkatsu").radiusKm == nil)
+    }
 }

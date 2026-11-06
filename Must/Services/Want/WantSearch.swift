@@ -311,6 +311,38 @@ actor WantSearchCache {
 
     private struct Stored: Codable { var at: Date; var hits: [PlaceHit] }
 
+    // MARK: Com nota (Enterprise, atrás do `PlacesEnterpriseFlag`)
+
+    private var ratedMemory: [String: (at: Date, hits: [RatedHit])] = [:]
+    private var ratedInFlight: [String: Task<[RatedHit], Error>] = [:]
+
+    static func ratedKey(_ q: PlacesTextQuery) -> String { key(q) + "|rated" }
+
+    func cachedRated(_ q: PlacesTextQuery, now: Date) -> [RatedHit]? {
+        let key = Self.ratedKey(q)
+        if let hit = ratedMemory[key], now.timeIntervalSince(hit.at) < Self.maxAge(q) { return hit.hits }
+        guard let data = try? Data(contentsOf: file(key)),
+              let stored = try? JSONDecoder().decode(StoredRated.self, from: data),
+              now.timeIntervalSince(stored.at) < Self.maxAge(q) else { return nil }
+        ratedMemory[key] = (stored.at, stored.hits)
+        return stored.hits
+    }
+
+    func fetchRated(_ q: PlacesTextQuery, now: Date, _ body: @escaping @Sendable () async throws -> [RatedHit]) async throws -> [RatedHit] {
+        let key = Self.ratedKey(q)
+        if let running = ratedInFlight[key] { return try await running.value }
+        let task = Task { try await body() }
+        ratedInFlight[key] = task
+        defer { ratedInFlight[key] = nil }
+        let hits = try await task.value
+        ratedMemory[key] = (now, hits)
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        if let data = try? JSONEncoder().encode(StoredRated(at: now, hits: hits)) { try? data.write(to: file(key), options: .atomic) }
+        return hits
+    }
+
+    private struct StoredRated: Codable { var at: Date; var hits: [RatedHit] }
+
     private func file(_ key: String) -> URL {
         let digest = SHA256.hash(data: Data(key.utf8)).map { String(format: "%02x", $0) }.joined().prefix(24)
         return directory.appending(path: "\(digest).json")
