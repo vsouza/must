@@ -74,6 +74,13 @@ enum PlacePhotoStore {
         return url
     }
 
+    /// A imagem chegou inteira (rodada 23 · G): o `ImageIO` lê o arquivo todo e não acha o fim cortado.
+    static func isCompleteImage(_ data: Data) -> Bool {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil), CGImageSourceGetCount(source) > 0 else { return false }
+        return CGImageSourceGetStatus(source) == .statusComplete
+            && CGImageSourceGetStatusAtIndex(source, 0) == .statusComplete
+    }
+
     /// JPEG de `maxPixel` no lado maior, qualidade 0,7 (premissa: 240 px, JPEG).
     static func makeThumbnail(_ data: Data, maxPixel: Int) -> Data? {
         guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }

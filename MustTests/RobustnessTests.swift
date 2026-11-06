@@ -85,6 +85,15 @@ struct RobustnessTests {
         #expect(NetworkChaos.mode == .off)
     }
 
+    /// Foto do Google cortada no meio (rede caindo) não vai pro disco: lá ela ficaria quebrada por 30 dias.
+    @Test func truncatedPhotoIsNotComplete() {
+        let full = PhotoFixtures.jpeg(200, 260)
+        #expect(PlacePhotoStore.isCompleteImage(full))
+        #expect(!PlacePhotoStore.isCompleteImage(full.prefix(full.count / 2)))
+        #expect(!PlacePhotoStore.isCompleteImage(Data("{\"places\": [".utf8)))
+        #expect(!PlacePhotoStore.isCompleteImage(Data()))
+    }
+
     @Test func gpsHopParses() {
         let hops = LocationService.parseHops("16:-19.93,-43.93; 7:35.69,139.70;lixo;3:1")
         #expect(hops.count == 2)
