@@ -34,10 +34,11 @@ struct MustApp: App {
 }
 
 extension MustApp {
-    /// Em cartaz da região atual, lido do board (RODADA-23 · A). O agente E soma os feeds com `.merging(_:)`.
+    /// Em cartaz da região atual: o board (RODADA-23 · A) + os feeds em cache do `EventsService` (E), sem repetição.
     static func showEvents(_ store: RegionStore) -> BoardShowEvents {
         let container = store.container
         return .live(region: store.region) { (try? container.mainContext.fetch(FetchDescriptor<Place>())) ?? [] }
+            .merging(source: EventsService.shared)
     }
 }
 

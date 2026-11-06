@@ -174,3 +174,11 @@ extension EnvironmentValues {
         set { self[EventsServiceKey.self] = newValue }
     }
 }
+
+/// Os feeds entram no Em cartaz do board (`BoardShowEvents.merging(source:)`): só o que já está no cache em memória,
+/// nunca rede na leitura.
+extension EventsService: @MainActor ShowEventSource {
+    func events(region: Region, at date: Date) -> [ShowEvent] {
+        loadedRegion == region ? events : []
+    }
+}
