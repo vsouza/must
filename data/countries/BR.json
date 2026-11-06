@@ -68,7 +68,37 @@
       "belohorizonte",
       "brasil"
     ],
-    "ramenTips": false
+    "ramenTips": false,
+    "micro": {
+      "breakfast": {
+        "label": "Café da manhã",
+        "note": "micro · pão de queijo e café · perto de casa",
+        "tag": "café",
+        "cost": 20
+      },
+      "water": {
+        "label": "Água e um lanche",
+        "note": "micro · antes da fila",
+        "tag": "água",
+        "cost": 10
+      },
+      "rest": {
+        "label": "Descanso em casa",
+        "note": "micro · 40 min · carregar o celular · trocar de roupa",
+        "tag": "zz"
+      },
+      "shop": {
+        "label": "Compra rápida",
+        "note": "micro · mercado ou farmácia no caminho",
+        "tag": "R$"
+      },
+      "treat": {
+        "label": "Sorvete no caminho",
+        "note": "micro · uma bola",
+        "tag": "doce",
+        "cost": 12
+      }
+    }
   },
   "sos": {
     "numbersLabel": "192 · 190 · 193 · seguro",
@@ -169,6 +199,10 @@
       }
     ],
     "exchangeUnit": 1,
+    "storedRateMin": 1.5,
+    "exchangeFormat": "US$ {n}",
+    "exchangeCurrency": "USD",
+    "exchangeSymbol": "US$",
     "fallbackBRLPerUnit": 5.5,
     "name": "Brasil",
     "phrases": [

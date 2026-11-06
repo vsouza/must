@@ -72,6 +72,18 @@ struct CountryProfile: Codable, Hashable, Sendable {
         var afternoon: [Int]
         var dinner: [Int]
         var night: [Int]
+
+        /// `[início, fim)` da janela (manhã cedo: dia de templos/foto).
+        func range(_ window: DayWindow, startEarly: Bool) -> Range<Int> {
+            let pair: [Int] = switch window {
+            case .morning: [startEarly ? morningEarly : morning[0], morning[1]]
+            case .lunch: lunch
+            case .afternoon: afternoon
+            case .dinner: dinner
+            case .night: night
+            }
+            return pair[0]..<pair[1]
+        }
     }
 
     /// Regras locais (prompt 24 §2: Roma). Os detalhes de texto ficam em `ItalyRules`; o país só liga.
@@ -110,6 +122,8 @@ struct CountryProfile: Codable, Hashable, Sendable {
         var weatherModels: String?
         /// Nome da fonte do tempo em Ajustes ("Open-Meteo + JMA").
         var weatherLabel: String?
+        /// Prefixo do código de linha que é trem (JR: "J"); o resto da tabela é metrô.
+        var trainLinePrefix: String?
         /// Fonte local nos rótulos do mapa (Hiragino no Japão).
         var localMapFont: Bool?
         /// Cartão de transporte de valor (Suica): lembrete de recarga, Wallet nos Atalhos, Carteira de partida.
@@ -139,8 +153,12 @@ struct CountryProfile: Codable, Hashable, Sendable {
         var atmFilter: String?
         /// Saldo baixo padrão do cartão de transporte (Carteira).
         var lowBalance: String?
+        /// Taxa de mesa na ficha do Lugar ("€ 1–3 · sem gorjeta", o coperto de Roma) no lugar do pagamento.
+        var tableCharge: String?
         /// Mostra o ≈ R$ nos gastos e no Wallet.
         var showsBRL: Bool?
+        /// Compras da viagem (lista com a previsão e as regras da volta) na Viagem e na Carteira.
+        var shoppingList: Bool?
     }
 
     struct DayText: Codable, Hashable, Sendable {
@@ -159,8 +177,19 @@ struct CountryProfile: Codable, Hashable, Sendable {
         var subreddits: [String]?
         /// Dica de lámen (fila curta no balcão).
         var ramenTips: Bool?
+        /// Idioma da fala dos vídeos colados ("ja-JP"). `nil` = pt-BR.
+        var videoLocale: String?
         /// Rótulo do Bolso ("Utilidades" no Japão).
         var pocketTitle: String?
+        /// Micro-paradas por tipo (`DayMicroKind.rawValue`: breakfast, water, rest, shop, treat).
+        var micro: [String: MicroWord]?
+    }
+
+    struct MicroWord: Codable, Hashable, Sendable {
+        var label: String
+        var note: String
+        var tag: String
+        var cost: Double?
     }
 
     struct SOS: Codable, Hashable, Sendable {

@@ -87,7 +87,8 @@
     "atmLine": "Passe num caixa no caminho",
     "atmFilter": "Caixa perto",
     "lowBalance": "",
-    "showsBRL": false
+    "showsBRL": false,
+    "tableCharge": "€ 1–3 · sem gorjeta"
   },
   "day": {
     "microStops": "café, gelato, descanso",
@@ -100,7 +101,37 @@
       "rome",
       "ItalyTravel"
     ],
-    "ramenTips": false
+    "ramenTips": false,
+    "micro": {
+      "breakfast": {
+        "label": "Cornetto e cappuccino no bar",
+        "note": "micro · no balcão, de pé",
+        "tag": "café",
+        "cost": 2.5
+      },
+      "water": {
+        "label": "Nasone · água fresca",
+        "note": "micro · de graça · tape o cano pra beber",
+        "tag": "água"
+      },
+      "rest": {
+        "label": "Descanso no hotel",
+        "note": "micro · 40 min · carregar o celular · trocar de roupa",
+        "tag": "zz"
+      },
+      "shop": {
+        "label": "Alimentari · pra levar",
+        "note": "micro · tax-free só acima de € 70 por loja",
+        "tag": "€",
+        "cost": 10
+      },
+      "treat": {
+        "label": "Gelato no caminho",
+        "note": "micro · uma bola no copinho",
+        "tag": "gl",
+        "cost": 3.5
+      }
+    }
   },
   "sos": {
     "numbersLabel": "112 · seguro · hospital",
@@ -224,6 +255,8 @@
       }
     ],
     "exchangeUnit": 1,
+    "storedRateMin": 1.5,
+    "exchangeFormat": "€ {n}",
     "fallbackBRLPerUnit": 6.4,
     "name": "Itália",
     "phrases": [

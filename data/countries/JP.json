@@ -41,6 +41,7 @@
     "taxiFare": "jpy",
     "weatherModels": "jma_seamless,best_match",
     "weatherLabel": "Open-Meteo + JMA",
+    "trainLinePrefix": "J",
     "localMapFont": true,
     "storedValueCard": "Suica",
     "lastTrainFromLine": false,
@@ -61,7 +62,8 @@
     "atmLine": "Caixa 7 Bank no 7-Eleven do caminho",
     "atmFilter": "Caixa · 7 Bank",
     "lowBalance": "1000",
-    "showsBRL": true
+    "showsBRL": true,
+    "shoppingList": true
   },
   "day": {
     "microStops": "café, konbini, descanso",
@@ -76,7 +78,39 @@
       "Kyoto"
     ],
     "ramenTips": true,
-    "pocketTitle": "Utilidades"
+    "pocketTitle": "Utilidades",
+    "micro": {
+      "breakfast": {
+        "label": "Café perto do hotel",
+        "note": "micro · café da manhã · a pé do hotel",
+        "tag": "café",
+        "cost": 800
+      },
+      "water": {
+        "label": "Konbini · água e onigiri",
+        "note": "micro · antes da fila",
+        "tag": "7",
+        "cost": 400
+      },
+      "rest": {
+        "label": "Descanso no hotel",
+        "note": "micro · 40 min · carregar o celular · trocar de roupa",
+        "tag": "zz"
+      },
+      "shop": {
+        "label": "Depachika · doces pra levar",
+        "note": "micro · tax-free acima de ¥ 5.000 com passaporte",
+        "tag": "¥",
+        "cost": 1500
+      },
+      "treat": {
+        "label": "Taiyaki no caminho",
+        "note": "micro · doce de rua",
+        "tag": "doce",
+        "cost": 300
+      }
+    },
+    "videoLocale": "ja-JP"
   },
   "sos": {
     "numbersLabel": "119 · 110 · seguro · hospital",
@@ -184,6 +218,9 @@
       }
     ],
     "exchangeUnit": 100,
+    "storedRateMax": 1,
+    "exchangeFormat": "¥{n}",
+    "shortTrainLabel": true,
     "fallbackBRLPerUnit": 0.036,
     "name": "Japão",
     "phrases": [

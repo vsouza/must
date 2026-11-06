@@ -211,11 +211,10 @@ struct DayEngineV8: DayEngine {
     @MainActor
     static func lastTrain(region: Region, date: Date, near: CLLocationCoordinate2D?) -> DayLastTrain? {
         let cal = region.calendar
-        switch region {
-        case .it:
+        if region.profile.has(.cityLastMetro) {
             // O metrô de Roma tem um horário só pra cidade toda (23:30; sex/sáb 01:30): a regra do Bolso, sem procurar estação.
             return DayComposer.romeLastMetro(on: date, calendar: cal)
-        case .jp, .bh:
+        } else {
             guard let last = LastTrains.home(region: region, near: near, transit: TransitLoader.load(region)),
                   let at = DayComposer.clock(last.time, on: date, calendar: cal) else { return nil }
             let line = last.label.hasPrefix("Último ") ? String(last.label.dropFirst("Último ".count)) : last.label
@@ -293,7 +292,7 @@ struct DayEngineV8: DayEngine {
             return (plus(minutes), "")
         }
         if let r = p.reservation, abs(r.at.timeIntervalSince(at)) < 60 {
-            if region == .it, let shift = ItalyRules.shiftMinutes(p) { return (plus(shift), "reserva · turno") }
+            if region.profile.has(.reservationShift), let shift = ItalyRules.shiftMinutes(p) { return (plus(shift), "reserva · turno") }
             return (plus(p.role == .eat ? 105 : p.role.duration), "reserva")
         }
         let ticketed = p.tickets.contains { abs($0.at.timeIntervalSince(at)) < 60 }
@@ -302,7 +301,7 @@ struct DayEngineV8: DayEngine {
             let length = p.extra?.art?.durationMinutes ?? p.extra?.experience?.durationMinutes ?? (p.kind == .sport ? 150 : 120)
             return (plus(length), "ingresso")
         }
-        if region == .it, ItalyRules.isAppia(p), cal.component(.weekday, from: at) == 1 {
+        if region.profile.has(.appiaSunday), ItalyRules.isAppia(p), cal.component(.weekday, from: at) == 1 {
             return (plus(max(ItalyRules.appiaMinutes, DaySolver.duration(p))), "domingo sem carros")
         }
         return (plus(p.role == .eat ? 105 : p.role.duration), "reserva")

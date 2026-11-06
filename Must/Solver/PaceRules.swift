@@ -49,7 +49,7 @@ extension DaySolver {
     /// Roma, domingo: a Via Appia fecha pra carros e vira âncora de manhã (09:30, 2 h 30), se não bater com outra âncora.
     static func sundayAppia(_ catalog: [SolverPlace], anchors: [ProposedStop], ctx: Context) -> ProposedStop? {
         let req = ctx.request
-        guard ctx.italy, req.weekday == 0 else { return nil }
+        guard ctx.rules.contains(.appiaSunday), req.weekday == 0 else { return nil }
         let taken = Set(anchors.map(\.place.id))
         let options = catalog
             .filter { !$0.done && req.isInCity($0.cityId) && ItalyRules.isAppia($0) && !ctx.mustExclude.contains($0.id) && !taken.contains($0.id) }

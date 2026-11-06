@@ -9,8 +9,8 @@ enum DaySolver {
 
     /// Minutos desde a meia-noite [início, fim).
     static func range(_ window: DayWindow, startEarly: Bool = false, region: Region? = nil) -> Range<Int> {
-        // Roma (prompt 24 §2): almoço 12:30–15, jantar 19:30–23.
-        if region == .it { return ItalyRules.range(window, startEarly: startEarly) }
+        // Janelas do país (`data/countries/<cc>.json`, `meals`). Roma (prompt 24 §2): almoço 12:30–15, jantar 19:30–23.
+        if let meals = region?.profile.meals { return meals.range(window, startEarly: startEarly) }
         return switch window {
         case .morning: (startEarly ? 8 * 60 + 30 : 9 * 60 + 30)..<(11 * 60 + 30)
         case .lunch: (11 * 60 + 30)..<(14 * 60 + 30)
@@ -146,12 +146,13 @@ enum DaySolver {
         /// "até 23:30" (Montar v8), em minutos do dia. `nil` = sem limite.
         var endMinute: Int?
 
-        /// Regras de Roma ligadas.
-        var italy: Bool { request.region == .it }
+        /// Regras locais do país (`CountryProfile.rules`; Roma: riposo, museus na segunda, turno de reserva).
+        let rules: Set<CountryProfile.Rule>
         var region: Region? { request.region }
 
         init(_ request: DayRequest, catalog: [SolverPlace]) {
             self.request = request
+            rules = Set(request.region?.profile.rules ?? [])
             travel = request.travel
             sun = SunService.day(request.date.addingTimeInterval(12 * 3600), request.cityCenter ?? request.origin, timeZone: request.timeZone)
             flightDeadlineMinute = request.flightDeadline.map { Int($0.timeIntervalSince(request.date) / 60) }
@@ -173,7 +174,7 @@ enum DaySolver {
             }
             mustInclude = ids(intent.mustInclude)
             mustExclude = ids(intent.mustExclude)
-            if let focusRef = request.focus, let plan = AreaFocusPlan(focus: focusRef, areas: AreaCatalog.all + AreaCatalog.areas(for: .it)) {
+            if let focusRef = request.focus, let plan = AreaFocusPlan(focus: focusRef, areas: AreaCatalog.all + AreaCatalog.areas(for: .it) + AreaCatalog.generated(for: request.region)) {
                 focus = plan
                 focusArea = Dictionary(catalog.compactMap { p in plan.areaId(for: p).map { (p.id, $0) } },
                                        uniquingKeysWith: { first, _ in first })
@@ -223,7 +224,7 @@ enum DaySolver {
             }
         }
         if p.rules.fullDay && !forced { return ("dia inteiro — peça pra ir", false) }
-        if ctx.italy {
+        if ctx.rules.contains(.stateMuseumsMonday) {
             // Museu estatal fecha segunda; a Borghese abre, mas só com reserva (sem reserva hoje, fica fora).
             if req.weekday == 1, ItalyRules.isStateMuseum(p) { return ("museu estatal fecha segunda", false) }
             if ItalyRules.requiresReservation(p) { return ("só com reserva (turno de 2 h)", false) }
@@ -276,7 +277,7 @@ enum DaySolver {
                 continue
             }
             // Roma: reserva com turno (Borghese, 2 h) termina na hora do turno.
-            let shift = ctx.italy ? ItalyRules.shiftMinutes(p) : nil
+            let shift = ctx.rules.contains(.reservationShift) ? ItalyRules.shiftMinutes(p) : nil
             let duration = shift ?? (p.role == .eat ? 105 : p.role.duration)
             var exception = false
             if spend + p.cost > ctx.budget, p.allowBudgetException, !hasException {
@@ -449,7 +450,7 @@ enum DaySolver {
                     }
 
                     // Roma: loja pequena no riposo (13–16) e igreja fechada no meio do dia passam pro fim da pausa.
-                    if ctx.italy, let closed = ItalyRules.middayClosure(p), (start..<(start + length)).overlaps(closed) {
+                    if ctx.rules.contains(.middayClosures), let closed = ItalyRules.middayClosure(p), (start..<(start + length)).overlaps(closed) {
                         guard closed.upperBound < w.upperBound else {
                             rejection[p.id] = ItalyRules.hasRiposo(p) ? "riposo 13–16" : "igreja fecha 12:30–15:30"
                             continue
