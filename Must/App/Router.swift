@@ -117,6 +117,8 @@ final class AppRouter {
         case gallery
         /// Editar lista (nome, cor, ícone, sub-listas, ordem, apagar).
         case editList(id: String)
+        /// Nova viagem (prompt 28 · F3): o fluxo de 9 telas, em tela cheia. `step` abre direto num passo (prints).
+        case novaViagem(step: Int = 1)
 
         var id: Self { self }
     }

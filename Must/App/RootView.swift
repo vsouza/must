@@ -56,6 +56,7 @@ struct RootView: View {
             switch cover {
             case .newList: NewListFlow()
             case .editList(let id): EditListFlow(listId: id)
+            case .novaViagem(let step): NewTripFlow(startStep: step)
             case .gallery:
                 #if DEBUG
                 Gallery()

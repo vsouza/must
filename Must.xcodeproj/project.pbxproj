@@ -115,6 +115,7 @@
 		3A0EF3BCBD64F07CAA51B1C7 /* Areas.swift in Sources */ = {isa = PBXBuildFile; fileRef = 110E0567BD73A4C21332461A /* Areas.swift */; };
 		3AB64A66663C8A06CD161CF1 /* CollectibleMoment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7586B99859BD255DB4AC2DB0 /* CollectibleMoment.swift */; };
 		3C61E0B9BE4FB4FD3D1D7EB0 /* TicketView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E926F5C8871767F5183C44EB /* TicketView.swift */; };
+		3C71B2B681CE23ED5BCF95E9 /* NewTripDraft.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6FDD71566ED21F52A5FEDF4 /* NewTripDraft.swift */; };
 		3CE9E71997ED950352DBE3A3 /* WantParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B1E0456F0354A55E2821F7A /* WantParserTests.swift */; };
 		3D42EA7CF1194F6D3A4315F0 /* MapPacks.swift in Sources */ = {isa = PBXBuildFile; fileRef = F89EE24137D29930396E7AFE /* MapPacks.swift */; };
 		3D8D9F5DD24492FF4512F716 /* RegionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A8B878319F3A3CFD0EB2879 /* RegionTests.swift */; };
@@ -396,6 +397,7 @@
 		CA7378B09FACBE946E187D68 /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6675C1F44B4037B9EE207B20 /* TodayView.swift */; };
 		CAE4712642A45CFA58D62F84 /* MustShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F5D9962BB74EFE458C08ABD /* MustShared.swift */; };
 		CB8369892BDB840CE762F320 /* PlacePanelFichaTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EB0211FCC84D9ED73E17DAE /* PlacePanelFichaTests.swift */; };
+		CB9317264328FFD2B70AAF3F /* NewTripFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79AE90863AAFD7E1C04481A8 /* NewTripFlow.swift */; };
 		CB9BBB66ED0E5544D3FAACFF /* PlacePhotoRef.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D59E2E32C6D785A134C2FC4 /* PlacePhotoRef.swift */; };
 		CBAB62A992AA8376C1DB3DE0 /* NearbyModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40DE0EE55D2F4D6C937D21D /* NearbyModel.swift */; };
 		CC17AB9B630BDDC83197780B /* GuideNudgesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B09B23123A531606C10D583 /* GuideNudgesTests.swift */; };
@@ -780,6 +782,7 @@
 		7762045A378DADBDFF7270E0 /* CompassBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompassBridge.swift; sourceTree = "<group>"; };
 		777DE3C7EC6186B8235C3E85 /* WhereAmI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhereAmI.swift; sourceTree = "<group>"; };
 		78212F58245B84FF6D0AEC48 /* AreaFocusSolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AreaFocusSolverTests.swift; sourceTree = "<group>"; };
+		79AE90863AAFD7E1C04481A8 /* NewTripFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewTripFlow.swift; sourceTree = "<group>"; };
 		7A0E81635371E1D789015B1A /* ListCoverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListCoverTests.swift; sourceTree = "<group>"; };
 		7A5C8629E902F9A6B0F451A9 /* TripThemeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripThemeTests.swift; sourceTree = "<group>"; };
 		7A7566B89D919661CCD45CCF /* SOSTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SOSTests.swift; sourceTree = "<group>"; };
@@ -1036,6 +1039,7 @@
 		F648A672D7C195C35608123B /* TravelMatrixLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TravelMatrixLoader.swift; sourceTree = "<group>"; };
 		F652FC92129D3FD75DA6ED1D /* ItalyRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItalyRules.swift; sourceTree = "<group>"; };
 		F6C9781C95F5102BF62B994C /* MustIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MustIcon.swift; sourceTree = "<group>"; };
+		F6FDD71566ED21F52A5FEDF4 /* NewTripDraft.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewTripDraft.swift; sourceTree = "<group>"; };
 		F73465FDB27FA97ECEDBBB81 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		F799B02D42632B01E8D3300B /* DayPrefetch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayPrefetch.swift; sourceTree = "<group>"; };
 		F79A71DF25B8CAE81CB57BC2 /* AvisosDoGuiaSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvisosDoGuiaSection.swift; sourceTree = "<group>"; };
@@ -1567,6 +1571,15 @@
 			path = MustTests;
 			sourceTree = "<group>";
 		};
+		62CBC01B8CFABCF1C188ADD6 /* NewTrip */ = {
+			isa = PBXGroup;
+			children = (
+				F6FDD71566ED21F52A5FEDF4 /* NewTripDraft.swift */,
+				79AE90863AAFD7E1C04481A8 /* NewTripFlow.swift */,
+			);
+			path = NewTrip;
+			sourceTree = "<group>";
+		};
 		668AF8187294B26E86B7275C /* Flights */ = {
 			isa = PBXGroup;
 			children = (
@@ -1911,6 +1924,7 @@
 				09F500CD5EA3D252AE1778C1 /* Map */,
 				420EF28B6F2A4788DA77A29A /* Musts */,
 				821FC3EE942A4638F469DBD3 /* NewList */,
+				62CBC01B8CFABCF1C188ADD6 /* NewTrip */,
 				8963997AD3E1C8549AA7C52B /* Night */,
 				B796295EF3113E3572446502 /* Place */,
 				DFEE2B36A35E159B693A08F0 /* Plan */,
@@ -2881,6 +2895,8 @@
 				2112256931B46241E389365A /* Network.swift in Sources */,
 				55E7A3275468FD0E181A0AA7 /* NetworkChaos.swift in Sources */,
 				C309A755522150372D686AC8 /* NewListFlow.swift in Sources */,
+				3C71B2B681CE23ED5BCF95E9 /* NewTripDraft.swift in Sources */,
+				CB9317264328FFD2B70AAF3F /* NewTripFlow.swift in Sources */,
 				2F61642C63CD0B2F85023063 /* NotesRules.swift in Sources */,
 				7614D4B9AE6DAEEBC248D2B3 /* NotificationTaps.swift in Sources */,
 				74988FB4DD27477EAE2C8F3E /* NumberInput.swift in Sources */,
