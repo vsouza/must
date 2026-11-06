@@ -128,11 +128,16 @@ final class AppRouter {
     /// Modo pedido pro Mapa ao chegar do card "Perto de você" (prompt 06).
     var mapShowsOpenNow = false
 
-    /// Telas v8 sem barra de abas (design): Montar (e a proposta), Ir/Como chegar e o Lugar em tela cheia.
+    /// Card do pino aberto no Mapa (prompt 27 §2): o design não tem a barra de abas por baixo dele.
+    var mapCardOpen = false
+
+    /// Telas v8 sem barra de abas (design): Montar (e a proposta), Ir/Como chegar, o Lugar em tela cheia, SOS e o
+    /// Mapa com o card do pino aberto.
     var hidesNavBar: Bool {
+        if mapCardOpen, paths[tab]?.last == .mapa || tab == .guia { return true }
         switch paths[tab]?.last {
-        case .montar, .ir, .comoChegar, .place, .sos: true
-        default: false
+        case .montar, .ir, .comoChegar, .place, .sos: return true
+        default: return false
         }
     }
 
@@ -197,7 +202,13 @@ final class AppRouter {
             push(.boaNoite, on: .hoje)
         case "import":
             // Caixa do Share Extension: o id é o nome da pasta (UUID); a tela confere se ainda existe.
-            sheet = .ticketImport(inboxId: items.first { $0.name == "id" }?.value)
+            let inboxId = items.first { $0.name == "id" }?.value
+            // Vídeo (prompt 29) vai pro Adicionar, que lê fala e texto na tela; o resto é ingresso.
+            if let inboxId, ShareInbox.item(id: inboxId)?.kind == .video {
+                sheet = .addLink(url: AddLinkModel.videoPrefix + inboxId, listId: nil)
+            } else {
+                sheet = .ticketImport(inboxId: inboxId)
+            }
         // Link do dia (prompt 25 · B.2): `must://d/<payload>`, o dia comprimido dentro do link (sem servidor).
         case "d":
             guard let payload = DayLink.payload(from: url) else { return }

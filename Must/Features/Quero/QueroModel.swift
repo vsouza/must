@@ -25,6 +25,19 @@ struct QueroEnv: Sendable {
     var upcoming: [(date: Date, areaIds: Set<String>)] = []
 }
 
+extension QueroEnv {
+    /// O board da cidade (com coordenada), sem SwiftData: o Quero… e a busca do mapa (prompt 27 §2.c) leem o mesmo.
+    @MainActor
+    static func board(_ places: [Place], cityGroup: String, now: Date, timeZone: TimeZone) -> [WantBoardPlace] {
+        places.compactMap { p -> WantBoardPlace? in
+            guard AreaCatalog.cityGroup(forCityId: p.cityId) == cityGroup, p.lat != 0 || p.lng != 0 else { return nil }
+            let until = p.hours?.closesAt(now, timeZone: timeZone).map(ListGrouping.hourLabel)
+            return WantBoardPlace(id: p.id, name: p.name, lat: p.lat, lng: p.lng, listId: p.list?.id, sub: p.sub, notes: p.notes,
+                                  placeId: p.placeId, area: p.area, until: until, done: p.isDone)
+        }
+    }
+}
+
 /// Uma linha da lista do Quero….
 struct QueroRow: Identifiable, Hashable, Sendable {
     var result: WantResult

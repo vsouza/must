@@ -12,6 +12,7 @@ struct DicasView: View {
     @Environment(Services.self) private var services
     @Environment(\.dayEngine) private var dayEngine
     @Environment(\.modelContext) private var context
+    @Environment(\.friends) private var friends
 
     @Query private var places: [Place]
     @Query private var trips: [TripInfo]
@@ -49,12 +50,22 @@ struct DicasView: View {
                 filters(areaName: context.areaName).padding(.top, 18)
                 VStack(spacing: 12) {
                     ForEach(shown) { card in
-                        Button { if let id = card.placeId { router.push(.place(id: id)) } } label: { DayTipCardView(card: card) }
-                            .buttonStyle(MustPressStyle())
-                            .contextMenu {
-                                Button(saved.contains(card.id) ? "Tirar das salvas" : "Salvar dica",
-                                       systemImage: saved.contains(card.id) ? "bookmark.slash" : "bookmark") { toggleSaved(card.id) }
+                        VStack(alignment: .leading, spacing: 6) {
+                            Button { if let id = card.placeId { router.push(.place(id: id)) } } label: { DayTipCardView(card: card) }
+                                .buttonStyle(MustPressStyle())
+                                .contextMenu {
+                                    Button(saved.contains(card.id) ? "Tirar das salvas" : "Salvar dica",
+                                           systemImage: saved.contains(card.id) ? "bookmark.slash" : "bookmark") { toggleSaved(card.id) }
+                                }
+                            // Amigos que foram a esse lugar (mock "exemplo" por enquanto): uma linha, some sem visita.
+                            if let id = card.placeId, let line = FriendsLine.summary(friends.visits(placeId: id)) {
+                                HStack(spacing: 6) {
+                                    Text(line).font(V8Font.text(13)).foregroundStyle(V8.mute).lineLimit(2)
+                                    if friends.isSample { V8Tag(text: "exemplo", style: .paper) }
+                                }
+                                .padding(.horizontal, 6)
                             }
+                        }
                     }
                     if shown.isEmpty {
                         Text(filter == .saved ? "Segure uma dica pra salvar." : "Nada aqui por enquanto.")

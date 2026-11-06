@@ -1,7 +1,7 @@
 import UIKit
 import UniformTypeIdentifiers
 
-/// Share Extension do Must (prompt 15 · A): recebe PDF, imagem, .pkpass, URL ou texto, grava na caixa do App Group
+/// Share Extension do Must (prompt 15 · A): recebe PDF, imagem, vídeo (prompt 29), .pkpass, URL ou texto, grava na caixa do App Group
 /// (`ShareInbox`) e abre o app em `must://import?id=`. Só recebe e grava: a leitura é no app.
 /// Se o app não abrir daqui, o item fica na caixa e o app o pega na próxima vez que ficar ativo.
 final class ShareViewController: UIViewController {
@@ -27,6 +27,7 @@ final class ShareViewController: UIViewController {
         // Ordem de preferência: um .pkpass também conforma a arquivo, e o passe é o que tem mais dado.
         let candidates: [(type: String, kind: ShareInbox.Kind)] = [
             ("com.apple.pkpass", .pkpass), (UTType.pdf.identifier, .pdf), (UTType.image.identifier, .image),
+            (UTType.movie.identifier, .video),
             (UTType.url.identifier, .url), (UTType.plainText.identifier, .text),
         ]
         for (type, kind) in candidates {
@@ -42,7 +43,7 @@ final class ShareViewController: UIViewController {
             }
             return
         }
-        status.text = "Esse tipo de item não é um ingresso."
+        status.text = "O Must não lê esse tipo de item."
         try? await Task.sleep(for: .seconds(2))
         extensionContext?.cancelRequest(withError: CocoaError(.fileReadUnsupportedScheme))
     }
@@ -51,7 +52,7 @@ final class ShareViewController: UIViewController {
 
     private static func stash(_ provider: NSItemProvider, type: String, kind: ShareInbox.Kind) async throws -> ShareInbox.Item {
         switch kind {
-        case .pdf, .image, .pkpass:
+        case .pdf, .image, .pkpass, .video:
             return try await loadFile(provider, type: type, kind: kind)
         case .url, .text:
             let value = try await loadText(provider, type: type)

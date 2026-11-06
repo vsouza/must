@@ -17,6 +17,8 @@ struct PlaceView: View {
     @Environment(RegionStore.self) private var store
     @Environment(Services.self) private var services
     @Environment(\.dayEngine) private var dayEngine
+    @Environment(\.showEvents) private var showEvents
+    @Environment(\.friends) private var friends
     @Query private var matches: [Place]
     @Query private var trips: [TripInfo]
     @Query private var settingsList: [Settings]
@@ -76,6 +78,23 @@ struct PlaceView: View {
         return page == 0 ? services.photoResolver.cachedHeroURL(refs: place.photoRefs) : nil
     }
 
+    /// "Em cartaz" do lugar (museu, casa de show, estádio): vazio some do Lugar.
+    private func emCartaz(_ place: Place) -> [ShowEvent] {
+        let provider = EmCartazProvider.resolve(showEvents)
+        return PlaceEmCartaz.visible(provider.events(placeId: place.id, at: now), now: now, calendar: region.calendar)
+    }
+
+    @ViewBuilder private func emCartazBlock(_ place: Place, onInk: Bool) -> some View {
+        let events = emCartaz(place)
+        if !events.isEmpty {
+            EmCartazSection(events: events, region: region, now: now, onInk: onInk,
+                            onPaste: { router.sheet = .addLink(url: nil, listId: nil) },
+                            // TODO(r23:A): fluxo próprio de foto do cartaz (Vision + EventExtractor); por ora o leitor de ingresso.
+                            onPoster: { router.sheet = .ticketImport(inboxId: nil) })
+                .padding(.bottom, 28)
+        }
+    }
+
     private func pages(_ place: Place) -> Int { place.placeId == nil ? 1 : max(1, min(place.photoRefs.count, 5)) }
 
     // MARK: Tela
@@ -116,6 +135,10 @@ struct PlaceView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .onAppear { services.sync.refreshIfStale(place, region: region) }
+        // Marcou "Feito" (folha de gasto): o momento do colecionável (prompt 27 §4, agente D).
+        .onChange(of: place.isDone) { was, isDone in
+            if isDone, !was { CollectibleCelebration.present(for: place.id) }
+        }
         .task(id: place.id) {
             // Seed nunca sincronizado: resolve este lugar no Places antes da foto (e das Dicas de quem foi).
             await services.sync.ensureResolved(place, region: region, cityName: trips.first?.city(id: place.cityId)?.name)
@@ -301,6 +324,8 @@ struct PlaceView: View {
                 V8Tag(text: "\(Proximos.dayLabel(anchor.at, now: now, calendar: region.calendar)) · âncora", style: .glass)
                 if let minutes = anchor.minutes { V8Tag(text: PlaceFicha.durationText(minutes), style: .glass) }
             } else {
+                let live = PlaceEmCartaz.nowCount(emCartaz(place), now: now, calendar: region.calendar)
+                if live > 0 { V8Tag(text: "em cartaz · \(live) agora", style: .orange) }
                 if let stop {
                     if stop.isNow {
                         V8Tag(text: photo ? "agora · parada \(stop.number)" : "agora · \(stop.number) de \(stop.total)", style: .orange)
@@ -461,6 +486,7 @@ struct PlaceView: View {
 
     private func inkExtras(_ place: Place) -> some View {
         VStack(alignment: .leading, spacing: 12) {
+            emCartazBlock(place, onInk: true)
             noteCard(place)
             pills(place, onInk: true)
         }
@@ -556,6 +582,7 @@ struct PlaceView: View {
             } else {
                 ficha(PlaceFicha.cells(place, region: region, now: now, here: here, walkMaxKm: walkMax, queueFirst: true), onInk: false)
             }
+            emCartazBlock(place, onInk: false).padding(.top, 30)
             noteCard(place).padding(.top, 34)
             pills(place, onInk: false).padding(.top, 12)
         }
@@ -575,6 +602,12 @@ struct PlaceView: View {
                     .padding(.top, 28)
                     .id("tips")
                     .onScrollVisibilityChange(threshold: 0.01) { visible in if visible { tipsVisible = true } }
+                // Amigos que foram (mock "exemplo" por enquanto) e filmes gravados aqui: somem sem dado.
+                let visits = FriendsProvider.visits(friends, placeId: place.id)
+                if !visits.isEmpty {
+                    FriendsSection(visits: visits, isSample: friends.isSample).padding(.top, 36)
+                }
+                FilmsSection(place: place, region: region, areaName: place.area).padding(.top, 36)
                 Color.clear.frame(height: 40)
             }
             .padding(.horizontal, 20)

@@ -262,7 +262,7 @@ struct ExpenseView: View {
         selectedPlaceId = placeId ?? detectPlace()?.id
         if let p = place {
             category = p.defaultCategory
-            if let price = p.price, price > 0 { digits = String(Int(price)) }
+            if let price = NumberInput.rounded(p.price), price > 0 { digits = String(price) }
         }
         if region == .jp { method = .cash }
     }

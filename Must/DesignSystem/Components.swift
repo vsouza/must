@@ -463,21 +463,35 @@ enum PhotoLoader {
         if let hit = memory.object(forKey: url as NSURL) { return hit }
         // Foto do Google (prompt 19): já está no disco, em arquivo (800 px ou miniatura 240 px).
         if url.isFileURL {
-            guard let image = UIImage(contentsOfFile: url.path()) else { return nil }
+            guard let image = await decoded(file: url) else { return nil }
             memory.setObject(image, forKey: url as NSURL)
             return image
         }
         let key = "photo|\(url.absoluteString)"
-        if let saved = await DiskCache.shared.stale(key), let image = UIImage(data: saved) {
+        if let saved = await DiskCache.shared.stale(key), let image = await decoded(saved) {
             memory.setObject(image, forKey: url as NSURL)
             if await DiskCache.shared.isFresh(key, maxAge: freshFor) == false {
                 Task { _ = await fetch(url, key: key) }   // velha: troca na próxima vez, sem atrasar a tela
             }
             return image
         }
-        guard let data = await fetch(url, key: key), let image = UIImage(data: data) else { return nil }
+        guard let data = await fetch(url, key: key), let image = await decoded(data) else { return nil }
         memory.setObject(image, forKey: url as NSURL)
         return image
+    }
+
+    /// Lê e decodifica fora do main (rodada 23 · G): o `UIImage` de arquivo é preguiçoso e decodificava no primeiro
+    /// desenho, no main, no meio da rolagem da Lista e dos Musts.
+    nonisolated static func decoded(file url: URL) async -> UIImage? {
+        await Task.detached(priority: .userInitiated) {
+            UIImage(contentsOfFile: url.path())?.preparingForDisplay()
+        }.value
+    }
+
+    nonisolated static func decoded(_ data: Data) async -> UIImage? {
+        await Task.detached(priority: .userInitiated) {
+            UIImage(data: data)?.preparingForDisplay()
+        }.value
     }
 
     /// Pré-download do dia (prompt 18 · A.5): garante a foto no disco. Não gasta dado do Modo de Pouco Dados
@@ -487,7 +501,7 @@ enum PhotoLoader {
         let key = "photo|\(url.absoluteString)"
         if await DiskCache.shared.exists(key) { return true }
         guard let raw = try? await HTTP(kind: .prefetch).get(url, headers: ["User-Agent": CommonsPhotoService.userAgent], service: "foto"),
-              UIImage(data: raw) != nil else { return false }
+              PlacePhotoStore.isCompleteImage(raw) else { return false }
         let data = await compact(raw)
         await DiskCache.shared.store(data, for: key)
         trimInBackground()
@@ -498,6 +512,8 @@ enum PhotoLoader {
         guard let raw = try? await HTTP().get(url, headers: ["User-Agent": CommonsPhotoService.userAgent], service: "foto") else {
             return nil
         }
+        // Cortada no meio (rede caindo): não grava — no disco ela valeria 30 dias, meio cinza.
+        guard PlacePhotoStore.isCompleteImage(raw) else { return nil }
         let data = await compact(raw)
         await DiskCache.shared.store(data, for: key)
         trimInBackground()

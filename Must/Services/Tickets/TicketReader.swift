@@ -88,6 +88,9 @@ enum TicketReader {
             }
         case .url, .text:
             return .text(item.text ?? "")
+        case .video:
+            // Vídeo não é ingresso: o Adicionar (prompt 29) é quem lê.
+            throw TicketReaderError.unreadablePDF
         }
     }
 

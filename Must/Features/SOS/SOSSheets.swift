@@ -158,6 +158,7 @@ struct SOSProfileSheet: View {
                 .foregroundStyle(V8.ink)
                 .keyboardType(keyboard)
                 .lineLimit(1...4)
+                .accessibilityIdentifier("sos.\(label)")
         }
         .padding(.vertical, 12)
         .overlay(alignment: .top) { Rectangle().fill(V8.rule).frame(height: 1) }

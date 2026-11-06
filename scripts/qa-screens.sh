@@ -70,6 +70,11 @@ v8shots() { # $1 = prefixo (jp|bh|it), $2 = lugar de exemplo, $3 = museu de exem
   WAIT=8 shot $r-v8-quero -debugScreen "quero:$7"   # 25 · Quero                       (25/1)
   shot $r-v8-xxxl-atalhos -debugScreen atalhos -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
   WAIT=8 shot $r-v8-off-quero -debugScreen "quero:$7" -debugNetwork offline
+  # prompt 27 §2 · agente C (RODADA-23): card do pino (MapaPino.png) e busca "o melhor … agora" + filtro por Must (MapaFiltro.png).
+  WAIT=9 shot $r-r23-mapa-pino -debugScreen mapa-pino            # MapaPino (próxima parada de hoje)
+  WAIT=11 shot $r-r23-mapa-filtro -debugScreen mapa-filtro        # MapaFiltro (fake do Places, sem cota)
+  WAIT=9 shot $r-r23-xxxl-mapa-pino -debugScreen mapa-pino -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
+  WAIT=11 shot $r-r23-off-mapa-filtro -debugScreen mapa-filtro -debugNetwork offline  # offline · só o seu board
   shot $r-v8-xxxl-capa -debugScreen capa -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
   shot $r-v8-xxxl-agora -debugScreen agora -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
   # QA (F): as outras 4 principais em xxxLarge (o app limita em .xxxLarge) e o modo avião (`-debugNetwork offline`).
@@ -89,6 +94,21 @@ v8shots() { # $1 = prefixo (jp|bh|it), $2 = lugar de exemplo, $3 = museu de exem
   WAIT=8 shot $r-p25-compartilhar -debugScreen compartilhar  # Compartilhar (cartaz desenhado no aparelho)
   shot $r-p25-sos -debugScreen sos                  # SOS
   shot $r-p25-off-sos -debugScreen sos ${=OFF}      # SOS sem internet (último endereço conhecido)
+  # RODADA-23 · agente D: Coleção e o momento "novo colecionável" (Colecao.png, ColecionavelNovo.png).
+  shot $r-r23-colecao -debugScreen colecao          # Coleção (marca alguns feitos no DEBUG)
+  WAIT=6 shot $r-r23-colecionavel-novo -debugScreen colecionavel-novo:$2  # o momento, com o card girado
+  shot $r-r23-xxxl-colecao -debugScreen colecao ${=XL}
+  # RODADA-23 · agente B: Em cartaz, Lugar (em cartaz, amigos, filmes) e Filmes (BH cai no FilmesVazio). Só JP e BH.
+  if [ "$r" != "it" ]; then
+    shot $r-r23-emcartaz -debugScreen emcartaz                    # EmCartaz
+    shot $r-r23-lugar-emcartaz -debugScreen lugar-emcartaz:$3     # LugarEmCartaz
+    shot $r-r23-lugar-amigos -debugScreen lugar-amigos:$3 -dev.simSetAt 0   # LugarAmigos (amigos + filmes)
+    shot $r-r23-filmes -debugScreen filmes:$3                     # Filmes / FilmesVazio (BH)
+    shot $r-r23-xxxl-emcartaz -debugScreen emcartaz ${=XL}
+    shot $r-r23-xxxl-filmes -debugScreen filmes:$3 ${=XL}
+    shot $r-r23-off-emcartaz -debugScreen emcartaz ${=OFF}
+    shot $r-r23-off-filmes -debugScreen filmes:$3 ${=OFF}
+  fi
 }
 ${=W} skipOnboarding -bool YES
 ${=W} dev.simDateOn -bool YES; ${=W} dev.simSetAt -float 0; ${=W} dev.simGPSOn -bool YES

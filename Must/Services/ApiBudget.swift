@@ -3,6 +3,9 @@ import Foundation
 /// SKUs da Google Maps Platform que o Must usa (prompt 17 · A). Cada uma tem a cota grátis por mês.
 enum GoogleSKU: String, CaseIterable, Sendable, Identifiable {
     case placesIdsOnly, placesEssentials, placesPro, placePhotos, autocomplete
+    /// Nota e nº de avaliações no Text Search (prompt 27 §2.c): nível Enterprise. Só sai com `PlacesEnterpriseFlag` ligado
+    /// (desligado por padrão — decisão pendente do Vinicius).
+    case placesEnterprise
     case routesEssentials, routesPro, routeMatrix, streetViewMetadata, streetView
 
     var id: String { rawValue }
@@ -21,7 +24,7 @@ enum GoogleSKU: String, CaseIterable, Sendable, Identifiable {
         case .placesIdsOnly, .streetViewMetadata: nil
         case .placesEssentials, .autocomplete, .routesEssentials, .routeMatrix, .streetView: 10_000
         case .placesPro, .routesPro: 5_000
-        case .placePhotos: 1_000
+        case .placePhotos, .placesEnterprise: 1_000
         }
     }
 
@@ -31,6 +34,7 @@ enum GoogleSKU: String, CaseIterable, Sendable, Identifiable {
         case .placesEssentials: "Places · Essentials"
         case .placesPro: "Places · Pro"
         case .placePhotos: "Places · Fotos"
+        case .placesEnterprise: "Places · Enterprise (nota)"
         case .autocomplete: "Autocomplete"
         case .routesEssentials: "Routes · Essentials"
         case .routesPro: "Routes · Pro (transporte com tarifa)"
@@ -47,6 +51,7 @@ enum GoogleSKU: String, CaseIterable, Sendable, Identifiable {
         case .placesEssentials: "10 mil grátis/mês · endereço, coordenada, tipo"
         case .placesPro: "5 mil grátis/mês · horário, nota, preço"
         case .placePhotos: "1 mil grátis/mês · foto principal de cada lugar"
+        case .placesEnterprise: "1 mil grátis/mês · nota na busca do mapa · desligado"
         case .autocomplete: "10 mil grátis/mês · Buscar por nome"
         case .routesEssentials: "10 mil grátis/mês · a pé, carro, trajeto"
         case .routesPro: "5 mil grátis/mês · trajeto com tarifa"
@@ -57,7 +62,7 @@ enum GoogleSKU: String, CaseIterable, Sendable, Identifiable {
     }
 
     /// Só os SKUs de Places (migra o contador antigo `PlacesUsage`).
-    static let places: [GoogleSKU] = [.placesIdsOnly, .placesEssentials, .placesPro, .placePhotos]
+    static let places: [GoogleSKU] = [.placesIdsOnly, .placesEssentials, .placesPro, .placePhotos, .placesEnterprise]
 }
 
 /// Por que uma chamada não sai.

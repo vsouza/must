@@ -85,9 +85,15 @@ struct WantCategory: Hashable, Sendable {
                          "frango com quiabo", "torresmo", "pizza", "carbonara", "cacio e pepe", "amatriciana", "supli",
                          "carciofi", "massa", "hamburguer", "churrasco", "picanha", "moqueca", "tutu"]
 
+    /// Como se fala em pt-BR → o prato da tabela ("lámen" é o ramen; o Places e o board usam os dois nomes).
+    static let dishAliases: [String: String] = ["lamen": "ramen", "lamens": "ramen", "tsukemen": "ramen", "sushis": "sushi",
+                                                "hamburger": "hamburguer", "burger": "hamburguer"]
+
     static func dish(_ label: String) -> WantCategory {
-        WantCategory(label: label, keywords: [label], verb: .comer, types: ["restaurant"], includedType: "restaurant", listId: "eat",
-                     kind: "restaurante")
+        let key = fold(label)
+        let aliases = dishAliases.filter { $0.value == key }.map(\.key).sorted()
+        return WantCategory(label: label, keywords: [key] + aliases, verb: .comer, types: ["restaurant"], includedType: "restaurant",
+                            listId: "eat", kind: "restaurante")
     }
 
     static func fold(_ s: String) -> String {
@@ -101,6 +107,9 @@ struct WantCategory: Hashable, Sendable {
         // Expressões de mais de uma palavra primeiro ("pão de queijo" antes de "queijo").
         let ordered = all.flatMap { c in c.keywords.map { (c, $0) } }.sorted { $0.1.count > $1.1.count }
         if let dish = dishes.sorted(by: { $0.count > $1.count }).first(where: has) { return Self.dish(dish) }
+        if let alias = dishAliases.keys.sorted(by: { $0.count > $1.count }).first(where: has), let dish = dishAliases[alias] {
+            return Self.dish(dish)
+        }
         return ordered.first { has($0.1) }?.0
     }
 

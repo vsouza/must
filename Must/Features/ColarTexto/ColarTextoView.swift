@@ -45,6 +45,7 @@ struct ColarTextoView: View {
                     .tint(Color.must.ink)
                 }
                 TextField("cola a resposta da IA, a lista do WhatsApp ou uma nota", text: $model.text, axis: .vertical)
+                    .accessibilityIdentifier("colar.text")
                     .font(.must.serif(18))
                     .lineLimit(6...18)
             }

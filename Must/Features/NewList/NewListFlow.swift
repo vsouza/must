@@ -171,6 +171,7 @@ struct NewListView: View {
                 HStack(spacing: 10) {
                     Text("Must").font(.must.archivo(17)).foregroundStyle(Color.must.secondary)
                     TextField("kissaten", text: $name)
+                        .accessibilityIdentifier("newlist.name")
                         .font(.must.archivo(17, .semibold))
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()

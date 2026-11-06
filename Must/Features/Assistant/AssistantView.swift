@@ -196,6 +196,7 @@ struct AssistantView: View {
                 .focused($focused)
                 .submitLabel(.send)
                 .onSubmit { ask(input) }
+                .accessibilityIdentifier("assistant.input")
             if chat.messages.isEmpty {
                 PasteButton(payloadType: String.self) { strings in
                     guard let link = strings.first else { return }

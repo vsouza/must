@@ -210,7 +210,7 @@ struct DoneSheet: View {
     }
 
     private func mark() {
-        let spent = Double(amount.replacingOccurrences(of: ".", with: "").replacingOccurrences(of: ",", with: ".")) ?? 0
+        let spent = NumberInput.double(amount.replacingOccurrences(of: ".", with: "").replacingOccurrences(of: ",", with: ".")) ?? 0
         PlaceActions.markDone(place, spent: spent, context: context)
         dismiss()
     }

@@ -51,6 +51,7 @@ struct RootView: View {
             case .viagens: TripSwitcherSheet()
             }
         }
+        .collectibleCelebration()
         .fullScreenCover(item: $router.cover) { cover in
             switch cover {
             case .newList: NewListFlow()

@@ -246,7 +246,7 @@ struct QueroView: View {
             if let row = model.selected, model.phase == .done {
                 fitCard(row)
                 HStack(spacing: 10) {
-                    BigButton(title: "Só guardar em \(listName)", style: .line, lineColor: V8.white, lineFill: V8.ink) { guardar(row) }
+                    BigButton(title: "Só guardar", style: .line, lineColor: V8.white, lineFill: V8.ink) { guardar(row) }
                     BigButton(title: row.slot == nil ? "Não cabe hoje" : "Encaixar hoje", style: .orange,
                               systemImage: row.slot == nil ? nil : "arrow.up.right") { encaixar(row) }
                         .disabled(row.slot == nil)
@@ -366,13 +366,7 @@ struct QueroView: View {
         let center = plan.flatMap { _ in planArea?.centroid.clCoordinate } ?? origin
         let cityId = city?.id ?? trip?.cities.first?.id ?? region.rawValue
         let group = AreaCatalog.cityGroup(forCityId: cityId)
-        let tz = region.timeZone
-        let board = places.compactMap { p -> WantBoardPlace? in
-            guard AreaCatalog.cityGroup(forCityId: p.cityId) == group, p.lat != 0 || p.lng != 0 else { return nil }
-            let until = p.hours?.closesAt(now, timeZone: tz).map(ListGrouping.hourLabel)
-            return WantBoardPlace(id: p.id, name: p.name, lat: p.lat, lng: p.lng, listId: p.list?.id, sub: p.sub, notes: p.notes,
-                                  placeId: p.placeId, area: p.area, until: until, done: p.isDone)
-        }
+        let board = QueroEnv.board(places, cityGroup: group, now: now, timeZone: region.timeZone)
         return QueroEnv(region: region, now: now, plan: plan, center: center, origin: origin, areaName: areaName, cityGroup: group,
                         cityId: cityId, online: services.connectivity.status != .offline, board: board,
                         useModel: settingsList.first?.onDeviceAI ?? true,

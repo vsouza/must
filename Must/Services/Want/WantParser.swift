@@ -27,7 +27,12 @@ enum WantWhen: String, CaseIterable, Codable, Hashable, Sendable {
     case hoje, amanha, qualquer
 }
 
-/// A vontade entendida: `{verb, object, brand?, category?, when?}`.
+/// "o melhor" / "barato" / nada dito (prompt 27 §2.c): manda no ranking da busca do mapa.
+enum WantQuality: String, CaseIterable, Codable, Hashable, Sendable {
+    case melhor, barato, qualquer
+}
+
+/// A vontade entendida: `{verb, object, brand?, category?, when?, qualidade, raio}`.
 struct WantIntent: Hashable, Sendable, Codable {
     var verb: WantVerb
     /// O que buscar, sem artigo ("relógio Seiko", "tonkatsu", "Fuji").
@@ -42,6 +47,10 @@ struct WantIntent: Hashable, Sendable, Codable {
     var good: Bool = false
     /// O regex achou o verbo escrito (não o padrão "comprar"): o modelo não troca.
     var verbWasExplicit: Bool = false
+    /// "o melhor", "mais bem avaliado" → `.melhor`; "barato", "em conta" → `.barato` (prompt 27 §2.c).
+    var quality: WantQuality = .qualquer
+    /// Raio pedido em km ("até 2 km", "a 500 m"). `nil` = o padrão de quem busca (mapa: 1,5 km a pé).
+    var radiusKm: Double? = nil
 
     /// "relógio Seiko" · "tonkatsu" · "pão de queijo".
     var display: String {
@@ -152,18 +161,25 @@ enum WantParser {
         if let first = words.first {
             for (v, forms) in verbs where forms.contains(where: { $0.split(separator: " ").first.map(String.init) == first }) {
                 verb = v
-                explicit = true
+                // "procurar um lámen", "achar um Seiko": buscar não diz o quê (vale o verbo da categoria).
+                explicit = !searchVerbs.contains(first)
                 words.removeFirst()
                 break
             }
         }
-        let folded = " " + lower.folding(options: .diacriticInsensitive, locale: nil) + " "
+        let raw = " " + lower.folding(options: .diacriticInsensitive, locale: nil) + " "
+        // Pontuação vira espaço ("agora, o melhor"); o raio lê o texto cru ("1,5 km").
+        let folded = String(raw.map { ",.;!?".contains($0) ? " " : $0 })
         let when: WantWhen? = folded.contains(" amanha ") ? .amanha
             : (folded.contains(" hoje ") || folded.contains(" agora ") || folded.contains(" ja ")) ? .hoje : nil
         let near = folded.contains(" perto ") || folded.contains(" aqui ")
         let good = folded.contains(" bom ") || folded.contains(" boa ") || folded.contains(" melhor ")
-        // Objeto: sem artigos no começo e sem "bom/perto/hoje" no fim.
-        while let first = words.first, articles.contains(first) { words.removeFirst() }
+        let quality = quality(folded)
+        let radius = radiusKm(raw)
+        // Raio dito ("até 2 km", "a 500 m") sai do objeto antes de tudo.
+        words = removingRadius(words)
+        // Objeto: sem artigos nem "o melhor/mais barato" no começo e sem "bom/perto/hoje" no fim.
+        while let first = words.first, articles.contains(first) || leadingQualifiers.contains(first) { words.removeFirst() }
         while let last = words.last, trailingWords.contains(last) || articles.contains(last) { words.removeLast() }
         // "um tonkatsu bom perto de casa": tira o que vem depois de "perto".
         if let cut = words.firstIndex(where: { $0 == "perto" || $0 == "hoje" || $0 == "amanhã" || $0 == "amanha" }) {
@@ -179,7 +195,58 @@ enum WantParser {
         // "quero um pão de queijo": sem verbo escrito, vale o da categoria.
         if !explicit, let c = WantCategory.match(object) ?? brand.flatMap({ WantCategory.match($0.category) }) { verb = c.verb }
         return WantIntent(verb: verb, object: object, brand: brand?.name, category: category, when: when, near: near, good: good,
-                          verbWasExplicit: explicit)
+                          verbWasExplicit: explicit, quality: quality, radiusKm: radius)
+    }
+
+    /// Verbos de busca: tiram a palavra, mas o verbo da vontade vem da categoria ("procurar um lámen" = comer).
+    static let searchVerbs: Set<String> = ["procurar", "procuro", "achar"]
+    /// Qualificadores que podem vir antes do objeto ("o melhor lámen", "um bom café", "o mais barato").
+    static let leadingQualifiers: Set<String> = ["melhor", "melhores", "mais", "bem", "avaliado", "avaliada", "bom", "boa", "barato",
+                                                 "barata", "baratinho", "top"]
+
+    /// "o melhor", "mais bem avaliado", "top" → melhor; "barato", "em conta" → barato. `folded` vem com espaços nas
+    /// pontas e sem acento.
+    static func quality(_ folded: String) -> WantQuality {
+        let barato = [" barato ", " barata ", " baratinho ", " baratinha ", " em conta ", " economico ", " economica "]
+        if barato.contains(where: folded.contains) { return .barato }
+        let melhor = [" melhor ", " melhores ", " bem avaliado ", " bem avaliada ", " mais avaliado ", " top "]
+        if melhor.contains(where: folded.contains) { return .melhor }
+        return .qualquer
+    }
+
+    /// "até 2 km", "a 500 m", "num raio de 1,5 km", "800m" → km (0,2…10). `nil` = não disse.
+    static func radiusKm(_ folded: String) -> Double? {
+        let pattern = #"(\d+(?:[.,]\d+)?)\s?(km|quilometros?|metros?|m)(?=[\s,.;!?]|$)"#
+        guard let range = folded.range(of: pattern, options: .regularExpression) else { return nil }
+        let match = String(folded[range])
+        let digits = String(match.prefix { $0.isNumber || $0 == "," || $0 == "." })
+        guard let value = Double(digits.replacingOccurrences(of: ",", with: ".")), value > 0 else { return nil }
+        let unit = match.dropFirst(digits.count).trimmingCharacters(in: .whitespaces)
+        let km = unit.hasPrefix("k") || unit.hasPrefix("q") ? value : value / 1000
+        return min(10, max(0.2, km))
+    }
+
+    /// Tira "até 2 km", "a 500 m", "num raio de 1 km" das palavras (o número, a unidade e a preposição antes).
+    static func removingRadius(_ words: [String]) -> [String] {
+        let units: Set<String> = ["km", "m", "metro", "metros", "quilometro", "quilometros", "quilômetro", "quilômetros"]
+        let lead: Set<String> = ["até", "ate", "a", "num", "raio", "de", "no", "máximo", "maximo"]
+        var out: [String] = []
+        var i = 0
+        while i < words.count {
+            let w = words[i]
+            let isNumber = Double(w.replacingOccurrences(of: ",", with: ".")) != nil
+            let joined = w.range(of: #"^\d+(?:[.,]\d+)?(km|m)$"#, options: .regularExpression) != nil
+            if joined || (isNumber && i + 1 < words.count && units.contains(words[i + 1])) {
+                // "1,5 km" chega partido na vírgula ("1", "5", "km"): a parte inteira sai junto.
+                if let last = out.last, Int(last) != nil { out.removeLast() }
+                while let last = out.last, lead.contains(last) { out.removeLast() }
+                i += joined ? 1 : 2
+                continue
+            }
+            out.append(w)
+            i += 1
+        }
+        return out
     }
 
     /// Tira artigos e "bom/perto" de um objeto vindo do modelo.

@@ -627,3 +627,149 @@ as 20 telas do `ONLY=v8`, capa e Agora em xxxLarge, mais Linha, Lugar, Bolso e D
 - [ ] Dynamic Type pelo Ajustes do iPhone (o simulador usou o argumento de launch).
 - [ ] Traçado do metrô de Roma por cima do mapa (é aproximado).
 - [ ] Lote de fotos do Google no Wi-Fi trocando as capas do Commons (Da Enzo e outros com foto errada).
+
+## Prompt 29 · Vídeo do Instagram (05/11/2026)
+
+Link do Instagram/TikTok sem legenda → cartão "Ler o vídeo" (3 passos + `PhotosPicker` de vídeos). Share Extension aceita `public.movie` e abre o Adicionar com o vídeo. `VideoReader` lê tela (Vision, 1 quadro/s, no máx. 90) e fala (`SpeechAnalyzer`; `SFSpeechRecognizer` no aparelho de reserva), junta com a legenda em `[legenda]`/`[tela mm:ss]`/`[fala mm:ss]` e o extrator de sempre acha os lugares; a conferência mostra "visto na tela 00:04" / "falado 00:07". O vídeo é apagado depois da leitura.
+
+- Testes: `VideoReaderTests` (vídeo de fixture desenhado com `AVAssetWriter`, OCR, junção, cancelar, progresso, fala sintetizada tolerante a falta de modelo) e `VideoIngestTests` (texto → extrator falso → origem).
+
+**Só dá pra testar no iPhone.**
+- [ ] Gravação de tela real de um reel de comida em BH (Mercado Central · fígado com jiló): lugares com "visto na tela".
+- [ ] Modelo de fala pt-BR: baixa só no Wi-Fi; no celular/Pouco Dados fica "sem modelo de fala" e a leitura segue só com a tela.
+- [ ] Reel de 30 s lido em menos de 15 s; Cancelar a qualquer momento; a tela não trava.
+- [ ] Compartilhar um vídeo de Fotos → Must abre o Adicionar já lendo.
+
+## Robustez e profiling (rodada 23 · G, 05/11/2026)
+
+Pedido do Vinicius: "quero tudo testado e funcionando. Faça profiling e testes de digitação pra pegar crashing, inclusive
+com internet ruim" — e antes: "ao digitar na tela de adicionar na lista o app quebra".
+
+**Como rodar.**
+
+```sh
+scripts/ui-tests.sh                                   # tudo (digitação + navegação + profiling), matriz padrão, ~3 h
+DEVICE=Must-R23g scripts/ui-tests.sh AddToListTypingTests          # uma classe
+MATRIX="bh:normal,jp:flaky,it:dropping" scripts/ui-tests.sh FieldsTypingTests/testQuero
+scripts/ui-tests.sh PerformanceTests                  # só os números (ver abaixo)
+```
+
+- Target **`MustUITests`** (XCUITest) com scheme próprio: o scheme `Must` continua só com os unitários (rápido).
+- O app abre como no `qa-screens.sh`: região, data (`-dev.simSetAt 0`) e GPS simulados, **todos os fakes** (Places,
+  Nearby, AeroDataBox, dicas, Routes, Autocomplete, Em cartaz, fotos do Google) — nenhuma chamada paga, nada de cota — e
+  **`-debugFreshStore YES`**: board novo do seed numa pasta temporária a cada abertura, sem tocar no board do simulador.
+- `MATRIX` = `região:rede` (`bh|jp|it` : `normal|wifi|slow|flaky|dropping|offline`). Sem ela, cada cenário de digitação
+  roda em BH, JP e IT (rede normal) e em BH com `slow` e `offline`; a navegação roda BH `flaky`, JP `dropping`, IT `flaky`.
+- No fim o script procura **`Fatal error`** do processo Must no log do simulador: um trap do Swift aparece pro XCTest só
+  como "o app saiu", e o simulador não deixa `.ips` em `~/Library/Logs/DiagnosticReports`.
+
+**Ganchos DEBUG novos** (todos desligados no host de testes e em Release).
+- `-debugNetwork flaky`: latência 0,5–8 s e 40 % de falha por tentativa — timeout, 500, 429 (Retry-After 1), resposta
+  cortada no meio e JSON inválido com 200 (`NetworkChaos`, passa pelo `HTTP` e pelo `CaptionFetcher`).
+- `-debugNetwork dropping` (+ `-debugNetworkPeriod 4`): a rede cai e volta a cada N s; o `Connectivity` acompanha (chip,
+  fila de saída, sync ao voltar) e o que estava em voo quando caiu volta `networkConnectionLost`. `slow` ficou igual.
+- `-debugGPSHop "7:35.69,139.70;16:-19.93,-43.93"`: o GPS simulado pula de região no meio do uso (automático ligado).
+- `-debugSyncEvery 3`: sync + Places + fila de saída a cada 3 s, gravando no board durante a digitação.
+- `-debugFreshStore YES`: ver acima.
+
+**Cenários de digitação** (`AddToListTypingTests`, `FieldsTypingTests`): rajadas de `typeText` com acentos, emoji,
+japonês, italiano e pontuação; apagar tudo; colar (5.000 caracteres pelo menu Colar); 23 dígitos, "nan" e letras nos campos
+de número; girar (o app é só retrato: tem que ignorar); mandar pro fundo e voltar; fechar a sheet pela metade e reabrir;
+trocar de região pelo GPS com a sheet aberta e o sync gravando.
+
+| Tela / campo | Teste |
+|---|---|
+| Lista › Adicionar à mão (`EditPlaceView(newInListId:)`): nome, nome local, preço, bairro, notas, salvar | `testTypeEverythingAndSave`, `testPasteLongTextRotateBackground`, `testCloseHalfTypedAndReopen`, `testRegionSwitchByGPSWhileTyping` |
+| Lista art (campos do tipo: inteira, estudante, duração, link do ingresso) | `testArtListExtraFields` |
+| Editar lugar existente (com o GPS trocando a região aos 9 s) | `testEditExistingPlace` |
+| Nova lista › Adicionar lugares (busca no board, Places, manual) | `testNewListAddItems` |
+| Quero… (texto, buscar) e as abas Texto / Link / Nome por cima | `testQuero` |
+| Adicionar › Link (lixo, Reel, Maps) e a legenda colada | `testAddLink` |
+| Adicionar › Texto (5.000 caracteres, Ler texto, fundo) | `testColarTexto` |
+| Buscar por nome (Autocomplete fake, escolher) | `testBuscarNome` |
+| Mapa › busca "o melhor X agora" (texto e voz) | `testMapaBusca` |
+| Montar › "ou diga…" | `testMontarOuDiga` |
+| Assistente (4 perguntas sem esperar a resposta) | `testAssistente` |
+| Gasto (teclado próprio, rápido) | `testGasto` |
+| SOS › Seu seguro / Seu plano (todos os campos, Guardar) | `testSOSSeguro` |
+| Carteira › item novo (todos os campos) | `testCarteira` |
+| Ingresso › Revisar (PDF de exemplo) | `testIngressoRevisar` |
+
+**Navegação com internet ruim** (`NavigationStressTests`): os 77 `-debugScreen` do `MustApp.swift` (cobrem todas as rotas
+do `Router.swift`; `.day` e `.diaRecebido` vão pelos links) e 15 links `must://` (inclusive quebrados: `must://d/lixo`,
+`must://lugar/nao-existe`, `montar?date=lixo`). Em cada tela: não cai, não fica vazia depois de 3 s, rola, e nenhum
+spinner passa de 20 s.
+
+**Resultado** (simulador `Must-R23g`, iPhone 17 · iOS 26.5, build Debug, 05/11 21h–00h).
+
+| Suíte | BH | JP | IT | BH lenta | BH offline | flaky / dropping |
+|---|---|---|---|---|---|---|
+| Digitação (17 cenários, `AddToListTypingTests` + `FieldsTypingTests`) | ok | ok | ok | ok | ok | JP flaky no colar, BH dropping na troca de região: ok |
+| Navegação (77 telas + 15 links) | flaky ok | dropping ok | flaky ok | — | — | nenhuma tela caiu, vazia ou com spinner > 20 s |
+| Profiling (8 medições) | ok | ok | — | — | offline | — |
+
+Nenhum `Fatal error` do Must no log do simulador nas rodadas finais. Na primeira rodada falharam 7 cenários por causa do
+próprio teste (campo sem foco depois do "buscar", elemento que sumiu na troca de região, rótulo em caixa alta) — corrigido
+no `MustUITestCase` (`enter`, `safeTap`, `BEGINSWITH[c]`) — e **um de verdade** (Colar texto, abaixo).
+
+**Crashes e travas achados (e corrigidos).**
+1. **Crash ao digitar número grande** (`KindExtraFields`, listas art/photo/sport/do): o campo relia o valor com `Int(_:)` a
+   cada tecla; 19+ dígitos (ou "nan"/"inf" colados) davam `Fatal error: Double value cannot be converted to Int because the
+   result would be greater than Int.max`. **Reproduzido no simulador** (Lista art › Adicionar à mão › "inteira": 23 dígitos →
+   o app sai). O mesmo `Int(_:)` estava no Revisar ingresso (preço), na Carteira (saldo) e no Gasto (preço do lugar).
+   Correção: `NumberInput` (só número finito até 1e12, inteiros ASCII limitados); `TicketMoney.parse` e os parsers dos
+   campos passam por ele. Regressão: `RobustnessTests` (5 testes) e `testArtListExtraFields` (digita os 23 dígitos primeiro —
+   com texto antes o campo já virava nil e o crash passava batido).
+2. **"Lendo o texto…" sem fim** no Adicionar › Texto com 5.000 caracteres (BH, JP, IT, lenta e offline): o Foundation
+   Models dizia "disponível" mas não respondia (no simulador o catálogo do modelo está vazio; no iPhone pode acontecer com o
+   modelo baixando). Sem teto, a tela ficava esperando. Correção: 12 s por bloco e 20 s no texto todo; passou disso, o bloco
+   cai nas palavras-chave. Regressão: `deadlineCutsSlowWork`, `stuckModelFallsBackToKeywords`; o UI test passou de 234 s
+   (5 falhas) pra 80 s.
+3. **Foto cortada gravada pra sempre** (`-debugNetwork flaky`, resposta pela metade): a foto do Google e a do Commons iam
+   pro disco como vieram e ficavam meio cinza por 30 dias (a foto é baixada uma vez só). O `ImageIO` diz que JPEG cortado
+   está completo; agora só grava JPEG com EOI (FF D9) e PNG com IEND. Regressão: `truncatedPhotoIsNotComplete`.
+4. **Viagem com a volta antes da ida** (board importado com `to` < `from`): `a...b` com a > b é trap. Agora a faixa da
+   cidade nunca inverte.
+
+**O "digitar na tela de adicionar na lista quebra" (relato do Vinicius).** Tentado, sem reproduzir fora do item 1:
+- Lista › Adicionar à mão em BH, JP e IT, rede normal/lenta/offline: todos os campos em rajadas, apagar, colar 5.000
+  caracteres, 23 dígitos/"nan"/letras no preço, girar, fundo e volta, fechar pela metade e reabrir 3×, salvar.
+- O suspeito da troca de região: GPS pulando BH → Tóquio → BH (e JP → BH, IT → JP) com o Novo lugar aberto, digitando, e o
+  sync gravando no board a cada 3 s (`-debugGPSHop`, `-debugSyncEvery`), também com a rede caindo e voltando. A árvore troca,
+  a sheet some, nenhum trap: os containers antigos ficam vivos (`RegionStore.retired`) e o `requestSync` leva o contexto dele.
+- Editar lugar existente com o GPS trocando a região aos 9 s; Nova lista › Adicionar lugares (busca a cada tecla, Places, manual).
+- O mais provável é o item 1, se a lista era art/photo/sport/do (o preço/duração é campo numérico do tipo); o item 2 parece
+  "travou" (não é crash) e não deixa log.
+- Mais resistente nos pontos suspeitos: o `EditPlaceView` não tem mais `@Query` de todos os lugares (relia o board inteiro a
+  cada tecla) — lê o lugar pelo id no contexto da própria árvore só ao abrir/salvar/apagar; a Lista lê a relação uma vez por
+  `body` e o `@Query` dela agora tem predicado; `DayPlanPrefs` (lido no `body` da Lista, capa e Linha) não decodifica mais o
+  dia a cada redesenho.
+
+**Profiling** (`PerformanceTests`, 3–5 iterações, desvio padrão < 8 % salvo memória delta). CPU inclui o trabalho de
+acessibilidade que o XCUITest pede ao app a cada gesto (cresce com o número de linhas): compare rodadas, não telas.
+
+| Medição | Número |
+|---|---|
+| Abertura fria até responder (`XCTApplicationLaunchMetric`, BH offline) | **1,39 s** (±2,4 %) |
+| Volta do fundo (JP offline): relógio · CPU · memória | 2,12 s (inclui as esperas do teste) · 0,11 s · 79 MB |
+| Lista Eat JP (48), 12 rolagens: relógio · CPU · pico de memória | 27,8 s · 3,9 s · 94 MB |
+| Musts, 8 rolagens | 7,8 s · 0,82 s · 71 MB |
+| Linha do dia (dia aceito), 8 rolagens | 7,3 s · 0,59 s · 75 MB |
+| Coleção, 8 rolagens | 7,5 s · 0,76 s · 81 MB |
+| Mapa (MapLibre), 4 arrastos + 2 pinças | CPU 0,80 s · pico 88 MB |
+| Digitar 104 teclas no Novo lugar (JP) | 6,3 s · CPU 3,1 s (~30 ms/tecla, com o teclado e a acessibilidade) · 105 MB |
+
+- `XCTHitchMetric` (iOS 26) compila e roda, mas o simulador não devolve hitches: medir no iPhone (abaixo).
+- Memória estável em todas (pico 70–105 MB; nada cresce entre iterações).
+- Corrigido barato: JSON do dia no `body` (memo), `@Query` sem predicado no Editar lugar e na Lista, foto decodificada no
+  main (`PhotoLoader` agora lê e decodifica fora do main com `preparingForDisplay`). O `ImageRenderer` (cartaz, colecionável)
+  só roda em ação, nunca no `body`. Fotos: memória → disco → rede, uma por lugar (ok).
+
+**Só dá no iPhone.**
+- [ ] Repetir o relato: Lista (de cada tipo, principalmente art/photo/sport/do) › Adicionar à mão, digitando de verdade
+  (autocorreção, previsões, ditado, teclado japonês no nome local). Se cair, Ajustes › Privacidade › Análise › Dados de
+  Análise › `Must-…ips` (ou `JetsamEvent` se foi memória) e mandar.
+- [ ] Hitches ao rolar Lista/Musts/Linha/Mapa: Xcode › Instruments › Animation Hitches no iPhone Air (o simulador não mede).
+- [ ] Internet ruim real: metrô (sinal caindo), Modo de Pouco Dados, Wi-Fi do hotel com portal — o `flaky`/`dropping` só
+  simulam o que passa pelo `HTTP`; MapLibre (tiles) e MapKit têm rede própria.
+- [ ] Colar texto com o Apple Intelligence de verdade: 5.000 caracteres responde antes dos 20 s ou cai nas palavras-chave.
