@@ -145,6 +145,21 @@ final class MapCameraController {
         lastGesture = Date()
     }
 
+    /// Card do pino (prompt 27 §2.a): a câmera não pula — só desliza o pino pra cima do card, sem mudar o zoom nem o foco
+    /// automático; segura o automático por 20 s (como um gesto).
+    func reveal(_ coordinate: CLLocationCoordinate2D, top: CGFloat, bottom: CGFloat) {
+        command = MapCameraCommand(target: .reveal(lat: coordinate.latitude, lng: coordinate.longitude, top: top, bottom: bottom))
+        lastGesture = Date()
+    }
+
+    /// Resultados da busca: enquadra você + os 3 entre a busca (em cima) e o card (embaixo). Segura o automático.
+    func fit(_ points: [CLLocationCoordinate2D], top: CGFloat, bottom: CGFloat) {
+        guard !points.isEmpty else { return }
+        command = MapCameraCommand(target: .fit(points: points.map { .init($0) }, top: top, bottom: bottom, sides: 48))
+        hideLine()
+        lastGesture = Date()
+    }
+
     private func neighborhood(_ center: CLLocationCoordinate2D, animated: Bool) {
         focus = .neighborhood(center: .init(center))
         hideLine()

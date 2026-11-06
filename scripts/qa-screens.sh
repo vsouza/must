@@ -70,6 +70,11 @@ v8shots() { # $1 = prefixo (jp|bh|it), $2 = lugar de exemplo, $3 = museu de exem
   WAIT=8 shot $r-v8-quero -debugScreen "quero:$7"   # 25 · Quero                       (25/1)
   shot $r-v8-xxxl-atalhos -debugScreen atalhos -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
   WAIT=8 shot $r-v8-off-quero -debugScreen "quero:$7" -debugNetwork offline
+  # prompt 27 §2 · agente C (RODADA-23): card do pino (MapaPino.png) e busca "o melhor … agora" + filtro por Must (MapaFiltro.png).
+  WAIT=9 shot $r-r23-mapa-pino -debugScreen mapa-pino            # MapaPino (próxima parada de hoje)
+  WAIT=11 shot $r-r23-mapa-filtro -debugScreen mapa-filtro        # MapaFiltro (fake do Places, sem cota)
+  WAIT=9 shot $r-r23-xxxl-mapa-pino -debugScreen mapa-pino -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
+  WAIT=11 shot $r-r23-off-mapa-filtro -debugScreen mapa-filtro -debugNetwork offline  # offline · só o seu board
   shot $r-v8-xxxl-capa -debugScreen capa -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
   shot $r-v8-xxxl-agora -debugScreen agora -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
   # QA (F): as outras 4 principais em xxxLarge (o app limita em .xxxLarge) e o modo avião (`-debugNetwork offline`).
