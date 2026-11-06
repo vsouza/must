@@ -28,13 +28,21 @@ final class RegionStore {
     @ObservationIgnored private let directory: URL
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private let seedBundle: Bundle
+    /// Registro das viagens (`trips.json`, prompt 28). Semeado com bh/jp/it na primeira abertura.
+    @ObservationIgnored let registry: TripRegistry
+    /// Viagens do registro que aparecem em Minhas viagens (sem as arquivadas).
+    private(set) var trips: [Trip]
 
     /// - Parameters:
     ///   - directory: onde ficam os `.store` (padrão: App Group). Testes passam uma pasta temporária.
     init(directory: URL? = nil, defaults: UserDefaults = .standard, seedBundle: Bundle = .main) {
-        self.directory = directory ?? Self.debugFreshDirectory ?? Region.storeDirectory
+        let directory = directory ?? Self.debugFreshDirectory ?? Region.storeDirectory
+        self.directory = directory
         self.defaults = defaults
         self.seedBundle = seedBundle
+        let registry = TripRegistry(directory: directory)
+        self.registry = registry
+        self.trips = registry.visible
         Self.moveToBrazilOnce(defaults)
         let region = Region(rawValue: defaults.string(forKey: Self.regionKey) ?? "") ?? .bh
         self.region = region
@@ -66,6 +74,9 @@ final class RegionStore {
         defaults.set(false, forKey: DevOverrides.Key.simDateOn)
         defaults.set(false, forKey: DevOverrides.Key.simGPSOn)
     }
+
+    /// A viagem atual (registro).
+    var current: Trip { registry.trip(region.rawValue) ?? region.trip }
 
     /// Tema da viagem da região (bandeira, lavado, selos). `MustApp` injeta no ambiente, fora da `.id`.
     var theme: TripTheme { TripTheme.forRegion(region) }

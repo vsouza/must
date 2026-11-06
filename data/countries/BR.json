@@ -1,0 +1,329 @@
+{
+  "code": "BR",
+  "name": "Brasil",
+  "preposition": "no",
+  "currency": "BRL",
+  "currencySymbol": "R$",
+  "timeZone": "America/Sao_Paulo",
+  "localLocale": "pt_BR",
+  "colorHex": "#007A33",
+  "defaultBudget": 200,
+  "budgetPresets": [
+    100,
+    200,
+    400
+  ],
+  "fx": {
+    "defaultBRLPerUnit": 1,
+    "unit": 1
+  },
+  "bounds": [
+    {
+      "minLat": -34,
+      "maxLat": 6,
+      "minLng": -74,
+      "maxLng": -34
+    }
+  ],
+  "center": {
+    "lat": -19.9245,
+    "lng": -43.9352
+  },
+  "rules": [],
+  "transit": {
+    "lines": "bh-lines",
+    "googleTransit": true,
+    "legMode": "taxi",
+    "legLabel": "app ou táxi",
+    "placeLabel": "metrô",
+    "taxiFare": "brl",
+    "weatherLabel": "Open-Meteo",
+    "lastTrainFromLine": true,
+    "noStationText": "Sem metrô a pé daqui · ônibus e app no Ir de cada lugar.",
+    "shortLineFromTail": true,
+    "areaMapWidth": 6000
+  },
+  "money": {
+    "cashCommon": false,
+    "paymentLabel": "cartão e Pix",
+    "paymentMethods": [
+      "cash",
+      "card"
+    ],
+    "amountQuickKey": ",",
+    "atmChip": "saque antes",
+    "atmLine": "Passe num caixa no caminho",
+    "atmFilter": "Caixa perto",
+    "lowBalance": "",
+    "showsBRL": false
+  },
+  "day": {
+    "microStops": "café, padaria, descanso",
+    "konbiniChips": false,
+    "assistantQuestion": "Vai chover amanhã?",
+    "mapSearchExample": "o melhor pão de queijo perto de mim agora",
+    "deliveryNote": "entrega em casa não é a ideia",
+    "storeTLD": "com.br",
+    "subreddits": [
+      "belohorizonte",
+      "brasil"
+    ],
+    "ramenTips": false
+  },
+  "sos": {
+    "numbersLabel": "192 · 190 · 193 · seguro",
+    "hospitalCities": [
+      "bh"
+    ],
+    "whereAmITitle": "Onde estou",
+    "whereAmIFontSize": 40
+  },
+  "shoppingPack": "jp-br",
+  "curatedAreas": [
+    "bh"
+  ],
+  "pocket": {
+    "cards": [
+      {
+        "detail": "dólar de referência · toque pra converter",
+        "kind": "exchange",
+        "label": "Câmbio · hoje",
+        "more": [],
+        "tone": "ink",
+        "value": ""
+      },
+      {
+        "detail": "cartão BHBUS · recarga no app ou na banca",
+        "kind": "transitCard",
+        "label": "Ônibus · anotado",
+        "more": [
+          "Passagem do ônibus municipal: R$ 5,75 (cartão BHBUS ou Pix no validador).",
+          "Metrô (linha 1, Eldorado ↔ Vilarinho): R$ 5,50, cartão ou dinheiro na bilheteria."
+        ],
+        "tone": "orange",
+        "value": "R$ 5,75"
+      },
+      {
+        "detail": "mineirês · 20 frases, com áudio",
+        "kind": "phrases",
+        "label": "Frases",
+        "more": [],
+        "tone": "white",
+        "value": "Uai, sô"
+      },
+      {
+        "detail": "linha 1 · Eldorado ↔ Vilarinho",
+        "kind": "lastTrain",
+        "label": "Último metrô",
+        "more": [
+          "Metrô funciona das 5h15 às 23h. Depois, aplicativo de carro.",
+          "Ônibus noturno passa de hora em hora nas linhas principais."
+        ],
+        "tone": "white",
+        "value": "23:00"
+      },
+      {
+        "detail": "já vem na conta · opcional",
+        "kind": "tipping",
+        "label": "Gorjeta",
+        "more": [
+          "Os 10 % do garçom vêm na conta e são opcionais.",
+          "Couvert artístico (música ao vivo) é cobrado à parte; pergunte antes."
+        ],
+        "tone": "white",
+        "value": "10 %"
+      },
+      {
+        "detail": "shopping · drogaria 24 h · Banco 24 Horas",
+        "kind": "nearby",
+        "label": "Perto de você",
+        "more": [
+          "Banheiro: shoppings e padarias grandes; em boteco, peça licença.",
+          "Farmácia 24 h em toda avenida grande (Drogaria Araujo).",
+          "Caixa: Banco 24 Horas dentro de shopping e supermercado; Pix vale em quase tudo."
+        ],
+        "tone": "white",
+        "value": "Banheiro\nFarmácia\nCaixa"
+      },
+      {
+        "detail": "Centro e Praça Sete · à noite, de carro",
+        "kind": "caution",
+        "label": "Cuidado",
+        "more": [
+          "No Centro e na Praça Sete, celular no bolso da frente.",
+          "À noite, prefira aplicativo de carro a andar entre bairros."
+        ],
+        "tone": "white",
+        "value": "Celular\nna mão"
+      },
+      {
+        "detail": "Afonso Pena · 7h–14h · muita coisa fecha",
+        "kind": "riposo",
+        "label": "Domingo",
+        "more": [
+          "Feira de Artes da Afonso Pena aos domingos de manhã.",
+          "Muitos restaurantes fecham domingo à noite e segunda."
+        ],
+        "tone": "white",
+        "value": "Feira\nHippie"
+      }
+    ],
+    "exchangeUnit": 1,
+    "fallbackBRLPerUnit": 5.5,
+    "name": "Brasil",
+    "phrases": [
+      {
+        "latin": "Uai, sô",
+        "meaning": "espanto, ênfase (serve pra tudo)",
+        "speech": "Uai, sô"
+      },
+      {
+        "latin": "Trem",
+        "meaning": "qualquer coisa",
+        "speech": "Trem"
+      },
+      {
+        "latin": "Cê tá doido",
+        "meaning": "você está louco? (espanto)",
+        "speech": "Cê tá doido"
+      },
+      {
+        "latin": "Pão de queijo quentinho",
+        "meaning": "o pedido certo na padaria",
+        "speech": "Pão de queijo quentinho"
+      },
+      {
+        "latin": "Me vê um pingado",
+        "meaning": "café com um pouco de leite",
+        "speech": "Me vê um pingado"
+      },
+      {
+        "latin": "Uma Brahma e dois copos",
+        "meaning": "o pedido de boteco",
+        "speech": "Uma Brahma e dois copos"
+      },
+      {
+        "latin": "Tira o gelo?",
+        "meaning": "a cerveja tá trincando?",
+        "speech": "Tira o gelo?"
+      },
+      {
+        "latin": "Fecha a conta, por favor",
+        "meaning": "a conta",
+        "speech": "Fecha a conta, por favor"
+      },
+      {
+        "latin": "Aceita Pix?",
+        "meaning": "aceita Pix?",
+        "speech": "Aceita Pix?"
+      },
+      {
+        "latin": "Onde é o banheiro?",
+        "meaning": "banheiro",
+        "speech": "Onde é o banheiro?"
+      },
+      {
+        "latin": "Tem mesa pra dois?",
+        "meaning": "mesa pra dois",
+        "speech": "Tem mesa pra dois?"
+      },
+      {
+        "latin": "Qual é a porção da casa?",
+        "meaning": "o petisco que todo mundo pede",
+        "speech": "Qual é a porção da casa?"
+      },
+      {
+        "latin": "Fígado com jiló",
+        "meaning": "o clássico do Mercado Central",
+        "speech": "Fígado com jiló"
+      },
+      {
+        "latin": "Queijo canastra meia-cura",
+        "meaning": "o queijo pra levar",
+        "speech": "Queijo canastra meia-cura"
+      },
+      {
+        "latin": "É longe daqui?",
+        "meaning": "é longe?",
+        "speech": "É longe daqui?"
+      },
+      {
+        "latin": "Dá pra ir a pé?",
+        "meaning": "dá pra ir a pé?",
+        "speech": "Dá pra ir a pé?"
+      },
+      {
+        "latin": "Até que horas abre?",
+        "meaning": "horário",
+        "speech": "Até que horas abre?"
+      },
+      {
+        "latin": "Bão?",
+        "meaning": "tudo bem?",
+        "speech": "Bão?"
+      },
+      {
+        "latin": "Nó!",
+        "meaning": "nossa! (espanto)",
+        "speech": "Nó!"
+      },
+      {
+        "latin": "Valeu demais",
+        "meaning": "muito obrigado",
+        "speech": "Valeu demais"
+      }
+    ],
+    "speechLanguage": "pt-BR",
+    "tips": [
+      {
+        "detail": "Padaria de bairro antes das 9h tem a fornada boa; café coado no balcão.",
+        "etiquette": false,
+        "id": "br-cafe",
+        "moment": "morning",
+        "title": "Pão de queijo sai do forno às 7h"
+      },
+      {
+        "detail": "Chegue cedo, coma no balcão e deixe as compras pro fim.",
+        "etiquette": false,
+        "id": "br-fila",
+        "moment": "beforeQueue",
+        "title": "Mercado Central lota de sábado depois das 11h"
+      },
+      {
+        "detail": "De outubro a março, guarda-chuva na bolsa e um café pra esperar.",
+        "etiquette": false,
+        "id": "br-tarde",
+        "moment": "afternoon",
+        "title": "Chuva de verão vem às 16h e passa em 40 min"
+      },
+      {
+        "detail": "Petisco pra dividir; os 10 % vêm na conta e são opcionais.",
+        "etiquette": true,
+        "id": "br-noite",
+        "moment": "night",
+        "title": "Boteco: cerveja de garrafa, mesa na calçada"
+      },
+      {
+        "detail": "Na Savassi e no Centro, espere o carro dentro do bar.",
+        "etiquette": false,
+        "id": "br-volta",
+        "moment": "back",
+        "title": "Metrô fecha às 23h: volte de carro de aplicativo"
+      },
+      {
+        "detail": "Cartão também; dinheiro só pra flanelinha e gorjeta pequena.",
+        "etiquette": false,
+        "id": "br-pix",
+        "moment": "anytime",
+        "title": "Pix vale em quase tudo, até na feira"
+      },
+      {
+        "detail": "Das 7h às 14h; muita coisa fecha domingo à noite e segunda.",
+        "etiquette": false,
+        "id": "br-feira",
+        "moment": "anytime",
+        "title": "Domingo de manhã é a Feira Hippie na Afonso Pena"
+      }
+    ]
+  }
+}

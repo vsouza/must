@@ -1,0 +1,391 @@
+{
+  "code": "IT",
+  "name": "Itália",
+  "preposition": "na",
+  "currency": "EUR",
+  "currencySymbol": "€",
+  "timeZone": "Europe/Rome",
+  "localLocale": "it_IT",
+  "colorHex": "#1F5FB4",
+  "defaultBudget": 120,
+  "budgetPresets": [
+    60,
+    120,
+    200
+  ],
+  "fx": {
+    "defaultBRLPerUnit": 6.2,
+    "unit": 1
+  },
+  "bounds": [
+    {
+      "minLat": 35.4,
+      "maxLat": 47.1,
+      "minLng": 6.6,
+      "maxLng": 18.6
+    }
+  ],
+  "center": {
+    "lat": 41.8955,
+    "lng": 12.4823
+  },
+  "meals": {
+    "morning": [
+      540,
+      750
+    ],
+    "morningEarly": 480,
+    "lunch": [
+      750,
+      900
+    ],
+    "afternoon": [
+      900,
+      1170
+    ],
+    "dinner": [
+      1170,
+      1380
+    ],
+    "night": [
+      1290,
+      1470
+    ]
+  },
+  "rules": [
+    "middayClosures",
+    "stateMuseumsMonday",
+    "reservationShift",
+    "appiaSunday",
+    "cityLastMetro",
+    "treatMicroStop",
+    "perPersonPrice",
+    "passportReminder"
+  ],
+  "transit": {
+    "lines": "roma-lines",
+    "googleTransit": true,
+    "legMode": "metro",
+    "legLabel": "metrô ou bus",
+    "placeLabel": "bus/metrô",
+    "taxiFare": "brl",
+    "weatherLabel": "Open-Meteo",
+    "lastTrainFromLine": false,
+    "noStationText": "Nenhuma estação a pé daqui.",
+    "shortLineFromTail": false,
+    "areaMapWidth": 6000
+  },
+  "money": {
+    "cashCommon": false,
+    "paymentLabel": "cartão",
+    "paymentMethods": [
+      "cash",
+      "card"
+    ],
+    "amountQuickKey": ",",
+    "atmChip": "saque antes",
+    "atmLine": "Passe num caixa no caminho",
+    "atmFilter": "Caixa perto",
+    "lowBalance": "",
+    "showsBRL": false
+  },
+  "day": {
+    "microStops": "café, gelato, descanso",
+    "konbiniChips": false,
+    "assistantQuestion": "Vai chover amanhã?",
+    "mapSearchExample": "o melhor lámen perto de mim, agora",
+    "deliveryNote": "entrega no Airbnb não é opção",
+    "storeTLD": "it",
+    "subreddits": [
+      "rome",
+      "ItalyTravel"
+    ],
+    "ramenTips": false
+  },
+  "sos": {
+    "numbersLabel": "112 · seguro · hospital",
+    "hospitalCities": [
+      "roma"
+    ],
+    "whereAmITitle": "Onde estou · em italiano",
+    "whereAmIFontSize": 40
+  },
+  "shoppingPack": "it-br",
+  "curatedAreas": [
+    "roma"
+  ],
+  "pocket": {
+    "cards": [
+      {
+        "detail": "toque pra converter",
+        "kind": "exchange",
+        "label": "Câmbio · hoje",
+        "more": [],
+        "tone": "ink",
+        "value": ""
+      },
+      {
+        "detail": "100 min · validar na máquina",
+        "kind": "ticket",
+        "label": "Bilhete BIT",
+        "more": [
+          "BIT: € 1,50, vale 100 minutos em ônibus e tram e uma entrada no metrô.",
+          "Validar sempre: na maquininha amarela do ônibus/tram ou no torniquete do metrô. Sem validar, multa de € 50+.",
+          "Cartão por aproximação no torniquete do metrô já vale como bilhete (tap & go)."
+        ],
+        "tone": "orange",
+        "value": "€ 1,50"
+      },
+      {
+        "detail": "a conta · 20 frases, com áudio",
+        "kind": "phrases",
+        "label": "Frases",
+        "more": [],
+        "tone": "white",
+        "value": "Il conto,\nper favore"
+      },
+      {
+        "detail": "sex e sáb até 01:30 · bus noturno N",
+        "kind": "lastTrain",
+        "label": "Último metrô",
+        "more": [
+          "Metrô (A, B, C) até 23:30; sexta e sábado até 01:30.",
+          "Depois, ônibus noturno (linhas com N): passa a cada 30 min, saindo de Termini e Piazza Venezia."
+        ],
+        "tone": "white",
+        "value": "23:30"
+      },
+      {
+        "detail": "já está na conta · \"al banco\" é mais barato",
+        "kind": "tipping",
+        "label": "Coperto e gorjeta",
+        "more": [
+          "Coperto (pão e lugar à mesa) de € 1–3 por pessoa vem na conta. Gorjeta não se espera.",
+          "Café \"al banco\" (no balcão, em pé) custa menos que \"al tavolo\". Paga no caixa primeiro, depois pede."
+        ],
+        "tone": "white",
+        "value": "€ 1–3\nsem gorjeta"
+      },
+      {
+        "detail": "2.500 fontes · tape o cano e beba do furo",
+        "kind": "water",
+        "label": "Água",
+        "more": [
+          "Os nasoni (bebedouros de ferro) têm água potável e gelada, de graça.",
+          "Tape a saída de baixo com o dedo: a água sobe pelo furinho de cima."
+        ],
+        "tone": "white",
+        "value": "Nasoni\nde graça"
+      },
+      {
+        "detail": "cobertos · fecham 12:30–15:30",
+        "kind": "churches",
+        "label": "Igrejas",
+        "more": [
+          "Ombro e joelho cobertos (leve uma echarpe). Vale pro Vaticano também.",
+          "Muitas igrejas fecham no meio do dia, das 12:30 às 15:30.",
+          "Pantheon: € 5, compre online pra pular a fila."
+        ],
+        "tone": "white",
+        "value": "Ombro e\njoelho"
+      },
+      {
+        "detail": "batedor de carteira · bolsa na frente",
+        "kind": "caution",
+        "label": "Cuidado",
+        "more": [
+          "Bus 64 (Termini ↔ Vaticano) e a estação Termini são os lugares clássicos de batedor de carteira.",
+          "Mochila na frente no ônibus lotado; celular nunca na mesa da calçada."
+        ],
+        "tone": "white",
+        "value": "Bus 64\ne Termini"
+      },
+      {
+        "detail": "lojas pequenas fecham · museus abertos",
+        "kind": "riposo",
+        "label": "Riposo",
+        "more": [
+          "Lojas pequenas e alguns cafés fecham das 13h às 16h. Museus e restaurantes do centro seguem abertos.",
+          "Museus estatais fecham segunda (a Galleria Borghese abre, com reserva)."
+        ],
+        "tone": "white",
+        "value": "13–16"
+      },
+      {
+        "detail": "online · pula a fila · 9h–19h",
+        "kind": "booking",
+        "label": "Pantheon",
+        "more": [
+          "Ingresso do Pantheon: € 5, compre online no site oficial e escolha o horário.",
+          "Colosseo entra pelo Foro Romano: fila menor e o mesmo bilhete."
+        ],
+        "tone": "white",
+        "value": "€ 5"
+      }
+    ],
+    "exchangeUnit": 1,
+    "fallbackBRLPerUnit": 6.4,
+    "name": "Itália",
+    "phrases": [
+      {
+        "latin": "Il conto, per favore",
+        "meaning": "a conta, por favor",
+        "speech": "Il conto, per favore"
+      },
+      {
+        "latin": "Buongiorno",
+        "meaning": "bom dia (até umas 15h)",
+        "speech": "Buongiorno"
+      },
+      {
+        "latin": "Buonasera",
+        "meaning": "boa tarde / boa noite",
+        "speech": "Buonasera"
+      },
+      {
+        "latin": "Grazie mille",
+        "meaning": "muito obrigado",
+        "speech": "Grazie mille"
+      },
+      {
+        "latin": "Permesso",
+        "meaning": "com licença (pra passar)",
+        "speech": "Permesso"
+      },
+      {
+        "latin": "Scusi",
+        "meaning": "desculpe / com licença",
+        "speech": "Scusi"
+      },
+      {
+        "latin": "Un caffè al banco",
+        "meaning": "um café no balcão",
+        "speech": "Un caffè al banco"
+      },
+      {
+        "latin": "Un cappuccino e un cornetto",
+        "meaning": "o café da manhã romano",
+        "speech": "Un cappuccino e un cornetto"
+      },
+      {
+        "latin": "Un tavolo per due",
+        "meaning": "mesa pra dois",
+        "speech": "Un tavolo per due"
+      },
+      {
+        "latin": "Ho una prenotazione",
+        "meaning": "tenho reserva",
+        "speech": "Ho una prenotazione"
+      },
+      {
+        "latin": "Acqua naturale / frizzante",
+        "meaning": "água sem / com gás",
+        "speech": "Acqua naturale, frizzante"
+      },
+      {
+        "latin": "Il vino della casa",
+        "meaning": "o vinho da casa",
+        "speech": "Il vino della casa"
+      },
+      {
+        "latin": "Quanto costa?",
+        "meaning": "quanto custa?",
+        "speech": "Quanto costa?"
+      },
+      {
+        "latin": "Posso pagare con la carta?",
+        "meaning": "aceita cartão?",
+        "speech": "Posso pagare con la carta?"
+      },
+      {
+        "latin": "Dov'è il bagno?",
+        "meaning": "onde fica o banheiro?",
+        "speech": "Dov'è il bagno?"
+      },
+      {
+        "latin": "Un biglietto, per favore",
+        "meaning": "um bilhete, por favor",
+        "speech": "Un biglietto, per favore"
+      },
+      {
+        "latin": "Dov'è la fermata?",
+        "meaning": "onde fica o ponto?",
+        "speech": "Dov'è la fermata?"
+      },
+      {
+        "latin": "È lontano?",
+        "meaning": "é longe?",
+        "speech": "È lontano?"
+      },
+      {
+        "latin": "Non capisco",
+        "meaning": "não entendo",
+        "speech": "Non capisco"
+      },
+      {
+        "latin": "Buonissimo!",
+        "meaning": "delicioso!",
+        "speech": "Buonissimo"
+      }
+    ],
+    "speechLanguage": "it-IT",
+    "tips": [
+      {
+        "detail": "Depois das 11h, café é espresso. \"Al banco\" custa menos: paga no caixa e pede no balcão.",
+        "etiquette": true,
+        "id": "it-cappuccino",
+        "moment": "morning",
+        "title": "Cappuccino só até as 11h, cornetto no balcão"
+      },
+      {
+        "detail": "O mesmo bilhete, fila bem menor. Água nos nasoni da Via dei Fori Imperiali.",
+        "etiquette": false,
+        "id": "it-colosseo",
+        "moment": "beforeQueue",
+        "title": "Colosseo: entre pelo Foro Romano"
+      },
+      {
+        "detail": "Museus seguem abertos; igrejas fecham das 12:30 às 15:30. Bom horário pra museu ou descanso.",
+        "etiquette": false,
+        "id": "it-riposo",
+        "moment": "afternoon",
+        "title": "Riposo das 13h às 16h: lojas pequenas fecham"
+      },
+      {
+        "detail": "Spritz com petisco no balcão; restaurante antes das 19:30 é de turista.",
+        "etiquette": true,
+        "id": "it-aperitivo",
+        "moment": "night",
+        "title": "Aperitivo das 19h às 21h, jantar a partir das 20h"
+      },
+      {
+        "detail": "Depois, ônibus noturno N de Termini e Piazza Venezia. Táxi só no ponto ou pelo app.",
+        "etiquette": false,
+        "id": "it-volta",
+        "moment": "back",
+        "title": "Último metrô 23:30 (sexta e sábado 01:30)"
+      },
+      {
+        "detail": "€ 1–3 por pessoa pelo pão e pelo lugar. Gorjeta não se espera; arredondar é gentileza.",
+        "etiquette": true,
+        "id": "it-coperto",
+        "moment": "anytime",
+        "title": "Coperto não é gorjeta: já está na conta"
+      },
+      {
+        "detail": "Leve uma echarpe na bolsa; vale pra São Pedro e Museus Vaticanos.",
+        "etiquette": true,
+        "id": "it-igrejas",
+        "moment": "anytime",
+        "title": "Igreja pede ombro e joelho cobertos"
+      },
+      {
+        "detail": "€ 1,50 por 100 min; sem validar é multa. No metrô, aproximar o cartão já vale.",
+        "etiquette": false,
+        "id": "it-bit",
+        "moment": "anytime",
+        "title": "Valide o BIT ao entrar no ônibus"
+      }
+    ]
+  }
+}

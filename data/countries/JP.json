@@ -1,0 +1,351 @@
+{
+  "code": "JP",
+  "name": "Japão",
+  "preposition": "no",
+  "currency": "JPY",
+  "currencySymbol": "¥",
+  "timeZone": "Asia/Tokyo",
+  "localLocale": "ja_JP",
+  "colorHex": "#D7000F",
+  "defaultBudget": 15000,
+  "budgetPresets": [
+    8000,
+    12000,
+    20000
+  ],
+  "fx": {
+    "defaultBRLPerUnit": 0.036,
+    "unit": 100
+  },
+  "bounds": [
+    {
+      "minLat": 24,
+      "maxLat": 46,
+      "minLng": 122,
+      "maxLng": 154
+    }
+  ],
+  "center": {
+    "lat": 35.6762,
+    "lng": 139.6503
+  },
+  "rules": [
+    "passportReminder"
+  ],
+  "transit": {
+    "lines": "tokyo-lines",
+    "googleTransit": false,
+    "legMode": "train",
+    "legLabel": "trem ou metrô",
+    "placeLabel": "metrô",
+    "taxiFare": "jpy",
+    "weatherModels": "jma_seamless,best_match",
+    "weatherLabel": "Open-Meteo + JMA",
+    "localMapFont": true,
+    "storedValueCard": "Suica",
+    "lastTrainFromLine": false,
+    "noStationText": "Nenhuma estação a pé daqui.",
+    "shortLineFromTail": false,
+    "areaMapWidth": 9000
+  },
+  "money": {
+    "cashCommon": true,
+    "paymentLabel": "cartão e cash",
+    "paymentMethods": [
+      "cash",
+      "card",
+      "transit-card"
+    ],
+    "amountQuickKey": "000",
+    "atmChip": "caixa 7 Bank no konbini",
+    "atmLine": "Caixa 7 Bank no 7-Eleven do caminho",
+    "atmFilter": "Caixa · 7 Bank",
+    "lowBalance": "1000",
+    "showsBRL": true
+  },
+  "day": {
+    "microStops": "café, konbini, descanso",
+    "konbiniChips": true,
+    "assistantQuestion": "Qual o último metrô pra casa?",
+    "mapSearchExample": "o melhor lámen perto de mim, agora",
+    "deliveryNote": "entrega no Airbnb não é opção",
+    "storeTLD": "jp",
+    "subreddits": [
+      "JapanTravel",
+      "Tokyo",
+      "Kyoto"
+    ],
+    "ramenTips": true,
+    "pocketTitle": "Utilidades"
+  },
+  "sos": {
+    "numbersLabel": "119 · 110 · seguro · hospital",
+    "hospitalCities": [
+      "tokyo",
+      "kyoto"
+    ],
+    "whereAmITitle": "Onde estou · em japonês",
+    "japaneseAddressOrder": true,
+    "whereAmIFontSize": 46
+  },
+  "shoppingPack": "jp-br",
+  "curatedAreas": [
+    "tokyo",
+    "kyoto"
+  ],
+  "pocket": {
+    "cards": [
+      {
+        "detail": "toque pra converter",
+        "kind": "exchange",
+        "label": "Câmbio · hoje",
+        "more": [],
+        "tone": "ink",
+        "value": ""
+      },
+      {
+        "detail": "recarregar · 7-Eleven, FamilyMart, máquina da estação",
+        "kind": "transitCard",
+        "label": "Suica · anotado",
+        "more": [
+          "Saldo anotado à mão na Carteira (o app não lê o cartão).",
+          "Recarga só em dinheiro: konbini (7-Eleven, FamilyMart, Lawson) ou máquina amarela da estação.",
+          "Suica no Wallet do iPhone recarrega com cartão, direto no app Carteira."
+        ],
+        "tone": "orange",
+        "value": "—"
+      },
+      {
+        "detail": "com licença · 20 frases, com áudio",
+        "kind": "phrases",
+        "label": "Frases",
+        "more": [],
+        "tone": "white",
+        "value": "Sumimasen"
+      },
+      {
+        "detail": "Yamanote · Shinjuku → Shibuya",
+        "kind": "lastTrain",
+        "label": "Último trem",
+        "more": [
+          "Horário da tabela do app (aproximado): confira no Google Maps antes de sair.",
+          "Perdeu? Táxi pra Naka-Meguro fica em ~¥ 3.500; depois da meia-noite a bandeira sobe 20 %."
+        ],
+        "tone": "white",
+        "value": "00:40"
+      },
+      {
+        "detail": "por loja, por dia · passaporte na mão",
+        "kind": "taxFree",
+        "label": "Tax-free",
+        "more": [
+          "Acima de ¥ 5.000 (sem imposto) na mesma loja, no mesmo dia.",
+          "Passaporte físico no caixa; o selo fica no sistema, sem papel.",
+          "Consumíveis (cosmético, comida) vêm lacrados: não abrir até sair do Japão."
+        ],
+        "tone": "white",
+        "value": "¥ 5.000"
+      },
+      {
+        "detail": "estação · konbini · 7 Bank",
+        "kind": "nearby",
+        "label": "Perto de você",
+        "more": [
+          "Banheiro: toda estação e todo konbini têm, de graça e limpo.",
+          "Lixeira: quase não tem na rua; guarde o lixo até um konbini ou estação.",
+          "Caixa com cartão estrangeiro: 7 Bank (7-Eleven) e Japan Post. Muitos lugares ainda são só cash."
+        ],
+        "tone": "white",
+        "value": "Banheiro\nLixeira\nCaixa"
+      },
+      {
+        "detail": "sem ligação · sem comer",
+        "kind": "etiquette",
+        "label": "Etiqueta",
+        "more": [
+          "Celular no silencioso, nada de ligação no vagão.",
+          "Comer andando é mal visto: pare perto da máquina ou do konbini.",
+          "Fila na plataforma nas marcas do chão; escada rolante: em Tóquio, fique à esquerda.",
+          "Sem gorjeta: deixar dinheiro na mesa confunde."
+        ],
+        "tone": "white",
+        "value": "Trem em\nsilêncio"
+      },
+      {
+        "detail": "Shinjuku saída sul · moedas ou Suica",
+        "kind": "lockers",
+        "label": "Armário · locker",
+        "more": [
+          "Pequeno ¥ 400, médio ¥ 500–600, grande ¥ 700 por dia.",
+          "Estações grandes enchem cedo: tente antes das 10h ou use o app ecbo cloak."
+        ],
+        "tone": "white",
+        "value": "¥ 400–700"
+      }
+    ],
+    "exchangeUnit": 100,
+    "fallbackBRLPerUnit": 0.036,
+    "name": "Japão",
+    "phrases": [
+      {
+        "latin": "Sumimasen",
+        "meaning": "com licença / desculpa",
+        "speech": "すみません"
+      },
+      {
+        "latin": "Arigatō gozaimasu",
+        "meaning": "muito obrigado",
+        "speech": "ありがとうございます"
+      },
+      {
+        "latin": "Kore o kudasai",
+        "meaning": "este, por favor",
+        "speech": "これをください"
+      },
+      {
+        "latin": "Okaikei onegaishimasu",
+        "meaning": "a conta, por favor",
+        "speech": "お会計お願いします"
+      },
+      {
+        "latin": "Kādo wa tsukaemasu ka?",
+        "meaning": "aceita cartão?",
+        "speech": "カードは使えますか"
+      },
+      {
+        "latin": "Toire wa doko desu ka?",
+        "meaning": "onde fica o banheiro?",
+        "speech": "トイレはどこですか"
+      },
+      {
+        "latin": "Futari desu",
+        "meaning": "somos dois",
+        "speech": "二人です"
+      },
+      {
+        "latin": "Menyū o kudasai",
+        "meaning": "o cardápio, por favor",
+        "speech": "メニューをください"
+      },
+      {
+        "latin": "Eigo no menyū wa arimasu ka?",
+        "meaning": "tem cardápio em inglês?",
+        "speech": "英語のメニューはありますか"
+      },
+      {
+        "latin": "Oishii!",
+        "meaning": "delicioso!",
+        "speech": "おいしい"
+      },
+      {
+        "latin": "Mizu o kudasai",
+        "meaning": "água, por favor",
+        "speech": "水をください"
+      },
+      {
+        "latin": "Ikura desu ka?",
+        "meaning": "quanto custa?",
+        "speech": "いくらですか"
+      },
+      {
+        "latin": "Menzei dekimasu ka?",
+        "meaning": "dá pra fazer tax-free?",
+        "speech": "免税できますか"
+      },
+      {
+        "latin": "Fukuro wa iranai desu",
+        "meaning": "não preciso de sacola",
+        "speech": "袋はいらないです"
+      },
+      {
+        "latin": "Eki wa doko desu ka?",
+        "meaning": "onde fica a estação?",
+        "speech": "駅はどこですか"
+      },
+      {
+        "latin": "Kono basho ni ikitai desu",
+        "meaning": "quero ir pra este lugar",
+        "speech": "この場所に行きたいです"
+      },
+      {
+        "latin": "Shashin o totte mo ii desu ka?",
+        "meaning": "posso tirar foto?",
+        "speech": "写真を撮ってもいいですか"
+      },
+      {
+        "latin": "Yoyaku shite imasu",
+        "meaning": "tenho reserva",
+        "speech": "予約しています"
+      },
+      {
+        "latin": "Wakarimasen",
+        "meaning": "não entendo",
+        "speech": "わかりません"
+      },
+      {
+        "latin": "Daijōbu desu",
+        "meaning": "tudo bem / não precisa",
+        "speech": "大丈夫です"
+      }
+    ],
+    "speechLanguage": "ja-JP",
+    "tips": [
+      {
+        "detail": "Konbini e estações têm lixeiras separadas. Beber andando é mal visto; pare perto da máquina.",
+        "etiquette": true,
+        "id": "jp-lixo",
+        "moment": "anytime",
+        "title": "Não tem lixeira na rua: guarde o lixo até um konbini"
+      },
+      {
+        "detail": "Onigiri, ovo cozido e café na máquina do balcão. Kissaten abrem às 8h com o \"morning set\".",
+        "etiquette": false,
+        "id": "jp-cafe",
+        "moment": "morning",
+        "title": "Café da manhã no konbini sai por ¥ 500"
+      },
+      {
+        "detail": "Fila de ramen não guarda lugar; quem sai, volta pro fim. Ticket na máquina antes de entrar.",
+        "etiquette": false,
+        "id": "jp-fila",
+        "moment": "beforeQueue",
+        "title": "Antes de fila longa: água e banheiro no konbini"
+      },
+      {
+        "detail": "O subsolo das lojas de departamento cola etiqueta de desconto antes de fechar.",
+        "etiquette": false,
+        "id": "jp-tarde",
+        "moment": "afternoon",
+        "title": "Depachika das 17h em diante: descontos de 20–50 %"
+      },
+      {
+        "detail": "¥ 300–600 por pessoa, vem sem pedir. Muitos bares pequenos são só cash.",
+        "etiquette": true,
+        "id": "jp-noite",
+        "moment": "night",
+        "title": "Izakaya cobra otōshi: o petisco de entrada é o cover"
+      },
+      {
+        "detail": "Confira o horário da volta antes do segundo drink. Táxi de madrugada custa 20 % a mais.",
+        "etiquette": false,
+        "id": "jp-volta",
+        "moment": "back",
+        "title": "O último trem sai antes da meia-noite em muitas linhas"
+      },
+      {
+        "detail": "Pague no caixa da frente, não na mesa. Dinheiro vai na bandejinha, não na mão.",
+        "etiquette": true,
+        "id": "jp-gorjeta",
+        "moment": "anytime",
+        "title": "Sem gorjeta, em lugar nenhum"
+      },
+      {
+        "detail": "Em Kyoto e Osaka é à direita. Na plataforma, fila nas marcas do chão.",
+        "etiquette": true,
+        "id": "jp-escada",
+        "moment": "anytime",
+        "title": "Escada rolante: em Tóquio, fique à esquerda"
+      }
+    ]
+  }
+}
