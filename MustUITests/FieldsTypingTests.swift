@@ -11,17 +11,17 @@ final class FieldsTypingTests: MustUITestCase {
             let field = app.textFields["O que você quer"]
             guard field.waitForExistence(timeout: 8) else { XCTFail("[\(config)] Quero sem campo"); continue }
             hammer(field, config, rounds: 2)
-            field.typeText("\n")
+            field.enter("\n")
             assertAlive("Quero buscar", config)
             clear(field)
-            field.typeText("quero comer um ramen\n")
+            field.enter("quero comer um ramen\n")
             sleep(2)
             assertAlive("Quero resultado", config)
             dismissKeyboard()
             for tab in ["Texto", "Link", "Nome"] {
                 let button = app.buttons[tab]
                 guard button.waitForExistence(timeout: 3), button.isHittable else { continue }
-                button.tap()
+                safeTap(button)
                 assertAlive("Quero › \(tab)", config)
                 let id = ["Texto": "colar.text", "Link": "add.link", "Nome": "buscar.query"][tab]!
                 if let inner = element(id, timeout: 5) {
@@ -44,9 +44,9 @@ final class FieldsTypingTests: MustUITestCase {
             clear(field)
             for url in ["htp:/ /quebrado 🍜", "https://www.instagram.com/reel/ABC123/", "https://maps.app.goo.gl/xyz",
                         "https://www.google.com/maps/place/Xapuri/@-19.8517,-43.9733,17z"] {
-                field.tap()
+                safeTap(field)
                 clear(field)
-                field.typeText(url + "\n")
+                field.enter(url + "\n")
                 sleep(1)
                 guard assertAlive("link \(url)", config) else { break }
                 if let caption = element("add.caption", timeout: 2) { paste(Self.longText, into: caption) }
@@ -61,11 +61,11 @@ final class FieldsTypingTests: MustUITestCase {
             launch(config, screen: "colar-texto")
             guard let field = element("colar.text") else { XCTFail("[\(config)] sem campo do Colar texto"); continue }
             paste(Self.longText, into: field)
-            field.typeText("\n📍 Ichiran Shibuya\n📍 Trattoria da Enzo al 29\n")
+            field.enter("\n📍 Ichiran Shibuya\n📍 Trattoria da Enzo al 29\n")
             assertAlive("colar 5.000", config)
             dismissKeyboard()
             if let read = button(startingWith: ["Ler texto"], timeout: 3) {
-                read.tap()
+                safeTap(read)
                 // Lê no aparelho: espera sair do "Lendo o texto…" (sem spinner infinito: 30 s no máximo).
                 let reading = app.staticTexts["Lendo o texto…"]
                 let deadline = Date().addingTimeInterval(30)
@@ -86,9 +86,9 @@ final class FieldsTypingTests: MustUITestCase {
             guard let field = element("buscar.query") else { XCTFail("[\(config)] sem campo do Buscar por nome"); continue }
             hammer(field, config, rounds: 2, texts: ["ko", "ffee", " mam", "🍜", "東京"])
             clear(field)
-            field.typeText("koffee mam")
+            field.enter("koffee mam")
             let first = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] 'koffee'")).firstMatch
-            if first.waitForExistence(timeout: 6) { first.tap() }
+            if first.waitForExistence(timeout: 6) { safeTap(first) }
             assertAlive("Buscar por nome › escolher", config)
             swipeSheetDown()
             assertAlive("Buscar por nome › fechar", config)
@@ -99,12 +99,12 @@ final class FieldsTypingTests: MustUITestCase {
     func testMontarOuDiga() {
         for config in matrix() {
             launch(config, screen: "montar")
-            guard let field = element("montar.ask") ?? scrollTo({ element("montar.ask", timeout: 0.5) }) else {
+            guard let field = scrollTo({ element("montar.ask", timeout: 1) }) else {
                 XCTFail("[\(config)] sem o \"ou diga\""); continue
             }
             hammer(field, config, rounds: 1)
             clear(field)
-            field.typeText("templo cedo, ramen, andar pouco, jantar bom 🍣\n")
+            field.enter("templo cedo, ramen, andar pouco, jantar bom 🍣\n")
             sleep(2)
             assertAlive("Montar ou diga", config)
         }
@@ -117,8 +117,8 @@ final class FieldsTypingTests: MustUITestCase {
             guard let field = element("assistant.input") else { XCTFail("[\(config)] sem campo do Assistente"); continue }
             for question in ["tô cansado, troca o bar de hoje", "quanto já gastei? 💸", "東京 ramen perto",
                              String(Self.longText.prefix(600))] {
-                field.tap()
-                field.typeText(question + "\n")
+                safeTap(field)
+                field.enter(question + "\n")
                 guard assertAlive("Assistente \(question.prefix(20))", config) else { break }
             }
             sleep(3)
@@ -133,7 +133,7 @@ final class FieldsTypingTests: MustUITestCase {
             guard app.buttons["1"].waitForExistence(timeout: 8) else { XCTFail("[\(config)] sem teclado do Gasto"); continue }
             let sequence = ["1", "2", ",", "5", "5", "5", "Apagar", "Apagar", "9", "9", "9", "9", "9", "9", "9", "9", "9", "9",
                             "000", ",", "0", "Apagar", "Apagar", "Apagar"]
-            for key in sequence where app.buttons[key].exists { app.buttons[key].tap() }
+            for key in sequence where app.buttons[key].exists { safeTap(app.buttons[key]) }
             assertAlive("Gasto teclado", config)
         }
     }
@@ -145,11 +145,11 @@ final class FieldsTypingTests: MustUITestCase {
             guard let line = scrollTo({ button(startingWith: ["Seu seguro", "Seu plano"], timeout: 1) }) else {
                 XCTFail("[\(config)] SOS sem a linha do seguro"); continue
             }
-            line.tap()
+            safeTap(line)
             typeIntoAllFields(config, swipes: 2)
             assertAlive("SOS seguro", config)
             if let save = button(startingWith: ["Guardar"], timeout: 3) ?? scrollTo({ button(startingWith: ["Guardar"], timeout: 0.5) }) {
-                save.tap()
+                safeTap(save)
             }
             assertAlive("SOS guardar", config)
         }
@@ -161,7 +161,7 @@ final class FieldsTypingTests: MustUITestCase {
             launch(config, screen: "carteira")
             let add = app.buttons["Adicionar à carteira"]
             guard add.waitForExistence(timeout: 8) else { XCTFail("[\(config)] Carteira sem o +"); continue }
-            add.tap()
+            safeTap(add)
             typeIntoAllFields(config, swipes: 3)
             assertAlive("Carteira campos", config)
             swipeSheetDown()
@@ -186,7 +186,7 @@ final class FieldsTypingTests: MustUITestCase {
             guard let add = scrollTo({ button(startingWith: ["Adicionar à mão", "Nada aqui ainda"], timeout: 1) }) else {
                 XCTFail("[\(config)] Lista art sem Adicionar à mão"); continue
             }
-            add.tap()
+            safeTap(add)
             guard element("edit.name") != nil else { XCTFail("[\(config)] Novo lugar não abriu"); continue }
             typeIntoAllFields(config, swipes: 5)
             assertAlive("campos do tipo art com números gigantes", config)
@@ -200,30 +200,30 @@ final class FieldsTypingTests: MustUITestCase {
             let field = app.textFields["Buscar no mapa"]
             guard field.waitForExistence(timeout: 10) else { XCTFail("[\(config)] Mapa sem a busca"); continue }
             sleep(2)
-            field.tap()
+            safeTap(field)
             clear(field)
             hammer(field, config, rounds: 2)
-            field.typeText("\n")
+            field.enter("\n")
             sleep(2)
             assertAlive("Mapa buscar", config)
             for query in ["o melhor lámen perto de mim agora", "pão de queijo", "東京 ramen", "🍜", String(Self.longText.prefix(300))] {
                 guard field.waitForExistence(timeout: 3) else { break }
-                field.tap()
-                if app.buttons["Limpar a busca"].exists { app.buttons["Limpar a busca"].tap() } else { clear(field) }
-                field.typeText(query + "\n")
+                safeTap(field)
+                if app.buttons["Limpar a busca"].exists { safeTap(app.buttons["Limpar a busca"]) } else { clear(field) }
+                field.enter(query + "\n")
                 guard assertAlive("Mapa \(query.prefix(20))", config) else { break }
             }
             // Voz: o simulador pede permissão (microfone/fala); o app não pode cair com nenhuma resposta.
             let mic = app.buttons["Falar"]
             if mic.waitForExistence(timeout: 2), mic.isHittable {
-                mic.tap()
+                safeTap(mic)
                 let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
                 for label in ["Não Permitir", "Don’t Allow", "Don't Allow", "OK", "Permitir"] {
                     let b = springboard.buttons[label]
-                    if b.waitForExistence(timeout: 2) { b.tap() }
+                    if b.waitForExistence(timeout: 2) { safeTap(b) }
                 }
                 sleep(1)
-                if app.buttons["Parar de ouvir"].exists { app.buttons["Parar de ouvir"].tap() }
+                if app.buttons["Parar de ouvir"].exists { safeTap(app.buttons["Parar de ouvir"]) }
             }
             assertAlive("Mapa voz", config)
             swipeSheetDown()

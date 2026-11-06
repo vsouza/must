@@ -14,7 +14,7 @@ final class AddToListTypingTests: MustUITestCase {
             attachScreenshot("sem-adicionar-\(config)")
             return false
         }
-        add.tap()
+        safeTap(add)
         guard element("edit.name") != nil else {
             XCTFail("[\(config)] o Novo lugar não abriu")
             attachScreenshot("sem-novo-lugar-\(config)")
@@ -32,12 +32,12 @@ final class AddToListTypingTests: MustUITestCase {
             }
             switch id {
             case "edit.price":
-                field.tap()
+                safeTap(field)
                 for text in ["12,50", "1.250,00", "abc", "9999999999", ",,,", ".5"] {
-                    field.typeText(text)
+                    field.enter(text)
                     clear(field)
                 }
-                field.typeText("38,90")
+                field.enter("38,90")
             case "edit.nameLocal":
                 hammer(field, config, rounds: 2, texts: ["一蘭 渋谷店", "ラーメン", "Ñ🍜"])
             default:
@@ -56,7 +56,7 @@ final class AddToListTypingTests: MustUITestCase {
             typeAllFields(config)
             guard assertAlive("antes de salvar", config) else { continue }
             dismissKeyboard()
-            if let save = element("edit.save", timeout: 3) { save.tap() }
+            if let save = element("edit.save", timeout: 3) { safeTap(save) }
             assertAlive("salvar", config)
             // Volta pra Lista e o lugar novo aparece (nome é o último texto digitado no campo nome).
             XCTAssertTrue(button(startingWith: ["Adicionar à mão"], timeout: 6) != nil || app.state == .runningForeground,
@@ -73,7 +73,7 @@ final class AddToListTypingTests: MustUITestCase {
             if let notes = element("edit.notes") ?? scrollTo({ element("edit.notes", timeout: 0.5) }) {
                 paste(Self.longText, into: notes)
                 assertAlive("colar 5.000 nas notas", config)
-                notes.typeText(" e mais 🍡")
+                notes.enter(" e mais 🍡")
             }
             rotate()
             assertAlive("girar", config)
@@ -89,11 +89,11 @@ final class AddToListTypingTests: MustUITestCase {
         for config in matrix(default: [Config(area: .bh, net: .normal), Config(area: .it, net: .slow)]) {
             guard openNewPlaceFromList(config) else { continue }
             for round in 0..<3 {
-                if let name = element("edit.name") { name.tap(); name.typeText("Meio digitado \(round) 🍜") }
+                if let name = element("edit.name") { safeTap(name); name.enter("Meio digitado \(round) 🍜") }
                 swipeSheetDown()
                 assertAlive("fechar pela metade \(round)", config)
                 guard let add = scrollTo({ button(startingWith: ["Adicionar à mão", "Nada aqui ainda"], timeout: 1) }) else { break }
-                add.tap()
+                safeTap(add)
                 assertAlive("reabrir \(round)", config)
             }
         }
@@ -113,11 +113,10 @@ final class AddToListTypingTests: MustUITestCase {
             while Date() < deadline, app.state == .runningForeground {
                 // Depois da troca a árvore é outra: o Novo lugar some; abre de novo pelo caminho da Lista se der.
                 if let name = element("edit.name", timeout: 1.5) {
-                    name.tap()
-                    name.typeText("Troca \(rounds) ação 東京 ")
-                    if let notes = element("edit.notes", timeout: 0.5) { notes.tap(); notes.typeText("nota \(rounds) 🍜 ") }
+                    name.enter("Troca \(rounds) ação 東京 ")
+                    if let notes = element("edit.notes", timeout: 0.5) { notes.enter("nota \(rounds) 🍜 ") }
                 } else if let add = button(startingWith: ["Adicionar à mão", "Nada aqui ainda"], timeout: 1) {
-                    add.tap()
+                    safeTap(add)
                 } else {
                     app.swipeUp(velocity: .fast)
                 }
@@ -135,16 +134,16 @@ final class AddToListTypingTests: MustUITestCase {
             guard let name = element("edit.name") else { XCTFail("[\(config)] Editar não abriu"); continue }
             clear(name)
             hammer(name, config, rounds: 1)
-            if let price = element("edit.price", timeout: 2) { price.tap(); clear(price); price.typeText("1.234,5") }
+            if let price = element("edit.price", timeout: 2) { safeTap(price); clear(price); price.enter("1.234,5") }
             if let area = element("edit.area", timeout: 2) { hammer(area, config, rounds: 1, texts: ["Shinjuku 新宿 ", "Savassi"]) }
             assertAlive("editar existente", config)
             // Espera o pulo do GPS (9 s) com a sheet aberta e digita de novo.
             let until = Date().addingTimeInterval(8)
             while Date() < until, app.state == .runningForeground {
-                if let name = element("edit.name", timeout: 1) { name.tap(); name.typeText("x") } else { break }
+                if let name = element("edit.name", timeout: 1) { name.enter("x") } else { break }
             }
             assertAlive("editar existente com troca de região", config)
-            if let save = element("edit.save", timeout: 2) { save.tap() }
+            if let save = element("edit.save", timeout: 2) { safeTap(save) }
             assertAlive("salvar existente", config)
         }
     }
@@ -154,37 +153,38 @@ final class AddToListTypingTests: MustUITestCase {
     func testNewListAddItems() {
         for config in matrix() {
             launch(config, screen: "nova-lista")
-            let name = app.textFields["kissaten"]
-            guard name.waitForExistence(timeout: 8) else { XCTFail("[\(config)] Nova lista sem nome"); continue }
+            guard let name = element("newlist.name", timeout: 10) ?? scrollTo({ element("newlist.name", timeout: 0.5) }) else {
+                XCTFail("[\(config)] Nova lista sem nome"); attachScreenshot("nova-lista-\(config)"); continue
+            }
             hammer(name, config, rounds: 2, texts: ["kissa", "ten ☕️", " 喫茶店", " ação"])
             clear(name)
-            name.typeText("kissaten teste")
+            name.enter("kissaten teste")
             dismissKeyboard()
             guard let create = scrollTo({ button(startingWith: ["Criar e adicionar lugares"], timeout: 1) }) else {
                 XCTFail("[\(config)] sem Criar e adicionar"); continue
             }
-            create.tap()
+            safeTap(create)
             let search = app.textFields["Buscar nome ou bairro…"]
             guard search.waitForExistence(timeout: 8) else { XCTFail("[\(config)] Adicionar lugares não abriu"); continue }
             hammer(search, config, rounds: 2)
             clear(search)
-            search.typeText("caf")
+            search.enter("caf")
             assertAlive("busca no board", config)
             // Places (fake) com a busca digitada aos poucos (o .task(id:) cancela a anterior).
             if let places = button(startingWith: ["Places"], timeout: 2) {
-                places.tap()
-                search.tap()
-                search.typeText("é ramen 🍜")
+                safeTap(places)
+                safeTap(search)
+                search.enter("é ramen 🍜")
                 sleep(2)
                 assertAlive("busca no Places", config)
             }
-            if let board = button(startingWith: ["Do board"], timeout: 2) { board.tap() }
+            if let board = button(startingWith: ["Do board"], timeout: 2) { safeTap(board) }
             dismissKeyboard()
             if let manual = app.buttons["manual"].exists ? app.buttons["manual"] : nil {
-                manual.tap()
+                safeTap(manual)
                 if let field = element("edit.name") {
                     hammer(field, config, rounds: 1)
-                    if let save = element("edit.save", timeout: 2) { save.tap() }
+                    if let save = element("edit.save", timeout: 2) { safeTap(save) }
                 }
             }
             assertAlive("Nova lista › manual", config)

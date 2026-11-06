@@ -144,7 +144,7 @@ class MustUITestCase: XCTestCase {
 
     /// Botão cujo rótulo começa com algum dos textos (botões com várias linhas de texto juntam tudo no rótulo).
     func button(startingWith prefixes: [String], timeout: TimeInterval = 6) -> XCUIElement? {
-        let format = prefixes.map { _ in "label BEGINSWITH %@" }.joined(separator: " OR ")
+        let format = prefixes.map { _ in "label BEGINSWITH[c] %@" }.joined(separator: " OR ")
         let el = app.buttons.matching(NSPredicate(format: format, argumentArray: prefixes)).firstMatch
         return el.waitForExistence(timeout: timeout) ? el : nil
     }
@@ -185,27 +185,52 @@ class MustUITestCase: XCTestCase {
     /// Digita em rajadas no campo (sem esperar a UI entre elas), apaga tudo e digita de novo.
     func hammer(_ field: XCUIElement, _ config: Config, rounds: Int = 2, texts: [String] = MustUITestCase.samples) {
         guard field.waitForExistence(timeout: 5) else { XCTFail("[\(config)] campo sumiu"); return }
-        field.tap()
         for round in 0..<rounds {
             for text in texts {
-                field.typeText(text)
+                type(text, into: field)
                 guard app.state == .runningForeground else { return }
             }
             if round < rounds - 1 { clear(field) }
         }
     }
 
+    /// O campo está com o teclado (o "\n" de buscar, a troca de aba e o fundo tiram o foco).
+    func hasFocus(_ field: XCUIElement) -> Bool {
+        field.exists && (field.value(forKey: "hasKeyboardFocus") as? Bool ?? false)
+    }
+
+    /// Digita no campo, tocando antes se ele perdeu o foco. Campo que sumiu (a tela trocou) não é falha do app.
+    func type(_ text: String, into field: XCUIElement) {
+        guard field.exists else { return }
+        if !hasFocus(field) {
+            guard field.isHittable else { return }
+            field.tap()
+        }
+        guard hasFocus(field) else { return }
+        field.typeText(text)
+    }
+
+    /// Toque que não falha se o elemento sumiu entre o achar e o tocar (troca de região, sheet fechando).
+    func safeTap(_ element: XCUIElement) {
+        guard element.exists, element.isHittable else { return }
+        let frame = element.frame
+        app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: frame.midX, dy: frame.midY)).tap()
+    }
+
     /// Apaga o que tem no campo (backspace repetido; o `value` diz quanto tem).
     func clear(_ field: XCUIElement) {
+        guard field.exists else { return }
         let current = (field.value as? String) ?? ""
         let count = max(current.count, 10) + 5
-        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: min(count, 400)))
+        type(String(repeating: XCUIKeyboardKey.delete.rawValue, count: min(count, 400)), into: field)
     }
 
     /// Cola um texto no campo pelo menu de edição (Colar/Paste). Sem o menu, digita uma parte.
     func paste(_ text: String, into field: XCUIElement, fallbackPrefix: Int = 300) {
         UIPasteboard.general.string = text
+        guard field.exists, field.isHittable else { return }
         field.tap()
+        guard field.exists else { return }
         field.press(forDuration: 1.1)
         let menu = app.menuItems.matching(NSPredicate(format: "label IN %@", ["Colar", "Paste"])).firstMatch
         if menu.waitForExistence(timeout: 2) {
@@ -215,7 +240,7 @@ class MustUITestCase: XCTestCase {
                 .matching(NSPredicate(format: "label IN %@", ["Permitir Colar", "Allow Paste"])).firstMatch
             if allow.waitForExistence(timeout: 1) { allow.tap() }
         } else {
-            field.typeText(String(text.prefix(fallbackPrefix)))
+            type(String(text.prefix(fallbackPrefix)), into: field)
         }
     }
 
@@ -234,13 +259,12 @@ class MustUITestCase: XCTestCase {
                 let key = "\(field.identifier)|\(field.placeholderValue ?? "")|\(field.label)"
                 guard !done.contains(key) else { continue }
                 done.insert(key)
-                field.tap()
                 for text in texts {
-                    field.typeText(text)
+                    type(text, into: field)
                     guard app.state == .runningForeground else { return }
                 }
                 clear(field)
-                field.typeText(texts[0])
+                type(texts[0], into: field)
             }
             dismissKeyboard()
             app.swipeUp(velocity: .slow)
@@ -276,5 +300,18 @@ class MustUITestCase: XCTestCase {
             if button.exists && button.isHittable { button.tap(); return }
         }
         app.swipeDown(velocity: .slow)
+    }
+}
+
+extension XCUIElement {
+    /// `typeText` que toca antes se o campo perdeu o foco, e não faz nada se o campo sumiu (a tela trocou).
+    func enter(_ text: String) {
+        guard exists else { return }
+        if !(value(forKey: "hasKeyboardFocus") as? Bool ?? false) {
+            guard isHittable else { return }
+            tap()
+        }
+        guard exists, value(forKey: "hasKeyboardFocus") as? Bool ?? false else { return }
+        typeText(text)
     }
 }
