@@ -233,10 +233,10 @@ struct AgoraView: View {
     private func contextChip(_ text: String) -> some View {
         HStack(spacing: 6) {
             Circle().fill(V8.orange).frame(width: 6, height: 6)
-            Text(text).font(V8Font.text(12.5, weight: .semibold)).foregroundStyle(V8.white).lineLimit(1)
+            Text(text).font(V8Font.text(13, weight: .semibold)).foregroundStyle(V8.white).lineLimit(1)
         }
-        .padding(.horizontal, 11)
-        .frame(height: 30)
+        .padding(.horizontal, 14)
+        .frame(minHeight: ButtonMetrics.smallPillHeight)
         .overlay(Capsule().strokeBorder(V8.white.opacity(0.3), lineWidth: 1))
     }
 
@@ -301,8 +301,8 @@ struct AgoraView: View {
                 HStack(spacing: 8) {
                     ForEach(more, id: \.self) { text in
                         Button { router.push(.linha(date: today), on: .hoje) } label: {
-                            Text(text).font(V8Font.text(12.5, weight: .semibold)).foregroundStyle(V8.white).lineLimit(1)
-                                .padding(.horizontal, 13).frame(height: 30)
+                            Text(text).font(V8Font.text(13, weight: .semibold)).foregroundStyle(V8.white).lineLimit(1)
+                                .padding(.horizontal, 14).frame(minHeight: ButtonMetrics.pillHeight)
                                 .overlay(Capsule().strokeBorder(V8.white.opacity(0.3), lineWidth: 1))
                         }
                         .buttonStyle(MustPressStyle())

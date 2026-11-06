@@ -262,7 +262,7 @@ struct LightDayView: View {
             Spacer(minLength: 6)
             if isNext {
                 Text("próximo").font(.must.archivo(13, .semibold)).foregroundStyle(.white)
-                    .padding(.horizontal, 12).frame(height: 30).background(Capsule().fill(Color.must.ink))
+                    .padding(.horizontal, 14).frame(minHeight: 34).background(Capsule().fill(Color.must.ink))
             } else if r.kind == .art {
                 TintTag("art", bg: MustColor.art.light, fg: MustColor.art.text)
             } else if r.kind == .place, let c = r.color {

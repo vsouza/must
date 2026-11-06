@@ -246,7 +246,7 @@ struct QueroView: View {
             if let row = model.selected, model.phase == .done {
                 fitCard(row)
                 HStack(spacing: 10) {
-                    BigButton(title: "Só guardar em \(listName)", style: .line, lineColor: V8.white, lineFill: V8.ink) { guardar(row) }
+                    BigButton(title: "Só guardar", style: .line, lineColor: V8.white, lineFill: V8.ink) { guardar(row) }
                     BigButton(title: row.slot == nil ? "Não cabe hoje" : "Encaixar hoje", style: .orange,
                               systemImage: row.slot == nil ? nil : "arrow.up.right") { encaixar(row) }
                         .disabled(row.slot == nil)

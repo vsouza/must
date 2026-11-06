@@ -100,6 +100,7 @@ struct ProximosView: View {
     /// Resto da Viagem (Nav.png: Próximos · Carteira · Voos · Compras · Mapas offline).
     private var links: some View {
         VStack(spacing: 0) {
+            link("Coleção", "um card por lugar feito · mandar") { router.push(.colecao) }
             link("Carteira", "cartões, passes, QR de entrada") { router.push(.carteira) }
             link("Voos e reservas", "status e checklist") { router.push(.schedule(tab: .voos)) }
             link("Compras", "lista, cota e regras da volta") { router.push(.compras) }

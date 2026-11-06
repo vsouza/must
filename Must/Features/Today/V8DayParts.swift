@@ -94,15 +94,25 @@ struct BigButton: View {
     var lineFill: Color = .clear
     var action: () -> Void
 
+    @ScaledMetric(relativeTo: .body) private var scaled: CGFloat = 16
+
+    private func line(_ size: CGFloat, lines: Int) -> some View {
+        HStack(spacing: 9) {
+            Text(title).font(V8Font.text(size, weight: .bold)).lineLimit(lines).multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: lines > 1)
+            if let systemImage { Image(systemName: systemImage).font(.system(size: size - 1, weight: .bold)) }
+        }
+    }
+
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 10) {
-                Text(title).font(V8Font.text(16, weight: .bold)).lineLimit(1).minimumScaleFactor(0.8)
-                if let systemImage { Image(systemName: systemImage).font(.system(size: 15, weight: .bold)) }
+            ViewThatFits(in: .horizontal) {
+                ForEach(ButtonMetrics.steps, id: \.self) { line($0, lines: 1) }
+                line(15, lines: 2).padding(.vertical, 12)
             }
             .foregroundStyle(style == .ink ? V8.white : style == .line ? lineColor : V8.ink)
-            .padding(.horizontal, 20)
-            .frame(maxWidth: .infinity, minHeight: 56)
+            .padding(.horizontal, ButtonMetrics.horizontalPadding(height: 56))
+            .frame(maxWidth: .infinity, minHeight: ButtonMetrics.height(base: 56, font: scaled, kind: .button))
             .background(Capsule().fill(style == .orange ? V8.orange : style == .ink ? V8.ink : lineFill))
             .overlay(Capsule().strokeBorder(style == .line ? lineColor : .clear, lineWidth: 1.5))
             .contentShape(Capsule())
@@ -154,6 +164,9 @@ struct DayStopRow: View {
     var onTap: (() -> Void)?
 
     private var isMicro: Bool { stop.kind == .micro }
+    /// Micro-parada "em cartaz" (exposição/show na janela livre): tracejada em laranja, selo EXP.
+    /// TODO(r23:A): o motor (`MicroStops`) deve marcar com `tag: "EXP"`; troco por um `DayMicroKind` quando existir.
+    private var isShow: Bool { isMicro && stop.tag?.uppercased() == "EXP" }
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -204,7 +217,8 @@ struct DayStopRow: View {
         .overlay {
             if isMicro && state != .now {
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .strokeBorder(V8.ink.opacity(0.3), style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
+                    .strokeBorder(isShow ? V8.orangeDeep : V8.ink.opacity(0.3),
+                                  style: StrokeStyle(lineWidth: isShow ? 1.5 : 1, dash: isShow ? [5, 3] : [4, 3]))
             } else if stop.kind == .must && state == .upcoming {
                 RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(V8.ink.opacity(0.08), lineWidth: 1)
             }
@@ -242,7 +256,7 @@ struct DayStopRow: View {
         }()
         let (bg, fg): (Color, Color) = {
             if state == .now { return (V8.ink, V8.white) }
-            if stop.kind == .anchor { return (V8.orange, V8.ink) }
+            if stop.kind == .anchor || isShow { return (V8.orange, V8.ink) }
             return (V8.ink.opacity(0.07), V8.ink)
         }()
         return Text(text)

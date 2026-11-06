@@ -251,7 +251,7 @@ struct MandarView: View {
 
     @ViewBuilder private var mainButton: some View {
         let url = isTrip ? pdfURL : posterURL
-        let title = isTrip ? "Mandar o PDF da viagem" : (Self.hasWhatsApp ? "Mandar cartaz pelo WhatsApp" : "Mandar o cartaz")
+        let title = isTrip ? "Mandar o PDF da viagem" : (Self.hasWhatsApp ? "Mandar cartaz" : "Mandar o cartaz")
         if let url {
             // Share sheet do sistema: com o WhatsApp instalado ele aparece entre os primeiros (o iOS ordena pelo uso).
             ShareLink(item: url) {

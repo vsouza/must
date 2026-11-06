@@ -89,6 +89,10 @@ v8shots() { # $1 = prefixo (jp|bh|it), $2 = lugar de exemplo, $3 = museu de exem
   WAIT=8 shot $r-p25-compartilhar -debugScreen compartilhar  # Compartilhar (cartaz desenhado no aparelho)
   shot $r-p25-sos -debugScreen sos                  # SOS
   shot $r-p25-off-sos -debugScreen sos ${=OFF}      # SOS sem internet (último endereço conhecido)
+  # RODADA-23 · agente D: Coleção e o momento "novo colecionável" (Colecao.png, ColecionavelNovo.png).
+  shot $r-r23-colecao -debugScreen colecao          # Coleção (marca alguns feitos no DEBUG)
+  WAIT=6 shot $r-r23-colecionavel-novo -debugScreen colecionavel-novo:$2  # o momento, com o card girado
+  shot $r-r23-xxxl-colecao -debugScreen colecao ${=XL}
 }
 ${=W} skipOnboarding -bool YES
 ${=W} dev.simDateOn -bool YES; ${=W} dev.simSetAt -float 0; ${=W} dev.simGPSOn -bool YES

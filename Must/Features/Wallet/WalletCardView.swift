@@ -92,14 +92,14 @@ struct WalletCardView: View {
                 Spacer(minLength: 8)
                 if item.opensWallet {
                     Button(action: onWallet) {
-                        Text("Abrir no Wallet ↗").font(.must.archivo(12, .semibold))
-                            .padding(.horizontal, 11).frame(height: 32)
+                        Text("Abrir no Wallet ↗").font(.must.archivo(13, .semibold))
+                            .padding(.horizontal, 14).frame(minHeight: 34)
                             .background(Capsule().fill(Color.white.opacity(0.22)))
                     }
                     .buttonStyle(MustPressStyle())
                 } else if item.attachmentName != nil {
-                    Text("voucher no PDF").font(.must.archivo(12, .semibold))
-                        .padding(.horizontal, 11).frame(height: 32)
+                    Text("voucher no PDF").font(.must.archivo(13, .semibold))
+                        .padding(.horizontal, 14).frame(minHeight: 34)
                         .background(Capsule().fill(Color.white.opacity(0.22)))
                 }
             }
@@ -133,7 +133,7 @@ struct WalletCardView: View {
     @ViewBuilder private func tagPill(_ text: String) -> some View {
         let isRail = item.kind == .railPass
         Text(text)
-            .font(.must.archivo(12, .semibold))
+            .font(.must.archivo(13, .semibold))
             .multilineTextAlignment(.trailing)
             .fixedSize(horizontal: false, vertical: true)
             .foregroundStyle(facts.alert || isRail ? Color.must.greenText : .white)
