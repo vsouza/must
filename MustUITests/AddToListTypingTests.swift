@@ -148,4 +148,46 @@ final class AddToListTypingTests: MustUITestCase {
             assertAlive("salvar existente", config)
         }
     }
+
+    /// Nova lista › "2 de 2 · adicionar lugares" (`AddItemsView`): busca no board a cada tecla, Places (fake), marcar,
+    /// "manual" (o Novo lugar com o nome buscado) e salvar. Outra leitura de "tela de adicionar na lista".
+    func testNewListAddItems() {
+        for config in matrix() {
+            launch(config, screen: "nova-lista")
+            let name = app.textFields["kissaten"]
+            guard name.waitForExistence(timeout: 8) else { XCTFail("[\(config)] Nova lista sem nome"); continue }
+            hammer(name, config, rounds: 2, texts: ["kissa", "ten ☕️", " 喫茶店", " ação"])
+            clear(name)
+            name.typeText("kissaten teste")
+            dismissKeyboard()
+            guard let create = scrollTo({ button(startingWith: ["Criar e adicionar lugares"], timeout: 1) }) else {
+                XCTFail("[\(config)] sem Criar e adicionar"); continue
+            }
+            create.tap()
+            let search = app.textFields["Buscar nome ou bairro…"]
+            guard search.waitForExistence(timeout: 8) else { XCTFail("[\(config)] Adicionar lugares não abriu"); continue }
+            hammer(search, config, rounds: 2)
+            clear(search)
+            search.typeText("caf")
+            assertAlive("busca no board", config)
+            // Places (fake) com a busca digitada aos poucos (o .task(id:) cancela a anterior).
+            if let places = button(startingWith: ["Places"], timeout: 2) {
+                places.tap()
+                search.tap()
+                search.typeText("é ramen 🍜")
+                sleep(2)
+                assertAlive("busca no Places", config)
+            }
+            if let board = button(startingWith: ["Do board"], timeout: 2) { board.tap() }
+            dismissKeyboard()
+            if let manual = app.buttons["manual"].exists ? app.buttons["manual"] : nil {
+                manual.tap()
+                if let field = element("edit.name") {
+                    hammer(field, config, rounds: 1)
+                    if let save = element("edit.save", timeout: 2) { save.tap() }
+                }
+            }
+            assertAlive("Nova lista › manual", config)
+        }
+    }
 }
