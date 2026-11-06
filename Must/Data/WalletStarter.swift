@@ -20,7 +20,8 @@ enum WalletStarter {
 
     /// Insere o que ainda não recebeu. Só mexe na região do Japão; BH não tem Carteira de viagem por padrão.
     static func ensure(_ context: ModelContext, region: Region) {
-        guard region == .jp else { return }
+        // Só onde o país tem cartão de transporte de valor (Japão: Suica e JR Pass, `transit.storedValueCard`).
+        guard region.profile.transit?.storedValueCard == "Suica" else { return }
         let settings = context.settings(for: region)
         var seen = Set(settings.seenSeedIds)
         var changed = false

@@ -28,19 +28,19 @@ enum ShoppingFX {
 
     /// R$ por ¥1 da região: o câmbio do usuário (Ajustes) só vale no Japão; fora dele usa o padrão.
     static func rate(for region: Region, userRate: Double?) -> Double {
-        guard region == .jp, let rate = userRate, rate > 0 else { return brlPerYen }
+        guard region.currency == "JPY", let rate = userRate, rate > 0 else { return brlPerYen }
         return rate
     }
 
     /// R$ por €1 da região: o câmbio do usuário só vale na Itália; fora dela usa o padrão.
     static func eurRate(for region: Region, userRate: Double?) -> Double {
-        guard region == .it, let rate = userRate, rate > 0 else { return brlPerEUR }
+        guard region.currency == "EUR", let rate = userRate, rate > 0 else { return brlPerEUR }
         return rate
     }
 
     /// R$ por 1 unidade da moeda das regras da volta da região (o `fxRate` do `ShoppingReport`): € em Roma, ¥ no resto.
     static func baseRate(for region: Region, userRate: Double?) -> Double {
-        region == .it ? eurRate(for: region, userRate: userRate) : rate(for: region, userRate: userRate)
+        region.currency == "EUR" ? eurRate(for: region, userRate: userRate) : rate(for: region, userRate: userRate)
     }
 
     /// Converte um valor de uma moeda pra outra pelo câmbio (passa por R$).

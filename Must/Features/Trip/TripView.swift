@@ -136,7 +136,7 @@ struct TripView: View {
 
     private func meta(spent: Double, elapsed: Int) -> String {
         var parts: [String] = []
-        if region == .jp, let fx = settingsList.first?.fxRate, spent > 0 { parts.append("≈ \((spent * fx).formatted(.money("BRL")))") }
+        if region.profile.money?.showsBRL == true, let fx = settingsList.first?.fxRate, spent > 0 { parts.append("≈ \((spent * fx).formatted(.money("BRL")))") }
         // Média sem centavos (prompt 18 · D.20): o formatador mostra centavos quando o valor não é inteiro.
         parts.append("média \(region.money((spent / Double(max(elapsed, 1))).rounded()))/dia")
         parts.append("meta \(region.money(budget))")
@@ -337,8 +337,8 @@ struct TripView: View {
                     Tag(wallet.isEmpty ? "Carteira" : "Carteira · \(wallet.count)")
                 }
                 .buttonStyle(MustPressStyle())
-                // Compras da viagem (prompt 17 · B): a lista com a previsão e as regras da volta (só Japão).
-                if region == .jp {
+                // Compras da viagem (prompt 17 · B): a lista com a previsão e as regras da volta (`money.shoppingList`: Japão).
+                if region.profile.money?.shoppingList == true {
                     Button { router.push(.compras, on: router.tab) } label: {
                         Tag(shopping.isEmpty ? "Compras" : "Compras · \(shopping.count)")
                     }
