@@ -5,11 +5,15 @@ import UIKit
 
 // MARK: - Modelo
 
-/// Camadas do mapa = chips-legenda (Hoje · Amanhã · Sem plano · 済 Feitos · Metrô).
+/// Camadas do mapa = chips-legenda (Hoje · Amanhã · Sem plano · 済 Feitos · Metrô). `search` = resultados da busca do mapa
+/// (prompt 27 §2.c): sempre ligada, fora da legenda.
 enum MapLayer: String, CaseIterable, Identifiable, Sendable {
-    case today, tomorrow, unplanned, done, metro
+    case today, tomorrow, unplanned, done, metro, search
 
     var id: String { rawValue }
+
+    /// O que vira chip na legenda (a busca não é camada que se desliga).
+    static let legend: [MapLayer] = [.today, .tomorrow, .unplanned, .done, .metro]
 
     var label: String {
         switch self {
@@ -18,6 +22,7 @@ enum MapLayer: String, CaseIterable, Identifiable, Sendable {
         case .unplanned: "Sem plano"
         case .done: "Feitos"
         case .metro: "Metrô"
+        case .search: "Busca"
         }
     }
 }
@@ -48,6 +53,8 @@ struct MapPin: Identifiable, Equatable, Sendable {
         case badge(text: String)
         /// Pino preto numerado do preview do Adicionar por link; `label` (nome) só no selecionado.
         case preview(number: Int, label: String?)
+        /// Resultado da busca do mapa ("Melhor agora"): número da ordem; o escolhido sai em laranja (`highlighted`).
+        case result(number: Int)
     }
 
     enum TodayStatus: Equatable, Sendable { case future, next, done }
@@ -58,26 +65,31 @@ struct MapPin: Identifiable, Equatable, Sendable {
     var kind: Kind
     var placeId: String?
     var layer: MapLayer
+    /// Selecionado (card aberto) ou o escolhido da busca: disco laranja de 44 pt com halo (`MapaPino.png`).
+    var highlighted = false
 
     var coordinate: CLLocationCoordinate2D { CLLocationCoordinate2D(latitude: lat, longitude: lng) }
 
-    init(id: String, coordinate: CLLocationCoordinate2D, kind: Kind, placeId: String?, layer: MapLayer) {
+    init(id: String, coordinate: CLLocationCoordinate2D, kind: Kind, placeId: String?, layer: MapLayer, highlighted: Bool = false) {
         self.id = id
         lat = coordinate.latitude
         lng = coordinate.longitude
         self.kind = kind
         self.placeId = placeId
         self.layer = layer
+        self.highlighted = highlighted
     }
 
     /// Ordem de empilhamento: hoje por cima de amanhã por cima de sem plano.
     var zOrder: CGFloat {
-        switch kind {
+        if highlighted { return 8 }
+        return switch kind {
         case .unplanned, .cluster: 1
         case .tomorrow: 2
         case .today(_, let status, _): status == .next ? 5 : 4
         case .callout, .badge: 6
         case .preview(_, let label): label == nil ? 4 : 7
+        case .result: 5
         }
     }
 }
@@ -105,6 +117,8 @@ enum PinStyle {
     static let blue = UIColor(Color.must.blue)
     static let green = UIColor(Color.must.green)
     static let greenText = UIColor(Color.must.greenText)
+    /// Laranja v8 (#FF4A1C): pino escolhido.
+    static let orange = UIColor(V8.orange)
     static let stampBorder = UIColor(red: 0xC9 / 255, green: 0xCD / 255, blue: 0xD3 / 255, alpha: 1)
     static let clusterFill = UIColor(red: 0x9A / 255, green: 0xA0 / 255, blue: 0xA8 / 255, alpha: 1)
 
@@ -222,8 +236,30 @@ final class PinView: MLNAnnotationView {
             fill(PinStyle.ink, stroke: nil)
             text("\(number)", font: PinStyle.mono(caption == nil ? 12 : 14), color: .white)
             if let caption { showPill(caption, gap: 6) }
+        case .result(let number):
+            setSize(30)
+            fill(PinStyle.ink, stroke: .white, width: 1.5)
+            text("\(number)", font: PinStyle.mono(13), color: .white)
         }
+        if pin.highlighted { highlight() }
         accessibilityLabel = pin.placeId
+    }
+
+    /// Escolhido: disco laranja 44 pt com contorno tinta e halo laranja a 25 % (o texto do pino fica, em tinta).
+    private func highlight() {
+        guard !disc.isHidden else { return }
+        let caption = label.text
+        setSize(44)
+        fill(PinStyle.orange, stroke: PinStyle.ink, width: 1.5)
+        text(caption ?? "", font: PinStyle.mono(17, .bold), color: PinStyle.ink)
+        let r: CGFloat = 31
+        ring.path = UIBezierPath(ovalIn: CGRect(x: bounds.midX - r, y: bounds.midY - r, width: r * 2, height: r * 2)).cgPath
+        ring.fillColor = PinStyle.orange.withAlphaComponent(0.22).cgColor
+        ring.strokeColor = PinStyle.orange.withAlphaComponent(0.35).cgColor
+        ring.lineWidth = 1
+        ring.isHidden = false
+        stopPulse()
+        if !pillBackground.isHidden, let caption = pill.text { showPill(caption, gap: 8) }
     }
 
     private func configureStamp(kanji: String, color: MustColor, open: PinOpenState) {
@@ -265,6 +301,7 @@ final class PinView: MLNAnnotationView {
 
     private func reset() {
         ring.isHidden = true
+        ring.fillColor = UIColor.clear.cgColor
         arc.isHidden = true
         disc.isHidden = false
         disc.lineDashPattern = nil
@@ -313,7 +350,7 @@ final class PinView: MLNAnnotationView {
     // MARK: Pulso (só com o mapa parado)
 
     func setPulsePaused(_ paused: Bool) {
-        if paused { stopPulse() } else if case .unplanned(_, _, .open) = pin?.kind { startPulse() }
+        if paused { stopPulse() } else if pin?.highlighted != true, case .unplanned(_, _, .open) = pin?.kind { startPulse() }
     }
 
     private func startPulse() {
