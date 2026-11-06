@@ -124,6 +124,12 @@ ${=W} dev.simDate -float $(epoch 2026-11-15T14:20:00+09:00)
 ${=W} dev.simLat -float 35.6909; ${=W} dev.simLng -float 139.7003
 shot jp-r23e-capa-inteligente -debugScreen capa-inteligente -debugEvents fake  # capa-inteligente (JP)
 shot jp-r23e-trocar-viagem -debugScreen trocar-viagem  # trocar-viagem · TrocarViagem.png
+# prompt 28 · F3/F4: Nova viagem (NovaViagem1…9.png), rascunho de exemplo Portugal · Lisboa e Porto · 12–20 mar 2027.
+for n in 1 2 3 4 5 6 7 8 9; do
+  WAIT=6 shot v8-novaviagem$n -debugScreen novaviagem$n                                    # NovaViagem$n
+  WAIT=6 shot v8-xxxl-novaviagem$n -debugScreen novaviagem$n -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
+  WAIT=6 shot v8-off-novaviagem$n -debugScreen novaviagem$n -debugNetwork offline          # modo avião: tudo menos busca e câmbio
+done
 
 echo "→ v8 · Japão · sáb 15 nov 14:20 · Shinjuku (CapaJP, Agora, Dia)"
 ${=W} region jp
