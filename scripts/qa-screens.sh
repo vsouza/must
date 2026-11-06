@@ -93,6 +93,18 @@ v8shots() { # $1 = prefixo (jp|bh|it), $2 = lugar de exemplo, $3 = museu de exem
 ${=W} skipOnboarding -bool YES
 ${=W} dev.simDateOn -bool YES; ${=W} dev.simSetAt -float 0; ${=W} dev.simGPSOn -bool YES
 
+echo "→ r23 · E · capa inteligente (sem dia aceito) e Minhas viagens; eventos de mentira (-debugEvents fake)"
+${=W} region bh
+${=W} dev.simDate -float $(epoch 2026-11-05T18:10:00-03:00)
+${=W} dev.simLat -float -19.9340; ${=W} dev.simLng -float -43.9440
+shot bh-r23e-capa-inteligente -debugScreen capa-inteligente -debugEvents fake  # capa-inteligente (BR) · CapaInteligente.png
+shot bh-r23e-off-capa-inteligente -debugScreen capa-inteligente -debugNetwork offline  # modo avião: sem evento, sem vazio
+${=W} region jp
+${=W} dev.simDate -float $(epoch 2026-11-15T14:20:00+09:00)
+${=W} dev.simLat -float 35.6909; ${=W} dev.simLng -float 139.7003
+shot jp-r23e-capa-inteligente -debugScreen capa-inteligente -debugEvents fake  # capa-inteligente (JP)
+shot jp-r23e-trocar-viagem -debugScreen trocar-viagem  # trocar-viagem · TrocarViagem.png
+
 echo "→ v8 · Japão · sáb 15 nov 14:20 · Shinjuku (CapaJP, Agora, Dia)"
 ${=W} region jp
 ${=W} dev.simDate -float $(epoch 2026-11-15T14:20:00+09:00)
