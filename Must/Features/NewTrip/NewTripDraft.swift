@@ -56,6 +56,8 @@ struct NewTripDraft: Equatable, Sendable {
         var neighborhoodOnly: String?
         var checkIn: Date?
         var checkOut: Date?
+        /// Hospedagem lida de um e-mail/PDF colado (selo "lido do e-mail"); false = digitada.
+        var lodgingFromEmail = false
     }
 
     struct FlightDraft: Equatable, Sendable {
