@@ -94,6 +94,36 @@ struct RobustnessTests {
         #expect(!PlacePhotoStore.isCompleteImage(Data()))
     }
 
+    // MARK: Colar texto não fica "Lendo o texto…" pra sempre
+
+    @Test func deadlineCutsSlowWork() async {
+        let clock = ContinuousClock()
+        let start = clock.now
+        let slow = await TravelTextExtractor.withDeadline(.milliseconds(150)) { () async throws -> Int in
+            try await Task.sleep(for: .seconds(10))
+            return 1
+        }
+        #expect(slow == nil)
+        #expect(clock.now - start < .seconds(3))
+        let fast = await TravelTextExtractor.withDeadline(.seconds(2)) { 7 }
+        #expect(fast == 7)
+    }
+
+    /// Modelo travado: o texto cai nas palavras-chave dentro do teto, com os lugares do 📍.
+    @Test func stuckModelFallsBackToKeywords() async {
+        let clock = ContinuousClock()
+        let start = clock.now
+        let text = String(repeating: "Dia 1 em Shinjuku: 📍 Ichiran Shibuya e 📍 Fuunji. ", count: 120)
+        let draft = await TravelTextExtractor.analyze(text, onDevice: true, knownAreas: [], blockTimeout: .milliseconds(200),
+                                                      totalTimeout: .milliseconds(400)) { _ in
+            try await Task.sleep(for: .seconds(30))
+            throw CancellationError()
+        }
+        #expect(clock.now - start < .seconds(5))
+        #expect(draft.via == "palavras-chave")
+        #expect(!draft.places.isEmpty)
+    }
+
     @Test func gpsHopParses() {
         let hops = LocationService.parseHops("16:-19.93,-43.93; 7:35.69,139.70;lixo;3:1")
         #expect(hops.count == 2)

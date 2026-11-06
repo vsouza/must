@@ -87,11 +87,22 @@ enum TravelTextExtractor {
     }
 
     /// Analisa o texto inteiro: por bloco, Foundation Models (se `onDevice` e disponível) ou regex. Links vêm do texto todo.
-    static func analyze(_ text: String, onDevice: Bool, knownAreas: [String]) async -> TravelTextDraft {
+    /// Teto do modelo por bloco e no texto todo (rodada 23 · G): 5.000 caracteres colados deixavam o "Lendo o texto…"
+    /// mais de 30 s na tela (sem fim no simulador). Passou do teto, o bloco cai nas palavras-chave — nunca espera pra sempre.
+    static let blockTimeout: Duration = .seconds(12)
+    static let totalTimeout: Duration = .seconds(20)
+
+    static func analyze(_ text: String, onDevice: Bool, knownAreas: [String],
+                        blockTimeout: Duration = blockTimeout, totalTimeout: Duration = totalTimeout,
+                        model: @escaping @Sendable (String) async throws -> ParsedTravelText = { try await respond($0) }) async -> TravelTextDraft {
         var parts: [TravelTextDraft] = []
         var usedModel = false
+        let clock = ContinuousClock()
+        let started = clock.now
         for block in blocks(text) {
-            if onDevice, OnDeviceAI.isAvailable, let parsed = try? await respond(block) {
+            let left = totalTimeout - (clock.now - started)
+            if onDevice, OnDeviceAI.isAvailable, left > .zero,
+               let parsed = await withDeadline(min(blockTimeout, left), { try await model(block) }) {
                 parts.append(map(parsed, text: block, knownAreas: knownAreas))
                 usedModel = true
             } else {
@@ -102,6 +113,20 @@ enum TravelTextExtractor {
         draft.links = TravelTextParser.links(in: text)
         draft.via = usedModel ? "no aparelho" : "palavras-chave"
         return draft
+    }
+
+    /// O resultado de `work`, ou nil se passar de `limit` (a tarefa é cancelada) ou falhar.
+    static func withDeadline<T: Sendable>(_ limit: Duration, _ work: @escaping @Sendable () async throws -> T) async -> T? {
+        await withTaskGroup(of: T?.self) { group in
+            group.addTask { try? await work() }
+            group.addTask {
+                try? await Task.sleep(for: limit)
+                return nil
+            }
+            let first = await group.next() ?? nil
+            group.cancelAll()
+            return first
+        }
     }
 
     /// Reforço na nuvem só quando o aparelho acha menos de dois lugares (rodada 21 · fatia 3).
