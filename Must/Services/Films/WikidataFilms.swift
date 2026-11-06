@@ -18,7 +18,7 @@ final class WikidataFilms: FilmsProviding, @unchecked Sendable {
     private let now: @Sendable () -> Date
     private let session = Session()
 
-    init(cache: FilmCache = .shared, now: @escaping @Sendable () -> Date = { Date() }, fetch: Fetcher? = nil) {
+    init(cache: FilmCache = .shared, fetch: Fetcher? = nil, now: @escaping @Sendable () -> Date = { Date() }) {
         self.cache = cache
         self.now = now
         self.fetch = fetch ?? { url in

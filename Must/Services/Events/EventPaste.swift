@@ -75,9 +75,18 @@ enum EventPaste {
     static func match(_ draft: ProgramDraft, in places: [SolverPlace]) -> SolverPlace? {
         let haystack = ShowEventBuilder.norm("\(draft.title ?? "") \(draft.venue ?? "")")
         guard !haystack.isEmpty else { return nil }
+        // Palavras genéricas não identificam o lugar ("Museu", "Teatro"): o que sobra tem que aparecer todo.
+        let generic: Set<String> = ["museu", "museum", "museo", "teatro", "theater", "theatre", "casa", "de", "do", "da", "dos", "das", "the", "of",
+                                    "galeria", "gallery", "centro", "center", "estadio", "stadium", "arena", "hall", "sala", "espaco"]
+        func tokens(_ name: String) -> [String] {
+            name.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: nil)
+                .split { !$0.isLetter && !$0.isNumber }.map { String($0) }
+        }
         return places.filter { p in
-            let name = ShowEventBuilder.norm(p.name)
-            return name.count >= 3 && haystack.contains(name)
+            let all = tokens(p.name)
+            let key = all.filter { !generic.contains($0) && $0.count >= 3 }
+            let needed = key.isEmpty ? all : key
+            return !needed.isEmpty && needed.joined().count >= 3 && needed.allSatisfy { haystack.contains($0) }
         }.sorted { ($0.name.count, $0.id) > ($1.name.count, $1.id) }.first
     }
 
