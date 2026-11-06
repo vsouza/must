@@ -10,13 +10,7 @@ enum WhereAmI {
     static let refreshAge: TimeInterval = 10 * 60
 
     /// Locale do endereço local de cada país.
-    static func localLocale(_ region: Region) -> Locale {
-        switch region {
-        case .jp: Locale(identifier: "ja_JP")
-        case .it: Locale(identifier: "it_IT")
-        case .bh: Locale(identifier: "pt_BR")
-        }
-    }
+    static func localLocale(_ region: Region) -> Locale { region.profile.local }
 
     /// Precisa pedir de novo? (sem endereço, longe ou velho).
     static func needsRefresh(_ last: LastAddress?, location: CLLocation, now: Date) -> Bool {
@@ -111,9 +105,9 @@ extension WhereAmI {
                        now: Date = AppClock.now) async -> LastAddress? {
         do {
             guard let local = try await geocoder.parts(at: location, locale: localLocale(region)) else { return nil }
-            let localLine = line(local, japaneseOrder: region == .jp)
+            let localLine = line(local, japaneseOrder: region.profile.sos?.japaneseAddressOrder == true)
             var latinLine = localLine
-            if region != .bh, let latin = try? await geocoder.parts(at: location, locale: Locale(identifier: "pt_BR")) {
+            if localLocale(region).identifier != "pt_BR", let latin = try? await geocoder.parts(at: location, locale: Locale(identifier: "pt_BR")) {
                 latinLine = line(latin, japaneseOrder: false)
             }
             guard !localLine.isEmpty else { return nil }

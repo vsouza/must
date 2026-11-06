@@ -358,7 +358,7 @@ struct SOSAddressFullScreen: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .top) {
-                V8SpecStack(lines: [region == .jp ? "Onde estou · em japonês" : region == .it ? "Onde estou · em italiano" : "Onde estou",
+                V8SpecStack(lines: [region.profile.sos?.whereAmITitle ?? "Onde estou",
                                     shown?.isStale == true ? "último endereço conhecido" : "mostre esta tela"])
                     .padding(.top, 14)
                 Spacer()
@@ -367,7 +367,7 @@ struct SOSAddressFullScreen: View {
             Spacer(minLength: 20)
             if let shown {
                 Text(shown.main)
-                    .font(V8Font.display(region == .jp ? 46 : 40))
+                    .font(V8Font.display(region.profile.sos?.whereAmIFontSize ?? 40))
                     .foregroundStyle(V8.ink)
                     .minimumScaleFactor(0.4)
                     .textSelection(.enabled)

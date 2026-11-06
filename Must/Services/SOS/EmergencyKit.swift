@@ -188,11 +188,8 @@ struct HospitalCatalog: Codable, Hashable, Sendable {
 
     /// Cidades de cada região (a lista curada não tem o "1"/"2" de Tóquio).
     static func cities(for region: Region) -> [String] {
-        switch region {
-        case .bh: ["bh"]
-        case .jp: ["tokyo", "kyoto"]
-        case .it: ["roma"]
-        }
+        // `sos.hospitalCities` do país (`data/countries/<cc>.json`). País sem lista curada: nenhum hospital inventado.
+        region.profile.sos?.hospitalCities ?? []
     }
 
     func hospitals(for region: Region) -> [Hospital] {
