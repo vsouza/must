@@ -11,7 +11,6 @@ struct EditPlaceView: View {
 
     @Query(sort: \MustList.order) private var lists: [MustList]
     @Query private var trips: [TripInfo]
-    @Query private var allPlaces: [Place]
 
     private let placeId: String?
     private let newListId: String?
@@ -43,7 +42,12 @@ struct EditPlaceView: View {
 
     private var region: Region { store.region }
     private var isNew: Bool { placeId == nil }
-    private var existing: Place? { placeId.flatMap { id in allPlaces.first { $0.id == id } } }
+    /// O lugar editado, lido pelo id no contexto desta árvore (rodada 23 · G): antes um `@Query` de todos os lugares
+    /// (100+ no Japão) rodava a cada tecla só pra achar este. Lido só no abrir/salvar/apagar, nunca no `body`.
+    private func existingPlace() -> Place? {
+        guard let id = placeId else { return nil }
+        return try? context.fetch(FetchDescriptor<Place>(predicate: #Predicate { $0.id == id })).first
+    }
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -332,7 +336,7 @@ struct EditPlaceView: View {
     private func load() {
         guard !loaded else { return }
         loaded = true
-        if let place = existing {
+        if let place = existingPlace() {
             draft = PlaceDraft(place: place, region: region)
         } else {
             let now = AppClock.now
@@ -360,7 +364,7 @@ struct EditPlaceView: View {
         guard let listId = draft.listId, let list = lists.first(where: { $0.id == listId }) else { error = "Escolhe uma lista."; return }
 
         let place: Place
-        if let existing {
+        if let existing = existingPlace() {
             place = existing
         } else {
             place = Place(id: "m-\(UUID().uuidString.prefix(8).lowercased())", name: name, cityId: draft.cityId)
@@ -378,7 +382,7 @@ struct EditPlaceView: View {
     }
 
     private func delete() {
-        guard let existing else { return }
+        guard let existing = existingPlace() else { return }
         context.delete(existing)
         try? context.save()
         dismiss()
