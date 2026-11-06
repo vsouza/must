@@ -213,8 +213,8 @@ struct WalletEditor: View {
         nameLocal = item.nameLocal ?? ""
         detail = item.detail
         coverage = item.coverage ?? ""
-        balanceText = item.balance.map { String(Int($0.rounded())) } ?? ""
-        lowText = item.lowBalance.map { String(Int($0.rounded())) } ?? ""
+        balanceText = NumberInput.intText(item.balance)
+        lowText = NumberInput.intText(item.lowBalance)
         hasFrom = item.validFrom != nil
         from = item.validFrom ?? AppClock.now
         hasUntil = item.validUntil != nil

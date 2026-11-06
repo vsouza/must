@@ -71,7 +71,7 @@ struct PocketConverterSheet: View {
     private var foreignSymbol: String { region == .bh ? "US$" : region.currencySymbol }
 
     private var value: Double {
-        Double(text.replacingOccurrences(of: ".", with: "").replacingOccurrences(of: ",", with: ".")) ?? 0
+        NumberInput.double(text.replacingOccurrences(of: ".", with: "").replacingOccurrences(of: ",", with: ".")) ?? 0
     }
 
     private var result: String {

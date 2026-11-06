@@ -119,6 +119,7 @@ struct EditPlaceView: View {
                     .background(Capsule().fill(Color.must.ink))
             }
             .buttonStyle(MustPressStyle())
+            .accessibilityIdentifier("edit.save")
         }
         .padding(.top, 16)
     }
@@ -126,10 +127,10 @@ struct EditPlaceView: View {
     private var nameFields: some View {
         HStack(alignment: .top, spacing: 10) {
             field("nome") {
-                TextField("Nome do lugar", text: $draft.name).font(.must.archivo(17))
+                TextField("Nome do lugar", text: $draft.name).font(.must.archivo(17)).accessibilityIdentifier("edit.name")
             }
             field("nome local · mostre ao atendente") {
-                TextField("opcional", text: $draft.nameLocal).font(.must.kanji(17, bold: false))
+                TextField("opcional", text: $draft.nameLocal).font(.must.kanji(17, bold: false)).accessibilityIdentifier("edit.nameLocal")
             }
             .frame(width: 130)
         }
@@ -176,7 +177,7 @@ struct EditPlaceView: View {
                 }
             }
             field("preço · \(region.currencySymbol)") {
-                TextField("0", text: $draft.priceText).font(.must.mono(17)).keyboardType(.decimalPad)
+                TextField("0", text: $draft.priceText).font(.must.mono(17)).keyboardType(.decimalPad).accessibilityIdentifier("edit.price")
             }
             .frame(width: 130)
         }
@@ -184,7 +185,7 @@ struct EditPlaceView: View {
 
     private var areaField: some View {
         field("bairro") {
-            TextField("Savassi, Naka-Meguro…", text: $draft.area).font(.must.archivo(17))
+            TextField("Savassi, Naka-Meguro…", text: $draft.area).font(.must.archivo(17)).accessibilityIdentifier("edit.area")
         }
     }
 
@@ -264,6 +265,7 @@ struct EditPlaceView: View {
         VStack(alignment: .leading, spacing: 10) {
             Micro("notas do board")
             TextField("o que pedir, onde sentar, quando ir…", text: $draft.notes, axis: .vertical)
+                .accessibilityIdentifier("edit.notes")
                 .font(.must.serif(19))
                 .lineLimit(3...8)
                 .padding(16)
@@ -282,6 +284,7 @@ struct EditPlaceView: View {
             }
             if draft.sourceKind != .board && draft.sourceKind != .manual {
                 TextField("link", text: $draft.sourceURL)
+                    .accessibilityIdentifier("edit.link")
                     .font(.must.mono(14))
                     .keyboardType(.URL)
                     .textInputAutocapitalization(.never)
@@ -445,7 +448,7 @@ struct PlaceDraft {
         place.list = list
         place.sub = sub
         place.cityId = cityId
-        place.price = Double(priceText.replacingOccurrences(of: ".", with: "").replacingOccurrences(of: ",", with: "."))
+        place.price = NumberInput.double(priceText.replacingOccurrences(of: ".", with: "").replacingOccurrences(of: ",", with: "."))
         place.area = area.isEmpty ? nil : area
         place.placeId = placeId
         place.hours = placeId == nil ? nil : hours

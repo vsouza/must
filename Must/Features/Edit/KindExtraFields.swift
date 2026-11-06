@@ -198,11 +198,13 @@ struct KindExtraFields: View {
     /// Preço: "1.400" é milhar. Distância (`decimal`): "7,5" e "7.5" são sete e meio.
     private func number(_ b: Binding<Double?>, decimal: Bool = false) -> Binding<String> {
         Binding {
-            b.wrappedValue.map { $0.truncatingRemainder(dividingBy: 1) == 0 ? String(Int($0)) : String($0) } ?? ""
+            // `Int(_:)` de 1e19 ou de NaN derruba o app: o campo relê o valor a cada tecla (rodada 23 · G).
+            guard let value = NumberInput.finite(b.wrappedValue) else { return "" }
+            return value.truncatingRemainder(dividingBy: 1) == 0 ? String(Int(value)) : String(value)
         } set: {
             let s = decimal ? $0.replacingOccurrences(of: ",", with: ".")
                 : $0.replacingOccurrences(of: ".", with: "").replacingOccurrences(of: ",", with: ".")
-            b.wrappedValue = Double(s)
+            b.wrappedValue = NumberInput.double(s)
         }
     }
 
@@ -211,6 +213,6 @@ struct KindExtraFields: View {
     }
 
     private func int(_ b: Binding<Int?>) -> Binding<String> {
-        Binding { b.wrappedValue.map(String.init) ?? "" } set: { b.wrappedValue = Int($0.filter(\.isNumber)) }
+        Binding { b.wrappedValue.map(String.init) ?? "" } set: { b.wrappedValue = NumberInput.int($0) }
     }
 }

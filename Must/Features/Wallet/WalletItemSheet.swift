@@ -215,13 +215,13 @@ struct WalletBalanceSheet: View {
         .scrollIndicators(.hidden)
         .background(Color.must.bg)
         .onAppear {
-            amount = item.balance.map { String(Int($0.rounded())) } ?? ""
+            amount = NumberInput.intText(item.balance)
             notedAt = item.balanceNotedAt ?? AppClock.now
         }
     }
 
     private func save() {
-        guard let value = Double(amount.filter(\.isNumber)) else { return }
+        guard let value = NumberInput.int(amount, max: 1_000_000_000).map(Double.init) else { return }
         item.balance = value
         item.balanceNotedAt = notedAt
         try? context.save()

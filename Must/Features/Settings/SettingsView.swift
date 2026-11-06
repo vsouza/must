@@ -364,6 +364,6 @@ private struct SettingsSections: View {
     static func parse(_ text: String) -> Double? {
         let cleaned = text.replacingOccurrences(of: ".", with: "").replacingOccurrences(of: ",", with: ".")
             .trimmingCharacters(in: .whitespaces)
-        return Double(cleaned)
+        return NumberInput.double(cleaned)
     }
 }

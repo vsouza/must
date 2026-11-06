@@ -158,7 +158,8 @@ enum TicketMoney {
                 s = s.replacingOccurrences(of: ",", with: ".")
             }
         }
-        return Double(s) ?? 0
+        // "nan", "inf" e 20 dígitos colados não viram preço (rodada 23 · G: `Int(_:)` deles derruba a tela).
+        return NumberInput.double(s) ?? 0
     }
 
     private static func window(_ text: String, around location: Int, before: Int, after: Int) -> String {
