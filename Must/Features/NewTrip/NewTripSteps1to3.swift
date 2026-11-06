@@ -381,6 +381,7 @@ struct NewTripStep2: View {
 struct NewTripStep3: View {
     var model: NewTripModel
     @Environment(Services.self) private var services
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var adding = false
     @State private var typed = ""
     @State private var search = DestinationSearch()
@@ -415,14 +416,20 @@ struct NewTripStep3: View {
         return "\(base) · não bate os \(days) dias. Ajuste as noites ou siga assim e acerte depois."
     }
 
-    private func row(_ i: Int, _ city: NewTripDraft.City) -> some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(spacing: 10) { reorder(i, city); info(i, city); Spacer(minLength: 4); nights(city) }
-            VStack(alignment: .leading, spacing: 10) {
-                HStack(spacing: 10) { reorder(i, city); info(i, city) }
-                nights(city)
+    /// Lado a lado como no `NovaViagem3.png`; só empilha o −/+ embaixo com letra de acessibilidade (o `ViewThatFits`
+    /// media a linha de datas sem quebra e empilhava até no tamanho normal).
+    @ViewBuilder private func row(_ i: Int, _ city: NewTripDraft.City) -> some View {
+        Group {
+            if dynamicTypeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(spacing: 10) { reorder(i, city); info(i, city) }
+                    nights(city)
+                }
+            } else {
+                HStack(spacing: 10) { reorder(i, city); info(i, city).layoutPriority(1); Spacer(minLength: 4); nights(city).fixedSize() }
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 16)
         .overlay(alignment: .bottom) { Rectangle().fill(V8.rule).frame(height: 1) }
         .contextMenu {
