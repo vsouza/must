@@ -372,4 +372,29 @@ struct TripEventCodecTests {
         try codec.import(board: BoardCodec.decode(BoardCodec.encode(exported)))
         #expect(try ctx.fetchCount(FetchDescriptor<TripEvent>()) == seedEvents + 1)
     }
+
+    // MARK: Programação colada (RODADA-23 · A)
+
+    @Test func programRoundTripsThroughTheBoardJSON() throws {
+        let at = Date(timeIntervalSince1970: 1_795_000_000)
+        let extra = PlaceExtra(program: [EventSession(at: at, title: "Show", price: 200)], programSource: .poster,
+                               programCheckedAt: Date(timeIntervalSince1970: 1_790_000_000))
+        var place = try JSONDecoder.board.decode(BoardPlace.self, from: Data(#"{"id":"z1","name":"Zepp","listId":"l","cityId":"c"}"#.utf8))
+        place.extra = extra
+        let decoded = try JSONDecoder.board.decode(BoardPlace.self, from: JSONEncoder.board(timeZone: .gmt).encode(place))
+        let back = try #require(decoded.extra)
+        #expect(back.program.map(\.title) == ["Show"] && back.program.first?.at == at)
+        #expect(back.programSource == .poster && back.programCheckedAt == extra.programCheckedAt)
+    }
+
+    @Test func oldFileWithoutProgramStillDecodesAndEmptyProgramIsNotWritten() throws {
+        let old = Data(#"{"art":{"priceAdult":100},"sport":{"sessions":[]}}"#.utf8)
+        let extra = try JSONDecoder.board.decode(PlaceExtra.self, from: old)
+        #expect(extra.program.isEmpty && extra.programSource == nil && extra.art?.priceAdult == 100)
+        let written = try JSONEncoder.board(timeZone: .gmt).encode(extra)
+        let text = String(decoding: written, as: UTF8.self)
+        #expect(!text.contains("program"))
+        #expect(!PlaceExtra(program: [EventSession(at: Date(), title: "x")]).isEmpty)
+        #expect(PlaceExtra().isEmpty)
+    }
 }

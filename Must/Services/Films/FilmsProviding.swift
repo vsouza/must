@@ -14,6 +14,8 @@ struct Film: Identifiable, Hashable, Sendable, Codable {
     var location: String?
     var distanceMeters: Double?
     var url: URL?
+    /// "filmado" (P915) ou "ambientado" (P840). Aditivo ao contrato.
+    var relation: String?
 }
 
 protocol FilmsProviding: Sendable {

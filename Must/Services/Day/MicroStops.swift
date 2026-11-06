@@ -34,6 +34,7 @@ enum MicroStops {
         case (.treat, .it): Words(label: "Gelato no caminho", note: "micro · uma bola no copinho", tag: "gl", cost: 3.5)
         case (.treat, .jp): Words(label: "Taiyaki no caminho", note: "micro · doce de rua", tag: "doce", cost: 300)
         case (.treat, .bh): Words(label: "Sorvete no caminho", note: "micro · uma bola", tag: "doce", cost: 12)
+        case (.show, _): Words(label: "Em cartaz", note: "micro · em cartaz", tag: "cartaz", cost: nil)
         }
     }
 
@@ -43,6 +44,8 @@ enum MicroStops {
         if input.region == .it { order.append(.treat) }
         order.append(.view)
         if input.includes.contains(.shopping) { order.insert(.shop, at: 1) } else { order.append(.shop) }
+        // Por último: só ocupa buraco que sobrou (e só se o board tem exposição em temporada).
+        order.append(.show)
         return order
     }
 
@@ -198,6 +201,9 @@ enum MicroStops {
             }
             return nil
 
+        case .show:
+            return exhibition(timeline: timeline, gaps: gaps, inDay: inDay, input: input, minutes: d, words: w)
+
         case .shop:
             // A caminho: sai de uma parada e compra antes de seguir pra próxima (de preferência à tarde).
             let ordered = gaps.filter { $0.prev.end >= at(15, 0, input) } + gaps.filter { $0.prev.end < at(15, 0, input) }
@@ -209,6 +215,47 @@ enum MicroStops {
             }
             return nil
         }
+    }
+
+    /// Exposição em cartaz (museu/galeria do board) perto do buraco: só se está em temporada hoje, aberta durante a visita
+    /// (e fechando depois dela) e cabe entre duas paradas sem mexer em nenhuma. Nunca entra lugar que já está no dia.
+    /// Dá pra trocar a faixa de 700 m por até 1,2 km: a exposição é o motivo da parada.
+    static let showNearMeters: CLLocationDistance = 1_200
+
+    private static func exhibition(timeline: [DayStop], gaps: [(prev: DayStop, next: DayStop)], inDay: Set<String>,
+                                   input: DayComposer.Input, minutes d: Int, words w: Words) -> DayStop? {
+        let cal = input.region.calendar
+        let cities = Set(input.stops.map { AreaCatalog.cityGroup(forCityId: $0.place.cityId) })
+        let showing = input.catalog.filter { p in
+            guard !p.done, !inDay.contains(p.id), p.kind == .art, p.lat != 0 || p.lng != 0, let art = p.extra?.art,
+                  art.runsFrom != nil || art.runsUntil != nil, art.isRunning(on: input.date, calendar: cal) else { return false }
+            return cities.isEmpty || cities.contains(AreaCatalog.cityGroup(forCityId: p.cityId))
+        }
+        guard !showing.isEmpty else { return nil }
+        for (prev, next) in gaps {
+            guard let from = DayComposer.coordinate(prev) else { continue }
+            let spot = CLLocation(latitude: from.latitude, longitude: from.longitude)
+            let near = showing.map { ($0, $0.location.distance(from: spot)) }.filter { $0.1 <= showNearMeters }
+                .sorted { ($0.1, $0.0.id) < ($1.1, $1.0.id) }
+            for (place, _) in near {
+                let here = CLLocationCoordinate2D(latitude: place.lat, longitude: place.lng)
+                guard let early = fit(d, at: here, prev: prev, next: next, latest: false, input: input),
+                      let late = fit(d, at: here, prev: prev, next: next, latest: true, input: input) else { continue }
+                let end = early.addingTimeInterval(Double(d) * 60)
+                let tz = input.region.timeZone
+                guard place.hours?.isOpen(at: early, timeZone: tz) != false, place.hours?.isOpen(at: end, timeZone: tz) != false else { continue }
+                let closes = place.hours?.closesAt(early, timeZone: tz)
+                if let closes, let hm = closes.split(separator: ":").compactMap({ Int($0) }) as [Int]?, hm.count == 2,
+                   input.date.addingTimeInterval(Double(max(hm[0] * 60 + hm[1], hm[0] == 0 ? 1440 : 0)) * 60) < end { continue }
+                let room = d + Int(late.timeIntervalSince(early) / 60)
+                var note = "micro · em cartaz · cabe \(room) min"
+                if let closes { note += " · fecha \(closes)" }
+                return DayStop(id: "m-show", placeId: place.id, kind: .micro, start: early, end: end, label: "\(place.name) · em cartaz",
+                               note: note, tag: w.tag, area: place.area ?? prev.area, cost: place.extra?.art?.priceAdult ?? place.price,
+                               micro: .show, lat: place.lat, lng: place.lng)
+            }
+        }
+        return nil
     }
 
     static func isCoffee(_ p: SolverPlace) -> Bool {
