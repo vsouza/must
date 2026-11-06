@@ -76,7 +76,7 @@ struct ListView: View {
                             + (group.places.firstIndex { $0.id == place.id } ?? 0) + 1
                         Button { router.push(.place(id: place.id), on: router.tab) } label: {
                             ListPlaceRow(index: "\(number)", place: place, meta: ListGrouping.meta(place, region: region),
-                                         state: state(place, open: snapshot.isOpen(place.id), currentPlaceId: currentPlaceId),
+                                         state: state(place, openState: snapshot.states[place.id], currentPlaceId: currentPlaceId),
                                          trailing: trailing(place, distance: snapshot.distance(place.id)), showPhoto: showPhotos)
                         }
                         .buttonStyle(.plain)
@@ -173,12 +173,12 @@ struct ListView: View {
         return dayEngine.now(in: plan, at: now)?.current.placeId
     }
 
-    private func state(_ place: Place, open: Bool, currentPlaceId: String?) -> IndexRowState {
+    /// `openState` vem do `OpenNowIndex` (já calculado no minuto): a linha não relê o horário de cada lugar ao rolar.
+    private func state(_ place: Place, openState: OpenState?, currentPlaceId: String?) -> IndexRowState {
         if place.isDone { return .done }
         if place.id == currentPlaceId { return .now }
         if let r = place.reservation, region.calendar.isDate(r.at, inSameDayAs: now), r.at > now { return .reservation(region.timeString(r.at)) }
-        if open { return .open }
-        switch place.openState(at: now, timeZone: region.timeZone) {
+        switch openState ?? place.openState(at: now, timeZone: region.timeZone) {
         case .closed(_, let time): return time.map { .opensAt(ListGrouping.hourLabel($0)) } ?? .closed
         case .open: return .open
         case .unknown: return .none
