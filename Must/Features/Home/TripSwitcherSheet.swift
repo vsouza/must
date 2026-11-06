@@ -16,6 +16,8 @@ struct TripSwitcherSheet: View {
     @Environment(AppRouter.self) private var router
     @Query private var places: [Place]
     @State private var confirmDelete: TripRow?
+    /// Linha com Arquivar/Apagar à mostra (uma por vez).
+    @State private var openSwipe: String?
 
     private var rows: [TripRow] {
         // "GPS": a viagem que o automático abriria aqui (só com posição).
@@ -26,7 +28,8 @@ struct TripSwitcherSheet: View {
 
     var body: some View {
         let rows = rows
-        VStack(alignment: .leading, spacing: 0) {
+        // Rola quando não cabe (4 viagens + Nova viagem na altura menor da folha): nada encolhe nem trunca.
+        ScrollView { VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .firstTextBaseline) {
                 Text("Minhas viagens").font(V8Font.display(34)).foregroundStyle(V8.ink).lineLimit(1).minimumScaleFactor(0.7)
                 Spacer(minLength: 8)
@@ -35,28 +38,24 @@ struct TripSwitcherSheet: View {
             .padding(.top, 22)
             .padding(.bottom, 14)
             Rectangle().fill(V8.rule).frame(height: 1)
-            List {
-                ForEach(rows) { row in
+            ForEach(rows) { row in
+                SwipeToActRow(enabled: row.region.trip.kind != .home, openRow: $openSwipe, id: row.id,
+                              onArchive: { store.archive(row.region.rawValue) }, onDelete: { confirmDelete = row }) {
                     Button { select(row) } label: { TripRowView(row: row) }
                         .buttonStyle(MustPressStyle())
-                        .accessibilityElement(children: .ignore)
-                        .accessibilityLabel("\(row.title). \(row.subtitle). \(row.tag.rawValue)\(row.isActive ? ". Ativa" : "")")
-                        .accessibilityAddTraits(row.isActive ? .isSelected : [])
-                        .accessibilityActions { if row.region.trip.kind != .home { swipeButtons(row) } }
-                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                            if row.region.trip.kind != .home { swipeButtons(row) }
-                        }
-                        .listRowInsets(EdgeInsets())
-                        .listRowBackground(V8.paper)
-                        .listRowSeparatorTint(V8.rule)
-                        .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
                 }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("\(row.title). \(row.subtitle). \(row.tag.rawValue)\(row.isActive ? ". Ativa" : "")")
+                .accessibilityAddTraits(row.isActive ? [.isSelected, .isButton] : .isButton)
+                .accessibilityAction { select(row) }
+                .accessibilityActions {
+                    if row.region.trip.kind != .home {
+                        Button("Arquivar") { store.archive(row.region.rawValue) }
+                        Button("Apagar") { confirmDelete = row }
+                    }
+                }
+                Rectangle().fill(V8.rule).frame(height: 1)
             }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
-            .scrollDisabled(rows.count <= 4)
-            .environment(\.defaultMinListRowHeight, 1)
-            .frame(height: CGFloat(rows.count) * 81)
             if Self.newTripEnabled {
                 Button { newTrip() } label: { newTripRow }
                     .buttonStyle(MustPressStyle())
@@ -70,12 +69,14 @@ struct TripSwitcherSheet: View {
                 .foregroundStyle(V8.mute)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.top, 18)
-            Spacer(minLength: 0)
+                .padding(.bottom, 24)
         }
         .padding(.horizontal, 20)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+        }
+        .scrollBounceBehavior(.basedOnSize)
         .background(V8.paper.ignoresSafeArea())
-        .presentationDetents([.fraction(0.62), .large])
+        .presentationDetents([.fraction(rows.count > 3 ? 0.8 : 0.72), .large])
         .presentationDragIndicator(.visible)
         .presentationCornerRadius(32)
         .confirmationDialog(confirmDelete.map { "Apagar \($0.title)?" } ?? "", isPresented: Binding(
@@ -88,11 +89,6 @@ struct TripSwitcherSheet: View {
         } message: {
             Text("Apaga o board, os gastos e os ingressos desta viagem neste iPhone. As outras viagens ficam como estão.")
         }
-    }
-
-    @ViewBuilder private func swipeButtons(_ row: TripRow) -> some View {
-        Button("Apagar", role: .destructive) { confirmDelete = row }
-        Button("Arquivar") { store.archive(row.region.rawValue) }.tint(V8.ink)
     }
 
     /// Fecha a folha e abre o fluxo Nova viagem (prompt 28), depois da animação da folha.
@@ -158,5 +154,68 @@ private struct TripRowView: View {
         case .gps, .plano:
             text.foregroundStyle(V8.mute)
         }
+    }
+}
+
+/// Deslizar pra esquerda mostra Arquivar e Apagar atrás da linha (a folha não é `List`, então o swipe é nosso).
+/// Toque na linha aberta fecha. VoiceOver usa as ações da linha.
+private struct SwipeToActRow<Content: View>: View {
+    var enabled: Bool
+    @Binding var openRow: String?
+    var id: String
+    var onArchive: () -> Void
+    var onDelete: () -> Void
+    @ViewBuilder var content: Content
+
+    @State private var drag: CGFloat = 0
+    private let width: CGFloat = 176
+
+    private var isOpen: Bool { openRow == id }
+    private var offset: CGFloat { min(0, max(-width - 24, (isOpen ? -width : 0) + drag)) }
+
+    var body: some View {
+        ZStack(alignment: .trailing) {
+            if enabled && offset < 0 {
+                HStack(spacing: 8) {
+                    action("Arquivar", "archivebox", fill: V8.ink, ink: V8.white) { close(); onArchive() }
+                    action("Apagar", "trash", fill: V8.orange, ink: V8.ink) { close(); onDelete() }
+                }
+                .padding(.vertical, 12)
+                .transition(.opacity)
+            }
+            content
+                .background(V8.paper)
+                .offset(x: offset)
+                .allowsHitTesting(!isOpen)
+                .overlay { if isOpen { Color.clear.contentShape(Rectangle()).onTapGesture { close() } } }
+        }
+        // Corta o que sai pela direita ao deslizar, sem cortar o anel da ativa (4 pt pra fora da miniatura).
+        .mask(Rectangle().padding(-6))
+        .gesture(DragGesture(minimumDistance: 18)
+            .onChanged { v in if abs(v.translation.width) > abs(v.translation.height) { drag = v.translation.width } }
+            .onEnded { v in
+                let shouldOpen = (isOpen ? -width : 0) + v.translation.width < -width / 2
+                withAnimation(.snappy(duration: 0.22)) {
+                    openRow = shouldOpen ? id : (isOpen ? nil : openRow)
+                    drag = 0
+                }
+            }, including: enabled ? .all : .subviews)
+        .animation(.snappy(duration: 0.22), value: isOpen)
+    }
+
+    private func close() { withAnimation(.snappy(duration: 0.22)) { openRow = nil } }
+
+    private func action(_ title: String, _ symbol: String, fill: Color, ink: Color, _ run: @escaping () -> Void) -> some View {
+        Button(action: run) {
+            VStack(spacing: 4) {
+                Image(systemName: symbol).font(.system(size: 17, weight: .semibold))
+                Text(title).font(V8Font.text(12, weight: .bold))
+            }
+            .foregroundStyle(ink)
+            .frame(width: 80)
+            .frame(maxHeight: .infinity)
+            .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(fill))
+        }
+        .buttonStyle(MustPressStyle())
     }
 }
