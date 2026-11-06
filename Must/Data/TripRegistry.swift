@@ -24,7 +24,7 @@ final class TripRegistry: @unchecked Sendable {
     init(directory: URL) {
         url = directory.appending(path: Self.fileName)
         let fm = FileManager.default
-        if fm.fileExists(atPath: url.path()) {
+        if fm.fileExists(atPath: url.path(percentEncoded: false)) {
             do {
                 let file = try Self.decoder.decode(File.self, from: Data(contentsOf: url))
                 all = file.trips

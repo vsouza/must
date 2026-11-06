@@ -6,7 +6,7 @@ import Testing
 /// uma viagem não toca nas outras.
 struct TripRegistryTests {
     private func tempDir() -> URL {
-        FileManager.default.temporaryDirectory.appending(path: "trips-\(UUID().uuidString)", directoryHint: .isDirectory)
+        FileManager.default.temporaryDirectory.appending(path: "trips Application Support \(UUID().uuidString)", directoryHint: .isDirectory)
     }
 
     private func newTrip(_ id: TripID) -> Trip {
@@ -26,7 +26,7 @@ struct TripRegistryTests {
         #expect(registry.trips.map(\.countryCode) == ["BR", "JP", "IT"])
         #expect(registry.trip("bh")?.kind == .home)
         #expect(registry.trip("jp")?.start == "2026-11-11" && registry.trip("jp")?.end == "2026-11-24")
-        #expect(FileManager.default.fileExists(atPath: dir.appending(path: "trips.json").path()))
+        #expect(FileManager.default.fileExists(atPath: dir.appending(path: "trips.json").path(percentEncoded: false)))
         // Os nomes de arquivo batem com os de antes do registro.
         #expect(Region.allCases.map(\.storeFileName) == registry.trips.map(\.storeFileName))
     }

@@ -27,7 +27,7 @@ struct TripMigrationTests {
             try context.save()
         }
         try FileManager.default.removeItem(at: dir.appending(path: TripRegistry.fileName))
-        let before = try FileManager.default.contentsOfDirectory(atPath: dir.path()).filter { $0.hasSuffix(".store") }.sorted()
+        let before = try FileManager.default.contentsOfDirectory(atPath: dir.path(percentEncoded: false)).filter { $0.hasSuffix(".store") }.sorted()
         #expect(before == ["must-bh.store", "must-jp.store"])
 
         // "Depois do update".
@@ -39,7 +39,7 @@ struct TripMigrationTests {
         let places = try context.fetch(FetchDescriptor<Place>(sortBy: [SortDescriptor(\.id)]))
         #expect(!places.isEmpty)
         #expect(places.first?.isDone == true)
-        let after = try FileManager.default.contentsOfDirectory(atPath: dir.path()).filter { $0.hasSuffix(".store") }.sorted()
+        let after = try FileManager.default.contentsOfDirectory(atPath: dir.path(percentEncoded: false)).filter { $0.hasSuffix(".store") }.sorted()
         #expect(after == before)
     }
 }

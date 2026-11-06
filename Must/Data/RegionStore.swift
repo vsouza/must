@@ -5,6 +5,10 @@ import OSLog
 import SwiftData
 import SwiftUI
 
+/// Nome novo (prompt 28 §3.3): a viagem aberta e o container dela. O arquivo e o tipo seguem `RegionStore` até o
+/// rename final (o tipo é usado como valor de ambiente em ~100 telas).
+typealias TripStore = RegionStore
+
 /// Região atual + o `ModelContainer` dela. Trocar região = trocar container (não apaga nada).
 /// O root injeta `.modelContainer(store.container)` e usa `.id(store.region)` pra recriar a árvore.
 @MainActor
@@ -152,7 +156,7 @@ final class RegionStore {
         retire(container)
         let base = directory.appending(path: region.storeFileName)
         for suffix in ["", "-shm", "-wal"] {
-            try? FileManager.default.removeItem(at: URL(filePath: base.path() + suffix))
+            try? FileManager.default.removeItem(at: URL(filePath: base.path(percentEncoded: false) + suffix))
         }
         defaults.removeObject(forKey: Self.onboardedKey(region))
         let (container, error) = Self.openContainer(for: region, in: directory, seedBundle: seedBundle)
@@ -189,7 +193,7 @@ final class RegionStore {
         if region.rawValue == id { leaveToHome() }
         let base = directory.appending(path: trip.storeFileName)
         for suffix in ["", "-shm", "-wal"] {
-            try? FileManager.default.removeItem(at: URL(filePath: base.path() + suffix))
+            try? FileManager.default.removeItem(at: URL(filePath: base.path(percentEncoded: false) + suffix))
         }
         registry.remove(id)
         KnownTrips.shared.forget(id)
