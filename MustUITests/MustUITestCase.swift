@@ -219,6 +219,34 @@ class MustUITestCase: XCTestCase {
         }
     }
 
+    /// Campos de texto visíveis agora (TextField de uma linha e os de várias linhas, que viram textView).
+    func visibleFields() -> [XCUIElement] {
+        let fields = app.textFields.allElementsBoundByIndex + app.textViews.allElementsBoundByIndex
+        return fields.filter { $0.exists && $0.isHittable }
+    }
+
+    /// Digita em cada campo visível (e nos que aparecem rolando). Os 23 dígitos vão primeiro: com texto antes, o campo
+    /// numérico já virou nil e o resto não chega no `Int(_:)` (foi assim que o crash do `KindExtraFields` passou batido).
+    func typeIntoAllFields(_ config: Config, swipes: Int = 3, texts: [String] = ["12345678901234567890123", " Ação 東京 🍜 ", "nan"]) {
+        var done = Set<String>()
+        for _ in 0...swipes {
+            for field in visibleFields() {
+                let key = "\(field.identifier)|\(field.placeholderValue ?? "")|\(field.label)"
+                guard !done.contains(key) else { continue }
+                done.insert(key)
+                field.tap()
+                for text in texts {
+                    field.typeText(text)
+                    guard app.state == .runningForeground else { return }
+                }
+                clear(field)
+                field.typeText(texts[0])
+            }
+            dismissKeyboard()
+            app.swipeUp(velocity: .slow)
+        }
+    }
+
     /// Gira a tela e volta (o app é só retrato no iPhone: tem que ignorar sem quebrar).
     func rotate() {
         XCUIDevice.shared.orientation = .landscapeLeft

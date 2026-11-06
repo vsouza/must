@@ -86,6 +86,7 @@
 		2C7065146324462F28DCE27B /* ColarTextoModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 237B6CBB2609F264714CEBF9 /* ColarTextoModel.swift */; };
 		2D002E77D1700CE3097993E5 /* V8Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 897C9F43BE0507A3E020BDFC /* V8Components.swift */; };
 		2D2C8CB9825DBE5903B8BDA7 /* ShoppingReport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51945D3387B8A1F6DF6F5AF9 /* ShoppingReport.swift */; };
+		2D6545265A9E4F569F900F47 /* FieldsTypingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36899479817CC171CDE3AA7E /* FieldsTypingTests.swift */; };
 		2EC1D6DAF56A4216102680B4 /* SolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E86FF33437EA2C4CD1E9745 /* SolverTests.swift */; };
 		2F4AEE43152136D6BCE5ACBC /* StartupSyncTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CB000EE62BDE36108585388 /* StartupSyncTests.swift */; };
 		2F61642C63CD0B2F85023063 /* NotesRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC9FD34E64012CFB56E93D7 /* NotesRules.swift */; };
@@ -607,6 +608,7 @@
 		357E10DA392C32CE55CDD7C7 /* BairrosCameraTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BairrosCameraTests.swift; sourceTree = "<group>"; };
 		3617550DF5AB1EF53F0BCF7A /* AreaTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AreaTests.swift; sourceTree = "<group>"; };
 		361BB6DBEF0297F500E175DB /* ReservationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservationsView.swift; sourceTree = "<group>"; };
+		36899479817CC171CDE3AA7E /* FieldsTypingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FieldsTypingTests.swift; sourceTree = "<group>"; };
 		368E3A56E58BFCDD87F59395 /* TravelText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TravelText.swift; sourceTree = "<group>"; };
 		36F805C942D29E1682813E17 /* GuiaBairroView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuiaBairroView.swift; sourceTree = "<group>"; };
 		370D0CA48E024F76392572E5 /* FriendsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsTests.swift; sourceTree = "<group>"; };
@@ -1646,6 +1648,7 @@
 			isa = PBXGroup;
 			children = (
 				01CA46FCD9F5308090F395DB /* AddToListTypingTests.swift */,
+				36899479817CC171CDE3AA7E /* FieldsTypingTests.swift */,
 				14EE015D01CFA6FF04C99D5C /* MustUITestCase.swift */,
 			);
 			path = MustUITests;
@@ -2514,6 +2517,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				57E97430EA39B4C0FAC86334 /* AddToListTypingTests.swift in Sources */,
+				2D6545265A9E4F569F900F47 /* FieldsTypingTests.swift in Sources */,
 				DBB6274E8C85B500E7EDD0F6 /* MustUITestCase.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
