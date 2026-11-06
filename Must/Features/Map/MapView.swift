@@ -8,8 +8,11 @@ struct MapView: View {
     @Environment(AppRouter.self) private var router
     @Environment(RegionStore.self) private var store
     @Environment(Services.self) private var services
+    @Environment(\.modelContext) private var context
+    @Environment(\.dayEngine) private var engine
 
     @Query private var places: [Place]
+    @Query(sort: \MustList.order) private var lists: [MustList]
     @Query private var days: [PlannedDay]
     @Query private var settingsList: [Settings]
     @Query private var trips: [TripInfo]
@@ -23,13 +26,24 @@ struct MapView: View {
     /// Bússola → cone do "você" (prompt 18 · A.2). Fica fora do `body`: ver `CompassBridge`.
     @State private var headingSink = YouHeadingSink()
     @State private var selectedId: String?
-    @State private var query = ""
     @State private var didCenter = false
+    /// Filtro por Must (prompt 27 §2.b), salvo por região.
+    @State private var mustFilter = MapMustFilter()
+    @State private var filterRegion: Region?
+    /// Busca "o melhor X perto de mim agora" (prompt 27 §2.c).
+    @State private var search = MapSearchModel(provider: MapSearchModel.providers().plain, rated: MapSearchModel.providers().rated)
+    @State private var speech = SpeechInput()
+    @State private var nearbyCache: [NearbyPlace] = []
+    @State private var failure: String?
+    @FocusState private var searchFocused: Bool
 
     /// Escala de bairro: ~900 m de largura de tela (a barra mostra "300 m").
     static let neighborhoodWidth: Double = 900
     /// "Perto de você".
     static let nearRadius: CLLocationDistance = 500
+    /// Altura livre embaixo com o card do pino ou dos resultados aberto (card + barra de abas).
+    static let cardBottom: CGFloat = 96 + 400
+    static let resultsTop: CGFloat = 250
 
     private var region: Region { store.region }
     private var now: Date { AppClock.now }
@@ -75,6 +89,7 @@ struct MapView: View {
                          onGesture: { cam.userGestured() },
                          onIdle: { cam.cameraIdle() },
                          onSelect: select,
+                         onTapEmpty: tapEmpty,
                          headingSink: headingSink)
                 .ignoresSafeArea()
             CompassBridge(compass: services.location.compass, sink: headingSink)
@@ -82,7 +97,24 @@ struct MapView: View {
             overlays
         }
         .onAppear(perform: appear)
+        .onAppear {
+            // Voz (o mesmo `SpeechInput` do Quero…): ao parar de falar, busca.
+            speech.onFinal = { text in
+                search.text = text
+                submitSearch()
+            }
+        }
+        .task { await debugScreen() }
+        .onDisappear { speech.cancel() }
         .onChange(of: router.mapShowsOpenNow) { _, open in if open { consumeOpenNow() } }
+        .onChange(of: region, initial: true) { _, r in loadFilter(r) }
+        .onChange(of: mustFilter) { _, f in
+            guard filterRegion == region else { return }
+            f.save(region)
+            if selectedId == nil, !search.isActive { reevaluate(force: true) }
+        }
+        .onChange(of: search.top.map(\.id)) { _, _ in fitResults() }
+        .onChange(of: speech.transcript) { _, t in if speech.isListening, !t.isEmpty { search.text = t } }
         .onChange(of: (stops + tomorrowStops).map(\.id)) { _, _ in requestRoutes() }
         // Reavaliar a câmera: andou (> 100 m, o controlador filtra), camada, 済, voltou pro app com o mapa em foco.
         .onChange(of: here.map { [$0.coordinate.latitude, $0.coordinate.longitude] }) { _, _ in reevaluate(force: false) }
@@ -96,7 +128,7 @@ struct MapView: View {
     /// Pinos das camadas ligadas que contam pro "mais perto".
     private var candidates: [MapCandidate] {
         let nextId = nextStop?.place?.id
-        return pins.filter { pin in
+        return mustPins.filter { pin in
             guard layers.contains(pin.layer), pin.placeId != nil else { return false }
             if case .today(_, .done, _) = pin.kind { return false }
             return true
@@ -129,7 +161,7 @@ struct MapView: View {
     // MARK: Cena
 
     private var scene: MapScene {
-        var scene = MapScene(region: region, layers: layers, pins: pins, metro: transit)
+        var scene = MapScene(region: region, layers: layers.union([.search]), pins: displayPins, metro: transit)
         let legs = Array(zip(stops, stops.dropFirst()))
         for (a, b) in legs {
             guard let pa = a.place, let pb = b.place else { continue }
@@ -155,6 +187,38 @@ struct MapView: View {
             }
         }
         return scene
+    }
+
+    /// Lista de cada lugar (pro filtro por Must).
+    private var listOf: [String: String] {
+        Dictionary(places.compactMap { p in p.list.map { (p.id, $0.id) } }, uniquingKeysWith: { a, _ in a })
+    }
+
+    /// Pinos depois do filtro por Must (não toca metrô, "você", distância nem busca).
+    private var mustPins: [MapPin] { mustFilter.apply(pins, listOf: listOf) }
+
+    /// O que o mapa desenha: filtro por Must, resultados da busca por cima (o mesmo lugar do board some, pra não ter dois
+    /// pinos) e o selecionado/escolhido em laranja.
+    private var displayPins: [MapPin] {
+        var out = mustPins
+        let results = search.top
+        if !results.isEmpty, selectedId == nil {
+            let boardIds = Set(results.compactMap(\.result.boardPlaceId))
+            out.removeAll { $0.placeId.map(boardIds.contains) == true }
+            let chosen = search.chosen?.id
+            for (i, c) in results.enumerated() where MapSearch.valid(c.result.lat, c.result.lng) {
+                out.append(MapPin(id: "result-\(c.id)", coordinate: c.result.coordinate, kind: .result(number: i + 1),
+                                  placeId: c.result.boardPlaceId, layer: .search, highlighted: c.id == chosen))
+            }
+        }
+        if let selectedId {
+            for i in out.indices where out[i].placeId == selectedId && out[i].layer != .search {
+                if case .callout = out[i].kind { continue }
+                if case .badge = out[i].kind { continue }
+                out[i].highlighted = true
+            }
+        }
+        return out
     }
 
     /// Pinos memoizados (A.2): `body` lê `pins` várias vezes; só monta de novo quando a chave muda.
@@ -263,7 +327,7 @@ struct MapView: View {
 
     private var nearby: [Near] {
         guard let here else { return [] }
-        let visible = Set(pins.filter { layers.contains($0.layer) }.compactMap(\.placeId))
+        let visible = Set(mustPins.filter { layers.contains($0.layer) }.compactMap(\.placeId))
         return places.filter { visible.contains($0.id) && !$0.isDone }
             .map { Near(place: $0, meters: $0.location.distance(from: here)) }
             .filter { $0.meters <= Self.nearRadius }
@@ -282,56 +346,258 @@ struct MapView: View {
 
     // MARK: Por cima
 
-    private var overlays: some View {
+    private var selectedPlace: Place? { selectedId.flatMap { id in places.first { $0.id == id } } }
+
+    @ViewBuilder private var overlays: some View {
+        if let place = selectedPlace {
+            cardOverlay(place)
+        } else {
+            mainOverlay
+        }
+    }
+
+    /// Card do pino aberto (`MapaPino.png`): fechar + ficha técnica em cima, o card embaixo. O mapa continua vivo no meio.
+    private func cardOverlay(_ place: Place) -> some View {
+        VStack(spacing: 0) {
+            HStack(alignment: .top) {
+                V8CornerButton(systemName: "xmark", label: "Fechar", filled: false) { closeCard() }
+                    .background(Circle().fill(V8.paper.opacity(0.92)))
+                Spacer(minLength: 12)
+                V8SpecStack(lines: MapCardFacts.spec(area: areaName, pin: pinPosition(place), list: place.list?.name),
+                            color: V8.ink, alignment: .trailing)
+                    .multilineTextAlignment(.trailing)
+                    .padding(.top, 12)
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 8)
+            Spacer(minLength: 0)
+            MapPlaceCard(place: place, region: region, now: now, here: here, walkMaxKm: walkMaxKm,
+                         goMinutes: legFromHere(to: place)?.minutes, nearby: nearbyCache,
+                         onClose: closeCard,
+                         onOpen: { router.push(.place(id: place.id)) },
+                         onGo: { router.push(.ir(placeId: place.id)) },
+                         onDone: { router.sheet = .expense(placeId: place.id) })
+                .padding(.horizontal, 12)
+                .padding(.bottom, 96)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+        }
+    }
+
+    /// "pino 2 de 9 · hoje" (parada de hoje/amanhã); `nil` pra quem não está num dia.
+    private func pinPosition(_ place: Place) -> (number: Int, total: Int, day: String)? {
+        if let i = stops.firstIndex(where: { $0.place?.id == place.id }) { return (i + 1, stops.count, "hoje") }
+        if let i = tomorrowStops.firstIndex(where: { $0.place?.id == place.id }) { return (i + 1, tomorrowStops.count, "amanhã") }
+        return nil
+    }
+
+    private var mainOverlay: some View {
         let near = nearby
         return VStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 10) {
                 HStack(spacing: 10) {
-                    searchField(near)
-                    Button { router.sheet = .assistant } label: {
-                        MustIconView(.assistente, size: 20)
-                            .foregroundStyle(near.isEmpty ? .white : Color.must.greenText)
-                            .frame(width: 52, height: 52)
-                            .background(Circle().fill(near.isEmpty ? Color.must.ink : Color.must.green))
-                            .shadow(color: Color(hex: 0x121316, opacity: 0.16), radius: 10, y: 6)
+                    MapSearchField(text: $search.text, placeholder: searchPlaceholder(near), listening: speech.isListening,
+                                   active: search.isActive, focused: $searchFocused,
+                                   onSubmit: submitSearch, onMic: { Task { await speech.toggle() } }, onClear: clearSearch)
+                    if !search.isActive && !searchFocused {
+                        Button { router.sheet = .assistant } label: {
+                            MustIconView(.assistente, size: 20)
+                                .foregroundStyle(near.isEmpty ? .white : Color.must.greenText)
+                                .frame(width: 52, height: 52)
+                                .background(Circle().fill(near.isEmpty ? Color.must.ink : Color.must.green))
+                                .shadow(color: Color(hex: 0x121316, opacity: 0.16), radius: 10, y: 6)
+                        }
+                        .buttonStyle(MustPressStyle())
+                        .accessibilityLabel("Assistente")
                     }
-                    .buttonStyle(MustPressStyle())
-                    .accessibilityLabel("Assistente")
                 }
-                .padding(.horizontal, 22)
-                legend
-                if let far = farTarget { farNotice(far.place, target: far.target).padding(.horizontal, 22) }
-                OfflineMapNudge(here: here?.coordinate, region: region).padding(.horizontal, 22)
+                .padding(.horizontal, 20)
+                if search.isActive { MapIntentChips(chips: search.chips, onTap: tapChip) }
+                MapMustPills(total: mustCounts.total, counts: mustCounts.lists, filter: mustFilter,
+                             onAll: { mustFilter.showAll() }, onToggle: { mustFilter.toggle($0) })
+                if !search.isActive {
+                    legend
+                    if let far = farTarget { farNotice(far.place, target: far.target).padding(.horizontal, 22) }
+                    OfflineMapNudge(here: here?.coordinate, region: region).padding(.horizontal, 22)
+                }
             }
             .padding(.top, 8)
 
             Spacer()
 
-            HStack(alignment: .bottom) {
-                ScaleBar(metersPerPoint: camera?.metersPerPoint)
-                Spacer()
-                VStack(spacing: 10) {
-                    roundButton(label: "Centralizar em mim") {
-                        MustIconView(.voceGps, size: 20).foregroundStyle(Color.must.ink)
-                    } action: { selectedId = nil; cam.resumeAuto(here: here, candidates: candidates, fallback: fallbackCenter) }
-                    roundButton(label: "Escala de bairro") {
-                        Text("300").font(.must.mono(13, .semibold)).foregroundStyle(Color.must.ink)
-                    } action: { selectedId = nil; cam.forceNeighborhood(here?.coordinate ?? fallbackCenter) }
+            if !search.isActive {
+                HStack(alignment: .bottom) {
+                    ScaleBar(metersPerPoint: camera?.metersPerPoint)
+                    Spacer()
+                    VStack(spacing: 10) {
+                        roundButton(label: "Centralizar em mim") {
+                            MustIconView(.voceGps, size: 20).foregroundStyle(Color.must.ink)
+                        } action: { selectedId = nil; cam.resumeAuto(here: here, candidates: candidates, fallback: fallbackCenter) }
+                        roundButton(label: "Escala de bairro") {
+                            Text("300").font(.must.mono(13, .semibold)).foregroundStyle(Color.must.ink)
+                        } action: { selectedId = nil; cam.forceNeighborhood(here?.coordinate ?? fallbackCenter) }
+                    }
                 }
-            }
-            .padding(.horizontal, 22)
-            .padding(.bottom, 10)
-
-            sheet(near)
                 .padding(.horizontal, 22)
-                .overlay(alignment: .bottomTrailing) {
-                    Text("© OpenStreetMap · Protomaps")
-                        .font(.must.archivo(9))
-                        .foregroundStyle(Color.must.secondary.opacity(0.9))
-                        .padding(.trailing, 26)
-                        .offset(y: 14)
-                }
-                .padding(.bottom, 96)
+                .padding(.bottom, 10)
+            }
+
+            Group {
+                if search.isActive { resultsCard.padding(.horizontal, 12) } else { sheet(near).padding(.horizontal, 22) }
+            }
+            .overlay(alignment: .bottomTrailing) {
+                Text("© OpenStreetMap · Protomaps")
+                    .font(.must.archivo(9))
+                    .foregroundStyle(Color.must.secondary.opacity(0.9))
+                    .padding(.trailing, 26)
+                    .offset(y: 14)
+            }
+            .padding(.bottom, 96)
+        }
+    }
+
+    // MARK: Filtro por Must
+
+    private var mustCounts: (total: Int, lists: [MapMustFilter.Count]) {
+        MapMustFilter.counts(listIdsOfPlaces: places.map { $0.list?.id }, lists: lists.map { ($0.id, $0.name) })
+    }
+
+    private func loadFilter(_ region: Region) {
+        mustFilter = MapMustFilter.load(region)
+        filterRegion = region
+    }
+
+    // MARK: Busca
+
+    private func searchPlaceholder(_ near: [Near]) -> String {
+        let open = near.filter { isOpen($0.place) }.count
+        let summary = near.isEmpty ? "nada a 500 m" : "\(near.count) \(near.count == 1 ? "must" : "musts") a 500 m · \(open) \(open == 1 ? "aberto" : "abertos")"
+        return "\(areaName) · \(summary)"
+    }
+
+    private var resultsCard: some View {
+        let chosen = search.chosen
+        let slot = chosen.flatMap { search.rows[$0.id]?.slot }
+        let emptyText = search.output?.offline == true
+            ? "Nada aberto no seu board por aqui. Sem internet: a busca no Google volta quando a rede voltar."
+            : "Nada aberto até \(MapSearchModel.km(search.output?.radiusKm ?? MapSearch.fallbackRadiusKm)). Tente o Quero… ou outro raio."
+        return MapResultsCard(title: search.title, countLine: search.countLine, items: search.top, chosenId: chosen?.id,
+                              searching: search.phase == .searching, emptyText: failure ?? emptyText, locale: region.locale,
+                              encaixarTitle: slot.map { "Encaixar \(region.timeString($0.start))" } ?? (chosen == nil ? "Encaixar" : "Não cabe hoje"),
+                              canEncaixar: slot != nil,
+                              onChoose: chooseResult,
+                              onQuero: { router.sheet = .quero(text: search.text) },
+                              onEncaixar: encaixar)
+    }
+
+    private func searchEnv() -> MapSearchEnv {
+        let quero = queroEnv()
+        let tz = region.timeZone
+        let byId = Dictionary(places.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        let board = quero.board.map { b -> MapBoardEntry in
+            let p = byId[b.id]
+            let open: Bool? = switch p?.openState(at: now, timeZone: tz) {
+            case .open: true
+            case .closed: false
+            default: nil
+            }
+            return MapBoardEntry(place: b, openNow: open, priceLevel: p?.priceLevel, queueMinutes: p?.queueMinutes)
+        }
+        return MapSearchEnv(region: region, center: quero.origin, cityGroup: quero.cityGroup,
+                            online: services.connectivity.status != .offline, board: board,
+                            useModel: settingsList.first?.onDeviceAI ?? true, quero: quero, enterprise: PlacesEnterpriseFlag.isOn())
+    }
+
+    /// O mesmo ambiente do Quero… (o "Encaixar hoje" do mapa e o de lá são a mesma conta).
+    private func queroEnv() -> QueroEnv {
+        let trip = trips.first
+        let city = trip?.city(on: now, calendar: region.calendar)
+        let cityCenter = city.map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lng) } ?? region.defaultCenter
+        let gps = here?.coordinate
+        let origin = gps.flatMap { DaySolver.streetKm($0, cityCenter) < 60 ? $0 : nil } ?? cityCenter
+        let cityId = city?.id ?? trip?.cities.first?.id ?? region.rawValue
+        let group = AreaCatalog.cityGroup(forCityId: cityId)
+        let today = region.calendar.startOfDay(for: now)
+        return QueroEnv(region: region, now: now, plan: engine.plan(for: today, region: region, context: context), center: origin,
+                        origin: origin, areaName: areaName, cityGroup: group, cityId: cityId,
+                        online: services.connectivity.status != .offline,
+                        board: QueroEnv.board(places, cityGroup: group, now: now, timeZone: region.timeZone),
+                        useModel: settingsList.first?.onDeviceAI ?? true, walkMaxKm: walkMaxKm)
+    }
+
+    /// Enter/buscar (nunca a cada tecla). Nome de um lugar do board abre o card dele (como a busca fazia); o resto é
+    /// "o melhor X perto de mim agora".
+    private func submitSearch() {
+        let typed = search.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !typed.isEmpty else { return }
+        searchFocused = false
+        failure = nil
+        if let hit = Self.boardNameHit(typed, in: places) {
+            search.clear()
+            open(hit.id, show: true)
+            return
+        }
+        selectedId = nil
+        search.submit(searchEnv())
+        Task { nearbyCache = await MapRatings.nearbyBatch(lat: fallbackCenter.latitude, lng: fallbackCenter.longitude, region: region) }
+    }
+
+    /// O nome de um lugar do board ("Inimá", "Fuunji"): igual, ou contido — desde que o texto não seja uma vontade
+    /// conhecida ("ramen", "pão de queijo" vão pra busca, mesmo havendo um "Ramen Nagi" no board).
+    static func boardNameHit(_ text: String, in places: [Place]) -> Place? {
+        let q = WantCategory.fold(text)
+        guard q.count >= 3 else { return nil }
+        if let exact = places.first(where: { WantCategory.fold($0.name) == q }) { return exact }
+        guard WantCategory.match(text) == nil, WantParser.parseLocal(text)?.quality == .qualquer,
+              q.split(separator: " ").count <= 3 else { return nil }
+        return places.first { WantCategory.fold($0.name).contains(q) }
+    }
+
+    private func clearSearch() {
+        speech.cancel()
+        search.clear()
+        searchFocused = false
+        failure = nil
+        reevaluate(force: true)
+    }
+
+    private func tapChip(_ id: String) {
+        let env = searchEnv()
+        switch id {
+        case "object": searchFocused = true
+        case "open": search.toggleOpen(env)
+        case "quality": search.cycleQuality(env)
+        case "radius": search.cycleRadius(env)
+        default: break
+        }
+    }
+
+    private func chooseResult(_ c: MapSearchCandidate) {
+        if search.chosenId == c.id, let board = c.result.boardPlaceId {
+            open(board, show: false)
+            return
+        }
+        search.chosenId = c.id
+    }
+
+    /// Você + os 3 entre a busca e o card (a câmera não fica no meio do nada).
+    private func fitResults() {
+        let points = search.top.map(\.result.coordinate) + [here?.coordinate].compactMap { $0 }
+        guard !search.top.isEmpty else { return }
+        cam.fit(points, top: Self.resultsTop, bottom: 96 + 370)
+    }
+
+    /// Encaixar hoje (a mesma conta do Quero…): grava o lugar (o do board ou um novo na lista da vontade) e a parada.
+    private func encaixar() {
+        guard let chosen = search.chosen, let row = search.rows[chosen.id], row.slot != nil else { return }
+        let env = queroEnv()
+        guard let place = QueroSave.place(for: row, intent: search.intent, text: search.text, lists: lists, cityId: env.cityId,
+                                          region: region, sync: services.sync, context: context) else { return }
+        do {
+            _ = try QueroSave.encaixar(row, place: place, env: env, context: context)
+            search.clear()
+            router.push(.linha(date: region.calendar.startOfDay(for: now)), on: .hoje)
+        } catch {
+            failure = "não deu pra gravar o dia: \(error.localizedDescription)"
         }
     }
 
@@ -361,27 +627,10 @@ struct MapView: View {
         return words.dropFirst().joined(separator: " ")
     }
 
-    private func searchField(_ near: [Near]) -> some View {
-        let open = near.filter { isOpen($0.place) }.count
-        let summary = near.isEmpty ? "nada a 500 m" : "\(near.count) \(near.count == 1 ? "must" : "musts") a 500 m · \(open) \(open == 1 ? "aberto" : "abertos")"
-        return HStack(spacing: 10) {
-            MustIconView(.buscar, size: 18).foregroundStyle(Color.must.secondary)
-            TextField("\(areaName) · \(summary)", text: $query)
-                .font(.must.archivo(15))
-                .minimumScaleFactor(0.8)
-                .submitLabel(.search)
-                .onSubmit(search)
-                .autocorrectionDisabled()
-        }
-        .padding(.horizontal, 18)
-        .frame(height: 52)
-        .glass(cornerRadius: 26)
-    }
-
     private var legend: some View {
         ScrollView(.horizontal) {
             HStack(spacing: 8) {
-                ForEach(MapLayer.allCases) { layer in
+                ForEach(MapLayer.legend) { layer in
                     Button { toggle(layer) } label: { chip(layer) }
                         .buttonStyle(MustPressStyle())
                         .accessibilityAddTraits(layers.contains(layer) ? .isSelected : [])
@@ -408,6 +657,8 @@ struct MapView: View {
                 Image(systemName: "checkmark").font(.system(size: 12, weight: .bold)).foregroundStyle(Color.must.ink)
             case .metro:
                 Capsule().fill(transit.lines.first?.color ?? Color.must.blue).frame(width: 14, height: 4)
+            case .search:
+                MustIconView(.buscar, size: 12).foregroundStyle(Color.must.ink)
             }
             Text(layer.label).font(.must.archivo(15, .semibold)).foregroundStyle(Color.must.ink)
         }
@@ -434,21 +685,15 @@ struct MapView: View {
     // MARK: Sheet
 
     @ViewBuilder private func sheet(_ near: [Near]) -> some View {
-        if let id = selectedId, let place = places.first(where: { $0.id == id }) {
-            let index = stops.firstIndex { $0.place?.id == place.id }
-            PlaceSheetCard(place: place, number: index.map { $0 + 1 }, stop: index.map { stops[$0] },
-                           leg: legFromHere(to: place), region: region, now: now,
-                           onClose: { selectedId = nil },
-                           onOpen: { router.push(.place(id: place.id), on: .guia) },
-                           onDay: { router.select(.hoje) })
-        } else if let far = farTarget {
+        // O pino tocado abre o `MapPlaceCard` (por cima de tudo, em `overlays`); aqui fica o "mais perto" e o "Perto de você".
+        if let far = farTarget {
             let index = stops.firstIndex { $0.place?.id == far.place.id }
             PlaceSheetCard(place: far.place, number: index.map { $0 + 1 }, stop: index.map { stops[$0] },
                            leg: legFromHere(to: far.place, walkUnderKm: 1.2), region: region, now: now,
                            distance: far.target.meters,
                            walkMinutes: walkMinutes(to: far.place),
                            onClose: { cam.forceNeighborhood(here?.coordinate ?? fallbackCenter) },
-                           onOpen: { router.push(.place(id: far.place.id), on: .guia) },
+                           onOpen: { router.push(.place(id: far.place.id)) },
                            onDay: { router.select(.hoje) })
         } else if !near.isEmpty || nextStop != nil {
             VStack(alignment: .leading, spacing: 0) {
@@ -600,14 +845,61 @@ struct MapView: View {
     }
 
     private func select(_ pin: MapPin) {
+        searchFocused = false
+        if pin.id.hasPrefix("result-") {
+            let id = String(pin.id.dropFirst("result-".count))
+            if let c = search.top.first(where: { $0.id == id }) { chooseResult(c) }
+            return
+        }
         guard let id = pin.placeId else { return }
-        if selectedId == id { router.push(.place(id: id), on: .guia) } else { selectedId = id }
+        if selectedId == id { router.push(.place(id: id)) } else { open(id, show: false) }
     }
 
-    private func search() {
-        guard let first = places.first(where: { $0.matches(query) }) else { return }
-        selectedId = first.id
-        cam.show(first.coordinate)
+    /// Abre o card do pino. A câmera não pula: só desliza o pino pra cima do card (`show`: centra, vindo da busca por nome).
+    private func open(_ id: String, show: Bool) {
+        guard let place = places.first(where: { $0.id == id }) else { return }
+        withAnimation(.spring(duration: 0.32)) { selectedId = id }
+        guard show else { cam.reveal(place.coordinate, top: 120, bottom: Self.cardBottom); return }
+        cam.show(place.coordinate)
+        Task {
+            try? await Task.sleep(for: .milliseconds(650))
+            guard selectedId == id else { return }
+            cam.reveal(place.coordinate, top: 120, bottom: Self.cardBottom)
+        }
+    }
+
+    private func closeCard() {
+        withAnimation(.spring(duration: 0.3)) { selectedId = nil }
+    }
+
+    /// Toque no mapa fora dos pinos: fecha o card (e o teclado).
+    private func tapEmpty() {
+        searchFocused = false
+        if selectedId != nil { closeCard() }
+    }
+
+    // MARK: Prints (`-debugScreen mapa-pino` / `mapa-filtro`)
+
+    /// `mapa-pino[:<id>]` abre o card (a próxima parada de hoje, senão o lugar mais perto); `mapa-filtro[:texto]` roda a
+    /// busca "o melhor … perto de mim agora" (lámen no Japão, pão de queijo em BH).
+    private func debugScreen() async {
+        #if DEBUG
+        guard let raw = DebugFlags.string("debugScreen"), raw.hasPrefix("mapa-") else { return }
+        let parts = raw.split(separator: ":", maxSplits: 1).map(String.init)
+        let arg = parts.count > 1 ? parts[1] : nil
+        try? await Task.sleep(for: .milliseconds(700))
+        switch parts[0] {
+        case "mapa-pino":
+            let target = arg.flatMap { id in places.first { $0.id == id } }
+                ?? nextStop?.place ?? stops.first?.place
+                ?? here.flatMap { h in unplannedPlaces.min { $0.location.distance(from: h) < $1.location.distance(from: h) } }
+            if let target { open(target.id, show: false) }
+        case "mapa-filtro":
+            search.text = arg ?? (region == .bh ? "o melhor pão de queijo perto de mim agora" : "o melhor lámen perto de mim, agora")
+            submitSearch()
+        default: break
+        }
+        #endif
     }
 }
 

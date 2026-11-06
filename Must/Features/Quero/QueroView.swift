@@ -366,13 +366,7 @@ struct QueroView: View {
         let center = plan.flatMap { _ in planArea?.centroid.clCoordinate } ?? origin
         let cityId = city?.id ?? trip?.cities.first?.id ?? region.rawValue
         let group = AreaCatalog.cityGroup(forCityId: cityId)
-        let tz = region.timeZone
-        let board = places.compactMap { p -> WantBoardPlace? in
-            guard AreaCatalog.cityGroup(forCityId: p.cityId) == group, p.lat != 0 || p.lng != 0 else { return nil }
-            let until = p.hours?.closesAt(now, timeZone: tz).map(ListGrouping.hourLabel)
-            return WantBoardPlace(id: p.id, name: p.name, lat: p.lat, lng: p.lng, listId: p.list?.id, sub: p.sub, notes: p.notes,
-                                  placeId: p.placeId, area: p.area, until: until, done: p.isDone)
-        }
+        let board = QueroEnv.board(places, cityGroup: group, now: now, timeZone: region.timeZone)
         return QueroEnv(region: region, now: now, plan: plan, center: center, origin: origin, areaName: areaName, cityGroup: group,
                         cityId: cityId, online: services.connectivity.status != .offline, board: board,
                         useModel: settingsList.first?.onDeviceAI ?? true,

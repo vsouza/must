@@ -36,6 +36,9 @@ struct MapCameraCommand: Equatable {
         case center(lat: Double, lng: Double, widthMeters: Double)
         /// Enquadra os pontos com folga (topo pela busca/legenda, base pela sheet).
         case fit(points: [Coordinate], top: CGFloat, bottom: CGFloat, sides: CGFloat)
+        /// Mostra o ponto acima do card sem mudar o zoom (prompt 27 §2.a): se ele já está na área livre, nada mexe;
+        /// senão o mapa só desliza o necessário.
+        case reveal(lat: Double, lng: Double, top: CGFloat, bottom: CGFloat)
     }
 
     struct Coordinate: Equatable {
@@ -72,6 +75,8 @@ struct MapLibreView: UIViewRepresentable {
     /// A câmera parou (depois de gesto ou animação).
     var onIdle: () -> Void = {}
     var onSelect: (MapPin) -> Void = { _ in }
+    /// Toque no mapa fora de qualquer pino (fecha o card do pino).
+    var onTapEmpty: (() -> Void)? = nil
     /// Gestos de arrastar e pinçar. Desligado no preview (só pinos).
     var interactive = true
     /// Direção do aparelho pro cone do "você". Vem de `CompassBridge`, não do `scene`: girar a bússola não redesenha o mapa.
@@ -98,6 +103,7 @@ struct MapLibreView: UIViewRepresentable {
         map.backgroundColor = UIColor(red: 0xE9 / 255, green: 0xEB / 255, blue: 0xEF / 255, alpha: 1)
         context.coordinator.loadStyle(near: scene.you ?? scene.region.defaultCenter)
         context.coordinator.observePacks()
+        context.coordinator.attachTap(map)
         return map
     }
 
@@ -155,6 +161,29 @@ struct MapLibreView: UIViewRepresentable {
         @objc private func packsChanged() {
             guard let map else { return }
             loadStyle(near: map.centerCoordinate)
+        }
+
+        // MARK: Toque fora dos pinos
+
+        /// Um toque simples no mapa (depois de o toque duplo falhar) que não caiu num pino.
+        func attachTap(_ map: MLNMapView) {
+            let tap = UITapGestureRecognizer(target: self, action: #selector(tapped(_:)))
+            tap.cancelsTouchesInView = false
+            tap.delegate = self
+            for double in (map.gestureRecognizers ?? []).compactMap({ $0 as? UITapGestureRecognizer }) where double.numberOfTapsRequired == 2 {
+                tap.require(toFail: double)
+            }
+            map.addGestureRecognizer(tap)
+        }
+
+        @objc private func tapped(_ gesture: UITapGestureRecognizer) {
+            guard let map, let onTapEmpty = parent.onTapEmpty, gesture.state == .ended else { return }
+            var view = map.hitTest(gesture.location(in: map), with: nil)
+            while let v = view, v !== map {
+                if v is PinView || v is YouView { return }
+                view = v.superview
+            }
+            onTapEmpty()
         }
 
         // MARK: Style
@@ -446,6 +475,17 @@ struct MapLibreView: UIViewRepresentable {
                 let mpp = width / Double(map.bounds.width)
                 let zoom = log2(40_075_016.686 * cos(lat * .pi / 180) / (512 * mpp))
                 move(map, to: CLLocationCoordinate2D(latitude: lat, longitude: lng), zoom: zoom, duration: duration)
+            case .reveal(let lat, let lng, let top, let bottom):
+                let size = map.bounds.size
+                let point = map.convert(CLLocationCoordinate2D(latitude: lat, longitude: lng), toPointTo: map)
+                let freeTop = top + 24, freeBottom = size.height - bottom - 24
+                let inside = point.y >= freeTop && point.y <= freeBottom && point.x >= 40 && point.x <= size.width - 40
+                guard !inside, freeBottom > freeTop else { return }
+                // Leva o ponto pra 45 % da área livre (e pro meio na horizontal, se saiu pelos lados).
+                let targetY = freeTop + (freeBottom - freeTop) * 0.45
+                let dx = point.x < 40 || point.x > size.width - 40 ? point.x - size.width / 2 : 0
+                let center = map.convert(CGPoint(x: size.width / 2 + dx, y: size.height / 2 + point.y - targetY), toCoordinateFrom: map)
+                move(map, to: center, zoom: map.zoomLevel, duration: duration)
             case .fit(let points, let top, let bottom, let sides):
                 // Um ponto só (Guia com a última parada da noite): centra nele na escala de bairro. Antes saía sem mexer
                 // e o mapa ficava no 0,0 (mar cinza).
@@ -568,6 +608,12 @@ struct MapLibreView: UIViewRepresentable {
             }
         }
     }
+}
+
+extension MapLibreView.Coordinator: UIGestureRecognizerDelegate {
+    /// O toque convive com os do MapLibre (seleção de pino, arrastar).
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
+                           shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool { true }
 }
 
 private extension UIColor {
