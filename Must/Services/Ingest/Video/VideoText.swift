@@ -79,6 +79,11 @@ enum VideoText {
         return kept.map(\.snippet)
     }
 
+    /// Quantos trechos ([tela]/[fala]) o texto juntado tem.
+    static func dedupeCount(_ merged: String) -> Int {
+        merged.split(separator: "\n").filter { $0.hasPrefix("[tela") || $0.hasPrefix("[fala") }.count
+    }
+
     static func normalize(_ text: String) -> String {
         text.folding(options: [.diacriticInsensitive, .caseInsensitive, .widthInsensitive], locale: nil)
             .filter { $0.isLetter || $0.isNumber }
