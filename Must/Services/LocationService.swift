@@ -51,7 +51,41 @@ final class LocationService: NSObject {
         manager.pausesLocationUpdatesAutomatically = true
         manager.activityType = .fitness
         refreshOverrides()
+        #if DEBUG
+        scheduleDebugHops()
+        #endif
     }
+
+    #if DEBUG
+    /// `-debugGPSHop "8:35.6909,139.7003;20:-19.9385,-43.9343"` (rodada 23 · G): aos 8 s o GPS simulado pula pra Tóquio,
+    /// aos 20 s volta pra BH. Com a região no automático, é a troca de região pelo GPS no meio do uso (sheet aberta,
+    /// texto pela metade) — o caso suspeito do "digitar na tela de adicionar quebra".
+    private func scheduleDebugHops() {
+        let hops = Self.parseHops(DebugFlags.string("debugGPSHop"))
+        guard !hops.isEmpty else { return }
+        Task { @MainActor [weak self] in
+            let start = Date()
+            for hop in hops {
+                let wait = hop.after - Date().timeIntervalSince(start)
+                if wait > 0 { try? await Task.sleep(for: .milliseconds(Int(wait * 1000))) }
+                Log.location.info("debugGPSHop → \(hop.lat), \(hop.lng)")
+                self?.simulated = CLLocation(latitude: hop.lat, longitude: hop.lng)
+            }
+        }
+    }
+
+    /// "8:35.69,139.70;20:-19.93,-43.93" → [(8, 35.69, 139.70), (20, -19.93, -43.93)], em ordem.
+    static func parseHops(_ text: String?) -> [(after: Double, lat: Double, lng: Double)] {
+        guard let text else { return [] }
+        return text.split(separator: ";").compactMap { part in
+            let pieces = part.split(separator: ":", maxSplits: 1)
+            guard pieces.count == 2, let after = Double(pieces[0].trimmingCharacters(in: .whitespaces)) else { return nil }
+            let coord = pieces[1].split(separator: ",").compactMap { Double($0.trimmingCharacters(in: .whitespaces)) }
+            guard coord.count == 2 else { return nil }
+            return (after, coord[0], coord[1])
+        }.sorted { $0.after < $1.after }
+    }
+    #endif
 
     /// Posição usada pelo app: simulada (se ligada) ou a real.
     var current: CLLocation? { simulated ?? device }

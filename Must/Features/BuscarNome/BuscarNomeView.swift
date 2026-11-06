@@ -103,6 +103,7 @@ struct BuscarNomeView: View {
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(Color.must.ink)
             TextField("nome do lugar", text: Binding(get: { model.query }, set: { model.typed($0, near: biasCenter) }))
+                .accessibilityIdentifier("buscar.query")
                 .font(.must.archivo(20))
                 .focused($focused)
                 .submitLabel(.search)

@@ -32,7 +32,7 @@ final class RegionStore {
     /// - Parameters:
     ///   - directory: onde ficam os `.store` (padrão: App Group). Testes passam uma pasta temporária.
     init(directory: URL? = nil, defaults: UserDefaults = .standard, seedBundle: Bundle = .main) {
-        self.directory = directory ?? Region.storeDirectory
+        self.directory = directory ?? Self.debugFreshDirectory ?? Region.storeDirectory
         self.defaults = defaults
         self.seedBundle = seedBundle
         Self.moveToBrazilOnce(defaults)
@@ -41,6 +41,15 @@ final class RegionStore {
         let (container, error) = Self.openContainer(for: region, in: self.directory, seedBundle: seedBundle)
         self.container = container
         self.lastError = error
+    }
+
+    /// `-debugFreshStore YES` (UI tests, rodada 23 · G): cada abertura começa do seed numa pasta temporária, sem tocar
+    /// no board do simulador. Só DEBUG e fora do host de testes.
+    static var debugFreshDirectory: URL? {
+        guard DebugFlags.bool("debugFreshStore") else { return nil }
+        let dir = URL.temporaryDirectory.appending(path: "must-uitests-\(UUID().uuidString.prefix(8))", directoryHint: .isDirectory)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir
     }
 
     /// Uma vez (05/11/2026, pedido do Vinicius: "vamos mudar o app pro brasil por hora, quero usar ele na rua"):

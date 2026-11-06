@@ -92,6 +92,10 @@ struct AppRoot: View {
             }
             // 07:00 com o app aberto (prompt 18 · A.5). Sem background task: fechado, fica pra próxima abertura.
             .task(id: store.region) { await prefetchAtSevenLoop() }
+            #if DEBUG
+            // `-debugSyncEvery 3` (rodada 23 · G): sincroniza a cada N s, pra digitar com o sync gravando no meio.
+            .task(id: generation) { await debugSyncLoop() }
+            #endif
             // Widgets e Live Activity acompanham qualquer gravação (dia aceito, 済, troca, gasto).
             .onReceive(NotificationCenter.default.publisher(for: ModelContext.didSave)) { _ in
                 guard isCurrent else { return }
@@ -162,6 +166,23 @@ struct AppRoot: View {
         // Lugares do seed sem `placeId`: resolve no Wi-Fi (fotos, horários e dicas dependem disso).
         await services.sync.resolveBoardIfNeeded(context: context, region: region, network: services.connectivity.prefetchNetwork)
     }
+
+    #if DEBUG
+    private func debugSyncLoop() async {
+        let every = DebugFlags.double("debugSyncEvery")
+        guard every > 0 else { return }
+        let context = context, region = store.region, container = context.container
+        defer { withExtendedLifetime(container) {} }
+        while !Task.isCancelled {
+            try? await Task.sleep(for: .milliseconds(Int(every * 1000)))
+            guard !Task.isCancelled, isCurrent else { return }
+            Log.app.info("debugSyncEvery: sync")
+            await services.sync.sync(context: context, region: region)
+            await services.sync.syncPlaces(context: context, region: region)
+            await Outbox.drain(context: context, region: region, places: services.places)
+        }
+    }
+    #endif
 
     /// Hoje e amanhã que ainda não estão salvos offline. A política (Wi-Fi, fora do Pouco Dados) decide se roda.
     private func runPrefetchPending() {
