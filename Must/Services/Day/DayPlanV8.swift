@@ -188,6 +188,8 @@ protocol DayEngine: Sendable {
     func build(area: String?, pace: Pace, budget: Double, until: Date, includes: Set<DayInclude>) async -> DayPlan
     /// Monta o dia de uma data (amanhã, no Montar da Boa noite). Padrão: o de hoje.
     func build(on date: Date, area: String?, pace: Pace, budget: Double, until: Date, includes: Set<DayInclude>) async -> DayPlan
+    /// "Outra" (Montar › proposta): o mesmo pedido com outra semente de desempate. Padrão: ignora a semente.
+    func build(on date: Date, area: String?, pace: Pace, budget: Double, until: Date, includes: Set<DayInclude>, seed: Int) async -> DayPlan
     /// "Agora" num instante do dia; `nil` antes da primeira parada ou depois da última.
     func now(in plan: DayPlan, at date: Date) -> DayNow?
     /// O dia aceito numa data (do SwiftData), já no formato v8. `nil` = nada montado.
@@ -197,6 +199,10 @@ protocol DayEngine: Sendable {
 extension DayEngine {
     func build(on date: Date, area: String?, pace: Pace, budget: Double, until: Date, includes: Set<DayInclude>) async -> DayPlan {
         await build(area: area, pace: pace, budget: budget, until: until, includes: includes)
+    }
+
+    func build(on date: Date, area: String?, pace: Pace, budget: Double, until: Date, includes: Set<DayInclude>, seed: Int) async -> DayPlan {
+        await build(on: date, area: area, pace: pace, budget: budget, until: until, includes: includes)
     }
 
     /// "Agora" (prompt 23 §3): a parada cujo horário de saída é o próximo. `DayNowRules` tem as contas.

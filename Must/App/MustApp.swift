@@ -311,7 +311,7 @@ enum DebugLaunch {
             acceptToday(context: context, region: region, location: location)
             router.select(.hoje)
             prefetchDays(services: services, context: context, region: region)
-        case "montar", "proposta", "trocar": router.push(.montar(date: region.calendar.startOfDay(for: AppClock.now)), on: .hoje)
+        case "montar", "proposta", "trocar", "outra": router.push(.montar(date: region.calendar.startOfDay(for: AppClock.now)), on: .hoje)
         case "gasto": router.select(.hoje); router.sheet = .expense(placeId: nil)
         case "aceitar":
             acceptToday(context: context, region: region, location: location)

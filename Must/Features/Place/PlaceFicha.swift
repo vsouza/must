@@ -90,9 +90,7 @@ enum PlaceFicha {
                       queueFirst: Bool) -> [Cell] {
         var cells: [Cell] = []
         if queueFirst, let q = place.queueMinutes, q > 0 { cells.append(Cell(label: "fila agora", value: "~\(q) min")) }
-        if let price = place.price, price > 0 {
-            cells.append(Cell(label: "preço", value: region.money(price) + (region == .it && place.list?.id == "eat" ? " / pessoa" : "")))
-        }
+        if let cost = cost(place, region: region, now: now) { cells.append(cost) }
         let eats = ["eat", "drink", "coffee"].contains(place.list?.id ?? "")
         if region == .it && eats {
             cells.append(Cell(label: "coperto", value: "€ 1–3 · sem gorjeta"))
@@ -109,6 +107,44 @@ enum PlaceFicha {
         if !queueFirst, let order = order(place) { cells.append(Cell(label: "pedir", value: order)) }
         cells.append(Cell(label: "veio de", value: origin(place)))
         return Array(cells.prefix(6))
+    }
+
+    /// Quanto custa (pedido do Vinicius, 06/11/2026: "mostrar quanto custa pra entrar, não só o pagamento").
+    /// Comer/beber: "preço" por pessoa. O resto: "entrada" — inteira e meia do museu, a próxima sessão com preço,
+    /// "a partir de" da experiência, ou o gasto previsto. `price == 0` é grátis de propósito (o seed marca assim);
+    /// sem nenhum dado, `nil` (não inventa preço).
+    static func cost(_ place: Place, region: Region, now: Date) -> Cell? {
+        let listId = place.list?.id ?? ""
+        let eats = ["eat", "drink", "coffee"].contains(listId)
+        let label = ["art", "see", "temple", "sport", "do", "experience", "night", "listen"].contains(listId) ? "entrada" : "preço"
+        func free(_ note: String?) -> String { note.map { "grátis · \($0)" } ?? "grátis" }
+        if !eats, let art = place.extra?.art {
+            if let adult = art.priceAdult {
+                if adult <= 0 { return Cell(label: label, value: free(nil)) }
+                var value = region.money(adult)
+                if let student = art.priceStudent, student < adult {
+                    value += student <= 0 ? " · meia grátis" : " · meia \(region.money(student))"
+                }
+                return Cell(label: label, value: value)
+            }
+            if let next = art.sessions.filter({ $0.at >= now && $0.price != nil }).min(by: { $0.at < $1.at }),
+               let price = next.price {
+                return Cell(label: label, value: price <= 0 ? free(nil) : "sessão \(region.money(price))")
+            }
+        }
+        if let exp = place.extra?.experience, let from = exp.priceFrom, from > 0 {
+            let money = exp.currency.map { $0 == region.currency ? region.money(from) : from.formatted(.money($0)) }
+                ?? region.money(from)
+            return Cell(label: label, value: "a partir de \(money)")
+        }
+        if let price = place.price {
+            if price <= 0 { return Cell(label: label, value: free(place.extra?.art?.freeNote)) }
+            return Cell(label: label, value: region.money(price) + (eats && region == .it && listId == "eat" ? " / pessoa" : ""))
+        }
+        if let level = place.priceLevel {
+            return Cell(label: label, value: level <= 0 ? free(nil) : String(repeating: region.currencySymbol, count: min(level, 4)))
+        }
+        return nil
     }
 
     /// Minutos até o lugar (a pé até `walkMaxKm`, metrô depois), sem rede.

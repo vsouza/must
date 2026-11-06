@@ -364,6 +364,7 @@
 		B552F06B9A8678A705988367 /* seed-bh.json in Resources */ = {isa = PBXBuildFile; fileRef = 50B7B2806BAB98E03649662B /* seed-bh.json */; };
 		B58925D640704EDD8E0F3A74 /* MartianMono.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8B67BB698E0083068BE34A90 /* MartianMono.ttf */; };
 		B5C2D9BF4AE641BD2AC84D4A /* EmCartazSamples.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEDD1A07B7B67EB8441B28EF /* EmCartazSamples.swift */; };
+		B6878DE0C69506B8CED8EF84 /* ProposalAndCostTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BC3262DE7A7ABEA33FEABF2 /* ProposalAndCostTests.swift */; };
 		B6CBBAED191C9ED0014DC878 /* ExtractedTicket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C832B556BB2DF99EF2A23CD /* ExtractedTicket.swift */; };
 		B6EE234FF05CEA7052D4BCBE /* PlacePhotoStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42CF55FAA3B0427D227A1790 /* PlacePhotoStore.swift */; };
 		B7AC5192D9B2C12006645647 /* TicketImportModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC7F7B284159B621FBB7D75 /* TicketImportModel.swift */; };
@@ -705,6 +706,7 @@
 		4AC3CBA2A9F2C12CC697A0D5 /* BoardModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardModel.swift; sourceTree = "<group>"; };
 		4B02C9FD57F462B5DD7ED9AB /* MapSearchViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapSearchViews.swift; sourceTree = "<group>"; };
 		4B265EE23EBB5953B8879351 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		4BC3262DE7A7ABEA33FEABF2 /* ProposalAndCostTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProposalAndCostTests.swift; sourceTree = "<group>"; };
 		4C1BEA3A52142382A4E16718 /* ColarTextoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColarTextoView.swift; sourceTree = "<group>"; };
 		4D464D945A49E20B455A3BEA /* Tips.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tips.swift; sourceTree = "<group>"; };
 		4D992925DC54DAC9FB74D5CB /* AIPlaceExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIPlaceExtractor.swift; sourceTree = "<group>"; };
@@ -1531,6 +1533,7 @@
 				A108F02F9AAFC162F9B73BEF /* PlaceResolverTests.swift */,
 				69D2CE35646C5AB69AE732BB /* PocketRulesTests.swift */,
 				E639FA3C7D274B015BEEA574 /* PosterTests.swift */,
+				4BC3262DE7A7ABEA33FEABF2 /* ProposalAndCostTests.swift */,
 				3ED71E74006BFAF0B24E307A /* ProximosTests.swift */,
 				AA488548E5855C26BB4C1C3C /* QAScenarioTests.swift */,
 				FF0BD205DD2BE22BE4EB1F5F /* QueroTests.swift */,
@@ -2635,6 +2638,7 @@
 				D008E59938102E6875832BE3 /* PlaceResolverTests.swift in Sources */,
 				0652B5F2C3142071D331EFC5 /* PocketRulesTests.swift in Sources */,
 				AD8CA8E33CF5D81A4500336E /* PosterTests.swift in Sources */,
+				B6878DE0C69506B8CED8EF84 /* ProposalAndCostTests.swift in Sources */,
 				A9A3F116BA55739F2D63D274 /* ProximosTests.swift in Sources */,
 				74A382295FB822CD3957318E /* QAScenarioTests.swift in Sources */,
 				24ADADCDC35CF270D713D628 /* QueroTests.swift in Sources */,

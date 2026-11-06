@@ -52,11 +52,11 @@ enum MapCardFacts {
         return "\(k.formatted(.number.precision(.fractionLength(k < 10 ? 1 : 0)).locale(locale))) mil"
     }
 
-    /// Fila, preço e distância (`MapaPino.png`); o que faltar vem do horário e do pagamento. Sempre 3.
+    /// Fila, preço (ou entrada) e distância (`MapaPino.png`); o que faltar vem do horário e do pagamento. Sempre 3.
     static func cells(_ place: Place, region: Region, now: Date, here: CLLocation?, walkMaxKm: Double) -> [PlaceFicha.Cell] {
         let all = PlaceFicha.cells(place, region: region, now: now, here: here, walkMaxKm: walkMaxKm, queueFirst: true)
         var picked: [PlaceFicha.Cell] = []
-        for label in ["fila agora", "preço", "distância", "horário", "pagamento"] where picked.count < 3 {
+        for label in ["fila agora", "preço", "entrada", "distância", "horário", "pagamento"] where picked.count < 3 {
             if let cell = all.first(where: { $0.label == label }) { picked.append(cell) }
         }
         // A distância fica sempre (é o que o card responde: dá pra ir a pé?).

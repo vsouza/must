@@ -13,6 +13,8 @@ struct DayAsk: Sendable, Hashable {
     /// "até 23:30": só a hora vale (aplicada no dia pedido; de madrugada = dia seguinte).
     var until: Date?
     var includes: Set<DayInclude>
+    /// Desempate do solver ("Outra"): 0 = a proposta de sempre.
+    var seed = 0
 }
 
 /// O que o motor lê do aparelho antes de montar: rápido, no main, sem rede. Depois disso tudo roda fora do main.
@@ -71,6 +73,10 @@ struct DayEngineV8: DayEngine {
 
     func build(on date: Date, area: String?, pace: Pace, budget: Double, until: Date, includes: Set<DayInclude>) async -> DayPlan {
         await build(DayAsk(date: date, area: area, pace: pace, budget: budget, until: until, includes: includes))
+    }
+
+    func build(on date: Date, area: String?, pace: Pace, budget: Double, until: Date, includes: Set<DayInclude>, seed: Int) async -> DayPlan {
+        await build(DayAsk(date: date, area: area, pace: pace, budget: budget, until: until, includes: includes, seed: seed))
     }
 
     @MainActor func plan(for date: Date, region: Region, context: ModelContext) -> DayPlan? {
@@ -149,6 +155,7 @@ struct DayEngineV8: DayEngine {
         planner.goldenPhoto = ask.includes.contains(.goldenPhoto)
         planner.until = ask.until.map { untilOn(date, $0, calendar: cal) }
         planner.focusArea = ask.area
+        planner.seed = ask.seed
         planner.weather = weather(date, trip)
         let request = planner.request(trip: trip, settings: settings, location: location, flights: flights)
         let city = trip?.city(on: date, calendar: cal)
