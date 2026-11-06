@@ -123,6 +123,8 @@ struct MapView: View {
         .onChange(of: here.map { [$0.coordinate.latitude, $0.coordinate.longitude] }) { _, _ in reevaluate(force: false) }
         .onChange(of: layers) { _, _ in reevaluate(force: true) }
         .onChange(of: stops.filter(\.done).count) { _, _ in reevaluate(force: true) }
+        .onChange(of: selectedId, initial: true) { _, id in router.mapCardOpen = id != nil }
+        .onDisappear { router.mapCardOpen = false }
         .onChange(of: scenePhase) { _, phase in if phase == .active && router.tab == .guia { reevaluate(force: true) } }
     }
 
@@ -362,9 +364,7 @@ struct MapView: View {
     }
 
     /// Card do pino aberto (`MapaPino.png`): fechar + ficha técnica em cima, o card embaixo. O mapa continua vivo no meio.
-    /// TODO(r23:C): o design não tem a barra de abas com o card aberto; `AppRouter.hidesNavBar` (fora da fronteira) decide
-    /// pela rota, então o card sobe 96 pt acima da barra. Se o orquestrador quiser, `hidesNavBar` pode ler um "card do mapa
-    /// aberto" do router.
+    /// Com o card aberto a barra de abas some (`AppRouter.mapCardOpen`), então o card encosta embaixo.
     private func cardOverlay(_ place: Place) -> some View {
         VStack(spacing: 0) {
             HStack(alignment: .top) {
@@ -389,7 +389,7 @@ struct MapView: View {
                          onGo: { router.push(.ir(placeId: place.id)) },
                          onDone: { router.sheet = .expense(placeId: place.id) })
                 .padding(.horizontal, 12)
-                .padding(.bottom, 96)
+                .padding(.bottom, 16)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
         }
     }
