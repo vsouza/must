@@ -10,6 +10,8 @@ enum ShareInbox {
 
     enum Kind: String, Codable, Sendable {
         case pdf, image, pkpass, url, text
+        /// Gravação de tela ou vídeo (prompt 29): o app lê fala e texto na tela, no aparelho.
+        case video
     }
 
     struct Item: Codable, Equatable, Sendable, Identifiable {
@@ -17,7 +19,7 @@ enum ShareInbox {
         var id: String
         var kind: Kind
         var createdAt: Date
-        /// Arquivo bruto (`item.pdf`, `item.png`, `item.pkpass`). Nil pra URL e texto.
+        /// Arquivo bruto (`item.pdf`, `item.png`, `item.pkpass`, `item.mov`). Nil pra URL e texto.
         var fileName: String?
         /// URL ou texto recebido.
         var text: String?

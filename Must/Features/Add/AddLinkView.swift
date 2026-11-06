@@ -115,7 +115,9 @@ struct AddLinkView: View {
         }
         .task {
             if initialMode == .text { mode = .text }
-            if let initialURL, model.input.isEmpty {
+            if let initialURL, initialURL.hasPrefix(AddLinkModel.videoPrefix) {
+                await runInboxVideo(String(initialURL.dropFirst(AddLinkModel.videoPrefix.count)))
+            } else if let initialURL, model.input.isEmpty {
                 model.input = initialURL
                 await run()
             }
@@ -216,6 +218,8 @@ struct AddLinkView: View {
         switch model.phase {
         case .idle, .done:
             EmptyView()
+        case .reading where model.isReadingVideo:
+            VideoReadCard(model: model) { _ in }
         case .reading:
             HStack(spacing: 10) {
                 ProgressView()
@@ -234,6 +238,9 @@ struct AddLinkView: View {
     private func pasteCard(_ message: String) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             stepsView
+            if model.offersVideo || model.videoText != nil {
+                VideoReadCard(model: model) { url in Task { await runVideo(url) } }
+            }
             Text(message).font(.must.archivo(15, .semibold)).foregroundStyle(Color.must.ink)
             TextField("cola aqui o texto da legenda", text: $model.pastedText, axis: .vertical)
                 .font(.must.serif(18))
@@ -310,6 +317,27 @@ struct AddLinkView: View {
         await model.run(board: places, lists: lists, city: city, region: region, knownAreas: knownAreas, provider: services.places,
                         queue: context)
         applyPreferredList()
+    }
+
+    /// Vídeo escolhido no cartão "Ler o vídeo": lê no aparelho e apaga a cópia temporária.
+    private func runVideo(_ url: URL) async {
+        configureExtractor()
+        await model.runVideo(url, region: region, board: places, lists: lists, city: city, knownAreas: knownAreas, provider: services.places)
+        try? FileManager.default.removeItem(at: url)
+        applyPreferredList()
+    }
+
+    private func runInboxVideo(_ id: String) async {
+        configureExtractor()
+        await model.runInboxVideo(id: id, board: places, lists: lists, city: city, region: region, knownAreas: knownAreas,
+                                  provider: services.places)
+        applyPreferredList()
+    }
+
+    private func configureExtractor() {
+        let settings = settingsList.first
+        model.extractorOptions = AIPlaceExtractor.Options(onDevice: settings?.onDeviceAI ?? true, cloudBoost: settings?.cloudBoost ?? false,
+                                                          knownAreas: [], timeZone: region.timeZone)
     }
 
     private func runPasted() async {

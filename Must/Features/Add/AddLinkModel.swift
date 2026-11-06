@@ -25,6 +25,97 @@ final class AddLinkModel {
     /// O Places foi consultado (senão, só entra o que o link trouxe com coordenada).
     var placesChecked = false
 
+    // MARK: Vídeo (prompt 29)
+
+    /// `AddLinkView.initialURL` com este prefixo + UUID = vídeo que o Share Extension deixou na caixa.
+    static let videoPrefix = "must-video://"
+    /// Progresso da leitura do vídeo (nil = não está lendo).
+    var videoProgress: VideoProgress?
+    /// De onde cada lugar veio ("visto na tela 00:04"), por id do resultado.
+    var videoOrigins: [String: VideoOrigin] = [:]
+    /// Avisos da leitura ("não ouvi fala", "modelo de fala só baixa no Wi-Fi").
+    var videoNotes: [String] = []
+    /// Texto juntado do vídeo (legenda + tela + fala).
+    var videoText: String?
+    @ObservationIgnored private var videoTask: Task<Void, Never>?
+
+    /// Já temos link do Instagram/TikTok mas a legenda não deu nada: oferecer "Ler o vídeo".
+    var offersVideo: Bool {
+        guard let source = resolved?.source else { return false }
+        return source == .instagram || source == .tiktok
+    }
+
+    var isReadingVideo: Bool { videoProgress != nil }
+
+    /// Vídeo da caixa do Share Extension (apagado depois de ler: só o texto fica).
+    func runInboxVideo(id: String, board: [Place], lists: [MustList], city: City?, region: Region, knownAreas: [String],
+                       provider: any PlacesProviding) async {
+        guard let item = ShareInbox.item(id: id), let file = ShareInbox.fileURL(for: item) else {
+            phase = .failed("Esse vídeo já saiu da caixa. Compartilhe de novo.")
+            return
+        }
+        if resolved == nil { resolved = ResolvedLink(source: .text, url: nil, text: "") }
+        await runVideo(file, region: region, board: board, lists: lists, city: city, knownAreas: knownAreas, provider: provider)
+        ShareInbox.remove(id: id)
+    }
+
+    /// Lê o vídeo no aparelho e segue o mesmo caminho da legenda (extrator → Places → conferência).
+    /// Cancelável: `cancelVideo()` para a leitura e volta pro cartão.
+    func runVideo(_ url: URL, region: Region, board: [Place], lists: [MustList], city: City?, knownAreas: [String],
+                  provider: any PlacesProviding) async {
+        videoTask?.cancel()
+        phase = .reading
+        videoNotes = []
+        videoProgress = VideoProgress(stage: .preparing, fraction: 0)
+        var options = VideoReader.Options()
+        options.locale = VideoReader.Options.locale(for: region)
+        // Modelo de fala só baixa no Wi-Fi e fora do Modo de Pouco Dados.
+        options.allowModelDownload = Connectivity.current == .online && Connectivity.currentIsWiFi
+        let link = resolved?.url
+        let weakCaption = caption?.text
+        let task = Task { [weak self] in
+            do {
+                let reading = try await VideoReader().read(url, options: options) { progress in
+                    Task { @MainActor in self?.videoProgress = progress }
+                }
+                try Task.checkCancellation()
+                guard let self else { return }
+                let merged = reading.merged(caption: weakCaption)
+                self.videoText = merged
+                self.videoNotes = reading.notes
+                let base = Caption(source: self.resolved?.source ?? .text, title: self.caption?.title, text: merged, url: link)
+                self.videoProgress = nil
+                await self.finish(base, board: board, lists: lists, city: city, region: region, knownAreas: knownAreas, provider: provider)
+                self.attachOrigins(merged)
+                if case .needsText = self.phase {
+                    self.phase = .needsText("Li o vídeo, mas não achei nome de lugar. Cola o trecho com o nome:")
+                }
+            } catch is CancellationError {
+                self?.videoProgress = nil
+                self?.phase = .idle
+            } catch {
+                self?.videoProgress = nil
+                self?.phase = .needsText((error as? LocalizedError)?.errorDescription ?? "Não consegui ler o vídeo.")
+            }
+        }
+        videoTask = task
+        await task.value
+        videoTask = nil
+    }
+
+    func cancelVideo() {
+        videoTask?.cancel()
+    }
+
+    private func attachOrigins(_ merged: String) {
+        videoOrigins = [:]
+        for match in matches {
+            let e = match.extracted
+            let names = [e.name, e.nameLocal].compactMap { $0 } + e.aliases
+            if let origin = VideoText.origin(of: names, in: merged) { videoOrigins[match.id] = origin }
+        }
+    }
+
     var detectedSource: LinkSource? {
         let source = LinkResolver.resolve(input).source
         return source.badge == nil ? nil : source
@@ -124,6 +215,10 @@ final class AddLinkModel {
         selectedId = nil
         perPlaceLists = false
         placesChecked = false
+        videoOrigins = [:]
+        videoNotes = []
+        videoText = nil
+        videoProgress = nil
     }
 
     func toggle(_ id: String) {
@@ -163,6 +258,10 @@ final class AddLinkModel {
         default:
             let what = resolved.source == .youtube ? "título e descrição do vídeo" : "legenda do post"
             lines.append((caption != nil, caption != nil ? "Legenda lida · \(what)" : "Lendo a \(what)…"))
+        }
+        if let videoText {
+            let seen = VideoText.dedupeCount(videoText)
+            lines.append((true, seen > 0 ? "Vídeo lido no aparelho · \(seen) trechos" : "Vídeo lido no aparelho"))
         }
         if caption != nil {
             let n = matches.count

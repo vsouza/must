@@ -627,3 +627,15 @@ as 20 telas do `ONLY=v8`, capa e Agora em xxxLarge, mais Linha, Lugar, Bolso e D
 - [ ] Dynamic Type pelo Ajustes do iPhone (o simulador usou o argumento de launch).
 - [ ] Traçado do metrô de Roma por cima do mapa (é aproximado).
 - [ ] Lote de fotos do Google no Wi-Fi trocando as capas do Commons (Da Enzo e outros com foto errada).
+
+## Prompt 29 · Vídeo do Instagram (05/11/2026)
+
+Link do Instagram/TikTok sem legenda → cartão "Ler o vídeo" (3 passos + `PhotosPicker` de vídeos). Share Extension aceita `public.movie` e abre o Adicionar com o vídeo. `VideoReader` lê tela (Vision, 1 quadro/s, no máx. 90) e fala (`SpeechAnalyzer`; `SFSpeechRecognizer` no aparelho de reserva), junta com a legenda em `[legenda]`/`[tela mm:ss]`/`[fala mm:ss]` e o extrator de sempre acha os lugares; a conferência mostra "visto na tela 00:04" / "falado 00:07". O vídeo é apagado depois da leitura.
+
+- Testes: `VideoReaderTests` (vídeo de fixture desenhado com `AVAssetWriter`, OCR, junção, cancelar, progresso, fala sintetizada tolerante a falta de modelo) e `VideoIngestTests` (texto → extrator falso → origem).
+
+**Só dá pra testar no iPhone.**
+- [ ] Gravação de tela real de um reel de comida em BH (Mercado Central · fígado com jiló): lugares com "visto na tela".
+- [ ] Modelo de fala pt-BR: baixa só no Wi-Fi; no celular/Pouco Dados fica "sem modelo de fala" e a leitura segue só com a tela.
+- [ ] Reel de 30 s lido em menos de 15 s; Cancelar a qualquer momento; a tela não trava.
+- [ ] Compartilhar um vídeo de Fotos → Must abre o Adicionar já lendo.

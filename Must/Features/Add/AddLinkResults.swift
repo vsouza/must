@@ -23,7 +23,7 @@ struct AddLinkResults: View {
     private var source: LinkSource { model.resolved?.source ?? .text }
 
     private var headline: String {
-        let label = switch source {
+        let base = switch source {
         case .instagram: "Reel"
         case .tiktok: "TikTok"
         case .youtube: "Vídeo"
@@ -31,7 +31,8 @@ struct AddLinkResults: View {
         case .web: "Link"
         case .text: "Texto"
         }
-        let raw = model.caption?.title ?? model.caption?.text.components(separatedBy: .newlines).first ?? ""
+        let label = model.videoText != nil && source == .text ? "Vídeo" : base
+        let raw = model.videoText != nil ? "" : (model.caption?.title ?? model.caption?.text.components(separatedBy: .newlines).first ?? "")
         let title = String(raw.trimmingCharacters(in: .whitespacesAndNewlines).prefix(60))
         return title.isEmpty ? label : "\(label) · “\(title)”"
     }
@@ -216,6 +217,7 @@ struct AddLinkResults: View {
         var parts: [String] = []
         if !match.located { parts.append("não achei no mapa") }
         parts.append((e.sub ?? Self.categoryLabel(e.category)).lowercased())
+        if let origin = model.videoOrigins[match.id] { parts.append(origin.label) }
         if let hours = match.details?.hours?.todayText(AppClock.now, timeZone: region.timeZone) { parts.append(hours) }
         if let price = match.details?.priceFrom, let currency = match.details?.priceCurrency {
             parts.append(price.formatted(.money(currency)))

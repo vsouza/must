@@ -104,7 +104,7 @@ struct AppRoot: View {
                     refreshGuide()
                     // Ingresso compartilhado que o Share Extension não conseguiu abrir: pega aqui.
                     if router.sheet == nil, let waiting = ShareInbox.pending().first {
-                        router.sheet = .ticketImport(inboxId: waiting.id)
+                        router.handle(url: ShareInbox.importURL(for: waiting.id), region: store.region)
                     }
                 } else if phase == .background {
                     services.location.stop()

@@ -202,7 +202,13 @@ final class AppRouter {
             push(.boaNoite, on: .hoje)
         case "import":
             // Caixa do Share Extension: o id é o nome da pasta (UUID); a tela confere se ainda existe.
-            sheet = .ticketImport(inboxId: items.first { $0.name == "id" }?.value)
+            let inboxId = items.first { $0.name == "id" }?.value
+            // Vídeo (prompt 29) vai pro Adicionar, que lê fala e texto na tela; o resto é ingresso.
+            if let inboxId, ShareInbox.item(id: inboxId)?.kind == .video {
+                sheet = .addLink(url: AddLinkModel.videoPrefix + inboxId, listId: nil)
+            } else {
+                sheet = .ticketImport(inboxId: inboxId)
+            }
         // Link do dia (prompt 25 · B.2): `must://d/<payload>`, o dia comprimido dentro do link (sem servidor).
         case "d":
             guard let payload = DayLink.payload(from: url) else { return }
