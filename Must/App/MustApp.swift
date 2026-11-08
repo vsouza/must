@@ -374,7 +374,7 @@ enum DebugLaunch {
         case "quero-pergunta": router.select(.hoje)
         case "bolso-novo": router.push(.bolso, on: .hoje)
         case "mais": router.sheet = .quero(text: nil)
-        case "viagem-aba": router.select(.viagem)
+        case "viagem-aba": PresenteDemo.ensure(context: context, region: region); router.select(.viagem)
         case "viagem": router.push(.trip, on: .hoje)
         // prompt 32 · Grupo: pessoas, votação, acertar contas, gasto dividido (GrupoDemo põe os exemplos).
         case "grupo", "grupo-viagem": GrupoDemo.ensure(context: context, region: region); router.push(.trip, on: .hoje)
@@ -450,16 +450,18 @@ enum DebugLaunch {
         case "compartilhar", "mandar": router.sheet = .mandar(date: region.calendar.startOfDay(for: AppClock.now))
         case "sos": router.push(.sos, on: .hoje)
         // prompt 31 · Presentes: a lista de exemplo (PresenteDemo) e cada tela.
+        case "presentes-vazio": // lista vazia: a frase e o campo de adicionar
+            router.push(.presentes, on: .viagem)
         case "presentes", "presente-comprado":
             PresenteDemo.ensure(context: context, region: region)
-            router.push(.presentes, on: .musts)
+            router.push(.presentes, on: .viagem)
         case "presente-novo":
             PresenteDemo.ensure(context: context, region: region)
             router.sheet = .presenteNovo(source: nil)
         case "presente-item", "presente-item-comprado":
             PresenteDemo.ensure(context: context, region: region)
-            router.push(.presentes, on: .musts)
-            router.push(.presente(id: PresenteDemo.kitKatId), on: .musts)
+            router.push(.presentes, on: .viagem)
+            router.push(.presente(id: PresenteDemo.kitKatId), on: .viagem)
         case "presente-perto":
             PresenteDemo.ensure(context: context, region: region)
             router.select(.hoje)

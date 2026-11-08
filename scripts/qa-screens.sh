@@ -289,6 +289,7 @@ echo "→ p31 · Presentes (lista, adicionar, item, comprado, perto na capa, que
 ${=W} region jp
 ${=W} dev.simDate -float $(epoch 2026-11-15T14:20:00+09:00)
 ${=W} dev.simLat -float 35.6938; ${=W} dev.simLng -float 139.7034
+WAIT=10 shot jp-presentes-vazio -debugScreen presentes-vazio
 WAIT=10 shot jp-presentes -debugScreen presentes
 WAIT=10 shot jp-presente-novo -debugScreen presente-novo
 WAIT=10 shot jp-presente-item -debugScreen presente-item

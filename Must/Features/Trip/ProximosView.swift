@@ -15,6 +15,7 @@ struct ProximosView: View {
     @Query private var events: [TripEvent]
     @Query(sort: \Flight.order) private var flights: [Flight]
     @Query private var trips: [TripInfo]
+    @Query private var gifts: [Gift]
 
     private var region: Region { store.region }
     private var cal: Calendar { region.calendar }
@@ -26,6 +27,7 @@ struct ProximosView: View {
             VStack(alignment: .leading, spacing: 0) {
                 header(now: now).padding(.top, 8)
                 minhasViagens.padding(.top, 14)
+                presentesLinha.padding(.top, 10)
                 HStack(alignment: .firstTextBaseline, spacing: 14) {
                     Text("Próximos")
                         .font(V8Font.display(52))
@@ -112,6 +114,30 @@ struct ProximosView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Minhas viagens, \(region.displayName), moeda \(TripSwitcherModel.currencyLabel(region))")
+    }
+
+    /// Linha fixa logo abaixo de "Minhas viagens": "Presentes · 5 faltam de 6" abre a lista.
+    private var presentesLinha: some View {
+        let pending = GiftLogic.pendingCount(gifts) > 0
+        return Button { router.push(.presentes) } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "gift").font(.system(size: 20, weight: .regular)).foregroundStyle(V8.white).frame(width: 26)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Presentes").font(V8Font.text(16, weight: .bold)).foregroundStyle(V8.white).lineLimit(1)
+                    Text(GiftLogic.pendingOfText(gifts))
+                        .font(V8Font.mono(10)).tracking(0.8).textCase(.uppercase)
+                        .foregroundStyle(pending ? V8.orange : V8.muteDark).lineLimit(1)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                Image(systemName: "arrow.up.right").font(.system(size: 16, weight: .semibold)).foregroundStyle(V8.white)
+            }
+            .padding(.horizontal, 14)
+            .frame(maxWidth: .infinity, minHeight: 56)
+            .overlay(Rectangle().strokeBorder(V8.white, lineWidth: 2))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Presentes, \(GiftLogic.pendingOfText(gifts))")
     }
 
     private var empty: some View {

@@ -260,7 +260,7 @@ struct QueroView: View {
                              onGo: { MapsLinks.openApple(to: $0.coordinate, name: $0.storeName) },
                              onOpen: { row in
                                  router.sheet = nil
-                                 router.push(row.storeId.map { .place(id: $0) } ?? .presente(id: row.giftId), on: .musts)
+                                 router.push(row.storeId.map { .place(id: $0) } ?? .presente(id: row.giftId), on: .viagem)
                              })
                     .padding(.horizontal, -20)
                     .padding(.bottom, 12)

@@ -11,7 +11,6 @@ struct MustsHubView: View {
     @Query(sort: \MustList.order) private var lists: [MustList]
     @Query(sort: \Place.name) private var places: [Place]
     @Query private var trips: [TripInfo]
-    @Query private var gifts: [Gift]
 
     @State private var city: String?
     @State private var cityPicked = false
@@ -61,7 +60,6 @@ struct MustsHubView: View {
                     .padding(.top, 18)
                     .accessibilityElement(children: .ignore)
                     .accessibilityLabel("\(scoped.count) lugares, \(done) feitos")
-                    giftsStrip.padding(.top, 16)
                     filters.padding(.top, 16)
                     rows(scoped: scoped, snapshot: snapshot).padding(.top, 16)
                     extras.padding(.top, 8)
@@ -82,30 +80,6 @@ struct MustsHubView: View {
                 router.sheet = .addLink(url: nil, listId: nil)
             }
         }
-    }
-
-    /// Faixa fixa de Presentes no topo (prompt 31): quantos faltam e quanto está previsto.
-    private var giftsStrip: some View {
-        let pending = GiftLogic.pendingCount(gifts)
-        let meta = gifts.isEmpty ? "cole um link ou vídeo de algo que alguém pediu"
-            : "\(gifts.count) \(gifts.count == 1 ? "item" : "itens") · \(GiftLogic.people(gifts).count) pessoas · previsto \(region.money(GiftLogic.plannedTotal(gifts)))"
-        return Button { router.push(.presentes, on: .musts) } label: {
-            HStack(spacing: 14) {
-                Text(gifts.isEmpty ? "0" : "\(pending)").font(V8Font.numeral(44)).tracking(-1).foregroundStyle(V8.orange).frame(minWidth: 52, alignment: .leading)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("Presentes").font(V8Font.text(17, weight: .bold)).foregroundStyle(V8.white)
-                    Text(meta).font(V8Font.text(13)).foregroundStyle(V8.muteDark).lineLimit(2)
-                }
-                Spacer(minLength: 8)
-                Image(systemName: "arrow.up.right").font(.system(size: 14, weight: .semibold)).foregroundStyle(V8.white)
-            }
-            .padding(.horizontal, 16).padding(.vertical, 14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(V8.ink)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Presentes, \(pending) \(pending == 1 ? "falta" : "faltam"). \(meta)")
     }
 
     private var filters: some View {
