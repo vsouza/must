@@ -103,28 +103,20 @@ struct NewListView: View {
     }
 
     var body: some View {
-        // Botão fixo embaixo, FORA do scroll (antes sobrepunha o último bloco: fotos, créditos, "Salvar" em cima do texto).
         VStack(spacing: 0) {
+            CutScreenHeader(title: editing == nil ? "Nova lista" : "Editar lista",
+                            corner: [editing == nil ? "passo 1 de 2" : "editar", cityName], height: 130,
+                            onBack: { dismiss() }, backIcon: "xmark")
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    HStack {
-                        IconButton(.fechar, label: "Fechar") { dismiss() }
-                        Spacer()
-                        Micro(editing == nil ? "nova lista · 1 de 2" : "editar lista")
-                        Spacer()
-                        Color.clear.frame(width: 40, height: 40)
-                    }
-                    .padding(.top, 16)
-
                     ListTile(list: preview, height: 170, previewCount: editing?.places.count ?? 0,
                              previewSubtitle: previewSubtitle, photoURL: shownPhotoURL)
                         .overlay(alignment: .bottomTrailing) {
                             if let credit = shownCredit { Credit(credit, color: color.text).padding(10) }
                         }
-                        .rotationEffect(.degrees(-1.2))
-                        .padding(.top, 22)
+                        .padding(.top, 20)
 
-                    nameSection.padding(.top, 34)
+                    nameSection.padding(.top, 28)
                     iconSection.padding(.top, 26)
                     colorSection.padding(.top, 26)
                     photoSection.padding(.top, 26)
@@ -135,20 +127,14 @@ struct NewListView: View {
                     }
                     Color.clear.frame(height: 24)
                 }
-                .padding(.horizontal, 22)
+                .padding(.horizontal, 20)
             }
+            .scrollIndicators(.hidden)
             .scrollDismissesKeyboard(.interactively)
-
-            PrimaryButton(editing == nil ? "Criar e adicionar lugares" : "Salvar",
-                          icon: editing == nil ? .avancar : nil, iconTrailing: true, style: .dark, action: confirm)
-                .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
-                .opacity(name.trimmingCharacters(in: .whitespaces).isEmpty ? 0.4 : 1)
-                .padding(.horizontal, 22)
-                .padding(.top, 24)
-                .padding(.bottom, 8)
-                .background(Color.must.bg)
         }
-        .background(Color.must.bg.ignoresSafeArea())
+        .background(V8.paper.ignoresSafeArea())
+        .cutFooter(editing == nil ? "Criar e adicionar lugares" : "Salvar",
+                   enabled: !name.trimmingCharacters(in: .whitespaces).isEmpty, action: confirm)
         .sheet(isPresented: $showIcons) {
             IconGridSheet(selected: $icon).presentationDetents([.medium, .large])
         }
@@ -165,13 +151,13 @@ struct NewListView: View {
 
     private var nameSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Micro("nome")
+            MonoLabel("nome", color: V8.mute)
             HStack(spacing: 10) {
                 HStack(spacing: 10) {
-                    Text("Must").font(.must.archivo(17)).foregroundStyle(Color.must.secondary)
+                    Text("Must").font(V8Font.text(17)).foregroundStyle(Color.must.secondary)
                     TextField("kissaten", text: $name)
                         .accessibilityIdentifier("newlist.name")
-                        .font(.must.archivo(17, .semibold))
+                        .font(V8Font.text(17, weight: .semibold))
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                 }
@@ -184,7 +170,7 @@ struct NewListView: View {
 
     private var iconSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Micro("ícone")
+            MonoLabel("ícone", color: V8.mute)
             let suggested = Self.suggestedIcons.contains(icon) ? Self.suggestedIcons : [icon] + Self.suggestedIcons.dropLast()
             FlowLayout(spacing: 10) {
                 ForEach(suggested) { item in
@@ -200,7 +186,7 @@ struct NewListView: View {
                 }
                 Button { showIcons = true } label: {
                     Text("+\(MustIcon.allCases.count - suggested.count)")
-                        .font(.must.archivo(13, .semibold))
+                        .font(V8Font.text(13, weight: .semibold))
                         .foregroundStyle(Color.must.ink)
                         .frame(width: 44, height: 44)
                         .overlay(Rectangle()
@@ -214,7 +200,7 @@ struct NewListView: View {
 
     private var colorSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Micro("cor")
+            MonoLabel("cor", color: V8.mute)
             // 12 cores em linha: rolagem horizontal (sem ela o HStack exige ~480 pt e empurra a tela inteira).
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
@@ -247,10 +233,10 @@ struct NewListView: View {
     /// Edição: a foto atual, com "trocar foto" pra abrir a busca.
     private var currentPhotoRow: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Micro("foto de fundo")
+            MonoLabel("foto de fundo", color: V8.mute)
             HStack(spacing: 12) {
                 Text(shownCredit.map { "foto · \($0)" } ?? "sem foto · só a cor")
-                    .mustMeta()
+                    .font(V8Font.text(13)).foregroundStyle(V8.mute)
                     .lineLimit(2)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 Button { searchPhotos = true } label: { Pill("trocar foto") }
@@ -265,12 +251,12 @@ struct NewListView: View {
     private var photoOptions: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
-                Micro("foto de fundo · Wikimedia CC")
+                MonoLabel("foto de fundo · Wikimedia CC", color: V8.mute)
                     .lineLimit(1)
                     .fixedSize(horizontal: true, vertical: false)
                 Spacer(minLength: 0)
                 Text("busca “\(name.isEmpty ? "…" : name) \(cityName.lowercased())”")
-                    .mustMeta()
+                    .font(V8Font.text(13)).foregroundStyle(V8.mute)
                     .lineLimit(1)
                     .truncationMode(.tail)
                     .frame(maxWidth: 180, alignment: .trailing)
@@ -282,7 +268,7 @@ struct NewListView: View {
                         Rectangle()
                             .fill(color.gradient)
                             .frame(width: 84, height: 64)
-                            .overlay(Text("sem foto").font(.must.mono(9)).foregroundStyle(color.text))
+                            .overlay(Text("sem foto").font(V8Font.mono(9)).foregroundStyle(color.text))
                             .overlay(Rectangle().strokeBorder(Color.must.ink, lineWidth: selectedPhoto == nil ? 2 : 0))
                     }
                     ForEach(photos.prefix(4)) { photo in
@@ -302,7 +288,7 @@ struct NewListView: View {
                 }
                 .buttonStyle(MustPressStyle())
             }
-            Text(photoNote ?? "Só fotos com licença CC · crédito fica no card · ou sem foto, só a cor.").mustMeta()
+            Text(photoNote ?? "Só fotos com licença CC · crédito fica no card · ou sem foto, só a cor.").font(V8Font.text(13)).foregroundStyle(V8.mute)
         }
     }
 
@@ -310,12 +296,12 @@ struct NewListView: View {
 
     private var subsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Micro("sub-listas")
+            MonoLabel("sub-listas", color: V8.mute)
             if !subs.isEmpty {
                 FlowLayout(spacing: 8) {
                     ForEach(subs, id: \.self) { sub in
                         HStack(spacing: 8) {
-                            Text(sub).font(.must.archivo(13, .semibold))
+                            Text(sub).font(V8Font.text(13, weight: .semibold))
                             Button { subs.removeAll { $0 == sub } } label: {
                                 MustIconView(.fechar, size: 10).foregroundStyle(Color.must.secondary)
                             }
@@ -330,24 +316,24 @@ struct NewListView: View {
             }
             HStack(spacing: 10) {
                 TextField("nova sub-lista, ex.: ramen", text: $newSub)
-                    .font(.must.archivo(16))
+                    .font(V8Font.text(16))
                     .submitLabel(.done)
                     .onSubmit(addSub)
                 if !newSub.trimmingCharacters(in: .whitespaces).isEmpty {
-                    Button("Adicionar", action: addSub).font(.must.archivo(14, .semibold)).foregroundStyle(Color.must.ink)
+                    Button("Adicionar", action: addSub).font(V8Font.text(14, weight: .semibold)).foregroundStyle(Color.must.ink)
                 }
             }
             .padding(.horizontal, 16)
             .frame(height: 52)
             .background(Color.must.surface, in: Rectangle())
-            Text("Tirar uma sub-lista não apaga os lugares: eles ficam sem sub.").mustMeta()
+            Text("Tirar uma sub-lista não apaga os lugares: eles ficam sem sub.").font(V8Font.text(13)).foregroundStyle(V8.mute)
         }
     }
 
     private var orderSection: some View {
         let position = lists.firstIndex { $0.id == editing?.id } ?? 0
         return VStack(alignment: .leading, spacing: 10) {
-            Micro("ordem")
+            MonoLabel("ordem", color: V8.mute)
             FormSection {
                 FormRow("Posição", subtitle: "\(position + 1) de \(lists.count) · no hub e no board") {
                     HStack(spacing: 8) {
@@ -371,7 +357,7 @@ struct NewListView: View {
             }
             Button { confirmDelete = true } label: {
                 Text("Apagar lista")
-                    .font(.must.archivo(15, .semibold))
+                    .font(V8Font.text(15, weight: .semibold))
                     .foregroundStyle(Color(hex: 0xC2261D))
                     .frame(maxWidth: .infinity)
                     .frame(height: 52)
@@ -509,7 +495,7 @@ struct IconGridSheet: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            SheetHandle()
+            CutScreenHeader(title: "Ícone", corner: ["\(MustIcon.allCases.count) opções"], height: 110, onBack: { dismiss() }, backIcon: "xmark")
             ScrollView {
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 5), spacing: 14) {
                     ForEach(MustIcon.allCases.filter { !$0.isTextGlyph }) { icon in
@@ -519,10 +505,11 @@ struct IconGridSheet: View {
                         } label: {
                             VStack(spacing: 5) {
                                 MustIconView(icon, size: 22)
-                                    .foregroundStyle(selected == icon ? .white : Color.must.ink)
+                                    .foregroundStyle(selected == icon ? V8.paper : V8.ink)
                                     .frame(width: 48, height: 48)
-                                    .background(Rectangle().fill(selected == icon ? Color.must.ink : Color.must.surface))
-                                Text(icon.label).font(.must.archivo(10)).foregroundStyle(Color.must.secondary).lineLimit(1)
+                                    .background(selected == icon ? V8.ink : Color.clear)
+                                    .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
+                                Text(icon.label).font(V8Font.text(10)).foregroundStyle(Color.must.secondary).lineLimit(1)
                             }
                         }
                         .buttonStyle(MustPressStyle())
@@ -531,6 +518,6 @@ struct IconGridSheet: View {
                 .padding(22)
             }
         }
-        .background(Color.must.bg)
+        .background(V8.paper.ignoresSafeArea())
     }
 }

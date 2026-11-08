@@ -174,6 +174,12 @@ struct IrView: View {
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel("\(minutes) minutos até o \(place.name)")
 
+                if !place.trust.coordConfirmed {
+                    MonoLabel("\(PlaceTrust.coordApproximate) · confira no mapa", size: 10.5, color: V8.orange)
+                        .padding(.top, 14)
+                        .accessibilityLabel("Local aproximado. Confira no mapa antes de sair.")
+                }
+
                 modes(model).padding(.top, 26)
 
                 VStack(spacing: 0) {
@@ -307,10 +313,7 @@ struct IrView: View {
         .padding(.horizontal, 20)
         .padding(.top, 24)
         .padding(.bottom, 24) // sem barra de abas nesta tela (`AppRouter.hidesNavBar`)
-        .background {
-            LinearGradient(colors: [V8.ink.opacity(0), V8.ink], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.25))
-                .ignoresSafeArea()
-                .allowsHitTesting(false)
-        }
+        .background(V8.ink.ignoresSafeArea())
+        .overlay(alignment: .top) { Rectangle().fill(V8.white).frame(height: 2) }
     }
 }

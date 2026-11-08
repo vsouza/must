@@ -134,7 +134,7 @@ final class BairrosModel {
 
     /// Centro e largura da câmera de entrada: o bairro pedido, senão o centro da região (escala de bairros).
     /// Com bolhas: enquadra as bolhas da cidade (a maior e as que estão a até ~8 km dela), acima da sheet.
-    func initialCommand(areaId: String?, near location: CLLocation? = nil) -> MapCameraCommand {
+    func initialCommand(areaId: String?, near location: CLLocation? = nil, compact: Bool = false) -> MapCameraCommand {
         let c = areaId.flatMap { id in areas.first { $0.id == id }?.centroid.clCoordinate } ?? region.defaultCenter
         // Âncora: o bairro pedido (sheet aberta), senão o mais perto de você (até 3 km), senão o que tem mais musts.
         let nearest = location.flatMap { here in
@@ -151,7 +151,7 @@ final class BairrosModel {
             if near.count >= 2 {
                 let points = near.map { MapCameraCommand.Coordinate(CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lng)) }
                 // Laterais com folga pro nome da bolha (o ponto é o centro; "ROPPONGI" cortava na borda).
-                return MapCameraCommand(target: .fit(points: points, top: 150, bottom: areaId == nil ? 220 : 470, sides: 72))
+                return MapCameraCommand(target: .fit(points: points, top: compact ? 30 : 150, bottom: compact ? 40 : (areaId == nil ? 220 : 470), sides: 72))
             }
         }
         return MapCameraCommand(target: .center(lat: c.latitude, lng: c.longitude, widthMeters: region.profile.transit?.areaMapWidth ?? 6_000))

@@ -42,9 +42,20 @@ struct HomeView: View {
     private var debugScreen: String { DebugFlags.string("debugScreen") ?? "" }
     /// `quero-nakano` (DEBUG, prints): a capa sai do bairro Nakano com o GPS longe, como no uso real fora do país.
     @State private var debugArea: Area?
+    /// Foto (só do disco) do bairro buscado no quero, quando não é o da capa.
+    @State private var searchedPhoto: URL?
     private var photoURL: URL? {
         guard debugScreen != "corte-capa-sem-foto" else { return nil }
-        return state.photo.flatMap { URL(string: $0.largeURL ?? $0.url) }
+        let capa = state.photo.flatMap { URL(string: $0.largeURL ?? $0.url) }
+        return CapaState.blockPhoto(searchedAreaId: searchedArea?.id, capaAreaId: state.areaId, searched: searchedPhoto, capa: capa)
+    }
+
+    /// O bairro de onde o quero está buscando (escolhido à mão ou o da capa quando o GPS está longe), só com o resultado na tela.
+    private var searchedArea: Area? {
+        guard corte.stage == .result else { return nil }
+        if let area = corte.areaOverride { return area }
+        guard let env = corte.lastEnv, env.originBasis == .area else { return nil }
+        return AreaCatalog.areas(for: region).first { $0.name == env.areaName }
     }
 
     private var locationCell: String {
@@ -87,6 +98,13 @@ struct HomeView: View {
             await loadIndicated()
         }
         .task(id: region) { await refreshEvents() }
+        .task(id: searchedArea?.id) {
+            searchedPhoto = nil
+            guard let area = searchedArea else { return }
+            guard let (_, candidates) = CapaState.areaCandidates(region: region, areaId: area.id, places: places),
+                  let photo = await CapaState.diskPhoto(region: region, areaId: area.id, candidates: candidates) else { return }
+            searchedPhoto = URL(string: photo.largeURL ?? photo.url)
+        }
         .task(id: state.areaId) {
             await state.loadPhoto(region: region, places: places, services: services, forced: forcePhoto)
         }

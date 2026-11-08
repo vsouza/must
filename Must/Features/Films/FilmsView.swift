@@ -31,18 +31,18 @@ struct FilmsView: View {
 
     var body: some View {
         let list = films ?? []
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                header.padding(.top, 8)
-                HStack(alignment: .lastTextBaseline, spacing: 10) {
-                    Text("Filmes").font(V8Font.display(52)).tracking(-1.6).foregroundStyle(V8.ink)
-                        .lineLimit(1).minimumScaleFactor(0.6).accessibilityAddTraits(.isHeader)
-                    BigNumeral("\(list.count)", size: 74, color: list.isEmpty ? V8.muteDark : V8.orange)
-                    if !list.isEmpty { SpecLabel("no bairro").padding(.bottom, 10) }
-                }
-                .padding(.top, 22)
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("Filmes: \(list.count)")
+        VStack(spacing: 0) {
+            CutScreenHeader(title: "Filmes", corner: ["\(areaLabel) · raio \(radiusText)", films?.isEmpty == false ? "fonte: wikidata · cc0" : "wikidata"],
+                            height: 170, onBack: { dismiss() })
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack(alignment: .lastTextBaseline, spacing: 10) {
+                        BigNumeral("\(list.count)", size: 74, color: list.isEmpty ? V8.mute : V8.orange)
+                        if !list.isEmpty { SpecLabel("no bairro").padding(.bottom, 10) }
+                    }
+                    .padding(.top, 18)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("Filmes: \(list.count)")
                 if list.isEmpty, films != nil {
                     emptyState.padding(.top, 70)
                 } else if !list.isEmpty {
@@ -52,23 +52,15 @@ struct FilmsView: View {
                     .padding(.top, 26)
                     SpecLabel("wikidata · cc0 · cache de 30 dias").padding(.top, 20)
                 }
-                V8BarSpacer()
+                    V8BarSpacer()
+                }
+                .padding(.horizontal, 20)
             }
-            .padding(.horizontal, 20)
+            .scrollIndicators(.hidden)
         }
-        .scrollIndicators(.hidden)
         .background(V8.paper.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
         .task(id: radiusKm) { await load() }
-    }
-
-    private var header: some View {
-        HStack(alignment: .top) {
-            V8CornerButton(systemName: "chevron.left", label: "Voltar") { dismiss() }
-            Spacer(minLength: 12)
-            V8SpecStack(lines: ["\(areaLabel) · raio \(radiusText)", films?.isEmpty == false ? "fonte: wikidata · cc0" : "wikidata"]
-                .map { $0 }, alignment: .trailing).padding(.top, 14)
-        }
     }
 
     private var radiusText: String {

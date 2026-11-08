@@ -41,86 +41,68 @@ struct WalletEditor: View {
     private var symbol: String { region.currencySymbol }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                SheetHandle().frame(maxWidth: .infinity)
-                HStack {
-                    Text(item == nil ? "Novo item" : "Editar item").mustTitle()
-                    Spacer()
-                    Button(action: save) {
-                        Text("Salvar").font(.must.archivo(15, .semibold)).foregroundStyle(.white)
-                            .padding(.horizontal, 18).frame(height: 40)
-                            .background(Rectangle().fill(name.trimmingCharacters(in: .whitespaces).isEmpty ? Color.must.secondary : Color.must.ink))
-                    }
-                    .buttonStyle(MustPressStyle())
-                    .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
-                }
-
-                VStack(alignment: .leading, spacing: 10) {
-                    Micro("tipo")
-                    FlowLayout(spacing: 8) {
-                        ForEach(WalletKind.allCases) { option in
-                            Button { kind = option } label: { Pill(option.label, isOn: kind == option) }
-                                .buttonStyle(MustPressStyle())
-                        }
+        CutSheet(title: item == nil ? "Novo item" : "Editar item", corner: ["Carteira", region.shortName],
+                 footer: "Salvar", footerEnabled: !name.trimmingCharacters(in: .whitespaces).isEmpty, onFooter: save) {
+            VStack(alignment: .leading, spacing: 10) {
+                MonoLabel("tipo", color: V8.mute)
+                FlowLayout(spacing: 8) {
+                    ForEach(WalletKind.allCases) { option in
+                        Button { kind = option } label: { Pill(option.label, isOn: kind == option) }
+                            .buttonStyle(MustPressStyle())
                     }
                 }
-
-                field("nome") { TextField("Suica", text: $name).font(.must.archivo(16, .semibold)) }
-                field("nome local (opcional)") { TextField("como está escrito no cartão", text: $nameLocal).font(.must.archivo(16)) }
-                field("linha de apoio (opcional)") { TextField("onde vale, de onde vem", text: $detail).font(.must.archivo(15)) }
-
-                if kind == .railPass {
-                    field("cobre") { TextField("Tóquio → Kyoto → Tóquio", text: $coverage).font(.must.archivo(15)) }
-                }
-                if kind == .transitCard {
-                    field("saldo que você anota (\(symbol))") {
-                        TextField("3240", text: $balanceText).font(.must.mono(17)).keyboardType(.numberPad)
-                    }
-                    field("avisar pra recarregar abaixo de (\(symbol))") {
-                        TextField("1000", text: $lowText).font(.must.mono(17)).keyboardType(.numberPad)
-                    }
-                }
-                if kind == .transitCard || kind == .creditCard {
-                    Toggle(isOn: $opensWallet) {
-                        FormRow("Abrir no Wallet", subtitle: "abre o app Wallet; não escolhe um passe")
-                    }
-                    .toggleStyle(.must)
-                }
-
-                if kind != .transitCard && kind != .creditCard && kind != .entryQR {
-                    validitySection
-                }
-                if kind == .entryQR || kind == .railPass {
-                    field("texto do QR (colar, ou ler da foto)") {
-                        TextField("texto que o leitor lê", text: $qrText).font(.must.archivo(15))
-                    }
-                }
-
-                attachmentSection
-
-                if kind == .esim {
-                    field("instruções do eSIM") {
-                        TextField("como instalar e ativar", text: $notes, axis: .vertical).font(.must.archivo(15)).lineLimit(2...8)
-                    }
-                } else {
-                    field("observação (opcional)") {
-                        TextField("", text: $notes, axis: .vertical).font(.must.archivo(15)).lineLimit(1...4)
-                    }
-                }
-                field("link (opcional)") {
-                    TextField("https://", text: $link).font(.must.archivo(15)).keyboardType(.URL).textInputAutocapitalization(.never)
-                }
-
-                Text("Passaporte, seguro e QR ficam só neste aparelho: nada vai pro export do board.").mustMeta()
-
-                if let error { Text(error).font(.must.meta).foregroundStyle(Color(hex: 0xC2261D)) }
             }
-            .padding(.horizontal, 22)
-            .padding(.bottom, 40)
+
+            field("nome") { TextField("Suica", text: $name).font(V8Font.text(16, weight: .semibold)) }
+            field("nome local (opcional)") { TextField("como está escrito no cartão", text: $nameLocal).font(V8Font.text(16)) }
+            field("linha de apoio (opcional)") { TextField("onde vale, de onde vem", text: $detail).font(V8Font.text(15)) }
+
+            if kind == .railPass {
+                field("cobre") { TextField("Tóquio → Kyoto → Tóquio", text: $coverage).font(V8Font.text(15)) }
+            }
+            if kind == .transitCard {
+                field("saldo que você anota (\(symbol))") {
+                    TextField("3240", text: $balanceText).font(V8Font.mono(17)).keyboardType(.numberPad)
+                }
+                field("avisar pra recarregar abaixo de (\(symbol))") {
+                    TextField("1000", text: $lowText).font(V8Font.mono(17)).keyboardType(.numberPad)
+                }
+            }
+            if kind == .transitCard || kind == .creditCard {
+                Toggle(isOn: $opensWallet) {
+                    FormRow("Abrir no Wallet", subtitle: "abre o app Wallet; não escolhe um passe")
+                }
+                .toggleStyle(.must)
+            }
+
+            if kind != .transitCard && kind != .creditCard && kind != .entryQR {
+                validitySection
+            }
+            if kind == .entryQR || kind == .railPass {
+                field("texto do QR (colar, ou ler da foto)") {
+                    TextField("texto que o leitor lê", text: $qrText).font(V8Font.text(15))
+                }
+            }
+
+            attachmentSection
+
+            if kind == .esim {
+                field("instruções do eSIM") {
+                    TextField("como instalar e ativar", text: $notes, axis: .vertical).font(V8Font.text(15)).lineLimit(2...8)
+                }
+            } else {
+                field("observação (opcional)") {
+                    TextField("", text: $notes, axis: .vertical).font(V8Font.text(15)).lineLimit(1...4)
+                }
+            }
+            field("link (opcional)") {
+                TextField("https://", text: $link).font(V8Font.text(15)).keyboardType(.URL).textInputAutocapitalization(.never)
+            }
+
+            Text("Passaporte, seguro e QR ficam só neste aparelho: nada vai pro export do board.").font(V8Font.text(13)).foregroundStyle(V8.mute)
+
+            if let error { Text(error).font(.must.meta).foregroundStyle(Color(hex: 0xC2261D)) }
         }
-        .scrollIndicators(.hidden)
-        .background(Color.must.bg)
         .onAppear(perform: load)
         .fileImporter(isPresented: $picking, allowedContentTypes: [.pdf, .image]) { result in
             attach(result)
@@ -145,15 +127,7 @@ struct WalletEditor: View {
     // MARK: Campos
 
     private func field<Content: View>(_ label: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Micro(label)
-            content()
-                .foregroundStyle(Color.must.ink)
-                .padding(.horizontal, 16)
-                .frame(minHeight: 52)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.must.surface, in: Rectangle())
-        }
+        CutBox(label: label) { content() }
     }
 
     /// Validade: "a partir de" só no passe de trem; "válido até" nos documentos com prazo.
@@ -177,13 +151,13 @@ struct WalletEditor: View {
 
     private var attachmentSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Micro(kind == .entryQR ? "print ou foto do QR" : "PDF ou foto")
+            MonoLabel(kind == .entryQR ? "print ou foto do QR" : "PDF ou foto", color: V8.mute)
             HStack(spacing: 10) {
                 // Label em Text (não Pill): o label do PhotosPicker não é isolado no main actor.
                 PhotosPicker(selection: $photo, matching: .images) {
-                    Text("Foto").font(.must.archivo(13, .semibold)).foregroundStyle(Color.must.ink)
-                        .padding(.vertical, 9).padding(.horizontal, 13)
-                        .background(Color.must.surface, in: Rectangle())
+                    Text("FOTO").font(V8Font.mono(11, weight: .semibold)).tracking(0.8).foregroundStyle(V8.ink)
+                        .padding(.horizontal, 12).frame(minHeight: 40)
+                        .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
                 }
                 .buttonStyle(MustPressStyle())
                 Button { picking = true } label: { Pill(attachmentName == nil ? "Arquivo" : "trocar", icon: .exportar) }
@@ -194,7 +168,7 @@ struct WalletEditor: View {
                 }
             }
             if attachmentName != nil {
-                Text("arquivo guardado · fica só neste aparelho").mustMeta()
+                Text("arquivo guardado · fica só neste aparelho").font(V8Font.text(13)).foregroundStyle(V8.mute)
             }
         }
     }

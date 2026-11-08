@@ -377,14 +377,14 @@ enum DebugLaunch {
         case "viagem-aba": router.select(.viagem)
         case "viagem": router.push(.trip, on: .hoje)
         case "reservas": router.push(.reservations, on: .hoje)
-        case "experiencias":
+        case "experiencias", "experiencia-link":
             ExperienceDemo.ensure(context: context, region: region)
             router.push(.experiences, on: .musts)
         case "descobrir": router.push(.discover, on: .hoje)
         case "voos": router.push(.schedule(tab: .voos), on: .hoje)
         case "viagem-voos": router.push(.trip, on: .hoje); router.push(.schedule(tab: .voos), on: .hoje)
         case "viagem-reservas": router.push(.trip, on: .hoje); router.push(.schedule(tab: .reservas), on: .hoje)
-        case "carteira": // itens de exemplo (Suica, JR Pass, eSIM, Visit Japan Web com QR) e a Carteira
+        case "carteira", "carteira-editor", "carteira-item": // itens de exemplo (Suica, JR Pass, eSIM, Visit Japan Web com QR) e a Carteira
             WalletDemo.ensure(context: context, region: region)
             router.push(.carteira, on: .hoje)
         case "ingresso-entrada", "ingresso-fontes": router.sheet = .ticketImport(inboxId: nil)
@@ -399,7 +399,7 @@ enum DebugLaunch {
             TicketDemo.ensure(context: context, region: region)
             router.push(.comoChegar(placeId: TicketDemo.placeId, meeting: true), on: .hoje)
         case "uso-google": router.push(.googleUsage, on: .hoje)
-        case "compras": // lista de exemplo (câmera, Portra, Kit Kat, ramen tonkotsu, saquê, faca, pomada) e Compras
+        case "compras", "compras-item": // lista de exemplo (câmera, Portra, Kit Kat, ramen tonkotsu, saquê, faca, pomada) e Compras
             ShoppingDemo.ensure(context: context)
             router.push(.compras, on: .hoje)
         case "compras-regras":

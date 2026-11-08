@@ -44,12 +44,14 @@ struct ProximosView: View {
                 if items.isEmpty {
                     empty.padding(.top, 28)
                 } else {
-                    VStack(spacing: 12) {
+                    // Faixas de ponta a ponta com régua (o corte): reserva laranja, o resto papel.
+                    VStack(spacing: 0) {
                         ForEach(items) { item in
                             Button { open(item) } label: { ProximoCard(item: item, region: region, now: now, leave: leaveLine(item)) }
-                                .buttonStyle(MustPressStyle())
+                                .buttonStyle(.plain)
                         }
                     }
+                    .padding(.horizontal, -20)
                     .padding(.top, 22)
                 }
                 links.padding(.top, 30)
@@ -212,42 +214,41 @@ struct ProximoCard: View {
     var leave: String?
 
     var body: some View {
-        TicketCard(tone: item.kind == .reservation ? .orange : .paper) {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(alignment: .center) {
-                    V8Tag(text: "\(item.kind.label) · \(Proximos.dayLabel(item.at, now: now, calendar: region.calendar))", style: .ink)
-                    Spacer(minLength: 8)
-                    if let corner = item.corner {
-                        SpecLabel(corner, color: item.kind == .reservation ? V8.ink : V8.mute)
-                    }
-                }
-                HStack(alignment: .lastTextBaseline, spacing: 12) {
-                    Text(region.timeString(item.at))
-                        .font(V8Font.numeral(40))
-                        .tracking(-1.4)
-                        .foregroundStyle(V8.ink)
-                        .fixedSize()
-                    if let route = item.route {
-                        SpecLabel(route, color: V8.mute)
-                    }
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .center) {
+                V8Tag(text: "\(item.kind.label) · \(Proximos.dayLabel(item.at, now: now, calendar: region.calendar))", style: .ink)
+                Spacer(minLength: 8)
+                if let corner = item.corner {
+                    SpecLabel(corner, color: item.kind == .reservation ? V8.ink : V8.mute)
                 }
             }
-        } bottom: {
-            VStack(alignment: .leading, spacing: 3) {
-                Text(item.title)
-                    .font(V8Font.text(18, weight: .bold))
+            HStack(alignment: .lastTextBaseline, spacing: 12) {
+                Text(region.timeString(item.at))
+                    .font(V8Font.numeral(44))
+                    .tracking(-1.4)
                     .foregroundStyle(V8.ink)
-                    .lineLimit(2)
-                let detail = [item.detail, leave].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
-                if !detail.isEmpty {
-                    Text(detail)
-                        .font(V8Font.text(14))
-                        .foregroundStyle(V8.ink.opacity(0.72))
-                        .lineLimit(2)
+                    .fixedSize()
+                if let route = item.route {
+                    SpecLabel(route, color: item.kind == .reservation ? V8.ink : V8.mute)
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            Text(item.title)
+                .font(V8Font.text(18, weight: .bold))
+                .foregroundStyle(V8.ink)
+                .lineLimit(2)
+            let detail = [item.detail, leave].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
+            if !detail.isEmpty {
+                Text(detail)
+                    .font(V8Font.text(14))
+                    .foregroundStyle(V8.ink.opacity(0.72))
+                    .lineLimit(2)
+            }
         }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(item.kind == .reservation ? V8.orange : V8.paper)
+        .overlay(alignment: .bottom) { Rectangle().fill(V8.ink).frame(height: 2) }
         .accessibilityElement(children: .combine)
     }
 }

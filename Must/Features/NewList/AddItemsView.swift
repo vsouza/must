@@ -60,26 +60,29 @@ struct AddItemsView: View {
     private var selectionCount: Int { selectedBoard.count + selectedSaved.count + selectedCandidates.count }
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    header
-                    VStack(alignment: .leading, spacing: 14) {
-                        searchField
-                        sourcePills
-                        if let importNote { Text(importNote).mustMeta() }
-                        results
-                    }
-                    .padding(.horizontal, 22)
-                    .padding(.top, -20)
-                    Color.clear.frame(height: 120)
-                }
+        VStack(spacing: 0) {
+            CutScreenHeader(title: list?.displayName ?? "Lista", corner: ["nova lista · 2 de 2", "criada agora"],
+                            photo: list?.photo?.url.flatMap(URL.init(string:)), height: 170,
+                            onBack: { dismiss() }) {
+                CutButton(title: "Depois") { finish(openList: false) }
             }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 14) {
+                    searchField
+                    sourcePills
+                    if let importNote { Text(importNote).font(V8Font.text(13)).foregroundStyle(V8.mute) }
+                    results
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
+                Color.clear.frame(height: 24)
+            }
+            .scrollIndicators(.hidden)
             .scrollDismissesKeyboard(.interactively)
-            .ignoresSafeArea(edges: .top)
-            bottomBar
         }
-        .background(Color.must.bg.ignoresSafeArea())
+        .background(V8.paper.ignoresSafeArea())
+        .cutFooter(selectionCount == 0 ? "Escolha lugares" : "Adicionar \(selectionCount) à lista",
+                   enabled: selectionCount > 0, arrow: false, action: add)
         .task(id: "\(query)|\(source == .places)") { await searchPlaces() }
         .sheet(isPresented: $showManual) {
             EditPlaceView(newInListId: listId, prefillName: query.isEmpty ? nil : query)
@@ -92,70 +95,19 @@ struct AddItemsView: View {
         }
     }
 
-    // MARK: Header
-
-    private var header: some View {
-        ZStack(alignment: .topLeading) {
-            TintedPhoto(url: list?.photo?.url.flatMap(URL.init(string:)), color: color)
-                .frame(height: 290)
-                .overlay(alignment: .bottom) {
-                    LinearGradient(colors: [.white.opacity(0), .white.opacity(0.95), .white], startPoint: .top, endPoint: .bottom)
-                        .frame(height: 140)
-                }
-            VStack(alignment: .leading, spacing: 26) {
-                HStack {
-                    Button { dismiss() } label: {
-                        MustIconView(.voltar, size: 18).foregroundStyle(Color.must.ink)
-                            .frame(width: 40, height: 40)
-                            .background(Rectangle().fill(Color.white.opacity(0.55)))
-                    }
-                    .buttonStyle(MustPressStyle())
-                    .accessibilityLabel("Voltar")
-                    Spacer()
-                    Micro("nova lista · 2 de 2", color: color.text)
-                    Spacer()
-                    Button { finish(openList: false) } label: {
-                        Text("Depois").font(.must.archivo(15, .semibold)).foregroundStyle(color.text)
-                            .padding(.horizontal, 16).frame(height: 36)
-                            .background(Rectangle().fill(Color.white.opacity(0.55)))
-                    }
-                    .buttonStyle(MustPressStyle())
-                }
-                HStack(spacing: 14) {
-                    MustIconView(list?.icon ?? .cafe, size: 22)
-                        .foregroundStyle(color.text)
-                        .frame(width: 48, height: 48)
-                        .background(Rectangle().fill(Color.white.opacity(0.6)))
-                    VStack(alignment: .leading, spacing: 2) {
-                        Micro("criada agora", color: color.text)
-                        HStack(alignment: .firstTextBaseline, spacing: 6) {
-                            Text(list?.displayName ?? "").font(.must.archivo(30, .semibold)).tracking(-0.6)
-                            if let kanji = list?.kanji { Text(kanji).font(.must.kanji(20)) }
-                        }
-                        .foregroundStyle(Color.must.ink)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
-                    }
-                }
-            }
-            .padding(.horizontal, 22)
-            .padding(.top, 62)
-        }
-    }
-
     private var searchField: some View {
         HStack(spacing: 8) {
             MustIconView(.buscar, size: 16).foregroundStyle(Color.must.secondary)
             TextField("Buscar nome ou bairro…", text: $query)
-                .font(.must.archivo(16))
+                .font(V8Font.text(16))
                 .autocorrectionDisabled()
             Button { showLink = true } label: {
-                Text("link").font(.must.mono(12, .semibold)).foregroundStyle(.white)
+                Text("link").font(V8Font.mono(12, weight: .semibold)).foregroundStyle(.white)
                     .padding(.horizontal, 9).frame(height: 26)
                     .background(Rectangle().fill(Color.must.ink))
             }
             Button { showManual = true } label: {
-                Text("manual").font(.must.mono(12, .semibold)).foregroundStyle(Color.must.ink)
+                Text("manual").font(V8Font.mono(12, weight: .semibold)).foregroundStyle(Color.must.ink)
                     .padding(.horizontal, 9).frame(height: 26)
             }
         }
@@ -189,7 +141,7 @@ struct AddItemsView: View {
             switch source {
             case .places:
                 if let placesNote {
-                    Text(placesNote).mustMeta().padding(.vertical, 18)
+                    Text(placesNote).font(V8Font.text(13)).foregroundStyle(V8.mute).padding(.vertical, 18)
                 }
                 ForEach(Array(candidates.enumerated()), id: \.element.id) { i, c in
                     if i > 0 { RowDivider() }
@@ -236,8 +188,8 @@ struct AddItemsView: View {
                         .frame(width: 32, height: 32)
                         .background(Rectangle().fill(color.gradient))
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Adicionar à mão").font(.must.archivo(16, .semibold)).foregroundStyle(Color.must.ink)
-                        Text(query.isEmpty ? "nome, bairro, preço, janela" : "“\(query)”").mustMeta()
+                        Text("Adicionar à mão").font(V8Font.text(16, weight: .semibold)).foregroundStyle(Color.must.ink)
+                        Text(query.isEmpty ? "nome, bairro, preço, janela" : "“\(query)”").font(V8Font.text(13)).foregroundStyle(V8.mute)
                     }
                     Spacer()
                 }
@@ -269,10 +221,10 @@ struct AddItemsView: View {
                         Text(title).mustPlace().lineLimit(1)
                         if let local { Text(local).font(.must.kanji(12, bold: false)).foregroundStyle(Color.must.secondary).lineLimit(1) }
                     }
-                    Text(meta).mustMeta().lineLimit(2)
+                    Text(meta).font(V8Font.text(13)).foregroundStyle(V8.mute).lineLimit(2)
                 }
                 Spacer(minLength: 8)
-                Text(badge).font(.must.mono(11, .semibold)).foregroundStyle(Color.must.ink)
+                Text(badge).font(V8Font.mono(11, weight: .semibold)).foregroundStyle(Color.must.ink)
                     .padding(.horizontal, 8).padding(.vertical, 4)
                     .background(Rectangle().fill(Color.must.surface))
             }
@@ -281,40 +233,6 @@ struct AddItemsView: View {
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(selected ? .isSelected : [])
-    }
-
-    private var bottomBar: some View {
-        HStack(spacing: 10) {
-            Button { showLink = true } label: {
-                MustIconView(.colarLink, size: 20).foregroundStyle(Color.must.ink)
-                    .frame(width: 52, height: 52)
-                    .background(Rectangle().fill(.white))
-                    .overlay(Rectangle().strokeBorder(Color.must.lineStrong))
-            }
-            .buttonStyle(MustPressStyle())
-            .accessibilityLabel("Colar link")
-
-            Button { add() } label: {
-                HStack(spacing: 9) {
-                    Text(selectionCount == 0 ? "Escolha lugares" : "Adicionar \(selectionCount) à lista")
-                    MustIconView(.ok, size: 18)
-                }
-                .font(.must.archivo(15, .bold))
-                .foregroundStyle(color.text)
-                .frame(maxWidth: .infinity)
-                .frame(height: 52)
-                .background(Rectangle().fill(color.gradient))
-            }
-            .buttonStyle(MustPressStyle())
-            .disabled(selectionCount == 0)
-            .opacity(selectionCount == 0 ? 0.5 : 1)
-        }
-        .padding(.horizontal, 22)
-        .padding(.top, 24)
-        .padding(.bottom, 8)
-        .background {
-            LinearGradient(colors: [.white.opacity(0), .white], startPoint: .top, endPoint: .center).ignoresSafeArea()
-        }
     }
 
     // MARK: Ações

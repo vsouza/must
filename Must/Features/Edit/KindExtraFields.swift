@@ -26,12 +26,12 @@ struct KindExtraFields: View {
         VStack(alignment: .leading, spacing: 22) {
             field("eixo · pra onde a câmera aponta (graus, 0 = norte)") {
                 HStack {
-                    TextField("248", text: number(photoSpot.facing)).font(.must.mono(17)).keyboardType(.numberPad)
-                    if let f = photoSpot.wrappedValue.facing { Text(SunService.cardinal(f)).font(.must.mono(14)).foregroundStyle(Color.must.secondary) }
+                    TextField("248", text: number(photoSpot.facing)).font(V8Font.mono(17)).keyboardType(.numberPad)
+                    if let f = photoSpot.wrappedValue.facing { Text(SunService.cardinal(f)).font(V8Font.mono(14)).foregroundStyle(Color.must.secondary) }
                 }
             }
             VStack(alignment: .leading, spacing: 10) {
-                Micro("melhor luz")
+                MonoLabel("melhor luz", color: V8.mute)
                 FlowLayout(spacing: 8) {
                     ForEach(LightKind.allCases) { l in
                         let on = photoSpot.wrappedValue.bestLight.contains(l)
@@ -44,8 +44,8 @@ struct KindExtraFields: View {
                     }
                 }
             }
-            field("equipamento") { TextField("35 mm · Portra 400", text: text(photoSpot.gear)).font(.must.archivo(17)) }
-            field("lotação") { TextField("lotado 16h+ sáb", text: text(photoSpot.crowdNote)).font(.must.archivo(17)) }
+            field("equipamento") { TextField("35 mm · Portra 400", text: text(photoSpot.gear)).font(V8Font.text(17)) }
+            field("lotação") { TextField("lotado 16h+ sáb", text: text(photoSpot.crowdNote)).font(V8Font.text(17)) }
             toggle("Tripé permitido", isOn: Binding { photoSpot.wrappedValue.tripodAllowed ?? false } set: { photoSpot.wrappedValue.tripodAllowed = $0 })
         }
     }
@@ -59,12 +59,12 @@ struct KindExtraFields: View {
     private var art: some View {
         VStack(alignment: .leading, spacing: 22) {
             HStack(spacing: 12) {
-                field("inteira (\(region.currencySymbol))") { TextField("0", text: number(artEvent.priceAdult)).font(.must.mono(17)).keyboardType(.numberPad) }
-                field("estudante") { TextField("—", text: number(artEvent.priceStudent)).font(.must.mono(17)).keyboardType(.numberPad) }
+                field("inteira (\(region.currencySymbol))") { TextField("0", text: number(artEvent.priceAdult)).font(V8Font.mono(17)).keyboardType(.numberPad) }
+                field("estudante") { TextField("—", text: number(artEvent.priceStudent)).font(V8Font.mono(17)).keyboardType(.numberPad) }
             }
-            field("grátis quando") { TextField("1ª quinta do mês", text: text(artEvent.freeNote)).font(.must.archivo(17)) }
+            field("grátis quando") { TextField("1ª quinta do mês", text: text(artEvent.freeNote)).font(V8Font.text(17)) }
             VStack(alignment: .leading, spacing: 10) {
-                Micro("temporada até")
+                MonoLabel("temporada até", color: V8.mute)
                 HStack {
                     if let until = artEvent.wrappedValue.runsUntil {
                         DatePicker("", selection: Binding { ArtEvent.localDay(until, calendar: region.calendar) } set: { artEvent.wrappedValue.runsUntil = $0 },
@@ -83,20 +83,20 @@ struct KindExtraFields: View {
                 }
             }
             HStack(spacing: 12) {
-                field("última entrada (min antes)") { TextField("30", text: int(artEvent.lastEntryMinutes)).font(.must.mono(17)).keyboardType(.numberPad) }
-                field("duração (min)") { TextField("90", text: int(artEvent.durationMinutes)).font(.must.mono(17)).keyboardType(.numberPad) }
+                field("última entrada (min antes)") { TextField("30", text: int(artEvent.lastEntryMinutes)).font(V8Font.mono(17)).keyboardType(.numberPad) }
+                field("duração (min)") { TextField("90", text: int(artEvent.durationMinutes)).font(V8Font.mono(17)).keyboardType(.numberPad) }
             }
             field("estilo (separado por vírgula)") {
                 TextField("fotografia, pb, rua", text: Binding { artEvent.wrappedValue.style.joined(separator: ", ") } set: {
                     artEvent.wrappedValue.style = $0.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
                 })
-                .font(.must.archivo(17))
+                .font(V8Font.text(17))
             }
             field("link do ingresso") {
                 TextField("https://…", text: Binding { artEvent.wrappedValue.ticketURL?.absoluteString ?? "" } set: {
                     artEvent.wrappedValue.ticketURL = URL(string: $0.trimmingCharacters(in: .whitespaces)).flatMap { $0.scheme == nil ? nil : $0 }
                 })
-                .font(.must.archivo(15)).keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled()
+                .font(V8Font.text(15)).keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled()
             }
             toggle("Precisa reservar", isOn: Binding { artEvent.wrappedValue.needsBooking } set: { artEvent.wrappedValue.needsBooking = $0 })
             toggle("Pode fotografar", isOn: Binding { artEvent.wrappedValue.photographyAllowed ?? false } set: { artEvent.wrappedValue.photographyAllowed = $0 })
@@ -112,7 +112,7 @@ struct KindExtraFields: View {
     private var sport: some View {
         VStack(alignment: .leading, spacing: 22) {
             VStack(alignment: .leading, spacing: 10) {
-                Micro("atividade")
+                MonoLabel("atividade", color: V8.mute)
                 FlowLayout(spacing: 8) {
                     ForEach(SportActivity.allCases) { a in
                         Button { sportSpot.wrappedValue.activity = a } label: { Pill(a.label, isOn: sportSpot.wrappedValue.activity == a) }
@@ -121,14 +121,14 @@ struct KindExtraFields: View {
                 }
             }
             HStack(spacing: 12) {
-                field("distância (km)") { TextField("7", text: number(sportSpot.distanceKm, decimal: true)).font(.must.mono(17)).keyboardType(.decimalPad) }
-                field("subida (m)") { TextField("34", text: int(sportSpot.elevationM)).font(.must.mono(17)).keyboardType(.numberPad) }
+                field("distância (km)") { TextField("7", text: number(sportSpot.distanceKm, decimal: true)).font(V8Font.mono(17)).keyboardType(.decimalPad) }
+                field("subida (m)") { TextField("34", text: int(sportSpot.elevationM)).font(V8Font.mono(17)).keyboardType(.numberPad) }
             }
-            field("piso") { TextField("asfalto e ciclovia", text: text(sportSpot.surface)).font(.must.archivo(17)) }
-            field("percurso") { TextField("começa na Igreja, água no km 3…", text: text(sportSpot.routeNote)).font(.must.archivo(15)) }
+            field("piso") { TextField("asfalto e ciclovia", text: text(sportSpot.surface)).font(V8Font.text(17)) }
+            field("percurso") { TextField("começa na Igreja, água no km 3…", text: text(sportSpot.routeNote)).font(V8Font.text(15)) }
             HStack(spacing: 12) {
-                field("temp. máx (padrão 28°)") { TextField("28", text: int(sportSpot.preferredTempMax)).font(.must.mono(17)).keyboardType(.numberPad) }
-                field("UV máx (padrão 6)") { TextField("6", text: int(sportSpot.preferredUVMax)).font(.must.mono(17)).keyboardType(.numberPad) }
+                field("temp. máx (padrão 28°)") { TextField("28", text: int(sportSpot.preferredTempMax)).font(V8Font.mono(17)).keyboardType(.numberPad) }
+                field("UV máx (padrão 6)") { TextField("6", text: int(sportSpot.preferredUVMax)).font(V8Font.mono(17)).keyboardType(.numberPad) }
             }
             toggle("Circuito (volta fechada)", isOn: Binding { sportSpot.wrappedValue.loop } set: { sportSpot.wrappedValue.loop = $0 })
         }
@@ -144,7 +144,7 @@ struct KindExtraFields: View {
     private var experience: some View {
         VStack(alignment: .leading, spacing: 22) {
             VStack(alignment: .leading, spacing: 10) {
-                Micro("fornecedor")
+                MonoLabel("fornecedor", color: V8.mute)
                 FlowLayout(spacing: 8) {
                     ForEach(ExperienceSupplier.allCases) { s in
                         Button { experienceInfo.wrappedValue.supplier = s } label: { Pill(s.label, isOn: experienceInfo.wrappedValue.supplier == s) }
@@ -153,23 +153,23 @@ struct KindExtraFields: View {
                 }
             }
             field("link do produto (colar)") {
-                TextField("https://www.viator.com/…", text: urlText(experienceInfo.url)).font(.must.archivo(15))
+                TextField("https://www.viator.com/…", text: urlText(experienceInfo.url)).font(V8Font.text(15))
                     .keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled()
             }
             HStack(spacing: 12) {
-                field("duração (min)") { TextField("180", text: int(experienceInfo.durationMinutes)).font(.must.mono(17)).keyboardType(.numberPad) }
-                field("grupo até") { TextField("8", text: int(experienceInfo.groupMax)).font(.must.mono(17)).keyboardType(.numberPad) }
+                field("duração (min)") { TextField("180", text: int(experienceInfo.durationMinutes)).font(V8Font.mono(17)).keyboardType(.numberPad) }
+                field("grupo até") { TextField("8", text: int(experienceInfo.groupMax)).font(V8Font.mono(17)).keyboardType(.numberPad) }
             }
             HStack(spacing: 12) {
-                field("a partir de (\(region.currencySymbol))") { TextField("0", text: number(experienceInfo.priceFrom)).font(.must.mono(17)).keyboardType(.numberPad) }
-                field("cancela grátis (h antes)") { TextField("24", text: int(experienceInfo.freeCancellationHours)).font(.must.mono(17)).keyboardType(.numberPad) }
+                field("a partir de (\(region.currencySymbol))") { TextField("0", text: number(experienceInfo.priceFrom)).font(V8Font.mono(17)).keyboardType(.numberPad) }
+                field("cancela grátis (h antes)") { TextField("24", text: int(experienceInfo.freeCancellationHours)).font(V8Font.mono(17)).keyboardType(.numberPad) }
             }
-            field("ponto de encontro") { TextField("Portão 1 do mercado externo", text: text(experienceInfo.meetingPoint)).font(.must.archivo(17)) }
+            field("ponto de encontro") { TextField("Portão 1 do mercado externo", text: text(experienceInfo.meetingPoint)).font(V8Font.text(17)) }
             field("idiomas") {
                 TextField("inglês, japonês", text: Binding { experienceInfo.wrappedValue.languages.joined(separator: ", ") } set: {
                     experienceInfo.wrappedValue.languages = $0.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
                 })
-                .font(.must.archivo(17))
+                .font(V8Font.text(17))
             }
         }
     }
@@ -177,18 +177,11 @@ struct KindExtraFields: View {
     // MARK: Peças
 
     private func field<Content: View>(_ label: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Micro(label).lineLimit(1).minimumScaleFactor(0.8)
-            content()
-                .foregroundStyle(Color.must.ink)
-                .padding(.horizontal, 16)
-                .frame(height: 52)
-                .background(Color.must.surface, in: Rectangle())
-        }
+        CutBox(label: label) { content() }
     }
 
     private func toggle(_ title: String, isOn: Binding<Bool>) -> some View {
-        Toggle(title, isOn: isOn).font(.must.archivo(16)).tint(Color.must.green)
+        Toggle(title, isOn: isOn).font(V8Font.text(16)).tint(V8.orange)
     }
 
     private func text(_ b: Binding<String?>) -> Binding<String> {

@@ -275,7 +275,7 @@ struct CapaCorteView: View {
                     .padding(20)
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else if suggest.cards.isEmpty && suggest.showLine == nil {
-                Text("Nada aberto por perto agora. Puxe a régua e diga o que você quer.")
+                Text(suggest.emptyLine.isEmpty ? "Nada aberto por perto agora. Puxe a régua e diga o que você quer." : suggest.emptyLine)
                     .font(V8Font.text(14)).foregroundStyle(V8.mute)
                     .padding(20)
                     .frame(maxWidth: .infinity, alignment: .leading)

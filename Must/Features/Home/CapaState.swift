@@ -103,6 +103,13 @@ final class CapaState {
         return (entry, candidates)
     }
 
+    /// A foto do bloco: se o quero busca em outro bairro que o da capa, vale a foto desse bairro (só a do disco); sem foto dele,
+    /// `nil` (cor + trama), nunca a do bairro errado.
+    static func blockPhoto(searchedAreaId: String?, capaAreaId: String?, searched: URL?, capa: URL?) -> URL? {
+        guard let searchedAreaId, searchedAreaId != capaAreaId else { return capa }
+        return searched
+    }
+
     /// Só o que já está no disco: Google de um Must do bairro › Commons já escolhida e baixada. Nunca baixa.
     static func diskPhoto(region: Region, areaId: String, candidates: [AreaHeroes.Candidate]) async -> CCPhoto? {
         if let google = AreaHeroes.googleOnDisk(candidates) { return google }

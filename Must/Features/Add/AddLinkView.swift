@@ -35,55 +35,43 @@ struct AddLinkView: View {
     private var knownAreas: [String] { Array(Set(places.compactMap(\.area))) }
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            Color.must.bg.ignoresSafeArea()
-            BlobBackground(style: .custom([
-                Blob(cx: 385, cy: 430, rx: 70, ry: 90, rotation: 0, fill: .blue, opacity: 0.85),
-                Blob(cx: 0, cy: 500, rx: 60, ry: 70, rotation: 0, fill: .green, opacity: 0.7),
-            ]))
-
+        VStack(spacing: 0) {
+            CutScreenHeader(title: mode == .text ? "Colar texto" : "Guardar", corner: ["Link · Texto · Nome", region.shortName],
+                            height: 150, onBack: { dismiss() }, backIcon: "xmark")
+            modePicker
+                .padding(.horizontal, 20)
+                .padding(.vertical, 10)
+                .overlay(alignment: .bottom) { IndexRule() }
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    HStack {
-                        IconButton(.fechar, label: "Fechar") { dismiss() }
-                        Spacer()
-                        modePicker
-                        Spacer()
-                        Color.clear.frame(width: 40, height: 40)
-                    }
-                    .padding(.top, 16)
-
                     if mode == .text {
                         ColarTextoView(model: texto, env: colarContext(), waiting: waiting.count)
-                            .padding(.top, 26)
+                            .padding(.top, 20)
                     } else if model.phase == .done {
                         AddLinkResults(model: model, lists: lists, region: region)
                             .padding(.top, 20)
                     } else {
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("Cola o link").mustTitle()
-                            Text("Reel, TikTok, YouTube ou um nome — eu descubro o lugar").mustSerif(18).foregroundStyle(Color.must.secondary)
-                        }
-                        .padding(.top, 26)
+                        Text("Reel, TikTok, YouTube ou um nome: eu descubro o lugar.")
+                            .font(V8Font.text(15)).foregroundStyle(V8.mute)
+                            .padding(.top, 20)
 
-                        inputField.padding(.top, 18)
+                        inputField.padding(.top, 14)
                         // "ou um nome": busca no Google por nome (Autocomplete), sem link.
                         Button { showNameSearch = true } label: {
-                            Text("ou um nome → buscar no Google").font(.must.archivo(14, .semibold)).foregroundStyle(Color.must.ink)
+                            Text("ou um nome → buscar no Google").font(V8Font.text(14, weight: .semibold)).foregroundStyle(V8.ink).underline()
                         }
                         .buttonStyle(MustPressStyle())
                         .padding(.top, 10)
                         // Presente (prompt 31): o mesmo link ou vídeo vira item da lista de presentes.
                         Button { giftSource = model.input.isEmpty ? initialURL : model.input; showGift = true } label: {
-                            Text("ou é um presente → guardar em Presentes").font(.must.archivo(14, .semibold)).foregroundStyle(Color.must.ink)
+                            Text("ou é um presente → guardar em Presentes").font(V8Font.text(14, weight: .semibold)).foregroundStyle(V8.ink).underline()
                         }
                         .buttonStyle(MustPressStyle())
                         .padding(.top, 8)
                         badges.padding(.top, 14)
                         if !waiting.isEmpty {
                             Text(waiting.count == 1 ? "1 esperando internet" : "\(waiting.count) esperando internet")
-                                .mustMeta()
-                                .foregroundStyle(Color.must.secondary)
+                                .font(V8Font.text(13)).foregroundStyle(V8.mute)
                                 .padding(.top, 10)
                         }
                         resultArea.padding(.top, 28)
@@ -92,25 +80,25 @@ struct AddLinkView: View {
                     Text(settingsList.first?.cloudBoost == true && CloudBoost.isConfigured
                          ? "Processado no aparelho · legendas difíceis vão pro Claude Haiku (só o texto)"
                          : "Processado no aparelho · nada sai do seu iPhone sem você pedir")
-                        .font(.must.meta)
-                        .foregroundStyle(Color.must.secondary)
-                        .multilineTextAlignment(.center)
-                        .frame(maxWidth: .infinity)
+                        .font(V8Font.text(13))
+                        .foregroundStyle(V8.mute)
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.top, 24)
-                    Color.clear.frame(height: 100)
+                    Color.clear.frame(height: 24)
                 }
-                .padding(.horizontal, 22)
+                .padding(.horizontal, 20)
             }
+            .scrollIndicators(.hidden)
             .scrollDismissesKeyboard(.interactively)
-            // Botões do Texto fixos embaixo (com fade branco); o Link mantém o botão dele, na ZStack.
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 if mode == .text && texto.phase == .done {
                     ColarTextoActions(model: texto, env: colarContext(), sync: services.sync) { dismiss() }
                 }
             }
-
-            if mode == .link { mainButton }
         }
+        .background(V8.paper.ignoresSafeArea())
+        .modifier(AddLinkFooter(mode: mode, title: footerTitle, enabled: footerEnabled, action: footerAction))
         .sheet(isPresented: $showGift) {
             let source = (giftSource?.isEmpty == false) ? giftSource : nil
             PresenteNovoView(source: source)
@@ -150,21 +138,19 @@ struct AddLinkView: View {
 
     /// Seletor "Link · Texto · Nome" no topo (no lugar do rótulo "adicionar").
     private var modePicker: some View {
-        HStack(spacing: 2) {
+        HStack(spacing: 0) {
             ForEach(AddMode.allCases, id: \.self) { option in
                 Button { mode = option } label: {
-                    Text(option.label)
-                        .font(.must.archivo(14, .semibold))
-                        .foregroundStyle(mode == option ? Color.white : Color.must.ink)
-                        .padding(.horizontal, 16)
-                        .frame(height: 40)
-                        .background(Rectangle().fill(mode == option ? Color.must.ink : .clear))
+                    Text(option.label.uppercased())
+                        .font(V8Font.mono(12, weight: .semibold)).tracking(1)
+                        .foregroundStyle(mode == option ? V8.paper : V8.ink)
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .background(mode == option ? V8.ink : Color.clear)
                 }
-                .buttonStyle(MustPressStyle())
+                .buttonStyle(.plain)
             }
         }
-        .padding(3)
-        .background(Rectangle().fill(Color.must.surface))
+        .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
         .accessibilityElement(children: .contain)
     }
 
@@ -182,10 +168,10 @@ struct AddLinkView: View {
 
     private var inputField: some View {
         HStack(spacing: 12) {
-            MustIconView(.colarLink, size: 18).foregroundStyle(Color.must.ink)
+            MustIconView(.colarLink, size: 18).foregroundStyle(V8.ink)
             TextField("instagram.com/reel/…", text: $model.input)
                 .accessibilityIdentifier("add.link")
-                .font(.must.mono(15))
+                .font(V8Font.mono(15))
                 .keyboardType(.URL)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
@@ -200,13 +186,13 @@ struct AddLinkView: View {
                 }
             }
             .labelStyle(.titleOnly)
-            .buttonBorderShape(.capsule)
-            .tint(Color.must.ink)
+            .buttonBorderShape(.roundedRectangle(radius: 0))
+            .tint(V8.ink)
         }
         .padding(.leading, 18)
         .padding(.trailing, 8)
-        .frame(height: 58)
-        .background(Color.must.surface, in: Rectangle())
+        .frame(minHeight: 58)
+        .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
     }
 
     private var badges: some View {
@@ -214,14 +200,15 @@ struct AddLinkView: View {
             ForEach([LinkSource.instagram, .tiktok, .youtube, .maps], id: \.self) { source in
                 let on = model.detectedSource == source
                 Text(source.badge ?? "")
-                    .font(.must.mono(12, .semibold))
-                    .foregroundStyle(on ? .white : Color.must.ink)
+                    .font(V8Font.mono(12, weight: .semibold))
+                    .foregroundStyle(on ? V8.paper : V8.ink)
                     .frame(minWidth: 32)
                     .padding(.horizontal, 6)
                     .frame(height: 44)
-                    .background(Rectangle().fill(on ? Color.must.ink : Color.must.surface))
+                    .background(on ? V8.ink : Color.clear)
+                    .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
             }
-            Text("Também pelo Atalho “Compartilhar → Must”").mustMeta().padding(.leading, 4)
+            Text("Também pelo Atalho “Compartilhar → Must”").font(V8Font.text(13)).foregroundStyle(V8.mute).padding(.leading, 4)
         }
     }
 
@@ -236,15 +223,15 @@ struct AddLinkView: View {
         case .reading:
             HStack(spacing: 10) {
                 ProgressView()
-                Text(model.stepLines.first?.text ?? "Lendo…").mustMeta()
+                Text(model.stepLines.first?.text ?? "Lendo…").font(V8Font.text(13)).foregroundStyle(V8.mute)
             }
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .glass(cornerRadius: 26)
+            .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
         case .needsText(let message):
             pasteCard(message)
         case .failed(let message):
-            Text(message).font(.must.meta).foregroundStyle(Color(hex: 0xC2261D))
+            Text(message).font(.must.meta).foregroundStyle(V8.orangeDeep)
         }
     }
 
@@ -254,13 +241,13 @@ struct AddLinkView: View {
             if model.offersVideo || model.videoText != nil {
                 VideoReadCard(model: model) { url in Task { await runVideo(url) } }
             }
-            Text(message).font(.must.archivo(15, .semibold)).foregroundStyle(Color.must.ink)
+            Text(message).font(V8Font.text(15, weight: .semibold)).foregroundStyle(Color.must.ink)
             TextField("cola aqui o texto da legenda", text: $model.pastedText, axis: .vertical)
                 .accessibilityIdentifier("add.caption")
-                .font(.must.serif(18))
+                .font(V8Font.text(16))
                 .lineLimit(3...8)
-                .padding(14)
-                .background(Color.white, in: Rectangle())
+                .padding(12)
+                .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
             Button {
                 Task { await runPasted() }
             } label: { Pill("Ler texto", style: .green) }
@@ -268,7 +255,7 @@ struct AddLinkView: View {
                 .disabled(model.pastedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         }
         .padding(20)
-        .glass(cornerRadius: 26)
+        .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
     }
 
     private var stepsView: some View {
@@ -276,11 +263,12 @@ struct AddLinkView: View {
             ForEach(Array(model.stepLines.enumerated()), id: \.offset) { _, step in
                 HStack(alignment: .top, spacing: 12) {
                     ZStack {
-                        Rectangle().fill(step.done ? Color.must.green : Color.must.surface)
-                        if step.done { MustIconView(.ok, size: 12).foregroundStyle(Color.must.greenText) }
+                        Rectangle().fill(step.done ? V8.orange : Color.clear)
+                        Rectangle().stroke(V8.ink, lineWidth: 1.5)
+                        if step.done { MustIconView(.ok, size: 12).foregroundStyle(V8.ink) }
                     }
                     .frame(width: 22, height: 22)
-                    Text(step.text).font(.must.archivo(14)).foregroundStyle(Color.must.secondary)
+                    Text(step.text).font(V8Font.text(14)).foregroundStyle(Color.must.secondary)
                 }
             }
         }
@@ -288,28 +276,23 @@ struct AddLinkView: View {
 
     // MARK: Ação principal
 
-    @ViewBuilder private var mainButton: some View {
-        Group {
-            if model.phase == .done {
-                if model.matches.allSatisfy({ $0.existing != nil }) {
-                    PrimaryButton("Já está no board · fechar", style: .dark) { dismiss() }
-                } else {
-                    let count = model.included.count
-                    PrimaryButton(addTitle, icon: .ok, iconTrailing: true) { save() }
-                        .disabled(count == 0)
-                        .opacity(count == 0 ? 0.5 : 1)
-                }
-            } else {
-                PrimaryButton("Ler o link", icon: .avancar, iconTrailing: true, style: .dark) { Task { await run() } }
-                    .disabled(model.input.trimmingCharacters(in: .whitespaces).isEmpty || model.phase == .reading)
-                    .opacity(model.input.trimmingCharacters(in: .whitespaces).isEmpty ? 0.4 : 1)
-            }
-        }
-        .padding(.horizontal, 22)
-        .padding(.top, 24)
-        .padding(.bottom, 8)
-        .background {
-            LinearGradient(colors: [.white.opacity(0), .white], startPoint: .top, endPoint: .center).ignoresSafeArea()
+    private var allExisting: Bool { model.phase == .done && model.matches.allSatisfy { $0.existing != nil } }
+
+    private var footerTitle: String {
+        if model.phase == .done { return allExisting ? "Já está no board · fechar" : addTitle }
+        return "Ler o link"
+    }
+
+    private var footerEnabled: Bool {
+        if model.phase == .done { return allExisting || !model.included.isEmpty }
+        return !model.input.trimmingCharacters(in: .whitespaces).isEmpty && model.phase != .reading
+    }
+
+    private func footerAction() {
+        if model.phase == .done {
+            if allExisting { dismiss() } else { save() }
+        } else {
+            Task { await run() }
         }
     }
 
@@ -388,6 +371,22 @@ enum AddMode: CaseIterable, Hashable {
         case .link: "Link"
         case .text: "Texto"
         case .name: "Nome"
+        }
+    }
+}
+
+/// O botão laranja do pé: só na aba Link (a aba Texto tem os botões dela).
+private struct AddLinkFooter: ViewModifier {
+    var mode: AddMode
+    var title: String
+    var enabled: Bool
+    var action: () -> Void
+
+    @ViewBuilder func body(content: Content) -> some View {
+        if mode == .link {
+            content.cutFooter(title, enabled: enabled, action: action)
+        } else {
+            content
         }
     }
 }

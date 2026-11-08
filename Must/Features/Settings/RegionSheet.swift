@@ -27,77 +27,56 @@ struct RegionSheet: View {
     private enum Expanded { case date, gps }
 
     var body: some View {
-        VStack(spacing: 0) {
-            SheetHandle()
-            ScrollView {
-                VStack(alignment: .leading, spacing: 12) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Micro("escondido · 5 toques na versão")
-                        Text("Região").mustTitle()
-                        Text("troca board, cidades, moeda, metrô e fontes de dados de uma vez")
-                            .mustSerif(18)
-                            .foregroundStyle(Color.must.secondary)
-                    }
-                    .padding(.top, 20)
-                    .padding(.bottom, 14)
-
-                    ForEach(store.trips.map(Region.init(trip:))) { region in
-                        RegionOption(region: region, selected: region == store.region,
-                                     subtitle: subtitle(for: region)) { select(region) }
-                    }
-
-                    FormSection {
-                        Button { liveData.toggle() } label: {
-                            FormRow("Dados ao vivo (Places, tempo)") {
-                                StatusChip(text: liveData ? "ligado" : "desligado", on: liveData)
-                            }
-                        }
-                        .buttonStyle(.plain)
-                        RowDivider()
-                        dateRow
-                        RowDivider()
-                        gpsRow
-                        RowDivider()
-                        cloudRow
-                        RowDivider()
-                        Button(action: exportLogs) {
-                            FormRow("Exportar logs", subtitle: "último dia · só esta abertura do app") {
-                                if exportingLogs { ProgressView() } else {
-                                    MustIconView(.avancar, size: 14).foregroundStyle(Color.must.secondary)
-                                }
-                            }
-                        }
-                        .buttonStyle(.plain)
-                        RowDivider()
-                        Button { confirmReset = true } label: {
-                            FormRow("Zerar o board desta região", titleColor: Color(hex: 0xC2261D))
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    .padding(.top, 6)
-
-                    if let error = store.lastError {
-                        Text("Erro no armazenamento: \(error)").font(.must.meta).foregroundStyle(Color(hex: 0xC2261D))
-                    }
-
-                    Text("Cada região tem o próprio board e os próprios gastos. Trocar não apaga nada.")
-                        .font(.must.meta)
-                        .foregroundStyle(Color.must.secondary)
-                        .multilineTextAlignment(.center)
-                        .frame(maxWidth: .infinity)
-                        .padding(.top, 6)
-                }
-                .padding(.horizontal, 22)
-                .padding(.bottom, 24)
+        CutSheet(title: "Região", corner: ["escondido", "5 toques na versão"],
+                 subtitle: "troca board, cidades, moeda, metrô e fontes de dados de uma vez",
+                 height: 190, footer: "Fechar", footerArrow: false, onFooter: { dismiss() }) {
+            ForEach(store.trips.map(Region.init(trip:))) { region in
+                RegionOption(region: region, selected: region == store.region,
+                             subtitle: subtitle(for: region)) { select(region) }
             }
-            PrimaryButton("Fechar", style: .dark) { dismiss() }
-                .padding(.horizontal, 22)
-                .padding(.bottom, 8)
+
+            FormSection {
+                Button { liveData.toggle() } label: {
+                    FormRow("Dados ao vivo (Places, tempo)") {
+                        StatusChip(text: liveData ? "ligado" : "desligado", on: liveData)
+                    }
+                }
+                .buttonStyle(.plain)
+                RowDivider()
+                dateRow
+                RowDivider()
+                gpsRow
+                RowDivider()
+                cloudRow
+                RowDivider()
+                Button(action: exportLogs) {
+                    FormRow("Exportar logs", subtitle: "último dia · só esta abertura do app") {
+                        if exportingLogs { ProgressView() } else {
+                            MustIconView(.avancar, size: 14).foregroundStyle(Color.must.secondary)
+                        }
+                    }
+                }
+                .buttonStyle(.plain)
+                RowDivider()
+                Button { confirmReset = true } label: {
+                    FormRow("Zerar o board desta região", titleColor: V8.orangeDeep)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.top, 6)
+
+            if let error = store.lastError {
+                Text("Erro no armazenamento: \(error)").font(.must.meta).foregroundStyle(V8.orangeDeep)
+            }
+
+            Text("Cada região tem o próprio board e os próprios gastos. Trocar não apaga nada.")
+                .font(.must.meta)
+                .foregroundStyle(Color.must.secondary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
+                .padding(.top, 6)
         }
-        .background(Color.must.bg)
         .presentationDetents([.large])
-        .presentationDragIndicator(.hidden)
-        .presentationCornerRadius(32)
         .confirmationDialog("Zerar o board de \(store.region.displayName)?", isPresented: $confirmReset, titleVisibility: .visible) {
             Button("Zerar \(store.region.shortName)", role: .destructive) { confirmResetAgain = true }
         } message: {
@@ -252,12 +231,12 @@ struct RegionSheet: View {
                         TextField("lat", text: $latText)
                         TextField("lng", text: $lngText)
                     }
-                    .font(.must.mono(14))
+                    .font(V8Font.mono(14))
                     .keyboardType(.numbersAndPunctuation)
                     .textFieldStyle(.plain)
                     .padding(.horizontal, 12)
                     .frame(height: 40)
-                    .background(Color.white, in: Rectangle())
+                    .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
                     HStack(spacing: 8) {
                         Button {
                             if let lat = Double(latText.replacingOccurrences(of: ",", with: ".")),
@@ -313,7 +292,7 @@ struct RegionSheet: View {
     }
 }
 
-/// Card de uma região: gradiente da cor quando selecionada, cinza quando não.
+/// Faixa de uma região: tinta cheia quando selecionada, borda de 2 pt quando não.
 private struct RegionOption: View {
     var region: Region
     var selected: Bool
@@ -325,36 +304,34 @@ private struct RegionOption: View {
             HStack(spacing: 16) {
                 ZStack {
                     if selected {
-                        Rectangle().fill(Color.must.ink)
-                        MustIconView(.ok, size: 16).foregroundStyle(.white)
+                        Rectangle().fill(V8.orange)
+                        MustIconView(.ok, size: 16).foregroundStyle(V8.ink)
                     } else {
-                        Rectangle().strokeBorder(Color(hex: 0xB9BDC4), lineWidth: 1.5)
+                        Rectangle().strokeBorder(V8.ink, lineWidth: 2)
                     }
                 }
                 .frame(width: 28, height: 28)
 
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Text(region.displayName).font(.must.archivo(19, .semibold))
+                        Text(region.displayName).font(V8Font.text(19, weight: .semibold))
                     }
-                    .foregroundStyle(Color.must.ink)
+                    .foregroundStyle(selected ? V8.paper : V8.ink)
                     Text(subtitle)
-                        .font(.must.archivo(13))
-                        .foregroundStyle(selected ? region.color.text : Color.must.secondary)
+                        .font(V8Font.text(13))
+                        .foregroundStyle(selected ? V8.muteDark : V8.mute)
                         .multilineTextAlignment(.leading)
                 }
                 Spacer(minLength: 8)
                 Text(region.utcOffsetLabel)
-                    .font(.must.mono(14, .semibold))
-                    .foregroundStyle(selected ? Color.must.ink : Color.must.secondary)
+                    .font(V8Font.mono(14, weight: .semibold))
+                    .foregroundStyle(selected ? V8.paper : V8.mute)
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 22)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background {
-                Rectangle()
-                    .fill(selected ? AnyShapeStyle(region.color.gradient) : AnyShapeStyle(Color.must.surface2))
-            }
+            .background(selected ? V8.ink : Color.clear)
+            .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
         }
         .buttonStyle(MustPressStyle())
         .accessibilityAddTraits(selected ? .isSelected : [])

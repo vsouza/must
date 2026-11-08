@@ -62,6 +62,15 @@ struct WalletView: View {
         }
         .background(V8.paper.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
+        .onAppear {
+            #if DEBUG
+            switch DebugFlags.string("debugScreen") {
+            case "carteira-editor": adding = true
+            case "carteira-item": opened = items.first
+            default: break
+            }
+            #endif
+        }
         .sheet(item: $opened) { item in WalletItemSheet(item: item) }
         .sheet(isPresented: $adding) { WalletEditor(item: nil) }
     }

@@ -53,7 +53,12 @@ struct ShoppingView: View {
         }
         .background(V8.paper.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
-        .onAppear { ShoppingFlightSync.refresh(context: context, region: region) }
+        .onAppear {
+            ShoppingFlightSync.refresh(context: context, region: region)
+            #if DEBUG
+            if DebugFlags.string("debugScreen") == "compras-item" { adding = true }
+            #endif
+        }
         .sheet(item: $editing, onDismiss: { ShoppingFlightSync.refresh(context: context, region: region) }) { item in
             ShoppingItemEditor(item: item)
         }

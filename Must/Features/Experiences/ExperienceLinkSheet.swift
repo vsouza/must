@@ -15,39 +15,23 @@ struct ExperienceLinkSheet: View {
     private var region: Region { store.region }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                HStack {
-                    Text("Colar link").mustTitle()
-                    Spacer()
-                    IconButton(.fechar, label: "Fechar") { dismiss() }
-                }
-                .padding(.top, 14)
-                Text("Cola o link de uma experiência. Eu leio o título, o preço, a duração e o ponto de encontro da página.")
-                    .mustSerif(18).foregroundStyle(Color.must.secondary)
-
+        CutSheet(title: "Colar link", corner: ["Experiências", "Viator · Klook · Airbnb"],
+                 footer: "Ler link", footerEnabled: !model.text.trimmingCharacters(in: .whitespaces).isEmpty && !model.isReading,
+                 footerArrow: false, onFooter: { read() }) {
+            Text("Cola o link de uma experiência. Eu leio o título, o preço, a duração e o ponto de encontro da página.")
+                .font(V8Font.text(15)).foregroundStyle(V8.mute)
+            CutBox(label: "link") {
                 TextField("https://www.klook.com/…", text: $model.text)
-                    .font(.must.archivo(16))
+                    .font(V8Font.text(16))
                     .keyboardType(.URL)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .submitLabel(.go)
                     .focused($focused)
                     .onSubmit { read() }
-                    .padding(.horizontal, 16)
-                    .frame(height: 52)
-                    .background(Rectangle().fill(Color.must.surface))
-
-                PrimaryButton("Ler link", icon: .colarLink) { read() }
-                    .disabled(model.text.trimmingCharacters(in: .whitespaces).isEmpty || model.isReading)
-
-                result
-                TabBarSpacer()
             }
-            .padding(.horizontal, 22)
+            result
         }
-        .scrollIndicators(.hidden)
-        .background(Color.must.bg)
         .presentationDetents([.large])
         .onAppear { focused = true }
     }
@@ -76,24 +60,24 @@ struct ExperienceLinkSheet: View {
     private func draftCard(_ draft: ExperienceDraft, link: ExperienceLink) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Tag(ExperienceSupplier.badge(link.supplier, url: link.url), style: .dark)
+                CutTag(text: ExperienceSupplier.badge(link.supplier, url: link.url), filled: true)
                 Spacer()
-                Micro(draft.via)
+                MonoLabel(draft.via, size: 10, color: V8.mute)
             }
-            Text(draft.name).font(.must.archivo(20, .semibold)).foregroundStyle(Color.must.ink)
-            Text(facts(draft)).font(.must.meta).foregroundStyle(Color.must.secondary)
+            Text(draft.name).font(V8Font.display(26)).foregroundStyle(V8.ink).fixedSize(horizontal: false, vertical: true)
+            Text(facts(draft)).font(V8Font.text(14)).foregroundStyle(V8.mute)
             if let session = draft.session {
-                Pill("\(region.shortDayTime(session.at)) · confira no fornecedor", style: .green)
+                CutTag(text: "\(region.shortDayTime(session.at)) · confira no fornecedor")
             }
-            PrimaryButton("Adicionar à Must do", icon: .adicionar) {
+            CutButton(title: "Adicionar à Must do", filled: true) {
                 ExperienceStore.add(draft, region: region, context: context)
                 dismiss()
             }
-            GhostButton("Ver no \(ExperienceSupplier.badge(link.supplier, url: link.url))", icon: .exportar) { openURL(link.url) }
+            CutButton(title: "Ver no \(ExperienceSupplier.badge(link.supplier, url: link.url))") { openURL(link.url) }
         }
-        .padding(18)
+        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .card()
+        .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
     }
 
     private func facts(_ draft: ExperienceDraft) -> String {
