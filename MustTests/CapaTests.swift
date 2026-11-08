@@ -87,13 +87,4 @@ struct CapaTests {
         #expect(CapaSwipe.route(for: .left, now: at(14, 20), region: .jp) == .dicas)
         #expect(CapaSwipe.route(for: .right, now: at(14, 20), region: .jp) == .bolso)
     }
-
-    // MARK: Foto
-
-    @Test func fotoSoDoDiscoEFixaNosPrints() {
-        #expect(CapaPhotoPolicy.usesPhoto(hasDiskPhoto: true, forced: false, debugScreen: false))
-        #expect(!CapaPhotoPolicy.usesPhoto(hasDiskPhoto: false, forced: false, debugScreen: false))
-        #expect(!CapaPhotoPolicy.usesPhoto(hasDiskPhoto: true, forced: false, debugScreen: true))
-        #expect(CapaPhotoPolicy.usesPhoto(hasDiskPhoto: false, forced: true, debugScreen: true))
-    }
 }

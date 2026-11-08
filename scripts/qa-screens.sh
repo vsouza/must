@@ -111,6 +111,24 @@ v8shots() { # $1 = prefixo (jp|bh|it), $2 = lugar de exemplo, $3 = museu de exem
     shot $r-r23-off-filmes -debugScreen filmes:$3 ${=OFF}
   fi
 }
+
+# prompt 30 · o corte (etapa 1): capa única, puxar a régua, quero… e resultado em duas faixas. `-capaFoto` baixa a foto do
+# Commons uma vez pro bairro (só nos prints); `corte-capa-sem-foto` é o estado sem foto no disco.
+corteshots() { # $1 = prefixo (jp|bh|it)
+  local r=$1
+  WAIT=10 shot $r-corte-capa -debugScreen corte-capa -capaFoto
+  if [ "$r" = "jp" ]; then
+    WAIT=8 shot $r-corte-capa-sem-foto -debugScreen corte-capa-sem-foto
+    WAIT=10 shot $r-corte-puxando -debugScreen corte-puxando -capaFoto
+    WAIT=10 shot $r-corte-quero -debugScreen corte-quero -capaFoto
+    WAIT=12 shot $r-corte-cafe -debugScreen corte-cafe -capaFoto
+    WAIT=12 shot $r-corte-cafe-offline -debugScreen corte-cafe-offline -capaFoto -debugNetwork offline
+    WAIT=10 shot $r-corte-walk1 -debugScreen corte-walk1 -capaFoto
+    WAIT=10 shot $r-corte-walk2 -debugScreen corte-walk2 -capaFoto
+    WAIT=12 shot $r-corte-xxxl-cafe -debugScreen corte-cafe -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
+    WAIT=10 shot $r-corte-xxxl-capa -debugScreen corte-capa -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
+  fi
+}
 ${=W} skipOnboarding -bool YES
 ${=W} dev.simDateOn -bool YES; ${=W} dev.simSetAt -float 0; ${=W} dev.simGPSOn -bool YES
 
@@ -137,22 +155,31 @@ ${=W} region jp
 ${=W} dev.simDate -float $(epoch 2026-11-15T14:20:00+09:00)
 ${=W} dev.simLat -float 35.6909; ${=W} dev.simLng -float 139.7003
 v8shots jp j05 j28 eat shinjuku $(epoch 2026-11-15T08:30:00+09:00) "quero comprar um Seiko"
+corteshots jp
 
 echo "→ v8 · BH · sáb 7 nov 14:35 · Savassi (CapaBR)"
 ${=W} region bh
 ${=W} dev.simDate -float $(epoch 2026-11-07T14:35:00-03:00)
 ${=W} dev.simLat -float -19.9385; ${=W} dev.simLng -float -43.9343
 v8shots bh p01 p01 eat savassi $(epoch 2026-11-07T08:30:00-03:00) "quero comer um pão de queijo"
+corteshots bh
 
 echo "→ v8 · Roma · qui 15 abr 2027 11:40 · Trastevere (CapaIT); dia 4 em Monti pro DiaIT"
 ${=W} region it
 ${=W} dev.simDate -float $(epoch 2027-04-15T11:40:00+02:00)
 ${=W} dev.simLat -float 41.8897; ${=W} dev.simLng -float 12.4695
 v8shots it r02 r46 eat trastevere $(epoch 2027-04-15T08:30:00+02:00) "quero comer uma carbonara"
+corteshots it
 ${=W} dev.simDate -float $(epoch 2027-04-14T14:00:00+02:00)
 ${=W} dev.simLat -float 41.8955; ${=W} dev.simLng -float 12.4925
 WAIT=12 shot it-v8-aceitar-monti -debugScreen aceitar-dia:monti -dev.simDate $(epoch 2027-04-14T08:30:00+02:00) -dev.simSetAt 0
 shot it-v8-dia-monti -debugScreen dia
+
+echo "→ corte · Portugal (viagem futura): Faltam N dias · Primeiro dia · Lisboa"
+${=W} region bh
+${=W} dev.simDate -float $(epoch 2026-11-07T14:35:00-03:00)
+WAIT=12 shot pt-corte-capa -debugScreen corte-capa -debugTrip portugal
+${=W} dev.simLat -float -19.9385; ${=W} dev.simLng -float -43.9343
 
 if [ "${ONLY:-}" != "v8" ]; then
 echo "→ BH · sábado 31 out 09:30 · Savassi"

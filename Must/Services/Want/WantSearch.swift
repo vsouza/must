@@ -54,6 +54,8 @@ struct WantSearchInput: Sendable {
     /// Lugares do board da cidade (já com coordenada): o que casa com a vontade entra na lista.
     var board: [WantBoardPlace] = []
     var now: Date = AppClock.now
+    /// O corte (prompt 30): os Musts do board da cidade entram a qualquer distância (o raio só vale pro que vem de fora).
+    var boardAnyDistance = false
 }
 
 /// Um lugar do board, sem SwiftData (pra rodar fora do main).
@@ -162,7 +164,7 @@ enum WantSearch {
             WantResult(id: "board:\(p.id)", name: p.name, lat: p.lat, lng: p.lng, origin: .board, area: p.area, googlePlaceId: p.placeId,
                        boardPlaceId: p.id, note: "no seu board", until: p.until, distance: meters(input.center, p.lat, p.lng))
         }
-        .filter { $0.distance <= (input.intent.near ? nearRadius : radius) * 1.5 }
+        .filter { input.boardAnyDistance || $0.distance <= (input.intent.near ? nearRadius : radius) * 1.5 }
     }
 
     /// Palavras do objeto (sem as curtas) e da marca.

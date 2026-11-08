@@ -494,7 +494,7 @@ struct IndexRow: View {
 }
 
 /// Faixa preta sólida por baixo do texto das telas de foto (Lugar, capa com foto). Sem degradê, sem foto lavada.
-struct CutBand<Content: View>: View {
+struct InkBand<Content: View>: View {
     @ViewBuilder var content: Content
 
     init(@ViewBuilder content: () -> Content) { self.content = content() }

@@ -358,35 +358,9 @@ struct QueroView: View {
     private var areaName: String { planArea?.name ?? gpsArea?.name ?? city?.name ?? region.displayName }
 
     private func env() -> QueroEnv {
-        let cityCenter = city.map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lng) } ?? region.defaultCenter
-        let gps = services.location.current?.coordinate
-        let gpsInCity = gps.map { DaySolver.streetKm($0, cityCenter) < 60 } ?? false
-        let origin = gpsInCity ? gps! : (planArea?.centroid.clCoordinate ?? cityCenter)
-        let plan = plan
-        let center = plan.flatMap { _ in planArea?.centroid.clCoordinate } ?? origin
-        let cityId = city?.id ?? trip?.cities.first?.id ?? region.rawValue
-        let group = AreaCatalog.cityGroup(forCityId: cityId)
-        let board = QueroEnv.board(places, cityGroup: group, now: now, timeZone: region.timeZone)
-        return QueroEnv(region: region, now: now, plan: plan, center: center, origin: origin, areaName: areaName, cityGroup: group,
-                        cityId: cityId, online: services.connectivity.status != .offline, board: board,
-                        useModel: settingsList.first?.onDeviceAI ?? true,
-                        walkMaxKm: settingsList.first?.walkMaxKm ?? 1.5, upcoming: upcoming())
-    }
-
-    /// Próximos 14 dias aceitos e os bairros das paradas (pro "sáb · Ginza").
-    private func upcoming() -> [(date: Date, areaIds: Set<String>)] {
-        let start = today.addingTimeInterval(86_400)
-        let end = today.addingTimeInterval(15 * 86_400)
-        let days = (try? context.fetch(FetchDescriptor<PlannedDay>(predicate: #Predicate { $0.date >= start && $0.date < end && $0.accepted },
-                                                                     sortBy: [SortDescriptor(\.date)]))) ?? []
-        let assigner = AreaAssigner(areas: areas)
-        return days.map { day in
-            let ids = day.stops.compactMap { stop -> String? in
-                guard let p = stop.place else { return nil }
-                return assigner.areaId(name: p.area, cityId: p.cityId, lat: p.lat, lng: p.lng)
-            }
-            return (day.date, Set(ids))
-        }
+        QueroEnv.make(region: region, now: now, places: places, trip: trip, settings: settingsList.first, plan: plan,
+                      gps: services.location.current?.coordinate, online: services.connectivity.status != .offline,
+                      upcoming: QueroEnv.upcomingDays(context: context, areas: areas, today: today))
     }
 }
 
