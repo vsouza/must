@@ -1,0 +1,270 @@
+<!doctype html><html lang="pt-BR"><head><title>Fluxos v9</title><meta charset="utf-8"><meta name="viewport" content="width=390"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Martian+Mono:wght@400;500;700;800&display=block" rel="stylesheet"><style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#121212;--paper:#F2F0EA;--bone:#E4E0D5;--or:#FF4A1C;--g1:#6B6B66;--g2:#A3A39C;--place:#D7000F;--jp:#D7000F;--br:#007A33;--it:#1F5FB4}
+html,body{background:var(--paper);color:var(--ink);font-family:'Schibsted Grotesk',sans-serif;-webkit-font-smoothing:antialiased}
+.scr{position:relative;width:390px;height:844px;overflow:hidden;display:flex;flex-direction:column;background:var(--paper)}
+.mono{font-family:'Martian Mono',monospace;font-size:9px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;line-height:1.55}
+.disp{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;letter-spacing:-.045em;line-height:.88}
+.g1{color:var(--g1)}.g2{color:var(--g2)}.orc{color:var(--or)}
+/* status bar */
+.sb{height:47px;flex:none;display:flex;justify-content:space-between;align-items:flex-end;padding:0 26px 7px 34px;font-weight:700;font-size:15px;letter-spacing:-.01em;position:relative;z-index:6}
+.sb.w{color:#fff}.sb svg{display:block}
+/* bloco da foto (CutBand) */
+.band{position:relative;flex:none;overflow:hidden;background:var(--place);color:#fff}
+.band>.p{position:absolute;inset:0;background-size:cover;background-position:center 40%;filter:grayscale(1) contrast(1.6) brightness(1.05);mix-blend-mode:multiply}
+.band::after{content:"";position:absolute;inset:0;background:radial-gradient(circle,#121212 0 .9px,transparent 1.3px) 0 0/4px 4px;opacity:.25;pointer-events:none;z-index:1}
+.band>.arcs{position:absolute;inset:0;z-index:2;pointer-events:none}
+.band>.in{position:relative;z-index:3;height:100%;display:flex;flex-direction:column;padding:0 20px 16px}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+/* régua */
+.rule{height:12px;background:var(--ink);flex:none;position:relative;z-index:4}
+.rule.pull{height:26px;display:flex;align-items:center;justify-content:center}
+.rule.pull .grip{width:38px;height:6px;background:var(--or)}
+.rule.pull .rl{position:absolute;right:16px;top:8px;color:var(--paper);font-family:'Martian Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;line-height:1}
+.rule.pull .ll{position:absolute;left:16px;top:8px;color:var(--g2);font-family:'Martian Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;line-height:1}
+/* botões quadrados */
+.sq{width:40px;height:40px;flex:none;border:2px solid currentColor;display:flex;align-items:center;justify-content:center;font-family:'Martian Mono',monospace;font-size:15px;font-weight:700}
+.sq.f{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.act{font-family:'Martian Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border:2px solid currentColor;padding:7px 8px;flex:none;line-height:1;white-space:nowrap}
+.act.f{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+/* faixas de seção */
+.sec{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:9px 18px;font-family:'Martian Mono',monospace;font-size:9px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;line-height:1.3;flex:none}
+.sec.or{background:var(--or)}.sec.ink{background:var(--ink);color:var(--paper)}.sec.ln{border-top:2px solid var(--ink)}
+/* índice */
+.ix{display:flex;align-items:center;gap:12px;padding:11px 18px;border-top:2px solid var(--ink);flex:none}
+.ix .n{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:30px;letter-spacing:-.04em;line-height:.9;width:70px;flex:none}
+.ix .n small{display:block;font-family:'Martian Mono',monospace;font-size:7.5px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;margin-top:4px;line-height:1.3}
+.ix .d{font-family:'Martian Mono',monospace;font-weight:700;font-size:16px;letter-spacing:-.02em;width:66px;flex:none;line-height:1}
+.ix .d small{display:block;font-weight:400;font-size:7.5px;letter-spacing:.08em;text-transform:uppercase;margin-top:4px;line-height:1.3;opacity:.75}
+.ix .t{flex:1;min-width:0}
+.ix .t b{display:block;font-size:15px;font-weight:700;line-height:1.2;letter-spacing:-.01em}
+.ix .t span{display:block;font-size:11.5px;color:var(--g1);line-height:1.35;margin-top:2px}
+.ix.or{background:var(--or)}.ix.or .t span{color:rgba(18,18,18,.72)}
+.ix.ink{background:var(--ink);color:var(--paper);border-top-color:#3a3a38}.ix.ink .t span{color:var(--g2)}
+.ix.ink+.ix:not(.ink){border-top-color:var(--ink)}
+.thumb{width:54px;height:54px;flex:none;position:relative;overflow:hidden;background:var(--place)}
+.thumb>.p{position:absolute;inset:0;background-size:cover;background-position:center;filter:grayscale(1) contrast(1.6) brightness(1.05);mix-blend-mode:multiply}
+.thumb::after{content:"";position:absolute;inset:0;background:radial-gradient(circle,#121212 0 .7px,transparent 1.1px) 0 0/3px 3px;opacity:.25}
+.thumb .pn{position:absolute;left:0;top:0;z-index:2;width:18px;height:18px;background:var(--ink);color:var(--paper);font-family:'Martian Mono',monospace;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.thumb .pn.k{background:var(--paper);color:var(--ink)}
+/* chips quadrados */
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-family:'Martian Mono',monospace;font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;padding:8px 10px;border:2px solid var(--ink);line-height:1;white-space:nowrap}
+.chip.on{background:var(--ink);color:var(--paper)}
+.chip.o{background:var(--or)}
+/* barra v9: faixa de tinta, sem cápsula */
+.bar{margin-top:auto;flex:none;background:var(--ink);color:var(--paper);position:relative;z-index:8}
+.bar .cells{display:grid;grid-template-columns:repeat(4,1fr) 74px;height:58px}
+.bar .c{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-family:'Martian Mono',monospace;font-size:7.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;border-right:1px solid #2f2f2d}
+.bar .c.on{background:var(--paper);color:var(--ink);font-weight:800;box-shadow:inset 0 3px 0 var(--or)}
+.bar .plus{background:var(--or);color:var(--ink);display:flex;align-items:center;justify-content:center;font-family:'Bricolage Grotesque';font-weight:800;font-size:34px;line-height:1}
+.bar .hm,.home{height:28px;display:flex;align-items:center;justify-content:center}
+.bar .hm i,.home i{display:block;width:134px;height:5px;border-radius:3px;background:var(--paper)}
+.home{flex:none}.home.k i{background:var(--ink)}
+.cta{flex:none;display:grid;height:58px}
+.cta>div{display:flex;align-items:center;justify-content:center;gap:8px;font-weight:800;font-size:16px;letter-spacing:-.01em}
+.cta .o{background:var(--or);color:var(--ink)}.cta .k{background:var(--ink);color:var(--paper)}.cta .pp{background:var(--paper);color:var(--ink)}
+.caret{display:inline-block;width:3px;background:var(--or);margin-left:3px;vertical-align:-3px}
+.lbl{font-family:'Martian Mono',monospace;font-size:8px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;line-height:1.4}
+.flag{flex:none;border:2px solid var(--ink);display:block}
+</style>
+<!--size:1600x4190-->
+<style>
+body{width:1600px}
+.pg{padding:56px 64px 64px}
+h2{font-family:'Bricolage Grotesque';font-weight:800;font-size:56px;letter-spacing:-.04em;line-height:.9}
+.sx{border-top:12px solid var(--ink);margin-top:48px;padding-top:22px}
+.sx .k{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:22px}
+.lede{font-size:20px;line-height:1.4;max-width:900px;margin-top:14px}
+.box{border:2px solid var(--ink);padding:14px 16px;background:var(--paper)}
+.box b{display:block;font-size:18px;font-weight:800;letter-spacing:-.01em}
+.box span{display:block;font-size:13.5px;color:var(--g1);margin-top:4px;line-height:1.4}
+.box.or{background:var(--or)} .box.or span{color:rgba(18,18,18,.75)}
+.box.ink{background:var(--ink);color:var(--paper)} .box.ink span{color:var(--g2)}
+.gx{font-family:'Martian Mono';font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:var(--ink);color:var(--paper);padding:5px 8px;display:inline-block;margin-bottom:8px}
+.gx.o{background:var(--or);color:var(--ink)}
+.cross{display:grid;grid-template-columns:1fr 300px 1fr;grid-template-rows:auto auto auto;gap:22px 34px;align-items:center}
+.cross img{display:block;width:300px;border:3px solid var(--ink)}
+.cross .c{grid-column:2;grid-row:2}
+.arrow{font-family:'Martian Mono';font-weight:800;font-size:22px}
+.cols{display:grid;grid-template-columns:repeat(5,1fr);gap:0;border:2px solid var(--ink)}
+.cols>div{border-right:2px solid var(--ink)}
+.cols>div:last-child{border-right:none}
+.cols .h{background:var(--ink);color:var(--paper);padding:14px 16px;font-family:'Martian Mono';font-weight:800;font-size:13px;letter-spacing:.1em;text-transform:uppercase;display:flex;justify-content:space-between}
+.cols .h.o{background:var(--or);color:var(--ink)}
+.cols .r{padding:11px 16px;border-top:2px solid var(--ink);font-size:14px;line-height:1.35}
+.cols .r b{display:block;font-size:15.5px}
+.cols .r span{color:var(--g1);font-size:13px}
+.cols .r.new{background:var(--or)} .cols .r.new span{color:rgba(18,18,18,.75)}
+.cols .r .m{font-family:'Martian Mono';font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);font-weight:700}
+table{width:100%;border-collapse:collapse;font-size:15px}
+td,th{border-top:2px solid var(--ink);padding:12px 14px;text-align:left;vertical-align:top;line-height:1.4}
+th{font-family:'Martian Mono';font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;background:var(--ink);color:var(--paper)}
+td:first-child{font-weight:800;font-size:17px;width:190px}
+td:nth-child(2){width:330px}
+.tri{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:2px solid var(--ink)}
+.tri>div{border-right:2px solid var(--ink)}
+.tri>div:last-child{border-right:none}
+.tri .h{padding:16px 18px;font-family:'Bricolage Grotesque';font-weight:800;font-size:40px;letter-spacing:-.03em;line-height:.9}
+.tri .r{padding:12px 18px;border-top:2px solid var(--ink);font-size:14.5px;line-height:1.4}
+.tri .r b{display:block;font-size:16px}
+.tri .r span{color:var(--g1)}
+.rules{display:grid;grid-template-columns:1fr 1fr;gap:0;border:2px solid var(--ink)}
+.rules div{padding:14px 18px;border-top:2px solid var(--ink);font-size:15px;line-height:1.4}
+.rules div:nth-child(odd){border-right:2px solid var(--ink)}
+.rules div:nth-child(-n+2){border-top:none}
+.rules b{font-family:'Martian Mono';font-size:11px;letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:4px}
+.barbig{width:390px;zoom:2.4}
+</style></head><body>
+<div class="pg">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start">
+    <div class="mono" style="font-size:12px">must · v9 · fluxos<br>08 nov 2026 · prompt 31 · itens 5 e 9</div>
+    <div class="mono" style="font-size:12px;text-align:right">tinta #121212 · papel #F2F0EA · laranja #FF4A1C<br>cor do lugar só no bloco da foto</div>
+  </div>
+  <div style="display:flex;align-items:flex-end;gap:40px;margin-top:26px">
+    <div class="disp" style="font-size:190px">Fluxos</div>
+    <div class="disp orc" style="font-size:190px">4</div>
+    <div class="lede" style="margin-bottom:18px"><b>Quatro abas, uma régua, um ✦.</b> Hoje, Explorar, Musts e Viagem. A régua com pegador pede um lugar (quero). O ✦ pergunta (Assistente). Todo o resto mora numa aba, nunca escondido num gesto só.</div>
+  </div>
+
+  <!-- A · barra -->
+  <div class="sx">
+    <div class="k"><h2>A barra</h2><span class="mono" style="font-size:12px">faixa de tinta · sem cápsula · sem sombra</span></div>
+    <div style="display:flex;gap:48px;align-items:center">
+      <div class="barbig"><div class="bar"><div class="cells"><div class="c"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="3.5" width="17" height="17"/><path d="M12 7.5v5l3.5 2"/></svg><span>hoje</span></div><div class="c on"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3.5 6.5l5.5-2.5 6 2.5 5.5-2.5v13.5l-5.5 2.5-6-2.5-5.5 2.5z"/><path d="M9 4v13.5M15 6.5V20"/></svg><span>explorar</span></div><div class="c"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3.5 6h17M3.5 12h17M3.5 18h11"/></svg><span>musts</span></div><div class="c"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="7.5" width="17" height="12"/><path d="M9 7.5V4.5h6v3"/></svg><span>viagem</span></div><div class="plus">+</div></div><div class="hm"><i></i></div></div></div>
+      <div style="font-size:16px;line-height:1.45;max-width:520px">
+        <p><b>Aba ativa</b> = bloco de papel com filete laranja de 3 pt em cima; as outras ficam na tinta, ícone + rótulo mono.</p>
+        <p style="margin-top:10px"><b>Guia</b> sai da barra e vira a página de bairro do <b>Explorar</b> (que também substitui o Mapa).</p>
+        <p style="margin-top:10px"><b>+</b> = <b>Quero · Guardar</b>: o campo do quero em cima e, embaixo, guardar Link, Vídeo, Foto, Ingresso, Presente, Nome. Segurar o + monta o dia de hoje (como hoje).</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- B · capa -->
+  <div class="sx">
+    <div class="k"><h2>A capa é o centro</h2><span class="mono" style="font-size:12px">gestos da capa · cada um com um botão equivalente</span></div>
+    <div class="cross">
+      <div style="grid-column:2;grid-row:1;text-align:center"><div class="arrow">↑</div><div class="box" style="text-align:left"><b>Linha do dia</b><span>deslizar pra cima. As 9 paradas, deslocamentos como itens. Montar o dia mora aqui.</span></div></div>
+      <div style="grid-column:1;grid-row:2;display:flex;align-items:center;gap:18px">
+        <img src="Assistente-1.png" style="width:190px;border:3px solid var(--ink)">
+        <div><div class="gx o">← ou ✦</div><div class="box or"><b>Assistente</b><span>deslizar pra esquerda ou tocar no ✦ (canto direito do bloco). Abre em "O que eu sei de hoje": as Dicas viraram a primeira página.</span></div></div>
+      </div>
+      <div class="c"><img src="Presentes-Perto.png"></div>
+      <div style="grid-column:3;grid-row:2;display:flex;align-items:center;gap:18px">
+        <div><div class="gx">→ ou alça</div><div class="box"><b>Bolso</b><span>deslizar pra direita. Junta os Atalhos ("Na mão": Suica, ingressos de hoje, mapa offline, SOS) com o Bolso (câmbio, frases, último trem, tax-free). 100 % offline.</span></div></div>
+      </div>
+      <div style="grid-column:1;grid-row:1;align-self:end"><div class="gx">⇄ no canto esquerdo</div><div class="box"><b>Minhas viagens</b><span>trocar de viagem, bandeira + moeda em cada linha, nova viagem.</span></div></div>
+      <div style="grid-column:3;grid-row:1;align-self:end"><div class="gx o">puxar a régua · tocar no bairro</div><div class="box or"><b>Quero…</b><span>a fenda laranja abre; resultado em duas faixas (seus Musts mesmo longe · perto agora). Se o texto for pergunta, oferece o Assistente.</span></div></div>
+      <div style="grid-column:2;grid-row:3;text-align:center"><div class="arrow">↓</div><div class="box" style="text-align:left"><b>Bom dia · Boa noite</b><span>deslizar pra baixo fora da régua. Antes das 10h, o briefing; depois das 21h, o fechamento.</span></div></div>
+      <div style="grid-column:1;grid-row:3"><div class="gx">toque numa linha</div><div class="box"><b>Lugar · evento</b><span>segurar a linha = encaixar hoje. Presente perto aparece aqui (linha laranja, selo "presente").</span></div></div>
+      <div style="grid-column:3;grid-row:3"><div class="gx">aviso local · live activity</div><div class="box ink"><b>O app fala sozinho</b><span>bom dia, saia às, golden, último trem; à noite, SOS na Live Activity.</span></div></div>
+    </div>
+  </div>
+
+  <!-- C · abas -->
+  <div class="sx">
+    <div class="k"><h2>Cada aba</h2><span class="mono" style="font-size:12px">laranja = novo ou mudou de casa</span></div>
+    <div class="cols">
+      <div><div class="h o"><span>Hoje</span><span>1</span></div>
+        <div class="r"><b>Capa (corte)</b><span>bairro · aberto a 10 min · índice</span></div>
+        <div class="r"><b>Agora → Ir → Como chegar</b><span>toque na linha do plano</span></div>
+        <div class="r"><b>Linha do dia ↑</b><span>e Montar / Outra</span></div>
+        <div class="r"><b>Bom dia · Boa noite ↓</b></div>
+        <div class="r new"><b>Assistente ← / ✦</b><span>Dicas dentro</span></div>
+        <div class="r new"><b>Bolso →</b><span>Atalhos + Bolso</span></div>
+        <div class="r"><b>Quero (régua)</b></div>
+        <div class="r"><b>Em cartaz</b><span>linha de evento → lista</span></div>
+      </div>
+      <div><div class="h o"><span>Explorar</span><span>2</span></div>
+        <div class="r new"><b>Página do bairro</b><span>foto + recorte do mapa + índice</span></div>
+        <div class="r new"><b>Trilho de estações</b><span>borda direita: arrastar = pular de bairro</span></div>
+        <div class="r new"><b>Recorte aberto</b><span>mapa vivo, camadas, pino → bloco</span></div>
+        <div class="r"><b>Guia do bairro</b><span>texto, vizinhos, Musts por hora (era a aba Guia)</span></div>
+        <div class="r"><b>Lugar</b></div>
+        <div class="r"><b>Quero com origem no bairro</b></div>
+      </div>
+      <div><div class="h"><span>Musts</span><span>3</span></div>
+        <div class="r"><b>Board</b><span>listas como faixas</span></div>
+        <div class="r"><b>Lista → Lugar</b></div>
+        <div class="r new"><b>Presentes</b><span>faixa fixa no topo do board · por pessoa</span></div>
+        <div class="r"><b>Fica pro fim</b></div>
+        <div class="r"><b>Must do</b><span>experiências por link</span></div>
+        <div class="r"><b>Coleção</b><span>os feitos</span></div>
+      </div>
+      <div><div class="h"><span>Viagem</span><span>4</span></div>
+        <div class="r"><b>Próximos</b><span>ingressos, reservas, voos em ordem</span></div>
+        <div class="r"><b>Ingresso</b><span>QR, como chegar, âncora do dia</span></div>
+        <div class="r"><b>Carteira · Voos</b></div>
+        <div class="r"><b>Compras + regras da volta</b><span>presentes comprados entram aqui</span></div>
+        <div class="r"><b>Gasto e dias · Mandar</b></div>
+        <div class="r"><b>Mapas offline</b></div>
+        <div class="r new"><b>Minhas viagens · SOS · Ajustes</b><span>linhas fixas no fim</span></div>
+      </div>
+      <div><div class="h o"><span>+</span><span>·</span></div>
+        <div class="r"><b>Quero…</b><span>o campo, em cima</span></div>
+        <div class="r"><span class="m">guardar</span><b>Link · Vídeo · Texto</b></div>
+        <div class="r new"><b>Ingresso</b><span>PDF, foto, .pkpass, câmera</span></div>
+        <div class="r new"><b>Presente</b><span>nome, link, vídeo, local, foto</span></div>
+        <div class="r"><b>Buscar por nome</b></div>
+        <div class="r"><span class="m">segurar o +</span><b>Montar o dia de hoje</b></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- D · onde mora -->
+  <div class="sx">
+    <div class="k"><h2>Onde mora cada coisa</h2><span class="mono" style="font-size:12px">uma casa, várias portas</span></div>
+    <table>
+      <tr><th>coisa</th><th>casa</th><th>portas</th></tr>
+      <tr><td>Assistente</td><td>tela cheia, por cima da aba atual</td><td>✦ no canto superior direito de todo bloco de foto (capa, Lugar, Lista, Explorar, Presentes) · ← na capa · "Continuar no Assistente" no quero · Siri / <span class="mono">must://assistente</span></td></tr>
+      <tr><td>Dicas</td><td>primeira página do Assistente</td><td>as mesmas do Assistente; filtros Agora · bairro · país · Salvas. Some como tela própria.</td></tr>
+      <tr><td>Quero…</td><td>fenda laranja sob o bloco</td><td>puxar a régua com pegador (capa, Lugar, Lista, Explorar, Presentes) · tocar no nome do bairro · + da barra</td></tr>
+      <tr><td>Bolso</td><td>painel que entra da direita</td><td>→ na capa · alça na borda direita · Lugar › "caixa perto" · Viagem</td></tr>
+      <tr><td>SOS</td><td>tela tinta (fora do corte)</td><td>primeira faixa do Bolso · Viagem (linha fixa) · Quick Action do ícone · Live Activity à noite. Nunca liga sozinho.</td></tr>
+      <tr><td>Ingressos</td><td>Viagem › Próximos</td><td>+ › Ingresso · Share Extension · Bolso (hoje) · Lugar › Ingresso · Live Activity no dia</td></tr>
+      <tr><td>Presentes</td><td>Musts › Presentes</td><td>+ › Presente · quero "presente/comprar…" · linha laranja na capa quando a loja está a 10 min · micro-parada na Linha do dia</td></tr>
+      <tr><td>Explorar</td><td>aba 2</td><td>barra · Lugar › "no mapa" abre o recorte com o pino · Guia/Linha do dia › bairro</td></tr>
+      <tr><td>Minhas viagens</td><td>tela cheia</td><td>⇄ no canto superior esquerdo da capa · Viagem (linha fixa) · Ajustes › Viagem</td></tr>
+    </table>
+  </div>
+
+  <!-- E · sai / junta / muda -->
+  <div class="sx">
+    <div class="k"><h2>O que sai, o que junta, o que muda</h2><span class="mono" style="font-size:12px">e por quê</span></div>
+    <div class="tri">
+      <div><div class="h">Sai</div>
+        <div class="r"><b>Aba Guia</b><span>era um bairro só; o Explorar mostra todos, com o mesmo conteúdo.</span></div>
+        <div class="r"><b>Rota Mapa (tela solta)</b><span>vira o recorte aberto do Explorar.</span></div>
+        <div class="r"><b>Dicas como tela própria</b><span>três telas de "texto que ajuda" (Dicas, Assistente, Quero) confundiam.</span></div>
+        <div class="r"><b>Passo a passo e cutucão</b><span>prompt 31 · 1: a régua fala sozinha ("↓ quero").</span></div>
+        <div class="r"><b>Botões redondos de IA</b><span>FAB do Mapa e do Dia; o ✦ fica num lugar só.</span></div>
+      </div>
+      <div><div class="h">Junta</div>
+        <div class="r"><b>Dicas + Assistente = Assistente</b><span>o app fala primeiro (dicas), você pergunta depois, na mesma tela.</span></div>
+        <div class="r"><b>Atalhos + Bolso = Bolso</b><span>"na mão" e "no bolso" eram a mesma promessa em dois painéis.</span></div>
+        <div class="r"><b>Guia + Mapa = Explorar</b><span>bairro e mapa são a mesma pergunta: o que tem ali.</span></div>
+        <div class="r"><b>Indicados fora do board</b><span>saem dos Atalhos: camada "fora do board" no Explorar e faixa tinta do quero.</span></div>
+      </div>
+      <div><div class="h">Muda</div>
+        <div class="r"><b>✦ abre o Assistente</b><span>antes abria Dicas: o ícone de IA prometia conversa e entregava lista.</span></div>
+        <div class="r"><b>← na capa = Assistente</b><span>mesmo destino do ✦; nenhum gesto é a única porta.</span></div>
+        <div class="r"><b>Quero × pergunta</b><span>quero acha lugar físico; se o texto é pergunta, uma faixa tinta oferece o Assistente com o texto.</span></div>
+        <div class="r"><b>Botões quadrados</b><span>⇄, ✦, ←, ✕: 40 pt, borda 2 pt, sem raio.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- F · regras -->
+  <div class="sx">
+    <div class="k"><h2>Regras novas do corte</h2><span class="mono" style="font-size:12px">valem pra toda tela</span></div>
+    <div class="rules">
+      <div><b>régua com pegador laranja</b>puxar = quero. Rótulo à direita diz o recorte: "↓ quero", "↓ quero em Nakano", "↓ presentes perto".</div>
+      <div><b>régua com pegador de papel</b>no Explorar A arrasta a proporção mapa/lista; no quero aberto, fecha a fenda. Nunca abre o quero.</div>
+      <div><b>cantos fixos</b>superior esquerdo: ⇄ (capa), ← (empurrada) ou ✕ (tela cheia). Superior direito: ✦. Nada mais nos cantos além de texto mono.</div>
+      <div><b>cor por linha inteira</b>laranja = seu (aberto agora / perto / ação) · tinta = de fora do board · papel = plano, fechado ou o resto. Pino segue a mesma regra.</div>
+      <div><b>foto só se já está no disco</b>de fora do board nunca baixa foto (linha sem miniatura). Sem foto: bloco com a cor do lugar + trama + arcos.</div>
+      <div><b>um numeral por tela</b>quantos abertos, quantos faltam, quantas dicas, quantas viagens. Sempre laranja no papel ou branco no bloco.</div>
+    </div>
+  </div>
+</div>
+</body></html>
