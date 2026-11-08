@@ -70,6 +70,8 @@ struct ListView: View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 0) {
                 cutBlock(count: base.count)
+                CutPullSlit(progress: corte.pull.progress)
+                    .frame(height: CutFrame.heights(pull: corte.pull.offset, rest: 0).slit)
                 pullRule
                 paperHeader(count: base.count, open: openCount)
                 if !saveForEndOnly { filters.padding(.top, 16).padding(.bottom, 14) }
@@ -102,7 +104,13 @@ struct ListView: View {
         #if DEBUG
         .task {
             // `-debugScreen corte-lista-quero:<lista>` (prints): a régua já puxada.
-            guard DebugFlags.string("debugScreen")?.hasPrefix("corte-lista-quero") == true, let list else { return }
+            let screen = DebugFlags.string("debugScreen") ?? ""
+            if screen.hasPrefix("corte-lista-puxando") {
+                try? await Task.sleep(for: .milliseconds(900))
+                corte.pull.drag(translation: 80)
+                return
+            }
+            guard screen.hasPrefix("corte-lista-quero"), let list else { return }
             try? await Task.sleep(for: .milliseconds(900))
             openQuero(list)
         }
@@ -137,18 +145,31 @@ struct ListView: View {
                 }
                 .padding(.top, 58)
                 Spacer(minLength: 16)
-                Text(listTitle)
-                    .font(V8Font.display(64))
-                    .tracking(-2)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.5)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .accessibilityAddTraits(.isHeader)
+                if corte.pull.progress > 0.25 {
+                    // Puxando: o título vira a frase do pedido.
+                    Text("\(list?.displayName ?? listTitle),\nquero")
+                        .font(V8Font.display(44))
+                        .tracking(-1.4)
+                        .lineSpacing(-10)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.5)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .accessibilityLabel("\(list?.displayName ?? listTitle), quero")
+                } else {
+                    Text(listTitle)
+                        .font(V8Font.display(64))
+                        .tracking(-2)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.5)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .accessibilityAddTraits(.isHeader)
+                }
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 16)
         }
-        .containerRelativeFrame(.vertical) { height, _ in height * 0.38 }
+        .containerRelativeFrame(.vertical) { [pull = corte.pull.offset] height, _ in CutFrame.heights(pull: pull, rest: height * 0.38).band }
+        .clipped()
         .frame(maxWidth: .infinity)
     }
 
@@ -195,7 +216,7 @@ struct ListView: View {
         if corte.stage != .rest, let list {
             CorteQueroOverlay(state: corte, photo: coverURL, subject: list.displayName, originName: region.shortName,
                               makeEnv: { queroEnv(list) }, actions: queroActions(list))
-                .transition(reduceMotion ? .opacity : .move(edge: .top))
+                .transition(.opacity)
         }
     }
 

@@ -117,6 +117,45 @@ enum CorteCount {
     }
 }
 
+// MARK: - Em cartaz na capa
+
+/// A linha "Em cartaz" do índice da capa (faixa tinta: é de fora do board). Aparece só com evento hoje; a hora grande é a da
+/// próxima sessão (ou "hoje" quando é exposição em temporada). Puro: o `body` só desenha.
+struct CorteShowLine: Equatable, Sendable {
+    static let rowId = "emcartaz"
+    var big: String
+    var unit: String
+    var title: String
+    var reason: String
+    /// Acontecendo (ou começando em até 10 min) a até 10 min a pé: entra no numeral da capa.
+    var countsNearby: Bool
+
+    /// `coordinates` = onde cada evento acontece (`ShowEvent.lat/lng` ou o lugar do board), por id do evento.
+    static func make(events: [ShowEvent], now: Date, region: Region, here: CLLocationCoordinate2D,
+                     coordinates: [String: CLLocationCoordinate2D] = [:]) -> CorteShowLine? {
+        let cal = region.calendar
+        let today = events.filter { EventsMapping.isOn($0, day: now, calendar: cal) || EmCartazModel.happensToday($0, now: now, calendar: cal) }
+        guard !today.isEmpty else { return nil }
+        // Primeiro o que tem hora (a mais próxima), depois as exposições em temporada.
+        let timed = today.compactMap { e in EmCartazModel.nextDate(e, now: now).map { (e, $0) } }.sorted { $0.1 < $1.1 }
+        let first = timed.first?.0 ?? today[0]
+        let when = timed.first?.1
+        let big = when.map { region.timeString($0) } ?? "hoje"
+        let n = today.count
+        let reason = "em cartaz · \(n) hoje"
+        // Conta no numeral: tem hora entre -90 min e +10 min e está a até 10 min a pé.
+        var counts = false
+        if let when, when <= now.addingTimeInterval(10 * 60), when >= now.addingTimeInterval(-90 * 60) {
+            if let c = coordinates[first.id] ?? first.lat.flatMap({ lat in first.lng.map { CLLocationCoordinate2D(latitude: lat, longitude: $0) } }) {
+                let d = CLLocation(latitude: c.latitude, longitude: c.longitude)
+                    .distance(from: CLLocation(latitude: here.latitude, longitude: here.longitude)) * SuggestionEngine.streetFactor
+                counts = d <= 10 * Walk.metersPerMinute
+            }
+        }
+        return CorteShowLine(big: big, unit: when == nil ? "em cartaz" : "hoje", title: first.title, reason: reason, countsNearby: counts)
+    }
+}
+
 // MARK: - Passo a passo (§5)
 
 /// O passo a passo da capa: na primeira vez e na primeira entrada em cada viagem. Só avança com o gesto de verdade.

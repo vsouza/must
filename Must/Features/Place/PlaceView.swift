@@ -109,6 +109,8 @@ struct PlaceView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     cutBlock(place, anchor: anchor, stop: stop, hasPhoto: hasPhoto)
+                    CutPullSlit(progress: corte.pull.progress)
+                        .frame(height: CutFrame.heights(pull: corte.pull.offset, rest: 0).slit)
                     pullRule(place)
                     paperBody(place, anchor: anchor, stop: stop)
                     lowerSection(place).id("panel")
@@ -124,6 +126,11 @@ struct PlaceView: View {
                 let screen = DebugFlags.string("debugScreen") ?? ""
                 if screen.hasPrefix("museu") { ProximosDemo.ensureTeamLab(context: context, dates: BoardDates(timeZone: region.timeZone)) }
                 if screen.hasPrefix("3d") { show3D = true; return }
+                if screen.hasPrefix("corte-lugar-puxando") {
+                    try? await Task.sleep(for: .milliseconds(900))
+                    corte.pull.drag(translation: 80)
+                    return
+                }
                 if screen.hasPrefix("corte-lugar-quero") {
                     try? await Task.sleep(for: .milliseconds(900))
                     corte.open()
@@ -170,6 +177,19 @@ struct PlaceView: View {
             VStack(alignment: .leading, spacing: 0) {
                 topBar(place, onPhoto: hasPhoto).padding(.top, 58)
                 Spacer(minLength: 16)
+                if corte.pull.progress > 0.25 {
+                    // Puxando: o título vira a frase do pedido.
+                    Text("\(place.name),\nperto daqui, quero")
+                        .font(V8Font.display(38))
+                        .tracking(-1.2)
+                        .lineSpacing(-8)
+                        .lineLimit(3)
+                        .minimumScaleFactor(0.5)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 16)
+                        .accessibilityLabel("\(place.name), perto daqui, quero")
+                } else {
                 VStack(alignment: .leading, spacing: 10) {
                     if let anchor { anchorTicket(anchor, place: place).padding(.bottom, 12) }
                     tags(place, anchor: anchor, stop: stop, photo: true)
@@ -187,9 +207,11 @@ struct PlaceView: View {
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 16)
+                }
             }
         }
-        .containerRelativeFrame(.vertical) { height, _ in height * 0.5 }
+        .containerRelativeFrame(.vertical) { [pull = corte.pull.offset] height, _ in CutFrame.heights(pull: pull, rest: height * 0.5).band }
+        .clipped()
         .frame(maxWidth: .infinity)
         // Toque na foto: ela inteira, em tela cheia, com zoom (as mesmas URLs: nada novo baixa).
         .contentShape(Rectangle())
@@ -213,7 +235,7 @@ struct PlaceView: View {
         if corte.stage != .rest {
             CorteQueroOverlay(state: corte, photo: photoURL(place, page: galleryPage), subject: place.name,
                               originName: place.name, makeEnv: { queroEnv(place) }, actions: queroActions(place))
-                .transition(reduceMotion ? .opacity : .move(edge: .top))
+                .transition(.opacity)
         }
     }
 
