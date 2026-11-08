@@ -430,6 +430,20 @@ enum DebugLaunch {
         case "quero": router.sheet = .quero(text: arg) // quero:quero comprar um Seiko
         case "compartilhar", "mandar": router.sheet = .mandar(date: region.calendar.startOfDay(for: AppClock.now))
         case "sos": router.push(.sos, on: .hoje)
+        // prompt 31 · Presentes: a lista de exemplo (PresenteDemo) e cada tela.
+        case "presentes", "presente-comprado":
+            PresenteDemo.ensure(context: context, region: region)
+            router.push(.presentes, on: .musts)
+        case "presente-novo":
+            PresenteDemo.ensure(context: context, region: region)
+            router.sheet = .presenteNovo(source: nil)
+        case "presente-item", "presente-item-comprado":
+            PresenteDemo.ensure(context: context, region: region)
+            router.push(.presentes, on: .musts)
+            router.push(.presente(id: PresenteDemo.kitKatId), on: .musts)
+        case "presente-perto", "presente-quero":
+            PresenteDemo.ensure(context: context, region: region)
+            router.select(.hoje)
         // RODADA-23 + prompt 26 (contrato): uma entrada por tela nova.
         case "emcartaz": router.push(.emCartaz, on: .hoje)
         case "filmes": router.push(.filmes(placeId: arg ?? "j105"), on: .musts)

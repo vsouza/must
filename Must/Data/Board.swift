@@ -9,9 +9,9 @@ import Foundation
 /// viagem só com id e país, pra mensagem de "board de outra viagem".
 struct Board: Codable, Equatable, Sendable {
     /// Versão que o app grava.
-    static let currentVersion = 2
+    static let currentVersion = 3
     /// Versões que o importador aceita.
-    static let readableVersions = 1...2
+    static let readableVersions = 1...3
 
     var version: Int
     var region: Region
@@ -25,13 +25,15 @@ struct Board: Codable, Equatable, Sendable {
     var events: [BoardEvent]?
     /// Reservas de voo (PNR, pernas, franquia, checklist). Prompt 15 · C.
     var flights: [BoardFlight]?
+    /// Lista de presentes (v3, prompt 31). Aditivo: arquivo sem `gifts` continua abrindo.
+    var gifts: [BoardGift]?
 
     private enum CodingKeys: String, CodingKey {
-        case version, region, tripId, countryCode, trip, budget, lists, places, expenses, days, events, flights
+        case version, region, tripId, countryCode, trip, budget, lists, places, expenses, days, events, flights, gifts
     }
 
     init(version: Int, region: Region, trip: BoardTrip? = nil, budget: BoardBudget? = nil, lists: [BoardList], places: [BoardPlace],
-         expenses: [BoardExpense]? = nil, days: [BoardDay]? = nil, events: [BoardEvent]? = nil, flights: [BoardFlight]? = nil) {
+         expenses: [BoardExpense]? = nil, days: [BoardDay]? = nil, events: [BoardEvent]? = nil, flights: [BoardFlight]? = nil, gifts: [BoardGift]? = nil) {
         self.version = version
         self.region = region
         self.trip = trip
@@ -42,6 +44,7 @@ struct Board: Codable, Equatable, Sendable {
         self.days = days
         self.events = events
         self.flights = flights
+        self.gifts = gifts
     }
 
     init(from decoder: Decoder) throws {
@@ -61,6 +64,7 @@ struct Board: Codable, Equatable, Sendable {
         days = try c.decodeIfPresent([BoardDay].self, forKey: .days)
         events = try c.decodeIfPresent([BoardEvent].self, forKey: .events)
         flights = try c.decodeIfPresent([BoardFlight].self, forKey: .flights)
+        gifts = try c.decodeIfPresent([BoardGift].self, forKey: .gifts)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -80,6 +84,7 @@ struct Board: Codable, Equatable, Sendable {
         try c.encodeIfPresent(days, forKey: .days)
         try c.encodeIfPresent(events, forKey: .events)
         try c.encodeIfPresent(flights, forKey: .flights)
+        try c.encodeIfPresent(gifts, forKey: .gifts)
     }
 
     /// Viagem que este aparelho não tem (board exportado de outra): só id e país, nunca vai pro registro.
@@ -89,6 +94,28 @@ struct Board: Codable, Equatable, Sendable {
                     timeZone: profile.timeZone, colorHex: nil, kind: .trip, start: nil, end: nil, cities: [], home: nil,
                     createdAt: Date(timeIntervalSince1970: 0), archived: false, seedId: nil)
     }
+}
+
+/// Presente da lista (v3). `person` é só o nome; `source` é name|link|video|place|photo.
+struct BoardGift: Codable, Equatable, Sendable {
+    var id: String
+    var title: String
+    var person: String?
+    var quantity: Int?
+    var estimatedPrice: Double?
+    var paidPrice: Double?
+    var boughtAt: Date?
+    var source: String?
+    var sourceURL: String?
+    var sourceLabel: String?
+    var videoClip: String?
+    var placeId: String?
+    var storeName: String?
+    var storeLat: Double?
+    var storeLng: Double?
+    var chain: Bool?
+    var note: String?
+    var order: Int?
 }
 
 /// Reserva de voo. As pernas são os trechos; o checklist guarda o que já foi marcado.
