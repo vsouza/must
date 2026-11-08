@@ -139,6 +139,21 @@ corte2shots() { # $1 = prefixo, $2 = lugar de exemplo, $3 = lista de exemplo
   WAIT=10 shot $r-corte-lista -debugScreen corte-lista:$3
   WAIT=12 shot $r-corte-lista-quero -debugScreen corte-lista-quero:$3
 }
+# prompt 30 · etapa 2 · o corte no Dia e no Bolso (Linha, Agora, Bom dia, Boa noite, proposta com o "Outra", Bolso). A foto do
+# bairro é a que já está no disco: o `corte-capa -capaFoto` da mesma região (logo acima) a guarda uma vez.
+cortediashots() { # $1 = prefixo (jp|bh)
+  local r=$1
+  shot $r-corte-dia -debugScreen corte-dia
+  shot $r-corte-agora -debugScreen corte-agora
+  shot $r-corte-bomdia -debugScreen corte-bomdia
+  shot $r-corte-boanoite -debugScreen corte-boanoite
+  WAIT=11 shot $r-corte-proposta -debugScreen corte-proposta
+  shot $r-corte-bolso -debugScreen corte-bolso
+  if [ "$r" = "jp" ]; then
+    shot $r-corte-xxxl-dia -debugScreen corte-dia -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
+    shot $r-corte-xxxl-bolso -debugScreen corte-bolso -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
+  fi
+}
 ${=W} skipOnboarding -bool YES
 ${=W} dev.simDateOn -bool YES; ${=W} dev.simSetAt -float 0; ${=W} dev.simGPSOn -bool YES
 
@@ -167,6 +182,7 @@ ${=W} dev.simLat -float 35.6909; ${=W} dev.simLng -float 139.7003
 v8shots jp j05 j28 eat shinjuku $(epoch 2026-11-15T08:30:00+09:00) "quero comprar um Seiko"
 corteshots jp
 corte2shots jp j01 eat
+cortediashots jp
 
 echo "→ v8 · BH · sáb 7 nov 14:35 · Savassi (CapaBR)"
 ${=W} region bh
@@ -174,6 +190,7 @@ ${=W} dev.simDate -float $(epoch 2026-11-07T14:35:00-03:00)
 ${=W} dev.simLat -float -19.9385; ${=W} dev.simLng -float -43.9343
 v8shots bh p01 p01 eat savassi $(epoch 2026-11-07T08:30:00-03:00) "quero comer um pão de queijo"
 corteshots bh
+cortediashots bh
 
 echo "→ v8 · Roma · qui 15 abr 2027 11:40 · Trastevere (CapaIT); dia 4 em Monti pro DiaIT"
 ${=W} region it

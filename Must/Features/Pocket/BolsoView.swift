@@ -9,6 +9,8 @@ struct BolsoView: View {
     @Environment(AppRouter.self) private var router
     @Environment(RegionStore.self) private var store
     @Environment(Services.self) private var services
+    @Environment(\.tripTheme) private var theme
+    @ScaledMetric(relativeTo: .title) private var scale: CGFloat = 1
 
     @Query private var settingsList: [Settings]
     @Query(sort: \WalletItem.order) private var wallet: [WalletItem]
@@ -31,27 +33,18 @@ struct BolsoView: View {
 
     var body: some View {
         let cards = PocketRules.cards(for: region, context: context)
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                header.padding(.top, 8)
-                Text("Bolso")
-                    .font(V8Font.display(52))
-                    .tracking(-1.6)
-                    .foregroundStyle(V8.ink)
-                    .padding(.top, 26)
-                    .accessibilityAddTraits(.isHeader)
-                Text("O que você consulta dez vezes por dia, numa tela só.")
-                    .font(V8Font.text(15))
-                    .foregroundStyle(V8.mute)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 2)
-                grid(cards).padding(.top, 34)
-                sosCard.padding(.top, 10)
-                V8BarSpacer()
+        VStack(spacing: 0) {
+            header
+            CutRule()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(cards) { card in cell(card) }
+                    sosCard
+                    V8BarSpacer()
+                }
             }
-            .padding(.horizontal, 20)
+            .scrollIndicators(.hidden)
         }
-        .scrollIndicators(.hidden)
         .background(V8.paper.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
         .sheet(item: $open) { card in
@@ -70,60 +63,70 @@ struct BolsoView: View {
         }
     }
 
+    /// Bloco do corte: cor do lugar e trama (sem foto), o título e o que o Bolso é.
     private var header: some View {
-        HStack(alignment: .top) {
-            V8SpecStack(lines: [region.profile.day?.pocketTitle ?? "Bolso · \(region.shortName)", "Tudo funciona offline"])
-                .padding(.top, 14)
-            Spacer(minLength: 12)
-            V8CornerButton(systemName: "xmark", label: "Fechar") { dismiss() }
+        CutBand(photo: nil) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(alignment: .top) {
+                    DayBandCorners(left: [region.profile.day?.pocketTitle ?? "Bolso · \(region.shortName)", "Tudo funciona offline"], right: [])
+                    Spacer(minLength: 12)
+                    V8CornerButton(systemName: "xmark", label: "Fechar") { dismiss() }
+                }
+                Spacer(minLength: 8)
+                Text("Bolso")
+                    .font(V8Font.display(56))
+                    .tracking(-1.6)
+                    .foregroundStyle(theme.coverInk)
+                    .accessibilityAddTraits(.isHeader)
+                Text("O que você consulta dez vezes por dia, numa tela só.")
+                    .font(V8Font.text(14))
+                    .foregroundStyle(theme.coverInk.opacity(0.9))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 2)
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 10)
+            .padding(.bottom, 16)
         }
+        .frame(height: 220 * min(scale, 1.4))
     }
 
     // MARK: SOS (prompt 25 · C.3: item fixo do Bolso)
 
+    /// A única faixa laranja do Bolso: é ação (o SOS em si, em `Features/SOS/`, continua tinta).
     private var sosCard: some View {
         let numbers = EmergencyKit.bundled.kit(for: region)?.primary.prefix(3).map(\.number) ?? []
         return Button { router.push(.sos) } label: {
             HStack(spacing: 14) {
                 Text("SOS")
-                    .font(V8Font.numeral(34))
+                    .font(V8Font.numeral(44))
                     .tracking(-1)
                     .foregroundStyle(V8.ink)
+                    .frame(width: 100, alignment: .leading)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Preciso de ajuda").font(V8Font.text(15, weight: .bold)).foregroundStyle(V8.ink)
+                    Text("Preciso de ajuda").font(V8Font.text(16, weight: .bold)).foregroundStyle(V8.ink)
                     Text((numbers + ["hospital", "onde estou"]).joined(separator: " · "))
                         .font(V8Font.text(13)).foregroundStyle(V8.ink.opacity(0.75)).lineLimit(1)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                Image(systemName: "arrow.up.right").font(.system(size: 15, weight: .bold)).foregroundStyle(V8.ink)
+                Image(systemName: "arrow.up.right").font(.system(size: 16, weight: .bold)).foregroundStyle(V8.ink)
             }
-            .padding(.horizontal, 18)
-            .frame(maxWidth: .infinity, minHeight: 72)
-            .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(V8.orange))
-            .contentShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .padding(.horizontal, 20)
+            .frame(maxWidth: .infinity, minHeight: 84)
+            .background(V8.orange)
+            .overlay(alignment: .bottom) { IndexRule() }
+            .contentShape(Rectangle())
         }
-        .buttonStyle(MustPressStyle())
+        .buttonStyle(.plain)
         .accessibilityLabel("SOS, preciso de ajuda")
         .accessibilityHint("números de emergência do país, hospital e onde estou; funciona sem internet")
     }
 
-    // MARK: Grade
-
-    private func grid(_ cards: [PocketCard]) -> some View {
-        let rows = stride(from: 0, to: cards.count, by: 2).map { Array(cards[$0..<min($0 + 2, cards.count)]) }
-        return Grid(horizontalSpacing: 10, verticalSpacing: 10) {
-            ForEach(rows, id: \.first?.id) { row in
-                GridRow {
-                    ForEach(row) { card in cell(card) }
-                    if row.count == 1 { Color.clear.gridCellUnsizedAxes([.horizontal, .vertical]) }
-                }
-            }
-        }
-    }
+    // MARK: Faixas
 
     private func cell(_ card: PocketCard) -> some View {
         Button { tap(card) } label: { PocketCardView(card: card) }
-            .buttonStyle(MustPressStyle())
+            .buttonStyle(.plain)
             .accessibilityHint(card.kind == .exchange ? "abre o conversor" : card.kind == .phrases ? "abre as frases com áudio" : "abre o detalhe")
     }
 
@@ -136,60 +139,44 @@ struct BolsoView: View {
     }
 }
 
-/// Um card da grade: micro-rótulo, valor grande (uma a três linhas) e uma linha de detalhe.
+/// Uma faixa inteira do Bolso: micro-rótulo, valor grande e uma linha de detalhe, régua de 2 pt embaixo. Tinta = o que
+/// vem de fora (câmbio, aviso); papel = o resto; aviso (tom laranja do conteúdo) = papel com filete laranja na esquerda.
 struct PocketCardView: View {
     var card: PocketCard
 
     private var lines: Int { card.value.split(separator: "\n").count }
+    private var ink: Bool { card.tone == .ink }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            SpecLabel(card.label, color: labelColor)
-            Spacer(minLength: 8)
-            Text(card.value)
-                .font(card.kind == .exchange ? V8Font.numeral(lines > 1 ? 30 : 34) : V8Font.display(lines >= 3 ? 23 : (lines == 2 ? 26 : 32)))
-                .tracking(-0.8)
-                .foregroundStyle(valueColor)
-                .lineSpacing(-4)
-                .lineLimit(lines)
-                .minimumScaleFactor(0.6)
-                .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: 8)
-            Text(card.detail)
-                .font(V8Font.text(13))
-                .foregroundStyle(detailColor)
-                .lineLimit(1)
-                .truncationMode(.tail)
-        }
-        .padding(.horizontal, 15)
-        .padding(.vertical, 16)
-        .frame(maxWidth: .infinity, minHeight: 116, maxHeight: .infinity, alignment: .topLeading)
-        .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(fill))
-        .overlay {
-            if card.tone == .white {
-                RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(V8.ink.opacity(0.1), lineWidth: 1)
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 6) {
+                SpecLabel(card.label, color: ink ? V8.muteDark : V8.mute)
+                Text(card.value.replacingOccurrences(of: "\n", with: " "))
+                    .font(card.kind == .exchange ? V8Font.numeral(40) : V8Font.display(lines >= 3 ? 24 : 28))
+                    .tracking(-0.8)
+                    .foregroundStyle(ink ? V8.orange : V8.ink)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.6)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(card.detail)
+                    .font(V8Font.text(13))
+                    .foregroundStyle(ink ? V8.muteDark : V8.ink.opacity(0.75))
+                    .lineLimit(2)
+                    .truncationMode(.tail)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            Image(systemName: "arrow.up.right").font(.system(size: 14, weight: .bold)).foregroundStyle(ink ? V8.white : V8.ink)
         }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
+        .frame(maxWidth: .infinity, minHeight: 88, alignment: .leading)
+        .background(ink ? V8.ink : Color.clear)
+        .overlay(alignment: .leading) {
+            if card.tone == .orange { Rectangle().fill(V8.orange).frame(width: 8) }
+        }
+        .overlay(alignment: .bottom) { IndexRule(color: V8.ink) }
+        .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(card.label): \(card.value.replacingOccurrences(of: "\n", with: " ")). \(card.detail)")
     }
-
-    private var fill: Color {
-        switch card.tone {
-        case .ink: V8.ink
-        case .orange: V8.orange
-        case .white: V8.white
-        }
-    }
-
-    private var labelColor: Color {
-        switch card.tone {
-        case .ink: V8.white.opacity(0.85)
-        case .orange: V8.ink.opacity(0.7)
-        case .white: V8.mute
-        }
-    }
-
-    private var valueColor: Color { card.tone == .ink ? V8.orange : V8.ink }
-    private var detailColor: Color { card.tone == .ink ? V8.muteDark : V8.ink.opacity(0.8) }
 }

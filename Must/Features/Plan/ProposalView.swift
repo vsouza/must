@@ -18,6 +18,7 @@ struct ProposalView: View {
     @Environment(AppRouter.self) private var router
     @Environment(RegionStore.self) private var store
     @Environment(Services.self) private var services
+    @Environment(\.tripTheme) private var theme
 
     @Query private var places: [Place]
     @Query private var trips: [TripInfo]
@@ -44,76 +45,58 @@ struct ProposalView: View {
     private var shown: DayPlan? { (swapped ? nil : plan) ?? planner.proposal.map { Self.dayPlan(from: $0, date: planner.date, budget: planner.budget) } }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .top) {
-                    RoundButton(systemImage: "chevron.left", label: "Voltar ao Montar", style: .line, tint: V8.ink) { dismiss() }
-                    Spacer(minLength: 12)
+        VStack(spacing: 0) {
+            band
+            CutRule()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
                     if let shown {
-                        SpecStack(lines: [DayText.dayLine(planner.date, region: region),
-                                          "\(shown.countLine) · previsto \(region.money(shown.plannedCost))"],
-                                  color: V8.mute, alignment: .trailing)
-                            .padding(.top, 4)
-                    }
-                }
-                .padding(.top, 10)
-                HStack(alignment: .lastTextBaseline, spacing: 10) {
-                    Text("Seu dia").font(V8Font.display(44)).foregroundStyle(V8.ink)
-                    if let shown { BigNumeral("\(shown.stops.count)", size: 84, color: V8.orange).fixedSize() }
-                }
-                .padding(.top, 18)
-                .accessibilityElement(children: .combine)
-                if let shown {
-                    Text(shown.title).font(V8Font.text(15)).foregroundStyle(V8.mute).padding(.top, 2)
-                    if let changeNote { ChangeBanner(diff: changeNote).padding(.top, 16).transition(.opacity) }
-                    VStack(alignment: .leading, spacing: 6) {
-                        if shown.stops.isEmpty {
-                            Text("Nada coube nesse pedido: troque o bairro ou o ritmo.").font(V8Font.text(15)).foregroundStyle(V8.mute)
-                        }
-                        ForEach(Array(shown.stops.enumerated()), id: \.element.id) { i, stop in
-                            VStack(alignment: .leading, spacing: 6) {
-                                DayStopRow(stop: stop, index: i + 1, state: .upcoming, region: region, onTap: swapAction(stop))
-                                    .changeHighlight(changed.contains(stop.id))
-                                if let leg = shown.leg(after: stop) { DayLegRow(leg: leg) }
+                        if let changeNote { ChangeBanner(diff: changeNote).transition(.opacity) }
+                        VStack(alignment: .leading, spacing: 0) {
+                            if shown.stops.isEmpty {
+                                DayStrip { Text("Nada coube nesse pedido: troque o bairro ou o ritmo.").font(V8Font.text(15)).foregroundStyle(V8.mute) }
                             }
-                            .transition(reduceMotion ? .opacity
-                                        : .asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity), removal: .opacity))
+                            ForEach(Array(shown.stops.enumerated()), id: \.element.id) { i, stop in
+                                VStack(alignment: .leading, spacing: 0) {
+                                    DayStopRow(stop: stop, index: i + 1, state: .upcoming, region: region, onTap: swapAction(stop))
+                                        .changeHighlight(changed.contains(stop.id))
+                                    if let leg = shown.leg(after: stop) { DayLegRow(leg: leg) }
+                                }
+                                .transition(reduceMotion ? .opacity
+                                            : .asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity), removal: .opacity))
+                            }
+                            if let last = shown.lastTrain {
+                                DayLegRow(leg: DayLeg(mode: .train, minutes: 0, from: "", to: "",
+                                                      detail: "último trem \(last.line) \(region.timeString(last.at))"),
+                                          color: V8.orangeDeep)
+                            }
                         }
-                        if let last = shown.lastTrain {
-                            DayLegRow(leg: DayLeg(mode: .train, minutes: 0, from: "", to: "",
-                                                  detail: "último trem \(last.line) \(region.timeString(last.at))"),
-                                      color: V8.orangeDeep)
+                        .animation(reduceMotion ? .easeInOut(duration: 0.2) : .snappy(duration: 0.45), value: shown.stops.map(\.id))
+                    }
+                    if let explanation = planner.proposal?.explanation, !explanation.isEmpty {
+                        DayStrip {
+                            Text(explanation)
+                                .font(V8Font.text(15))
+                                .foregroundStyle(V8.ink)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
                     }
-                    .padding(.top, 22)
-                    .animation(reduceMotion ? .easeInOut(duration: 0.2) : .snappy(duration: 0.45), value: shown.stops.map(\.id))
+                    if let error { Text(error).font(V8Font.text(13)).foregroundStyle(V8.orangeDeep).padding(.horizontal, 20).padding(.top, 8) }
+                    Color.clear.frame(height: 190)
                 }
-                if let explanation = planner.proposal?.explanation, !explanation.isEmpty {
-                    Text(explanation)
-                        .font(V8Font.text(15))
-                        .foregroundStyle(V8.ink)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(16)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(V8.ink.opacity(0.14)))
-                        .padding(.top, 18)
-                }
-                if let error { Text(error).font(V8Font.text(13)).foregroundStyle(V8.orangeDeep).padding(.top, 8) }
-                Color.clear.frame(height: 190)
             }
-            .padding(.horizontal, 20)
+            .scrollIndicators(.hidden)
+            .overlay(alignment: .bottom) { actions }
         }
-        .scrollIndicators(.hidden)
-        .onChange(of: shown?.stops ?? []) { old, new in markChanges(from: old, to: new) }
-        .overlay(alignment: .bottom) { actions }
         .background(V8.paper.ignoresSafeArea())
+        .onChange(of: shown?.stops ?? []) { old, new in markChanges(from: old, to: new) }
         #if DEBUG
         .onAppear {
             if DebugFlags.string("debugScreen") == "trocar" {
                 swapping = planner.proposal?.stops.first { $0.place.role == .eat && !$0.isAnchor }
             }
             // Prints do "Outra" (o que mudou): aperta sozinho depois de 1,5 s.
-            if DebugFlags.string("debugScreen") == "outra" {
+            if ["outra", "corte-proposta"].contains(DebugFlags.string("debugScreen")) {
                 Task { try? await Task.sleep(for: .seconds(1.5)); anotherDay() }
             }
         }
@@ -123,6 +106,31 @@ struct ProposalView: View {
                 .presentationDetents([.large])
                 .presentationCornerRadius(32)
                 .presentationDragIndicator(.hidden)
+        }
+    }
+
+    /// Bloco do bairro do dia: o numeral gigante = quantas paradas tem a proposta.
+    private var band: some View {
+        DayBand(areaId: shown?.bandArea() ?? planner.focusArea, places: places, height: 250) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(alignment: .top) {
+                    RoundButton(systemImage: "chevron.left", label: "Voltar ao Montar", style: .line, tint: theme.coverInk, size: 40) { dismiss() }
+                    Spacer(minLength: 12)
+                    if let shown {
+                        DayBandCorners(left: [], right: [DayText.dayLine(planner.date, region: region),
+                                                         "\(shown.countLine) · previsto \(region.money(shown.plannedCost))"])
+                    }
+                }
+                Spacer(minLength: 8)
+                HStack(alignment: .bottom, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        if let title = shown?.title, !title.isEmpty { MonoLabel(title, size: 10, color: theme.coverInk.opacity(0.9)) }
+                        Text("Seu dia").font(V8Font.display(46)).foregroundStyle(theme.coverInk).lineLimit(1).minimumScaleFactor(0.6)
+                    }
+                    Spacer(minLength: 8)
+                    if let shown { DayBandNumeral(value: "\(shown.stops.count)", caption: shown.stops.count == 1 ? "parada" : "paradas") }
+                }
+            }
         }
     }
 
@@ -397,47 +405,41 @@ struct ProposalDiff: Equatable, Sendable {
     var spoken: String { [title, detail].compactMap { $0 }.joined(separator: ". ") }
 }
 
-/// Resumo da troca acima da linha: laranja quando mudou algo, cinza quando o dia ficou igual.
+/// Resumo da troca acima do índice: faixa laranja inteira quando mudou algo, papel quando o dia ficou igual.
 private struct ChangeBanner: View {
     var diff: ProposalDiff
 
     var body: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: diff.count == 0 ? "equal" : "arrow.triangle.2.circlepath")
-                .font(.system(size: 14, weight: .bold))
-                .foregroundStyle(diff.count == 0 ? V8.mute : V8.orange)
-                .padding(.top, 2)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(diff.title.uppercased()).font(V8Font.mono(11)).tracking(1.1).foregroundStyle(V8.ink)
-                if let detail = diff.detail {
-                    Text(detail).font(V8Font.text(14)).foregroundStyle(V8.mute)
-                        .fixedSize(horizontal: false, vertical: true)
+        DayStrip(tone: diff.count == 0 ? .paper : .orange) {
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: diff.count == 0 ? "equal" : "arrow.triangle.2.circlepath")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(V8.ink)
+                    .padding(.top, 2)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(diff.title.uppercased()).font(V8Font.mono(11, weight: .semibold)).tracking(1.1).foregroundStyle(V8.ink)
+                    if let detail = diff.detail {
+                        Text(detail).font(V8Font.text(14)).foregroundStyle(V8.ink.opacity(0.8))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
+                Spacer(minLength: 0)
             }
-            Spacer(minLength: 0)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .background(RoundedRectangle(cornerRadius: 16, style: .continuous)
-            .strokeBorder(diff.count == 0 ? V8.ink.opacity(0.14) : V8.orange.opacity(0.7), lineWidth: 1))
         .accessibilityElement(children: .combine)
     }
 }
 
 private extension View {
-    /// Linha que acabou de entrar: fundo laranja leve e um filete na esquerda, que somem devagar.
+    /// Linha que acabou de entrar: faixa laranja leve de largura total e um filete na esquerda, que somem devagar.
     func changeHighlight(_ on: Bool) -> some View {
-        padding(.vertical, on ? 4 : 0)
-            .background(alignment: .leading) {
-                if on {
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(V8.orange.opacity(0.12))
-                        .overlay(alignment: .leading) {
-                            Capsule().fill(V8.orange).frame(width: 3).padding(.vertical, 6)
-                        }
-                        .padding(.horizontal, -8)
-                        .transition(.opacity)
-                }
+        background(alignment: .leading) {
+            if on {
+                Rectangle()
+                    .fill(V8.orange.opacity(0.22))
+                    .overlay(alignment: .leading) { Rectangle().fill(V8.orange).frame(width: 6) }
+                    .transition(.opacity)
             }
+        }
     }
 }

@@ -76,26 +76,37 @@ final class CapaState {
         region.displayName
     }
 
+    /// O bairro e os Musts dele (candidatos a foto). `nil` se o bairro não tem entrada.
+    static func areaCandidates(region: Region, areaId: String, places: [Place]) -> (AreaEntry, [AreaHeroes.Candidate])? {
+        let refs = places.map(HomeState.areaPlace)
+        let index = AreaIndex.build(areas: AreaCatalog.areas(for: region), places: refs, openIds: [])
+        guard let entry = index.entry(areaId) else { return nil }
+        let byId = Dictionary(places.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        let candidates = entry.placeIds.compactMap { id in
+            byId[id].map { AreaHeroes.Candidate(name: $0.name, coordinate: $0.coordinate, placeId: $0.placeId, photoRefs: $0.photoRefs) }
+        }
+        return (entry, candidates)
+    }
+
+    /// Só o que já está no disco: Google de um Must do bairro › Commons já escolhida e baixada. Nunca baixa.
+    static func diskPhoto(region: Region, areaId: String, candidates: [AreaHeroes.Candidate]) async -> CCPhoto? {
+        if let google = AreaHeroes.googleOnDisk(candidates) { return google }
+        if let saved = await DiskCache.shared.stale(AreaHeroes.cacheKey(region: region, areaId: areaId)),
+           let commons = try? JSONDecoder().decode(CCPhoto.self, from: saved),
+           await DiskCache.shared.exists("photo|\(commons.largeURL ?? commons.url)") {
+            return commons
+        }
+        return nil
+    }
+
     /// Foto do bairro: Google de um Must do bairro no disco › Commons já escolhida e baixada. Nunca baixa nada,
     /// salvo `forced` (prints com `-capaFoto`), que pode escolher e baixar a do Commons uma vez.
     func loadPhoto(region: Region, places: [Place], services: Services, forced: Bool) async {
         guard let areaId else { photo = nil; return }
         guard areaId != photoAreaId || photo == nil else { return }
         photoAreaId = areaId
-        let refs = places.map(HomeState.areaPlace)
-        let index = AreaIndex.build(areas: AreaCatalog.areas(for: region), places: refs, openIds: [])
-        guard let entry = index.entry(areaId) else { photo = nil; return }
-        let byId = Dictionary(places.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
-        let candidates = entry.placeIds.compactMap { id in
-            byId[id].map { AreaHeroes.Candidate(name: $0.name, coordinate: $0.coordinate, placeId: $0.placeId, photoRefs: $0.photoRefs) }
-        }
-        if let google = AreaHeroes.googleOnDisk(candidates) { photo = google; return }
-        if let saved = await DiskCache.shared.stale(AreaHeroes.cacheKey(region: region, areaId: areaId)),
-           let commons = try? JSONDecoder().decode(CCPhoto.self, from: saved),
-           await DiskCache.shared.exists("photo|\(commons.largeURL ?? commons.url)") {
-            photo = commons
-            return
-        }
+        guard let (entry, candidates) = Self.areaCandidates(region: region, areaId: areaId, places: places) else { photo = nil; return }
+        if let disk = await Self.diskPhoto(region: region, areaId: areaId, candidates: candidates) { photo = disk; return }
         guard forced else { photo = nil; return }
         photo = await AreaHeroes(photos: services.photos).photo(region: region, area: entry.area, candidates: candidates,
                                                                  cityName: region.displayName)

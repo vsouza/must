@@ -153,9 +153,10 @@ struct SectionHead: View {
     }
 }
 
-// MARK: - Linha do dia: cards e deslocamentos
+// MARK: - Linha do dia: o índice (prompt 30)
 
-/// Uma parada da Linha (âncora = tinta, must = branco, micro = tracejada; feito 50 %, agora laranja).
+/// Uma parada da Linha como linha do índice, de largura total: hora em número grande, nome e motivo, régua de 2 pt embaixo.
+/// Agora = laranja inteiro; âncora = tinta; must = papel; micro-parada = linha baixa com régua fina tracejada. Feito 50 %.
 struct DayStopRow: View {
     var stop: DayStop
     var index: Int
@@ -164,129 +165,117 @@ struct DayStopRow: View {
     var onTap: (() -> Void)?
 
     private var isMicro: Bool { stop.kind == .micro }
-    /// Micro-parada "em cartaz" (exposição/show na janela livre): tracejada em laranja, selo EXP.
+    /// Micro-parada "em cartaz" (exposição/show na janela livre): selo EXP em laranja.
     /// TODO(r23:A): o motor (`MicroStops`) deve marcar com `tag: "EXP"`; troco por um `DayMicroKind` quando existir.
     private var isShow: Bool { isMicro && stop.tag?.uppercased() == "EXP" }
+    private var isInk: Bool { state != .now && stop.kind == .anchor }
+
+    private var main: Color { state == .now ? V8.ink : isInk ? V8.white : V8.ink }
+    private var sub: Color { state == .now ? V8.ink.opacity(0.75) : isInk ? V8.muteDark : V8.mute }
+    private var fill: Color { state == .now ? V8.orange : isInk ? V8.ink : .clear }
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
+        if let onTap {
+            Button(action: onTap) { row }.buttonStyle(.plain)
+        } else {
+            row
+        }
+    }
+
+    private var row: some View {
+        HStack(alignment: .center, spacing: 14) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(region.timeString(stop.start))
-                    .font(V8Font.mono(13))
-                    .fontWeight(.semibold)
-                    .foregroundStyle(state == .now ? V8.orangeDeep : V8.ink)
+                    .font(isMicro ? V8Font.mono(17, weight: .semibold) : V8Font.numeral(28))
+                    .tracking(isMicro ? 0 : 0.5)
+                    .foregroundStyle(state == .now || isInk ? main : (isMicro ? V8.ink.opacity(0.75) : V8.ink))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
                 Text(DayText.caption(for: stop, isNow: state == .now).uppercased())
-                    .font(V8Font.mono(8))
-                    .tracking(0.8)
-                    .foregroundStyle(V8.mute)
+                    .font(V8Font.mono(8.5)).tracking(0.9)
+                    .foregroundStyle(sub)
+                    .lineLimit(1)
             }
-            .lineLimit(1)
-            .minimumScaleFactor(0.6) // xxxLarge: "14:23" encolhe em vez de virar "14:…"
-            .frame(width: 56, alignment: .leading)
-            .padding(.top, isMicro ? 10 : 16)
-            .opacity(state == .done ? 0.5 : 1)
-
-            card
+            .frame(width: 88, alignment: .leading)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(stop.label)
+                    .font(V8Font.text(isMicro ? 15 : 17, weight: isMicro ? .semibold : .bold))
+                    .foregroundStyle(main)
+                    .lineLimit(1)
+                Text(state == .done && !stop.note.contains("feito") ? stop.note + " · feito ✓" : stop.note)
+                    .font(V8Font.text(isMicro ? 12 : 12.5))
+                    .foregroundStyle(sub)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            trailing
         }
+        .padding(.horizontal, 20)
+        .padding(.vertical, isMicro ? 9 : 13)
+        .frame(maxWidth: .infinity, minHeight: isMicro ? 52 : 68, alignment: .leading)
+        .background(fill)
+        .overlay(alignment: .bottom) {
+            if isMicro && state != .now {
+                Line().stroke(V8.ink.opacity(0.4), style: StrokeStyle(lineWidth: 1, dash: [4, 3])).frame(height: 1)
+            } else {
+                IndexRule()
+            }
+        }
+        .opacity(state == .done ? 0.5 : 1)
+        .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(region.timeString(stop.start)), \(stop.label), \(stop.note)\(state == .done ? ", feito" : state == .now ? ", agora" : "")")
     }
 
-    @ViewBuilder private var card: some View {
-        let content = HStack(spacing: 12) {
-            badge
-            VStack(alignment: .leading, spacing: 2) {
-                Text(stop.label)
-                    .font(V8Font.text(isMicro ? 14 : 16, weight: isMicro ? .semibold : .bold))
-                    .foregroundStyle(titleColor)
-                    .lineLimit(1)
-                Text(state == .done && !stop.note.contains("feito") ? stop.note + " · feito ✓" : stop.note)
-                    .font(V8Font.text(isMicro ? 12.5 : 13))
-                    .foregroundStyle(titleColor.opacity(0.72))
-                    .lineLimit(1)
-            }
-            Spacer(minLength: 0)
-            if state == .now {
-                Image(systemName: "arrow.up.right").font(.system(size: 15, weight: .bold)).foregroundStyle(V8.ink)
-            }
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, isMicro ? 9 : 14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(fill))
-        .overlay {
-            if isMicro && state != .now {
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .strokeBorder(isShow ? V8.orangeDeep : V8.ink.opacity(0.3),
-                                  style: StrokeStyle(lineWidth: isShow ? 1.5 : 1, dash: isShow ? [5, 3] : [4, 3]))
-            } else if stop.kind == .must && state == .upcoming {
-                RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(V8.ink.opacity(0.08), lineWidth: 1)
-            }
-        }
-        .opacity(state == .done ? 0.5 : 1)
-        .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-
-        if let onTap {
-            Button(action: onTap) { content }.buttonStyle(MustPressStyle())
-        } else {
-            content
+    @ViewBuilder private var trailing: some View {
+        if state == .now {
+            Image(systemName: "arrow.up.right").font(.system(size: 16, weight: .bold)).foregroundStyle(V8.ink)
+        } else if stop.kind == .anchor || isShow {
+            Text((stop.tag ?? (isShow ? "EXP" : "RES")).uppercased())
+                .font(V8Font.mono(9.5, weight: .semibold)).tracking(0.8)
+                .foregroundStyle(isInk ? V8.orange : V8.ink)
+                .lineLimit(1)
+                .padding(.horizontal, 7).padding(.vertical, 5)
+                .overlay(Rectangle().stroke(isInk ? V8.orange : V8.ink, lineWidth: 1.5))
+        } else if state == .done {
+            Text("✓").font(V8Font.mono(14, weight: .bold)).foregroundStyle(V8.ink)
         }
     }
 
-    private var fill: Color {
-        if state == .now { return V8.orange }
-        switch stop.kind {
-        case .anchor: return V8.ink
-        case .must: return V8.white
-        case .micro: return .clear
+    private struct Line: Shape {
+        func path(in rect: CGRect) -> Path {
+            var p = Path()
+            p.move(to: CGPoint(x: rect.minX, y: rect.midY))
+            p.addLine(to: CGPoint(x: rect.maxX, y: rect.midY))
+            return p
         }
-    }
-
-    private var titleColor: Color {
-        if state == .now { return V8.ink }
-        return stop.kind == .anchor ? V8.white : V8.ink
-    }
-
-    /// Quadradinho da esquerda: selo da âncora (laranja), índice (must, agora), selo curto da micro.
-    private var badge: some View {
-        let text: String = {
-            if stop.kind == .micro { return state == .done ? "✓" : (stop.tag ?? "·") }
-            if stop.kind == .anchor && state != .now { return stop.tag ?? "\(index)" }
-            return "\(index)"
-        }()
-        let (bg, fg): (Color, Color) = {
-            if state == .now { return (V8.ink, V8.white) }
-            if stop.kind == .anchor || isShow { return (V8.orange, V8.ink) }
-            return (V8.ink.opacity(0.07), V8.ink)
-        }()
-        return Text(text)
-            .font(V8Font.mono(text.count > 2 ? 10 : 12))
-            .fontWeight(.bold)
-            .lineLimit(1)
-            .minimumScaleFactor(0.6)
-            .foregroundStyle(fg)
-            .frame(width: isMicro ? 34 : 40, height: isMicro ? 34 : 40)
-            .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(bg))
-            .accessibilityHidden(true)
     }
 }
 
-/// Deslocamento entre duas paradas: traço + modo + minutos ("JY Yamanote 09:12 · 34 min · plat. 14").
+/// Deslocamento entre duas paradas: um item de índice baixo ("JY Yamanote 09:12 · 34 min · plat. 14"), alinhado ao nome da
+/// parada, com régua fina embaixo.
 struct DayLegRow: View {
     var leg: DayLeg
     var color: Color = V8.mute
 
     var body: some View {
         HStack(spacing: 8) {
-            RoundedRectangle(cornerRadius: 2).fill(color.opacity(0.5)).frame(width: 3, height: 18)
+            Text("↓")
+                .font(V8Font.mono(10.5, weight: .bold))
+                .foregroundStyle(color)
             Text(Self.text(leg).uppercased())
                 .font(V8Font.mono(9.5))
                 .tracking(0.6)
                 .foregroundStyle(color)
                 .lineLimit(1)
+                .minimumScaleFactor(0.8)
         }
-        .padding(.leading, 68)
-        .padding(.vertical, 2)
+        .padding(.leading, 20 + 88 + 14)
+        .padding(.trailing, 20)
+        .padding(.vertical, 7)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .overlay(alignment: .bottom) { Rectangle().fill(V8.ink.opacity(0.35)).frame(height: 1) }
         .accessibilityElement(children: .combine)
     }
 

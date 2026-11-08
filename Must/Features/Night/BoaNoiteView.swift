@@ -35,62 +35,64 @@ struct BoaNoiteView: View {
     }
 
     private var region: Region { store.region }
+    /// Tinta do bloco da foto (branca com viagem).
     private var ink: Color { theme.coverInk }
     private var now: Date { AppClock.now }
     private var today: Date { region.calendar.startOfDay(for: now) }
     private var dayKey: String { BoardDates(timeZone: region.timeZone).dayString(today) }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .top) {
-                    SpecStack(lines: ["\(DayText.dayLine(now, region: region)) · \(region.timeString(now))",
-                                      "dia \(plan?.dayNumber.map(String.init) ?? region.dayNumber(now)) fechado"], color: ink)
-                    Spacer(minLength: 12)
-                    SpecStack(lines: rightSpec, color: ink, alignment: .trailing)
+        VStack(spacing: 0) {
+            DayBand(areaId: plan?.bandArea(), places: places, height: 270) {
+                VStack(alignment: .leading, spacing: 0) {
+                    DayBandCorners(left: ["\(DayText.dayLine(now, region: region)) · \(region.timeString(now))",
+                                          "dia \(plan?.dayNumber.map(String.init) ?? region.dayNumber(now)) fechado"],
+                                   right: rightSpec)
+                    Spacer(minLength: 8)
+                    HStack(alignment: .bottom, spacing: 10) {
+                        Text("Boa noite.")
+                            .font(V8Font.display(52))
+                            .foregroundStyle(ink)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.5)
+                            .accessibilityAddTraits(.isHeader)
+                        Spacer(minLength: 4)
+                        if let summary {
+                            DayBandNumeral(value: "\(summary.done)", caption: "de \(summary.total) paradas", size: 88)
+                        }
+                    }
                 }
-                .padding(.top, 10)
-
-                Text("Boa noite.")
-                    .font(V8Font.display(64))
-                    .foregroundStyle(ink)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.6)
-                    .padding(.top, 36)
-                Text(summary?.sentence ?? "Nada montado hoje. Amanhã é outro dia.")
-                    .font(V8Font.text(16))
-                    .foregroundStyle(ink)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 8)
-                    .padding(.trailing, 30)
-
-                if let summary { stats(summary).padding(.top, 36) }
-                diaryCard.padding(.top, 36)
-                tomorrowSection.padding(.top, 30)
-                Color.clear.frame(height: 170)
             }
-            .padding(.horizontal, 20)
-        }
-        .scrollIndicators(.hidden)
-        .scrollDismissesKeyboard(.interactively)
-        .overlay(alignment: .bottom) {
-            BigButton(title: "Fechar o dia", style: .ink, systemImage: "checkmark") { closeDay() }
-                .padding(.horizontal, 20)
-                .padding(.bottom, 92)
-        }
-        .background {
-            ZStack {
-                theme.cover
-                Rings(color: ink, count: 3, diameter: 520, opacity: 0.45, offset: CGSize(width: 0, height: 60))
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                BigNumeral(plan?.dayNumber.map(String.init) ?? region.dayNumber(now), size: 360, color: ink.opacity(0.15))
-                    .fixedSize()
-                    .offset(x: 70, y: 90)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+            CutRule()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(summary?.sentence ?? "Nada montado hoje. Amanhã é outro dia.")
+                        .font(V8Font.text(17, weight: .semibold))
+                        .foregroundStyle(V8.ink)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 16)
+                    IndexRule()
+                    if let summary { stats(summary) }
+                    diaryCard
+                    tomorrowSection
+                    Color.clear.frame(height: 190)
+                }
             }
-            .ignoresSafeArea()
-            .accessibilityHidden(true)
+            .scrollIndicators(.hidden)
+            .scrollDismissesKeyboard(.interactively)
+            .overlay(alignment: .bottom) {
+                BigButton(title: "Fechar o dia", style: .ink, systemImage: "checkmark") { closeDay() }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 28)
+                    .padding(.bottom, 92)
+                    .background {
+                        LinearGradient(colors: [V8.paper.opacity(0), V8.paper], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.3))
+                            .ignoresSafeArea().allowsHitTesting(false)
+                    }
+            }
         }
+        .background(V8.paper.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
         .onAppear(perform: load)
     }
@@ -154,14 +156,17 @@ struct BoaNoiteView: View {
 
     // MARK: Números
 
+    /// Km a pé e gasto: duas colunas separadas por régua de 2 pt.
     private func stats(_ s: NightSummary) -> some View {
         let money = DayText.compactMoney(s.spent, region: region)
-        return HStack(alignment: .top, spacing: 12) {
-            stat(big: "\(s.done)", small: "/\(s.total)", label: "paradas")
+        return HStack(alignment: .top, spacing: 0) {
             stat(big: s.walkKm.formatted(.number.locale(region.locale).precision(.fractionLength(1))), small: nil, label: "km a pé")
+            Rectangle().fill(V8.ink).frame(width: 2)
             stat(big: money.number, small: money.suffix.isEmpty ? nil : money.suffix,
                  label: s.percent.map { "gasto · \($0)%" } ?? "gasto")
         }
+        .fixedSize(horizontal: false, vertical: true)
+        .overlay(alignment: .bottom) { IndexRule() }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(s.done) de \(s.total) paradas, \(Walk.kmText(s.walkKm)) a pé, gasto \(region.money(s.spent))")
     }
@@ -169,16 +174,19 @@ struct BoaNoiteView: View {
     private func stat(big: String, small: String?, label: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .lastTextBaseline, spacing: 0) {
-                Text(big).font(V8Font.numeral(50)).foregroundStyle(ink).lineLimit(1).minimumScaleFactor(0.5)
-                if let small { Text(small).font(V8Font.numeral(26)).foregroundStyle(ink.opacity(0.6)) }
+                Text(big).font(V8Font.numeral(44)).foregroundStyle(V8.ink).lineLimit(1).minimumScaleFactor(0.5)
+                if let small { Text(small).font(V8Font.numeral(24)).foregroundStyle(V8.mute) }
             }
-            SpecLabel(label, color: ink)
+            SpecLabel(label, color: V8.mute)
         }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // MARK: Diário
 
+    /// Faixa tinta inteira: a linha do diário (é sua, mas é o que fica; o laranja fica pro "Fechar o dia").
     private var diaryCard: some View {
         VStack(alignment: .leading, spacing: 10) {
             MonoLabel("Uma linha sobre hoje", size: 10, color: V8.orange)
@@ -200,11 +208,12 @@ struct BoaNoiteView: View {
             }
             MonoLabel(editing ? "pronto fecha o teclado" : "toque pra editar · vai pro diário", size: 9.5, color: V8.muteDark)
         }
-        .padding(.horizontal, 22)
-        .padding(.vertical, 20)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 28, style: .continuous).fill(V8.ink))
-        .contentShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .background(V8.ink)
+        .overlay(alignment: .bottom) { IndexRule() }
+        .contentShape(Rectangle())
         .onTapGesture {
             editing = true
             diaryFocused = true
@@ -224,41 +233,52 @@ struct BoaNoiteView: View {
 
     @ViewBuilder private var tomorrowSection: some View {
         if let t = tomorrow {
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 0) {
                 HStack(alignment: .firstTextBaseline) {
-                    Text("Amanhã").font(V8Font.display(28)).foregroundStyle(ink)
+                    Text("Amanhã").font(V8Font.display(26)).foregroundStyle(V8.ink)
                     Spacer(minLength: 8)
                     MonoLabel(["\(DayText.weekdayShort(t.date, region: region)) \(region.dayNumber(t.date))", t.area]
-                        .compactMap { $0 }.joined(separator: " · "), color: ink)
+                        .compactMap { $0 }.joined(separator: " · "), color: V8.mute)
                 }
+                .padding(.horizontal, 20)
+                .padding(.top, 18)
+                .padding(.bottom, 10)
+                .overlay(alignment: .bottom) { IndexRule() }
                 HStack(spacing: 14) {
                     if let time = t.time {
-                        Text(region.timeString(time)).font(V8Font.mono(20)).fontWeight(.semibold).foregroundStyle(ink)
+                        Text(region.timeString(time)).font(V8Font.numeral(28)).tracking(0.5).foregroundStyle(V8.ink)
+                            .lineLimit(1).minimumScaleFactor(0.6).frame(width: 88, alignment: .leading)
                     }
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(t.title).font(V8Font.text(15, weight: .bold)).foregroundStyle(ink).lineLimit(1)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(t.title).font(V8Font.text(17, weight: .bold)).foregroundStyle(V8.ink).lineLimit(1)
                         if let advice = t.advice {
-                            Text(advice).font(V8Font.text(13)).foregroundStyle(ink.opacity(0.85)).lineLimit(1)
+                            Text(advice).font(V8Font.text(12.5)).foregroundStyle(V8.mute).lineLimit(2)
                         }
                     }
                     Spacer(minLength: 0)
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 14)
-                .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(ink.opacity(0.14)))
+                .padding(.horizontal, 20)
+                .padding(.vertical, 13)
+                .frame(minHeight: 68)
+                .overlay(alignment: .bottom) { IndexRule() }
+                .accessibilityElement(children: .combine)
                 if !chips.isEmpty {
                     ScrollView(.horizontal) {
-                        HStack(spacing: 6) {
+                        HStack(spacing: 8) {
                             ForEach(chips) { chip in
                                 Text(chip.short.uppercased())
-                                    .font(V8Font.mono(9.5)).fontWeight(.semibold).tracking(0.8)
-                                    .foregroundStyle(ink)
+                                    .font(V8Font.mono(9.5, weight: .semibold)).tracking(0.8)
+                                    .foregroundStyle(V8.ink)
                                     .padding(.horizontal, 9).padding(.vertical, 7)
-                                    .background(RoundedRectangle(cornerRadius: 6).fill(ink.opacity(0.14)))
+                                    .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
                             }
                         }
+                        .padding(2)
                     }
                     .scrollIndicators(.hidden)
+                    .contentMargins(.horizontal, 18, for: .scrollContent)
+                    .padding(.vertical, 12)
+                    .overlay(alignment: .bottom) { IndexRule() }
                 }
             }
         }
