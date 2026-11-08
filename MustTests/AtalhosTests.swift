@@ -7,9 +7,9 @@ import Testing
 /// Atalhos (prompt 25 · D): gesto, grade e linhas perto — tudo do aparelho.
 @MainActor
 struct AtalhosTests {
-    @Test func deslizePraDireitaAbreOsAtalhos() {
+    @Test func deslizePraDireitaAbreOBolsoComOsAtalhos() {
         let now = Region.jp.calendar.date(from: DateComponents(year: 2026, month: 11, day: 15, hour: 14, minute: 20))!
-        #expect(CapaSwipe.action(for: .right, now: now, region: .jp) == .atalhos)
+        #expect(CapaSwipe.action(for: .right, now: now, region: .jp) == .route(.bolso))
         #expect(CapaSwipe.action(for: .left, now: now, region: .jp) == .route(.dicas))
         #expect(CapaSwipe.action(for: .down, now: now, region: .jp) == nil)
     }

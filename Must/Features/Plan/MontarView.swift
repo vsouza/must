@@ -227,7 +227,7 @@ struct MontarView: View {
         DayBand(areaId: area, places: places, height: 230) {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(alignment: .top) {
-                    RoundButton(systemImage: "xmark", label: "Fechar", style: .line, tint: theme.coverInk, size: 40) { dismiss() }
+                    V8CornerButton(systemName: "xmark", label: "Fechar", tint: theme.coverInk) { dismiss() }
                     Spacer(minLength: 12)
                     Button { editingStart = true } label: {
                         DayBandCorners(left: [], right: [DayText.dayLine(planner.date, region: region),

@@ -9,6 +9,7 @@ struct ProximosView: View {
     @Environment(RegionStore.self) private var store
     @Environment(\.dayEngine) private var dayEngine
     @Environment(\.modelContext) private var context
+    @Environment(\.tripTheme) private var theme
 
     @Query private var places: [Place]
     @Query private var events: [TripEvent]
@@ -24,6 +25,7 @@ struct ProximosView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 header(now: now).padding(.top, 8)
+                minhasViagens.padding(.top, 14)
                 HStack(alignment: .firstTextBaseline, spacing: 14) {
                     Text("Próximos")
                         .font(V8Font.display(52))
@@ -80,8 +82,34 @@ struct ProximosView: View {
             V8SpecStack(lines: ["Viagem · \(region.shortName)", line ?? "sem viagem marcada · \(region.displayName)"], color: V8.muteDark)
                 .padding(.top, 14)
             Spacer(minLength: 12)
-            V8CornerButton(systemName: "creditcard", label: "Carteira", onInk: true) { router.push(.carteira) }
+            HStack(spacing: 8) {
+                V8CornerButton(systemName: "creditcard", label: "Carteira", onInk: true) { router.push(.carteira) }
+                AssistantCorner(onInk: true)
+            }
         }
+    }
+
+    /// Linha fixa do topo da aba (v9): a viagem de agora com bandeira e moeda; tocar abre Minhas viagens (o mesmo ⇄ da capa).
+    private var minhasViagens: some View {
+        Button { router.sheet = .viagens } label: {
+            HStack(spacing: 12) {
+                TripFlag(theme, size: 26)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Minhas viagens").font(V8Font.text(16, weight: .bold)).foregroundStyle(V8.white).lineLimit(1)
+                    Text("\(region.displayName) · \(TripSwitcherModel.currencyLabel(region))")
+                        .font(V8Font.mono(10)).tracking(0.8).textCase(.uppercase)
+                        .foregroundStyle(V8.muteDark).lineLimit(1)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                Image(systemName: "arrow.left.arrow.right").font(.system(size: 16, weight: .semibold)).foregroundStyle(V8.white)
+            }
+            .padding(.horizontal, 14)
+            .frame(maxWidth: .infinity, minHeight: 56)
+            .overlay(Rectangle().strokeBorder(V8.white, lineWidth: 2))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Minhas viagens, \(region.displayName), moeda \(TripSwitcherModel.currencyLabel(region))")
     }
 
     private var empty: some View {

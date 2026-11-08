@@ -79,6 +79,10 @@ final class QueroModel {
     private(set) var notice: String?
     /// Quantos o filtro tirou (site, loja só online, sem coordenada): o rodapé "fora: …" só aparece com algo.
     private(set) var dropped = 0
+    /// O texto era uma pergunta (v9): a resposta curta e a porta pro Assistente; nenhuma busca de lugar roda.
+    private(set) var question: QueroQuestionState?
+    /// Quem responde (a tela que tem o contexto do SwiftData e os serviços liga isto).
+    @ObservationIgnored var answerer: (@MainActor (String) async -> String)?
     /// Por que a busca de fora ficou só no board ("sem internet", "sem chave do Google"…).
     private(set) var outsideNote: String?
     var selectedId: String?
@@ -103,6 +107,20 @@ final class QueroModel {
         let typed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !typed.isEmpty else { return }
         searchTask?.cancel()
+        if QueroQuestion.isQuestion(typed) {
+            rows = []
+            intent = nil
+            phase = .idle
+            question = QueroQuestionState(text: typed, answer: nil)
+            searchTask = Task { [weak self] in
+                guard let self else { return }
+                let answer = await self.answerer?(typed) ?? QueroQuestion.fallback
+                guard !Task.isCancelled, self.question?.text == typed else { return }
+                self.question?.answer = answer
+            }
+            return
+        }
+        question = nil
         phase = .searching
         searchTask = Task { [weak self] in
             guard let self else { return }

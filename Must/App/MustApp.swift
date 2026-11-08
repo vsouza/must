@@ -367,7 +367,13 @@ enum DebugLaunch {
                 prefetchDays(services: services, context: context, region: region)
             }
             router.select(.guia)
-        case "assistente": router.sheet = .assistant
+        case "assistente", "assistente-conversa": router.sheet = .assistant // conversa: `-debugAsk "pergunta"` envia sozinho
+        // v9 (prompt 31): barra nova, Quero com pergunta, Bolso com os Atalhos, o `+` e a aba Viagem.
+        case "barra": router.select(.hoje)
+        case "quero-pergunta": router.select(.hoje)
+        case "bolso-novo": router.push(.bolso, on: .hoje)
+        case "mais": router.sheet = .quero(text: nil)
+        case "viagem-aba": router.select(.viagem)
         case "viagem": router.push(.trip, on: .hoje)
         case "reservas": router.push(.reservations, on: .hoje)
         case "experiencias":

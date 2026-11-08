@@ -132,6 +132,7 @@ struct BoardView: View {
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    AssistantCorner(onPhoto: true)
                 }
                 .padding(.top, 58)
                 Spacer(minLength: 16)

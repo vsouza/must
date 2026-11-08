@@ -409,17 +409,6 @@ struct MapView: View {
                     MapSearchField(text: $search.text, placeholder: searchPlaceholder(near), listening: speech.isListening,
                                    active: search.isActive, focused: $searchFocused,
                                    onSubmit: submitSearch, onMic: { Task { await speech.toggle() } }, onClear: clearSearch)
-                    if !search.isActive && !searchFocused {
-                        Button { router.sheet = .assistant } label: {
-                            MustIconView(.assistente, size: 20)
-                                .foregroundStyle(near.isEmpty ? .white : Color.must.greenText)
-                                .frame(width: 52, height: 52)
-                                .background(Circle().fill(near.isEmpty ? Color.must.ink : Color.must.green))
-                                .shadow(color: Color(hex: 0x121316, opacity: 0.16), radius: 10, y: 6)
-                        }
-                        .buttonStyle(MustPressStyle())
-                        .accessibilityLabel("Assistente")
-                    }
                 }
                 .padding(.horizontal, 20)
                 if search.isActive { MapIntentChips(chips: search.chips, onTap: tapChip) }

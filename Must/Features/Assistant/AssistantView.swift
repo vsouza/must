@@ -1,19 +1,31 @@
 import SwiftData
 import SwiftUI
 
-/// Assistente: orb, sugestões do momento e chat com cartões de ação. Roda no aparelho.
+/// Assistente v9 (`design/v9/Assistente-1.png` e `-2.png`): tela cheia no corte. **Página 1 = Dicas** ("O que eu sei de
+/// hoje": filtros, numeral, linhas de índice); a conversa mora embaixo (campo + microfone + enviar). Ao enviar a primeira
+/// pergunta a página de dicas vira a conversa; "↑ dicas" volta. Sem balões: a pergunta em letra grande e a resposta em
+/// texto; as trocas do dia viram linhas de índice que só o toque aplica. Roda no aparelho.
 struct AssistantView: View {
+    /// Pergunta que já chega digitada (o "Continuar no Assistente" do Quero…).
+    var initialQuestion: String?
+
+    init(initialQuestion: String? = nil) { self.initialQuestion = initialQuestion }
+
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
     @Environment(AppRouter.self) private var router
     @Environment(RegionStore.self) private var store
     @Environment(Services.self) private var services
+    @Environment(\.tripTheme) private var theme
     @Query private var places: [Place]
     @Query private var settingsList: [Settings]
 
     @State private var chat = ChatModel()
+    @State private var speech = SpeechInput()
     @State private var input = ""
     @State private var markingDone: String?
+    /// Mostra a página de dicas mesmo com conversa (o "↑ dicas" do topo).
+    @State private var showDicas = false
     /// Pergunta em curso: cancelada quando a tela fecha (prompt 18 · A.7).
     @State private var asking: Task<Void, Never>?
     @FocusState private var focused: Bool
@@ -21,75 +33,92 @@ struct AssistantView: View {
     private var region: Region { store.region }
     private var useModel: Bool { settingsList.first?.onDeviceAI ?? true }
     private var snapshot: AssistantSnapshot { AssistantSnapshot.make(context: context, region: region, services: services) }
+    private var onDicas: Bool { chat.messages.isEmpty || showDicas }
 
     var body: some View {
         VStack(spacing: 0) {
-            header
-            if chat.messages.isEmpty { empty } else { conversation }
-            inputBar
+            band
+            CutRule()
+            if onDicas { dicas } else { conversation }
+            footer
         }
-        .background(Color.must.bg.ignoresSafeArea())
-        // Modelo aquecido só agora que o Assistente abre (nunca na abertura do app), e a geração para se a tela fechar.
+        .background(V8.paper.ignoresSafeArea())
+        // Modelo aquecido só agora que o Assistente abre (nunca na abertura do app), e a geração para se a tela fecha.
         .task { chat.warm(snapshot: snapshot, useModel: useModel) }
-        .onDisappear { asking?.cancel() }
-        #if DEBUG
+        .onDisappear { asking?.cancel(); speech.cancel() }
         .onAppear {
+            speech.onFinal = { text in ask(text) }
+            if let initialQuestion, chat.messages.isEmpty { ask(initialQuestion) }
+            #if DEBUG
             if let q = DebugFlags.string("debugAsk"), chat.messages.isEmpty { ask(q) }
+            #endif
         }
-        #endif
         .sheet(item: Binding(get: { markingDone.map { IdentifiedString(id: $0) } }, set: { markingDone = $0?.id })) { item in
             ExpenseView(placeId: item.id)
         }
+        .accessibilityAction(.escape) { dismiss() }
     }
 
-    // MARK: Topo
+    // MARK: Bloco
 
-    private var header: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Must").font(.must.archivo(16)).foregroundStyle(Color.must.secondary)
-                Text("Assistente").font(.must.archivo(22, .semibold)).foregroundStyle(Color.must.ink)
-            }
-            .background(alignment: .topLeading) {
-                if !chat.messages.isEmpty {
-                    AssistantOrb(dotted: false).frame(width: 160, height: 110).offset(x: -24, y: -6).opacity(0.9)
+    private var band: some View {
+        let ink = theme.coverInk
+        return CutBand(photo: nil) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(alignment: .top, spacing: 10) {
+                    V8CornerButton(systemName: "xmark", label: "Fechar", tint: ink) { dismiss() }
+                    SpecStack(lines: ["✦ Assistente · no aparelho",
+                                      onDicas ? "conhece seus \(places.count) musts e o dia" : "\(region.timeString(AppClock.now)) · \(snapshot.areaName)"],
+                              color: ink)
+                    Spacer(minLength: 6)
+                    if !chat.messages.isEmpty {
+                        Button { withAnimation(.snappy(duration: 0.2)) { showDicas.toggle() } } label: {
+                            Text(showDicas ? "↓ CONVERSA" : "↑ DICAS")
+                                .font(V8Font.mono(11, weight: .bold)).tracking(1)
+                                .foregroundStyle(ink)
+                                .padding(.horizontal, 10)
+                                .frame(minHeight: 44)
+                                .overlay(Rectangle().strokeBorder(ink, lineWidth: 2))
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(showDicas ? "Voltar pra conversa" : "Ver as dicas")
+                    }
                 }
+                Spacer(minLength: 8)
+                Text(onDicas ? "O que eu sei de hoje" : "Conversa")
+                    .font(V8Font.display(onDicas ? 48 : 36))
+                    .tracking(-1.6)
+                    .foregroundStyle(ink)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.5)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityAddTraits(.isHeader)
             }
-            Spacer()
-            IconButton(.fechar, label: "Fechar") { dismiss() }
+            .padding(.horizontal, 20)
+            .padding(.top, 10)
+            .padding(.bottom, 14)
         }
-        .padding(.horizontal, 22)
-        .padding(.top, 20)
+        .frame(height: onDicas ? 190 : 140)
     }
 
-    // MARK: Vazio
+    // MARK: Página 1 · Dicas
 
-    private var empty: some View {
-        VStack(spacing: 14) {
-            Spacer(minLength: 10)
-            AssistantOrb(dotted: true).frame(width: 300, height: 230)
-            Spacer(minLength: 10)
-            Text("Como posso ajudar agora, Vinicius?")
-                .font(.must.archivo(26, .semibold)).tracking(-0.4)
-                .multilineTextAlignment(.center)
-                .foregroundStyle(Color.must.ink)
-            Text(subtitle).mustSerif(18).foregroundStyle(Color.must.secondary).multilineTextAlignment(.center)
-            VStack(alignment: .leading, spacing: 10) {
-                ForEach(FallbackAssistant.suggestions(snapshot), id: \.self) { suggestion in
-                    Button { ask(suggestion) } label: { Pill(suggestion) }
-                        .buttonStyle(MustPressStyle())
+    private var dicas: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                DicasPage { id in
+                    let tab = router.tab
+                    dismiss()
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .milliseconds(350))
+                        router.push(.place(id: id), on: tab)
+                    }
                 }
+                Color.clear.frame(height: 16)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.top, 8)
         }
-        .padding(.horizontal, 22)
-        .padding(.bottom, 14)
-    }
-
-    private var subtitle: String {
-        let where_ = OnDeviceAI.isAvailable && useModel ? "no aparelho" : "no aparelho · sem modelo, por palavra-chave"
-        return "\(where_) · conhece seus \(places.count) musts e o dia de hoje"
+        .scrollIndicators(.hidden)
+        .scrollDismissesKeyboard(.interactively)
     }
 
     // MARK: Conversa
@@ -97,133 +126,148 @@ struct AssistantView: View {
     private var conversation: some View {
         ScrollViewReader { proxy in
             ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
-                    Micro("\(region.timeString(AppClock.now)) · \(snapshot.areaName) · no aparelho")
-                        .frame(maxWidth: .infinity)
-                        .padding(.top, 30)
+                VStack(alignment: .leading, spacing: 22) {
                     ForEach(chat.messages) { message in
-                        bubble(message).id(message.id)
+                        line(message).id(message.id)
                     }
                     if chat.busy, chat.messages.last?.role == .user {
-                        ProgressView().padding(.leading, 4)
+                        MonoLabel("pensando no aparelho…", size: 10, color: V8.mute)
                     }
                     Color.clear.frame(height: 8).id("end")
                 }
-                .padding(.horizontal, 22)
+                .padding(.horizontal, 20)
+                .padding(.top, 20)
             }
+            .scrollIndicators(.hidden)
             .scrollDismissesKeyboard(.interactively)
             .onChange(of: chat.messages.last?.text) { _, _ in withAnimation { proxy.scrollTo("end", anchor: .bottom) } }
             .onChange(of: chat.messages.count) { _, _ in withAnimation { proxy.scrollTo("end", anchor: .bottom) } }
         }
     }
 
-    @ViewBuilder private func bubble(_ m: ChatMessage) -> some View {
+    @ViewBuilder private func line(_ m: ChatMessage) -> some View {
         switch m.role {
         case .user:
             Text(m.text)
-                .font(.must.archivo(16))
-                .foregroundStyle(.white)
-                .padding(.horizontal, 18)
-                .padding(.vertical, 14)
-                .background(Color.must.ink, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-                .frame(maxWidth: .infinity, alignment: .trailing)
-                .padding(.leading, 40)
+                .font(V8Font.display(30))
+                .tracking(-0.9)
+                .foregroundStyle(V8.ink)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .accessibilityAddTraits(.isHeader)
         case .assistant:
             VStack(alignment: .leading, spacing: 12) {
                 if !m.text.isEmpty {
                     MoneyText(text: m.text, currencySymbol: region.currencySymbol)
-                        .font(.must.archivo(17))
-                        .foregroundStyle(Color.must.ink)
+                        .font(V8Font.text(15.5))
+                        .foregroundStyle(V8.ink)
                         .fixedSize(horizontal: false, vertical: true)
                 } else if m.isStreaming {
-                    ProgressView()
+                    MonoLabel("escrevendo…", size: 10, color: V8.mute)
                 }
-                ForEach(m.actions) { action in actionCard(action, message: m) }
-                if let note = m.note { Text(note).mustSerif(18).foregroundStyle(Color.must.secondary) }
+                if !m.actions.isEmpty {
+                    VStack(spacing: 0) {
+                        ForEach(m.actions) { action in actionRow(action, message: m) }
+                    }
+                    .overlay(alignment: .top) { Rectangle().fill(V8.ink).frame(height: 2) }
+                }
+                if let note = m.note { MonoLabel(note, size: 10, color: V8.mute) }
                 if !m.quickReplies.isEmpty {
-                    FlowLayout(spacing: 8) {
+                    CorteFlow(spacing: 8) {
                         ForEach(m.quickReplies, id: \.self) { reply in
-                            Button { quick(reply, from: m) } label: { Pill(reply) }.buttonStyle(MustPressStyle())
+                            Button { quick(reply, from: m) } label: { V8FilterChip(title: reply, on: false) }.buttonStyle(.plain)
                         }
                     }
                 }
             }
-            .padding(.trailing, 20)
         }
     }
 
-    private func actionCard(_ action: AssistantAction, message: ChatMessage) -> some View {
+    /// Mudança do dia como linha de índice: laranja = entra (destaque), papel = o resto.
+    private func actionRow(_ action: AssistantAction, message: ChatMessage) -> some View {
         let applied = message.applied.contains(action.id)
+        let live = action.highlighted && !applied
         return HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(action.place.name).font(.must.archivo(18, .semibold)).foregroundStyle(Color.must.ink)
-                Text(action.meta).font(.must.archivo(14)).foregroundStyle(action.highlighted ? MustColor.eat.text : Color.must.secondary)
-                    .lineLimit(2)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(action.place.name).font(V8Font.text(17, weight: .bold)).foregroundStyle(V8.ink).lineLimit(2)
+                Text(action.meta).font(V8Font.text(13)).foregroundStyle(live ? V8.ink.opacity(0.8) : V8.mute).lineLimit(2)
             }
-            Spacer(minLength: 8)
+            .frame(maxWidth: .infinity, alignment: .leading)
             Button { run(action, message: message) } label: {
-                Text(applied ? "Feito ✓" : action.buttonTitle)
-                    .font(.must.archivo(15, .semibold))
-                    .foregroundStyle(action.highlighted && !applied ? .white : Color.must.ink)
-                    .padding(.horizontal, 16)
-                    .frame(height: 38)
-                    .background(Capsule().fill(action.highlighted && !applied ? Color.must.ink : Color.white.opacity(0.7)))
+                Text(applied ? "FEITO ✓" : action.buttonTitle.uppercased())
+                    .font(V8Font.mono(11, weight: .bold)).tracking(1)
+                    .foregroundStyle(live ? V8.paper : V8.ink)
+                    .padding(.horizontal, 12)
+                    .frame(minHeight: 44)
+                    .background(live ? V8.ink : Color.clear)
+                    .overlay(Rectangle().strokeBorder(V8.ink, lineWidth: 2))
             }
-            .buttonStyle(MustPressStyle())
+            .buttonStyle(.plain)
             .disabled(applied)
         }
-        .padding(18)
-        .background {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(action.highlighted ? AnyShapeStyle(MustColor.eat.gradient) : AnyShapeStyle(Color.must.surface2))
-        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(live ? V8.orange : V8.paper)
+        .overlay(alignment: .bottom) { Rectangle().fill(V8.ink).frame(height: 2) }
     }
 
     // MARK: Entrada
 
-    private var inputBar: some View {
-        HStack(spacing: 8) {
-            Button { ask(input) } label: {
-                MustIconView(.assistente, size: 18).foregroundStyle(.white)
-                    .frame(width: 44, height: 44)
-                    .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(MustGradient.avatar))
+    private var footer: some View {
+        VStack(spacing: 0) {
+            if onDicas {
+                CorteFlow(spacing: 8) {
+                    ForEach(Array(FallbackAssistant.suggestions(snapshot).prefix(2)), id: \.self) { suggestion in
+                        Button { ask(suggestion) } label: { V8FilterChip(title: suggestion, on: false) }.buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .overlay(alignment: .top) { Rectangle().fill(V8.ink).frame(height: 2) }
             }
-            .buttonStyle(MustPressStyle())
-            .accessibilityLabel("Enviar")
-            TextField(chat.messages.isEmpty ? "Pergunte ou peça uma troca…" : "Responder…", text: $input, axis: .vertical)
-                .font(.must.archivo(16))
+            inputBar
+        }
+    }
+
+    private var inputBar: some View {
+        HStack(spacing: 0) {
+            TextField("", text: $input, prompt: Text(chat.messages.isEmpty ? "Pergunte ou peça…" : "Responder…").foregroundStyle(V8.muteDark),
+                      axis: .vertical)
+                .font(V8Font.text(17))
+                .foregroundStyle(V8.white)
+                .tint(V8.orange)
                 .lineLimit(1...4)
                 .focused($focused)
                 .submitLabel(.send)
                 .onSubmit { ask(input) }
+                .padding(.horizontal, 18)
+                .frame(maxWidth: .infinity, minHeight: 58, alignment: .leading)
                 .accessibilityIdentifier("assistant.input")
-            if chat.messages.isEmpty {
-                PasteButton(payloadType: String.self) { strings in
-                    guard let link = strings.first else { return }
-                    Task { @MainActor in
-                        dismiss()
-                        try? await Task.sleep(for: .milliseconds(300))
-                        router.sheet = .addLink(url: link, listId: nil)
-                    }
-                }
-                .labelStyle(.iconOnly)
-                .buttonBorderShape(.roundedRectangle(radius: 14))
-                .tint(.white)
-                .foregroundStyle(Color.must.ink)
-                .accessibilityLabel("Colar link")
+                .accessibilityLabel("Pergunte ou peça")
+            Button { Task { await speech.toggle() } } label: {
+                Image(systemName: speech.isListening ? "waveform" : "mic")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(speech.isListening ? V8.orange : V8.white)
+                    .frame(width: 66, height: 58)
+                    .overlay(alignment: .leading) { Rectangle().fill(V8.muteDark.opacity(0.5)).frame(width: 1) }
+                    .contentShape(Rectangle())
             }
-            Button { focused = true } label: {
-                MustIconView(.falar, size: 18).foregroundStyle(.white)
-                    .frame(width: 44, height: 44)
-                    .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color.must.ink))
+            .buttonStyle(.plain)
+            .accessibilityLabel(speech.isListening ? "Parar de ouvir" : "Falar")
+            Button { ask(input) } label: {
+                Image(systemName: "arrow.up")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundStyle(V8.ink)
+                    .frame(width: 84, height: 58)
+                    .background(V8.orange)
+                    .contentShape(Rectangle())
             }
-            .buttonStyle(MustPressStyle())
-            .accessibilityLabel("Ditar (microfone do teclado)")
+            .buttonStyle(.plain)
+            .accessibilityLabel("Enviar")
         }
-        .padding(8)
-        .background(Color.must.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .padding(.horizontal, 22)
-        .padding(.bottom, 8)
+        .frame(minHeight: 58)
+        .background(V8.ink.ignoresSafeArea(edges: .bottom))
     }
 
     // MARK: Ações
@@ -232,6 +276,8 @@ struct AssistantView: View {
         let question = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !question.isEmpty else { return }
         input = ""
+        focused = false
+        showDicas = false
         let snap = snapshot
         asking = Task { await chat.send(question, snapshot: snap, useModel: useModel) }
     }
@@ -273,47 +319,9 @@ struct MoneyText: View {
         let ns = text as NSString
         for match in regex.matches(in: text, range: NSRange(location: 0, length: ns.length)) {
             guard let range = Range(match.range, in: text), let attrRange = Range(range, in: out) else { continue }
-            out[attrRange].font = .must.mono(17, .semibold)
+            out[attrRange].font = V8Font.mono(15, weight: .bold)
         }
         return out
     }
 }
 
-/// Orb do Assistente: duas elipses (azul/verde) com retícula pontilhada por cima.
-struct AssistantOrb: View {
-    var dotted: Bool
-
-    var body: some View {
-        GeometryReader { geo in
-            let w = geo.size.width, h = geo.size.height
-            ZStack {
-                Ellipse().fill(Blob.Fill.blue.gradient).frame(width: w * 0.68, height: h * 0.78).position(x: w * 0.36, y: h * 0.4)
-                Ellipse().fill(Blob.Fill.green.gradient).frame(width: w * 0.66, height: h * 0.76).position(x: w * 0.64, y: h * 0.6)
-                if dotted {
-                    Canvas { ctx, size in
-                        let center = CGPoint(x: size.width * 0.5, y: size.height * 0.5)
-                        let radius = min(size.width, size.height) * 0.48
-                        let step: CGFloat = 7
-                        var y: CGFloat = 0
-                        while y < size.height {
-                            var x: CGFloat = 0
-                            while x < size.width {
-                                let d = hypot(x - center.x, (y - center.y) * 1.15)
-                                if d < radius {
-                                    ctx.fill(Path(ellipseIn: CGRect(x: x, y: y, width: 2.4, height: 2.4)),
-                                             with: .color(Color.must.ink.opacity(0.55)))
-                                }
-                                x += step
-                            }
-                            y += step
-                        }
-                    }
-                    .frame(width: w * 0.62, height: h * 0.92)
-                    .position(x: w * 0.5, y: h * 0.5)
-                    .blendMode(.multiply)
-                }
-            }
-        }
-        .accessibilityHidden(true)
-    }
-}

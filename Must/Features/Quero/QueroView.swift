@@ -81,6 +81,10 @@ struct QueroView: View {
             }
         }
         .onAppear {
+            model.answerer = { [context, services, store] text in
+                await QueroAnswerer.answer(text, context: context, region: store.region, services: services,
+                                           useModel: (try? context.fetch(FetchDescriptor<Settings>()).first?.onDeviceAI) ?? true)
+            }
             speech.onFinal = { text in
                 model.text = text
                 model.submit(env())
@@ -144,7 +148,7 @@ struct QueroView: View {
         }
         .padding(.horizontal, 18)
         .frame(minHeight: 58)
-        .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(V8.graphite))
+        .background(Rectangle().fill(V8.graphite))
         .overlay(alignment: .bottomLeading) {
             if speech.state == .denied || speech.state == .unavailable {
                 Text(speech.state == .denied ? "voz desligada nos Ajustes do iPhone" : "voz indisponível agora")
@@ -157,7 +161,7 @@ struct QueroView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
                 ForEach(WantVerb.allCases, id: \.self) { verb in
-                    Button { model.choose(verb, env: env()) } label: { V8Pill(verb.label, active: model.verb == verb, onInk: true) }
+                    Button { model.choose(verb, env: env()) } label: { V8FilterChip(title: verb.label, on: model.verb == verb, onInk: true) }
                         .buttonStyle(MustPressStyle())
                 }
             }
@@ -167,22 +171,59 @@ struct QueroView: View {
         .scrollClipDisabled()
     }
 
-    /// Link · Texto · Nome: o Adicionar de antes, como abas secundárias.
-    private var secondaryTabs: some View {
-        HStack(spacing: 14) {
-            MonoLabel("ou adicione por", size: 9, color: V8.muteDark)
-            ForEach(AddMode.allCases, id: \.self) { mode in
-                Button { secondary = mode } label: {
-                    Text(mode.label)
-                        .font(V8Font.text(13, weight: .semibold))
-                        .underline()
-                        .foregroundStyle(V8.white)
-                        .padding(.vertical, 6)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(MustPressStyle())
-                .accessibilityLabel("Adicionar por \(mode.label.lowercased())")
+    /// Guardar (v9): Link · Vídeo · Texto · Ingresso · Presente em chips quadrados, e "Buscar por nome" embaixo.
+    enum Guardar: CaseIterable, Hashable {
+        case link, video, text, ticket, gift
+
+        var label: String {
+            switch self {
+            case .link: "Link"
+            case .video: "Vídeo"
+            case .text: "Texto"
+            case .ticket: "Ingresso"
+            case .gift: "Presente"
             }
+        }
+    }
+
+    private var secondaryTabs: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            MonoLabel("ou guarde", size: 9, color: V8.muteDark)
+            CorteFlow(spacing: 8) {
+                ForEach(Guardar.allCases, id: \.self) { item in
+                    Button { guardar(item) } label: { V8FilterChip(title: item.label, on: false, onInk: true) }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Guardar \(item.label.lowercased())")
+                }
+            }
+            Button { secondary = .name } label: {
+                Text("Buscar por nome")
+                    .font(V8Font.text(13, weight: .semibold))
+                    .underline()
+                    .foregroundStyle(V8.white)
+                    .padding(.vertical, 8)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(MustPressStyle())
+            .accessibilityLabel("Buscar por nome")
+        }
+    }
+
+    private func guardar(_ item: Guardar) {
+        switch item {
+        case .link, .video: secondary = .link
+        case .text: secondary = .text
+        case .ticket: later { router.sheet = .ticketImport(inboxId: nil) }
+        case .gift: later { router.push(.presenteNovo, on: .musts) }
+        }
+    }
+
+    /// Fecha o Quero… e roda depois que a sheet sai (o `router` não abre sheet por cima de sheet).
+    private func later(_ body: @escaping @MainActor () -> Void) {
+        dismiss()
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(350))
+            body()
         }
     }
 
@@ -190,6 +231,14 @@ struct QueroView: View {
 
     @ViewBuilder private var results: some View {
         VStack(alignment: .leading, spacing: 4) {
+            if let question = model.question {
+                QueroQuestionSlab(question: question) {
+                    let text = question.text
+                    later { router.sheet = .assistantAsk(text: text) }
+                }
+                .padding(.horizontal, -20)
+                .padding(.bottom, 14)
+            }
             if model.offline {
                 chip("sem internet · a busca volta quando a rede voltar")
             } else if let notice = model.notice {
@@ -206,6 +255,8 @@ struct QueroView: View {
                 .padding(.bottom, 4)
             }
             switch model.phase {
+            case .idle where model.question != nil:
+                EmptyView()
             case .idle:
                 Text("Diga o que quer — comprar, comer, ver. Eu acho o lugar de verdade, perto de hoje, e vejo se cabe no dia.")
                     .font(V8Font.text(15)).foregroundStyle(V8.muteDark).fixedSize(horizontal: false, vertical: true)

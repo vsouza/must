@@ -142,7 +142,7 @@ struct IrView: View {
         return ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(alignment: .top) {
-                    RoundButton(systemImage: "chevron.left", label: "Voltar", style: .line, tint: V8.white) { dismiss() }
+                    V8CornerButton(systemName: "chevron.left", label: "Voltar", tint: V8.white) { dismiss() }
                     Spacer(minLength: 12)
                     SpecStack(lines: ["Ir · \(modeWord(option?.mode))",
                                       (["chega \(region.timeString(model.arrives))"]

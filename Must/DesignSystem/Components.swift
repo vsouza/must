@@ -558,7 +558,7 @@ enum MustTab: String, CaseIterable, Identifiable, Sendable {
     var title: String {
         switch self {
         case .hoje: "Hoje"
-        case .guia: "Guia"
+        case .guia: "Explorar"
         case .musts: "Musts"
         case .viagem: "Viagem"
         }

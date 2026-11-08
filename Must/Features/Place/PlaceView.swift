@@ -301,6 +301,7 @@ struct PlaceView: View {
                     }
                 }
                 moreMenu(place, onPhoto: onPhoto)
+                AssistantCorner(onInk: !onPhoto, onPhoto: onPhoto)
             }
             HStack(alignment: .top) {
                 if onPhoto { V8SpecStack(lines: PlaceFicha.specLines(place), color: V8.white) }

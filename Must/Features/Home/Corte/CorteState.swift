@@ -22,6 +22,10 @@ final class CorteState {
     private(set) var widened = false
     /// "Outro bairro": o bairro escolhido à mão no vazio (vale até fechar o quero).
     private(set) var areaOverride: Area?
+    /// Responde perguntas digitadas no quero (a capa liga: tem o contexto e os serviços).
+    @ObservationIgnored var answerer: (@MainActor (String) async -> String)? {
+        didSet { quero.answerer = answerer }
+    }
     @ObservationIgnored private let makeModel: @MainActor () -> QueroModel
 
     init(makeModel: @escaping @MainActor () -> QueroModel = { CorteState.defaultModel() }) {
@@ -49,6 +53,7 @@ final class CorteState {
         stage = .rest
         speech.cancel()
         quero = makeModel()
+        quero.answerer = answerer
         savedNote = nil
         added = []
         widened = false
@@ -68,7 +73,8 @@ final class CorteState {
 
     func submit(_ env: QueroEnv) {
         guard !quero.text.trimmingCharacters(in: .whitespaces).isEmpty else { return }
-        stage = .result
+        // Pergunta (v9): fica na fenda, com a faixa "✦ isso é uma pergunta" e os chips de lugar embaixo.
+        stage = QueroQuestion.isQuestion(quero.text) ? .asking : .result
         lastEnv = env
         split = CorteSplit.Result(board: [], outside: [])
         quero.submit(Self.corteEnv(adjusted(env)))

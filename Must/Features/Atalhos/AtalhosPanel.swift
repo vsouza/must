@@ -11,99 +11,34 @@ enum AtalhosAction: Equatable {
     case url(URL)
 }
 
-/// Atalhos (prompt 25 · D, `Atalhos.png`): painel de papel sobre a capa (a capa fica atrás, deslocada: só a faixa da cor do
-/// lugar aparece à esquerda). Grade 2×2 (Suica/Carteira, ingressos de hoje, mapa offline, SOS), Linhas perto, Indicados por
-/// perto, Bolso, e os botões Quero… e Mandar. Tudo do aparelho, montado na hora: abre sem esperar nada.
+/// Topo do Bolso v9 (antes o painel de Atalhos, prompt 25 · D): grade 2×2 (Suica/Carteira, ingressos de hoje, mapa offline,
+/// SOS) e as linhas de trem perto. Tudo do aparelho, montado na hora. Os "indicados fora do board" saíram daqui (vão pro
+/// Explorar e pra faixa de fora do Quero…).
 struct AtalhosPanel: View {
-    var onClose: (AtalhosAction?) -> Void
+    var onAction: (AtalhosAction) -> Void
 
-    @Environment(AppRouter.self) private var router
     @Environment(RegionStore.self) private var store
     @Environment(Services.self) private var services
     @Environment(\.modelContext) private var context
     @Environment(\.dayEngine) private var engine
-    @Environment(\.tripTheme) private var theme
     @Environment(\.dynamicTypeSize) private var typeSize
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @Query(sort: \WalletItem.order) private var wallet: [WalletItem]
     @Query private var places: [Place]
     @Query private var trips: [TripInfo]
 
-    @State private var shown = false
-    @State private var picks: [AtalhoPick] = []
-    @State private var picksLoaded = false
-
-    private let strip: CGFloat = 60
     private var region: Region { store.region }
     private var now: Date { AppClock.now }
     private var today: Date { region.calendar.startOfDay(for: now) }
 
     var body: some View {
-        GeometryReader { geo in
-            ZStack(alignment: .leading) {
-                // A capa deslocada: só a cor dela, à esquerda. Toque fecha.
-                theme.cover
-                    .frame(width: strip + 40)
-                    .ignoresSafeArea()
-                    .opacity(shown ? 1 : 0)
-                    .onTapGesture { close(nil) }
-                    .accessibilityLabel("Voltar pra capa")
-                    .accessibilityAddTraits(.isButton)
-                panel
-                    .frame(width: geo.size.width - strip)
-                    .background {
-                        Rectangle()
-                            .fill(V8.paper)
-                            .overlay(alignment: .leading) { Rectangle().fill(V8.ink).frame(width: 6) }
-                            .ignoresSafeArea()
-                    }
-                    .offset(x: shown ? strip : geo.size.width + 20)
-            }
+        VStack(alignment: .leading, spacing: 0) {
+            grid
+            linesSection.padding(.top, 26)
         }
-        .simultaneousGesture(DragGesture(minimumDistance: 30).onEnded { value in
-            if value.translation.width > 80, abs(value.translation.width) > abs(value.translation.height) { close(nil) }
-        })
-        .onAppear {
-            withAnimation(reduceMotion ? .easeOut(duration: 0.12) : .snappy(duration: 0.22)) { shown = true }
-        }
-        .task { await loadPicks() }
-        .accessibilityAction(.escape) { close(nil) }
     }
 
-    // MARK: Painel
-
-    private var panel: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .top) {
-                    V8SpecStack(lines: ["Atalhos", "deslize a capa pra direita"]).padding(.top, 14)
-                    Spacer(minLength: 12)
-                    V8CornerButton(systemName: "xmark", label: "Fechar") { close(nil) }
-                }
-                .padding(.top, 8)
-                Text("Na mão")
-                    .font(V8Font.display(36))
-                    .tracking(-1)
-                    .foregroundStyle(V8.ink)
-                    .padding(.top, 8)
-                    .accessibilityAddTraits(.isHeader)
-                grid.padding(.top, 18)
-                linesSection.padding(.top, 26)
-                picksSection.padding(.top, 24)
-                bolsoRow.padding(.top, 14)
-                HStack(spacing: 10) {
-                    BigButton(title: "Quero…", style: .orange) { close(.sheet(.quero(text: nil))) }
-                    BigButton(title: "Mandar o dia", style: .line) { close(.sheet(.mandar(date: today))) }
-                }
-                .padding(.top, 22)
-                Color.clear.frame(height: 24)
-            }
-            .padding(.leading, 22)
-            .padding(.trailing, 20)
-        }
-        .scrollIndicators(.hidden)
-    }
+    private func close(_ action: AtalhosAction?) { if let action { onAction(action) } }
 
     // MARK: Grade 2×2
 
@@ -198,7 +133,7 @@ struct AtalhosPanel: View {
             return nil
         }
         let last = LastTrains.home(region: region, near: here, transit: transit)
-        let next = DayClock.read(engine: engine, region: region, context: context, at: now, position: services.location.current?.coordinate).now
+        let next = plan.flatMap { engine.now(in: $0, at: now) }
         lines.note = AtalhosRules.note(lastTrain: last, leaveAt: next.map { region.timeString($0.leaveAt) },
                                        next: next?.next.map { short($0.label) })
         return lines
@@ -219,76 +154,6 @@ struct AtalhosPanel: View {
                 Text(region.profile.transit?.noStationText ?? "Nenhuma estação a pé daqui.")
                     .font(V8Font.text(14)).foregroundStyle(V8.mute).fixedSize(horizontal: false, vertical: true)
             }
-        }
-    }
-
-    // MARK: Indicados por perto
-
-    @ViewBuilder private var picksSection: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            SectionHead(title: "Indicados por perto", trailing: "fora do board")
-            if picks.isEmpty {
-                Button { close(.route(.discover)) } label: {
-                    Text(picksLoaded ? "Abra Por perto no Wi-Fi e os indicados ficam aqui, mesmo offline." : " ")
-                        .font(V8Font.text(14)).foregroundStyle(V8.mute).multilineTextAlignment(.leading)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(.vertical, 8)
-                }
-                .buttonStyle(.plain)
-            }
-            ForEach(Array(picks.enumerated()), id: \.element.id) { i, pick in
-                Button { close(.route(.discover)) } label: {
-                    IndexRow(index: "\(i + 1)", title: pick.name, meta: pick.reason)
-                }
-                .buttonStyle(.plain)
-            }
-        }
-    }
-
-    private var bolsoRow: some View {
-        Button { close(.route(.bolso)) } label: {
-            HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Bolso").font(V8Font.text(16, weight: .bold)).foregroundStyle(V8.ink)
-                    Text("câmbio, frases, último trem · tudo offline").font(V8Font.text(12)).foregroundStyle(V8.mute).lineLimit(1)
-                }
-                Spacer(minLength: 8)
-                Image(systemName: "chevron.right").font(.system(size: 13, weight: .semibold)).foregroundStyle(V8.ink)
-            }
-            .padding(.vertical, 12)
-            .overlay(alignment: .top) { Rectangle().fill(V8.ink.opacity(0.14)).frame(height: 1) }
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-    }
-
-    /// Só o que já está no aparelho: o cache do "Por perto" (fresco ou de até 12 h). Com `-debugNearby fake`, as amostras.
-    private func loadPicks() async {
-        defer { picksLoaded = true }
-        guard let here = services.location.current?.coordinate else { return }
-        var batch = await services.nearby.cached(lat: here.latitude, lng: here.longitude, region: region, now: now)
-        #if DEBUG
-        if batch == nil, DebugFlags.string("debugNearby") == "fake" {
-            batch = await services.nearby.load(lat: here.latitude, lng: here.longitude, region: region, now: now)
-        }
-        #endif
-        if batch == nil {
-            let (lat, lng, r, t) = (here.latitude, here.longitude, region, now)
-            batch = await Task.detached { AtalhosRules.cachedBatch(lat: lat, lng: lng, region: r, now: t) }.value
-        }
-        guard let batch else { return }
-        let origin = CLLocation(latitude: here.latitude, longitude: here.longitude)
-        let ranked = DiscoverBuilder.ranked(batch: batch, places: places, origin: origin, now: now, region: region)
-        picks = AtalhosRules.picks(ranked)
-    }
-
-    // MARK: Fechar
-
-    private func close(_ action: AtalhosAction?) {
-        withAnimation(.snappy(duration: 0.18)) { shown = false }
-        Task {
-            try? await Task.sleep(for: .milliseconds(action == nil ? 190 : 120))
-            onClose(action)
         }
     }
 
@@ -330,8 +195,7 @@ struct AtalhoCardView: View {
         .background(Rectangle().fill(fill))
         .overlay {
             if card.tone == .white || card.tone == .alert {
-                Rectangle()
-                    .strokeBorder(card.tone == .alert ? V8.orange : V8.ink.opacity(0.14), lineWidth: 1)
+                Rectangle().strokeBorder(card.tone == .alert ? V8.orange : V8.ink, lineWidth: 2)
             }
         }
         .accessibilityElement(children: .ignore)
@@ -369,14 +233,14 @@ private struct AtalhoLineChip: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
                 .frame(width: 20, height: 20)
-                .background(Rectangle().fill(Color(hex: line.rgb == 0 ? V8.Hex.ink : line.rgb)))
+                .background(Circle().fill(Color(hex: line.rgb == 0 ? V8.Hex.ink : line.rgb)))
             Text(line.name).font(V8Font.text(12, weight: .semibold)).foregroundStyle(V8.ink).lineLimit(1)
         }
         .padding(.leading, 3)
         .padding(.trailing, 9)
         .frame(minHeight: 26)
         .background(Rectangle().fill(V8.paper))
-        .overlay(Rectangle().strokeBorder(V8.ink.opacity(0.14), lineWidth: 1))
+        .overlay(Rectangle().strokeBorder(V8.ink, lineWidth: 2))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("linha \(line.name)")
     }

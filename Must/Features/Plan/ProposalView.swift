@@ -114,7 +114,7 @@ struct ProposalView: View {
         DayBand(areaId: shown?.bandArea() ?? planner.focusArea, places: places, height: 250) {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(alignment: .top) {
-                    RoundButton(systemImage: "chevron.left", label: "Voltar ao Montar", style: .line, tint: theme.coverInk, size: 40) { dismiss() }
+                    V8CornerButton(systemName: "chevron.left", label: "Voltar ao Montar", tint: theme.coverInk) { dismiss() }
                     Spacer(minLength: 12)
                     if let shown {
                         DayBandCorners(left: [], right: [DayText.dayLine(planner.date, region: region),
