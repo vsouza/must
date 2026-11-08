@@ -27,3 +27,10 @@ Pedido do Vinicius antes de dormir (08/11, madrugada): "caminhe para finalizarmo
 
 ## Regras de sempre
 Sem API/chave nova (Google Places, Open-Meteo, Wikipedia, Commons, AeroDataBox, eventos já existentes valem; Anthropic só Haiku low pra links difíceis); nada de scraping; sem `tiles.sh`; sem push; `Secrets.plist` nunca commitado; pt-BR; nada em japonês na interface além do nome local "mostre ao atendente"; xcodegen; testes Swift Testing pra toda lógica nova; prints com `-debugScreen` em `scripts/qa-screens.sh`; Dynamic Type até XXXL (`mustCap`) e Reduzir movimento.
+
+## Decisões da madrugada (08/11, Claude, pra o Vinicius revisar de manhã)
+- **Explorar = conceito B** (`design/v9/ExplorarB-*.png`): cada bairro é uma página de foto com o mapa como recorte e o trilho de estações na borda direita (ordem por tempo de trem, bairros de hoje marcados); absorve a aba Guia; do A entram as 4 camadas (aberto agora · seus Musts · fora do board · trilha do dia) e o pino que vira bloco no recorte aberto. A régua continua só do quero.
+- **Navegação** como em `design/v9/Fluxos.png` e `design/v9/README.md`: barra Hoje · Explorar · Musts · Viagem · + (faixa de tinta, sem cápsula); ✦ sempre no canto superior direito do bloco e deslizar pra esquerda na capa abrem o **Assistente**, cuja primeira página são as Dicas; Atalhos + Bolso = um Bolso (deslizar pra direita); quero detecta pergunta e oferece "Continuar no Assistente"; + = Quero · Guardar (Link, Vídeo, Texto, Ingresso, Presente); Minhas viagens pelo ⇄ da capa e por uma linha fixa em Viagem.
+- **Presentes** como em `design/v9/Presentes-*.png`.
+- **Ingressos**: sem modelo de terceiros por ora (gargalo era o extrator; ver `docs/ingressos-leitura.md`); juntar 10–15 ingressos reais pro segundo corpus.
+- **Relatório do viajante** (`docs/relatorio-viajante.md`): prioridades = relógio único + plano que se refaz, confiança do dado, quero sem vazio, dias-problema.
