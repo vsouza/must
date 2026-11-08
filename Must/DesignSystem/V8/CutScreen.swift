@@ -209,7 +209,8 @@ extension View {
     /// Botão principal da folha/tela: laranja de ponta a ponta no pé, régua de tinta em cima, mono caixa alta.
     func cutFooter(_ title: String, enabled: Bool = true, arrow: Bool = true, id: String? = nil, action: @escaping () -> Void) -> some View {
         safeAreaInset(edge: .bottom, spacing: 0) {
-            Button(action: action) {
+            // Sem `.disabled`: o estilo plain apaga o botão inteiro e o fundo laranja fica transparente sobre a lista.
+            Button { if enabled { action() } } label: {
                 HStack(spacing: 10) {
                     Text(title.uppercased())
                         .font(V8Font.mono(14, weight: .semibold)).tracking(1.2)
@@ -227,7 +228,8 @@ extension View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .disabled(!enabled)
+            .accessibilityAddTraits(enabled ? [] : .isStaticText)
+            .accessibilityHint(enabled ? "" : "indisponível")
             .accessibilityIdentifier(id ?? "")
         }
     }

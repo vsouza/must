@@ -272,8 +272,23 @@
     "text-field": [
      "upcase",
      [
-      "get",
-      "name"
+      "case",
+      [
+       "has",
+       "script"
+      ],
+      [
+       "coalesce",
+       [
+        "get",
+        "name:en"
+       ],
+       ""
+      ],
+      [
+       "get",
+       "name"
+      ]
      ]
     ],
     "text-font": [
@@ -306,8 +321,23 @@
     "text-field": [
      "upcase",
      [
-      "get",
-      "name"
+      "case",
+      [
+       "has",
+       "script"
+      ],
+      [
+       "coalesce",
+       [
+        "get",
+        "name:en"
+       ],
+       ""
+      ],
+      [
+       "get",
+       "name"
+      ]
      ]
     ],
     "text-font": [
@@ -338,8 +368,23 @@
     "text-field": [
      "upcase",
      [
-      "get",
-      "name"
+      "case",
+      [
+       "has",
+       "script"
+      ],
+      [
+       "coalesce",
+       [
+        "get",
+        "name:en"
+       ],
+       ""
+      ],
+      [
+       "get",
+       "name"
+      ]
      ]
     ],
     "text-font": [
@@ -365,8 +410,23 @@
    ],
    "layout": {
     "text-field": [
-     "get",
-     "name"
+     "case",
+     [
+      "has",
+      "script"
+     ],
+     [
+      "coalesce",
+      [
+       "get",
+       "name:en"
+      ],
+      ""
+     ],
+     [
+      "get",
+      "name"
+     ]
     ],
     "text-font": [
      "Archivo SemiBold"

@@ -9,7 +9,7 @@ import UIKit
 @MainActor
 enum ExplorarSnapshot {
     /// Versão do desenho (muda a chave quando o estilo do mapa muda).
-    static let version = 1
+    static let version = 2  // 2: rótulos do mapa só em letras latinas
     /// Largura do recorte em metros (um bairro a pé).
     static let widthMeters: Double = 900
     /// Lado do recorte quadrado (pt).

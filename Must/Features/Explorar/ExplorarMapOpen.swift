@@ -156,25 +156,24 @@ struct ExplorarMapOpen: View {
             ForEach(ExplorarLayer.allCases) { layer in
                 let on = layers.contains(layer)
                 let disabled = (layer == .trail && model.trail.count < 2)
-                Button { toggle(layer) } label: {
+                // Desligada fica sólida (papel + texto cinza): nada translúcido sobre o mapa.
+                Button { if !disabled { toggle(layer) } } label: {
                     HStack(alignment: .top, spacing: 6) {
-                        Rectangle().fill(on ? V8.ink : Color.clear).frame(width: 9, height: 9)
-                            .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
+                        Rectangle().fill(on && !disabled ? V8.ink : Color.clear).frame(width: 9, height: 9)
+                            .overlay(Rectangle().stroke(disabled ? V8.mute : V8.ink, lineWidth: 2))
                         Text(cellLabel(layer))
                             .font(V8Font.mono(9, weight: .bold)).tracking(0.6)
-                            .foregroundStyle(V8.ink)
+                            .foregroundStyle(disabled ? V8.mute : V8.ink)
                             .strikethrough(strike(layer))
                             .lineLimit(3).minimumScaleFactor(0.6)
                             .multilineTextAlignment(.leading)
                     }
                     .padding(.horizontal, 8).padding(.vertical, 8)
                     .frame(maxWidth: .infinity, minHeight: 48, alignment: .topLeading)
-                    .background(on ? V8.orange : V8.paper)
+                    .background(on && !disabled ? V8.orange : V8.paper)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .opacity(disabled ? 0.45 : 1)
-                .disabled(disabled)
                 .overlay(alignment: .trailing) { if layer != .trail { Rectangle().fill(V8.ink).frame(width: 2) } }
                 .accessibilityLabel(layer.label)
                 .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
