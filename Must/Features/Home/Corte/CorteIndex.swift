@@ -14,10 +14,39 @@ struct CorteIndexLine: Identifiable, Hashable, Sendable {
     var unit: String
     var title: String
     var reason: String
-    var card: Suggestion
+    /// `nil` na linha "Em cartaz" (abre a tela Em cartaz).
+    var card: Suggestion?
 
     static func == (a: CorteIndexLine, b: CorteIndexLine) -> Bool { a.id == b.id && a.big == b.big && a.reason == b.reason }
     func hash(into hasher: inout Hasher) { hasher.combine(id) }
+
+    var isShows: Bool { id == CorteShowLine.rowId }
+
+    /// "Em cartaz": faixa tinta, hora (ou "hoje") grande, nome do evento e "em cartaz · N hoje".
+    init(_ show: CorteShowLine) {
+        card = nil
+        id = CorteShowLine.rowId
+        tone = .ink
+        big = show.big
+        unit = show.unit
+        title = show.title
+        reason = show.reason
+    }
+
+    /// O índice da capa: a linha do Em cartaz entra em segundo (primeiro se estiver acontecendo agora), dentro do limite `n`.
+    static func index(cards: [Suggestion], show: CorteShowLine?, limit n: Int) -> [CorteIndexLine] {
+        var all = cards.map(CorteIndexLine.init)
+        if let show {
+            let row = CorteIndexLine(show)
+            all.insert(row, at: show.countsNearby || all.isEmpty ? 0 : 1)
+            guard let at = all.firstIndex(where: \.isShows), at >= n else { return Array(all.prefix(n)) }
+            // Não cabe: troca a última visível, pra linha não sumir.
+            var cut = Array(all.prefix(n))
+            if n > 0 { cut[n - 1] = row }
+            return cut
+        }
+        return Array(all.prefix(n))
+    }
 
     init(_ card: Suggestion) {
         self.card = card
@@ -69,8 +98,7 @@ enum CorteLayout {
     static func heights(stage: Stage, pull: CGFloat, rest: CGFloat) -> (band: CGFloat, slit: CGFloat) {
         switch stage {
         case .rest:
-            let p = min(max(pull, 0), 110)
-            return (rest - 0.4 * p, 1.4 * p)
+            return CutFrame.heights(pull: pull, rest: rest)
         case .asking: return (askingBand, askingSlit)
         case .result: return (resultBand, 0)
         }

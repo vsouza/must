@@ -118,6 +118,7 @@ corteshots() { # $1 = prefixo (jp|bh|it)
   local r=$1
   WAIT=10 shot $r-corte-capa -debugScreen corte-capa -capaFoto
   if [ "$r" = "jp" ]; then
+    WAIT=10 shot $r-corte-capa-cartaz -debugScreen corte-capa-cartaz -capaFoto -debugEvents fake  # linha tinta "Em cartaz" no índice
     WAIT=8 shot $r-corte-capa-sem-foto -debugScreen corte-capa-sem-foto
     WAIT=10 shot $r-corte-puxando -debugScreen corte-puxando -capaFoto
     WAIT=10 shot $r-corte-quero -debugScreen corte-quero -capaFoto

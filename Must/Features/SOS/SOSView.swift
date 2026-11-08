@@ -67,7 +67,7 @@ struct SOSView: View {
             BottomFade(color: V8.ink, height: 60)
         }
         .toolbar(.hidden, for: .navigationBar)
-        .preferredColorScheme(.dark)
+        .lightStatusBar()
         .onAppear {
             profile = sos.profile()
             address = sos.lastAddress(country: region.country)

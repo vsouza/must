@@ -25,6 +25,7 @@ struct CapaCorteView: View {
         var route: (CorteRow) -> Void
         var addToBoard: (CorteRow) -> Void
         var fitToday: (CorteRow) -> Void
+        var openShows: () -> Void
     }
 
     @Environment(\.tripTheme) private var theme
@@ -238,7 +239,6 @@ struct CapaCorteView: View {
         }
     }
 
-    private var lines: [CorteIndexLine] { suggest.cards.map(CorteIndexLine.init) }
 
     private var restPaper: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -288,14 +288,16 @@ struct CapaCorteView: View {
                     .font(V8Font.text(14)).foregroundStyle(V8.mute)
                     .padding(20)
                     .frame(maxWidth: .infinity, alignment: .leading)
-            } else if lines.isEmpty {
+            } else if suggest.cards.isEmpty && suggest.showLine == nil {
                 Text("Nada aberto por perto agora. Puxe a régua e diga o que você quer.")
                     .font(V8Font.text(14)).foregroundStyle(V8.mute)
                     .padding(20)
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else {
-                ForEach(lines.prefix(n)) { line in
-                    CorteIndexRow(line: line) { actions.openSuggestion(line.card) }
+                ForEach(CorteIndexLine.index(cards: suggest.cards, show: suggest.showLine, limit: n)) { line in
+                    CorteIndexRow(line: line) {
+                        if let card = line.card { actions.openSuggestion(card) } else { actions.openShows() }
+                    }
                 }
             }
         }

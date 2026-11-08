@@ -1,6 +1,7 @@
 import CoreImage
 import CoreImage.CIFilterBuiltins
 import CryptoKit
+import os
 import SwiftUI
 import UIKit
 
@@ -150,6 +151,90 @@ enum CutImages {
     }
 }
 
+// MARK: - Barra de status
+
+/// Quem está sob a barra de status pede conteúdo claro (hora, bateria e sinal em branco): o bloco da foto/cor e as telas de tinta.
+/// O SwiftUI não deixa uma tela empurrada mudar o estilo da barra (a raiz decide e o app é `UIUserInterfaceStyle = Light`),
+/// então o estilo é entregue direto ao UIKit: `preferredStatusBarStyle` das classes de controlador do app devolve
+/// `.lightContent` enquanto houver pedido. Telas de papel no topo não pedem nada: barra escura.
+@MainActor
+@Observable
+final class StatusBarStyle {
+    static let shared = StatusBarStyle()
+    private(set) var lightTokens: Set<UUID> = []
+    /// Conteúdo claro (sobre cor, foto ou tinta).
+    var light: Bool { !lightTokens.isEmpty }
+
+    func set(_ token: UUID, light on: Bool) {
+        let before = light
+        if on { lightTokens.insert(token) } else { lightTokens.remove(token) }
+        let now = light
+        guard before != now else { return }
+        StatusBarSwizzle.flag.withLock { $0 = now }
+        StatusBarSwizzle.install()
+        StatusBarSwizzle.refresh()
+    }
+}
+
+
+/// Troca `preferredStatusBarStyle` nas classes de controlador do app (uma vez). Sem pedido, devolve o estilo original.
+@MainActor
+enum StatusBarSwizzle {
+    nonisolated static let flag = OSAllocatedUnfairLock(initialState: false)
+    private static var done: Set<ObjectIdentifier> = []
+
+    static func install() {
+        var classes: [AnyClass] = [UIViewController.self, UINavigationController.self, UITabBarController.self]
+        for window in windows() {
+            var vc = window.rootViewController
+            while let current = vc {
+                classes.append(type(of: current))
+                vc = current.presentedViewController
+            }
+        }
+        for cls in classes where done.insert(ObjectIdentifier(cls)).inserted { patch(cls) }
+    }
+
+    private static func patch(_ cls: AnyClass) {
+        let selector = #selector(getter: UIViewController.preferredStatusBarStyle)
+        guard let method = class_getInstanceMethod(cls, selector) else { return }
+        typealias Original = @convention(c) (AnyObject, Selector) -> Int
+        let original = unsafeBitCast(method_getImplementation(method), to: Original.self)
+        let block: @convention(block) (AnyObject) -> Int = { object in
+            StatusBarSwizzle.flag.withLock { $0 } ? UIStatusBarStyle.lightContent.rawValue : original(object, selector)
+        }
+        method_setImplementation(method, imp_implementationWithBlock(block))
+    }
+
+    private static func windows() -> [UIWindow] {
+        UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.flatMap(\.windows)
+    }
+
+    static func refresh() {
+        for window in windows() {
+            var vc = window.rootViewController
+            while let current = vc {
+                current.setNeedsStatusBarAppearanceUpdate()
+                vc = current.presentedViewController
+            }
+        }
+    }
+}
+
+private struct LightStatusBarModifier: ViewModifier {
+    @State private var token = UUID()
+    func body(content: Content) -> some View {
+        content
+            .onAppear { StatusBarStyle.shared.set(token, light: true) }
+            .onDisappear { StatusBarStyle.shared.set(token, light: false) }
+    }
+}
+
+extension View {
+    /// A tela tem tinta (ou cor) no topo: barra de status clara.
+    func lightStatusBar() -> some View { modifier(LightStatusBarModifier()) }
+}
+
 // MARK: - Bloco da foto
 
 /// Bloco da foto (`CutBand`): foto em P&B de contraste alto multiplicada sobre a cor do lugar (`TripTheme`), trama de pontos
@@ -169,6 +254,7 @@ struct CutBand<Content: View>: View {
     @Environment(\.tripTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var image: UIImage?
+    @State private var statusToken = UUID()
 
     private var rgb: UInt32 { tint ?? theme.coverRGB }
     private var ink: Color { theme.hasTrip || tint != nil ? V8.white : V8.ink }
@@ -178,6 +264,14 @@ struct CutBand<Content: View>: View {
             .foregroundStyle(ink)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: alignment)
             .background { backdrop.ignoresSafeArea(edges: .top) }
+            // Enquanto o bloco cobre a barra de status (rolou pra fora = papel embaixo), a barra fica clara.
+            .onGeometryChange(for: Bool.self) { proxy in
+                let frame = proxy.frame(in: .global)
+                return frame.minY < 80 && frame.maxY > 54
+            } action: { covers in
+                StatusBarStyle.shared.set(statusToken, light: covers && (theme.hasTrip || tint != nil))
+            }
+            .onDisappear { StatusBarStyle.shared.set(statusToken, light: false) }
             .task(id: CutTreatment.key(source: photo?.absoluteString ?? "plain", tint: rgb)) {
                 let made = await CutImages.treated(photo: photo, tint: rgb)
                 if reduceMotion { image = made } else { withAnimation(.easeOut(duration: 0.25)) { image = made } }
@@ -308,6 +402,40 @@ final class CutPull {
         case .pulling where offset >= almost: "↓ mais um pouco"
         default: text
         }
+    }
+}
+
+/// As alturas do arrasto (pt), iguais na capa, no Lugar e na Lista: a régua desce `pull`; o bloco da foto encolhe 0,4× e a
+/// fenda laranja abre 1,4× entre a foto e a régua.
+enum CutFrame {
+    static func heights(pull: CGFloat, rest: CGFloat) -> (band: CGFloat, slit: CGFloat) {
+        let p = min(max(pull, 0), CutPull.limit)
+        return (rest - 0.4 * p, 1.4 * p)
+    }
+}
+
+/// A fenda laranja do arrasto no Lugar e na Lista (só o eco do campo: "café" apagado e a dica; o campo de verdade abre ao
+/// travar, em `CorteQueroOverlay`). A altura vem do chamador (`CutFrame.heights(...).slit`).
+struct CutPullSlit: View {
+    var progress: CGFloat
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("café")
+                .font(Font(V8Fonts.bricolage(52, weight: 800, width: 85, opticalSize: 96)))
+                .tracking(-1.6)
+                .foregroundStyle(V8.ink.opacity(0.35))
+                .lineLimit(1)
+            MonoLabel("digite ou fale · só lugares físicos", size: 9, color: V8.ink)
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 12)
+        .padding(.bottom, 14)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+        .background(V8.orange)
+        .opacity(Double(progress))
+        .clipped()
+        .accessibilityHidden(true)
     }
 }
 

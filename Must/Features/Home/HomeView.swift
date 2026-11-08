@@ -227,7 +227,8 @@ struct HomeView: View {
               openPlace: { router.push(.place(id: $0), on: .hoje) },
               route: { row in MapsLinks.openApple(to: row.row.result.coordinate, name: row.row.result.name) },
               addToBoard: addToBoard,
-              fitToday: fitToday)
+              fitToday: fitToday,
+              openShows: { router.push(.emCartaz, on: .hoje) })
     }
 
     private func makeEnv() -> QueroEnv {

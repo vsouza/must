@@ -16,6 +16,8 @@ final class CapaSuggestState {
     private(set) var sources: [String] = []
     /// Eventos de hoje (feeds + board) pro chip "Em cartaz".
     private(set) var showsToday = 0
+    /// A linha "Em cartaz" do índice (nil = sem evento hoje).
+    private(set) var showLine: CorteShowLine?
     /// O numeral da capa do corte: quantas coisas abertas a 10 min (board + fora do board).
     private(set) var openNearby = 0
     /// Cache de "por perto" da célula atual (fora do board).
@@ -90,6 +92,10 @@ final class CapaSuggestState {
         // Horário desconhecido não é "fechado": o que o ranker pôs na capa (Must, fecha logo, indicado) também conta.
         openNearby = max(CorteCount.openWithin10(places: places, indicated: indicated, here: here),
                          cards.filter { [.must, .closing, .indicated].contains($0.kind) }.count)
+        var eventCoords: [String: CLLocationCoordinate2D] = [:]
+        for e in events { if let id = e.placeId, let p = i.places.first(where: { $0.id == id }) { eventCoords[e.id] = CLLocationCoordinate2D(latitude: p.lat, longitude: p.lng) } }
+        showLine = CorteShowLine.make(events: events, now: i.now, region: region, here: here, coordinates: eventCoords)
+        if showLine?.countsNearby == true { openNearby += 1 }
         stateLine = SuggestCopy.stateLine(region: region, now: i.now, plan: planStop, mustsNearby: nearby)
 
         let focus = i.currentArea ?? areas.first { $0.id == i.plan?.area }

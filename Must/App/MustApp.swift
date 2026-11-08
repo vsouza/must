@@ -325,8 +325,8 @@ enum DebugLaunch {
         case "editar-lista": router.cover = .editList(id: arg ?? "eat")
         case "lista": router.push(.list(id: arg ?? "eat"), on: .musts)
         // prompt 30 · etapa 2: o corte no Lugar, na Lista e no Board (o `PlaceView`/`ListView` lêem o `debugScreen` pro quero aberto).
-        case "corte-lugar", "corte-lugar-quero": router.push(.place(id: arg ?? "p01"), on: .musts)
-        case "corte-lista", "corte-lista-quero": router.push(.list(id: arg ?? "eat"), on: .musts)
+        case "corte-lugar", "corte-lugar-quero", "corte-lugar-puxando": router.push(.place(id: arg ?? "p01"), on: .musts)
+        case "corte-lista", "corte-lista-quero", "corte-lista-puxando": router.push(.list(id: arg ?? "eat"), on: .musts)
         case "corte-board", "corte-board-filtro": router.push(.board(edit: false), on: .musts)
         case "fim": router.push(.saveForEnd, on: .musts)
         case "lugar": router.push(.place(id: arg ?? "p01"), on: .musts)
@@ -442,7 +442,7 @@ enum DebugLaunch {
         case "lugar-amigos", "lugar-emcartaz": router.push(.place(id: arg ?? "j28"), on: .musts)
         case "capa-inteligente": router.select(.hoje)
         // prompt 30 · o corte: a capa e os estados do gesto (o `HomeView` lê o `debugScreen` e monta cada um).
-        case "corte-capa", "corte-capa-sem-foto", "corte-puxando", "corte-quero", "corte-cafe", "corte-cafe-offline", "corte-walk1", "corte-walk2":
+        case "corte-capa", "corte-capa-cartaz", "corte-capa-sem-foto", "corte-puxando", "corte-quero", "corte-cafe", "corte-cafe-offline", "corte-walk1", "corte-walk2":
             router.select(.hoje)
         case "sincronizar":
             router.push(.settings, on: .hoje)
