@@ -201,6 +201,7 @@ struct SuggestionFarTests {
 }
 
 /// A foto do bloco acompanha o bairro buscado no quero.
+@MainActor
 struct BlockPhotoTests {
     let capa = URL(string: "https://x/shinjuku.jpg")
     let nakano = URL(string: "https://x/nakano.jpg")

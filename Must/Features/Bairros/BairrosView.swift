@@ -68,7 +68,7 @@ struct BairrosView: View {
             model.prepare(region: region)
             refresh()
             // Depois do refresh: a câmera enquadra as bolhas já calculadas.
-            command = model.initialCommand(areaId: initialArea, near: services.location.current)
+            command = model.initialCommand(areaId: initialArea, near: services.location.current, compact: true)
             if let initialArea { model.select(initialArea) }
         }
         .task { await clock() }

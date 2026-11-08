@@ -218,12 +218,12 @@ extension View {
                     if arrow { Image(systemName: "arrow.up.right").font(.system(size: 16, weight: .bold)) }
                 }
                 .foregroundStyle(V8.ink)
+                .opacity(enabled ? 1 : 0.4)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 18)
                 .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
                 .background(V8.orange.ignoresSafeArea(edges: .bottom))
                 .overlay(alignment: .top) { Rectangle().fill(V8.ink).frame(height: 2) }
-                .opacity(enabled ? 1 : 0.4)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
