@@ -250,7 +250,24 @@ struct ExplorarMapOpen: View {
     private func selectedBlock(_ item: ExplorarItem, listed: [ExplorarItem]) -> some View {
         let ref = model.photoRefs[item.id]?.first
         let url = ref.flatMap { PlacePhotoStore.existing($0) }
+        // Ações em cima da foto: no iPhone 17 o bloco abaixo do mapa tem ~160 pt e a barra cobria os botões.
         return VStack(spacing: 0) {
+            HStack(spacing: 0) {
+                actionButton("Ir", filled: true) { MapsLinks.openApple(to: item.coordinate, name: item.name) }
+                dayButton(item)
+                if ExplorarPinActions.canSave(item) {
+                    actionButton("+ board", filled: false) {
+                        if let id = onSave(item) { selected = id } else { notice = "não deu pra guardar agora" }
+                    }
+                } else if let id = item.placeId {
+                    actionButton("Abrir", filled: false) { router.push(.place(id: id), on: router.tab) }
+                }
+            }
+            .overlay(alignment: .bottom) { Rectangle().fill(V8.ink).frame(height: 2) }
+            if let notice {
+                MonoLabel(notice, size: 10, color: V8.mute).frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 20).padding(.vertical, 8)
+            }
             CutBand(photo: url, alignment: .bottomLeading) {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(alignment: .firstTextBaseline) {
@@ -268,24 +285,8 @@ struct ExplorarMapOpen: View {
                 .padding(.horizontal, 20).padding(.vertical, 14)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(height: 190)
+            .frame(height: 160)
             .clipped()
-            HStack(spacing: 0) {
-                actionButton("Ir", filled: true) { MapsLinks.openApple(to: item.coordinate, name: item.name) }
-                dayButton(item)
-                if ExplorarPinActions.canSave(item) {
-                    actionButton("+ board", filled: false) {
-                        if let id = onSave(item) { selected = id } else { notice = "não deu pra guardar agora" }
-                    }
-                } else if let id = item.placeId {
-                    actionButton("Abrir", filled: false) { router.push(.place(id: id), on: router.tab) }
-                }
-            }
-            .overlay(alignment: .bottom) { Rectangle().fill(V8.ink).frame(height: 2) }
-            if let notice {
-                MonoLabel(notice, size: 10, color: V8.mute).frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 20).padding(.vertical, 8)
-            }
         }
         .simultaneousGesture(DragGesture(minimumDistance: 30).onEnded { value in
             guard abs(value.translation.width) > abs(value.translation.height) * 1.5 else { return }
