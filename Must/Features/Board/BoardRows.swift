@@ -104,43 +104,56 @@ struct SelectMark: View {
     }
 }
 
-/// Cabeçalho de grupo: ponto na cor, nome, contagem, sub-listas e "editar lista".
+/// Cabeçalho de grupo = uma faixa inteira (prompt 30): régua dura de 12 pt, o nome da lista gigante (Bricolage), a contagem em
+/// mono, as sub-listas em mono e "editar lista" quadrado. Sem ponto de cor (a cor do Must saiu na v8).
 struct BoardGroupHeader: View {
     var group: BoardGroup
     var onEditList: (() -> Void)?
 
     var body: some View {
-        HStack(alignment: .center, spacing: 8) {
-            Circle()
-                .fill(group.color.strong)
-                .frame(width: 9, height: 9)
-            Text(group.title)
-                .font(.must.archivo(15, .semibold))
-                .foregroundStyle(Color.must.ink)
-            Text("\(group.places.count)")
-                .font(.must.mono(12))
-                .foregroundStyle(Color.must.secondary)
-            if !group.subCounts.isEmpty {
-                Text(group.subCounts.map { "\($0.name) \($0.count)" }.joined(separator: " · "))
-                    .font(.must.mono(11))
-                    .foregroundStyle(Color.must.secondary)
-                    .lineLimit(1)
+        VStack(alignment: .leading, spacing: 0) {
+            CutRule()
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                Text(group.title)
+                    .font(V8Font.display(40))
+                    .tracking(-1.4)
+                    .foregroundStyle(V8.ink)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.6)
+                    .accessibilityAddTraits(.isHeader)
+                Spacer(minLength: 8)
+                Text("\(group.places.count)")
+                    .font(V8Font.mono(22, weight: .semibold))
+                    .foregroundStyle(V8.ink)
+                    .accessibilityLabel("\(group.places.count) lugares")
             }
-            Spacer(minLength: 8)
-            if let onEditList {
-                Button(action: onEditList) {
-                    Text("editar lista")
-                        .font(.must.archivo(13, .semibold))
-                        .foregroundStyle(Color.must.ink)
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 12)
-                        .background(Capsule().fill(Color.must.surface))
+            .padding(.horizontal, 22)
+            .padding(.top, 14)
+            HStack(alignment: .center, spacing: 8) {
+                if !group.subCounts.isEmpty {
+                    Text(group.subCounts.map { "\($0.name) \($0.count)" }.joined(separator: " · ").uppercased())
+                        .font(V8Font.mono(9.5)).tracking(0.8)
+                        .foregroundStyle(V8.mute)
+                        .lineLimit(1)
                 }
-                .buttonStyle(MustPressStyle())
+                Spacer(minLength: 8)
+                if let onEditList {
+                    Button(action: onEditList) {
+                        Text("EDITAR LISTA")
+                            .font(V8Font.mono(10, weight: .semibold)).tracking(0.8)
+                            .foregroundStyle(V8.ink)
+                            .padding(.horizontal, 10).padding(.vertical, 8)
+                            .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
             }
+            .padding(.horizontal, 22)
+            .padding(.top, 6)
+            .padding(.bottom, 10)
+            CorteRule2()
         }
-        .padding(.top, 20)
-        .padding(.bottom, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
     }

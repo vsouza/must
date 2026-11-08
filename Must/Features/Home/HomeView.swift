@@ -78,6 +78,7 @@ struct HomeView: View {
             .presentationBackground(.clear)
         }
         .onAppear {
+            router.setQuero("capa", open: corte.stage != .rest)
             refresh()
             // `-debugScreen atalhos` (prints): abre o painel em cima da capa.
             if debugScreen == "atalhos", !showAtalhos { openAtalhos() }
@@ -93,6 +94,9 @@ struct HomeView: View {
             await state.loadPhoto(region: region, places: places, services: services, forced: forcePhoto)
         }
         .onChange(of: scenePhase) { _, phase in if phase == .active { refresh() } }
+        // O quero aberto esconde a barra de abas (ela flutuava por cima dos chips de vontade).
+        .onChange(of: corte.stage) { _, stage in router.setQuero("capa", open: stage != .rest) }
+        .onDisappear { router.setQuero("capa", open: false) }
         .onReceive(NotificationCenter.default.publisher(for: ModelContext.didSave)) { _ in scheduleRefresh() }
     }
 
@@ -237,19 +241,12 @@ struct HomeView: View {
 
     /// "+ board": guarda o lugar de fora na lista certa (a mesma lógica do Quero…).
     private func addToBoard(_ row: CorteRow) {
-        let env = makeEnv()
-        guard let place = QueroSave.place(for: row.row, intent: corte.quero.intent, text: corte.quero.text, lists: lists, cityId: env.cityId,
-                                          region: region, sync: services.sync, context: context) else { return }
-        corte.markAdded(row.id, note: "Guardado em \(place.list?.name.capitalized ?? "Musts")")
+        CorteSave.addToBoard(row, state: corte, env: makeEnv(), lists: lists, services: services, context: context)
     }
 
     /// Toque longo: "Encaixar hoje" (prompt 25), o mesmo do Quero….
     private func fitToday(_ row: CorteRow) {
-        let env = makeEnv()
-        guard row.row.slot != nil,
-              let place = QueroSave.place(for: row.row, intent: corte.quero.intent, text: corte.quero.text, lists: lists, cityId: env.cityId,
-                                          region: region, sync: services.sync, context: context),
-              (try? QueroSave.encaixar(row.row, place: place, env: env, context: context)) != nil else { return }
+        guard CorteSave.fitToday(row, state: corte, env: makeEnv(), lists: lists, services: services, context: context) else { return }
         corte.close()
         router.push(.linha(date: today), on: .hoje)
     }

@@ -91,6 +91,7 @@
 		293AA86827E4B24BB3C9F966 /* StartupSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = B641C5F378BAE625AB9EC389 /* StartupSync.swift */; };
 		2A3B5E803BB2D63031091E1A /* WalletDemo.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDA371C417B2B9F722B417BE /* WalletDemo.swift */; };
 		2BBE5013A361E4C3286625EE /* TicketEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3840ECE0F90F2549AFD6169B /* TicketEditor.swift */; };
+		2BD56FB0E40D53DDE4AC914E /* CorteQueroParts.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3F0EA6E277B9E3244C43EF9 /* CorteQueroParts.swift */; };
 		2C7065146324462F28DCE27B /* ColarTextoModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 237B6CBB2609F264714CEBF9 /* ColarTextoModel.swift */; };
 		2D002E77D1700CE3097993E5 /* V8Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 897C9F43BE0507A3E020BDFC /* V8Components.swift */; };
 		2D2C8CB9825DBE5903B8BDA7 /* ShoppingReport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51945D3387B8A1F6DF6F5AF9 /* ShoppingReport.swift */; };
@@ -126,6 +127,7 @@
 		3D42EA7CF1194F6D3A4315F0 /* MapPacks.swift in Sources */ = {isa = PBXBuildFile; fileRef = F89EE24137D29930396E7AFE /* MapPacks.swift */; };
 		3D8D9F5DD24492FF4512F716 /* RegionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A8B878319F3A3CFD0EB2879 /* RegionTests.swift */; };
 		3D9F337FE572341152D2EF55 /* ServiceParsingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E884E5C34972411E3851FCFF /* ServiceParsingTests.swift */; };
+		3DE0EE9420741A4922D1FD71 /* CorteEtapa2Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 732B5F13FE5EC8126CDD2586 /* CorteEtapa2Tests.swift */; };
 		3E30C46610688819D69EF835 /* MapLibre in Frameworks */ = {isa = PBXBuildFile; productRef = 30987A7E19D256D9E25A36C6 /* MapLibre */; };
 		3F78711AAD428818F4D543A7 /* FlightCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4461819BB41014C5415AE46C /* FlightCardView.swift */; };
 		400E672AEF8F8A1BA78837FE /* GuiaModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C857ACD7BF83F9BCA26A2C1E /* GuiaModel.swift */; };
@@ -805,6 +807,7 @@
 		6FF43B0D7C49597680F405C1 /* BuscarNomeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuscarNomeModel.swift; sourceTree = "<group>"; };
 		70F3839B1D3C5EF7721DE77E /* GuideNudgeScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuideNudgeScheduler.swift; sourceTree = "<group>"; };
 		71224347FB8D44E54B5CF3C3 /* GuiaChapters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuiaChapters.swift; sourceTree = "<group>"; };
+		732B5F13FE5EC8126CDD2586 /* CorteEtapa2Tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CorteEtapa2Tests.swift; sourceTree = "<group>"; };
 		745317422880B10B468C2413 /* EventsFeedTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventsFeedTests.swift; sourceTree = "<group>"; };
 		7465A8B2F0C5AAD5F25BE2AD /* FilmsProviding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmsProviding.swift; sourceTree = "<group>"; };
 		749DC76B242DE6E4478B5633 /* OfflineMapsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineMapsView.swift; sourceTree = "<group>"; };
@@ -1080,6 +1083,7 @@
 		F39592A383AE3D589B550C7B /* CountryProfileTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryProfileTests.swift; sourceTree = "<group>"; };
 		F3C575A126CAA351D0D5198A /* LinkPlacesMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkPlacesMap.swift; sourceTree = "<group>"; };
 		F3D5AF2353CFC137BC12A870 /* BolsoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BolsoView.swift; sourceTree = "<group>"; };
+		F3F0EA6E277B9E3244C43EF9 /* CorteQueroParts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CorteQueroParts.swift; sourceTree = "<group>"; };
 		F40DE0EE55D2F4D6C937D21D /* NearbyModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearbyModel.swift; sourceTree = "<group>"; };
 		F4F154F0FA0C43621F70D409 /* Formatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Formatting.swift; sourceTree = "<group>"; };
 		F55FE18F2CE9BDECC7C25825 /* DiscoverBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoverBuilder.swift; sourceTree = "<group>"; };
@@ -1537,6 +1541,7 @@
 				81ADBEA332F02C068F3ED632 /* ColarTextoCloudTests.swift */,
 				2B64D1B6B9C678CF295B9B62 /* ColarTextoTests.swift */,
 				22C0C6B603597BE1CFD08937 /* CollectibleTests.swift */,
+				732B5F13FE5EC8126CDD2586 /* CorteEtapa2Tests.swift */,
 				635E55993E353F1C88A5FE5D /* CorteTests.swift */,
 				F39592A383AE3D589B550C7B /* CountryProfileTests.swift */,
 				62AC6FD638195A396A098578 /* CurrentAreaTests.swift */,
@@ -2268,6 +2273,7 @@
 				9EE1F5F9BEC80D1BBF79AFE7 /* CapaCorteView.swift */,
 				5BFA8A865F7DD6E0AD487084 /* CorteIndex.swift */,
 				48F0DE5F738F7D34576217FE /* CorteLogic.swift */,
+				F3F0EA6E277B9E3244C43EF9 /* CorteQueroParts.swift */,
 				4C0634B47ACCAE7A2F9922E7 /* CorteRows.swift */,
 				9C41BA3E27D6A4A003625CCB /* CorteState.swift */,
 			);
@@ -2671,6 +2677,7 @@
 				A5D0D6788434CB54CED73139 /* ColarTextoCloudTests.swift in Sources */,
 				81443345977C727CB448470D /* ColarTextoTests.swift in Sources */,
 				A5840145E08F856926BD1BD3 /* CollectibleTests.swift in Sources */,
+				3DE0EE9420741A4922D1FD71 /* CorteEtapa2Tests.swift in Sources */,
 				1DACD1AD269F3D5C810AABB7 /* CorteTests.swift in Sources */,
 				FF8BB9597D49FB3D62392FD9 /* CountryProfileTests.swift in Sources */,
 				586DA55FAA8979C58E411C81 /* CurrentAreaTests.swift in Sources */,
@@ -2851,6 +2858,7 @@
 				1A80837B3150B52E78448AE7 /* Connectivity.swift in Sources */,
 				F326ABC6FF4DE7FD721013C8 /* CorteIndex.swift in Sources */,
 				AFBB4AF71B3221E6DABB9CCE /* CorteLogic.swift in Sources */,
+				2BD56FB0E40D53DDE4AC914E /* CorteQueroParts.swift in Sources */,
 				520D33C84EF7E2780B39BCDA /* CorteRows.swift in Sources */,
 				F95B19C91AA33E2A9D6F6528 /* CorteState.swift in Sources */,
 				E547EA2E6628AFD1565AC0DC /* CountryProfile.swift in Sources */,

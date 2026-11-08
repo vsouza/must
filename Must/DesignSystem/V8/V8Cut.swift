@@ -300,6 +300,15 @@ final class CutPull {
         default: return uses >= usesBeforeShort ? "↓ \(noun)" : "↓ puxe · \(noun)…"
         }
     }
+
+    /// Régua puxável com texto fixo (Lugar: "↓ perto daqui, quero…"): só troca pra "mais um pouco" no meio do gesto.
+    static func staticLabel(_ text: String, phase: Phase, offset: CGFloat) -> String {
+        switch phase {
+        case .open: "↑ fechar"
+        case .pulling where offset >= almost: "↓ mais um pouco"
+        default: text
+        }
+    }
 }
 
 extension View {

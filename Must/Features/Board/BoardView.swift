@@ -36,19 +36,24 @@ struct BoardView: View {
         List {
             Section {
                 VStack(alignment: .leading, spacing: 0) {
-                    topBar
-                    titleBlock.padding(.top, 18)
-                    SearchPill(text: searchText, placeholder: "Nome, bairro, nota, fonte…") { sortChip }
-                        .padding(.top, 18)
-                    chips.padding(.top, 14)
-                    if groups.isEmpty {
-                        Text(query.isFiltering ? "Nada com “\(query.text)” no board." : "Nenhum lugar no board.")
-                            .mustMeta()
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 28)
+                    cutBlock
+                    CutRule()
+                    VStack(alignment: .leading, spacing: 0) {
+                        SearchPill(text: searchText, placeholder: "Nome, bairro, nota, fonte…") { sortChip }
+                            .padding(.top, 18)
+                        chips.padding(.top, 14).padding(.bottom, 18)
+                        if groups.isEmpty {
+                            Text(query.isFiltering ? "Nada com “\(query.text)” no board." : "Nenhum lugar no board.")
+                                .mustMeta()
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 28)
+                        }
                     }
+                    .padding(.horizontal, 22)
                 }
-                .boardRow()
+                .listRowInsets(EdgeInsets())
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
             }
             ForEach(groups) { group in groupSection(group) }
             Section {
@@ -62,7 +67,8 @@ struct BoardView: View {
         .scrollIndicators(.hidden)
         .scrollDismissesKeyboard(.immediately)
         .environment(\.editMode, $editMode)
-        .background(Color.white.ignoresSafeArea())
+        .background(V8.paper.ignoresSafeArea())
+        .ignoresSafeArea(edges: .top)
         .safeAreaInset(edge: .bottom) {
             if (editing && !model.selection.isEmpty) || message != nil {
                 bottomBar.padding(.bottom, 92) // acima da tab bar
@@ -96,36 +102,53 @@ struct BoardView: View {
         }
     }
 
-    // MARK: Topo
+    // MARK: Topo (o corte)
 
-    private var topBar: some View {
-        HStack {
-            IconButton(.voltar, label: "Voltar") { dismiss() }
-            Spacer(minLength: 8)
-            Micro("board · \(places.count) lugares · \(lists.count) listas")
-            Spacer(minLength: 8)
-            // "+": adicionar um lugar pelo nome (Buscar por nome, prompt 17 · A).
-            IconButton(.adicionar, style: .dark, label: "Adicionar por nome") { showNameSearch = true }
-            Button { editMode = editing ? .inactive : .active } label: {
-                Text(editing ? "Pronto" : "Editar")
-                    .font(.must.archivo(14, .semibold))
-                    .foregroundStyle(editing ? .white : Color.must.ink)
-                    .padding(.horizontal, 16)
-                    .frame(height: 40)
-                    .background(Capsule().fill(editing ? Color.must.ink : Color.must.surface))
-            }
-            .buttonStyle(MustPressStyle())
-        }
-        .padding(.top, 8)
+    /// Capa de uma lista (a que já está no disco; nunca baixa): a foto só mora aqui, no bloco do topo.
+    private var coverURL: URL? {
+        lists.lazy.compactMap { ListCover.photo(for: $0) }.first.flatMap { URL(string: $0.largeURL ?? $0.url) }
     }
 
-    private var titleBlock: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Tudo").mustTitle()
-            Text(editing ? "editando · toque pra selecionar, segure pra arrastar" : "o board inteiro · toque pra abrir")
-                .mustSerif(18)
-                .foregroundStyle(Color.must.secondary)
+    /// Bloco do topo: voltar, "+" e Editar nos cantos; "Tudo" gigante e a contagem em mono. A régua é estática.
+    private var cutBlock: some View {
+        CutBand(photo: coverURL) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(spacing: 8) {
+                    V8CornerButton(systemName: "chevron.left", label: "Voltar", onPhoto: true) { dismiss() }
+                    Spacer(minLength: 8)
+                    // "+": adicionar um lugar pelo nome (Buscar por nome, prompt 17 · A).
+                    V8CornerButton(systemName: "plus", label: "Adicionar por nome", onPhoto: true) { showNameSearch = true }
+                    Button { editMode = editing ? .inactive : .active } label: {
+                        Text(editing ? "PRONTO" : "EDITAR")
+                            .font(V8Font.mono(11, weight: .semibold)).tracking(1)
+                            .padding(.horizontal, 14)
+                            .frame(minWidth: 44, minHeight: 44)
+                            .background(editing ? V8.ink : Color.clear)
+                            .overlay(Rectangle().stroke(V8.white, lineWidth: 2))
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.top, 58)
+                Spacer(minLength: 16)
+                MonoLabel("board · \(places.count) lugares · \(lists.count) listas", size: 10, color: V8.white)
+                Text("Tudo")
+                    .font(V8Font.display(72))
+                    .tracking(-2.4)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityAddTraits(.isHeader)
+                if editing {
+                    Text("editando · toque pra selecionar, segure pra arrastar")
+                        .font(V8Font.text(14)).opacity(0.9).lineLimit(2)
+                }
+            }
+            .padding(.horizontal, 22)
+            .padding(.bottom, 16)
         }
+        .frame(height: 330)
+        .frame(maxWidth: .infinity)
     }
 
     private var sortChip: some View {
@@ -176,7 +199,9 @@ struct BoardView: View {
         let reorderable = editing && !query.isFiltering && query.sort == .manual && group.list != nil && !collapsed
         return Section {
             BoardGroupHeader(group: group, onEditList: group.list.map { list in { router.cover = .editList(id: list.id) } })
-                .boardRow()
+                .listRowInsets(EdgeInsets())
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
                 .dropDestination(for: PlaceDragItem.self) { (items: [PlaceDragItem], _: CGPoint) -> Bool in
                     drop(items, onto: group)
                 }

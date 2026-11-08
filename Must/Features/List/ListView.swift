@@ -27,6 +27,9 @@ struct ListView: View {
     @State private var openOnly = false
     @State private var cheapOnly = false
     @AppStorage(MustsPrefs.noPhotosKey) private var noPhotos = false
+    /// O corte (prompt 30): a régua "↓ quero <lista>" abre o quero já filtrado pela lista.
+    @State private var corte = CorteState()
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// Abertos e distâncias: recalculados só quando muda o minuto, a posição (≥ 50 m), o conjunto ou os filtros (A.3).
     @State private var openNow = OpenNowIndex()
 
@@ -63,21 +66,20 @@ struct ListView: View {
         let currentPlaceId = currentStopPlaceId()
         let groups = ListGrouping.groups(places: visible, region: region, location: location, nearSort: nearSort, pinned: currentPlaceId,
                                          distance: { snapshot.distance($0) }, isOpen: { snapshot.isOpen($0) })
-        let showPhotos = !noPhotos && base.count <= Self.photoLimit
+        let openCount = base.filter { snapshot.isOpen($0.id) }.count
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 0) {
-                header(count: base.count, open: base.filter { snapshot.isOpen($0.id) }.count).padding(.top, 8)
-                titleRow(count: base.count).padding(.top, 22)
-                if !saveForEndOnly { filters.padding(.top, 20) }
+                cutBlock(count: base.count)
+                pullRule
+                paperHeader(count: base.count, open: openCount)
+                if !saveForEndOnly { filters.padding(.top, 16).padding(.bottom, 14) }
                 ForEach(groups) { group in
-                    groupHeader(group).padding(.top, 28)
+                    groupHeader(group)
                     ForEach(group.places, id: \.id) { place in
-                        let number = (groups.prefix { $0.id != group.id }.map(\.places.count).reduce(0, +))
-                            + (group.places.firstIndex { $0.id == place.id } ?? 0) + 1
                         Button { router.push(.place(id: place.id), on: router.tab) } label: {
-                            ListPlaceRow(index: "\(number)", place: place, meta: ListGrouping.meta(place, region: region),
-                                         state: state(place, openState: snapshot.states[place.id], currentPlaceId: currentPlaceId),
-                                         trailing: trailing(place, distance: snapshot.distance(place.id)), showPhoto: showPhotos)
+                            ListIndexRow(distance: snapshot.distance(place.id), reservation: reservationTime(place), title: place.name,
+                                         meta: ListGrouping.meta(place, region: region),
+                                         state: state(place, openState: snapshot.states[place.id], currentPlaceId: currentPlaceId))
                         }
                         .buttonStyle(.plain)
                         .contextMenu {
@@ -85,41 +87,139 @@ struct ListView: View {
                         }
                     }
                 }
-                if !saveForEndOnly { addRow(empty: visible.isEmpty).padding(.top, 18) }
+                if !saveForEndOnly { addRow(empty: visible.isEmpty).padding(.horizontal, 20).padding(.top, 14) }
                 V8BarSpacer()
             }
-            .padding(.horizontal, 20)
         }
         .scrollIndicators(.hidden)
+        .ignoresSafeArea(edges: .top)
         .background(V8.paper.ignoresSafeArea())
+        .overlay { queroLayer }
         .toolbar(.hidden, for: .navigationBar)
+        .onChange(of: corte.stage) { _, stage in router.setQuero("lista", open: stage != .rest) }
+        .onAppear { router.setQuero("lista", open: corte.stage != .rest) }
+        .onDisappear { router.setQuero("lista", open: false) }
+        #if DEBUG
+        .task {
+            // `-debugScreen corte-lista-quero:<lista>` (prints): a régua já puxada.
+            guard DebugFlags.string("debugScreen")?.hasPrefix("corte-lista-quero") == true, let list else { return }
+            try? await Task.sleep(for: .milliseconds(900))
+            openQuero(list)
+        }
+        #endif
     }
 
-    // MARK: Topo
+    private func reservationTime(_ place: Place) -> String? {
+        guard let r = place.reservation, region.calendar.isDate(r.at, inSameDayAs: now), r.at > now else { return nil }
+        return region.timeString(r.at)
+    }
 
-    private func header(count: Int, open: Int) -> some View {
-        let listName = saveForEndOnly ? "fica pro fim" : (list?.displayName ?? "")
+    // MARK: Topo (o corte)
+
+    private var coverURL: URL? {
+        guard !saveForEndOnly, !noPhotos, let list, let photo = ListCover.photo(for: list) else { return nil }
+        return URL(string: photo.largeURL ?? photo.url)
+    }
+
+    private var listTitle: String { saveForEndOnly ? "Fica pro fim" : (sub ?? list?.name.capitalized ?? "Lista") }
+
+    /// Bloco = capa da lista (a que já está no disco; nunca baixa) com o nome gigante; sem foto, a cor do lugar.
+    private func cutBlock(count: Int) -> some View {
         let city = trips.first?.city(on: now, calendar: region.calendar)?.name ?? region.shortName
-        return HStack(alignment: .top) {
-            V8CornerButton(systemName: "chevron.left", label: "Voltar") { dismiss() }
-            Spacer(minLength: 12)
-            V8SpecStack(lines: ["\(listName) · \(city)", "\(count) lugares · \(open) abertos"], alignment: .trailing)
-                .padding(.top, 14)
+        let listName = saveForEndOnly ? "fica pro fim" : (list?.displayName ?? "")
+        return CutBand(photo: coverURL) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(alignment: .top) {
+                    V8CornerButton(systemName: "chevron.left", label: "Voltar", onPhoto: true) { dismiss() }
+                    Spacer(minLength: 12)
+                    V8SpecStack(lines: ["\(listName) · \(city)", "\(count) lugares"], color: V8.white, alignment: .trailing)
+                        .padding(.top, 14)
+                }
+                .padding(.top, 58)
+                Spacer(minLength: 16)
+                Text(listTitle)
+                    .font(V8Font.display(64))
+                    .tracking(-2)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.5)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityAddTraits(.isHeader)
+            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 16)
+        }
+        .containerRelativeFrame(.vertical) { height, _ in height * 0.38 }
+        .frame(maxWidth: .infinity)
+    }
+
+    /// "↓ quero <lista>": puxar abre o quero já filtrado pela lista. Sem lista (fica pro fim) a régua é estática.
+    @ViewBuilder private var pullRule: some View {
+        if saveForEndOnly || list == nil {
+            CutRule()
+        } else if let list {
+            let noun = "quero \(list.name.lowercased())"
+            CutRule(pullLabel: CutPull.label(phase: corte.pull.phase, offset: corte.pull.offset, uses: corte.coach.uses, noun: noun))
+                .cutPull(corte.pull, reduceMotion: reduceMotion, onOpen: { openQuero(list) }, onClose: { corte.close() })
+                .accessibilityAction(named: "Abrir quero") { openQuero(list) }
         }
     }
 
-    private func titleRow(count: Int) -> some View {
-        HStack(alignment: .lastTextBaseline, spacing: 10) {
-            Text(saveForEndOnly ? "Fica pro fim" : (sub ?? list?.name.capitalized ?? "Lista"))
-                .font(V8Font.display(52))
-                .tracking(-1.6)
-                .foregroundStyle(V8.ink)
-                .lineLimit(2)
-                .minimumScaleFactor(0.6)
-                .accessibilityAddTraits(.isHeader)
-            BigNumeral("\(count)", size: 74, color: V8.orange)
-            SpecLabel("por bairro").padding(.bottom, 10)
+    /// Cabeçalho do papel: quantos lugares e o numeral laranja = quantos estão abertos agora.
+    private func paperHeader(count: Int, open: Int) -> some View {
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 6) {
+                MonoLabel("aberto agora · de \(count)", size: 10, color: V8.mute)
+                Text(saveForEndOnly ? "o que fica pro fim da viagem" : "por bairro, do mais perto")
+                    .font(V8Font.text(15, weight: .semibold)).foregroundStyle(V8.ink).lineLimit(2)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            Text(open > 99 ? "99+" : "\(open)")
+                .font(V8Font.numeral(84)).tracking(-4).foregroundStyle(V8.orange)
+                .lineLimit(1).fixedSize()
+                .accessibilityHidden(true)
         }
+        .padding(.horizontal, 20).padding(.vertical, 12)
+        .overlay(alignment: .bottom) { CorteRule2() }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(open) abertos agora, de \(count) lugares")
+    }
+
+    // MARK: Quero filtrado pela lista
+
+    private func openQuero(_ list: MustList) {
+        corte.open()
+        corte.preset(CorteListWish.wish(listId: list.id, name: list.name))
+    }
+
+    @ViewBuilder private var queroLayer: some View {
+        if corte.stage != .rest, let list {
+            CorteQueroOverlay(state: corte, photo: coverURL, subject: list.displayName, originName: region.shortName,
+                              makeEnv: { queroEnv(list) }, actions: queroActions(list))
+                .transition(reduceMotion ? .opacity : .move(edge: .top))
+        }
+    }
+
+    /// O ambiente do quero na lista: o da capa (GPS, dia de hoje) com o board reduzido à lista.
+    private func queroEnv(_ list: MustList) -> QueroEnv {
+        let all = (try? context.fetch(FetchDescriptor<Place>())) ?? []
+        let today = region.calendar.startOfDay(for: now)
+        let plan = dayEngine.plan(for: today, region: region, context: context)
+        let base = QueroEnv.make(region: region, now: now, places: all, trip: trips.first, settings: settingsList.first, plan: plan,
+                                 gps: services.location.current?.coordinate, online: services.connectivity.status != .offline,
+                                 upcoming: QueroEnv.upcomingDays(context: context, areas: AreaCatalog.areas(for: region), today: today))
+        return CorteState.corteEnv(base).scoped(toList: list.id)
+    }
+
+    private func queroActions(_ list: MustList) -> CorteResultActions {
+        CorteResultActions(
+            openPlace: { router.push(.place(id: $0), on: router.tab) },
+            route: { MapsLinks.openApple(to: $0.row.result.coordinate, name: $0.row.result.name) },
+            addToBoard: { CorteSave.addToBoard($0, state: corte, env: queroEnv(list), lists: lists, services: services, context: context) },
+            fitToday: { row in
+                guard CorteSave.fitToday(row, state: corte, env: queroEnv(list), lists: lists, services: services, context: context) else { return }
+                corte.close()
+                router.push(.linha(date: region.calendar.startOfDay(for: now)), on: router.tab)
+            })
     }
 
     private var filters: some View {
@@ -149,6 +249,7 @@ struct ListView: View {
         }
     }
 
+    /// Bairro: nome em Bricolage, legenda mono ("6 · você está aqui"), régua dura de 2 pt em cima e embaixo.
     private func groupHeader(_ group: ListGrouping.Group) -> some View {
         HStack(alignment: .lastTextBaseline, spacing: 10) {
             Text(group.name)
@@ -160,7 +261,11 @@ struct ListView: View {
             Spacer(minLength: 8)
             SpecLabel(group.caption)
         }
-        .padding(.bottom, 6)
+        .padding(.horizontal, 20)
+        .padding(.top, 14)
+        .padding(.bottom, 8)
+        .overlay(alignment: .top) { CorteRule2() }
+        .overlay(alignment: .bottom) { CorteRule2() }
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
     }
@@ -212,77 +317,62 @@ struct ListView: View {
     }
 }
 
-/// Uma linha da Lista: índice laranja, miniatura (lista curta), nome, meta e o estado com a distância à direita.
-/// Sem miniatura é o `IndexRow` do contrato.
-struct ListPlaceRow: View {
-    var index: String
-    var place: Place
+/// Uma linha da Lista no padrão índice (prompt 30): a distância grande em mono (ou a hora da reserva de hoje), o nome, o
+/// motivo (meta) e o estado à direita. Régua de 2 pt embaixo; sem miniatura (a foto fica no bloco do topo).
+struct ListIndexRow: View {
+    var distance: CLLocationDistance?
+    var reservation: String?
+    var title: String
     var meta: String
     var state: IndexRowState
-    var trailing: String?
-    var showPhoto: Bool
+
+    private var big: (value: String, unit: String)? {
+        if let reservation { return (reservation, "reserva") }
+        guard let distance else { return nil }
+        let parts = CorteSplit.distanceParts(distance)
+        return (parts.value, parts.unit == "m" ? "metros" : parts.unit)
+    }
 
     var body: some View {
-        Group {
-            if showPhoto {
-                withPhoto
-            } else {
-                IndexRow(index: index, title: place.name, meta: meta, state: state, trailing: trailing)
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(big?.value ?? "·")
+                    .font(V8Font.mono(22, weight: .semibold)).foregroundStyle(V8.ink)
+                    .lineLimit(1).minimumScaleFactor(0.6)
+                Text((big?.unit ?? "sem gps").uppercased())
+                    .font(V8Font.mono(8.5)).tracking(0.8).foregroundStyle(V8.mute).lineLimit(1)
             }
-        }
-        .opacity(state == .done ? 0.55 : 1)
-        .overlay(alignment: .bottom) { Rectangle().fill(V8.ink.opacity(0.12)).frame(height: 1) }
-        .contentShape(Rectangle())
-    }
-
-    private var withPhoto: some View {
-        HStack(alignment: .center, spacing: 14) {
-            Text(index)
-                .font(V8Font.numeral(30))
-                .foregroundStyle(V8.orangeDeep)
-                .frame(width: 30, alignment: .leading)
-                .accessibilityHidden(true)
-            V8Thumb(placeId: place.placeId, refs: place.photoRefs, size: 46, dimmed: state == .done)
+            .frame(width: 76, alignment: .leading)
             VStack(alignment: .leading, spacing: 3) {
-                Text(place.name).font(V8Font.text(17, weight: .bold)).foregroundStyle(V8.ink).lineLimit(2)
-                Text(meta).font(V8Font.text(13)).foregroundStyle(V8.mute).lineLimit(1)
-            }
-            Spacer(minLength: 8)
-            VStack(alignment: .trailing, spacing: 3) {
-                if state != .none {
-                    HStack(spacing: 5) {
-                        Circle().fill(dotColor).frame(width: 6, height: 6)
-                        Text(stateLabel.uppercased()).font(V8Font.mono(10)).tracking(0.8).foregroundStyle(stateColor).lineLimit(1)
-                    }
+                Text(title).font(V8Font.text(17, weight: .bold)).foregroundStyle(V8.ink).lineLimit(2)
+                if !meta.isEmpty {
+                    Text(meta).font(V8Font.text(12)).foregroundStyle(V8.mute).lineLimit(1).truncationMode(.tail)
                 }
-                if let trailing { Text(trailing).font(V8Font.mono(11).weight(.bold)).foregroundStyle(V8.ink).lineLimit(1) }
             }
-            .fixedSize()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            if state != .none {
+                HStack(spacing: 5) {
+                    Circle().fill(state.isLive ? V8.orange : V8.mute).frame(width: 6, height: 6)
+                    Text(stateLabel.uppercased()).font(V8Font.mono(9.5)).tracking(0.8)
+                        .foregroundStyle(state.isLive ? V8.orangeDeep : V8.mute).lineLimit(1)
+                }
+                .fixedSize()
+            }
         }
+        .padding(.horizontal, 20)
         .padding(.vertical, 12)
+        .frame(minHeight: 64)
+        .opacity(state == .done ? 0.55 : 1)
+        .overlay(alignment: .bottom) { CorteRule2() }
+        .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel([place.name, meta, stateLabel, trailing].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: ", "))
+        .accessibilityLabel([title, meta, stateLabel, big.map { "\($0.value) \($0.unit)" }].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: ", "))
     }
 
-    /// Reserva mostra só "reserva" (a hora vai embaixo, como no design).
+    /// Reserva mostra só "reserva" (a hora vai na coluna da esquerda).
     private var stateLabel: String {
         if case .reservation = state { return "reserva" }
         return state.label
-    }
-
-    private var stateColor: Color {
-        switch state {
-        case .now, .reservation: V8.orangeDeep
-        case .open: V8.orangeDeep.opacity(0.85)
-        default: V8.mute
-        }
-    }
-
-    private var dotColor: Color {
-        switch state {
-        case .now, .reservation, .open: V8.orange
-        default: V8.mute
-        }
     }
 }
 
