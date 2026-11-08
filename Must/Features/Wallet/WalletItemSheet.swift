@@ -21,46 +21,32 @@ struct WalletItemSheet: View {
     private var now: Date { AppClock.now }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                SheetHandle().frame(maxWidth: .infinity)
-                VStack(alignment: .leading, spacing: 6) {
-                    Micro(item.kind.label)
-                    Text(item.name).mustTitle()
-                    if let local = item.nameLocal {
-                        Text(local).mustSerif(18).foregroundStyle(Color.must.secondary)
-                    }
-                    if !item.detail.isEmpty { Text(item.detail).mustMeta() }
-                }
-
-                qrBlock
-                validityRow
-                if item.kind == .transitCard { balanceBlock }
-                if let coverage = item.coverage, !coverage.isEmpty {
-                    FormSection { FormRow("Cobre", subtitle: coverage) }
-                }
-                actions
-                if !item.notes.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Micro("instruções")
-                        Text(item.notes).font(.must.archivo(15)).foregroundStyle(Color.must.ink)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                    .padding(18)
-                    .background(Color.must.surface2, in: Rectangle())
-                }
-                HStack(spacing: 10) {
-                    GhostButton("Editar", icon: .editar) { editing = true }
-                    GhostButton("Apagar", icon: .remover) { confirmDelete = true }
-                }
-                .padding(.top, 4)
-                Color.clear.frame(height: 20)
+        CutSheet(title: item.name, corner: [item.kind.label, region.shortName],
+                 subtitle: [item.nameLocal, item.detail.isEmpty ? nil : item.detail].compactMap { $0 }.joined(separator: " · "),
+                 height: 170) {
+            qrBlock
+            validityRow
+            if item.kind == .transitCard { balanceBlock }
+            if let coverage = item.coverage, !coverage.isEmpty {
+                FormSection { FormRow("Cobre", subtitle: coverage) }
             }
-            .padding(.horizontal, 22)
-            .padding(.bottom, 40)
+            actions
+            if !item.notes.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    MonoLabel("instruções", color: V8.mute)
+                    Text(item.notes).font(V8Font.text(15)).foregroundStyle(Color.must.ink)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .padding(16)
+                .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
+            }
+            HStack(spacing: 10) {
+                GhostButton("Editar", icon: .editar) { editing = true }
+                GhostButton("Apagar", icon: .remover) { confirmDelete = true }
+            }
+            .padding(.top, 4)
+            Color.clear.frame(height: 20)
         }
-        .scrollIndicators(.hidden)
-        .background(Color.must.bg)
         .quickLookPreview($preview)
         .fullScreenCover(isPresented: $bigQR) {
             BigQRView(payload: item.qrPayload ?? "", confirmation: nil)
@@ -92,7 +78,7 @@ struct WalletItemSheet: View {
                 }
                 .buttonStyle(MustPressStyle())
                 .accessibilityLabel("Mostrar QR grande")
-                Text("salvo no aparelho · funciona sem internet · toque pra mostrar grande").mustMeta()
+                Text("salvo no aparelho · funciona sem internet · toque pra mostrar grande").font(V8Font.text(13)).foregroundStyle(V8.mute)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .multilineTextAlignment(.center)
             }
@@ -108,19 +94,19 @@ struct WalletItemSheet: View {
     /// Saldo: sempre anotado à mão. Não há API pública pra ler o saldo da Suica.
     private var balanceBlock: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Micro("saldo anotado à mão")
+            MonoLabel("saldo anotado à mão", color: V8.mute)
             HStack(alignment: .firstTextBaseline) {
                 Text(item.balance.map { region.money($0) } ?? "sem saldo anotado")
-                    .font(.must.mono(26, .semibold)).foregroundStyle(Color.must.ink)
+                    .font(V8Font.mono(26, weight: .semibold)).foregroundStyle(Color.must.ink)
                 Spacer(minLength: 8)
                 Button { annotating = true } label: { Pill("anotar saldo", icon: .editar) }
                     .buttonStyle(MustPressStyle())
             }
-            Text(balanceNote).mustMeta()
+            Text(balanceNote).font(V8Font.text(13)).foregroundStyle(V8.mute)
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.must.surface2, in: Rectangle())
+        .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
     }
 
     private var balanceNote: String {
@@ -172,48 +158,22 @@ struct WalletBalanceSheet: View {
     private var region: Region { store.region }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                SheetHandle().frame(maxWidth: .infinity)
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Anotar saldo").mustTitle()
-                        Text(item.name).mustMeta()
-                    }
-                    Spacer()
-                    Button(action: save) {
-                        Text("Salvar").font(.must.archivo(15, .semibold)).foregroundStyle(.white)
-                            .padding(.horizontal, 18).frame(height: 40)
-                            .background(Rectangle().fill(amount.isEmpty ? Color.must.secondary : Color.must.ink))
-                    }
-                    .buttonStyle(MustPressStyle())
-                    .disabled(amount.isEmpty)
-                }
-
-                VStack(alignment: .leading, spacing: 10) {
-                    Micro("saldo que você viu (\(region.currencySymbol))")
-                    TextField("3240", text: $amount)
-                        .font(.must.mono(20, .semibold))
-                        .keyboardType(.numberPad)
-                        .foregroundStyle(Color.must.ink)
-                        .padding(.horizontal, 16)
-                        .frame(height: 52)
-                        .background(Color.must.surface, in: Rectangle())
-                }
-
-                DatePicker("Anotado em", selection: $notedAt, displayedComponents: [.date, .hourAndMinute])
-                    .font(.must.body).tint(Color.must.ink)
-                    .environment(\.timeZone, region.timeZone)
-                    .environment(\.locale, region.locale)
-
-                Text("Anotado à mão: não há API pública pra ler o saldo. O valor é o que você viu no app ou no Wallet, na hora que anotou.")
-                    .mustMeta()
+        CutSheet(title: "Anotar saldo", corner: [item.name], footer: "Salvar", footerEnabled: !amount.isEmpty, onFooter: save) {
+            CutBox(label: "saldo que você viu (\(region.currencySymbol))") {
+                TextField("3240", text: $amount)
+                    .font(V8Font.mono(20, weight: .semibold))
+                    .keyboardType(.numberPad)
+                    .foregroundStyle(V8.ink)
             }
-            .padding(.horizontal, 22)
-            .padding(.bottom, 40)
+
+            DatePicker("Anotado em", selection: $notedAt, displayedComponents: [.date, .hourAndMinute])
+                .font(V8Font.text(15)).tint(V8.orange)
+                .environment(\.timeZone, region.timeZone)
+                .environment(\.locale, region.locale)
+
+            Text("Anotado à mão: não há API pública pra ler o saldo. O valor é o que você viu no app ou no Wallet, na hora que anotou.")
+                .font(V8Font.text(13)).foregroundStyle(V8.mute)
         }
-        .scrollIndicators(.hidden)
-        .background(Color.must.bg)
         .onAppear {
             amount = NumberInput.intText(item.balance)
             notedAt = item.balanceNotedAt ?? AppClock.now

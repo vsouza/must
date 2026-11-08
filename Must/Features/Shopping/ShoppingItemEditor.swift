@@ -34,109 +34,85 @@ struct ShoppingItemEditor: View {
     private var trimmedName: String { name.trimmingCharacters(in: .whitespacesAndNewlines) }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                SheetHandle().frame(maxWidth: .infinity)
-                HStack {
-                    Text(item == nil ? "Novo item" : "Editar item").mustTitle()
-                    Spacer()
-                    Button(action: save) {
-                        Text("Salvar").font(.must.archivo(15, .semibold)).foregroundStyle(.white)
-                            .padding(.horizontal, 18).frame(height: 40)
-                            .background(Rectangle().fill(trimmedName.isEmpty ? Color.must.secondary : Color.must.ink))
-                    }
-                    .buttonStyle(MustPressStyle())
-                    .disabled(trimmedName.isEmpty)
-                }
+        CutSheet(title: item == nil ? "Novo item" : "Editar item", corner: ["Compras", region.shortName],
+                 footer: "Salvar", footerEnabled: !trimmedName.isEmpty, onFooter: save) {
+            field("nome") { TextField("ramen tonkotsu instantâneo", text: $name).font(V8Font.text(16, weight: .semibold)) }
 
-                field("nome") { TextField("ramen tonkotsu instantâneo", text: $name).font(.must.archivo(16, .semibold)) }
-
-                VStack(alignment: .leading, spacing: 10) {
-                    Micro("categoria")
-                    FlowLayout(spacing: 8) {
-                        ForEach(ShoppingCategory.allCases) { option in
-                            Button { category = option } label: { Pill(option.label, isOn: category == option) }
-                                .buttonStyle(MustPressStyle())
-                        }
-                    }
-                }
-
-                VStack(alignment: .leading, spacing: 10) {
-                    Micro("loja")
-                    FlowLayout(spacing: 8) {
-                        ForEach(shopStores) { place in
-                            Button {
-                                storeId = place.id
-                                if area.isEmpty { area = place.area ?? "" }
-                            } label: { Pill(place.name, isOn: storeId == place.id) }
-                                .buttonStyle(MustPressStyle())
-                        }
-                        Button { storeId = nil } label: { Pill("outra loja", isOn: storeId == nil) }
+            VStack(alignment: .leading, spacing: 10) {
+                MonoLabel("categoria", size: 10, color: V8.mute)
+                FlowLayout(spacing: 8) {
+                    ForEach(ShoppingCategory.allCases) { option in
+                        Button { category = option } label: { Pill(option.label, isOn: category == option) }
                             .buttonStyle(MustPressStyle())
                     }
-                    if storeId == nil {
-                        field("nome da loja") { TextField("Map Camera", text: $storeName).font(.must.archivo(15)) }
-                    }
                 }
-
-                field("bairro (opcional)") { TextField("Shinjuku", text: $area).font(.must.archivo(15)) }
-                field("preço total estimado (\(region.currencySymbol))") {
-                    TextField("95000", text: $estText).font(.must.mono(17)).keyboardType(.numberPad)
-                }
-
-                HStack {
-                    Text("quantidade").font(.must.archivo(15, .semibold))
-                    Spacer()
-                    Stepper("\(qty)", value: $qty, in: 1...99).font(.must.mono(15)).fixedSize()
-                }
-                .padding(.horizontal, 16).padding(.vertical, 10)
-                .background(Color.must.surface2, in: Rectangle())
-
-                VStack(alignment: .leading, spacing: 10) {
-                    Micro("situação")
-                    FlowLayout(spacing: 8) {
-                        ForEach(ShoppingStatus.allCases) { option in
-                            Button { status = option } label: { Pill(option.label, isOn: status == option) }
-                                .buttonStyle(MustPressStyle())
-                        }
-                    }
-                }
-
-                if status == .bought {
-                    field("quanto pagou (opcional, \(region.currencySymbol))") {
-                        TextField("o estimado, se vazio", text: $paidText).font(.must.mono(17)).keyboardType(.numberPad)
-                    }
-                }
-
-                Toggle(isOn: $taxFree) {
-                    FormRow("Tem recibo tax-free", subtitle: "entra no reembolso da saída, se a loja/dia passar de \(ShoppingReport.money(ShoppingRules.pack(for: region).limits.taxFreeMinYen, currency: region == .it ? "EUR" : "JPY"))")
-                }
-                .toggleStyle(.must)
-
-                if category == .food {
-                    field("ingredientes (a checagem de porco e leite cru lê daqui)") {
-                        TextField("arroz, caldo de porco, tempero…", text: $ingredients, axis: .vertical)
-                            .font(.must.archivo(15)).lineLimit(2...6)
-                    }
-                }
-                field("observação (volume, sabor…)") {
-                    TextField("720 ml · sabor matcha", text: $notes, axis: .vertical).font(.must.archivo(15)).lineLimit(1...4)
-                }
-
-                Text("Comprado vira gasto de compras e marca a loja como visitada. Os alertas da volta aparecem na própria lista.")
-                    .mustMeta()
-
-                if item != nil {
-                    GhostButton("Apagar", icon: .remover) { confirmDelete = true }
-                        .padding(.top, 4)
-                }
-                Color.clear.frame(height: 20)
             }
-            .padding(.horizontal, 22)
-            .padding(.bottom, 40)
+
+            VStack(alignment: .leading, spacing: 10) {
+                MonoLabel("loja", size: 10, color: V8.mute)
+                FlowLayout(spacing: 8) {
+                    ForEach(shopStores) { place in
+                        Button {
+                            storeId = place.id
+                            if area.isEmpty { area = place.area ?? "" }
+                        } label: { Pill(place.name, isOn: storeId == place.id) }
+                            .buttonStyle(MustPressStyle())
+                    }
+                    Button { storeId = nil } label: { Pill("outra loja", isOn: storeId == nil) }
+                        .buttonStyle(MustPressStyle())
+                }
+                if storeId == nil {
+                    field("nome da loja") { TextField("Map Camera", text: $storeName).font(V8Font.text(15)) }
+                }
+            }
+
+            field("bairro (opcional)") { TextField("Shinjuku", text: $area).font(V8Font.text(15)) }
+            field("preço total estimado (\(region.currencySymbol))") {
+                TextField("95000", text: $estText).font(V8Font.mono(17)).keyboardType(.numberPad)
+            }
+
+            CutBox(label: "quantidade") {
+                Stepper("\(qty)", value: $qty, in: 1...99).font(V8Font.mono(15))
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+                MonoLabel("situação", size: 10, color: V8.mute)
+                FlowLayout(spacing: 8) {
+                    ForEach(ShoppingStatus.allCases) { option in
+                        Button { status = option } label: { Pill(option.label, isOn: status == option) }
+                            .buttonStyle(MustPressStyle())
+                    }
+                }
+            }
+
+            if status == .bought {
+                field("quanto pagou (opcional, \(region.currencySymbol))") {
+                    TextField("o estimado, se vazio", text: $paidText).font(V8Font.mono(17)).keyboardType(.numberPad)
+                }
+            }
+
+            Toggle(isOn: $taxFree) {
+                FormRow("Tem recibo tax-free", subtitle: "entra no reembolso da saída, se a loja/dia passar de \(ShoppingReport.money(ShoppingRules.pack(for: region).limits.taxFreeMinYen, currency: region == .it ? "EUR" : "JPY"))")
+            }
+            .toggleStyle(.must)
+
+            if category == .food {
+                field("ingredientes (a checagem de porco e leite cru lê daqui)") {
+                    TextField("arroz, caldo de porco, tempero…", text: $ingredients, axis: .vertical)
+                        .font(V8Font.text(15)).lineLimit(2...6)
+                }
+            }
+            field("observação (volume, sabor…)") {
+                TextField("720 ml · sabor matcha", text: $notes, axis: .vertical).font(V8Font.text(15)).lineLimit(1...4)
+            }
+
+            Text("Comprado vira gasto de compras e marca a loja como visitada. Os alertas da volta aparecem na própria lista.")
+                .font(V8Font.text(13)).foregroundStyle(V8.mute)
+
+            if item != nil {
+                CutButton(title: "Apagar") { confirmDelete = true }
+            }
         }
-        .scrollIndicators(.hidden)
-        .background(Color.must.bg)
         .onAppear(perform: load)
         .confirmationDialog("Apagar \(item?.name ?? "item")?", isPresented: $confirmDelete, titleVisibility: .visible) {
             Button("Apagar", role: .destructive) {
@@ -150,14 +126,7 @@ struct ShoppingItemEditor: View {
     }
 
     private func field<C: View>(_ label: String, @ViewBuilder _ content: () -> C) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Micro(label)
-            content()
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.must.surface2, in: Rectangle())
-        }
+        CutBox(label: label) { content() }
     }
 
     private func load() {

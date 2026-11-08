@@ -211,6 +211,45 @@ viajanteshots() {
   ${=W} dev.simDate -float $(epoch 2026-11-24T15:10:00+09:00)
   shot ultimo-dia-boa-tarde -debugScreen bom-dia -debugProblemDemo YES
 }
+# Acabamento do corte (prompt 31 · rodada de acabamento): folhas de edição, Viagem, Bairros, Ir. `ONLY=acabamento` tira só estas.
+acabamentoshots() {
+  local XL="-UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL"
+  echo "→ acabamento · Japão · Shinjuku 15 nov 14:20"
+  ${=W} region jp
+  ${=W} dev.simDate -float $(epoch 2026-11-15T14:20:00+09:00)
+  ${=W} dev.simLat -float 35.6909; ${=W} dev.simLng -float 139.7003
+  WAIT=8 shot acab-editar -debugScreen editar:j01
+  WAIT=8 shot acab-adicionar -debugScreen adicionar
+  WAIT=8 shot acab-nova-lista -debugScreen nova-lista
+  WAIT=8 shot acab-gasto -debugScreen gasto
+  WAIT=8 shot acab-carteira-editor -debugScreen carteira-editor
+  WAIT=8 shot acab-carteira-item -debugScreen carteira-item
+  WAIT=8 shot acab-compras-item -debugScreen compras-item
+  WAIT=8 shot acab-compras-regras -debugScreen compras-regras
+  WAIT=8 shot acab-experiencia-link -debugScreen experiencia-link
+  WAIT=8 shot acab-ir-aprox -debugScreen ir:j05
+  WAIT=8 shot acab-filmes -debugScreen filmes:j105
+  WAIT=8 shot acab-regiao -debugScreen regiao
+  WAIT=8 shot acab-viagem -debugScreen viagem-aba
+  WAIT=8 shot acab-proximos -debugScreen proximos
+  WAIT=8 shot acab-bairros -debugScreen bairros
+  WAIT=8 shot acab-bolso -debugScreen bolso-novo
+  shot acab-xxxl-editar -debugScreen editar:j01 $=XL
+  shot acab-xxxl-gasto -debugScreen gasto $=XL
+  shot acab-xxxl-compras-item -debugScreen compras-item $=XL
+  shot acab-xxxl-viagem -debugScreen viagem-aba $=XL
+  shot acab-xxxl-bairros -debugScreen bairros $=XL
+}
+if [ "${ONLY:-}" = "acabamento" ]; then
+  acabamentoshots
+  for k in dev.simDateOn dev.simDate dev.simSetAt dev.simGPSOn dev.simLat dev.simLng dev.simCloud skipOnboarding \
+           debugPlaces debugNearby debugFlight debugTips debugAsk debugRoutes debugAutocomplete; do
+    xcrun simctl spawn "$UDID" defaults delete $PREFS $k 2>/dev/null || true
+  done
+  ${=W} region bh
+  echo "pronto: $OUT/"
+  exit 0
+fi
 if [ "${ONLY:-}" = "viajante" ]; then
   viajanteshots
   for k in dev.simDateOn dev.simDate dev.simSetAt dev.simGPSOn dev.simLat dev.simLng dev.simCloud skipOnboarding \

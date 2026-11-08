@@ -291,3 +291,73 @@ extension CutPage where Trailing == EmptyView {
                   backIcon: backIcon, spacer: spacer, trailing: { EmptyView() }, content: content)
     }
 }
+
+// MARK: - Folhas (prompt 31 · acabamento)
+
+/// Caixa de campo quadrada (borda de 2 pt) com micro-rótulo em cima, pra qualquer conteúdo (campo, stepper, valor).
+struct CutBox<Content: View>: View {
+    var label: String?
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if let label { MonoLabel(label, size: 10, color: V8.mute) }
+            content
+                .tint(V8.orange)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
+                .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
+        }
+    }
+}
+
+/// Folha de edição no corte: bloco da cor do lugar com o título e o fechar, papel que rola com os campos, botão principal
+/// laranja de ponta a ponta no pé (`footer`). Sem handle, sem fade branco, sem `.mustTitle()`.
+struct CutSheet<Content: View>: View {
+    var title: String
+    var corner: [String] = []
+    var subtitle: String?
+    var height: CGFloat = 150
+    var footer: String?
+    var footerEnabled = true
+    var footerArrow = true
+    var onFooter: () -> Void = {}
+    var onClose: (() -> Void)?
+    @ViewBuilder var content: Content
+
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(spacing: 0) {
+            CutScreenHeader(title: title, corner: corner, subtitle: subtitle, height: height,
+                            onBack: { if let onClose { onClose() } else { dismiss() } }, backIcon: "xmark")
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    content
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 20)
+            }
+            .scrollIndicators(.hidden)
+            .scrollDismissesKeyboard(.interactively)
+        }
+        .background(V8.paper.ignoresSafeArea())
+        .modifier(CutSheetFooter(title: footer, enabled: footerEnabled, arrow: footerArrow, action: onFooter))
+    }
+}
+
+private struct CutSheetFooter: ViewModifier {
+    var title: String?
+    var enabled: Bool
+    var arrow: Bool
+    var action: () -> Void
+
+    @ViewBuilder func body(content: Content) -> some View {
+        if let title {
+            content.cutFooter(title, enabled: enabled, arrow: arrow, action: action)
+        } else {
+            content
+        }
+    }
+}

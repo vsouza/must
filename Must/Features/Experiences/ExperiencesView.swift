@@ -42,6 +42,11 @@ struct ExperiencesView: View {
             }
         }
         .scrollDismissesKeyboard(.immediately)
+        .onAppear {
+            #if DEBUG
+            if DebugFlags.string("debugScreen") == "experiencia-link" { linking = true }
+            #endif
+        }
         .sheet(isPresented: $linking) { ExperienceLinkSheet() }
         .toolbar(.hidden, for: .navigationBar)
     }
