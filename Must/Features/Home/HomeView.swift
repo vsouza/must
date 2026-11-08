@@ -107,7 +107,8 @@ struct HomeView: View {
         let trip = trips.first
         state.refresh(.init(region: region, now: now, engine: engine, context: context, trip: trip, expenses: expenses,
                             currentArea: currentArea, nowWeather: services.sync.now(region: region, trip: trip),
-                            todayWeather: services.sync.weather(on: now, region: region, trip: trip)))
+                            todayWeather: services.sync.weather(on: now, region: region, trip: trip),
+                            position: services.location.current?.coordinate))
         recomputeSuggestions(now: now)
     }
 
@@ -117,7 +118,7 @@ struct HomeView: View {
         events.loadCached(region: region)
         suggest.recompute(.init(
             region: region, now: now, here: services.location.current?.coordinate, currentArea: currentArea, places: places,
-            plan: state.plan, dayNow: state.dayNow, events: events.events, boardShows: showEvents.today(region: region, at: now),
+            plan: state.plan, dayNow: state.dayNow, clock: state.clock, events: events.events, boardShows: showEvents.today(region: region, at: now),
             forecast: services.sync.weather(on: now, region: region, trip: trips.first),
             eventSourceName: { [events] in events.sourceName(forId: $0) }))
     }

@@ -71,7 +71,7 @@ enum SuggestionEngine {
         guard let stop = i.plan else { return nil }
         let late = stop.lateSince.map { "desde \(i.region.timeString($0))" }
         return Suggestion(id: "plan:\(stop.id)", kind: .plan, style: .ink, label: "NO PLANO · AGORA", trailing: nil,
-                          title: stop.label, meta: [stop.action, late].compactMap { $0 }.joined(separator: " · "),
+                          title: stop.label, meta: [stop.away.map { "a \($0) min daqui" }, stop.action, late].compactMap { $0 }.joined(separator: " · "),
                           reasons: ["no plano", late == nil ? "agora" : "atrasado"], placeId: stop.placeId, eventId: nil,
                           coordinate: stop.lat.flatMap { lat in stop.lng.map { CLLocationCoordinate2D(latitude: lat, longitude: $0) } },
                           url: nil, score: 100, urgencyMinutes: 0)

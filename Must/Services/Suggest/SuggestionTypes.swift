@@ -44,6 +44,8 @@ struct SuggestPlanStop: Hashable, Sendable {
     var lng: Double?
     /// Passou do fim previsto: desde quando devia estar nela.
     var lateSince: Date?
+    /// Parada longe de onde você está: minutos até lá (só quando ≥ 10), pro "a 18 min daqui".
+    var away: Int? = nil
 }
 
 /// Luz boa de hoje (ou de amanhã): janela do golden.

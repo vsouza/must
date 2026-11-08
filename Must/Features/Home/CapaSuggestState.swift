@@ -20,6 +20,8 @@ final class CapaSuggestState {
     private(set) var showLine: CorteShowLine?
     /// O numeral da capa do corte: quantas coisas abertas a 10 min (board + fora do board).
     private(set) var openNearby = 0
+    /// Perto (10 min) mas sem horário confirmado: não conta como aberto.
+    private(set) var unconfirmedNearby = 0
     /// Cache de "por perto" da célula atual (fora do board).
     @ObservationIgnored var indicated: [NearbyPlace] = []
     @ObservationIgnored private let prefs = SuggestPrefs()
@@ -32,6 +34,8 @@ final class CapaSuggestState {
         var places: [Place]
         var plan: DayPlan?
         var dayNow: DayNow?
+        /// O relógio único do dia (ajuste, quantas faltam).
+        var clock: DayClock? = nil
         var events: [ShowEvent]
         var boardShows: [ShowEvent]
         var forecast: DayWeather?
@@ -43,6 +47,13 @@ final class CapaSuggestState {
         guard let plan else { return true }
         guard let here = currentArea?.id, let planArea = plan.area else { return false }
         return here != planArea
+    }
+
+    /// Minutos a pé/trem daqui até a parada do plano, só quando ela está longe (≥ 10 min): "agora: X · a 18 min daqui".
+    static func awayMinutes(from here: CLLocationCoordinate2D, to stop: SuggestPlanStop?) -> Int? {
+        guard let stop, let lat = stop.lat, let lng = stop.lng, lat != 0 || lng != 0 else { return nil }
+        let minutes = DaySolver.leg(here, CLLocationCoordinate2D(latitude: lat, longitude: lng), walkMax: 1.5).minutes
+        return minutes >= 10 ? minutes : nil
     }
 
     func recompute(_ i: Inputs) {
@@ -58,9 +69,10 @@ final class CapaSuggestState {
             planStop = SuggestPlanStop(id: now.current.id, placeId: now.current.placeId, label: DayText.head(now.current.label),
                                        action: "\(verb) \(region.timeString(now.arriveBy ?? now.leaveAt))",
                                        lat: now.current.lat, lng: now.current.lng,
-                                       lateSince: now.current.end < i.now ? now.current.end : nil)
+                                       lateSince: nil)
         }
 
+        if let h = i.here, let stop = planStop { planStop?.away = Self.awayMinutes(from: h, to: stop) }
         let sun = SunService.day(i.now, here, timeZone: tz)
         var light: SuggestLight?
         if let golden = sun.goldenPM, golden.end > i.now {
@@ -85,18 +97,18 @@ final class CapaSuggestState {
         cards = SuggestionEngine.suggest(inputs)
         prefs.markShown(cards.map(\.id), region: region, now: i.now)
 
-        let origin = CLLocation(latitude: here.latitude, longitude: here.longitude)
-        let reach = Double(SuggestionEngine.mustWalkMinutes) * Walk.metersPerMinute
-        let nearby = places.filter { !$0.done && $0.kind != .photo
-            && CLLocation(latitude: $0.lat, longitude: $0.lng).distance(from: origin) * SuggestionEngine.streetFactor <= reach }.count
-        // Horário desconhecido não é "fechado": o que o ranker pôs na capa (Must, fecha logo, indicado) também conta.
-        openNearby = max(CorteCount.openWithin10(places: places, indicated: indicated, here: here),
-                         cards.filter { [.must, .closing, .indicated].contains($0.kind) }.count)
+        // O numeral e o texto da capa contam a mesma coisa: abertos (horário confirmado) a 10 min. O que não tem horário
+        // confirmado não entra como "aberto"; vai à parte ("sem horário").
+        let counts = CorteCount.counts(places: places, indicated: indicated, here: here)
+        openNearby = counts.open
+        unconfirmedNearby = counts.unconfirmed
         var eventCoords: [String: CLLocationCoordinate2D] = [:]
         for e in events { if let id = e.placeId, let p = i.places.first(where: { $0.id == id }) { eventCoords[e.id] = CLLocationCoordinate2D(latitude: p.lat, longitude: p.lng) } }
         showLine = CorteShowLine.make(events: events, now: i.now, region: region, here: here, coordinates: eventCoords)
         if showLine?.countsNearby == true { openNearby += 1 }
-        stateLine = SuggestCopy.stateLine(region: region, now: i.now, plan: planStop, mustsNearby: nearby)
+        stateLine = SuggestCopy.stateLine(region: region, now: i.now, plan: planStop, openNearby: openNearby, unconfirmed: unconfirmedNearby,
+                                          adjustedRemaining: i.clock?.adjusted == true ? i.clock?.remaining : nil,
+                                          awayMinutes: planStop?.away)
 
         let focus = i.currentArea ?? areas.first { $0.id == i.plan?.area }
         let neighbor = focus?.neighbors.min { $0.minutes < $1.minutes }.flatMap { n in areas.first { $0.id == n.areaId } }

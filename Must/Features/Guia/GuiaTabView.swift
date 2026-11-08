@@ -51,7 +51,9 @@ struct GuiaAreaView: View {
 
     var body: some View {
         let area = area
-        let plan = dayEngine.plan(for: region.calendar.startOfDay(for: now), region: region, context: context)
+        // O relógio único (o mesmo da capa, da Linha e do Agora): o que ficou pra depois sai da manhã do guia.
+        let clock = DayClock.read(engine: dayEngine, region: region, context: context, at: now, position: services.location.current?.coordinate)
+        let plan = clock.plan
         let assigner = AreaAssigner(areas: areas)
         let inArea = places.filter { p in
             assigner.areaId(name: p.area, cityId: p.cityId, lat: p.lat, lng: p.lng) == area?.id
@@ -60,11 +62,12 @@ struct GuiaAreaView: View {
         let open = inArea.filter { snapshot.isOpen($0.id) }.count
         let byId = Dictionary(places.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         let stops = (plan?.stops ?? []).filter { stop in
+            if clock.skippedIds.contains(stop.id) { return false }
             if let a = stop.area { return a == area?.id }
             guard let p = stop.placeId.flatMap({ byId[$0] }) else { return false }
             return assigner.areaId(name: p.area, cityId: p.cityId, lat: p.lat, lng: p.lng) == area?.id
         }
-        let nowStop = plan.flatMap { dayEngine.now(in: $0, at: now) }?.current
+        let nowStop = clock.now?.current
         let chapters = GuiaChapters.build(
             stops: stops, nowStopId: nowStop?.id,
             extras: inArea.sorted { ($0.isDone ? 1 : 0, $0.order) < ($1.isDone ? 1 : 0, $1.order) }.map { p in

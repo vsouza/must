@@ -105,6 +105,12 @@ enum CorteSplit {
 enum CorteCount {
     /// Quantas coisas abertas a 10 min a pé: seus Musts abertos + o que o cache de "por perto" diz que está aberto.
     static func openWithin10(places: [SuggestPlace], indicated: [NearbyPlace], here: CLLocationCoordinate2D) -> Int {
+        counts(places: places, indicated: indicated, here: here).open
+    }
+
+    /// `open` = aberto com horário confirmado (Google); `unconfirmed` = Musts perto sem horário confirmado: não dá pra
+    /// afirmar que estão abertos, então não entram no numeral.
+    static func counts(places: [SuggestPlace], indicated: [NearbyPlace], here: CLLocationCoordinate2D) -> (open: Int, unconfirmed: Int) {
         let origin = CLLocation(latitude: here.latitude, longitude: here.longitude)
         let reach = 10 * Walk.metersPerMinute
         func near(_ lat: Double, _ lng: Double) -> Bool {
@@ -113,7 +119,8 @@ enum CorteCount {
         let board = places.filter { !$0.done && $0.kind != .photo && $0.state.isOpen && near($0.lat, $0.lng) }
         let boardNames = Set(board.map { $0.name.lowercased() })
         let outside = indicated.filter { $0.openNow == true && near($0.lat, $0.lng) && !boardNames.contains($0.name.lowercased()) }
-        return board.count + outside.count
+        let unknown = places.filter { !$0.done && $0.kind != .photo && $0.state == .unknown && near($0.lat, $0.lng) }.count
+        return (board.count + outside.count, unknown)
     }
 }
 
