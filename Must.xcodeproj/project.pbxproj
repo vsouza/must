@@ -323,6 +323,7 @@
 		9C4014D3EA22E045B245B547 /* BomDiaTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B70DEBB2AAB73A25CCF4BC0 /* BomDiaTests.swift */; };
 		9CC8B06D8C1B600330DC67A4 /* atom-sample.xml in Resources */ = {isa = PBXBuildFile; fileRef = 69797B6B2B256B44652C1819 /* atom-sample.xml */; };
 		9CD2200A8546E3B5F71FEF4D /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4574509CFEC4FC14741A8455 /* Models.swift */; };
+		9D554FFABA1347A3BAD94CCE /* GiftTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0200D0F7E3AC4742CA41C52 /* GiftTests.swift */; };
 		9EF294F1F76304E723EDB13C /* MapSearchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DC9C42C8B821ADC701839EA /* MapSearchTests.swift */; };
 		9F15F6515F09E91125A9D6D9 /* IntentParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB72F5E89393DFD046BC52D8 /* IntentParser.swift */; };
 		A05689C2D9725E4029F56DE1 /* NearbyRanker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F810A340D5DA4290CC357972 /* NearbyRanker.swift */; };
@@ -1098,6 +1099,7 @@
 		ED1C3E7250F21EAC59316249 /* PlacePhotosTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlacePhotosTests.swift; sourceTree = "<group>"; };
 		ED37DC2EAF419B2E07BF858A /* PinsMemo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinsMemo.swift; sourceTree = "<group>"; };
 		EE07089DD4B669E2D6332C3E /* DayShareBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayShareBuilder.swift; sourceTree = "<group>"; };
+		F0200D0F7E3AC4742CA41C52 /* GiftTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GiftTests.swift; sourceTree = "<group>"; };
 		F0337069BB6F61CEAA2C76B4 /* CapaSmartViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapaSmartViews.swift; sourceTree = "<group>"; };
 		F04FEADE15CAB2D71D969131 /* FlightReminders.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightReminders.swift; sourceTree = "<group>"; };
 		F0D079E0D9E82E2F50BE762D /* MapCardTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapCardTests.swift; sourceTree = "<group>"; };
@@ -1598,6 +1600,7 @@
 				538013AE01AF2A312E0ACF82 /* FilmsUITests.swift */,
 				F2FCC18F2FD107CBB17F43DD /* FlightTests.swift */,
 				370D0CA48E024F76392572E5 /* FriendsTests.swift */,
+				F0200D0F7E3AC4742CA41C52 /* GiftTests.swift */,
 				F8A2E431EE5D54677E53846A /* GoogleParsersTests.swift */,
 				1F46BBCF517C68884FEA25E0 /* GoogleRoutesTests.swift */,
 				53579B2816C008C77A14A1E5 /* GuiaChaptersTests.swift */,
@@ -2754,6 +2757,7 @@
 				7A209634EAB7034CAD02944F /* FilmsUITests.swift in Sources */,
 				345D55FBAF0D045350FAF93E /* FlightTests.swift in Sources */,
 				F14C2B41E73AD5CFAE3F60DE /* FriendsTests.swift in Sources */,
+				9D554FFABA1347A3BAD94CCE /* GiftTests.swift in Sources */,
 				98B6650DC0EF418C0FE80013 /* GoogleParsersTests.swift in Sources */,
 				5EA8F39179AD3853B92293A3 /* GoogleRoutesTests.swift in Sources */,
 				C212FDB1B6AA52FA2EBA234B /* GuiaChaptersTests.swift in Sources */,

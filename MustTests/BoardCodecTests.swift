@@ -171,12 +171,12 @@ struct BoardCodecTests {
         #expect(board.version == 2)
     }
 
-    @Test func exportGravaV2ComTripIdEPais() throws {
+    @Test func exportGravaVersaoAtualComTripIdEPais() throws {
         let codec = try Self.makeCodec(.bh)
         try codec.import(board: Self.seed(.bh))
         let data = try BoardCodec.encode(codec.export())
         let object = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
-        #expect(object["version"] as? Int == 2)
+        #expect(object["version"] as? Int == Board.currentVersion)
         #expect(object["tripId"] as? String == "bh")
         #expect(object["countryCode"] as? String == "BR")
         #expect(object["region"] == nil)
@@ -195,8 +195,8 @@ struct BoardCodecTests {
 
     @Test func semViagemNenhumaEhErroDeLeitura() {
         #expect(throws: BoardError.self) { try BoardCodec.decode(Data(#"{"version": 2, "lists": [], "places": []}"#.utf8)) }
-        #expect(throws: BoardError.unsupportedVersion(3)) {
-            let board = try BoardCodec.decode(Data(#"{"version": 3, "tripId": "bh", "lists": [], "places": []}"#.utf8))
+        #expect(throws: BoardError.unsupportedVersion(4)) {
+            let board = try BoardCodec.decode(Data(#"{"version": 4, "tripId": "bh", "lists": [], "places": []}"#.utf8))
             try Self.makeCodec(.bh).import(board: board)
         }
     }

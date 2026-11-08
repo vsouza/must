@@ -441,9 +441,12 @@ enum DebugLaunch {
             PresenteDemo.ensure(context: context, region: region)
             router.push(.presentes, on: .musts)
             router.push(.presente(id: PresenteDemo.kitKatId), on: .musts)
-        case "presente-perto", "presente-quero":
+        case "presente-perto":
             PresenteDemo.ensure(context: context, region: region)
             router.select(.hoje)
+        case "presente-quero": // o quero com "presente": a faixa laranja dos presentes pendentes e a loja mais perto
+            PresenteDemo.ensure(context: context, region: region)
+            router.sheet = .quero(text: "presente")
         // RODADA-23 + prompt 26 (contrato): uma entrada por tela nova.
         case "emcartaz": router.push(.emCartaz, on: .hoje)
         case "filmes": router.push(.filmes(placeId: arg ?? "j105"), on: .musts)
