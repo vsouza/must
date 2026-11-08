@@ -114,3 +114,8 @@ Os prompts em `prompts/` são executados em ordem (01 → 25; a rodada atual é 
 - **Quero sem vazio à toa** (`WantOrigin`): origem = GPS só dentro da cidade da viagem, senão o bairro/cidade da viagem; verbo sozinho vale; fontes externas aprovadas na faixa tinta; vazio sempre com motivo.
 - **Ingressos**: camada de texto do PDF › `RecognizeDocumentsRequest` › extrator de campos › Foundation Models só pros campos incertos; corpus em `MustTests/Fixtures/tickets/`, relatório em `docs/ingressos-leitura.md`. Sem modelo de terceiros por ora.
 - **Testes: rodar com `scripts/test.sh [simulador] [derivedData]`** — fecha o app e reinicia o simulador se o XCTest não conectar no `testmanagerd` (falha conhecida do simulador depois de sessões de prints).
+
+## Grupo (08/11/2026, pedido do Vinicius)
+- Sem servidor: tudo passa pelo compartilhar do iOS (WhatsApp) e fica só no aparelho. Bloco **Grupo** na aba Viagem: Pessoas (`Companion`) · Votar (`PlacePoll`, cartaz "A ou B?" 1080×1920, você marca os votos; vencedor ganha "+ dia") · Acertar contas (`Expense.paidBy`/`splitWith`, lógica em `Must/Services/Group/Settlement.swift`, em centavos inteiros) · Mandar o dia.
+- O quero responde perguntas sem IA com `QuestionAnswerer` (dá tempo, preço, horário, como chego, vale a pena, agora) a partir do board, `DayClock` e `DaySolver`; nunca inventa número.
+- Rótulos do mapa só em letras latinas: o style usa `name:en` quando a feição tem `script` (não latina), senão `name`.
