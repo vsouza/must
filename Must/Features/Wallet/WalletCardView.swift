@@ -67,7 +67,8 @@ struct WalletDocumentFacts: Equatable {
     }
 }
 
-/// Cartão de cor (verde, grafite, azul) com um pouco de rotação, como o design. Toque abre o item.
+/// Cartão da Carteira no corte: faixa inteira de tinta (laranja se o saldo/validade pede atenção), nome, detalhe, o valor em
+/// numeral e a etiqueta. Sem degradê, rotação ou sombra. Toque abre o item.
 struct WalletCardView: View {
     let item: WalletItem
     let facts: WalletCardFacts
@@ -75,71 +76,68 @@ struct WalletCardView: View {
     var onTap: () -> Void
     var onWallet: () -> Void
 
-    private static let amber = Color(hex: 0xFFB020)
-
     var body: some View {
+        let fill = facts.alert ? V8.orange : V8.ink
+        let text = facts.alert ? V8.ink : V8.white
+        let soft = facts.alert ? V8.ink.opacity(0.75) : V8.muteDark
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .top, spacing: 12) {
                 VStack(alignment: .leading, spacing: 4) {
-                    HStack(alignment: .firstTextBaseline, spacing: 8) {
-                        Text(item.name).font(.must.archivo(18, .semibold)).lineLimit(1)
-                        if let local = item.nameLocal {
-                            Text(local).font(.must.archivo(13, .medium)).opacity(0.85)
-                        }
-                    }
-                    Text(item.detail).font(.must.archivo(12)).opacity(0.8).lineLimit(2)
+                    Text(item.name).font(V8Font.text(18, weight: .bold)).foregroundStyle(text)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(item.detail).font(V8Font.text(13)).foregroundStyle(soft)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 8)
+                if item.attachmentName != nil, !item.opensWallet {
+                    Text("VOUCHER NO PDF").font(V8Font.mono(10, weight: .semibold)).tracking(0.8).foregroundStyle(text)
+                        .padding(.horizontal, 8).padding(.vertical, 5)
+                        .overlay(Rectangle().stroke(text, lineWidth: 1.5))
+                }
+            }
+            if !facts.label.isEmpty || !facts.value.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    MonoLabel(facts.label, size: 10, color: soft)
+                    Text(facts.value)
+                        .font(item.kind == .railPass ? V8Font.text(18, weight: .bold) : V8Font.numeral(40))
+                        .foregroundStyle(text)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.6)
+                }
+                .padding(.top, 18)
+            }
+            HStack(alignment: .center, spacing: 12) {
+                if let tag = facts.tag {
+                    Text(tag.uppercased())
+                        .font(V8Font.mono(10, weight: .semibold)).tracking(0.8)
+                        .foregroundStyle(facts.alert ? V8.orange : text)
+                        .padding(.horizontal, 8).padding(.vertical, 5)
+                        .background(facts.alert ? V8.ink : Color.clear)
+                        .overlay(Rectangle().stroke(text, lineWidth: facts.alert ? 0 : 1.5))
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: 8)
                 if item.opensWallet {
                     Button(action: onWallet) {
-                        Text("Abrir no Wallet ↗").font(.must.archivo(13, .semibold))
-                            .padding(.horizontal, 14).frame(minHeight: 34)
-                            .background(Capsule().fill(Color.white.opacity(0.22)))
+                        Text("ABRIR NO WALLET ↗")
+                            .font(V8Font.mono(11, weight: .semibold)).tracking(0.8)
+                            .foregroundStyle(text)
+                            .padding(.horizontal, 12).frame(minHeight: 44)
+                            .overlay(Rectangle().stroke(text, lineWidth: 2))
                     }
-                    .buttonStyle(MustPressStyle())
-                } else if item.attachmentName != nil {
-                    Text("voucher no PDF").font(.must.archivo(13, .semibold))
-                        .padding(.horizontal, 14).frame(minHeight: 34)
-                        .background(Capsule().fill(Color.white.opacity(0.22)))
+                    .buttonStyle(.plain)
                 }
             }
-            Spacer(minLength: 10)
-            HStack(alignment: .bottom, spacing: 12) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(facts.label).font(.must.archivo(12)).opacity(0.8)
-                    Text(facts.value)
-                        .font(item.kind == .railPass ? .must.archivo(16, .semibold) : .must.mono(22, .semibold))
-                        .lineLimit(2)
-                }
-                Spacer(minLength: 8)
-                if let tag = facts.tag { tagPill(tag) }
-            }
+            .padding(.top, 14)
         }
-        .foregroundStyle(.white)
-        .padding(18)
-        .frame(maxWidth: .infinity, minHeight: 160, alignment: .topLeading)
-        .background(
-            LinearGradient(colors: item.kind.tone.colors.map { Color(hex: $0) }, startPoint: .topLeading, endPoint: .bottomTrailing),
-            in: RoundedRectangle(cornerRadius: 22, style: .continuous)
-        )
-        .shadow(color: Color(hex: 0x121316, opacity: 0.18), radius: 16, y: 14)
-        .rotationEffect(.degrees(rotation))
+        .padding(.horizontal, 20)
+        .padding(.vertical, 18)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .background(fill)
+        .overlay(alignment: .bottom) { Rectangle().fill(V8.paper).frame(height: 2) }
         .contentShape(Rectangle())
         .onTapGesture(perform: onTap)
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .contain)
         .accessibilityAddTraits(.isButton)
-    }
-
-    @ViewBuilder private func tagPill(_ text: String) -> some View {
-        let isRail = item.kind == .railPass
-        Text(text)
-            .font(.must.archivo(13, .semibold))
-            .multilineTextAlignment(.trailing)
-            .fixedSize(horizontal: false, vertical: true)
-            .foregroundStyle(facts.alert || isRail ? Color.must.greenText : .white)
-            .padding(.horizontal, 10).padding(.vertical, 6)
-            .background(
-                Capsule().fill(facts.alert ? Self.amber : (isRail ? Color.must.green : Color.white.opacity(0.2)))
-            )
     }
 }

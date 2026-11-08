@@ -41,19 +41,21 @@ struct Pill: View {
             if let icon { MustIconView(icon, size: 14) }
             Text(text).lineLimit(1)
         }
-        .font(V8Font.text(13, weight: .semibold))
+        .font(V8Font.mono(11, weight: .semibold))
+        .tracking(0.8)
+        .textCase(.uppercase)
         .foregroundStyle(foreground)
-        .padding(.horizontal, 13)
-        .frame(minHeight: 34)
-        .background(background, in: Capsule())
-        .overlay(Capsule().strokeBorder(resolved == .default ? V8.ink : Color.clear, lineWidth: 1))
-        .contentShape(Capsule())
+        .padding(.horizontal, 12)
+        .frame(minHeight: 40)
+        .background(background, in: Rectangle())
+        .overlay(Rectangle().strokeBorder(resolved == .green ? Color.clear : V8.ink, lineWidth: 2))
+        .contentShape(Rectangle())
     }
 
     private var foreground: Color {
         switch resolved {
         case .default: V8.ink
-        case .dark: V8.white
+        case .dark: V8.paper
         case .green: V8.ink
         }
     }
@@ -91,16 +93,20 @@ struct PrimaryButton: View {
         Button(action: action) {
             HStack(spacing: 10) {
                 if let icon, !iconTrailing { MustIconView(icon, size: 18) }
-                Text(title).lineLimit(1)
+                Text(title).lineLimit(2)
                 if let icon, iconTrailing { MustIconView(icon, size: 18) }
             }
-            .font(V8Font.text(16, weight: .bold))
-            .foregroundStyle(style == .green ? V8.ink : V8.white)
-            .padding(.horizontal, 22)
+            .font(V8Font.mono(13, weight: .semibold))
+            .tracking(1.1)
+            .textCase(.uppercase)
+            .multilineTextAlignment(.center)
+            .foregroundStyle(style == .green ? V8.ink : V8.paper)
+            .padding(.horizontal, 20)
             .frame(maxWidth: .infinity)
             .frame(minHeight: 56)
-            .background(style == .green ? V8.orange : V8.ink, in: Capsule())
-            .contentShape(Capsule())
+            .background(style == .green ? V8.orange : V8.ink, in: Rectangle())
+            .overlay(Rectangle().strokeBorder(V8.ink, lineWidth: 2))
+            .contentShape(Rectangle())
         }
         .buttonStyle(MustPressStyle())
     }
@@ -122,15 +128,18 @@ struct GhostButton: View {
         Button(action: action) {
             HStack(spacing: 8) {
                 if let icon { MustIconView(icon, size: 17) }
-                Text(title).lineLimit(1)
+                Text(title).lineLimit(2)
             }
-            .font(V8Font.text(15, weight: .semibold))
+            .font(V8Font.mono(12, weight: .semibold))
+            .tracking(1)
+            .textCase(.uppercase)
+            .multilineTextAlignment(.center)
             .foregroundStyle(V8.ink)
-            .padding(.horizontal, 18)
+            .padding(.horizontal, 16)
             .frame(maxWidth: .infinity)
             .frame(minHeight: 48)
-            .overlay(Capsule().strokeBorder(V8.ink, lineWidth: 1.5))
-            .contentShape(Capsule())
+            .overlay(Rectangle().strokeBorder(V8.ink, lineWidth: 2))
+            .contentShape(Rectangle())
         }
         .buttonStyle(MustPressStyle())
     }
@@ -160,7 +169,7 @@ struct IconButton: View {
                 .foregroundStyle(style == .dark ? V8.white : V8.ink)
                 .frame(width: size, height: size)
                 .background { background }
-                .contentShape(Circle())
+                .contentShape(Rectangle())
         }
         .buttonStyle(MustPressStyle())
         .accessibilityLabel(label ?? symbol.label)
@@ -168,9 +177,9 @@ struct IconButton: View {
 
     @ViewBuilder private var background: some View {
         switch style {
-        case .gray: Circle().strokeBorder(V8.ink, lineWidth: 1)
-        case .dark: Circle().fill(V8.ink)
-        case .glass: Circle().fill(V8.paper)
+        case .gray: Rectangle().strokeBorder(V8.ink, lineWidth: 2)
+        case .dark: Rectangle().fill(V8.ink)
+        case .glass: Rectangle().fill(V8.paper)
         }
     }
 }
@@ -190,8 +199,7 @@ struct Fab: View {
             MustIconView(symbol, size: 22)
                 .foregroundStyle(V8.white)
                 .frame(width: 54, height: 54)
-                .background(Circle().fill(V8.ink))
-                .shadow(color: V8.ink.opacity(0.28), radius: 22, x: 0, y: 18)
+                .background(Rectangle().fill(V8.ink))
         }
         .buttonStyle(MustPressStyle())
         .accessibilityLabel(symbol.label)
@@ -223,8 +231,8 @@ struct Tag: View {
         .foregroundStyle(style == .dark ? V8.white : V8.ink)
         .padding(.vertical, 5)
         .padding(.horizontal, 8)
-        .background(style == .dark ? V8.ink : (style == .green ? V8.orange : V8.bone),
-                    in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+        .background(style == .dark ? V8.ink : (style == .green ? V8.orange : Color.clear), in: Rectangle())
+        .overlay(Rectangle().strokeBorder(style == .default ? V8.ink : Color.clear, lineWidth: 1.5))
     }
 }
 
@@ -579,9 +587,9 @@ struct MustTabBar: View {
 /// Alça de sheet.
 struct SheetHandle: View {
     var body: some View {
-        Capsule()
-            .fill(V8.ink.opacity(0.2))
-            .frame(width: 36, height: 5)
+        Rectangle()
+            .fill(V8.ink.opacity(0.3))
+            .frame(width: 36, height: 4)
             .padding(.top, 8)
             .accessibilityHidden(true)
     }

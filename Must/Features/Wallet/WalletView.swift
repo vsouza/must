@@ -8,6 +8,7 @@ struct WalletView: View {
     @Environment(\.openURL) private var openURL
     @Environment(RegionStore.self) private var store
     @Environment(AppRouter.self) private var router
+    @Environment(\.tripTheme) private var theme
 
     @Query(sort: [SortDescriptor(\WalletItem.order), SortDescriptor(\WalletItem.createdAt)]) private var items: [WalletItem]
     @Query private var expenses: [Expense]
@@ -29,66 +30,50 @@ struct WalletView: View {
         let cardSpend = TripStats.spent(expenses.filter { $0.method == .card }, in: period, calendar: region.calendar)
         let fxRate = settingsList.first?.fxRate ?? 0
 
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                topBar.padding(.top, 8)
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Carteira").mustTitle()
-                    Text("cartões, passes e documentos — toque e vai direto pro Wallet ou pro app")
-                        .mustSerif(18).foregroundStyle(Color.must.secondary)
+        VStack(spacing: 0) {
+            CutScreenHeader(title: "Carteira", corner: ["\(region.shortName) · central"], subtitle: "Cartões, passes e documentos. Toque e vai.",
+                            height: 220, onBack: { dismiss() }) {
+                CutCornerButton(systemName: "plus", label: "Adicionar à carteira", tint: theme.coverInk) { adding = true }
+            }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
                     if region.profile.money?.shoppingList == true {
                         Button { router.push(.compras, on: router.tab) } label: {
-                            Tag(shopping.isEmpty ? "Compras da viagem" : "Compras da viagem · \(shopping.count)")
+                            CutRow(title: "Compras da viagem", detail: shopping.isEmpty ? "lista do que trazer" : "\(shopping.count) na lista") {
+                                CutValue(text: "abrir", chevron: true)
+                            }
                         }
-                        .buttonStyle(MustPressStyle())
-                        .padding(.top, 6)
+                        .buttonStyle(.plain)
                     }
+                    if items.isEmpty {
+                        emptyState
+                    } else {
+                        if !cards.isEmpty {
+                            cardStack(cardSpend: cardSpend, fxRate: fxRate)
+                        }
+                        if !documents.isEmpty {
+                            CutSection(label: "documentos · \(documents.count)", inset: false) { documentList }
+                        }
+                    }
+                    V8BarSpacer()
                 }
-                .padding(.top, 22)
-
-                if items.isEmpty {
-                    emptyState.padding(.top, 28)
-                } else {
-                    if !cards.isEmpty {
-                        cardStack(cardSpend: cardSpend, fxRate: fxRate).padding(.top, 26)
-                    }
-                    if !documents.isEmpty {
-                        documentList.padding(.top, 26)
-                    }
-                }
-                Color.clear.frame(height: 40)
             }
-            .padding(.horizontal, 22)
+            .scrollIndicators(.hidden)
         }
-        .scrollIndicators(.hidden)
-        .background(Color.must.bg)
+        .background(V8.paper.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
         .sheet(item: $opened) { item in WalletItemSheet(item: item) }
         .sheet(isPresented: $adding) { WalletEditor(item: nil) }
-    }
-
-    // MARK: Topo
-
-    private var topBar: some View {
-        HStack {
-            IconButton(.voltar, label: "Voltar") { dismiss() }
-            Spacer()
-            Micro("\(region.shortName) · central da viagem")
-            Spacer()
-            IconButton(.adicionar, style: .dark, label: "Adicionar à carteira") { adding = true }
-        }
     }
 
     // MARK: Cartões
 
     /// Cartões empilhados, cada um girado um pouco (1–2°), como o design.
     private func cardStack(cardSpend: Double, fxRate: Double) -> some View {
-        let tilts: [Double] = [-1.5, 1, -0.8]
-        return VStack(spacing: -16) {
-            ForEach(Array(cards.enumerated()), id: \.element.id) { index, item in
+        VStack(spacing: 0) {
+            ForEach(cards, id: \.id) { item in
                 WalletCardView(item: item,
                                facts: WalletCardFacts.make(item, region: region, now: now, cardSpend: cardSpend, fxRate: fxRate),
-                               rotation: tilts[index % tilts.count],
                                onTap: { opened = item },
                                onWallet: { openURL(WalletRules.walletURL) })
             }
@@ -99,44 +84,42 @@ struct WalletView: View {
 
     private var documentList: some View {
         VStack(spacing: 0) {
-            ForEach(Array(documents.enumerated()), id: \.element.id) { index, item in
-                if index > 0 { RowDivider() }
+            ForEach(documents, id: \.id) { item in
                 Button { opened = item } label: { documentRow(item) }
                     .buttonStyle(.plain)
             }
         }
-        .padding(.horizontal, 16)
-        .background(Color.white, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(Color.must.line))
     }
 
     private func documentRow(_ item: WalletItem) -> some View {
         let facts = WalletDocumentFacts.make(item, region: region, now: now)
         return HStack(spacing: 12) {
             Text(facts.badge)
-                .font(.must.mono(10, .semibold))
-                .foregroundStyle(Color.must.ink)
-                .frame(width: 34, height: 34)
-                .background(Color.must.surface, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .font(V8Font.mono(10, weight: .semibold))
+                .foregroundStyle(V8.ink)
+                .frame(width: 44, height: 44)
+                .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
             VStack(alignment: .leading, spacing: 1) {
-                Text(item.name).font(.must.archivo(14, .semibold)).foregroundStyle(Color.must.ink).lineLimit(1)
+                Text(item.name).font(V8Font.text(16, weight: .bold)).foregroundStyle(V8.ink).lineLimit(2)
                 if !facts.subtitle.isEmpty {
-                    Text(facts.subtitle).font(.must.archivo(12)).foregroundStyle(Color.must.secondary).lineLimit(1)
+                    Text(facts.subtitle).font(V8Font.text(13)).foregroundStyle(V8.mute).lineLimit(2)
                 }
             }
-            Spacer(minLength: 8)
+            .frame(maxWidth: .infinity, alignment: .leading)
             documentTag(facts)
         }
-        .padding(.vertical, 11)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 12)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .overlay(alignment: .top) { IndexRule() }
         .contentShape(Rectangle())
     }
 
     @ViewBuilder private func documentTag(_ facts: WalletDocumentFacts) -> some View {
         switch facts.emphasis {
-        case .ready: Tag(facts.tag, style: .green)
-        case .alert: Tag(facts.tag, dot: Color(hex: 0xFFB020))
-        case nil: Tag(facts.tag)
+        case .ready: CutTag(text: facts.tag, filled: true, orange: true)
+        case .alert: CutTag(text: facts.tag, filled: true)
+        case nil: CutTag(text: facts.tag)
         }
     }
 
@@ -144,12 +127,12 @@ struct WalletView: View {
 
     private var emptyState: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Micro("nada guardado ainda")
+            MonoLabel("nada guardado ainda", size: 10, color: V8.mute)
             Text("Toque em + pra adicionar à mão. Trem e o QR do Visit Japan Web entram pelo Trazer ingresso.")
-                .mustMeta()
+                .font(V8Font.text(15)).foregroundStyle(V8.ink)
         }
-        .padding(18)
+        .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.must.surface2, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay(alignment: .bottom) { IndexRule() }
     }
 }

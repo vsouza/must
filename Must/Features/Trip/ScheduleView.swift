@@ -9,6 +9,7 @@ enum ScheduleTab: String, Hashable, Sendable {
 struct ScheduleView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppRouter.self) private var router
+    @Environment(\.tripTheme) private var theme
 
     @State private var tab: ScheduleTab
 
@@ -18,19 +19,15 @@ struct ScheduleView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack {
-                IconButton(.voltar, style: .glass, label: "Voltar") { dismiss() }
-                Spacer()
-                Micro("agenda da viagem")
-                Spacer()
-                IconButton(.adicionar, style: .dark, label: "Trazer ingresso") { router.sheet = .ticketImport(inboxId: nil) }
+            CutScreenHeader(title: "Agenda", corner: ["Viagem · voos e reservas"], height: 190, onBack: { dismiss() }) {
+                CutCornerButton(systemName: "plus", label: "Trazer ingresso", tint: theme.coverInk) {
+                    router.sheet = .ticketImport(inboxId: nil)
+                }
             }
-            .padding(.horizontal, 22)
-            .padding(.top, 8)
-
             switcher
-                .padding(.horizontal, 22)
-                .padding(.top, 14)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .overlay(alignment: .bottom) { IndexRule() }
 
             switch tab {
             case .voos:
@@ -39,23 +36,18 @@ struct ScheduleView: View {
                 ReservationsView(embedded: true, onFlight: { tab = .voos })
             }
         }
-        .background(Color.must.bg)
+        .background(V8.paper.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
     }
 
     private var switcher: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 8) {
             ForEach([ScheduleTab.voos, .reservas], id: \.self) { option in
                 Button { tab = option } label: {
-                    Text(option == .voos ? "Voos" : "Reservas")
-                        .font(.must.archivo(15, .semibold))
-                        .foregroundStyle(tab == option ? Color.white : Color.must.ink)
+                    CutChip(text: option == .voos ? "Voos" : "Reservas", isOn: tab == option, minHeight: 44)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
-                        .background(Capsule().fill(tab == option ? Color.must.ink : Color.must.surface))
                 }
-                .buttonStyle(MustPressStyle())
-                .accessibilityAddTraits(tab == option ? .isSelected : [])
+                .buttonStyle(.plain)
             }
         }
     }

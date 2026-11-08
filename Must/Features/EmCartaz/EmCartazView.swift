@@ -6,6 +6,7 @@ import SwiftUI
 struct EmCartazView: View {
     @Environment(\.showEvents) private var showEvents
     @Environment(AppRouter.self) private var router
+    @Environment(\.dismiss) private var dismiss
     @Environment(RegionStore.self) private var store
     @Environment(\.dynamicTypeSize) private var typeSize
     @Query private var trips: [TripInfo]
@@ -27,38 +28,35 @@ struct EmCartazView: View {
         let total = EmCartazModel.sections(today: sections.today, upcoming: sections.later, filter: .trip, now: now,
                                            calendar: region.calendar)
         let counts = EmCartazModel.headerCounts(total)
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                header(counts: counts).padding(.top, 8)
-                HStack(alignment: .lastTextBaseline, spacing: 12) {
-                    Text("Em cartaz")
-                        .font(V8Font.display(52))
-                        .tracking(-1.6)
-                        .foregroundStyle(V8.ink)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.6)
-                        .accessibilityAddTraits(.isHeader)
-                    BigNumeral("\(sections.count)", size: 74, color: V8.orange)
+        VStack(spacing: 0) {
+            header(counts: counts)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack(alignment: .center, spacing: 12) {
+                        BigNumeral("\(sections.count)", size: 74, color: V8.orange).fixedSize()
+                        SpecLabel("em cartaz\nna viagem")
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 18)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("Em cartaz: \(sections.count)")
+                    filters.padding(.horizontal, 20).padding(.vertical, 16)
+                    IndexRule()
+                    if sections.count == 0 { empty }
+                    if !sections.today.isEmpty {
+                        sectionTitle("Hoje", trailing: "\(DayText.weekdayShort(now, region: region)) \(region.dayNumber(now)) · \(sections.today.count)")
+                        rows(sections.today, startAt: 1)
+                    }
+                    if !sections.later.isEmpty {
+                        sectionTitle("Dias seguintes", trailing: "\(sections.later.count)")
+                        rows(sections.later, startAt: sections.today.count + 1)
+                    }
+                    Color.clear.frame(height: 190)
                 }
-                .padding(.top, 22)
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("Em cartaz: \(sections.count)")
-                filters.padding(.top, 18)
-                if sections.count == 0 { empty.padding(.top, 36) }
-                if !sections.today.isEmpty {
-                    sectionTitle("Hoje", trailing: "\(DayText.weekdayShort(now, region: region)) \(region.dayNumber(now)) · \(sections.today.count)")
-                        .padding(.top, 30)
-                    rows(sections.today, startAt: 1)
-                }
-                if !sections.later.isEmpty {
-                    sectionTitle("Dias seguintes", trailing: "\(sections.later.count)").padding(.top, 34)
-                    rows(sections.later, startAt: sections.today.count + 1)
-                }
-                Color.clear.frame(height: 190)
             }
-            .padding(.horizontal, 20)
+            .scrollIndicators(.hidden)
         }
-        .scrollIndicators(.hidden)
         .background(V8.paper.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
         .safeAreaInset(edge: .bottom, spacing: 0) { footer }
@@ -69,12 +67,10 @@ struct EmCartazView: View {
 
     private func header(counts: (left: String, right: String)) -> some View {
         let city = trips.first?.city(on: now, calendar: region.calendar)?.name ?? region.displayName
-        return HStack(alignment: .top) {
-            V8SpecStack(lines: ["\(city) · \(DayText.weekdayShort(now, region: region)) \(region.shortDay(now))", counts.left]
-                .filter { !$0.isEmpty }).padding(.top, 14)
-            Spacer(minLength: 12)
-            V8SpecStack(lines: [counts.right, "sem scraping"].filter { !$0.isEmpty }, alignment: .trailing).padding(.top, 14)
-        }
+        return CutScreenHeader(title: "Em cartaz",
+                               corner: ["\(city) · \(DayText.weekdayShort(now, region: region)) \(region.shortDay(now))", counts.left, counts.right]
+                                   .filter { !$0.isEmpty },
+                               height: 210, onBack: { dismiss() })
     }
 
     private var filters: some View {
@@ -85,12 +81,14 @@ struct EmCartazView: View {
 
     private func sectionTitle(_ title: String, trailing: String) -> some View {
         HStack(alignment: .firstTextBaseline) {
-            Text(title).font(V8Font.display(28)).tracking(-0.8).foregroundStyle(V8.ink)
+            Text(title).font(V8Font.display(26)).tracking(-0.8).foregroundStyle(V8.paper)
                 .accessibilityAddTraits(.isHeader)
             Spacer(minLength: 8)
-            SpecLabel(trailing)
+            SpecLabel(trailing, color: V8.muteDark)
         }
-        .padding(.bottom, 10)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 10)
+        .background(V8.ink)
     }
 
     private var empty: some View {
@@ -100,6 +98,7 @@ struct EmCartazView: View {
                 .font(V8Font.text(15)).foregroundStyle(V8.mute)
                 .fixedSize(horizontal: false, vertical: true)
         }
+        .padding(20)
     }
 
     // MARK: Linhas
@@ -113,7 +112,7 @@ struct EmCartazView: View {
                     EmCartazRow(index: startAt + offset, event: event, region: region, now: now,
                                 stacked: typeSize.isAccessibilitySize)
                 }
-                .buttonStyle(MustPressStyle())
+                .buttonStyle(.plain)
                 .disabled(event.placeId == nil)
             }
         }
@@ -122,24 +121,29 @@ struct EmCartazView: View {
     // MARK: Rodapé
 
     private var footer: some View {
-        HStack(spacing: 12) {
-            V8Button("Colar link", .ink, icon: .colarLink) { router.sheet = .addLink(url: nil, listId: nil) }
-            // TODO(r23:A): quando o leitor de cartaz (Vision + EventExtractor) tiver fluxo próprio, apontar pra ele;
-            // até lá o atalho abre o leitor de ingresso (câmera/Fotos), que já faz OCR no aparelho.
-            V8Button("Foto do cartaz", .line, icon: .cameraFoto) { router.sheet = .ticketImport(inboxId: nil) }
+        // Dois botões de ponta a ponta no pé: laranja (colar link) e tinta (foto do cartaz), régua de tinta em cima.
+        // TODO(r23:A): quando o leitor de cartaz (Vision + EventExtractor) tiver fluxo próprio, apontar pra ele;
+        // até lá o atalho abre o leitor de ingresso (câmera/Fotos), que já faz OCR no aparelho.
+        HStack(spacing: 0) {
+            footerButton("Colar link", fill: V8.orange, ink: V8.ink) { router.sheet = .addLink(url: nil, listId: nil) }
+            footerButton("Foto do cartaz", fill: V8.ink, ink: V8.paper) { router.sheet = .ticketImport(inboxId: nil) }
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 14)
-        .padding(.bottom, 96) // acima da barra v8
-        .background {
-            VStack(spacing: 0) {
-                LinearGradient(colors: [V8.paper.opacity(0), V8.paper], startPoint: .top, endPoint: .bottom).frame(height: 36)
-                V8.paper
-            }
-            .padding(.top, -36)
-            .ignoresSafeArea()
-            .allowsHitTesting(false)
+        .padding(.bottom, 82) // acima da barra v8
+        .background(V8.paper.ignoresSafeArea())
+        .overlay(alignment: .top) { Rectangle().fill(V8.ink).frame(height: 2) }
+    }
+
+    private func footerButton(_ title: String, fill: Color, ink: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title.uppercased())
+                .font(V8Font.mono(12, weight: .semibold)).tracking(1)
+                .multilineTextAlignment(.center)
+                .foregroundStyle(ink)
+                .frame(maxWidth: .infinity, minHeight: 56)
+                .background(fill)
+                .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
     }
 }
 
@@ -174,14 +178,15 @@ struct EmCartazRow: View {
                     .foregroundStyle(V8.mute)
                     .lineLimit(stacked ? 3 : 1)
                     .truncationMode(.tail)
-                V8Tag(text: EmCartazModel.origin(event.source), style: .paper).padding(.top, 4)
+                CutTag(text: EmCartazModel.origin(event.source)).padding(.top, 4)
                 if stacked { trailingView(trailing).padding(.top, 4) }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             if !stacked { trailingView(trailing) }
         }
+        .padding(.horizontal, 20)
         .padding(.vertical, 14)
-        .overlay(alignment: .top) { Rectangle().fill(V8.ink.opacity(0.14)).frame(height: 1) }
+        .overlay(alignment: .bottom) { IndexRule() }
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }

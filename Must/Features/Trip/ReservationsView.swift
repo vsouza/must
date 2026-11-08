@@ -7,6 +7,7 @@ struct ReservationsView: View {
     @Environment(AppRouter.self) private var router
     @Environment(RegionStore.self) private var store
     @Environment(Services.self) private var services
+    @Environment(\.tripTheme) private var theme
 
     @Query private var places: [Place]
     @Query(sort: \TripEvent.at) private var events: [TripEvent]
@@ -86,51 +87,44 @@ struct ReservationsView: View {
     var body: some View {
         let all = items
         let next = all.first { !$0.done && ($0.allDay ? region.calendar.startOfDay(for: $0.at) >= region.calendar.startOfDay(for: now) : $0.at >= now) }
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                HStack {
-                    if embedded {
-                        Color.clear.frame(width: 40, height: 40)
-                    } else {
-                        IconButton(.voltar, style: .glass, label: "Voltar") { dismiss() }
+        VStack(spacing: 0) {
+            if !embedded {
+                CutScreenHeader(title: "Reservas", corner: [trips.first?.hasTrip == true ? "âncoras da viagem" : "âncoras do mês"],
+                                subtitle: "O dia se monta em volta delas", height: 200, onBack: { dismiss() }) {
+                    CutCornerButton(systemName: "plus", label: "Novo evento", tint: theme.coverInk) { editing = .new }
+                }
+            }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack(alignment: .center, spacing: 12) {
+                        BigNumeral("\(all.count)", size: 64, color: V8.orange).fixedSize()
+                        SpecLabel(all.count == 1 ? "marcada\no dia se monta em volta" : "marcadas\no dia se monta em volta")
+                        Spacer(minLength: 8)
+                        if embedded {
+                            CutCornerButton(systemName: "plus", label: "Novo evento") { editing = .new }
+                        }
                     }
-                    Spacer()
-                    Micro(trips.first?.hasTrip == true ? "âncoras da viagem" : "âncoras do mês")
-                    Spacer()
-                    IconButton(.adicionar, style: .dark, label: "Novo evento") { editing = .new }
-                }
-                .padding(.top, 8)
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Reservas").mustTitle()
-                    Text("o dia se monta em volta delas · \(all.count) \(all.count == 1 ? "marcada" : "marcadas")")
-                        .mustSerif(18).foregroundStyle(Color.must.secondary)
-                }
-                .padding(.top, 22)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 14)
+                    .overlay(alignment: .bottom) { IndexRule() }
 
-                GhostButton("Trazer ingresso", icon: .colarLink) { router.sheet = .ticketImport(inboxId: nil) }
-                    .padding(.top, 18)
+                    Button { router.sheet = .ticketImport(inboxId: nil) } label: {
+                        CutRow(title: "Trazer ingresso", detail: "PDF, foto ou link") { CutValue(text: "abrir", chevron: true) }
+                    }
+                    .buttonStyle(.plain)
 
-                if let next { nextCard(next).padding(.top, 22) }
-                list(all).padding(.top, next == nil ? 22 : -14)
-                if all.isEmpty {
-                    Text("Nada marcado ainda. Reserva de lugar entra pelo Editar lugar; trem, voo e passeio de dia inteiro, pelo +.")
-                        .mustMeta().padding(.top, 20)
+                    if let next { nextCard(next) }
+                    list(all)
+                    if all.isEmpty {
+                        Text("Nada marcado ainda. Reserva de lugar entra pelo Editar lugar; trem, voo e passeio de dia inteiro, pelo +.")
+                            .font(V8Font.text(14)).foregroundStyle(V8.mute).padding(20)
+                    }
+                    V8BarSpacer()
                 }
-                TabBarSpacer()
             }
-            .padding(.horizontal, 22)
+            .scrollIndicators(.hidden)
         }
-        .scrollIndicators(.hidden)
-        .background {
-            ZStack {
-                Color.must.bg
-                BlobBackground(style: .custom([
-                    Blob(cx: 350, cy: 140, rx: 100, ry: 70, rotation: -18, fill: .blue, opacity: 0.85),
-                    Blob(cx: 0, cy: 250, rx: 60, ry: 45, rotation: 10, fill: .green),
-                ]))
-            }
-            .ignoresSafeArea()
-        }
+        .background(V8.paper.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
         .sheet(item: $editing) { target in
             switch target {
@@ -150,53 +144,50 @@ struct ReservationsView: View {
         }
         return Button { open(item) } label: {
             VStack(alignment: .leading, spacing: 8) {
-                Micro("próxima · \(today ? "hoje" : region.shortDay(item.at))", color: .white.opacity(0.75))
+                MonoLabel("próxima · \(today ? "hoje" : region.shortDay(item.at))", size: 10, color: V8.ink)
                 HStack(alignment: .firstTextBaseline) {
-                    Text(item.title).font(.must.archivo(24, .semibold)).foregroundStyle(.white).lineLimit(1)
+                    Text(item.title).font(V8Font.text(22, weight: .bold)).foregroundStyle(V8.ink).lineLimit(2)
                     Spacer()
-                    if !item.allDay { Text(region.timeString(item.at)).font(.must.mono(26, .semibold)).foregroundStyle(.white) }
+                    if !item.allDay { Text(region.timeString(item.at)).font(V8Font.numeral(40)).foregroundStyle(V8.ink) }
                 }
-                Text(parts.joined(separator: " · ")).font(.must.archivo(14)).foregroundStyle(.white.opacity(0.9)).lineLimit(2)
+                Text(parts.joined(separator: " · ")).font(V8Font.text(14)).foregroundStyle(V8.ink.opacity(0.8)).lineLimit(2)
                     .multilineTextAlignment(.leading)
             }
-            .padding(20)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(LinearGradient(colors: [Color(hex: 0x4C8DFF), Color.must.blue], startPoint: .topLeading, endPoint: .bottomTrailing),
-                        in: RoundedRectangle(cornerRadius: 26, style: .continuous))
-            .rotationEffect(.degrees(-1))
-            .zIndex(1)
+            .background(V8.orange)
+            .overlay(alignment: .bottom) { IndexRule() }
+            .contentShape(Rectangle())
         }
-        .buttonStyle(MustPressStyle())
+        .buttonStyle(.plain)
     }
 
     private func list(_ all: [Item]) -> some View {
         VStack(spacing: 0) {
-            ForEach(Array(all.enumerated()), id: \.element.id) { index, item in
-                if index > 0 { RowDivider() }
+            ForEach(all) { item in
                 Button { open(item) } label: { row(item) }.buttonStyle(.plain)
             }
         }
-        .padding(.horizontal, 20)
-        .padding(.top, all.isEmpty ? 0 : 14)
-        .background(Color.white, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(Color.must.line))
     }
 
     private func row(_ item: Item) -> some View {
         HStack(alignment: .top, spacing: 16) {
             VStack(spacing: 0) {
-                Text(region.dayNumber(item.at)).font(.must.mono(24, .semibold)).foregroundStyle(Color.must.ink)
-                Text(region.monthShort(item.at).uppercased()).font(.must.mono(10)).tracking(1).foregroundStyle(Color.must.secondary)
+                Text(region.dayNumber(item.at)).font(V8Font.numeral(34)).foregroundStyle(V8.ink)
+                Text(region.monthShort(item.at).uppercased()).font(V8Font.mono(10)).tracking(1).foregroundStyle(V8.mute)
             }
-            .frame(width: 44)
+            .frame(width: 52)
             VStack(alignment: .leading, spacing: 4) {
-                Text(item.title).mustPlace().lineLimit(1)
-                Text(item.meta).mustMeta().lineLimit(2).multilineTextAlignment(.leading)
+                Text(item.title).font(V8Font.text(17, weight: .bold)).foregroundStyle(V8.ink).lineLimit(2)
+                Text(item.meta).font(V8Font.text(13)).foregroundStyle(V8.mute).lineLimit(2).multilineTextAlignment(.leading)
             }
-            Spacer(minLength: 8)
+            .frame(maxWidth: .infinity, alignment: .leading)
             tag(item)
         }
-        .padding(.vertical, 16)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 14)
+        .overlay(alignment: .bottom) { IndexRule() }
         .opacity(item.done ? 0.5 : 1)
         .contentShape(Rectangle())
     }
@@ -205,19 +196,19 @@ struct ReservationsView: View {
         let cal = region.calendar
         let todayCity = trips.first?.city(on: now, calendar: cal)
         if item.done && item.place != nil {
-            KanjiSeal(done: true, size: 30, look: .soft)
+            CutTag(text: "feito")
         } else if cal.isDate(item.at, inSameDayAs: now) {
-            Tag("hoje", style: .dark)
+            CutTag(text: "hoje", filled: true)
         } else if item.ticket != nil {
-            Tag("ingresso")
+            CutTag(text: "ingresso")
         } else if item.weatherDependent {
-            Tag("tempo", dot: Color.must.blue)
+            CutTag(text: "tempo")
         } else if let event = item.event {
-            Tag(event.allDay ? "dia" : event.kind.tag)
+            CutTag(text: event.allDay ? "dia" : event.kind.tag)
         } else if let cityId = item.cityId, let city = trips.first?.city(id: cityId), city.name != todayCity?.name {
-            Tag(city.name)
+            CutTag(text: city.name)
         } else if trips.first?.hasTrip == true {
-            Tag("viagem")
+            CutTag(text: "viagem")
         }
     }
 
@@ -246,46 +237,39 @@ struct EventEditor: View {
     @State private var confirmDelete = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: 0) {
             SheetHandle().frame(maxWidth: .infinity)
-            HStack {
-                Text(event == nil ? "Novo evento" : "Evento").mustTitle()
-                Spacer()
-                Button("Salvar", action: save)
-                    .font(.must.archivo(15, .semibold))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 18).frame(height: 40)
-                    .background(Capsule().fill(Color.must.ink))
-                    .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)
-            }
-            TextField("Shinkansen → Kyoto, Nara · dia inteiro…", text: $title)
-                .font(.must.archivo(17))
-                .padding(.horizontal, 16).frame(height: 52)
-                .background(Color.must.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-            FlowLayout(spacing: 8) {
-                ForEach(TripEventKind.allCases.filter { $0 != .flight }) { k in
-                    Button { kind = k; if k == .dayTrip { allDay = true } } label: { Pill(k.label.capitalized, isOn: kind == k, icon: k.icon) }
-                        .buttonStyle(MustPressStyle())
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text(event == nil ? "Novo evento" : "Evento").font(V8Font.display(34)).tracking(-1).foregroundStyle(V8.ink)
+                        Spacer()
+                    }
+                    CutField(label: "o quê", text: $title, placeholder: "Shinkansen → Kyoto, Nara · dia inteiro…")
+                    FlowLayout(spacing: 8, lineSpacing: 8) {
+                        ForEach(TripEventKind.allCases.filter { $0 != .flight }) { k in
+                            Button { kind = k; if k == .dayTrip { allDay = true } } label: { Pill(k.label.capitalized, isOn: kind == k, icon: k.icon) }
+                                .buttonStyle(.plain)
+                        }
+                    }
+                    Toggle(isOn: $allDay) { FormRow("Dia inteiro", subtitle: "sem hora marcada") }.toggleStyle(.must)
+                    DatePicker("Quando", selection: $at, displayedComponents: allDay ? [.date] : [.date, .hourAndMinute])
+                        .font(V8Font.text(16)).tint(V8.orange)
+                        .environment(\.timeZone, region.timeZone)
+                        .environment(\.locale, region.locale)
+                    CutField(label: "nota", text: $note, placeholder: "Nozomi 215 · vagão 8, ônibus 07:35…")
+                    Toggle(isOn: $weatherDependent) { FormRow("Depende do tempo", subtitle: "só vale com céu limpo") }.toggleStyle(.must)
+                    if event != nil {
+                        GhostButton("Remover evento", icon: .remover) { confirmDelete = true }
+                    }
                 }
-            }
-            Toggle(isOn: $allDay) { FormRow("Dia inteiro", subtitle: "sem hora marcada") }.toggleStyle(.must)
-            DatePicker("Quando", selection: $at, displayedComponents: allDay ? [.date] : [.date, .hourAndMinute])
-                .font(.must.body).tint(Color.must.ink)
-                .environment(\.timeZone, region.timeZone)
-                .environment(\.locale, region.locale)
-            TextField("nota (Nozomi 215 · vagão 8, ônibus 07:35…)", text: $note)
-                .font(.must.archivo(15))
-                .padding(.horizontal, 14).frame(height: 48)
-                .background(Color.must.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-            Toggle(isOn: $weatherDependent) { FormRow("Depende do tempo", subtitle: "só vale com céu limpo") }.toggleStyle(.must)
-            Spacer()
-            if event != nil {
-                GhostButton("Remover evento", icon: .remover) { confirmDelete = true }
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+                .padding(.bottom, 20)
             }
         }
-        .padding(.horizontal, 22)
-        .padding(.bottom, 12)
-        .background(Color.must.bg)
+        .background(V8.paper)
+        .cutFooter("Salvar", enabled: !title.trimmingCharacters(in: .whitespaces).isEmpty, action: save)
         .onAppear(perform: load)
         .confirmationDialog("Remover \(title)?", isPresented: $confirmDelete, titleVisibility: .visible) {
             Button("Remover", role: .destructive) {

@@ -121,7 +121,7 @@ struct V8Tag: View {
             .foregroundStyle(foreground)
             .padding(.horizontal, 9)
             .padding(.vertical, 5)
-            .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(background))
+            .background(Rectangle().fill(background))
     }
 
     private var foreground: Color {
@@ -183,7 +183,7 @@ struct V8Thumb: View {
     var body: some View {
         V8Photo(url: url, placeholder: dimmed ? V8.mute.opacity(0.6) : Color(hex: 0x3A3A38))
             .frame(width: size, height: size)
-            .clipShape(RoundedRectangle(cornerRadius: size * 0.27, style: .continuous))
+            .clipShape(Rectangle())
             .opacity(dimmed ? 0.6 : 1)
             .task(id: refs.first?.name ?? "") {
                 guard let first = refs.first else { url = nil; return }
