@@ -13,6 +13,8 @@ struct CapaCorteView: View {
     var suggest: CapaSuggestState
     var state: CorteState
     var tripId: String
+    /// Há dia aceito pra hoje? Sem ele a capa mostra a linha "Montar o dia".
+    var hasPlan = true
     var makeEnv: () -> QueroEnv
     var actions: Actions
 
@@ -28,6 +30,10 @@ struct CapaCorteView: View {
         var addToBoard: (CorteRow) -> Void
         var fitToday: (CorteRow) -> Void
         var openShows: () -> Void
+        /// Botão visível pro Bolso (antes só deslizando →).
+        var bolso: () -> Void
+        /// Montar o dia de hoje (linha da capa quando não há dia).
+        var montar: () -> Void
     }
 
     @Environment(\.tripTheme) private var theme
@@ -237,8 +243,38 @@ struct CapaCorteView: View {
                 indexRows(1)
                 indexRows(0)
             }
-            .padding(.bottom, 96)
+            shortcutRows
             Spacer(minLength: 0)
+        }
+    }
+
+    /// Caminhos que antes só existiam por gesto: Bolso (→) e Montar o dia (segurar o `+`).
+    private var shortcutRows: some View {
+        VStack(spacing: 0) {
+            if !hasPlan && !upcoming { shortcutRow("Montar o dia de hoje", sub: "roteiro pelo que está aberto e perto", action: actions.montar) }
+            shortcutRow("Bolso", sub: "Suica, ingressos, mapa offline, SOS", action: actions.bolso)
+        }
+        .padding(.bottom, 12)
+    }
+
+    private func shortcutRow(_ title: String, sub: String, action: @escaping () -> Void) -> some View {
+        VStack(spacing: 0) {
+            Rectangle().fill(V8.ink).frame(height: 2)
+            Button(action: action) {
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(title).font(V8Font.text(17, weight: .bold)).foregroundStyle(V8.ink).lineLimit(1)
+                        Text(sub).font(V8Font.text(13)).foregroundStyle(V8.mute).lineLimit(1)
+                    }
+                    Spacer(minLength: 8)
+                    Image(systemName: "arrow.right").font(.system(size: 16, weight: .bold)).foregroundStyle(V8.orange)
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
         }
     }
 

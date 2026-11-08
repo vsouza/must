@@ -67,7 +67,7 @@ struct HomeView: View {
         Group {
             if let content = state.content {
                 CapaCorteView(content: content, areaName: debugArea?.name ?? currentArea?.name ?? content.area, photoURL: photoURL, suggest: suggest,
-                              state: corte, tripId: region.trip.id, makeEnv: makeEnv, actions: actions)
+                              state: corte, tripId: region.trip.id, hasPlan: state.plan != nil, makeEnv: makeEnv, actions: actions)
             } else {
                 theme.cover.ignoresSafeArea()
             }
@@ -225,7 +225,9 @@ struct HomeView: View {
               route: { row in MapsLinks.openApple(to: row.row.result.coordinate, name: row.row.result.name) },
               addToBoard: addToBoard,
               fitToday: fitToday,
-              openShows: { router.push(.emCartaz, on: .hoje) })
+              openShows: { router.push(.emCartaz, on: .hoje) },
+              bolso: { go(.right) },
+              montar: { router.push(.montar(date: today), on: .hoje) })
     }
 
     private func makeEnv() -> QueroEnv {

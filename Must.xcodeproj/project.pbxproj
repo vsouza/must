@@ -82,6 +82,8 @@
 		1DF8CF4E92278E72BF82AC91 /* BoardShowEvents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1628272D6061D4C591EE5118 /* BoardShowEvents.swift */; };
 		1E7978C66213AF4A1BB5A450 /* PresentesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D1BFD9C5AE314139EDAFA1C /* PresentesView.swift */; };
 		1E7AAC71C8AA6F8967423CA0 /* Settlement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8343C1C616DA3C644E064416 /* Settlement.swift */; };
+		1E8BA12B7B0C98ACB7FC5882 /* NowAccessory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F453DC12283474078AB1B13 /* NowAccessory.swift */; };
+		1FCF495EF4C450F77446E766 /* BarraNativaTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 530EB713C3A53F2A7A86351F /* BarraNativaTests.swift */; };
 		1FDB5B166C904B87CA3B4487 /* EventsSources.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A0CC1C8C12ED0EB34ED1A33 /* EventsSources.swift */; };
 		1FEB3E57CD6862CA2F6FD056 /* Outbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA4E203891AC1CE8BE1BDFEB /* Outbox.swift */; };
 		204A9E0456F7D62DB845D418 /* PlaceThumb.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60B79767D24D87527F074D57 /* PlaceThumb.swift */; };
@@ -685,6 +687,7 @@
 		0DB3D5B44041AE54E0274A81 /* CapaTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapaTests.swift; sourceTree = "<group>"; };
 		0EAB869A6FCE0978AB38F558 /* museu-jp_foto.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "museu-jp_foto.png"; sourceTree = "<group>"; };
 		0ECE91A8AC13EB4F448E14CE /* TravelMatrixTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TravelMatrixTests.swift; sourceTree = "<group>"; };
+		0F453DC12283474078AB1B13 /* NowAccessory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowAccessory.swift; sourceTree = "<group>"; };
 		0F9CE3F785580679B015C4ED /* TicketReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketReaderTests.swift; sourceTree = "<group>"; };
 		0FA0D8F4E00D60D3AC6AC4CF /* TripSwitcherModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripSwitcherModel.swift; sourceTree = "<group>"; };
 		0FF11D40BC1FD6464D2737BB /* DayFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayFlowTests.swift; sourceTree = "<group>"; };
@@ -856,6 +859,7 @@
 		510AFA185D11B399A89AD9EF /* Icons.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Icons.swift; sourceTree = "<group>"; };
 		51945D3387B8A1F6DF6F5AF9 /* ShoppingReport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShoppingReport.swift; sourceTree = "<group>"; };
 		52E83517F5E263937FFD5D1C /* TripSwitcherSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripSwitcherSheet.swift; sourceTree = "<group>"; };
+		530EB713C3A53F2A7A86351F /* BarraNativaTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarraNativaTests.swift; sourceTree = "<group>"; };
 		532D92C7D6879474355DB391 /* AddLinkView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddLinkView.swift; sourceTree = "<group>"; };
 		533500AE41E1217EB3964921 /* VotarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VotarView.swift; sourceTree = "<group>"; };
 		53579B2816C008C77A14A1E5 /* GuiaChaptersTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuiaChaptersTests.swift; sourceTree = "<group>"; };
@@ -1726,6 +1730,7 @@
 				1DE57219F69A779B9ED60617 /* AtalhosTests.swift */,
 				357E10DA392C32CE55CDD7C7 /* BairrosCameraTests.swift */,
 				E7CD9A7E3C0765F23B3798EA /* BairrosGuiaTests.swift */,
+				530EB713C3A53F2A7A86351F /* BarraNativaTests.swift */,
 				DA4807C0EC34C53EF1278382 /* BoaNoiteTests.swift */,
 				3847B720AFE775247C5B85A9 /* BoardCodecTests.swift */,
 				4057F13FC1B1224A5960AEE0 /* BoardEditsTests.swift */,
@@ -2120,6 +2125,7 @@
 				6A65495A52E0B006233D513B /* DebugFlags.swift */,
 				FED236518F13E68EAEBCC987 /* MustApp.swift */,
 				1BC23A56B003D07E12A30C69 /* NotificationTaps.swift */,
+				0F453DC12283474078AB1B13 /* NowAccessory.swift */,
 				10E1AAF40DE6541D6FB3D78D /* RootView.swift */,
 				5621525C6CB7D37030B2A19B /* Router.swift */,
 				42A529AE230489483D5F5535 /* SwipeBack.swift */,
@@ -2976,6 +2982,7 @@
 				39BAC3B32DA8AB39E5ACA524 /* AtalhosTests.swift in Sources */,
 				047E0002D7BC095C89231C97 /* BairrosCameraTests.swift in Sources */,
 				EE0AD7F1EA1DECACE7623D76 /* BairrosGuiaTests.swift in Sources */,
+				1FCF495EF4C450F77446E766 /* BarraNativaTests.swift in Sources */,
 				FEFE0EE4458622F1FCC1355C /* BoaNoiteTests.swift in Sources */,
 				D6C8A98A1AE102D60705D9F8 /* BoardCodecTests.swift in Sources */,
 				78181CEF9BEEFB6917B6775B /* BoardEditsTests.swift in Sources */,
@@ -3356,6 +3363,7 @@
 				61FAA271404986E5142B7C18 /* NewTripSteps6to9.swift in Sources */,
 				2F61642C63CD0B2F85023063 /* NotesRules.swift in Sources */,
 				7614D4B9AE6DAEEBC248D2B3 /* NotificationTaps.swift in Sources */,
+				1E8BA12B7B0C98ACB7FC5882 /* NowAccessory.swift in Sources */,
 				74988FB4DD27477EAE2C8F3E /* NumberInput.swift in Sources */,
 				989DF46BD7A07F9EC7D4CFA5 /* OfflineMaps.swift in Sources */,
 				9B5ACD00BB9A018D2E4F21C1 /* OfflineMapsView.swift in Sources */,
