@@ -133,9 +133,19 @@ final class AppRouter {
     /// Card do pino aberto no Mapa (prompt 27 §2): o design não tem a barra de abas por baixo dele.
     var mapCardOpen = false
 
+    /// Telas com o "quero…" aberto (capa, Lugar, Lista; prompt 30): a barra de abas some enquanto uma delas está aberta,
+    /// senão ela flutua por cima dos chips de vontade e do teclado. Cada tela avisa pelo próprio nome.
+    private(set) var queroOwners: Set<String> = []
+    var queroOpen: Bool { !queroOwners.isEmpty }
+
+    func setQuero(_ owner: String, open: Bool) {
+        if open { queroOwners.insert(owner) } else { queroOwners.remove(owner) }
+    }
+
     /// Telas v8 sem barra de abas (design): Montar (e a proposta), Ir/Como chegar, o Lugar em tela cheia, SOS e o
     /// Mapa com o card do pino aberto.
     var hidesNavBar: Bool {
+        if queroOpen { return true }
         if mapCardOpen, paths[tab]?.last == .mapa || tab == .guia { return true }
         switch paths[tab]?.last {
         case .montar, .ir, .comoChegar, .place, .sos: return true

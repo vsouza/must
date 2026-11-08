@@ -306,23 +306,7 @@ struct CapaCorteView: View {
     private var askingPaper: some View {
         VStack(alignment: .leading, spacing: 10) {
             if state.walk == .write { walkTwo }
-            MonoLabel("vontades de agora", size: 10, color: V8.mute)
-            CorteFlow(spacing: 8) {
-                ForEach(CorteWish.all) { wish in
-                    Button { state.choose(wish, env: makeEnv()) } label: {
-                        Text(wish.label.uppercased())
-                            .font(V8Font.mono(11, weight: .semibold))
-                            .tracking(1)
-                            .foregroundStyle(state.quero.text == wish.text ? V8.paper : V8.ink)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 10)
-                            .background(state.quero.text == wish.text ? V8.ink : Color.clear)
-                            .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
+            CorteWishChips(state: state, makeEnv: makeEnv)
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 20)
@@ -343,59 +327,10 @@ struct CapaCorteView: View {
         .overlay(alignment: .bottom) { BottomFade(color: V8.paper, height: 90) }
     }
 
-    @ViewBuilder private var resultBands: some View {
-        let query = state.quero.intent?.object ?? state.quero.text
-        if state.quero.phase == .searching {
-            Text("procurando perto de \(placeName)…")
-                .font(V8Font.text(14)).foregroundStyle(V8.mute)
-                .padding(20)
-        } else {
-            // Faixa laranja: seus Musts, mesmo longe.
-            HStack {
-                MonoLabel("seus musts · \(state.split.board.count)", size: 10, color: V8.ink)
-                Spacer(minLength: 8)
-                MonoLabel("mesmo longe", size: 10, color: V8.ink)
-            }
-            .padding(.horizontal, 20).padding(.vertical, 10)
-            .background(V8.orange)
-            if state.split.board.isEmpty {
-                Text("nenhum \(query) seu nesta cidade")
-                    .font(V8Font.text(15, weight: .semibold)).foregroundStyle(V8.ink)
-                    .padding(20)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            ForEach(state.split.board) { line in
-                CorteResultRow(line: line, dark: false, added: false,
-                               onTap: { if let id = line.row.result.boardPlaceId { actions.openPlace(id) } },
-                               onAction: { line.action == .go ? actions.route(line) : (line.row.result.boardPlaceId.map(actions.openPlace) ?? ()) },
-                               onFit: line.row.slot != nil ? { actions.fitToday(line) } : nil)
-            }
-            // Faixa tinta: o que tem perto, fora do board.
-            VStack(alignment: .leading, spacing: 0) {
-                HStack {
-                    MonoLabel("aqui perto agora · \(state.quero.offline ? 0 : state.split.outside.count)", size: 10, color: V8.white)
-                    Spacer(minLength: 8)
-                    MonoLabel("fora do board", size: 10, color: V8.muteDark)
-                }
-                .padding(.horizontal, 20).padding(.vertical, 12)
-                if state.quero.offline {
-                    Text("sem internet · só seus Musts")
-                        .font(V8Font.text(15, weight: .semibold)).foregroundStyle(V8.white)
-                        .padding(.horizontal, 20).padding(.bottom, 20)
-                } else if state.split.outside.isEmpty {
-                    Text(state.quero.notice ?? "nada aberto perto, fora do seu board")
-                        .font(V8Font.text(14)).foregroundStyle(V8.muteDark)
-                        .padding(.horizontal, 20).padding(.bottom, 20)
-                }
-                ForEach(state.quero.offline ? [] : state.split.outside) { line in
-                    CorteResultRow(line: line, dark: true, added: state.added.contains(line.id),
-                                   onTap: { actions.route(line) }, onAction: { actions.addToBoard(line) },
-                                   onFit: line.row.slot != nil ? { actions.fitToday(line) } : nil)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(V8.ink)
-        }
+    private var resultBands: some View {
+        CorteResultBands(state: state, placeName: placeName,
+                         actions: .init(openPlace: actions.openPlace, route: actions.route, addToBoard: actions.addToBoard,
+                                        fitToday: actions.fitToday))
     }
 
     // MARK: Passo a passo (§5)

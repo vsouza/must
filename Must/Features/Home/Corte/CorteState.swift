@@ -61,6 +61,12 @@ final class CorteState {
         added = []
     }
 
+    /// A Lista abre o quero já com o pedido da lista (texto + verbo); a pessoa só confirma ou muda.
+    func preset(_ wish: CorteWish) {
+        quero.text = wish.text
+        quero.verbOverride = wish.verb
+    }
+
     /// "Novo pedido": volta pra fenda com o texto anterior.
     func askAgain() { stage = .asking }
 

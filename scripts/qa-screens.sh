@@ -129,6 +129,16 @@ corteshots() { # $1 = prefixo (jp|bh|it)
     WAIT=10 shot $r-corte-xxxl-capa -debugScreen corte-capa -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
   fi
 }
+# prompt 30 · etapa 2 (Lugar, Lista, Board): o corte nas telas de lista. Lugar e Lista têm a régua puxável (o quero abre com
+# origem no lugar / filtrado pela lista); o Board tem régua estática.
+corte2shots() { # $1 = prefixo, $2 = lugar de exemplo, $3 = lista de exemplo
+  local r=$1
+  WAIT=10 shot $r-corte-lugar -debugScreen corte-lugar:$2
+  WAIT=12 shot $r-corte-lugar-quero -debugScreen corte-lugar-quero:$2
+  WAIT=10 shot $r-corte-board -debugScreen corte-board
+  WAIT=10 shot $r-corte-lista -debugScreen corte-lista:$3
+  WAIT=12 shot $r-corte-lista-quero -debugScreen corte-lista-quero:$3
+}
 ${=W} skipOnboarding -bool YES
 ${=W} dev.simDateOn -bool YES; ${=W} dev.simSetAt -float 0; ${=W} dev.simGPSOn -bool YES
 
@@ -156,6 +166,7 @@ ${=W} dev.simDate -float $(epoch 2026-11-15T14:20:00+09:00)
 ${=W} dev.simLat -float 35.6909; ${=W} dev.simLng -float 139.7003
 v8shots jp j05 j28 eat shinjuku $(epoch 2026-11-15T08:30:00+09:00) "quero comprar um Seiko"
 corteshots jp
+corte2shots jp j01 eat
 
 echo "→ v8 · BH · sáb 7 nov 14:35 · Savassi (CapaBR)"
 ${=W} region bh
