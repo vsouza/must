@@ -19,8 +19,12 @@ struct SuggestPlace: Equatable, Sendable {
     var state: OpenState
     /// `DayWindow.rawValue`: morning, lunch, afternoon, dinner, night.
     var windows: Set<String>
+    /// Coordenada chutada (seed `approx`), ainda não resolvida no Google.
+    var approx: Bool = false
     /// Tem horário do Google (`state` é de verdade, não `.unknown`).
     var hasHours: Bool { state != .unknown }
+    /// O que a gente sabe de verdade deste lugar (horário e coordenada).
+    var trust: PlaceTrust { PlaceTrust(hoursConfirmed: hasHours, coordConfirmed: !approx) }
 
     var coordinate: CLLocationCoordinate2D { CLLocationCoordinate2D(latitude: lat, longitude: lng) }
 
@@ -99,6 +103,8 @@ struct Suggestion: Identifiable, Hashable, Sendable {
     var score: Double
     /// Minutos até fechar/começar (desempate: o que acaba antes).
     var urgencyMinutes: Int?
+    /// "horário estimado" / "local aproximado": micro-rótulo quando o dado do lugar não está confirmado. `nil` = confirmado.
+    var trust: String? = nil
 
     var reasonLine: String { reasons.joined(separator: " · ") }
 

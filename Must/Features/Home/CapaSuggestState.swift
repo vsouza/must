@@ -127,7 +127,7 @@ final class CapaSuggestState {
     static func suggestPlace(_ p: Place, now: Date, tz: TimeZone) -> SuggestPlace {
         SuggestPlace(id: p.id, name: p.name, listName: p.list?.name ?? "", color: p.list?.colorRaw ?? "",
                      kind: p.list?.kind ?? .place, sub: p.sub, lat: p.lat, lng: p.lng, done: p.isDone,
-                     state: p.openState(at: now, timeZone: tz), windows: Set(p.windowsRaw))
+                     state: p.openState(at: now, timeZone: tz), windows: Set(p.windowsRaw), approx: p.approx)
     }
 
     /// As duas cores de lista mais usadas (feitos; sem nenhum, as maiores): 2 e 1.

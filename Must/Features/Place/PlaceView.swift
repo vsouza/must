@@ -403,6 +403,7 @@ struct PlaceView: View {
                     : (PlaceFicha.openTag(place, region: region, now: now) ?? PlaceFicha.queueTag(place, region: region)) {
                     V8Tag(text: second, style: .glass)
                 }
+                if let coord = PlaceFicha.coordTag(place) { V8Tag(text: coord, style: .glass) }
             }
         }
     }

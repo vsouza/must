@@ -253,6 +253,8 @@ private struct SettingsSections: View {
                 }
             }
             .buttonStyle(.plain)
+            RowDivider()
+            TrustSyncRows()
             Button {
                 Task { await services.sync.syncPlaces(context: context, region: region) }
             } label: {

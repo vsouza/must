@@ -14,6 +14,8 @@ struct CorteIndexLine: Identifiable, Hashable, Sendable {
     var unit: String
     var title: String
     var reason: String
+    /// Micro-rótulo mono "horário estimado" / "local aproximado" (dado ainda não confirmado no Google). `nil` = confirmado.
+    var trust: String? = nil
     /// `nil` na linha "Em cartaz" (abre a tela Em cartaz).
     var card: Suggestion?
 
@@ -50,6 +52,7 @@ struct CorteIndexLine: Identifiable, Hashable, Sendable {
 
     init(_ card: Suggestion) {
         self.card = card
+        trust = card.trust
         id = card.id
         title = card.title
         switch card.kind {

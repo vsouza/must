@@ -61,7 +61,7 @@ enum SuggestionEngine {
                 Suggestion(id: "must:\(place.id)", kind: .must, style: .ink, label: "MUST \(place.listName.uppercased())",
                            trailing: Walk.distanceText(meters), title: place.name, meta: place.sub ?? "no seu board",
                            reasons: ["perto", "no board"], placeId: place.id, eventId: nil, coordinate: place.coordinate, url: nil,
-                           score: 0, urgencyMinutes: nil)
+                           score: 0, urgencyMinutes: nil, trust: place.trust.microLabel)
             }
     }
 
@@ -100,7 +100,7 @@ enum SuggestionEngine {
             if fit.good { reasons.append("hora certa") }
             if (i.taste[place.color] ?? 0) >= 2 { reasons.append("seu gosto") }
             var kind = Suggestion.Kind.must
-            var label = "MUST \(place.listName.uppercased()) · \(fit.open ? "ABERTO" : "NO SEU HORÁRIO")"
+            var label = "MUST \(place.listName.uppercased()) · \(fit.open ? "ABERTO" : "HORÁRIO NÃO CONFIRMADO")"
             var urgency: Int?
             if let left = fit.closesIn, left <= 60 {
                 score += 2
@@ -113,7 +113,8 @@ enum SuggestionEngine {
             let meta = [fit.closesText.map { "fecha \($0)" }, place.sub].compactMap { $0 }.joined(separator: " · ")
             out.append(Suggestion(id: "must:\(place.id)", kind: kind, style: .ink, label: label, trailing: Walk.distanceText(meters),
                                   title: place.name, meta: meta.isEmpty ? "no seu board" : meta, reasons: reasons, placeId: place.id,
-                                  eventId: nil, coordinate: place.coordinate, url: nil, score: score, urgencyMinutes: urgency))
+                                  eventId: nil, coordinate: place.coordinate, url: nil, score: score, urgencyMinutes: urgency,
+                                  trust: place.trust.microLabel))
         }
         return out
     }
@@ -226,7 +227,8 @@ enum SuggestionEngine {
                           trailing: Walk.distanceText(meters), title: place.name,
                           meta: "luz até \(i.region.timeString(light.end))" + (place.sub.map { " · \($0)" } ?? ""),
                           reasons: reasons, placeId: place.id, eventId: nil, coordinate: place.coordinate, url: nil, score: score,
-                          urgencyMinutes: light.isToday ? max(minutesToStart, 0) : nil)
+                          urgencyMinutes: light.isToday ? max(minutesToStart, 0) : nil,
+                          trust: place.approx ? PlaceTrust.coordApproximate : nil)
     }
 
     // MARK: 6 · Indicados (fora do board)

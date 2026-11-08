@@ -82,11 +82,20 @@ struct CorteIndexRow: View {
                         .font(V8Font.text(17, weight: .bold))
                         .foregroundStyle(main)
                         .lineLimit(1)
-                    Text(line.reason)
-                        .font(V8Font.text(12))
-                        .foregroundStyle(sub)
-                        .lineLimit(1)
-                        .truncationMode(.tail)
+                    HStack(spacing: 6) {
+                        if let trust = line.trust {
+                            Text(trust.uppercased())
+                                .font(V8Font.mono(8)).tracking(0.7).foregroundStyle(sub)
+                                .lineLimit(1).fixedSize()
+                                .padding(.horizontal, 4).padding(.vertical, 1)
+                                .overlay(Rectangle().stroke(sub.opacity(0.7), lineWidth: 0.8))
+                        }
+                        Text(line.reason)
+                            .font(V8Font.text(12))
+                            .foregroundStyle(sub)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -99,7 +108,7 @@ struct CorteIndexRow: View {
         }
         .buttonStyle(.plain)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(line.title). \(line.big) \(line.unit). \(line.reason)")
+        .accessibilityLabel("\(line.title). \(line.big) \(line.unit). \(line.reason)\(line.trust.map { ". \($0)" } ?? "")")
         .accessibilityAddTraits(.isButton)
     }
 }
