@@ -183,7 +183,7 @@ struct KindExtraFields: View {
                 .foregroundStyle(Color.must.ink)
                 .padding(.horizontal, 16)
                 .frame(height: 52)
-                .background(Color.must.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .background(Color.must.surface, in: Rectangle())
         }
     }
 

@@ -583,11 +583,11 @@ struct V8ButtonFace: View {
         }
         .padding(.horizontal, pad)
         .frame(maxWidth: .infinity, minHeight: minH)
-        .contentShape(Capsule())
+        .contentShape(Rectangle())
         switch style {
-        case .orange: content.foregroundStyle(V8.ink).background(Capsule().fill(V8.orange))
-        case .ink: content.foregroundStyle(V8.white).background(Capsule().fill(V8.ink))
-        case .line: content.overlay(Capsule().strokeBorder(.foreground, lineWidth: 1.5))
+        case .orange: content.foregroundStyle(V8.ink).background(Rectangle().fill(V8.orange))
+        case .ink: content.foregroundStyle(V8.white).background(Rectangle().fill(V8.ink))
+        case .line: content.overlay(Rectangle().strokeBorder(.foreground, lineWidth: 2))
         }
     }
 }
@@ -631,9 +631,9 @@ struct V8Pill: View {
             .foregroundStyle(ink)
             .padding(.horizontal, 14)
             .frame(minHeight: max(base, ButtonMetrics.pillRatio * font * scale))
-            .background(Capsule().fill(fill))
-            .overlay(Capsule().strokeBorder(active ? Color.clear : ink, lineWidth: 1))
-            .contentShape(Capsule())
+            .background(Rectangle().fill(fill))
+            .overlay(Rectangle().strokeBorder(active ? Color.clear : ink, lineWidth: 2))
+            .contentShape(Rectangle())
             .accessibilityAddTraits(active ? .isSelected : [])
     }
 }
@@ -659,9 +659,9 @@ struct V8RoundButton<Glyph: View>: View {
         Button(action: action) {
             glyph(ButtonMetrics.roundGlyph(diameter: diameter))
                 .frame(width: diameter, height: diameter)
-                .background(Circle().fill(filled ? V8.ink : .clear))
-                .overlay(Circle().strokeBorder(.foreground, lineWidth: 1.8))
-                .contentShape(Circle())
+                .background(Rectangle().fill(filled ? V8.ink : .clear))
+                .overlay(Rectangle().strokeBorder(.foreground, lineWidth: 2))
+                .contentShape(Rectangle())
         }
         .buttonStyle(MustPressStyle())
         .accessibilityLabel(label)

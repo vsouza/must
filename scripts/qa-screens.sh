@@ -144,6 +144,20 @@ corte2shots() { # $1 = prefixo, $2 = lugar de exemplo, $3 = lista de exemplo
 }
 # prompt 30 · etapa 2 · o corte no Dia e no Bolso (Linha, Agora, Bom dia, Boa noite, proposta com o "Outra", Bolso). A foto do
 # bairro é a que já está no disco: o `corte-capa -capaFoto` da mesma região (logo acima) a guarda uma vez.
+# prompt 31 · item 10 · o corte nas telas restantes (Dicas, Guia, Carteira, Voos, Reservas, Em cartaz, Ajustes, Mapas offline, Nova viagem,
+# Compras, Viagem, Experiências, Coleção, Musts, Como chegar, Gasto, Região). Todas usam `-debugScreen` já existentes.
+corte3shots() { # $1 = prefixo (jp|bh)
+  local r=$1
+  for t in dicas guia carteira voos reservas emcartaz ajustes mapas-offline novaviagem1 novaviagem3 novaviagem5 compras viagem experiencias colecao musts gasto regiao; do
+    shot $r-corte3-$t -debugScreen $t
+  done
+  shot $r-corte3-como-chegar -debugScreen como-chegar:j01 -debugRoutes fake
+  if [ "$r" = "jp" ]; then
+    for t in dicas carteira ajustes voos; do
+      shot $r-corte3-xxxl-$t -debugScreen $t -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
+    done
+  fi
+}
 cortediashots() { # $1 = prefixo (jp|bh)
   local r=$1
   shot $r-corte-dia -debugScreen corte-dia
@@ -188,6 +202,7 @@ v8shots jp j05 j28 eat shinjuku $(epoch 2026-11-15T08:30:00+09:00) "quero compra
 corteshots jp
 corte2shots jp j01 eat
 cortediashots jp
+corte3shots jp
 
 echo "→ v8 · BH · sáb 7 nov 14:35 · Savassi (CapaBR)"
 ${=W} region bh

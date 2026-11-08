@@ -99,8 +99,7 @@ struct NewTripStep1: View {
                     .onChange(of: query) { _, text in search.update(text, online: !offline) }
             }
             .padding(.horizontal, 22).frame(minHeight: 66)
-            .background(Capsule().fill(V8.white))
-            .overlay(Capsule().strokeBorder(V8.bone, lineWidth: 1.5))
+            .overlay(Rectangle().strokeBorder(V8.ink, lineWidth: 2))
 
             if offline {
                 Text("sem internet · digite à mão, o resto funciona")
@@ -149,8 +148,8 @@ struct NewTripStep1: View {
 
     private func radio(color: Color, dim: Bool = false) -> some View {
         ZStack {
-            Circle().fill(color)
-            Circle().fill(V8.paper).frame(width: 14, height: 14)
+            Rectangle().fill(color)
+            Rectangle().fill(V8.paper).frame(width: 14, height: 14)
         }
         .frame(width: 44, height: 44).opacity(dim ? 0.6 : 1)
     }
@@ -237,11 +236,11 @@ struct NewTripStep1: View {
                 let hex = NewTripCatalog.hex(rgb)
                 let on = model.draft.colorHex.uppercased() == hex
                 Button { model.draft.colorHex = hex } label: {
-                    RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Color(hex: rgb))
+                    Rectangle().fill(Color(hex: rgb))
                         .aspectRatio(1, contentMode: .fit)
                         .padding(5)
                         .overlay {
-                            if on { RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(V8.ink, lineWidth: 2.5) }
+                            if on { Rectangle().strokeBorder(V8.ink, lineWidth: 2.5) }
                         }
                         .frame(minWidth: 44)
                 }
@@ -360,7 +359,7 @@ struct NewTripStep2: View {
                         }
                         .frame(height: 40)
                     }
-                    if isStart || isEnd { Capsule().fill(V8.orange).frame(height: 40) }
+                    if isStart || isEnd { Rectangle().fill(V8.orange).frame(height: 40) }
                     Text("\(cal.component(.day, from: day))")
                         .font(V8Font.mono(17, weight: .bold)).foregroundStyle(V8.ink)
                 }
@@ -465,7 +464,7 @@ struct NewTripStep3: View {
         HStack(spacing: 8) {
             V8RoundButton(diameter: 44, label: "Menos uma noite em \(city.name)", action: {
                 model.setNights(city.nights - 1, cityId: city.id)
-            }) { size in Capsule().fill(.foreground).frame(width: 12, height: 2).frame(width: size, height: size) }
+            }) { size in Rectangle().fill(.foreground).frame(width: 12, height: 2).frame(width: size, height: size) }
             VStack(spacing: 2) {
                 Text("\(city.nights)").font(V8Font.mono(22, weight: .bold)).foregroundStyle(V8.ink)
                 SpecLabel(city.nights == 1 ? "noite" : "noites").fixedSize()
@@ -493,13 +492,13 @@ struct NewTripStep3: View {
     private var addButton: some View {
         Button { adding.toggle() } label: {
             HStack(spacing: 16) {
-                Circle().fill(V8.orange).frame(width: 52, height: 52)
+                Rectangle().fill(V8.orange).frame(width: 52, height: 52)
                     .overlay { V8Glyph(.plus).frame(width: 22, height: 22).foregroundStyle(V8.ink) }
                 Text("Adicionar cidade").font(V8Font.text(18, weight: .bold)).foregroundStyle(V8.ink)
                 Spacer()
             }
             .padding(14)
-            .background(RoundedRectangle(cornerRadius: 28, style: .continuous)
+            .background(Rectangle()
                 .strokeBorder(V8.ruleStrongColor, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4])))
         }
         .buttonStyle(.plain)
@@ -523,7 +522,7 @@ struct NewTripStep3: View {
             TextField("", text: $typed, prompt: Text(offline ? "nome da cidade (à mão)" : "buscar cidade").foregroundStyle(V8.mute))
                 .font(V8Font.text(18, weight: .semibold)).foregroundStyle(V8.ink)
                 .padding(.horizontal, 18).frame(minHeight: 52)
-                .background(Capsule().fill(V8.white)).overlay(Capsule().strokeBorder(V8.bone, lineWidth: 1.5))
+                .overlay(Rectangle().strokeBorder(V8.ink, lineWidth: 2))
                 .focused($focused).submitLabel(.done).autocorrectionDisabled()
                 .onSubmit { commitTyped() }
                 .onChange(of: typed) { _, t in search.update(t, online: !offline) }

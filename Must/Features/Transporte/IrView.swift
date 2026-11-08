@@ -233,8 +233,8 @@ struct IrView: View {
                             .lineLimit(1)
                             .padding(.horizontal, 16)
                             .frame(height: 40)
-                            .background(Capsule().fill(on ? V8.orange : .clear))
-                            .overlay(Capsule().strokeBorder(on ? .clear : V8.white.opacity(0.4), lineWidth: 1))
+                            .background(Rectangle().fill(on ? V8.orange : .clear))
+                            .overlay(Rectangle().strokeBorder(on ? .clear : V8.white.opacity(0.4), lineWidth: 1))
                     }
                     .buttonStyle(MustPressStyle())
                     .accessibilityAddTraits(on ? .isSelected : [])
@@ -252,8 +252,8 @@ struct IrView: View {
                 .font(V8Font.text(15, weight: .bold))
                 .foregroundStyle(first ? V8.ink : V8.white)
                 .frame(width: 32, height: 32)
-                .background(Circle().fill(first ? V8.orange : .clear))
-                .overlay(Circle().strokeBorder(first ? .clear : V8.white.opacity(0.6), lineWidth: 1))
+                .background(Rectangle().fill(first ? V8.orange : .clear))
+                .overlay(Rectangle().strokeBorder(first ? .clear : V8.white.opacity(0.6), lineWidth: 1))
             VStack(alignment: .leading, spacing: 3) {
                 Text(step.title)
                     .font(V8Font.text(16, weight: .semibold))
@@ -286,7 +286,7 @@ struct IrView: View {
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 16)
-        .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(V8.graphite))
+        .background(Rectangle().fill(V8.graphite))
     }
 
     private func actions(_ model: ComoChegarModel, place: Place) -> some View {

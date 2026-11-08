@@ -147,8 +147,7 @@ struct BairrosView: View {
                     .foregroundStyle(Color.must.ink)
                     .padding(.horizontal, 18)
                     .frame(height: 44)
-                    .background(Capsule().fill(.white.opacity(0.92)))
-                    .shadow(color: Color.must.ink.opacity(0.12), radius: 10, y: 4)
+                    .background(Rectangle().fill(.white.opacity(0.92)))
                 Spacer(minLength: 0)
             }
             Text("tamanho = musts · cor = o que mais tem")
@@ -156,7 +155,7 @@ struct BairrosView: View {
                 .foregroundStyle(Color.must.secondary)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 7)
-                .background(Capsule().fill(.white.opacity(0.92)))
+                .background(Rectangle().fill(.white.opacity(0.92)))
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
@@ -174,8 +173,7 @@ struct BairrosView: View {
                 .foregroundStyle(Color.must.ink)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 10)
-                .background(Capsule().fill(.white.opacity(0.92)))
-                .shadow(color: Color.must.ink.opacity(0.12), radius: 10, y: 4)
+                .background(Rectangle().fill(.white.opacity(0.92)))
         }
     }
 
@@ -185,7 +183,6 @@ struct BairrosView: View {
             .foregroundStyle(Color.must.ink)
             .frame(width: 44, height: 44)
             .background(Circle().fill(.white.opacity(0.92)))
-            .shadow(color: Color.must.ink.opacity(0.12), radius: 10, y: 4)
     }
 
     /// "Ajustar": abre a montagem do dia de hoje já com o bairro (e vizinhos) como foco; nada é gravado ainda.
@@ -217,7 +214,6 @@ struct AreaBubbleView: View {
         ZStack {
             Circle()
                 .fill(bubble.color.strong)
-                .shadow(color: Color.must.ink.opacity(0.18), radius: 8, y: 5)
             if selected {
                 Circle().strokeBorder(Color.must.ink, lineWidth: 2.5).padding(-5)
             }
@@ -256,7 +252,7 @@ struct BairroSheetView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Capsule().fill(Color.must.line).frame(width: 36, height: 5).frame(maxWidth: .infinity)
+            Rectangle().fill(Color.must.line).frame(width: 36, height: 5).frame(maxWidth: .infinity)
             HStack(alignment: .center, spacing: 14) {
                 StationStamp(sheet.area.seal, sub: sheet.area.stampSub, size: 74, surface: .paper, filled: false,
                              rotation: -8)
@@ -292,14 +288,14 @@ struct BairroSheetView: View {
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(.white)
                         .frame(width: 34, height: 34)
-                        .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(MustGradient.avatar))
+                        .background(Rectangle().fill(MustGradient.avatar))
                     Text(sheet.phrase)
                         .font(.must.serif(18))
                         .foregroundStyle(Color.must.ink)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .padding(14)
-                .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(Color.must.surface))
+                .background(Rectangle().fill(Color.must.surface))
             }
             HStack(spacing: 10) {
                 Button(action: onAdjust) {
@@ -307,7 +303,7 @@ struct BairroSheetView: View {
                         .font(.must.archivo(15, .semibold))
                         .foregroundStyle(Color.must.ink)
                         .frame(width: 120, height: 52)
-                        .background(Capsule().fill(Color.must.surface))
+                        .background(Rectangle().fill(Color.must.surface))
                 }
                 .buttonStyle(MustPressStyle())
                 Button(action: onMontar) {
@@ -318,7 +314,7 @@ struct BairroSheetView: View {
                         .minimumScaleFactor(0.7)
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)
-                        .background(Capsule().fill(Color.must.ink))
+                        .background(Rectangle().fill(Color.must.ink))
                 }
                 .buttonStyle(MustPressStyle())
                 .layoutPriority(1)
@@ -326,9 +322,8 @@ struct BairroSheetView: View {
         }
         .padding(20)
         .background(
-            RoundedRectangle(cornerRadius: 30, style: .continuous)
+            Rectangle()
                 .fill(.white)
-                .shadow(color: Color.must.ink.opacity(0.2), radius: 24, y: -6)
         )
     }
 }
@@ -349,7 +344,7 @@ struct MixBar: View {
             }
         }
         .frame(height: 6)
-        .clipShape(Capsule())
+        .clipShape(Rectangle())
     }
 }
 

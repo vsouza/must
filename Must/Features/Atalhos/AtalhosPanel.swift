@@ -53,9 +53,9 @@ struct AtalhosPanel: View {
                 panel
                     .frame(width: geo.size.width - strip)
                     .background {
-                        UnevenRoundedRectangle(topLeadingRadius: 34, bottomLeadingRadius: 34, style: .continuous)
+                        Rectangle()
                             .fill(V8.paper)
-                            .shadow(color: V8.ink.opacity(0.25), radius: 30, x: -10, y: 0)
+                            .overlay(alignment: .leading) { Rectangle().fill(V8.ink).frame(width: 6) }
                             .ignoresSafeArea()
                     }
                     .offset(x: shown ? strip : geo.size.width + 20)
@@ -327,10 +327,10 @@ struct AtalhoCardView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, minHeight: 104, maxHeight: .infinity, alignment: .topLeading)
-        .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(fill))
+        .background(Rectangle().fill(fill))
         .overlay {
             if card.tone == .white || card.tone == .alert {
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                Rectangle()
                     .strokeBorder(card.tone == .alert ? V8.orange : V8.ink.opacity(0.14), lineWidth: 1)
             }
         }
@@ -369,14 +369,14 @@ private struct AtalhoLineChip: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
                 .frame(width: 20, height: 20)
-                .background(Circle().fill(Color(hex: line.rgb == 0 ? V8.Hex.ink : line.rgb)))
+                .background(Rectangle().fill(Color(hex: line.rgb == 0 ? V8.Hex.ink : line.rgb)))
             Text(line.name).font(V8Font.text(12, weight: .semibold)).foregroundStyle(V8.ink).lineLimit(1)
         }
         .padding(.leading, 3)
         .padding(.trailing, 9)
         .frame(minHeight: 26)
-        .background(Capsule().fill(V8.paper))
-        .overlay(Capsule().strokeBorder(V8.ink.opacity(0.14), lineWidth: 1))
+        .background(Rectangle().fill(V8.paper))
+        .overlay(Rectangle().strokeBorder(V8.ink.opacity(0.14), lineWidth: 1))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("linha \(line.name)")
     }

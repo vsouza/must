@@ -77,7 +77,7 @@ struct VideoReadCard: View {
     private func step(_ n: Int, _ text: String) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 12) {
             Text("\(n)").font(.must.mono(12, .semibold)).foregroundStyle(Color.must.greenText)
-                .frame(width: 22, height: 22).background(Circle().fill(Color.must.green))
+                .frame(width: 22, height: 22).background(Rectangle().fill(Color.must.green))
             Text(text).font(.must.archivo(14)).foregroundStyle(Color.must.ink).fixedSize(horizontal: false, vertical: true)
         }
     }

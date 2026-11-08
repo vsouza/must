@@ -22,17 +22,17 @@ struct V8CornerButton: View {
                 .frame(width: 44, height: 44)
                 .background {
                     if filled {
-                        Circle().fill(onInk ? V8.paper : V8.ink)
+                        Rectangle().fill(onInk ? V8.paper : V8.ink)
                     } else if onPhoto {
-                        Circle().fill(V8.ink.opacity(0.28))
+                        Rectangle().fill(V8.ink.opacity(0.28))
                     }
                 }
                 .overlay {
                     if !filled {
-                        Circle().strokeBorder((onInk || onPhoto ? V8.white : V8.ink).opacity(onPhoto ? 0.85 : 0.9), lineWidth: 1)
+                        Rectangle().strokeBorder((onInk || onPhoto ? V8.white : V8.ink).opacity(onPhoto ? 0.85 : 0.9), lineWidth: 1)
                     }
                 }
-                .contentShape(Circle())
+                .contentShape(Rectangle())
         }
         .buttonStyle(MustPressStyle())
         .accessibilityLabel(label)

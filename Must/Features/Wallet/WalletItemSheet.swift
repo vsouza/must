@@ -47,7 +47,7 @@ struct WalletItemSheet: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .padding(18)
-                    .background(Color.must.surface2, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                    .background(Color.must.surface2, in: Rectangle())
                 }
                 HStack(spacing: 10) {
                     GhostButton("Editar", icon: .editar) { editing = true }
@@ -87,7 +87,7 @@ struct WalletItemSheet: View {
                         .scaledToFit()
                         .frame(width: 220, height: 220)
                         .padding(14)
-                        .background(.white, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                        .background(.white, in: Rectangle())
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(MustPressStyle())
@@ -120,7 +120,7 @@ struct WalletItemSheet: View {
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.must.surface2, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .background(Color.must.surface2, in: Rectangle())
     }
 
     private var balanceNote: String {
@@ -184,7 +184,7 @@ struct WalletBalanceSheet: View {
                     Button(action: save) {
                         Text("Salvar").font(.must.archivo(15, .semibold)).foregroundStyle(.white)
                             .padding(.horizontal, 18).frame(height: 40)
-                            .background(Capsule().fill(amount.isEmpty ? Color.must.secondary : Color.must.ink))
+                            .background(Rectangle().fill(amount.isEmpty ? Color.must.secondary : Color.must.ink))
                     }
                     .buttonStyle(MustPressStyle())
                     .disabled(amount.isEmpty)
@@ -198,7 +198,7 @@ struct WalletBalanceSheet: View {
                         .foregroundStyle(Color.must.ink)
                         .padding(.horizontal, 16)
                         .frame(height: 52)
-                        .background(Color.must.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                        .background(Color.must.surface, in: Rectangle())
                 }
 
                 DatePicker("Anotado em", selection: $notedAt, displayedComponents: [.date, .hourAndMinute])

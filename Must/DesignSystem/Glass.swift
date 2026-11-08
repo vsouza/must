@@ -34,7 +34,7 @@ extension View {
 
     /// Card branco (`surface2`), raio 22.
     func card(cornerRadius: CGFloat = 22) -> some View {
-        background(Color.must.surface2, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+        overlay(Rectangle().strokeBorder(V8.ink, lineWidth: 2))
     }
 
     /// v5: card de vidro colorido e girado. v8: card sólido, sem giro.
@@ -52,11 +52,9 @@ private struct GlassModifier: ViewModifier {
     var cornerRadius: CGFloat
 
     func body(content: Content) -> some View {
-        let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+        // Corte: papel com borda de 2 pt, sem raio (o parâmetro fica por compatibilidade).
         content
-            .background(shape.fill(V8.white))
-            .overlay(shape.strokeBorder(V8.rule, lineWidth: 1))
-            .clipShape(shape)
+            .overlay(Rectangle().strokeBorder(V8.ink, lineWidth: 2))
     }
 }
 
@@ -66,10 +64,9 @@ private struct StackCardModifier: ViewModifier {
     var rotation: Double
 
     func body(content: Content) -> some View {
-        let shape = RoundedRectangle(cornerRadius: 24, style: .continuous)
         content
             .foregroundStyle(tint.text)
-            .background(shape.fill(tint.fill))
-            .clipShape(shape)
+            .background(Rectangle().fill(tint.fill))
+            .overlay(Rectangle().strokeBorder(V8.ink, lineWidth: 2))
     }
 }

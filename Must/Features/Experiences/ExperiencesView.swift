@@ -6,6 +6,7 @@ struct ExperiencesView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppRouter.self) private var router
     @Environment(RegionStore.self) private var store
+    @Environment(\.tripTheme) private var theme
 
     @Query private var places: [Place]
 
@@ -17,56 +18,32 @@ struct ExperiencesView: View {
 
     var body: some View {
         let rows = ExperienceListModel.rows(places: places, query: query, chip: chip, region: region, now: AppClock.now)
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                topBar.padding(.top, 8)
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Experiências").mustTitle()
-                    Text("aulas, tours, ingressos — com hora marcada, viram âncora").mustSerif(18).foregroundStyle(Color.must.secondary)
-                }
-                .padding(.top, 22)
+        CutPage(title: "Experiências", corner: ["Must do · \(region.displayName)", "\(rows.count) salvas"],
+                subtitle: "Aulas, tours, ingressos. Com hora marcada, viram âncora.", height: 220, onBack: { dismiss() },
+                trailing: {
+            // Ingressos e reservas (Reservas mostra os ingressos).
+            CutCornerButton(systemName: "ticket", label: "Ingressos", tint: theme.coverInk) { router.push(.reservations, on: .musts) }
+        }) {
+            CutSearchField(text: $query, placeholder: "Buscar experiência, fornecedor…") { EmptyView() }
+                .padding(.horizontal, 20)
+            chips.padding(.vertical, 14)
+            IndexRule()
+            linkCard
 
-                SearchPill(text: $query, placeholder: "Buscar experiência, fornecedor…").padding(.top, 20)
-                chips.padding(.top, 14)
-                linkCard.padding(.top, 18)
-
-                if rows.isEmpty {
-                    emptyState.padding(.top, 26)
-                } else {
-                    LazyVStack(spacing: 12) {
-                        ForEach(rows) { row in
-                            ExperienceRowCard(row: row, region: region,
-                                              onOpen: { router.push(.place(id: row.place.id), on: .musts) })
-                        }
+            if rows.isEmpty {
+                emptyState
+            } else {
+                LazyVStack(spacing: 0) {
+                    ForEach(rows) { row in
+                        ExperienceRowCard(row: row, region: region,
+                                          onOpen: { router.push(.place(id: row.place.id), on: .musts) })
                     }
-                    .padding(.top, 18)
                 }
-                TabBarSpacer()
             }
-            .padding(.horizontal, 22)
         }
         .scrollDismissesKeyboard(.immediately)
-        .scrollIndicators(.hidden)
-        .background {
-            ZStack {
-                Color.must.bg
-                BlobBackground(style: .musts)
-            }
-            .ignoresSafeArea()
-        }
         .sheet(isPresented: $linking) { ExperienceLinkSheet() }
         .toolbar(.hidden, for: .navigationBar)
-    }
-
-    private var topBar: some View {
-        HStack {
-            IconButton(.voltar, label: "Voltar") { dismiss() }
-            Spacer()
-            Micro("Must do · \(region.displayName)")
-            Spacer()
-            // Ingressos e reservas (Reservas mostra os ingressos).
-            IconButton(.reservaAncora, style: .dark, label: "Ingressos") { router.push(.reservations, on: .musts) }
-        }
     }
 
     private var chips: some View {
@@ -77,44 +54,30 @@ struct ExperiencesView: View {
                         .buttonStyle(.plain)
                 }
             }
+            .padding(.horizontal, 20)
         }
         .scrollIndicators(.hidden)
     }
 
     private var linkCard: some View {
         Button { linking = true } label: {
-            HStack(spacing: 14) {
-                MustIconView(.colarLink, size: 18)
-                    .foregroundStyle(.white)
-                    .frame(width: 44, height: 44)
-                    .background(Circle().fill(Color.must.blue))
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("Achou no Airbnb, Klook ou GetYourGuide? Cola o link")
-                        .font(.must.archivo(15, .semibold))
-                        .foregroundStyle(Color.must.ink)
-                        .multilineTextAlignment(.leading)
-                    Text("eu leio título, preço, duração e ponto de encontro").font(.must.meta).foregroundStyle(Color.must.secondary)
-                }
-                Spacer(minLength: 0)
+            CutRow(title: "Achou no Airbnb, Klook ou GetYourGuide? Cola o link",
+                   detail: "eu leio título, preço, duração e ponto de encontro", tone: .orange) {
+                MustIconView(.colarLink, size: 20).foregroundStyle(V8.ink)
             }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .card()
         }
-        .buttonStyle(MustPressStyle())
+        .buttonStyle(.plain)
     }
 
     private var emptyState: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(query.isEmpty ? "Nenhuma experiência salva ainda." : "Nenhuma experiência com “\(query)”.")
-                .font(.must.archivo(15, .semibold))
-                .foregroundStyle(Color.must.ink)
+                .font(V8Font.text(16, weight: .bold)).foregroundStyle(V8.ink)
             Text("Cola o link de um tour ou de uma aula acima. Ela entra na Must do, com data e horário se a página trouxer.")
-                .font(.must.meta).foregroundStyle(Color.must.secondary)
+                .font(V8Font.text(14)).foregroundStyle(V8.mute)
         }
-        .padding(18)
+        .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .card()
     }
 }
 
@@ -157,10 +120,10 @@ struct ExperienceRowCard: View {
                 }
                 if let conflict = row.conflicts.first {
                     Text(conflict)
-                        .font(.must.mono(12, .semibold))
-                        .foregroundStyle(Color.must.blueText)
+                        .font(V8Font.mono(11, weight: .semibold))
+                        .foregroundStyle(V8.paper)
                         .padding(.horizontal, 8).padding(.vertical, 4)
-                        .background(Capsule().fill(Color.must.blue.opacity(0.14)))
+                        .background(Rectangle().fill(V8.ink))
                 }
                 if let url = info?.url {
                     Button { openURL(url) } label: {
@@ -173,10 +136,9 @@ struct ExperienceRowCard: View {
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(height: 176, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(Color.white))
-        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Color.must.line))
+        .frame(minHeight: 176, alignment: .leading)
+        .clipShape(Rectangle())
+        .overlay(alignment: .bottom) { IndexRule() }
     }
 
     /// "3h · grupo até 8 · em inglês · ★ 4,9 · 1.240"

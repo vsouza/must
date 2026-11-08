@@ -79,8 +79,8 @@ struct EditPlaceView: View {
                                 .foregroundStyle(Color(hex: 0xC2261D))
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 52)
-                                .background(Capsule().fill(.white))
-                                .overlay(Capsule().strokeBorder(Color(hex: 0xF1C9C6)))
+                                .background(Rectangle().fill(.white))
+                                .overlay(Rectangle().strokeBorder(Color(hex: 0xF1C9C6)))
                         }
                         .buttonStyle(MustPressStyle())
                     }
@@ -120,7 +120,7 @@ struct EditPlaceView: View {
                     .foregroundStyle(.white)
                     .padding(.horizontal, 18)
                     .frame(height: 40)
-                    .background(Capsule().fill(Color.must.ink))
+                    .background(Rectangle().fill(Color.must.ink))
             }
             .buttonStyle(MustPressStyle())
             .accessibilityIdentifier("edit.save")
@@ -273,7 +273,7 @@ struct EditPlaceView: View {
                 .font(.must.serif(19))
                 .lineLimit(3...8)
                 .padding(16)
-                .background(Color.must.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .background(Color.must.surface, in: Rectangle())
         }
     }
 
@@ -295,7 +295,7 @@ struct EditPlaceView: View {
                     .autocorrectionDisabled()
                     .padding(.horizontal, 14)
                     .frame(height: 44)
-                    .background(Color.must.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .background(Color.must.surface, in: Rectangle())
             }
         }
     }
@@ -327,7 +327,7 @@ struct EditPlaceView: View {
                 .foregroundStyle(Color.must.ink)
                 .padding(.horizontal, 16)
                 .frame(height: 52)
-                .background(Color.must.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .background(Color.must.surface, in: Rectangle())
         }
     }
 
@@ -514,7 +514,7 @@ struct ReservationEditor: View {
                 .font(.must.archivo(15))
                 .padding(.horizontal, 14)
                 .frame(height: 48)
-                .background(Color.must.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .background(Color.must.surface, in: Rectangle())
             Spacer()
             HStack(spacing: 10) {
                 if reservation != nil {

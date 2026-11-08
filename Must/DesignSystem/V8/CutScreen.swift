@@ -109,7 +109,7 @@ struct CutRow<Trailing: View>: View {
                 if let detail, !detail.isEmpty {
                     Text(detail)
                         .font(V8Font.text(13))
-                        .foregroundStyle(tone == .ink ? V8.muteDark : V8.mute)
+                        .foregroundStyle(tone == .ink ? V8.muteDark : tone == .orange ? V8.ink.opacity(0.8) : V8.mute)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }

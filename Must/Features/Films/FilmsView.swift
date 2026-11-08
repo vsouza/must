@@ -84,7 +84,7 @@ struct FilmsView: View {
                 .lineLimit(1).minimumScaleFactor(0.6)
                 .frame(width: 62, height: 90, alignment: .topTrailing)
                 .padding(.trailing, 2)
-                .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(V8.ink))
+                .background(Rectangle().fill(V8.ink))
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 4) {
                 Text(film.title).font(V8Font.text(20, weight: .bold)).tracking(-0.3).foregroundStyle(V8.ink)

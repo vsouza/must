@@ -51,7 +51,7 @@ struct CollectibleCardView: View {
         }
         .frame(width: size.width, height: size.height)
         .overlay { if item.variant == .outdoor { Rectangle().strokeBorder(V8.ink, lineWidth: 6) } }
-        .clipShape(RoundedRectangle(cornerRadius: corner, style: .continuous))
+        .clipShape(Rectangle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Colecionável \(item.order) de \(item.total): \(item.title)")
     }
@@ -63,9 +63,9 @@ struct CollectibleCardView: View {
     private func rings(_ size: CGSize) -> some View {
         ZStack(alignment: .topLeading) {
             let d: CGFloat = stories ? 1000 : 900
-            Circle().stroke(ringColor, lineWidth: 3).frame(width: d, height: d).offset(x: stories ? -330 : -260, y: stories ? -430 : -480)
-            Circle().stroke(ringColor, lineWidth: 3).frame(width: d, height: d).offset(x: stories ? 180 : 420, y: stories ? 790 : 480)
-            if stories { Circle().stroke(ringColor, lineWidth: 3).frame(width: d, height: d).offset(x: -420, y: 1250) }
+            Rectangle().stroke(ringColor, lineWidth: 3).frame(width: d, height: d).offset(x: stories ? -330 : -260, y: stories ? -430 : -480)
+            Rectangle().stroke(ringColor, lineWidth: 3).frame(width: d, height: d).offset(x: stories ? 180 : 420, y: stories ? 790 : 480)
+            if stories { Rectangle().stroke(ringColor, lineWidth: 3).frame(width: d, height: d).offset(x: -420, y: 1250) }
         }
         .frame(width: size.width, height: size.height, alignment: .topLeading)
         .allowsHitTesting(false)
@@ -89,7 +89,7 @@ struct CollectibleCardView: View {
 
     private var seal: some View {
         ZStack {
-            Circle().strokeBorder(ink, lineWidth: 7)
+            Rectangle().strokeBorder(ink, lineWidth: 7)
             VStack(spacing: 6) {
                 Text(item.stampCode).font(mono(stories ? 72 : 64, weight: 800)).foregroundStyle(ink)
                     .lineLimit(1).minimumScaleFactor(0.5)

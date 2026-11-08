@@ -150,7 +150,7 @@ struct ExpenseView: View {
                     Text(placeSubtitle(place)).mustMeta().lineLimit(2)
                 }
             } else {
-                MustIconView(.yenGasto, size: 18).frame(width: 36, height: 36).background(Circle().fill(Color.must.surface))
+                MustIconView(.yenGasto, size: 18).frame(width: 36, height: 36).background(Rectangle().fill(Color.must.surface))
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Sem lugar").mustPlace()
                     Text("gasto solto · metrô, konbini, gorjeta").mustMeta()
@@ -206,7 +206,7 @@ struct ExpenseView: View {
                     .foregroundStyle(key.count > 1 || key == "," ? Color.must.secondary : Color.must.ink)
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
-                    .background(RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .background(Rectangle()
                         .fill(key.count > 1 || key == "⌫" || key == "," ? Color.clear : Color.must.surface2))
                 }
                 .buttonStyle(MustPressStyle())
@@ -240,8 +240,8 @@ struct ExpenseView: View {
                         .foregroundStyle(Color.must.ink)
                         .padding(.horizontal, 14)
                         .frame(height: 36)
-                        .background(Capsule().fill(method == m ? Color.must.surface : Color.white))
-                        .overlay(Capsule().strokeBorder(method == m ? Color.clear : Color.must.lineStrong))
+                        .background(Rectangle().fill(method == m ? Color.must.surface : Color.white))
+                        .overlay(Rectangle().strokeBorder(method == m ? Color.clear : Color.must.lineStrong))
                 }
                 .buttonStyle(MustPressStyle())
             }
@@ -287,7 +287,7 @@ private struct PlacePicker: View {
                 .font(.must.archivo(16))
                 .padding(.horizontal, 14)
                 .frame(height: 46)
-                .background(Color.must.surface, in: Capsule())
+                .background(Color.must.surface, in: Rectangle())
             ScrollView {
                 VStack(spacing: 0) {
                     Button { onPick(nil); dismiss() } label: {

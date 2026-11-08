@@ -31,33 +31,33 @@ struct CollectionView: View {
         let done = slots.compactMap(\.collectible)
         let rare = done.filter(\.isRare).count
 
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                header(done: done.count, total: slots.count, rare: rare).padding(.top, 8)
-                HStack(alignment: .firstTextBaseline, spacing: 14) {
-                    Text("Coleção")
-                        .font(V8Font.display(52)).tracking(-1.6).foregroundStyle(V8.ink)
-                        .lineLimit(1).minimumScaleFactor(0.6)
-                        .accessibilityAddTraits(.isHeader)
-                    BigNumeral("\(done.count)", size: 74, color: V8.orange)
-                }
-                .padding(.top, 22)
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("Coleção: \(done.count) feitos")
-                controls.padding(.top, 20)
-                if done.isEmpty {
-                    empty.padding(.top, 30)
-                } else {
-                    if !showcase.isEmpty || organizing { vitrine(showcase).padding(.top, 28) }
-                    ForEach(sections) { section in
-                        sectionView(section).padding(.top, 26)
+        VStack(spacing: 0) {
+            header(done: done.count, total: slots.count, rare: rare)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack(alignment: .center, spacing: 12) {
+                        BigNumeral("\(done.count)", size: 74, color: V8.orange).fixedSize()
+                        SpecLabel("feitos\n\(rare) raros")
+                        Spacer(minLength: 0)
                     }
+                    .padding(.top, 18)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("Coleção: \(done.count) feitos")
+                    controls.padding(.top, 16)
+                    if done.isEmpty {
+                        empty.padding(.top, 30)
+                    } else {
+                        if !showcase.isEmpty || organizing { vitrine(showcase).padding(.top, 28) }
+                        ForEach(sections) { section in
+                            sectionView(section).padding(.top, 26)
+                        }
+                    }
+                    V8BarSpacer()
                 }
-                V8BarSpacer()
+                .padding(.horizontal, 20)
             }
-            .padding(.horizontal, 20)
+            .scrollIndicators(.hidden)
         }
-        .scrollIndicators(.hidden)
         .background(V8.paper.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
         .sheet(item: $detail) { item in CollectibleDetailView(item: item, tint: tint) }
@@ -74,14 +74,11 @@ struct CollectionView: View {
     // MARK: Topo
 
     private func header(done: Int, total: Int, rare: Int) -> some View {
-        HStack(alignment: .top) {
-            V8SpecStack(lines: ["Coleção · \(region.countryName)", "\(done) feitos de \(total)"])
-            Spacer(minLength: 12)
-            V8SpecStack(lines: [CollectibleText.dateLabel(AppClock.now, timeZoneId: region.timeZone.identifier, withYear: true)
-                .split(separator: " ").dropFirst().joined(separator: " "), "\(rare) raros"], alignment: .trailing)
-        }
-        .padding(.trailing, 0)
-        .overlay(alignment: .topTrailing) { EmptyView() }
+        CutScreenHeader(title: "Coleção",
+                        corner: ["Coleção · \(region.countryName)", "\(done) feitos de \(total)",
+                                 CollectibleText.dateLabel(AppClock.now, timeZoneId: region.timeZone.identifier, withYear: true)
+                                     .split(separator: " ").dropFirst().joined(separator: " ")],
+                        height: 200, onBack: { dismiss() })
     }
 
     private var controls: some View {
@@ -94,19 +91,17 @@ struct CollectionView: View {
                     } label: {
                         Text(g.label)
                             .font(V8Font.text(15, weight: .bold))
-                            .foregroundStyle(group == g ? V8.white : V8.ink)
+                            .foregroundStyle(group == g ? V8.paper : V8.ink)
                             .padding(.horizontal, 16)
                             .frame(minHeight: 44)
-                            .background(Capsule().fill(group == g ? V8.ink : .clear))
-                            .contentShape(Capsule())
+                            .background(Rectangle().fill(group == g ? V8.ink : .clear))
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityAddTraits(group == g ? .isSelected : [])
                 }
             }
-            .padding(3)
-            .background(Capsule().fill(V8.white))
-            .overlay(Capsule().strokeBorder(V8.rule, lineWidth: 1))
+            .overlay(Rectangle().strokeBorder(V8.ink, lineWidth: 2))
             Spacer(minLength: 0)
             Button { withAnimation(.snappy) { organizing.toggle() } } label: {
                 Text(organizing ? "Pronto" : "Organizar")
@@ -114,9 +109,9 @@ struct CollectionView: View {
                     .foregroundStyle(organizing ? V8.white : V8.ink)
                     .padding(.horizontal, 18)
                     .frame(minHeight: 44)
-                    .background(Capsule().fill(organizing ? V8.ink : .clear))
-                    .overlay(Capsule().strokeBorder(V8.ink, lineWidth: 1.5))
-                    .contentShape(Capsule())
+                    .background(Rectangle().fill(organizing ? V8.ink : .clear))
+                    .overlay(Rectangle().strokeBorder(V8.ink, lineWidth: 2))
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
         }
@@ -191,10 +186,10 @@ struct CollectionView: View {
         HStack(spacing: 6) {
             Image(systemName: isPinned ? "pin.fill" : "pin").font(.system(size: 13, weight: .bold))
                 .frame(width: 28, height: 28)
-                .background(Circle().fill(isPinned ? V8.orange : V8.white)).foregroundStyle(V8.ink)
+                .background(Rectangle().fill(isPinned ? V8.orange : V8.white)).foregroundStyle(V8.ink)
             Button { toggleHidden(item.id) } label: {
                 Image(systemName: "eye.slash").font(.system(size: 13, weight: .bold))
-                    .frame(width: 28, height: 28).background(Circle().fill(V8.white)).foregroundStyle(V8.ink)
+                    .frame(width: 28, height: 28).background(Rectangle().fill(V8.white)).foregroundStyle(V8.ink)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Esconder")
@@ -203,7 +198,7 @@ struct CollectionView: View {
     }
 
     private func todoCard(_ slot: CollectionSlot) -> some View {
-        RoundedRectangle(cornerRadius: 22, style: .continuous)
+        Rectangle()
             .strokeBorder(V8.mute.opacity(0.5), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
             .frame(width: 106, height: 138)
             .overlay(alignment: .bottomLeading) {
@@ -254,7 +249,7 @@ struct MiniCollectibleCard: View {
         let big = width >= 130
         ZStack(alignment: .topLeading) {
             bg
-            Circle().stroke(fg.opacity(0.4), lineWidth: 1).frame(width: width * 0.9, height: width * 0.9)
+            Rectangle().stroke(fg.opacity(0.4), lineWidth: 1).frame(width: width * 0.9, height: width * 0.9)
                 .offset(x: -width * 0.35, y: height * 0.38)
             Text(CollectibleText.number(item.order).suffix(2))
                 .font(V8Font.numeral(big ? 80 : 64)).tracking(big ? -4.8 : -3.8)
@@ -277,7 +272,7 @@ struct MiniCollectibleCard: View {
             .frame(width: width, height: height, alignment: .bottomLeading)
         }
         .frame(width: width, height: height)
-        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .overlay { if item.variant == .outdoor { RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(V8.ink, lineWidth: 1.5) } }
+        .clipShape(Rectangle())
+        .overlay { if item.variant == .outdoor { Rectangle().strokeBorder(V8.ink, lineWidth: 1.5) } }
     }
 }

@@ -313,9 +313,9 @@ struct GuiaRouteBand: View {
                 .stroke(V8.white, style: StrokeStyle(lineWidth: 3, lineCap: .square, lineJoin: .miter))
                 ForEach(Array(projected.enumerated()), id: \.offset) { index, entry in
                     let (point, at) = entry
-                    Circle()
+                    Rectangle()
                         .fill(point.isNow ? V8.orange : V8.paper)
-                        .overlay(Circle().stroke(V8.ink, lineWidth: 2))
+                        .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
                         .frame(width: point.isNow ? 26 : (point.small ? 12 : 22), height: point.isNow ? 26 : (point.small ? 12 : 22))
                         .position(at)
                     if let label = labels[index] {

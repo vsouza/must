@@ -8,6 +8,7 @@ struct ShoppingView: View {
     @Environment(\.modelContext) private var context
     @Environment(AppRouter.self) private var router
     @Environment(RegionStore.self) private var store
+    @Environment(\.tripTheme) private var theme
 
     @Query(sort: [SortDescriptor(\ShoppingItem.createdAt)]) private var items: [ShoppingItem]
     @Query private var places: [Place]
@@ -31,26 +32,26 @@ struct ShoppingView: View {
 
     var body: some View {
         let report = makeReport(items)
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                topBar.padding(.top, 8)
-                titleRow(report).padding(.top, 22)
-                if items.isEmpty {
-                    emptyState.padding(.top, 26)
-                } else {
-                    totalCard(report).padding(.top, 22)
-                    categoryStrip.padding(.top, 22)
-                    ForEach(visibleCategories, id: \.self) { category in
-                        section(category).padding(.top, 30)
+        VStack(spacing: 0) {
+            header(report)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    alertsRow(report)
+                    if items.isEmpty {
+                        emptyState.padding(.top, 26).padding(.horizontal, 22)
+                    } else {
+                        totalCard(report)
+                        categoryStrip.padding(.top, 22).padding(.horizontal, 22)
+                        ForEach(visibleCategories, id: \.self) { category in
+                            section(category).padding(.top, 30).padding(.horizontal, 22)
+                        }
                     }
+                    V8BarSpacer()
                 }
-                TabBarSpacer()
             }
-            .padding(.horizontal, 22)
+            .scrollIndicators(.hidden)
         }
-        .scrollIndicators(.hidden)
-        .overlay(alignment: .bottom) { tabFade }
-        .background(Color.must.bg)
+        .background(V8.paper.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
         .onAppear { ShoppingFlightSync.refresh(context: context, region: region) }
         .sheet(item: $editing, onDismiss: { ShoppingFlightSync.refresh(context: context, region: region) }) { item in
@@ -63,41 +64,24 @@ struct ShoppingView: View {
 
     // MARK: Topo
 
-    private var topBar: some View {
+    private func header(_ report: ShoppingReport) -> some View {
         let bought = items.filter(\.isBought).count
-        return HStack {
-            IconButton(.voltar, label: "Voltar") { dismiss() }
-            Spacer()
-            Micro("\(region.shortName) · \(items.count) \(items.count == 1 ? "item" : "itens") · \(bought) comprados")
-            Spacer()
-            IconButton(.adicionar, style: .dark, label: "Adicionar à lista") { adding = true }
+        return CutScreenHeader(title: "Compras",
+                               corner: ["\(region.shortName) · \(items.count) \(items.count == 1 ? "item" : "itens")", "\(bought) comprados"],
+                               height: 200, onBack: { dismiss() }) {
+            CutCornerButton(systemName: "plus", label: "Adicionar à lista", tint: theme.coverInk) { adding = true }
         }
     }
 
-    private func titleRow(_ report: ShoppingReport) -> some View {
+    /// Faixa de ação: as regras da volta (laranja = pede atenção).
+    private func alertsRow(_ report: ShoppingReport) -> some View {
         let alerts = report.alerts.count
-        return HStack(alignment: .center, spacing: 10) {
-            Text("Compras").mustTitle()
-            Spacer(minLength: 8)
-            Button { router.push(.regrasVolta, on: router.tab) } label: {
-                Text("Regras da volta · \(alerts) \(alerts == 1 ? "alerta" : "alertas")")
-                    .font(.must.archivo(14, .semibold))
-                    .foregroundStyle(Color(hex: 0x4A2E00))
-                    .lineLimit(1)
-                    .padding(.vertical, 9)
-                    .padding(.horizontal, 14)
-                    .background(Capsule().fill(Color(hex: 0xFFE3A3)))
+        return Button { router.push(.regrasVolta, on: router.tab) } label: {
+            CutRow(title: "Regras da volta", detail: "\(alerts) \(alerts == 1 ? "alerta" : "alertas")", tone: alerts > 0 ? .orange : .paper) {
+                CutValue(text: "ver", chevron: true)
             }
-            .buttonStyle(MustPressStyle())
         }
-    }
-
-    /// Degradê branco na borda de baixo: a lista rola por trás dele até a tab bar.
-    private var tabFade: some View {
-        LinearGradient(colors: [Color.must.bg.opacity(0), Color.must.bg], startPoint: .top, endPoint: .bottom)
-            .frame(height: 90)
-            .allowsHitTesting(false)
-            .ignoresSafeArea(edges: .bottom)
+        .buttonStyle(.plain)
     }
 
     // MARK: Previsto e cota
@@ -119,7 +103,7 @@ struct ShoppingView: View {
                 HStack(spacing: 6) {
                     Text("já gasto").font(.must.archivo(13)).foregroundStyle(.white.opacity(0.7))
                     Text(ShoppingReport.money(report.regionAmount(yen: report.spent), currency: currency))
-                        .font(.must.mono(14, .semibold)).foregroundStyle(Color.must.green)
+                        .font(.must.mono(14, .semibold)).foregroundStyle(V8.orange)
                 }
             }
             HStack(alignment: .firstTextBaseline, spacing: 10) {
@@ -132,10 +116,10 @@ struct ShoppingView: View {
             }
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    Capsule().fill(.white.opacity(0.16))
+                    Rectangle().fill(.white.opacity(0.16))
                     HStack(spacing: 0) {
-                        Capsule().fill(Color.must.green).frame(width: geo.size.width * boughtShare)
-                        Capsule().fill(Color.must.blue).frame(width: geo.size.width * plannedShare)
+                        Rectangle().fill(V8.orange).frame(width: geo.size.width * boughtShare)
+                        Rectangle().fill(V8.white.opacity(0.55)).frame(width: geo.size.width * plannedShare)
                     }
                 }
             }
@@ -162,7 +146,7 @@ struct ShoppingView: View {
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 26, style: .continuous).fill(Color.must.ink))
+        .background(Rectangle().fill(Color.must.ink))
     }
 
     // MARK: Fileira de categorias
@@ -195,7 +179,7 @@ struct ShoppingView: View {
         return VStack(spacing: 6) {
             ShoppingTile(category: category, size: 58)
                 .overlay {
-                    if selected { RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(Color.must.ink, lineWidth: 2.5).padding(-4) }
+                    if selected { Rectangle().strokeBorder(Color.must.ink, lineWidth: 2.5).padding(-4) }
                 }
             Text("\(category.label) · \(count)")
                 .font(.must.archivo(11, .semibold))
@@ -303,6 +287,6 @@ struct ShoppingView: View {
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.must.surface2, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .background(Color.must.surface2, in: Rectangle())
     }
 }

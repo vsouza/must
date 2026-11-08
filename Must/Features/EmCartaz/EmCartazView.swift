@@ -113,7 +113,6 @@ struct EmCartazView: View {
                                 stacked: typeSize.isAccessibilitySize)
                 }
                 .buttonStyle(.plain)
-                .disabled(event.placeId == nil)
             }
         }
     }

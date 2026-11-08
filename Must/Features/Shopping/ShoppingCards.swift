@@ -63,11 +63,8 @@ struct ShoppingTile: View {
     var size: CGFloat
 
     var body: some View {
-        RoundedRectangle(cornerRadius: size * 0.3, style: .continuous)
-            .fill(category == .cameras
-                  ? AnyShapeStyle(Color(hex: 0x121316))
-                  : AnyShapeStyle(LinearGradient(colors: [category.tint.light, category.tint.strong],
-                                                 startPoint: .topLeading, endPoint: .bottomTrailing)))
+        Rectangle()
+            .fill(category == .cameras ? V8.ink : category.tint.strong)
             .frame(width: size, height: size)
             .overlay {
                 ShoppingIcon(category: category, size: size * 0.45, color: .white)
@@ -108,8 +105,8 @@ struct ShoppingItemCard: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .frame(width: 150, alignment: .topLeading)
-            .background(Color.must.surface2, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .background(Color.must.surface2, in: Rectangle())
+            .contentShape(Rectangle())
         }
         .buttonStyle(MustPressStyle())
     }
@@ -140,7 +137,7 @@ struct ShoppingRuleChip: View {
             .foregroundStyle(foreground)
             .padding(.vertical, 7)
             .padding(.horizontal, 12)
-            .background(background, in: Capsule())
+            .background(background, in: Rectangle())
     }
 
     private var foreground: Color {

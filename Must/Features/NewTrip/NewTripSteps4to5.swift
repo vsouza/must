@@ -27,8 +27,8 @@ private struct NewTripAction: View {
             }
             .foregroundStyle(V8.ink)
             .padding(.horizontal, 18).frame(minHeight: 48)
-            .overlay(Capsule().strokeBorder(V8.ink, lineWidth: 1.5))
-            .contentShape(Capsule())
+            .overlay(Rectangle().strokeBorder(V8.ink, lineWidth: 2))
+            .contentShape(Rectangle())
         }
         .buttonStyle(MustPressStyle())
     }
@@ -149,8 +149,7 @@ private struct LodgingSheet: View {
                 TextEditor(text: $pasted)
                     .font(V8Font.text(15)).scrollContentBackground(.hidden)
                     .frame(minHeight: 110)
-                    .padding(10).background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(V8.white))
-                    .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(V8.bone, lineWidth: 1))
+                    .padding(10).overlay(Rectangle().strokeBorder(V8.ink, lineWidth: 2))
                 HStack(spacing: 10) {
                     NewTripAction(title: "Colar do clipboard", icon: "doc.on.clipboard") {
                         pasted = UIPasteboard.general.string ?? pasted
@@ -193,7 +192,7 @@ private struct LodgingSheet: View {
             SpecLabel(label)
             TextField("", text: text).font(V8Font.text(18, weight: .semibold)).foregroundStyle(V8.ink)
                 .padding(.horizontal, 16).frame(minHeight: 50)
-                .background(Capsule().fill(V8.white)).overlay(Capsule().strokeBorder(V8.bone, lineWidth: 1))
+                .overlay(Rectangle().strokeBorder(V8.ink, lineWidth: 2))
         }
     }
 
@@ -233,7 +232,7 @@ private struct NeighborhoodSheet: View {
             TextField("", text: $text, prompt: Text("ex.: Chiado").foregroundStyle(V8.mute))
                 .font(V8Font.text(20, weight: .semibold)).foregroundStyle(V8.ink)
                 .padding(.horizontal, 18).frame(minHeight: 56)
-                .background(Capsule().fill(V8.white)).overlay(Capsule().strokeBorder(V8.bone, lineWidth: 1))
+                .overlay(Rectangle().strokeBorder(V8.ink, lineWidth: 2))
                 .submitLabel(.done)
             HStack(spacing: 12) {
                 V8Button("Cancelar", .line) { dismiss() }.foregroundStyle(V8.ink)
@@ -360,8 +359,7 @@ private struct FlightSheet: View {
                 switch mode {
                 case .email:
                     TextEditor(text: $pasted).font(V8Font.text(15)).scrollContentBackground(.hidden).frame(minHeight: 130)
-                        .padding(10).background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(V8.white))
-                        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(V8.bone, lineWidth: 1))
+                        .padding(10).overlay(Rectangle().strokeBorder(V8.ink, lineWidth: 2))
                     HStack(spacing: 10) {
                         NewTripAction(title: "Colar do clipboard", icon: "doc.on.clipboard") {
                             pasted = UIPasteboard.general.string ?? pasted
@@ -376,7 +374,7 @@ private struct FlightSheet: View {
                             Text(reading ? "Lendo…" : "Escolher foto do cartão").font(V8Font.text(16, weight: .semibold))
                         }
                         .foregroundStyle(V8.ink).padding(.horizontal, 18).frame(minHeight: 48)
-                        .overlay(Capsule().strokeBorder(V8.ink, lineWidth: 1.5))
+                        .overlay(Rectangle().strokeBorder(V8.ink, lineWidth: 2))
                     }
                     .onChange(of: picked) { _, item in Task { await readPhoto(item) } }
                 case .hand:
@@ -431,7 +429,7 @@ private struct FlightSheet: View {
             TextField("", text: text).font(V8Font.text(18, weight: .semibold)).foregroundStyle(V8.ink)
                 .textInputAutocapitalization(.characters).autocorrectionDisabled()
                 .padding(.horizontal, 16).frame(minHeight: 50)
-                .background(Capsule().fill(V8.white)).overlay(Capsule().strokeBorder(V8.bone, lineWidth: 1))
+                .overlay(Rectangle().strokeBorder(V8.ink, lineWidth: 2))
         }
     }
 

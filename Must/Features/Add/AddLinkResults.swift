@@ -53,7 +53,7 @@ struct AddLinkResults: View {
                     .foregroundStyle(.white)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 4)
-                    .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(Color.must.ink))
+                    .background(Rectangle().fill(Color.must.ink))
             }
             VStack(alignment: .leading, spacing: 1) {
                 Text(headline).font(.must.archivo(13, .semibold)).foregroundStyle(Color.must.ink).lineLimit(1)
@@ -66,12 +66,12 @@ struct AddLinkResults: View {
                     .foregroundStyle(Color.must.ink)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 8)
-                    .background(Capsule().fill(.white))
+                    .background(Rectangle().fill(.white))
             }
             .buttonStyle(MustPressStyle())
         }
         .padding(12)
-        .background(Color.must.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .background(Color.must.surface, in: Rectangle())
     }
 
     // MARK: Lista
@@ -111,9 +111,8 @@ struct AddLinkResults: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 2)
-        .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(Color.white))
-        .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(Color.must.line))
-        .shadow(color: Color(hex: 0x121316, opacity: 0.06), radius: 15, x: 0, y: 10)
+        .background(Rectangle().fill(Color.white))
+        .overlay(Rectangle().strokeBorder(Color.must.line))
     }
 
     private func row(_ match: MatchedPlace, number: Int?) -> some View {
@@ -152,7 +151,7 @@ struct AddLinkResults: View {
             .font(.must.mono(12, .semibold))
             .foregroundStyle(number == nil ? Color.must.secondary : (selected ? Color.must.greenText : .white))
             .frame(width: 28, height: 28)
-            .background(Circle().fill(number == nil ? Color.must.surface : (selected ? Color.must.green : Color.must.ink)))
+            .background(Rectangle().fill(number == nil ? Color.must.surface : (selected ? Color.must.green : Color.must.ink)))
     }
 
     @ViewBuilder private func trailing(_ match: MatchedPlace, on: Bool) -> some View {
@@ -177,8 +176,8 @@ struct AddLinkResults: View {
 
     private func checkDisc(on: Bool) -> some View {
         ZStack {
-            Circle().fill(on ? Color.must.green : Color.white)
-            Circle().strokeBorder(Color.must.line, lineWidth: on ? 0 : 1)
+            Rectangle().fill(on ? Color.must.green : Color.white)
+            Rectangle().strokeBorder(Color.must.line, lineWidth: on ? 0 : 1)
             if on { MustIconView(.ok, size: 13).foregroundStyle(Color.must.greenText) }
         }
         .frame(width: 26, height: 26)
@@ -190,8 +189,8 @@ struct AddLinkResults: View {
             .foregroundStyle(Color.must.ink)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
-            .background(Capsule().fill(fill))
-            .overlay(Capsule().strokeBorder(stroke ? Color.must.line : .clear))
+            .background(Rectangle().fill(fill))
+            .overlay(Rectangle().strokeBorder(stroke ? Color.must.line : .clear))
     }
 
     /// Seletor de lista da linha (só no modo "um por lugar…").
@@ -207,7 +206,7 @@ struct AddLinkResults: View {
                 .foregroundStyle(Color.must.ink)
                 .padding(.horizontal, 9)
                 .padding(.vertical, 4)
-                .background(Capsule().fill(Color.must.surface))
+                .background(Rectangle().fill(Color.must.surface))
         }
     }
 

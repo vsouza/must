@@ -24,7 +24,7 @@ struct ListTile: View {
             VStack(alignment: .leading, spacing: 0) {
                 MustIconView(list.icon, size: 18)
                     .frame(width: 36, height: 36)
-                    .background(Circle().fill(Color.white.opacity(0.55)))
+                    .background(Rectangle().fill(Color.white.opacity(0.55)))
                 Spacer(minLength: 0)
                 MonoNumber("\(previewCount ?? list.places.count)", size: height < 130 ? 26 : 28)
                 Text(list.displayName).font(.must.archivo(17, .semibold)).lineLimit(1).minimumScaleFactor(0.8)
@@ -39,7 +39,7 @@ struct ListTile: View {
         }
         .frame(maxWidth: .infinity)
         .frame(height: height)
-        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .clipShape(Rectangle())
         .accessibilityElement(children: .combine)
         .task(id: "\(list.places.count)|\(list.photo?.url ?? "")") { if photoURL == nil { cover = ListCover.photo(for: list) } }
     }

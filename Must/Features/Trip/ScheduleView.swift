@@ -44,8 +44,14 @@ struct ScheduleView: View {
         HStack(spacing: 8) {
             ForEach([ScheduleTab.voos, .reservas], id: \.self) { option in
                 Button { tab = option } label: {
-                    CutChip(text: option == .voos ? "Voos" : "Reservas", isOn: tab == option, minHeight: 44)
-                        .frame(maxWidth: .infinity)
+                    Text((option == .voos ? "Voos" : "Reservas").uppercased())
+                        .font(V8Font.mono(12, weight: .semibold)).tracking(1)
+                        .foregroundStyle(tab == option ? V8.paper : V8.ink)
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .background(tab == option ? V8.ink : Color.clear)
+                        .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
+                        .contentShape(Rectangle())
+                        .accessibilityAddTraits(tab == option ? .isSelected : [])
                 }
                 .buttonStyle(.plain)
             }
