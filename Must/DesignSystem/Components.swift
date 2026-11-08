@@ -603,11 +603,11 @@ struct MustToggleStyle: ToggleStyle {
         HStack {
             configuration.label
             Spacer(minLength: 12)
-            Capsule()
+            Rectangle()
                 .fill(configuration.isOn ? V8.orange : Color(hex: V8.Hex.ruleStrong))
                 .frame(width: 46, height: 28)
                 .overlay(alignment: configuration.isOn ? .trailing : .leading) {
-                    Circle()
+                    Rectangle()
                         .fill(configuration.isOn ? V8.ink : V8.white)
                         .frame(width: 22, height: 22)
                         .padding(3)
