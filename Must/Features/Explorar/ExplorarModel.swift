@@ -215,7 +215,7 @@ final class ExplorarModel {
     // MARK: Textos
 
     static func meta(_ place: Place, open: Bool, region: Region, now: Date) -> String {
-        var parts: [String] = ["seu Must \(place.list?.displayName.lowercased() ?? "")".trimmingCharacters(in: .whitespaces)]
+        var parts: [String] = ["seu Must \(place.list?.name.lowercased() ?? "")".trimmingCharacters(in: .whitespaces)]
         if let q = place.queueMinutes, q > 0 { parts.append("fila \(q) min") }
         if place.isDone { parts.append("feito") }
         else if case .open(let until) = place.openState(at: now, timeZone: region.timeZone) { parts.append(until.map { "fecha \($0)" } ?? "aberto") }
