@@ -64,48 +64,36 @@ struct ExpenseView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack {
-                IconButton(.fechar, label: "Fechar") { dismiss() }
-                Spacer()
-                Micro("gasto · hoje \(region.money(spentToday, symbol: true)) de \(region.money(budget, symbol: false))")
-                Spacer()
-                Color.clear.frame(width: 40, height: 40)
-            }
-            .padding(.horizontal, 22)
-            .padding(.top, 16)
+            CutScreenHeader(title: "Gasto", corner: ["hoje \(region.money(spentToday, symbol: true)) de \(region.money(budget, symbol: false))"],
+                            height: 120, onBack: { dismiss() }, backIcon: "xmark")
+            ScrollView {
+                VStack(spacing: 0) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        MonoLabel("quanto foi?", color: V8.mute)
+                        HStack(alignment: .firstTextBaseline, spacing: 6) {
+                            Text(region.currencySymbol).font(V8Font.mono(26, weight: .semibold)).foregroundStyle(V8.mute)
+                            Text(displayAmount)
+                                .font(V8Font.numeral(76)).tracking(-2)
+                                .foregroundStyle(V8.ink).lineLimit(1).minimumScaleFactor(0.4)
+                        }
+                        Text(fitLine).font(V8Font.text(14)).foregroundStyle(V8.mute)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 18)
+                    .overlay(alignment: .bottom) { IndexRule() }
 
-            VStack(spacing: 6) {
-                Text("Quanto foi?").font(.must.archivo(15)).foregroundStyle(Color.must.secondary)
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text(region.currencySymbol).font(.must.mono(26, .semibold)).foregroundStyle(Color.must.secondary)
-                    MonoNumber(displayAmount, size: 76).foregroundStyle(Color.must.ink)
+                    placeCard.padding(.horizontal, 20).padding(.top, 16)
+                    categories.padding(.top, 14)
+                    keypad.padding(.horizontal, 20).padding(.top, 14)
+                    payment.padding(.horizontal, 20).padding(.top, 14)
+                    Color.clear.frame(height: 16)
                 }
-                Text(fitLine).mustSerif(18).foregroundStyle(Color.must.secondary)
             }
-            .padding(.top, 24)
-
-            placeCard.padding(.horizontal, 22).padding(.top, 22)
-            categories.padding(.top, 14)
-            keypad.padding(.horizontal, 22).padding(.top, 14)
-            Spacer(minLength: 8)
-            payment
-            PrimaryButton(buttonTitle) { save() }
-                .disabled(amount == 0 && place == nil)
-                .opacity(amount == 0 && place == nil ? 0.5 : 1)
-                .padding(.horizontal, 22)
-                .padding(.top, 12)
-                .padding(.bottom, 8)
+            .scrollIndicators(.hidden)
         }
-        .background {
-            ZStack {
-                Color.must.bg
-                BlobBackground(style: .custom([
-                    Blob(cx: 340, cy: 225, rx: 95, ry: 70, rotation: -18, fill: .green),
-                    Blob(cx: 30, cy: 315, rx: 75, ry: 52, rotation: 12, fill: .blue),
-                ]))
-            }
-            .ignoresSafeArea()
-        }
+        .background(V8.paper.ignoresSafeArea())
+        .cutFooter(buttonTitle, enabled: !(amount == 0 && place == nil), action: save)
         .sheet(isPresented: $picking) {
             PlacePicker(places: places) { picked in
                 selectedPlaceId = picked?.id
@@ -146,22 +134,21 @@ struct ExpenseView: View {
             if let place {
                 KanjiSeal(done: true, size: 36)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(place.name).mustPlace().lineLimit(1)
-                    Text(placeSubtitle(place)).mustMeta().lineLimit(2)
+                    Text(place.name).font(V8Font.text(17, weight: .bold)).foregroundStyle(V8.ink).lineLimit(2)
+                    Text(placeSubtitle(place)).font(V8Font.text(13)).foregroundStyle(V8.mute).lineLimit(2)
                 }
             } else {
-                MustIconView(.yenGasto, size: 18).frame(width: 36, height: 36).background(Rectangle().fill(Color.must.surface))
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Sem lugar").mustPlace()
-                    Text("gasto solto · metrô, konbini, gorjeta").mustMeta()
+                    Text("Sem lugar").font(V8Font.text(17, weight: .bold)).foregroundStyle(V8.ink)
+                    Text("gasto solto · metrô, konbini, gorjeta").font(V8Font.text(13)).foregroundStyle(V8.mute)
                 }
             }
             Spacer(minLength: 8)
             Button { picking = true } label: { Pill("Outro lugar") }
                 .buttonStyle(MustPressStyle())
         }
-        .padding(16)
-        .glass(cornerRadius: 22)
+        .padding(14)
+        .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
     }
 
     private func placeSubtitle(_ place: Place) -> String {
@@ -206,8 +193,7 @@ struct ExpenseView: View {
                     .foregroundStyle(key.count > 1 || key == "," ? Color.must.secondary : Color.must.ink)
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
-                    .background(Rectangle()
-                        .fill(key.count > 1 || key == "⌫" || key == "," ? Color.clear : Color.must.surface2))
+                    .overlay(Rectangle().stroke(V8.ink, lineWidth: key.count > 1 || key == "⌫" || key == "," ? 0 : 2))
                 }
                 .buttonStyle(MustPressStyle())
                 .accessibilityLabel(key == "⌫" ? "Apagar" : key)
@@ -236,12 +222,12 @@ struct ExpenseView: View {
             ForEach(region.profile.money?.paymentMethods?.compactMap(PaymentMethod.init(rawValue:)) ?? [.cash, .card], id: \.self) { m in
                 Button { method = m } label: {
                     Text(m == .cash ? "pago em dinheiro" : m.label)
-                        .font(.must.archivo(14))
+                        .font(V8Font.text(14))
                         .foregroundStyle(Color.must.ink)
                         .padding(.horizontal, 14)
                         .frame(height: 36)
-                        .background(Rectangle().fill(method == m ? Color.must.surface : Color.white))
-                        .overlay(Rectangle().strokeBorder(method == m ? Color.clear : Color.must.lineStrong))
+                        .background(method == m ? V8.orange : Color.clear)
+                        .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
                 }
                 .buttonStyle(MustPressStyle())
             }
@@ -282,12 +268,11 @@ private struct PlacePicker: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            SheetHandle().frame(maxWidth: .infinity)
             TextField("Buscar no board…", text: $query)
-                .font(.must.archivo(16))
+                .font(V8Font.text(16))
                 .padding(.horizontal, 14)
-                .frame(height: 46)
-                .background(Color.must.surface, in: Rectangle())
+                .frame(minHeight: 48)
+                .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
             ScrollView {
                 VStack(spacing: 0) {
                     Button { onPick(nil); dismiss() } label: {
@@ -305,6 +290,7 @@ private struct PlacePicker: View {
             }
         }
         .padding(.horizontal, 22)
-        .background(Color.must.bg)
+        .padding(.top, 16)
+        .background(V8.paper)
     }
 }

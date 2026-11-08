@@ -90,10 +90,10 @@ struct TripView: View {
     private func spendBlock(spent: Double, elapsed: Int) -> some View {
         HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 6) {
-                Text(trip == nil ? "Gasto no mês" : "Gasto na viagem").font(.must.archivo(14)).foregroundStyle(Color.must.secondary)
+                Text(trip == nil ? "Gasto no mês" : "Gasto na viagem").font(V8Font.text(14)).foregroundStyle(Color.must.secondary)
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     MonoNumber(region.money(spent, symbol: false), size: 40)
-                    Text(region.currency).font(.must.archivo(17, .semibold))
+                    Text(region.currency).font(V8Font.text(17, weight: .semibold))
                 }
                 .foregroundStyle(Color.must.ink)
                 Text(meta(spent: spent, elapsed: elapsed)).font(.must.meta).foregroundStyle(Color.must.secondary).lineLimit(2)
@@ -141,22 +141,20 @@ struct TripView: View {
     }
 
     private func dayDot(_ cell: TripStats.DayCell) -> some View {
+        // Datas = quadrados de borda de 2 pt; hoje em tinta, feito em laranja, outra cidade tracejado.
         let (fill, text): (Color, Color) = switch cell.state {
-        case .done: (Color.must.green, Color.must.greenText)
-        case .today: (Color.must.ink, .white)
-        case .otherCity: (Color(hex: 0xE6F1FF), Color.must.blueText)
-        case .future, .past: (Color.must.surface, Color.must.ink)
+        case .done: (V8.orange, V8.ink)
+        case .today: (V8.ink, V8.paper)
+        case .otherCity, .future, .past: (Color.clear, V8.ink)
         }
         return Text("\(cell.number)")
-            .font(.must.mono(14, .semibold))
+            .font(V8Font.mono(14, weight: .semibold))
             .foregroundStyle(text)
-            .frame(width: 40, height: 40)
+            .frame(width: 44, height: 44)
             .background(Rectangle().fill(fill))
-            .overlay {
-                if cell.state == .today { Rectangle().strokeBorder(theme.tripColor, lineWidth: 2.5).padding(-4) }
-            }
+            .overlay(Rectangle().stroke(V8.ink, style: StrokeStyle(lineWidth: 2, dash: cell.state == .otherCity ? [4, 3] : [])))
             .overlay(alignment: .topTrailing) {
-                if trip == nil, cell.state == .done { Image(systemName: "checkmark").font(.system(size: 8, weight: .bold)).foregroundStyle(Color.must.greenText).offset(x: 2, y: -2) }
+                if trip == nil, cell.state == .done { Image(systemName: "checkmark").font(.system(size: 8, weight: .bold)).foregroundStyle(V8.ink).offset(x: -3, y: 3) }
             }
             .opacity(cell.state == .past ? 0.5 : 1)
             .accessibilityLabel("dia \(cell.number)")
@@ -183,7 +181,7 @@ struct TripView: View {
             if areas.isEmpty {
                 Text("nenhum selo ainda").mustSerif(18).foregroundStyle(Color.must.secondary)
             } else {
-                Micro("selos de bairro · \(areas.count)", color: theme.labelColor)
+                MonoLabel("selos de bairro · \(areas.count)", color: theme.labelColor)
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 14) {
                         ForEach(Array(areas.enumerated()), id: \.element.id) { index, area in
@@ -204,11 +202,10 @@ struct TripView: View {
         let current = trip.city(on: now, calendar: cal)
         let shown = Array(trip.cities.prefix(3))
         // Pilha com altura do conteúdo (nada de altura fixa): a sobreposição é só a decorativa (−8 pt, abaixo do limite de 12).
-        return VStack(alignment: .leading, spacing: 0) {
+        return VStack(alignment: .leading, spacing: -2) {
             ForEach(Array(shown.enumerated()), id: \.element.id) { index, city in
                 cityCard(city, trip: trip, isCurrent: city.id == current?.id, isLast: index == shown.count - 1, index: index)
-                    .stackCard(tint: index == 0 ? .must(.eat) : index == 1 ? .must(.drink) : .sky,
-                               rotation: index == 0 ? -2 : index == 1 ? 1.5 : 0)
+                    .tripBand(orange: city.id == current?.id || (current == nil && index == 0))
             }
         }
     }
@@ -238,14 +235,14 @@ struct TripView: View {
         return VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
                 TripFlag(theme)
-                Micro(label, color: isLast ? Color.must.blueText : (index == 0 ? MustColor.eat.text : Color.must.blueText))
+                MonoLabel(label, color: V8.ink)
                     .lineLimit(1)
             }
             if isLast && !saveForEnd.isEmpty {
                 saveForEndBlock(saveForEnd)
             } else {
-                Text(title).font(.must.archivo(24, .semibold)).foregroundStyle(Color.must.ink).lineLimit(2)
-                Text(detail.joined(separator: " · ")).font(.must.archivo(13)).lineLimit(1)
+                Text(title).font(V8Font.text(24, weight: .semibold)).foregroundStyle(Color.must.ink).lineLimit(2)
+                Text(detail.joined(separator: " · ")).font(V8Font.text(13)).lineLimit(1)
             }
         }
         .padding(.horizontal, 24)
@@ -258,8 +255,8 @@ struct TripView: View {
         HStack(alignment: .bottom, spacing: 12) {
             MonoNumber("\(items.count)", size: 64).foregroundStyle(Color.must.ink).fixedSize()
             VStack(alignment: .leading, spacing: 2) {
-                Text("ficaram pro fim").font(.must.archivo(19, .semibold)).foregroundStyle(Color.must.ink)
-                Text(items.prefix(3).map(\.name).joined(separator: ", ")).font(.must.archivo(13)).foregroundStyle(Color.must.blueText).lineLimit(2)
+                Text("ficaram pro fim").font(V8Font.text(19, weight: .semibold)).foregroundStyle(Color.must.ink)
+                Text(items.prefix(3).map(\.name).joined(separator: ", ")).font(V8Font.text(13)).foregroundStyle(V8.ink.opacity(0.7)).lineLimit(2)
             }
             .padding(.bottom, 6)
         }
@@ -272,18 +269,18 @@ struct TripView: View {
         let weekStart = cal.dateInterval(of: .weekOfYear, for: today)?.start ?? today
         let lastWeek = cal.date(byAdding: .day, value: -7, to: weekStart) ?? weekStart
         let saveForEnd = places.filter { $0.saveForEnd && !$0.isDone }
-        return VStack(alignment: .leading, spacing: 0) {
+        return VStack(alignment: .leading, spacing: -2) {
             weekCard(start: weekStart, title: "Esta semana")
-                .stackCard(color: .eat, rotation: -2)
+                .tripBand(orange: true)
             weekCard(start: lastWeek, title: "Semana passada")
-                .stackCard(color: .drink, rotation: 1.5)
+                .tripBand(orange: false)
             VStack(alignment: .leading, spacing: 8) {
-                Micro("fica pro fim · quando você pedir", color: Color.must.blueText)
+                MonoLabel("fica pro fim · quando você pedir", color: V8.ink)
                 saveForEndBlock(saveForEnd)
             }
             .padding(.horizontal, 24).padding(.vertical, 22)
             .frame(maxWidth: .infinity, alignment: .topLeading)
-            .stackCard(tint: .sky)
+            .tripBand(orange: false)
         }
     }
 
@@ -294,8 +291,8 @@ struct TripView: View {
         let spent = TripStats.spent(expenses, in: weekRange, calendar: cal)
         return VStack(alignment: .leading, spacing: 8) {
             Micro("\(title) · \(region.shortDay(start))–\(region.shortDay(end))", color: Color.must.ink.opacity(0.7))
-            Text(doneCount == 1 ? "1 must feito" : "\(doneCount) musts feitos").font(.must.archivo(24, .semibold)).foregroundStyle(Color.must.ink)
-            Text("gasto \(region.money(spent))").font(.must.archivo(13))
+            Text(doneCount == 1 ? "1 must feito" : "\(doneCount) musts feitos").font(V8Font.text(24, weight: .semibold)).foregroundStyle(Color.must.ink)
+            Text("gasto \(region.money(spent))").font(V8Font.text(13))
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 22)
@@ -328,5 +325,13 @@ struct TripView: View {
             }
         }
         .scrollClipDisabled()
+    }
+}
+
+extension View {
+    /// Faixa da Viagem no corte: papel (ou laranja pro que é seu agora) com borda de 2 pt, sem rotação nem cor de lista.
+    fileprivate func tripBand(orange: Bool) -> some View {
+        background(orange ? V8.orange : Color.clear)
+            .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
     }
 }

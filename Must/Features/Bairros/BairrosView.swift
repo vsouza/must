@@ -32,21 +32,37 @@ struct BairrosView: View {
     }
 
     var body: some View {
-        GeometryReader { geo in
-            ZStack {
-                MapLibreView(scene: model.scene, command: command,
-                             onCamera: { model.camera = $0 })
-                    .ignoresSafeArea()
-                edges(in: geo.size)
-                bubbles(in: geo.size)
-                you(in: geo.size)
-                StatusBarScrim()
+        VStack(spacing: 0) {
+            CutScreenHeader(title: "Bairros", corner: ["pra onde hoje?", "tamanho = musts"],
+                            subtitle: "\(model.bubbles.count) bairros · toque num pra ver", height: 170, onBack: { dismiss() })
+            GeometryReader { geo in
+                ZStack {
+                    MapLibreView(scene: model.scene, command: command,
+                                 onCamera: { model.camera = $0 })
+                    edges(in: geo.size)
+                    bubbles(in: geo.size)
+                    you(in: geo.size)
+                }
+                .clipped()
             }
+            .frame(height: 300)
+            CutRule()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    if let sheet = model.sheet {
+                        BairroSheetView(sheet: sheet,
+                                        onAdjust: { adjust(sheet.area.id) },
+                                        onMontar: { montar(sheet.area.id) })
+                    }
+                    ForEach(model.bubbles.sorted { ($0.count, $1.name) > ($1.count, $0.name) }) { bubble in
+                        index(bubble)
+                    }
+                    V8BarSpacer()
+                }
+            }
+            .scrollIndicators(.hidden)
         }
-        .overlay(alignment: .top) { topBar.padding(.horizontal, 16).padding(.top, 6) }
-        .overlay(alignment: .bottom) { bottom.padding(.horizontal, 12).padding(.bottom, 100) }
-        .tripWash()
-        .background(Color.must.bg.ignoresSafeArea())
+        .background(V8.paper.ignoresSafeArea())
         .navigationBarHidden(true)
         .onAppear {
             model.prepare(region: region)
@@ -97,12 +113,12 @@ struct BairrosView: View {
                         path.move(to: a)
                         path.addLine(to: b)
                     }
-                    .stroke(Color.must.ink.opacity(0.4), style: StrokeStyle(lineWidth: 1.2, dash: [3, 4]))
+                    .stroke(V8.ink.opacity(0.5), style: StrokeStyle(lineWidth: 1.2, dash: [3, 4]))
                     Text("\(edge.minutes)′")
-                        .font(.must.mono(11, .bold))
+                        .font(V8Font.mono(11, weight: .bold))
                         .foregroundStyle(Color.must.ink)
                         .padding(.horizontal, 3)
-                        .background(Color.white.opacity(0.7))
+                        .background(V8.paper.opacity(0.9))
                         .position(x: (a.x + b.x) / 2, y: (a.y + b.y) / 2)
                 }
             }
@@ -134,55 +150,36 @@ struct BairrosView: View {
         }
     }
 
-    // MARK: Topo e base
+    // MARK: Índice
 
-    private var topBar: some View {
-        VStack(spacing: 8) {
-            HStack(spacing: 10) {
-                Button { dismiss() } label: { circle("chevron.left") }
-                    .buttonStyle(MustPressStyle())
-                    .accessibilityLabel("Voltar")
-                Text("Pra onde hoje?")
-                    .font(.must.archivo(16, .semibold))
-                    .foregroundStyle(Color.must.ink)
-                    .padding(.horizontal, 18)
-                    .frame(height: 44)
-                    .background(Rectangle().fill(.white.opacity(0.92)))
-                Spacer(minLength: 0)
-            }
-            Text("tamanho = musts · cor = o que mais tem")
-                .font(.must.archivo(12))
-                .foregroundStyle(Color.must.secondary)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 7)
-                .background(Rectangle().fill(.white.opacity(0.92)))
+    /// Uma linha do índice: a contagem grande, o nome e quantos estão abertos agora.
+    private func index(_ bubble: AreaBubble) -> some View {
+        let selected = model.selectedId == bubble.id
+        return Button { model.select(selected ? nil : bubble.id) } label: {
+            HStack(alignment: .center, spacing: 14) {
+                Text("\(bubble.count)")
+                    .font(V8Font.numeral(44)).tracking(-1)
+                    .foregroundStyle(selected ? V8.ink : V8.orange)
+                    .frame(width: 76, alignment: .leading)
+                    .minimumScaleFactor(0.6)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(bubble.name).font(V8Font.text(17, weight: .bold)).foregroundStyle(selected ? V8.ink : V8.white).lineLimit(2)
+                    Text("\(bubble.count == 1 ? "1 must" : "\(bubble.count) musts") · \(bubble.openCount) abertos agora")
+                        .font(V8Font.text(13)).foregroundStyle(selected ? V8.ink.opacity(0.75) : V8.muteDark).lineLimit(2)
+                }
                 .frame(maxWidth: .infinity, alignment: .leading)
+                Image(systemName: selected ? "xmark" : "chevron.right").font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(selected ? V8.ink : V8.white)
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
+            .background(selected ? V8.orange : V8.ink)
+            .overlay(alignment: .bottom) { Rectangle().fill(V8.paper).frame(height: 2) }
+            .contentShape(Rectangle())
         }
-    }
-
-    @ViewBuilder
-    private var bottom: some View {
-        if let sheet = model.sheet {
-            BairroSheetView(sheet: sheet,
-                            onAdjust: { adjust(sheet.area.id) },
-                            onMontar: { montar(sheet.area.id) })
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-        } else {
-            Text("toque num bairro")
-                .font(.must.archivo(13, .semibold))
-                .foregroundStyle(Color.must.ink)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 10)
-                .background(Rectangle().fill(.white.opacity(0.92)))
-        }
-    }
-
-    private func circle(_ symbol: String) -> some View {
-        Image(systemName: symbol)
-            .font(.system(size: 16, weight: .semibold))
-            .foregroundStyle(Color.must.ink)
-            .frame(width: 44, height: 44)
-            .background(Circle().fill(.white.opacity(0.92)))
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(bubble.name), \(bubble.count) musts, \(bubble.openCount) abertos agora")
     }
 
     /// "Ajustar": abre a montagem do dia de hoje já com o bairro (e vizinhos) como foco; nada é gravado ainda.
@@ -225,7 +222,7 @@ struct AreaBubbleView: View {
         .frame(width: d, height: d)
         .overlay(alignment: .bottom) {
             Text(bubble.name.uppercased())
-                .font(.must.archivo(10, .bold))
+                .font(V8Font.text(10, weight: .bold))
                 .tracking(1)
                 .foregroundStyle(Color.must.ink)
                 .lineLimit(1)
@@ -252,27 +249,24 @@ struct BairroSheetView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Rectangle().fill(Color.must.line).frame(width: 36, height: 5).frame(maxWidth: .infinity)
             HStack(alignment: .center, spacing: 14) {
                 StationStamp(sheet.area.seal, sub: sheet.area.stampSub, size: 74, surface: .paper, filled: false,
-                             rotation: -8)
+                             rotation: 0)
                 VStack(alignment: .leading, spacing: 4) {
                     Text(sheet.area.name)
-                        .font(.must.archivo(30, .semibold))
-                        .tracking(-0.6)
-                        .foregroundStyle(Color.must.ink)
-                        .lineLimit(1)
+                        .font(V8Font.display(30))
+                        .foregroundStyle(V8.ink)
+                        .lineLimit(2)
                         .minimumScaleFactor(0.6)
                     Text(meta)
-                        .font(.must.archivo(13))
-                        .foregroundStyle(Color.must.secondary)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
+                        .font(V8Font.text(13))
+                        .foregroundStyle(V8.mute)
+                        .lineLimit(2)
                 }
             }
             MixBar(parts: sheet.mix, total: sheet.count)
             if !sheet.neighbors.isEmpty {
-                Micro("Junto, a poucos minutos")
+                MonoLabel("junto, a poucos minutos", color: V8.mute)
                 ScrollView(.horizontal) {
                     HStack(spacing: 8) {
                         ForEach(sheet.neighbors) { neighbor in
@@ -283,48 +277,34 @@ struct BairroSheetView: View {
                 .scrollIndicators(.hidden)
             }
             if !sheet.phrase.isEmpty {
-                HStack(alignment: .top, spacing: 12) {
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(width: 34, height: 34)
-                        .background(Rectangle().fill(MustGradient.avatar))
-                    Text(sheet.phrase)
-                        .font(.must.serif(18))
-                        .foregroundStyle(Color.must.ink)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .padding(14)
-                .background(Rectangle().fill(Color.must.surface))
+                Text(sheet.phrase)
+                    .font(V8Font.text(15))
+                    .foregroundStyle(V8.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
             }
             HStack(spacing: 10) {
-                Button(action: onAdjust) {
-                    Text("Ajustar")
-                        .font(.must.archivo(15, .semibold))
-                        .foregroundStyle(Color.must.ink)
-                        .frame(width: 120, height: 52)
-                        .background(Rectangle().fill(Color.must.surface))
-                }
-                .buttonStyle(MustPressStyle())
+                CutButton(title: "Ajustar", action: onAdjust)
                 Button(action: onMontar) {
-                    Text("Montar \(sheet.area.name)+")
-                        .font(.must.archivo(15, .semibold))
-                        .foregroundStyle(.white)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 52)
-                        .background(Rectangle().fill(Color.must.ink))
+                    Text("Montar \(sheet.area.name)+".uppercased())
+                        .font(V8Font.mono(12, weight: .semibold)).tracking(1)
+                        .foregroundStyle(V8.ink)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 12)
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .background(V8.orange)
+                        .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
                 }
-                .buttonStyle(MustPressStyle())
+                .buttonStyle(.plain)
                 .layoutPriority(1)
             }
         }
         .padding(20)
-        .background(
-            Rectangle()
-                .fill(.white)
-        )
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .overlay(alignment: .bottom) { IndexRule() }
     }
 }
 
