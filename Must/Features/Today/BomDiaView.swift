@@ -97,7 +97,7 @@ struct BomDiaView: View {
                     IndexRule()
                     anchors
                     checklist
-                    Color.clear.frame(height: 190)
+                    Color.clear.frame(height: 110)
                 }
             }
             .scrollIndicators(.hidden)
@@ -259,7 +259,7 @@ struct BomDiaView: View {
         }
         .padding(.horizontal, 20)
         .padding(.top, 30)
-        .padding(.bottom, 96)
+        .padding(.bottom, 12)
         .background {
             LinearGradient(colors: [V8.paper.opacity(0), V8.paper], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.25))
                 .ignoresSafeArea()

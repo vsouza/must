@@ -58,7 +58,7 @@ struct BoardView: View {
             }
             ForEach(groups) { group in groupSection(group) }
             Section {
-                Color.clear.frame(height: 150)
+                Color.clear.frame(height: 40)
             }
             .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
@@ -72,7 +72,7 @@ struct BoardView: View {
         .ignoresSafeArea(edges: .top)
         .safeAreaInset(edge: .bottom) {
             if (editing && !model.selection.isEmpty) || message != nil {
-                bottomBar.padding(.bottom, 92) // acima da tab bar
+                bottomBar.padding(.bottom, 8) // a barra nativa já reserva a safe area
             }
         }
         .sheet(isPresented: $showNameSearch) { BuscarNomeView() }

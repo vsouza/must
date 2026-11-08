@@ -49,7 +49,7 @@ struct ImportView: View {
                         .padding(.top, 14)
                 }
                 .padding(.horizontal, 22)
-                .padding(.bottom, 110)
+                .padding(.bottom, 24)
             }
             .scrollDismissesKeyboard(.interactively)
 

@@ -86,7 +86,7 @@ struct BoaNoiteView: View {
                 BigButton(title: "Fechar o dia", style: .ink, systemImage: "checkmark") { closeDay() }
                     .padding(.horizontal, 20)
                     .padding(.top, 12)
-                    .padding(.bottom, 92)
+                    .padding(.bottom, 12)
                     .frame(maxWidth: .infinity)
                     .background(V8.paper.ignoresSafeArea())
                     .overlay(alignment: .top) { IndexRule() }

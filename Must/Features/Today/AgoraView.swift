@@ -188,7 +188,7 @@ struct AgoraView: View {
                     ForEach(later(c)) { stop in
                         DayStopRow(stop: stop, index: 0, state: .upcoming, region: region, onTap: openLater(stop))
                     }
-                    Color.clear.frame(height: 190)
+                    Color.clear.frame(height: 110)
                 }
             }
             .scrollIndicators(.hidden)
@@ -196,7 +196,7 @@ struct AgoraView: View {
                 actions(c, current: current)
                     .padding(.horizontal, 20)
                     .padding(.top, 28)
-                    .padding(.bottom, 96)
+                    .padding(.bottom, 12)
                     .background {
                         LinearGradient(colors: [V8.paper.opacity(0), V8.paper], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.3))
                             .ignoresSafeArea().allowsHitTesting(false)

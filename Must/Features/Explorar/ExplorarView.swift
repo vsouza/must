@@ -467,7 +467,7 @@ struct ExplorarView: View {
             }
             guide
             mapLink
-            Color.clear.frame(height: 110)
+            Color.clear.frame(height: 24)
         }
     }
 
@@ -568,7 +568,7 @@ struct ExplorarView: View {
             let selected = model.stations[safe: preview]?.id
             ExplorarRailPanel(stations: model.stations, selectedId: selected, cityName: model.cities.first { $0.group == model.cityGroup }?.name ?? "",
                               rows: ExplorarRailPanel.window(model.stations, around: selected))
-                .padding(.bottom, 96)
+                .padding(.bottom, 12)
         }
         .ignoresSafeArea(edges: .top)
         .transition(.opacity)

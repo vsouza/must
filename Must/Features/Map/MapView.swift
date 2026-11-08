@@ -451,7 +451,7 @@ struct MapView: View {
                     .padding(.trailing, 26)
                     .offset(y: 14)
             }
-            .padding(.bottom, 96)
+            .padding(.bottom, 12)
         }
     }
 

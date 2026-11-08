@@ -52,7 +52,7 @@ struct TicketView: View {
                 heading(place, ticket).padding(.top, 18)
                 ticketCard(place, ticket).padding(.top, 26)
                 meetingCard(place).padding(.top, 30)
-                Color.clear.frame(height: 230)
+                Color.clear.frame(height: 140)
             }
             .padding(.horizontal, 22)
         }
@@ -290,7 +290,7 @@ struct TicketView: View {
         }
         .padding(.horizontal, 22)
         .padding(.top, 24)
-        .padding(.bottom, 92)
+        .padding(.bottom, 12)
         .background {
             LinearGradient(colors: [.white.opacity(0), .white.opacity(0.95), .white], startPoint: .top, endPoint: .bottom)
                 .ignoresSafeArea()
