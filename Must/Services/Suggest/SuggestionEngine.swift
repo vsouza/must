@@ -16,6 +16,7 @@ enum SuggestionEngine {
         var all: [Suggestion] = []
         if let plan = planCard(i) { all.append(plan) }
         all += mustCards(i)
+        all += giftCards(i)
         all += eventCards(i)
         if let light = lightCard(i) { all.append(light) }
         let ranked = pick(all.filter { !i.dismissed.contains($0.id) }, i: i)
@@ -116,6 +117,28 @@ enum SuggestionEngine {
                                   eventId: nil, coordinate: place.coordinate, url: nil, score: score, urgencyMinutes: urgency))
         }
         return out
+    }
+
+    // MARK: Presente (prompt 31)
+
+    /// A loja de presente a ≤ 10 min e aberta: uma linha por loja ("presente da Ana · Don Quijote · 450 m"). Sobe no ranking porque
+    /// é algo que você já decidiu comprar; nunca empurra o plano (100).
+    static func giftCards(_ i: SuggestInputs) -> [Suggestion] {
+        let byStore = Dictionary(grouping: i.gifts.filter(\.isOpen)) { $0.storeId ?? $0.storeName.lowercased() }
+        return byStore.values.compactMap { group -> Suggestion? in
+            let sorted = group.sorted { ($0.meters, $0.giftId) < ($1.meters, $1.giftId) }
+            guard let first = sorted.first else { return nil }
+            let people = Array(Set(sorted.map(\.person).filter { !$0.isEmpty })).sorted()
+            let who = people.isEmpty ? "presente" : "presente da \(people.joined(separator: " e "))"
+            let more = sorted.count > 1 ? " · +\(sorted.count - 1)" : ""
+            let id = "gift:\(first.storeId ?? first.storeName.lowercased())"
+            var score = proximity(walk: first.minutes) + 5
+            if i.shownEarlier.contains(id) { score -= 2 }
+            return Suggestion(id: id, kind: .gift, style: .ink, label: "PRESENTE · ABERTO", trailing: Walk.distanceText(first.meters),
+                              title: first.storeName, meta: "\(who) · \(GiftLogic.titleWithQtyText(first.title, first.quantity))\(more)",
+                              reasons: ["presente", "a \(first.minutes) min"], placeId: first.storeId, eventId: nil,
+                              coordinate: first.coordinate, url: nil, score: score, urgencyMinutes: nil, giftId: first.giftId)
+        }
     }
 
     struct Fit { var score: Int; var open: Bool; var good: Bool; var closesIn: Int?; var closesText: String? }

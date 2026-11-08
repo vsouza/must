@@ -21,6 +21,7 @@ struct QueroView: View {
     @Query private var places: [Place]
     @Query private var trips: [TripInfo]
     @Query private var settingsList: [Settings]
+    @Query private var gifts: [Gift]
 
     @State private var model = QueroModel(provider: QueroView.provider(), extras: QueroView.extras())
     @State private var speech = SpeechInput()
@@ -218,6 +219,16 @@ struct QueroView: View {
                 }
                 .padding(.bottom, 4)
             }
+            if !model.giftRows.isEmpty {
+                GiftWantBand(rows: model.giftRows,
+                             onGo: { MapsLinks.openApple(to: $0.coordinate, name: $0.storeName) },
+                             onOpen: { row in
+                                 router.sheet = nil
+                                 router.push(row.storeId.map { .place(id: $0) } ?? .presente(id: row.giftId), on: .musts)
+                             })
+                    .padding(.horizontal, -20)
+                    .padding(.bottom, 12)
+            }
             switch model.phase {
             case .idle:
                 Text("Diga o que quer — comprar, comer, ver. Eu acho o lugar de verdade, perto de hoje, e vejo se cabe no dia.")
@@ -225,7 +236,7 @@ struct QueroView: View {
             case .searching:
                 Text("procurando perto de \(areaName)…").font(V8Font.text(14)).foregroundStyle(V8.muteDark).padding(.vertical, 12)
             case .done:
-                if model.rows.isEmpty {
+                if model.rows.isEmpty && model.giftRows.isEmpty {
                     Text(model.offline ? "Nada no aparelho pra isso ainda." : "Nenhum lugar físico por perto pra isso. Tente outra palavra.")
                         .font(V8Font.text(15)).foregroundStyle(V8.muteDark).padding(.vertical, 12)
                 }
@@ -383,7 +394,7 @@ struct QueroView: View {
         QueroEnv.make(region: region, now: now, places: places, trip: trip, settings: settingsList.first, plan: plan,
                       gps: services.location.current?.coordinate, online: services.connectivity.status != .offline,
                       upcoming: QueroEnv.upcomingDays(context: context, areas: areas, today: today),
-                      areaHint: planArea ?? gpsArea, shows: showEvents.today(region: region, at: now))
+                      areaHint: planArea ?? gpsArea, shows: showEvents.today(region: region, at: now), gifts: gifts)
     }
 }
 

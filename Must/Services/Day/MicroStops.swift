@@ -41,6 +41,8 @@ enum MicroStops {
         if input.region.profile.has(.treatMicroStop) { order.append(.treat) }
         order.append(.view)
         if input.includes.contains(.shopping) { order.insert(.shop, at: 1) } else { order.append(.shop) }
+        // Presente pendente com loja perto de uma parada (prompt 31): só quando há presente na lista.
+        if !input.gifts.isEmpty { order.append(.gift) }
         // Por último: só ocupa buraco que sobrou (e só se o board tem exposição em temporada).
         order.append(.show)
         return order
@@ -198,6 +200,9 @@ enum MicroStops {
             }
             return nil
 
+        case .gift:
+            return giftStop(timeline: timeline, gaps: gaps, input: input, minutes: d)
+
         case .show:
             return exhibition(timeline: timeline, gaps: gaps, inDay: inDay, input: input, minutes: d, words: w)
 
@@ -212,6 +217,36 @@ enum MicroStops {
             }
             return nil
         }
+    }
+
+    /// Loja de presente a ≤ 5 min a pé de uma parada que cabe no buraco entre ela e a próxima (sem mexer em nada). A loja
+    /// com mais presentes pendentes vence; desempate pelo id. Loja do board fechada na hora não entra.
+    static let giftNearMeters: CLLocationDistance = 5 * Walk.metersPerMinute / GiftLogic.streetFactor
+
+    private static func giftStop(timeline: [DayStop], gaps: [(prev: DayStop, next: DayStop)], input: DayComposer.Input, minutes d: Int) -> DayStop? {
+        let inDay = Set(timeline.compactMap(\.placeId))
+        for (prev, next) in gaps {
+            guard let from = DayComposer.coordinate(prev) else { continue }
+            let spot = CLLocation(latitude: from.latitude, longitude: from.longitude)
+            let byStore = Dictionary(grouping: input.gifts.filter { CLLocation(latitude: $0.lat, longitude: $0.lng).distance(from: spot) <= giftNearMeters
+                && !($0.placeId.map(inDay.contains) ?? false) }) { $0.placeId ?? $0.storeName.lowercased() }
+            let ordered = byStore.values.sorted { a, b in
+                a.count != b.count ? a.count > b.count : (a.first?.giftId ?? "") < (b.first?.giftId ?? "")
+            }
+            for group in ordered {
+                guard let first = group.sorted(by: { $0.giftId < $1.giftId }).first else { continue }
+                let here = first.coordinate
+                guard let start = fit(d, at: here, prev: prev, next: next, latest: false, input: input) else { continue }
+                if let id = first.placeId,
+                   input.catalog.first(where: { $0.id == id })?.hours?.isOpen(at: start, timeZone: input.region.timeZone) == false { continue }
+                let people = Array(Set(group.map(\.person).filter { !$0.isEmpty })).sorted()
+                let who = people.isEmpty ? "presente" : "presente da \(people.joined(separator: " e "))"
+                return DayStop(id: "m-gift", placeId: nil, kind: .micro, start: start, end: start.addingTimeInterval(Double(d) * 60),
+                               label: "Passar na \(first.storeName)", note: "micro · \(who) · \(GiftLogic.titleWithQtyText(first.title, first.quantity))",
+                               tag: "presente", area: prev.area, cost: nil, micro: .gift, lat: here.latitude, lng: here.longitude)
+            }
+        }
+        return nil
     }
 
     /// Exposição em cartaz (museu/galeria do board) perto do buraco: só se está em temporada hoje, aberta durante a visita

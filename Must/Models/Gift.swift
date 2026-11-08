@@ -139,7 +139,30 @@ struct GiftGroup: Identifiable, Equatable {
     static func == (a: GiftGroup, b: GiftGroup) -> Bool { a.person == b.person && a.gifts.map(\.id) == b.gifts.map(\.id) }
 }
 
+/// Um presente pendente com loja que tem coordenada, já como valor (o solver roda fora do main).
+struct GiftSpot: Sendable, Hashable {
+    var giftId: String
+    var person: String
+    var title: String
+    var quantity: Int
+    var storeName: String
+    var placeId: String?
+    var lat: Double
+    var lng: Double
+    var coordinate: CLLocationCoordinate2D { CLLocationCoordinate2D(latitude: lat, longitude: lng) }
+}
+
 enum GiftLogic {
+    /// Presentes pendentes com loja concreta (board ou coordenada guardada), pro solver e pro ranker.
+    static func spots(_ gifts: [Gift], places: [Place]) -> [GiftSpot] {
+        gifts.filter { !$0.isBought }.compactMap { gift in
+            guard let store = store(of: gift, places: places) else { return nil }
+            return GiftSpot(giftId: gift.id, person: gift.personName == noPerson ? "" : gift.personName, title: gift.title,
+                            quantity: gift.quantity, storeName: store.name, placeId: store.id,
+                            lat: store.coordinate.latitude, lng: store.coordinate.longitude)
+        }
+    }
+
     static let noPerson = "Sem pessoa"
     /// "Perto" = a até 10 min a pé.
     static let nearMinutes = 10

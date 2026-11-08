@@ -53,7 +53,7 @@ struct CorteIndexLine: Identifiable, Hashable, Sendable {
         id = card.id
         title = card.title
         switch card.kind {
-        case .must, .closing: tone = .orange
+        case .must, .closing, .gift: tone = .orange
         case .event, .indicated: tone = .ink
         case .plan, .light, .rain: tone = .paper
         }

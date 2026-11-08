@@ -73,10 +73,12 @@ struct SuggestInputs: Sendable {
     var dismissed: Set<String> = []
     /// Sugerido antes (há mais de 1 h): −2.
     var shownEarlier: Set<String> = []
+    /// Presentes pendentes cuja loja está a ≤ 10 min e aberta (prompt 31): vira a linha laranja "presente da Ana · Don Quijote".
+    var gifts: [GiftNearby] = []
 }
 
 struct Suggestion: Identifiable, Hashable, Sendable {
-    enum Kind: String, Sendable { case plan, must, closing, event, light, rain, indicated }
+    enum Kind: String, Sendable { case plan, must, closing, event, light, rain, indicated, gift }
     /// Tinta = Must; laranja = evento; papel = o resto.
     enum Style: String, Sendable { case ink, orange, paper }
 
@@ -97,6 +99,8 @@ struct Suggestion: Identifiable, Hashable, Sendable {
     var score: Double
     /// Minutos até fechar/começar (desempate: o que acaba antes).
     var urgencyMinutes: Int?
+    /// Presente que a linha lembra (`Gift.id` do mais perto).
+    var giftId: String?
 
     var reasonLine: String { reasons.joined(separator: " · ") }
 
