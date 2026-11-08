@@ -76,20 +76,20 @@ struct BoaNoiteView: View {
                     if let summary { stats(summary) }
                     diaryCard
                     tomorrowSection
-                    Color.clear.frame(height: 190)
+                    Color.clear.frame(height: 24)
                 }
             }
             .scrollIndicators(.hidden)
             .scrollDismissesKeyboard(.interactively)
-            .overlay(alignment: .bottom) {
+            // Inset, não overlay: o botão reserva o espaço dele e nada (diário com letra grande) fica escondido atrás.
+            .safeAreaInset(edge: .bottom, spacing: 0) {
                 BigButton(title: "Fechar o dia", style: .ink, systemImage: "checkmark") { closeDay() }
                     .padding(.horizontal, 20)
-                    .padding(.top, 28)
+                    .padding(.top, 12)
                     .padding(.bottom, 92)
-                    .background {
-                        LinearGradient(colors: [V8.paper.opacity(0), V8.paper], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.3))
-                            .ignoresSafeArea().allowsHitTesting(false)
-                    }
+                    .frame(maxWidth: .infinity)
+                    .background(V8.paper.ignoresSafeArea())
+                    .overlay(alignment: .top) { IndexRule() }
             }
         }
         .background(V8.paper.ignoresSafeArea())

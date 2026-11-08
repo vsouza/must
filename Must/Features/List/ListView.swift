@@ -189,20 +189,22 @@ struct ListView: View {
     private func paperHeader(count: Int, open: Int) -> some View {
         HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 6) {
-                MonoLabel("aberto agora · de \(count)", size: 10, color: V8.mute)
+                // Nada aberto (ou sem horário conhecido): o numeral vira o tamanho da lista, em tinta, em vez de um "0" laranja gigante.
+                MonoLabel(open > 0 ? "aberto agora · de \(count)" : "lugares · nenhum aberto agora", size: 10, color: V8.mute)
                 Text(saveForEndOnly ? "o que fica pro fim da viagem" : "por bairro, do mais perto")
                     .font(V8Font.text(15, weight: .semibold)).foregroundStyle(V8.ink).lineLimit(2)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            Text(open > 99 ? "99+" : "\(open)")
-                .font(V8Font.numeral(84)).tracking(-4).foregroundStyle(V8.orange)
+            let shown = open > 0 ? open : count
+            Text(shown > 99 ? "99+" : "\(shown)")
+                .font(V8Font.numeral(84)).tracking(-4).foregroundStyle(open > 0 ? V8.orange : V8.ink)
                 .lineLimit(1).fixedSize()
                 .accessibilityHidden(true)
         }
         .padding(.horizontal, 20).padding(.vertical, 12)
         .overlay(alignment: .bottom) { CorteRule2() }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(open) abertos agora, de \(count) lugares")
+        .accessibilityLabel(open > 0 ? "\(open) abertos agora, de \(count) lugares" : "\(count) lugares, nenhum aberto agora")
     }
 
     // MARK: Quero filtrado pela lista
