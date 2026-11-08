@@ -23,6 +23,8 @@ struct AddLinkView: View {
 
     @State private var model = AddLinkModel()
     @State private var showNameSearch = false
+    @State private var giftSource: String?
+    @State private var showGift = false
     /// Link · Texto · Nome (ColarTexto.png, prompt 18 · E.21). "Nome" abre a busca por nome, sem trocar a aba.
     @State private var mode: AddMode = .link
     @State private var texto = ColarTextoModel()
@@ -71,6 +73,12 @@ struct AddLinkView: View {
                         }
                         .buttonStyle(MustPressStyle())
                         .padding(.top, 10)
+                        // Presente (prompt 31): o mesmo link ou vídeo vira item da lista de presentes.
+                        Button { giftSource = model.input.isEmpty ? initialURL : model.input; showGift = true } label: {
+                            Text("ou é um presente → guardar em Presentes").font(.must.archivo(14, .semibold)).foregroundStyle(Color.must.ink)
+                        }
+                        .buttonStyle(MustPressStyle())
+                        .padding(.top, 8)
                         badges.padding(.top, 14)
                         if !waiting.isEmpty {
                             Text(waiting.count == 1 ? "1 esperando internet" : "\(waiting.count) esperando internet")
@@ -102,6 +110,10 @@ struct AddLinkView: View {
             }
 
             if mode == .link { mainButton }
+        }
+        .sheet(isPresented: $showGift) {
+            let source = (giftSource?.isEmpty == false) ? giftSource : nil
+            PresenteNovoView(source: source)
         }
         .sheet(isPresented: $showNameSearch) {
             BuscarNomeView(initialQuery: model.input.trimmingCharacters(in: .whitespacesAndNewlines).contains(".") ? "" : model.input,

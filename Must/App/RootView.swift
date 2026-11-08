@@ -49,6 +49,7 @@ struct RootView: View {
             case .quero(let text): QueroView(initialText: text).presentationCornerRadius(0)
             case .mandar(let date): MandarView(date: date)
             case .viagens: TripSwitcherSheet()
+            case .presenteNovo(let source): PresenteNovoView(source: source)
             }
         }
         .collectibleCelebration()

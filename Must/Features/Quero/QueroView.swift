@@ -21,10 +21,12 @@ struct QueroView: View {
     @Query private var places: [Place]
     @Query private var trips: [TripInfo]
     @Query private var settingsList: [Settings]
+    @Query private var gifts: [Gift]
 
     @State private var model = QueroModel(provider: QueroView.provider(), extras: QueroView.extras())
     @State private var speech = SpeechInput()
     @State private var secondary: AddMode?
+    @State private var showGift = false
     @State private var saved: String?
     @State private var failure: String?
     @FocusState private var focused: Bool
@@ -80,6 +82,7 @@ struct QueroView: View {
             default: AddLinkView(initialURL: nil, preferredListId: nil, initialMode: mode)
             }
         }
+        .sheet(isPresented: $showGift) { PresenteNovoView() }
         .onAppear {
             model.answerer = { [context, services, store] text in
                 await QueroAnswerer.answer(text, context: context, region: store.region, services: services,
@@ -183,6 +186,17 @@ struct QueroView: View {
             case .ticket: "Ingresso"
             case .gift: "Presente"
             }
+            // Presente (prompt 31): o `+` também guarda o que se quer comprar pra alguém.
+            Button { showGift = true } label: {
+                Text("Presente")
+                    .font(V8Font.text(13, weight: .semibold))
+                    .underline()
+                    .foregroundStyle(V8.white)
+                    .padding(.vertical, 6)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(MustPressStyle())
+            .accessibilityLabel("Guardar um presente")
         }
     }
 
@@ -254,6 +268,16 @@ struct QueroView: View {
                 }
                 .padding(.bottom, 4)
             }
+            if !model.giftRows.isEmpty {
+                GiftWantBand(rows: model.giftRows,
+                             onGo: { MapsLinks.openApple(to: $0.coordinate, name: $0.storeName) },
+                             onOpen: { row in
+                                 router.sheet = nil
+                                 router.push(row.storeId.map { .place(id: $0) } ?? .presente(id: row.giftId), on: .musts)
+                             })
+                    .padding(.horizontal, -20)
+                    .padding(.bottom, 12)
+            }
             switch model.phase {
             case .idle where model.question != nil:
                 EmptyView()
@@ -263,7 +287,7 @@ struct QueroView: View {
             case .searching:
                 Text("procurando perto de \(areaName)…").font(V8Font.text(14)).foregroundStyle(V8.muteDark).padding(.vertical, 12)
             case .done:
-                if model.rows.isEmpty {
+                if model.rows.isEmpty && model.giftRows.isEmpty {
                     Text(model.offline ? "Nada no aparelho pra isso ainda." : "Nenhum lugar físico por perto pra isso. Tente outra palavra.")
                         .font(V8Font.text(15)).foregroundStyle(V8.muteDark).padding(.vertical, 12)
                 }
@@ -421,7 +445,7 @@ struct QueroView: View {
         QueroEnv.make(region: region, now: now, places: places, trip: trip, settings: settingsList.first, plan: plan,
                       gps: services.location.current?.coordinate, online: services.connectivity.status != .offline,
                       upcoming: QueroEnv.upcomingDays(context: context, areas: areas, today: today),
-                      areaHint: planArea ?? gpsArea, shows: showEvents.today(region: region, at: now))
+                      areaHint: planArea ?? gpsArea, shows: showEvents.today(region: region, at: now), gifts: gifts)
     }
 }
 

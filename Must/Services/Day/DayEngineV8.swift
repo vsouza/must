@@ -33,6 +33,8 @@ struct DaySource: Sendable {
     var canFetchTravel: Bool
     var includes: Set<DayInclude>
     var focusArea: String?
+    /// Presentes pendentes com loja (micro-parada "passar na loja").
+    var gifts: [GiftSpot] = []
 }
 
 /// Motor do dia v8 (prompt 23 §3) sobre o solver de sempre: o `DaySolver` escolhe âncoras e Musts (todas as regras:
@@ -110,7 +112,7 @@ struct DayEngineV8: DayEngine {
             date: src.request.date, region: src.region, stops: boards, hotel: src.hotel, pace: src.request.pace ?? .normal,
             includes: src.includes, walkMaxKm: src.walkMaxKm, travel: src.request.travel, lastTrain: lastTrain,
             dayNumber: src.dayNumber, budget: src.request.budget, spent: src.spent, focusArea: src.focusArea,
-            cityName: src.cityName, catalog: src.catalog))
+            cityName: src.cityName, catalog: src.catalog, gifts: src.gifts))
     }
 
     /// Tempos reais (Routes Matrix) da origem e das 9 candidatas mais perto — o mesmo pedido do Montar v7, com o cache em
@@ -164,7 +166,8 @@ struct DayEngineV8: DayEngine {
                          dayNumber: dayNumber(trip: trip, date: date, calendar: cal),
                          spent: spent(context: context, region: region, date: date),
                          walkMaxKm: DaySolver.effectiveWalkMax(walkMaxKm: settings?.walkMaxKm ?? 1.5, walk: request.walk),
-                         canFetchTravel: online && DevOverrides.liveData, includes: ask.includes, focusArea: ask.area)
+                         canFetchTravel: online && DevOverrides.liveData, includes: ask.includes, focusArea: ask.area,
+                         gifts: GiftLogic.spots(context.gifts(), places: places))
     }
 
     /// A hora de `until` no dia pedido (00:00–04:59 = madrugada do dia seguinte).
@@ -239,7 +242,7 @@ struct DayEngineV8: DayEngine {
         let prefs = DayPlanPrefs.load(region: region, date: date)
         let placeCount = (try? context.fetchCount(FetchDescriptor<Place>())) ?? 0
         let signature = ([region.rawValue, "\(date.timeIntervalSince1970)", "\(planned.budget)", planned.focusAreaId ?? "-",
-                          "\(prefs.pace.rawValue)", prefs.includes.map(\.rawValue).sorted().joined(separator: ","), "\(placeCount)"]
+                          "\(prefs.pace.rawValue)", prefs.includes.map(\.rawValue).sorted().joined(separator: ","), "\(placeCount)", "g\((try? context.fetchCount(FetchDescriptor<Gift>())) ?? 0)"]
                          + stops.map { "\($0.place!.id)@\($0.at.timeIntervalSince1970)\($0.done ? "+" : "")\($0.isAnchor ? "!" : "")" })
             .joined(separator: "|")
         let spent = spent(context: context, region: region, date: date)
@@ -265,7 +268,9 @@ struct DayEngineV8: DayEngine {
         }
         let trip = (try? context.fetch(FetchDescriptor<TripInfo>()))?.first
         let settings = (try? context.fetch(FetchDescriptor<Settings>()))?.first
-        let catalog = ((try? context.fetch(FetchDescriptor<Place>())) ?? []).solverCatalog
+        let allPlaces = (try? context.fetch(FetchDescriptor<Place>())) ?? []
+        let catalog = allPlaces.solverCatalog
+        let giftSpots = GiftLogic.spots(context.gifts(), places: allPlaces)
         let boards = stops.map { stop -> DayComposer.BoardStop in
             let place = SolverPlace(stop.place!)
             let timing = boardTiming(place, at: stop.at, isAnchor: stop.isAnchor, region: region)
@@ -277,7 +282,8 @@ struct DayEngineV8: DayEngine {
             date: date, region: region, stops: boards, hotel: hotel(region: region, trip: trip, date: date), pace: prefs.pace,
             includes: prefs.includes, walkMaxKm: DaySolver.effectiveWalkMax(walkMaxKm: settings?.walkMaxKm ?? 1.5, walk: planned.walk),
             travel: nil, lastTrain: last, dayNumber: dayNumber(trip: trip, date: date, calendar: cal), budget: planned.budget,
-            spent: spent, focusArea: planned.focusAreaId, cityName: trip?.city(on: date, calendar: cal)?.name, catalog: catalog))
+            spent: spent, focusArea: planned.focusAreaId, cityName: trip?.city(on: date, calendar: cal)?.name, catalog: catalog,
+            gifts: giftSpots))
         if memo.count > 24 { memo.removeAll() }
         memo[signature] = plan
         return plan

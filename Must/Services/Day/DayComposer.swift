@@ -40,6 +40,8 @@ enum DayComposer {
         var cityName: String? = nil
         /// Board inteiro: de onde saem os nomes das micro-paradas (café perto do hotel, loja no caminho).
         var catalog: [SolverPlace] = []
+        /// Presentes pendentes com loja (prompt 31): viram micro-parada "passar na loja" quando a loja fica a ≤ 5 min de uma parada.
+        var gifts: [GiftSpot] = []
     }
 
     // MARK: Montagem

@@ -6,7 +6,7 @@
   "required": ["version", "lists", "places"],
   "anyOf": [{"required": ["tripId"]}, {"required": ["region"]}],
   "properties": {
-    "version": {"enum": [1, 2]},
+    "version": {"enum": [1, 2, 3]},
     "tripId": {"type": "string", "pattern": "^[a-z0-9-]+$", "description": "id da viagem (bh, jp, it nas de fábrica; <slug>-<4 letras> nas criadas no app). Versão 2."},
     "countryCode": {"type": "string", "pattern": "^[A-Z]{2}$", "description": "país da viagem, ISO 3166-1 alfa-2. Versão 2."},
     "region": {"enum": ["bh", "jp", "it"], "description": "legado (versão 1): a viagem de fábrica do arquivo."},
@@ -66,6 +66,12 @@
       "pnr": {"type": "string"}, "carrier": {"type": "string"}, "template": {"enum": ["intl-japan", "domestic-br"]}, "checkedKg": {"type": "integer"}, "cabinKg": {"type": "integer"},
       "legs": {"type": "array", "items": {"type": "object", "required": ["number", "from", "to", "departs"], "properties": {"number": {"type": "string"}, "from": {"type": "string", "description": "IATA"}, "to": {"type": "string", "description": "IATA"}, "departs": {"type": "string", "format": "date-time"}, "arrives": {"type": "string", "format": "date-time"}, "seat": {"type": "string"}, "terminal": {"type": "string"}, "gate": {"type": "string"}, "note": {"type": "string"}}}},
       "checklist": {"type": "array", "items": {"type": "object", "required": ["id", "phase", "title", "done"], "properties": {"id": {"type": "string"}, "phase": {"enum": ["h72", "bags", "airport", "arrival"]}, "title": {"type": "string"}, "note": {"type": "string"}, "done": {"type": "boolean"}, "dueAt": {"type": "string", "format": "date-time"}, "auto": {"type": "boolean"}, "autoRule": {"type": "string"}}}}}}},
+    "gifts": {"type": "array", "description": "lista de presentes (versão 3): o que comprar, pra quem, onde. Arquivo sem gifts continua válido", "items": {"type": "object", "required": ["id", "title"], "properties": {
+      "id": {"type": "string"}, "title": {"type": "string"}, "person": {"type": "string"}, "quantity": {"type": "integer", "minimum": 1},
+      "estimatedPrice": {"type": "number", "description": "uma unidade, na moeda da viagem"}, "paidPrice": {"type": "number", "description": "total pago"}, "boughtAt": {"type": "string", "format": "date-time"},
+      "source": {"enum": ["name", "link", "video", "place", "photo"]}, "sourceURL": {"type": "string"}, "sourceLabel": {"type": "string"}, "videoClip": {"type": "string"},
+      "placeId": {"type": "string", "description": "loja do board"}, "storeName": {"type": "string"}, "storeLat": {"type": "number"}, "storeLng": {"type": "number"}, "chain": {"type": "boolean"},
+      "note": {"type": "string"}, "order": {"type": "integer"}}}},
     "days": {"type": "array", "description": "dias já montados/aceitos", "items": {"type": "object", "properties": {"date": {"type": "string", "format": "date"}, "kind": {"enum": ["free", "shopping", "night", "photo", "temples", "rest"]}, "budget": {"type": "number"}, "walk": {"enum": ["low", "normal", "high"]}, "stops": {"type": "array", "items": {"type": "object", "properties": {"placeId": {"type": "string"}, "at": {"type": "string"}, "done": {"type": "boolean"}}}}}}}
   }
 }

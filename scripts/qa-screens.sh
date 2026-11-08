@@ -232,6 +232,17 @@ ${=W} dev.simDate -float $(epoch 2026-10-20T12:00:00+09:00)
 WAIT=12 shot jp-quero-viagem-futura -debugScreen quero-viagem-futura
 shot jp-viagens -debugScreen viagens
 
+echo "→ p31 · Presentes (lista, adicionar, item, comprado, perto na capa, quero) · Shinjuku 15 nov 14:20; comparar com design/v9/Presentes-*.png"
+${=W} region jp
+${=W} dev.simDate -float $(epoch 2026-11-15T14:20:00+09:00)
+${=W} dev.simLat -float 35.6938; ${=W} dev.simLng -float 139.7034
+WAIT=10 shot jp-presentes -debugScreen presentes
+WAIT=10 shot jp-presente-novo -debugScreen presente-novo
+WAIT=10 shot jp-presente-item -debugScreen presente-item
+WAIT=10 shot jp-presente-comprado -debugScreen presente-comprado
+WAIT=12 shot jp-presente-perto -debugScreen presente-perto -capaFoto
+WAIT=12 shot jp-presente-quero -debugScreen presente-quero
+WAIT=10 shot jp-presentes-xxxl -debugScreen presentes -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
 echo "→ p31 · navegação v9: barra, Assistente (dicas e conversa), Quero com pergunta, Bolso, + e aba Viagem (design/v9/Fluxos.png, Assistente-*.png)"
 ${=W} region jp
 ${=W} dev.simDate -float $(epoch 2026-11-15T14:20:00+09:00)

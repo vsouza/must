@@ -44,6 +44,8 @@ final class CapaSuggestState {
         var boardShows: [ShowEvent]
         var forecast: DayWeather?
         var eventSourceName: (String) -> String?
+        /// Presentes da viagem (prompt 31): os pendentes com loja perto entram no ranker.
+        var gifts: [Gift] = []
     }
 
     /// O dia aceito não vale mais na capa: sem dia, ou você saiu do bairro do plano.
@@ -105,7 +107,8 @@ final class CapaSuggestState {
                                    events: events, indicated: indicated,
                                    boardNames: Set(places.map { $0.name.lowercased() }), rainInMinutes: rain, light: light,
                                    taste: Self.taste(places), dismissed: prefs.dismissed(region: region, now: i.now),
-                                   shownEarlier: prefs.shownEarlier(region: region, now: i.now))
+                                   shownEarlier: prefs.shownEarlier(region: region, now: i.now),
+                                   gifts: GiftLogic.nearby(gifts: i.gifts, places: i.places, here: i.here, now: i.now, timeZone: tz))
         cards = SuggestionEngine.suggest(inputs)
         prefs.markShown(cards.map(\.id), region: region, now: i.now)
 

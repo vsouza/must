@@ -22,6 +22,7 @@ struct HomeView: View {
     @Query private var trips: [TripInfo]
     @Query(sort: \MustList.order) private var lists: [MustList]
     @Query private var settingsList: [Settings]
+    @Query private var gifts: [Gift]
 
     @State private var state = CapaState()
     /// "Agora vale" (prompt 26): cartões, linha de estado e card da noite.
@@ -90,6 +91,8 @@ struct HomeView: View {
             await state.loadPhoto(region: region, places: places, services: services, forced: forcePhoto)
         }
         .onChange(of: scenePhase) { _, phase in if phase == .active { refresh() } }
+        // Presente novo, comprado ou apagado muda a linha laranja da capa (prompt 31).
+        .onChange(of: gifts.map { "\($0.id)\($0.boughtAt != nil)" }) { _, _ in recomputeSuggestions(now: AppClock.now) }
         // O quero aberto esconde a barra de abas (ela flutuava por cima dos chips de vontade).
         .onChange(of: corte.stage) { _, stage in router.setQuero("capa", open: stage != .rest) }
         .onDisappear { router.setQuero("capa", open: false) }
@@ -116,7 +119,7 @@ struct HomeView: View {
             region: region, now: now, here: services.location.current?.coordinate, currentArea: currentArea, places: places,
             plan: state.plan, dayNow: state.dayNow, clock: state.clock, problem: state.problem, events: events.events, boardShows: showEvents.today(region: region, at: now),
             forecast: services.sync.weather(on: now, region: region, trip: trips.first),
-            eventSourceName: { [events] in events.sourceName(forId: $0) }))
+            eventSourceName: { [events] in events.sourceName(forId: $0) }, gifts: gifts))
     }
 
     /// Cache de "por perto" da célula (só leitura, nunca chama fonte): vira o "indicado" fora do board.
@@ -137,6 +140,7 @@ struct HomeView: View {
 
     private func openSuggestion(_ card: Suggestion) {
         if card.kind == .plan { router.push(.agora, on: .hoje); return }
+        if card.kind == .gift, let id = card.giftId { router.push(.presente(id: id), on: .hoje); return }
         if let id = card.placeId { router.push(.place(id: id), on: .hoje); return }
         if let url = card.url { openURL(url); return }
         if let c = card.coordinate { MapsLinks.openApple(to: c, name: card.title) }
@@ -213,7 +217,7 @@ struct HomeView: View {
                              plan: state.plan, gps: services.location.current?.coordinate,
                              online: services.connectivity.status != .offline,
                              upcoming: QueroEnv.upcomingDays(context: context, areas: areas, today: today),
-                             areaHint: capaArea(areas), shows: showEvents.today(region: region, at: now))
+                             areaHint: capaArea(areas), shows: showEvents.today(region: region, at: now), gifts: gifts)
     }
 
     /// O bairro que a capa mostra (GPS por célula, senão o do dia pelo nome): de onde o quero sai quando o GPS está longe.

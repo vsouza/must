@@ -157,6 +157,7 @@ struct BoardCodec {
         summary.daysUpserted = try importDays(board.days ?? [], places: places)
         try importEvents(board.events ?? [])
         try importFlights(board.flights ?? [])
+        try importGifts(board.gifts ?? [])
 
         try context.save()
         Log.data.info("import \(region.rawValue): \(summary.description, privacy: .public)")
@@ -296,6 +297,37 @@ struct BoardCodec {
         }
     }
 
+    /// Presentes (`gifts`, v3). Id que já existe é atualizado; id novo entra. Gasto não é recriado (o export de `expenses` já o traz).
+    private func importGifts(_ items: [BoardGift]) throws {
+        let known = Dictionary(try context.fetch(FetchDescriptor<Gift>()).map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        for item in items {
+            let gift: Gift
+            if let existing = known[item.id] {
+                gift = existing
+            } else {
+                gift = Gift(id: item.id, title: item.title)
+                context.insert(gift)
+            }
+            gift.title = item.title
+            gift.person = item.person ?? ""
+            gift.quantity = max(1, item.quantity ?? 1)
+            gift.estimatedPrice = item.estimatedPrice ?? 0
+            gift.paidPrice = item.paidPrice
+            gift.boughtAt = item.boughtAt
+            gift.sourceRaw = item.source ?? GiftSource.name.rawValue
+            gift.sourceURL = item.sourceURL
+            gift.sourceLabel = item.sourceLabel ?? ""
+            gift.videoClip = item.videoClip
+            gift.placeId = item.placeId
+            gift.storeName = item.storeName ?? ""
+            gift.storeLat = item.storeLat
+            gift.storeLng = item.storeLng
+            gift.chain = item.chain ?? false
+            gift.note = item.note ?? ""
+            gift.order = item.order ?? 0
+        }
+    }
+
     /// Reservas de voo do board (`flights`). Dedupe pelo primeiro trecho (número + partida).
     private func importFlights(_ items: [BoardFlight]) throws {
         for item in items where !item.legs.isEmpty {
@@ -358,6 +390,7 @@ struct BoardCodec {
         let days = try context.fetch(FetchDescriptor<PlannedDay>(sortBy: [SortDescriptor(\.date)]))
         let events = try context.fetch(FetchDescriptor<TripEvent>(sortBy: [SortDescriptor(\.at), SortDescriptor(\.title)]))
         let flights = context.flights()
+        let gifts = context.gifts()
 
         let boardTrip = trip.map { t in
             BoardTrip(start: t.start.map(d.dayString), end: t.end.map(d.dayString), home: t.home,
@@ -407,6 +440,14 @@ struct BoardCodec {
                                                seat: l.seat, terminal: l.terminal, gate: l.gate, note: l.note)
                             },
                             checklist: f.checklist.isEmpty ? nil : f.checklist)
+            },
+            gifts: gifts.isEmpty ? nil : gifts.map { g in
+                BoardGift(id: g.id, title: g.title, person: g.person.isEmpty ? nil : g.person, quantity: g.quantity,
+                          estimatedPrice: g.estimatedPrice, paidPrice: g.paidPrice, boughtAt: g.boughtAt,
+                          source: g.sourceRaw, sourceURL: g.sourceURL, sourceLabel: g.sourceLabel.isEmpty ? nil : g.sourceLabel,
+                          videoClip: g.videoClip, placeId: g.placeId, storeName: g.storeName.isEmpty ? nil : g.storeName,
+                          storeLat: g.storeLat, storeLng: g.storeLng, chain: g.chain ? true : nil,
+                          note: g.note.isEmpty ? nil : g.note, order: g.order)
             }
         )
     }

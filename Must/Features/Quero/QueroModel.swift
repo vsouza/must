@@ -31,6 +31,9 @@ struct QueroEnv: Sendable {
     var radiusMeters: Double?
     /// Em cartaz hoje (pra "ouvir" e "noite"): lido do aparelho, sem rede.
     var shows: [ShowEvent] = []
+    /// Presentes pendentes com loja (prompt 31), do mais perto de `origin`, a qualquer distância; nomes das pessoas da lista.
+    var giftRows: [GiftNearby] = []
+    var giftPeople: [String] = []
 }
 
 extension QueroEnv {
@@ -83,6 +86,8 @@ final class QueroModel {
     private(set) var question: QueroQuestionState?
     /// Quem responde (a tela que tem o contexto do SwiftData e os serviços liga isto).
     @ObservationIgnored var answerer: (@MainActor (String) async -> String)?
+    /// "presente", "comprar presente" ou o nome de uma pessoa: os presentes pendentes com a loja mais perto (faixa laranja de cima).
+    private(set) var giftRows: [GiftNearby] = []
     /// Por que a busca de fora ficou só no board ("sem internet", "sem chave do Google"…).
     private(set) var outsideNote: String?
     var selectedId: String?
@@ -121,11 +126,12 @@ final class QueroModel {
             return
         }
         question = nil
+        giftRows = GiftLogic.isGiftWant(typed, people: env.giftPeople) ? env.giftRows : []
         phase = .searching
         searchTask = Task { [weak self] in
             guard let self else { return }
             guard var intent = await WantParser.parse(typed, useModel: env.useModel) else {
-                self.phase = .idle
+                self.phase = self.giftRows.isEmpty ? .idle : .done
                 return
             }
             if let forced = self.verbOverride, forced != intent.verb {
@@ -332,7 +338,7 @@ extension QueroEnv {
     @MainActor
     static func make(region: Region, now: Date, places: [Place], trip: TripInfo?, settings: Settings?, plan: DayPlan?,
                      gps: CLLocationCoordinate2D?, online: Bool, upcoming: [(date: Date, areaIds: Set<String>)],
-                     areaHint: Area? = nil, shows: [ShowEvent] = []) -> QueroEnv {
+                     areaHint: Area? = nil, shows: [ShowEvent] = [], gifts: [Gift] = []) -> QueroEnv {
         let areas = AreaCatalog.areas(for: region)
         let city = trip?.city(on: now, calendar: region.calendar)
         // Viagem futura: `city(on:)` já devolve a primeira cidade; sem coordenada ainda, o centro da região.
@@ -357,6 +363,8 @@ extension QueroEnv {
                            cityId: cityId, online: online, board: board, useModel: settings?.onDeviceAI ?? true,
                            walkMaxKm: settings?.walkMaxKm ?? 1.5, upcoming: upcoming)
         env.shows = shows
+        env.giftPeople = GiftLogic.people(gifts)
+        env.giftRows = GiftLogic.nearby(gifts: gifts, places: places, here: origin, now: now, timeZone: region.timeZone, maxMinutes: .max)
         env.originBasis = resolved.basis
         return env
     }

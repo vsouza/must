@@ -57,6 +57,20 @@ struct CorteResultBands: View {
     var makeEnv: () -> QueroEnv
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // "presente" (prompt 31): primeira faixa laranja, os presentes pendentes com a loja mais perto, a qualquer distância.
+            if !state.quero.giftRows.isEmpty, state.quero.phase != .searching {
+                GiftWantBand(rows: state.quero.giftRows,
+                             onGo: { MapsLinks.openApple(to: $0.coordinate, name: $0.storeName) },
+                             onOpen: { row in
+                                 if let id = row.storeId { actions.openPlace(id) } else { MapsLinks.openApple(to: row.coordinate, name: row.storeName) }
+                             })
+            }
+            if !(state.quero.intent == nil && !state.quero.giftRows.isEmpty) { mainBands }
+        }
+    }
+
+    @ViewBuilder private var mainBands: some View {
         let query = state.quero.intent?.object ?? state.quero.text
         let origin = state.originName(fallback: placeName)
         if state.quero.phase == .searching {

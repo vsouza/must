@@ -75,6 +75,11 @@ enum Route: Hashable {
     case colecao
     /// Dia que alguém mandou (`must://d/<payload>`, agente 25/2): só leitura, o dia vem dentro do link.
     case diaRecebido(payload: String)
+    // MARK: prompt 31 · Presentes
+    /// Lista de presentes (Musts › Presentes): por pessoa, checklist, previsto.
+    case presentes
+    /// Detalhe de um presente (`Gift.id`).
+    case presente(id: String)
 }
 
 /// Navegação do app: aba atual, pilha de cada aba e o que está apresentado por cima.
@@ -99,6 +104,9 @@ final class AppRouter {
         case mandar(date: Date?)
         /// Minhas viagens (prompt 27 §7, agente E).
         case viagens
+        /// Novo presente (prompt 31). `source` = link colado ou `must-video://<id da caixa>` (Share Extension); nil = em branco.
+        /// É a folha que o `+` (Quero · Guardar › Presente) e a conferência do Share abrem.
+        case presenteNovo(source: String?)
 
         var id: String {
             switch self {
@@ -113,6 +121,7 @@ final class AppRouter {
             case .quero(let text): "quero-\(text ?? "")"
             case .mandar(let date): "mandar-\(date?.timeIntervalSince1970 ?? 0)"
             case .viagens: "viagens"
+            case .presenteNovo(let source): "presente-novo-\(source ?? "")"
             }
         }
     }
@@ -153,7 +162,7 @@ final class AppRouter {
         if queroOpen { return true }
         if mapCardOpen, paths[tab]?.last == .mapa || tab == .guia { return true }
         switch paths[tab]?.last {
-        case .montar, .ir, .comoChegar, .place, .sos: return true
+        case .montar, .ir, .comoChegar, .place, .sos, .presente: return true
         default: return false
         }
     }
@@ -294,6 +303,8 @@ extension View {
             case .filmes(let placeId): FilmsView(placeId: placeId)
             case .colecao: CollectionView()
             case .diaRecebido(let payload): DiaRecebidoView(payload: payload)
+            case .presentes: PresentesView()
+            case .presente(let id): PresenteItemView(giftId: id)
             }
         }
     }

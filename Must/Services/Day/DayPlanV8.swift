@@ -84,6 +84,8 @@ enum DayMicroKind: String, Codable, Hashable, Sendable, CaseIterable {
     case treat
     /// Exposição em cartaz aberta e em temporada, que cabe num buraco do dia (RODADA-23 · A). TODO(r23:A): arquivo é do motor, só o case.
     case show
+    /// Passar na loja de um presente pendente que fica a ≤ 5 min de uma parada (prompt 31). Nunca âncora, só buraco que já existe.
+    case gift
 
     /// Minutos fixos.
     var minutes: Int {
@@ -95,6 +97,7 @@ enum DayMicroKind: String, Codable, Hashable, Sendable, CaseIterable {
         case .view: 15
         case .treat: 15
         case .show: 30
+        case .gift: 15
         }
     }
 }
