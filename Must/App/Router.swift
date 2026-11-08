@@ -294,7 +294,7 @@ extension View {
             case .ir(let placeId): IrView(placeId: placeId)
             case .boaNoite: BoaNoiteView()
             case .dicas: AssistantView()
-            case .presenteNovo: PresenteNovoPlaceholder()
+            case .presenteNovo: PresenteNovoView(source: nil)
             case .bolso: BolsoView()
             case .proximos: ProximosView()
             case .mapa: MapView()

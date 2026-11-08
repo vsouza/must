@@ -26,7 +26,6 @@ struct QueroView: View {
     @State private var model = QueroModel(provider: QueroView.provider(), extras: QueroView.extras())
     @State private var speech = SpeechInput()
     @State private var secondary: AddMode?
-    @State private var showGift = false
     @State private var saved: String?
     @State private var failure: String?
     @FocusState private var focused: Bool
@@ -82,7 +81,6 @@ struct QueroView: View {
             default: AddLinkView(initialURL: nil, preferredListId: nil, initialMode: mode)
             }
         }
-        .sheet(isPresented: $showGift) { PresenteNovoView() }
         .onAppear {
             model.answerer = { [context, services, store] text in
                 await QueroAnswerer.answer(text, context: context, region: store.region, services: services,
@@ -186,17 +184,6 @@ struct QueroView: View {
             case .ticket: "Ingresso"
             case .gift: "Presente"
             }
-            // Presente (prompt 31): o `+` também guarda o que se quer comprar pra alguém.
-            Button { showGift = true } label: {
-                Text("Presente")
-                    .font(V8Font.text(13, weight: .semibold))
-                    .underline()
-                    .foregroundStyle(V8.white)
-                    .padding(.vertical, 6)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(MustPressStyle())
-            .accessibilityLabel("Guardar um presente")
         }
     }
 
@@ -228,7 +215,7 @@ struct QueroView: View {
         case .link, .video: secondary = .link
         case .text: secondary = .text
         case .ticket: later { router.sheet = .ticketImport(inboxId: nil) }
-        case .gift: later { router.push(.presenteNovo, on: .musts) }
+        case .gift: later { router.sheet = .presenteNovo(source: nil) }
         }
     }
 
