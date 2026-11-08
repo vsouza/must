@@ -373,7 +373,7 @@ enum DebugLaunch {
         case "barra": router.select(.hoje)
         case "quero-pergunta": router.select(.hoje)
         case "bolso-novo": router.push(.bolso, on: .hoje)
-        case "mais": router.sheet = .quero(text: nil)
+        case "mais": router.openQuero()
         case "viagem-aba": PresenteDemo.ensure(context: context, region: region); router.select(.viagem)
         case "viagem": router.push(.trip, on: .hoje)
         // prompt 32 · Grupo: pessoas, votação, acertar contas, gasto dividido (GrupoDemo põe os exemplos).
@@ -446,7 +446,7 @@ enum DebugLaunch {
         case "museu": router.push(.place(id: arg ?? "r46"), on: .musts)
         // prompt 25 (contrato): Atalhos é um painel sobre a capa (o agente 25/1 lê `-debugScreen atalhos`).
         case "atalhos": router.select(.hoje)
-        case "quero": router.sheet = .quero(text: arg) // quero:quero comprar um Seiko
+        case "quero": router.openQuero(text: arg) // quero:quero comprar um Seiko
         case "compartilhar", "mandar": router.sheet = .mandar(date: region.calendar.startOfDay(for: AppClock.now))
         case "sos": router.push(.sos, on: .hoje)
         // prompt 31 · Presentes: a lista de exemplo (PresenteDemo) e cada tela.
@@ -467,7 +467,7 @@ enum DebugLaunch {
             router.select(.hoje)
         case "presente-quero": // o quero com "presente": a faixa laranja dos presentes pendentes e a loja mais perto
             PresenteDemo.ensure(context: context, region: region)
-            router.sheet = .quero(text: "presente")
+            router.openQuero(text: "presente")
         // RODADA-23 + prompt 26 (contrato): uma entrada por tela nova.
         case "emcartaz": router.push(.emCartaz, on: .hoje)
         case "filmes": router.push(.filmes(placeId: arg ?? "j105"), on: .musts)

@@ -107,8 +107,6 @@ final class AppRouter {
         case ticketImport(inboxId: String?)
         /// Buscar por nome (prompt 17 · A): sheet, cobre a tab bar. `query` pré-preenche o campo.
         case buscarNome(query: String, listId: String?)
-        /// Quero… (prompt 25 · A, agente 25/1): vontade → lugar físico → parada. O `+` da barra abre aqui.
-        case quero(text: String?)
         /// Mandar o dia (prompt 25 · B, agente 25/2): cartaz, link, PDF. `date` nil = a viagem inteira.
         case mandar(date: Date?)
         /// Minhas viagens (prompt 27 §7, agente E).
@@ -129,7 +127,6 @@ final class AppRouter {
             case .assistantAsk(let text): "assistant-\(text)"
             case .ticketImport(let id): "import-\(id ?? "")"
             case .buscarNome(let query, let list): "buscar-\(query)-\(list ?? "")"
-            case .quero(let text): "quero-\(text ?? "")"
             case .mandar(let date): "mandar-\(date?.timeIntervalSince1970 ?? 0)"
             case .viagens: "viagens"
             case .presenteNovo(let source): "presente-novo-\(source ?? "")"
@@ -150,6 +147,20 @@ final class AppRouter {
     }
 
     var tab: MustTab = .hoje
+    /// A aba de busca (lupa da barra nativa) é o Quero…: `tab` guarda a aba de baixo, que volta ao sair da lupa.
+    var queroSelected = false
+    var queroText: String?
+    /// Muda a cada pedido de texto novo; a página do Quero recria com ele.
+    private(set) var queroToken = 0
+
+    /// Abre o Quero… na lupa da barra, já com `text` (e busca, se houver).
+    func openQuero(text: String? = nil) {
+        sheet = nil
+        if text != nil { queroText = text; queroToken += 1 } else if !queroSelected { queroText = nil }
+        queroSelected = true
+    }
+
+    func leaveQuero() { queroSelected = false }
     var paths: [MustTab: [Route]] = [:]
     var sheet: Sheet?
     var cover: Cover?
@@ -190,12 +201,15 @@ final class AppRouter {
             return
         }
         let target = tab ?? self.tab
+        queroSelected = false
         self.tab = target
         paths[target, default: []].append(route)
     }
 
     func select(_ tab: MustTab) {
-        if self.tab == tab {
+        let fromQuero = queroSelected
+        queroSelected = false
+        if self.tab == tab, !fromQuero {
             paths[tab] = [] // tocar na aba atual volta pra raiz
         }
         self.tab = tab

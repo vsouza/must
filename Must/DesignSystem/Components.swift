@@ -564,6 +564,16 @@ enum MustTab: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
+    /// Ícone da barra nativa (iOS 26).
+    var systemImage: String {
+        switch self {
+        case .hoje: "clock"
+        case .explorar: "map"
+        case .musts: "list.bullet"
+        case .viagem: "suitcase"
+        }
+    }
+
     var icon: MustIcon {
         switch self {
         case .hoje: .hoje

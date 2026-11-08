@@ -485,7 +485,7 @@ struct MapView: View {
                               encaixarTitle: slot.map { "Encaixar \(region.timeString($0.start))" } ?? (chosen == nil ? "Encaixar" : "Não cabe hoje"),
                               canEncaixar: slot != nil,
                               onChoose: chooseResult,
-                              onQuero: { router.sheet = .quero(text: search.text) },
+                              onQuero: { router.openQuero(text: search.text) },
                               onEncaixar: encaixar)
     }
 

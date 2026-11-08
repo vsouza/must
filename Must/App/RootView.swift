@@ -1,41 +1,48 @@
 import SwiftUI
 
-/// Barra v8 (Hoje / Guia / Musts / Viagem + `+`), cada aba com a própria NavigationStack.
+/// O que a barra nativa seleciona: uma das quatro abas ou a lupa (o Quero…).
+enum RootTab: Hashable {
+    case main(MustTab)
+    case quero
+}
+
+/// Barra de abas nativa do iOS 26 (Liquid Glass): Hoje · Explorar · Musts · Viagem e, separada à direita, a lupa que é o
+/// Quero…. Cada aba tem a própria NavigationStack. A faixa "agora" fica na `tabViewBottomAccessory`.
 struct RootView: View {
     @Environment(AppRouter.self) private var router
     @Environment(RegionStore.self) private var store
-    /// Abas já visitadas: cada uma é montada na primeira vez e fica viva depois (troca de aba não recria).
-    /// Antes as quatro subiam no arranque; o Mapa pedia rotas e criava o MLNMapView antes do primeiro frame (prompt 18 · A.6).
-    @State private var visited: Set<MustTab> = []
+
+    private var selection: Binding<RootTab> {
+        Binding(get: { router.queroSelected ? .quero : .main(router.tab) },
+                set: { new in
+                    switch new {
+                    case .quero: router.openQuero()
+                    case .main(let tab): router.select(tab)
+                    }
+                })
+    }
 
     var body: some View {
         @Bindable var router = router
-        ZStack(alignment: .bottom) {
+        TabView(selection: selection) {
             ForEach(MustTab.allCases) { tab in
-                if visited.contains(tab) || router.tab == tab {
+                Tab(tab.title, systemImage: tab.systemImage, value: RootTab.main(tab)) {
                     NavigationStack(path: router.path(for: tab)) {
                         root(for: tab)
                             .toolbar(.hidden, for: .navigationBar)
                             .mustDestinations()
                     }
-                    .opacity(router.tab == tab ? 1 : 0)
-                    .allowsHitTesting(router.tab == tab)
-                    .accessibilityHidden(router.tab != tab)
+                    // Telas que escondiam a barra (Montar, Ir, Lugar, SOS, quero aberto…).
+                    .toolbar(router.hidesNavBar ? .hidden : .visible, for: .tabBar)
                 }
             }
-
-            if !router.hidesNavBar {
-                // `+`: Quero… (prompt 25 · A); toque longo: Montar o dia de hoje.
-                V8NavBar(active: router.tab, onSelect: { router.select($0) },
-                         onPlus: { router.sheet = .quero(text: nil) },
-                         onPlusHold: { router.push(.montar(date: store.region.calendar.startOfDay(for: AppClock.now)), on: .hoje) })
-                    .ignoresSafeArea(.keyboard)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            Tab("Quero", systemImage: "magnifyingglass", value: RootTab.quero, role: .search) {
+                QueroTabPage()
             }
         }
-        // A aba que sai já estava montada (era a visível): guarda também, senão o Início some ao sair dele.
-        .animation(.snappy(duration: 0.25), value: router.hidesNavBar)
-        .onChange(of: router.tab) { old, new in visited.formUnion([old, new]) }
+        .tint(V8.orange)
+        .tabBarMinimizeBehavior(.onScrollDown)
+        .modifier(NowAccessoryModifier(enabled: !router.hidesNavBar && !router.queroSelected))
         .sheet(item: $router.sheet) { sheet in
             switch sheet {
             case .addLink(let url, let listId): AddLinkView(initialURL: url, preferredListId: listId)
@@ -46,7 +53,6 @@ struct RootView: View {
             case .assistantAsk(let text): AssistantView(initialQuestion: text).presentationCornerRadius(0)
             case .ticketImport(let inboxId): TicketImportFlow(inboxId: inboxId)
             case .buscarNome(let query, let listId): BuscarNomeView(initialQuery: query, preferredListId: listId)
-            case .quero(let text): QueroView(initialText: text).presentationCornerRadius(0)
             case .mandar(let date): MandarView(date: date)
             case .viagens: TripSwitcherSheet()
             case .presenteNovo(let source): PresenteNovoView(source: source)
@@ -79,9 +85,9 @@ struct RootView: View {
     }
 }
 
-/// Espaço reservado pra tab bar no fim das telas roláveis.
+/// Antes reservava 96 pt pra barra customizada; a barra nativa já entra na safe area. Sobra só um respiro.
 struct TabBarSpacer: View {
-    var body: some View { Color.clear.frame(height: 96) }
+    var body: some View { Color.clear.frame(height: 16) }
 }
 
 // MARK: - Placeholders (prompts 05, 06, 08)

@@ -8,8 +8,10 @@ import SwiftUI
 /// Link / Texto / Nome (o Adicionar de antes) ficam como abas secundárias.
 struct QueroView: View {
     var initialText: String?
+    /// Página da aba de busca (iOS 26): sem ✕, sem forçar o escuro no app inteiro; "fechar" volta pra aba anterior.
+    var inTab = false
 
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismiss) private var systemDismiss
     @Environment(\.modelContext) private var context
     @Environment(\.dayEngine) private var engine
     @Environment(AppRouter.self) private var router
@@ -29,6 +31,15 @@ struct QueroView: View {
     @State private var saved: String?
     @State private var failure: String?
     @FocusState private var focused: Bool
+
+    private func dismiss() {
+        if inTab {
+            model.text = ""
+            router.leaveQuero()
+        } else {
+            systemDismiss()
+        }
+    }
 
     private var region: Region { store.region }
     private var now: Date { AppClock.now }
@@ -74,7 +85,7 @@ struct QueroView: View {
             .scrollDismissesKeyboard(.interactively)
             bottom
         }
-        .preferredColorScheme(.dark)
+        .modifier(QueroDark(inTab: inTab))
         .sheet(item: $secondary) { mode in
             switch mode {
             case .name: BuscarNomeView(initialQuery: model.intent?.object ?? model.text, preferredListId: nil)
@@ -108,7 +119,7 @@ struct QueroView: View {
 
     private var header: some View {
         HStack(alignment: .top) {
-            V8CornerButton(systemName: "xmark", label: "Fechar", onInk: true) { dismiss() }
+            if !inTab { V8CornerButton(systemName: "xmark", label: "Fechar", onInk: true) { dismiss() } }
             Spacer(minLength: 12)
             V8SpecStack(lines: ["\(areaName) · \(region.timeString(now))",
                                 model.verb == .comprar || model.verb == nil ? "só lojas físicas, nesta cidade" : "só lugares de verdade, nesta cidade"],
@@ -221,6 +232,7 @@ struct QueroView: View {
 
     /// Fecha o Quero… e roda depois que a sheet sai (o `router` não abre sheet por cima de sheet).
     private func later(_ body: @escaping @MainActor () -> Void) {
+        if inTab { body(); return }
         dismiss()
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(350))
@@ -489,4 +501,28 @@ private struct QueroRowView: View {
 
 extension AddMode: Identifiable {
     var id: Self { self }
+}
+
+
+/// Na sheet o Quero força o tema escuro da janela; na aba isso pintaria o app inteiro, então só a página fica escura.
+private struct QueroDark: ViewModifier {
+    var inTab: Bool
+
+    func body(content: Content) -> some View {
+        if inTab {
+            content.environment(\.colorScheme, .dark)
+        } else {
+            content.preferredColorScheme(.dark)
+        }
+    }
+}
+
+/// A aba de busca da barra nativa: o Quero… como página. `token` recria a página quando alguém pede um texto novo.
+struct QueroTabPage: View {
+    @Environment(AppRouter.self) private var router
+
+    var body: some View {
+        QueroView(initialText: router.queroText, inTab: true)
+            .id(router.queroToken)
+    }
 }
