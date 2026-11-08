@@ -125,7 +125,7 @@ struct MapView: View {
         .onChange(of: stops.filter(\.done).count) { _, _ in reevaluate(force: true) }
         .onChange(of: selectedId, initial: true) { _, id in router.mapCardOpen = id != nil }
         .onDisappear { router.mapCardOpen = false }
-        .onChange(of: scenePhase) { _, phase in if phase == .active && router.tab == .guia { reevaluate(force: true) } }
+        .onChange(of: scenePhase) { _, phase in if phase == .active && router.tab == .explorar { reevaluate(force: true) } }
     }
 
     // MARK: Câmera (prompt 11)

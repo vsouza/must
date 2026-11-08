@@ -70,7 +70,7 @@ struct RootView: View {
     @ViewBuilder private func root(for tab: MustTab) -> some View {
         switch tab {
         case .hoje: HomeView() // capa do dia (agente C)
-        case .guia: GuiaTabView() // Guia do bairro (agente D)
+        case .explorar: ExplorarView() // Explorar (prompt 31 · 8): o bairro em página, mapa em recorte
         case .musts: MustsHubView()
         case .viagem: ProximosView() // Próximos (agente D)
         }

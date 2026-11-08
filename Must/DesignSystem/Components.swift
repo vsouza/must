@@ -543,14 +543,14 @@ enum PhotoLoader {
 
 enum MustTab: String, CaseIterable, Identifiable, Sendable {
     /// Abas v8 (prompt 23 §2, `Nav.png`): Hoje (capa), Guia, Musts, Viagem (Próximos) + `+`.
-    case hoje, guia, musts, viagem
+    case hoje, explorar, musts, viagem
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
         case .hoje: "Hoje"
-        case .guia: "Guia"
+        case .explorar: "Explorar"
         case .musts: "Musts"
         case .viagem: "Viagem"
         }
@@ -559,7 +559,7 @@ enum MustTab: String, CaseIterable, Identifiable, Sendable {
     var icon: MustIcon {
         switch self {
         case .hoje: .hoje
-        case .guia: .mapa
+        case .explorar: .mapa
         case .musts: .mustsLista
         case .viagem: .calendario
         }

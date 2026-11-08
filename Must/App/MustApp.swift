@@ -364,7 +364,8 @@ enum DebugLaunch {
                 acceptToday(context: context, region: region, location: location, offset: 1)
                 prefetchDays(services: services, context: context, region: region)
             }
-            router.select(.guia)
+            router.select(.explorar)
+        case "explorar", "explorar-trilho", "explorar-recorte", "explorar-kyoto", "explorar-sem-foto": router.select(.explorar) // prompt 31 · 8
         case "assistente": router.sheet = .assistant
         case "viagem": router.push(.trip, on: .hoje)
         case "reservas": router.push(.reservations, on: .hoje)
