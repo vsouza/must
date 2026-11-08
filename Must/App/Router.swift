@@ -157,7 +157,7 @@ final class AppRouter {
         if queroOpen { return true }
         if mapCardOpen, paths[tab]?.last == .mapa || tab == .guia { return true }
         switch paths[tab]?.last {
-        case .montar, .ir, .comoChegar, .place, .sos: return true
+        case .montar, .ir, .comoChegar, .place, .sos, .presente: return true
         default: return false
         }
     }

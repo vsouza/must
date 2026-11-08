@@ -172,7 +172,7 @@ struct GiftTests {
         let cards = SuggestionEngine.suggest(inputs)
         let card = try? #require(cards.first { $0.kind == .gift })
         #expect(card?.title == "Don Quijote")
-        #expect(card?.meta.contains("presente da Ana e Pedro") == true)
+        #expect(card?.meta.contains("presente pra Ana e Pedro") == true)
         #expect(card.map { CorteIndexLine($0).tone } == .orange)
         // Sem GiftNearby, nada de linha de presente.
         #expect(SuggestionEngine.suggest(SuggestInputs(region: region, now: now, here: here, places: [])).allSatisfy { $0.kind != .gift })
@@ -194,7 +194,7 @@ struct GiftTests {
         let sun = SunService.day(day.addingTimeInterval(12 * 3600), input.hotel, timeZone: tz)
         let micro = try #require(MicroStops.make(.gift, timeline: timeline, input: input, sun: sun))
         #expect(micro.micro == .gift && micro.kind == .micro && micro.label == "Passar na Don Quijote")
-        #expect(micro.note.contains("presente da Ana"))
+        #expect(micro.note.contains("presente pra Ana"))
         #expect(micro.start >= at(11) && micro.end <= at(15))
         // Só a loja longe: nada entra.
         input.gifts = [far]

@@ -419,6 +419,13 @@ struct PresenteNovoView: View {
             if let id = g.placeId, let p = places.first(where: { $0.id == id }) { storeName = p.name }
             return
         }
+        #if DEBUG
+        if DebugFlags.string("debugScreen") == "presente-novo" {
+            title = "Kit Kat de matcha"; person = "Ana"; quantity = 3; priceText = "1200"; tab = .video
+            storeName = "Don Quijote Shinjuku"; sourceLabel = "@tokyosnacks"; clip = "0:12–0:19"; videoInboxId = "demo"
+            return
+        }
+        #endif
         titleFocused = source == nil
         guard let source else { return }
         if source.hasPrefix(AddLinkModel.videoPrefix) {

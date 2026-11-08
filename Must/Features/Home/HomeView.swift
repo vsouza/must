@@ -97,6 +97,8 @@ struct HomeView: View {
             await state.loadPhoto(region: region, places: places, services: services, forced: forcePhoto)
         }
         .onChange(of: scenePhase) { _, phase in if phase == .active { refresh() } }
+        // Presente novo, comprado ou apagado muda a linha laranja da capa (prompt 31).
+        .onChange(of: gifts.map { "\($0.id)\($0.boughtAt != nil)" }) { _, _ in recomputeSuggestions(now: AppClock.now) }
         // O quero aberto esconde a barra de abas (ela flutuava por cima dos chips de vontade).
         .onChange(of: corte.stage) { _, stage in router.setQuero("capa", open: stage != .rest) }
         .onDisappear { router.setQuero("capa", open: false) }

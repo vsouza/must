@@ -240,7 +240,7 @@ enum MicroStops {
                 if let id = first.placeId,
                    input.catalog.first(where: { $0.id == id })?.hours?.isOpen(at: start, timeZone: input.region.timeZone) == false { continue }
                 let people = Array(Set(group.map(\.person).filter { !$0.isEmpty })).sorted()
-                let who = people.isEmpty ? "presente" : "presente da \(people.joined(separator: " e "))"
+                let who = people.isEmpty ? "presente" : "presente pra \(people.joined(separator: " e "))"
                 return DayStop(id: "m-gift", placeId: nil, kind: .micro, start: start, end: start.addingTimeInterval(Double(d) * 60),
                                label: "Passar na \(first.storeName)", note: "micro · \(who) · \(GiftLogic.titleWithQtyText(first.title, first.quantity))",
                                tag: "presente", area: prev.area, cost: nil, micro: .gift, lat: here.latitude, lng: here.longitude)

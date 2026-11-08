@@ -51,7 +51,7 @@ struct PresenteItemView: View {
                     band(gift, storeName: store?.name, position: position, count: mine.count)
                     CutRule()
                     line("Pra quem", title: gift.personName == GiftLogic.noPerson ? "Ninguém ainda" : gift.personName,
-                         sub: others.isEmpty ? nil : "mais \(others.count) \(others.count == 1 ? "item" : "itens") pra \(gift.personName == GiftLogic.noPerson ? "ela" : "essa pessoa"): "
+                         sub: others.isEmpty ? nil : "mais \(others.count) \(others.count == 1 ? "item" : "itens") pra \(gift.personName == GiftLogic.noPerson ? "essa pessoa" : gift.personName): "
                             + others.prefix(2).map { "\($0.title.lowercased())\($0.isBought ? " (comprado)" : "")" }.joined(separator: ", "))
                     line("Quanto", title: quanto(gift), sub: money.brl(gift.estimatedTotal).map { "\($0) · câmbio de Ajustes" })
                     whereLine(gift, store: store)

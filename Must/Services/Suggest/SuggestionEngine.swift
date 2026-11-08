@@ -129,10 +129,10 @@ enum SuggestionEngine {
             let sorted = group.sorted { ($0.meters, $0.giftId) < ($1.meters, $1.giftId) }
             guard let first = sorted.first else { return nil }
             let people = Array(Set(sorted.map(\.person).filter { !$0.isEmpty })).sorted()
-            let who = people.isEmpty ? "presente" : "presente da \(people.joined(separator: " e "))"
+            let who = people.isEmpty ? "presente" : "presente pra \(people.joined(separator: " e "))"
             let more = sorted.count > 1 ? " · +\(sorted.count - 1)" : ""
             let id = "gift:\(first.storeId ?? first.storeName.lowercased())"
-            var score = proximity(walk: first.minutes) + 5
+            var score = proximity(walk: first.minutes) + 9
             if i.shownEarlier.contains(id) { score -= 2 }
             return Suggestion(id: id, kind: .gift, style: .ink, label: "PRESENTE · ABERTO", trailing: Walk.distanceText(first.meters),
                               title: first.storeName, meta: "\(who) · \(GiftLogic.titleWithQtyText(first.title, first.quantity))\(more)",
