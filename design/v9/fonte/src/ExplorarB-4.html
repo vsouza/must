@@ -1,0 +1,63 @@
+<!doctype html><html lang="pt-BR"><head><title>Explorar B · outra cidade</title>{{HEAD}}
+<style>
+.seg{display:flex}
+.seg div{font-family:'Martian Mono';font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:8px 10px;border:2px solid #fff;line-height:1}
+.seg div+div{border-left:none}
+.seg .on{background:#fff;color:var(--ink)}
+.cut{position:absolute;left:20px;top:112px;width:176px;height:176px;border:3px solid var(--ink);background:var(--paper);overflow:hidden;z-index:4}
+.cut svg{display:block}
+.cutl{position:absolute;left:20px;top:296px;z-index:4;color:#fff}
+.rail{position:absolute;right:18px;top:104px;height:200px;width:130px;z-index:4;color:#fff}
+.rail .ln{position:absolute;right:7px;top:4px;bottom:4px;width:2px;background:#fff}
+.st{position:absolute;right:0;display:flex;align-items:center;gap:8px;font-family:'Martian Mono';font-size:8px;letter-spacing:.08em;text-transform:uppercase;line-height:1;white-space:nowrap}
+.st b{font-weight:800;font-size:9px}
+.st i{width:16px;height:10px;flex:none;background:var(--place);border:2px solid #fff}
+.st.today i{background:#fff}
+.st.here{font-size:9px}
+.st.here i{width:16px;height:16px;background:#fff;border-color:var(--ink)}
+.stamp{width:54px;height:54px;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-family:'Martian Mono';font-weight:800;font-size:13px;letter-spacing:.04em;flex:none}
+.hd{display:flex;justify-content:space-between;align-items:flex-end;padding:10px 18px 8px;flex:none}
+</style></head><body>
+<div class="scr">
+  <div class="band" style="height:478px">
+    {{ARCS:390|478|330,40,150|40,500,160|200,260,90}}
+    <div class="in">
+      {{SB}}
+      <div class="top" style="margin-top:6px;align-items:center">
+        <div class="seg"><div>Tóquio</div><div class="on">Kyoto</div></div>
+        <div class="mono" style="text-align:right;flex:1">mapa offline<br>baixado · 38 mb</div>
+        <div class="sq" style="color:#fff">✦</div>
+      </div>
+      <div style="margin-top:auto;display:flex;gap:12px;align-items:flex-end">
+        <div class="stamp">GIO</div>
+        <div><div class="mono">kyoto · dias 6 a 9</div><div class="mono">2h15 de shinkansen daqui</div></div>
+      </div>
+      <div class="disp" style="font-size:76px;margin-top:10px">Gion</div>
+    </div>
+    <div class="cut"><svg width="170" height="170" viewBox="0 0 170 170">
+      {{MAP:170|170|31|river=M30 -10 C 34 60, 26 120, 34 180}}
+      {{PIN:96|70|1|plan|18}}{{PIN:132|112|2|plan|18}}{{PIN:80|128|3|plan|18}}{{PIN:120|40|4|ink|18}}{{DOT:150|150|or}}
+    </svg></div>
+    <div class="cutl mono">mapa · toque pra abrir<br>6 musts · do hotel 12 min</div>
+    <div class="rail"><div class="ln"></div>
+      <div class="st" style="top:-4px"><b>KRS</b> hotel<i></i></div>
+      <div class="st" style="top:22px"><b>KWM</b> 4 min<i></i></div>
+      <div class="st" style="top:46px"><b>NJO</b> 10 min<i></i></div>
+      <div class="st here" style="top:68px"><b>GIO</b> 12 · dia 7<i></i></div>
+      <div class="st today" style="top:96px"><b>HGS</b> 15 · dia 7<i></i></div>
+      <div class="st today" style="top:120px"><b>FSM</b> 18 · dia 8<i></i></div>
+      <div class="st today" style="top:144px"><b>ARS</b> 25 · dia 6<i></i></div>
+      <div class="st" style="top:168px"><b>KNK</b> 30 min<i></i></div>
+    </div>
+  </div>
+  <div class="rule pull"><div class="grip"></div><span class="rl">↓ quero em gion</span></div>
+  <div class="sec ink"><span>outra cidade · nada daqui entra hoje</span><span>dia 7</span></div>
+  <div class="hd">
+    <div><div class="mono g1">seus musts em gion</div><div style="font-size:12.5px;margin-top:3px">planejado pro dia 7 · qua 18 nov</div></div>
+    <div class="disp" style="font-size:54px">6</div>
+  </div>
+  <div class="ix"><div class="d">dia 7<small>17h–23h</small></div><div class="t"><b>Yasaka-jinja</b><span>seu Must temple · lanternas acesas</span></div><div class="thumb"><span class="pn">1</span></div></div>
+  <div class="ix"><div class="d">dia 7<small>fecha seg</small></div><div class="t"><b>Kagizen Yoshifusa</b><span>seu Must coffee · kuzukiri gelado</span></div><div class="thumb"><span class="pn">2</span></div></div>
+  {{BAR:explorar}}
+</div>
+</body></html>

@@ -1,0 +1,46 @@
+<!doctype html><html lang="pt-BR"><head><title>Explorar A · camada fora do board</title>{{HEAD}}
+<style>
+.map{position:relative;height:420px;flex:none;overflow:hidden}
+.map>svg{position:absolute;inset:0}
+.ov{position:absolute;left:0;right:0;top:0;z-index:3}
+.ovt{display:flex;justify-content:space-between;align-items:flex-start;padding:6px 18px 0}
+.ovt .tag{background:var(--paper);border:2px solid var(--ink);padding:6px 8px}
+.layers{position:absolute;left:0;right:0;bottom:0;z-index:3;display:grid;grid-template-columns:repeat(4,1fr);background:var(--paper);border-top:2px solid var(--ink)}
+.layers div{padding:7px 8px 6px;border-right:2px solid var(--ink);font-family:'Martian Mono';font-size:7.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;line-height:1.35;display:flex;gap:6px;align-items:flex-start}
+.layers div:last-child{border-right:none}
+.layers i{width:9px;height:9px;flex:none;margin-top:1px;border:2px solid var(--ink)}
+.layers .on i{background:var(--ink)}
+.layers .on.k{background:var(--ink);color:var(--paper)} .layers .on.k i{border-color:var(--paper);background:var(--paper)}
+.ix .act{border-color:var(--paper)}
+</style></head><body>
+<div class="scr">
+  <div class="map">
+    <svg width="390" height="420" viewBox="0 0 390 420">
+      {{MAP:390|420|7|park=250,250,150,110|rail=M120 -10 C 140 120, 150 250, 175 430|label=36,212,SHINJUKU STA.}}
+      <g opacity=".35">{{DOT:232|200|or}}{{DOT:298|300|or}}{{DOT:276|174|or}}{{DOT:318|132|or}}{{DOT:240|120|or}}</g>
+      {{PIN:214|262|1|ink}}{{PIN:150|196|2|ink}}{{PIN:262|140|3|ink}}{{PIN:330|228|4|ink}}{{PIN:110|286|5|ink|20}}{{PIN:60|176|6|ink|20}}
+      {{ME:195|236}}
+    </svg>
+    <div class="ov">
+      {{SBI}}
+      <div class="ovt">
+        <div class="tag mono" style="line-height:1.45">explorar · shinjuku<br>camada: fora do board</div>
+        <div style="display:flex;gap:6px"><div class="sq" style="background:var(--paper)">⌖</div><div class="sq f">✦</div></div>
+      </div>
+    </div>
+    <div class="layers">
+      <div class="on"><i></i><span>aberto<br>agora</span></div>
+      <div><i></i><span>seus<br>musts · 9</span></div>
+      <div class="on k"><i></i><span>fora do<br>board · 6</span></div>
+      <div><i></i><span>trilha<br>do dia</span></div>
+    </div>
+  </div>
+  <div class="rule pull"><span class="ll">↕ mapa · lista</span><div class="grip" style="background:var(--paper)"></div><span class="rl">meio</span></div>
+  <div class="sec ink" style="border-bottom:2px solid #3a3a38"><span>aqui perto agora · 6</span><span>google · wikipedia</span></div>
+  <div class="ix ink" style="border-top:none"><div class="d">180 m<small>2 min a pé</small></div><div class="t"><b>Paul Bassett</b><span>café · ★ 4,3 · cabe 4 · aberto</span></div><div class="act">+ board</div></div>
+  <div class="ix ink"><div class="d">300 m<small>4 min a pé</small></div><div class="t"><b>Disk Union Shinjuku</b><span>vinil, 8 andares · ★ 4,6 · até 21h</span></div><div class="act">+ board</div></div>
+  <div class="ix ink"><div class="d">500 m<small>7 min a pé</small></div><div class="t"><b>Hanazono-jinja</b><span>santuário · wikipedia · aberto 24 h</span></div><div class="act">+ board</div></div>
+  <div class="sec ink" style="border-top:2px solid #3a3a38;color:var(--g2)"><span>sem foto: não baixamos nada de fora</span><span>google 812/1.000</span></div>
+  {{BAR:explorar}}
+</div>
+</body></html>

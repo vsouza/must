@@ -1,0 +1,86 @@
+<!doctype html><html lang="pt-BR"><head><title>Explorar · comparar</title>{{HEAD}}
+<!--size:1440x1610-->
+<style>
+body{width:1440px}
+.pg{padding:52px 56px 56px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:0;border:2px solid var(--ink);margin-top:34px}
+.two>div{padding:24px 26px 26px}
+.two>div:first-child{border-right:2px solid var(--ink)}
+.shots{display:flex;gap:10px;margin-top:18px}
+.shots figure{flex:1}
+.shots img{display:block;width:100%;border:2px solid var(--ink)}
+.shots figcaption{font-family:'Martian Mono';font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;margin-top:7px;line-height:1.4}
+h2{font-family:'Bricolage Grotesque';font-weight:800;font-size:46px;letter-spacing:-.04em;line-height:.92}
+.idea{font-size:16px;line-height:1.45;margin-top:12px}
+.pc{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:20px;border:2px solid var(--ink)}
+.pc>div{padding:0}
+.pc>div:first-child{border-right:2px solid var(--ink)}
+.pc .h{font-family:'Martian Mono';font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:9px 14px;background:var(--ink);color:var(--paper)}
+.pc .h.o{background:var(--or);color:var(--ink)}
+.pc li{list-style:none;padding:9px 14px;border-top:2px solid var(--ink);font-size:14px;line-height:1.4}
+.pc li:first-child{border-top:none}
+.rec{margin-top:34px;background:var(--or);display:grid;grid-template-columns:260px 1fr;border:2px solid var(--ink)}
+.rec .l{padding:24px;border-right:2px solid var(--ink)}
+.rec .r{padding:24px 28px;font-size:18px;line-height:1.45}
+.rec .r p+p{margin-top:10px}
+.take{display:grid;grid-template-columns:repeat(4,1fr);border:2px solid var(--ink);border-top:none}
+.take div{padding:14px 18px;border-right:2px solid var(--ink);font-size:14px;line-height:1.4}
+.take div:last-child{border-right:none}
+.take b{display:block;font-family:'Martian Mono';font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px}
+</style></head><body>
+<div class="pg">
+  <div style="display:flex;justify-content:space-between"><div class="mono" style="font-size:12px">must · v9 · explorar<br>substitui a aba mapa (e a aba guia)</div><div class="mono" style="font-size:12px;text-align:right">mapLibre com estilo "corte" · pinos do app<br>nenhuma api nova · nenhuma foto nova</div></div>
+  <div style="display:flex;align-items:flex-end;gap:36px;margin-top:22px">
+    <div class="disp" style="font-size:150px">Explorar</div>
+    <div class="disp orc" style="font-size:150px">2</div>
+    <div style="font-size:19px;line-height:1.4;max-width:560px;margin-bottom:14px"><b>Dois conceitos pro mapa mais inteligente.</b> Os dois usam o corte (bloco, régua, papel), as camadas aberto agora · seus Musts · fora do board · trilha do dia, e pinos quadrados na regra de cor das linhas.</div>
+  </div>
+
+  <div class="two">
+    <div>
+      <div class="mono">conceito a</div>
+      <h2 style="margin-top:6px">O corte móvel</h2>
+      <p class="idea">O mapa é o bloco de cima, o índice é o papel. A régua divide os dois e o dedo arrasta a proporção (mapa · meio · lista). O índice é sempre o que está na tela do mapa; tocar num pino transforma o papel no bloco da foto do lugar.</p>
+      <div class="shots">
+        <figure><img src="ExplorarA-1.png"><figcaption>1 · meio a meio<br>camadas em 4 células</figcaption></figure>
+        <figure><img src="ExplorarA-2.png"><figcaption>2 · mapa cheio<br>pino vira bloco</figcaption></figure>
+        <figure><img src="ExplorarA-3.png"><figcaption>3 · lista cheia<br>bairro + vizinhos</figcaption></figure>
+        <figure><img src="ExplorarA-4.png"><figcaption>4 · camada fora<br>do board</figcaption></figure>
+      </div>
+      <div class="pc">
+        <div><div class="h o">a favor</div><ul><li>Direto pra "o que tem aqui agora"; zero aprendizado.</li><li>Mapa e lista sempre em sincronia (o que está na tela é o que está listado).</li><li>Pino vira bloco: sem cartão flutuante, sem sombra.</li></ul></div>
+        <div><div class="h">contra</div><ul><li>A régua muda de sentido (aqui redimensiona, no resto abre o quero).</li><li>Repete a capa e o quero: "perto agora" já tem duas casas.</li><li>Foto só em miniatura; o mapa domina e é a parte menos nossa.</li><li>MapLibre vivo o tempo todo (bateria, dados sem pack offline).</li></ul></div>
+      </div>
+    </div>
+    <div>
+      <div class="mono">conceito b</div>
+      <h2 style="margin-top:6px">Bairros como páginas</h2>
+      <p class="idea">Cada bairro é uma página de foto em tela cheia, com o mapa como um recorte quadrado dentro do bloco. Deslizar pro lado troca de bairro; o trilho de estações na borda direita pula direto (ordem: tempo de trem de você, bairros de hoje marcados). Tocar no recorte abre o mapa vivo com a foto virando moldura.</p>
+      <div class="shots">
+        <figure><img src="ExplorarB-1.png"><figcaption>1 · página do bairro<br>recorte + trilho</figcaption></figure>
+        <figure><img src="ExplorarB-2.png"><figcaption>2 · arrastando<br>no trilho</figcaption></figure>
+        <figure><img src="ExplorarB-3.png"><figcaption>3 · recorte aberto<br>foto vira moldura</figcaption></figure>
+        <figure><img src="ExplorarB-4.png"><figcaption>4 · outra cidade<br>sem foto, offline</figcaption></figure>
+      </div>
+      <div class="pc">
+        <div><div class="h o">a favor</div><ul><li>É o modelo do app: bairro + vizinhos com tempo de trem (<span class="mono">Area</span>).</li><li>Foto em toda página: o Explorar vira a vitrine do corte.</li><li>Trilho = linha de trem + trilha do dia, num gesto novo e óbvio.</li><li>Um mapa vivo por vez; recortes são snapshots em cache (offline, baratos).</li><li>Absorve a aba Guia sem perder nada.</li></ul></div>
+        <div><div class="h">contra</div><ul><li>"Perto de mim agora" fica a um toque (recorte), não na cara.</li><li>23 bairros em Tóquio: depende do trilho pra não virar carrossel.</li><li>Página de bairro sem foto no disco fica só cor (normal, mas menos rica).</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rec">
+    <div class="l"><div class="mono">recomendação</div><div class="disp" style="font-size:120px;margin-top:6px">B</div></div>
+    <div class="r">
+      <p><b>Fazer o B, com duas peças do A.</b> O Explorar é pra planejar por bairro e descobrir; o "perto agora" já mora na capa e no quero. Páginas de bairro com foto, recorte e trilho de estações dão ao app uma navegação que nenhum outro guia tem e reaproveitam o que já existe (Area, tempos de trem, AreaHeroes, MapLibre).</p>
+      <p>Do A entram: as <b>camadas em 4 células</b> e o <b>pino que vira bloco</b> no recorte aberto. A régua do recorte continua sendo a do quero (com origem no bairro), então o gesto nunca muda de sentido.</p>
+    </div>
+  </div>
+  <div class="take">
+    <div><b>começa em</b>o bairro onde você está (GPS por célula); sem GPS na cidade da viagem, o bairro do dia; viagem futura, o primeiro bairro do dia 1.</div>
+    <div><b>trilho</b>só bairros com Musts ou vizinhos dos dias; marca os de hoje (branco) e "feito"; segurar e arrastar = pular; háptico a cada estação.</div>
+    <div><b>recorte</b>snapshot do MapLibre por bairro + camadas, gerado fora do main e guardado em disco; tocar = mapa vivo; sem pack offline, recorte em cache continua.</div>
+    <div><b>cidades</b>segmentado no topo do bloco; outra cidade mostra "nada daqui entra hoje" e ordena pelo hotel, não pelo GPS.</div>
+  </div>
+</div>
+</body></html>
