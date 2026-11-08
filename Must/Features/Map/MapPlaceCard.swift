@@ -22,6 +22,7 @@ struct MapPlaceCard: View {
     @Environment(\.friends) private var friends
     @Environment(Services.self) private var services: Services?
     @State private var photoURL: URL?
+    @State private var carousel: PhotoCarousel?
     @State private var rating: KnownRating?
     @State private var drag: CGFloat = 0
 
@@ -99,7 +100,15 @@ struct MapPlaceCard: View {
             }
             .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
             .contentShape(Rectangle())
-            .onTapGesture(perform: onOpen)
+            .onTapGesture {
+                // Toque na foto: todas as fotos do lugar em carrossel (sem foto, abre o Lugar como antes).
+                if let pages = PhotoCarousel.place(placeId: place.placeId, refs: place.photoRefs, resolver: services?.photoResolver) {
+                    carousel = pages
+                } else {
+                    onOpen()
+                }
+            }
+            .photoCarousel($carousel)
     }
 
     private var fields: some View {

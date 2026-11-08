@@ -935,7 +935,7 @@ struct PlaceSheetCard: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .center, spacing: 14) {
                 // Foto principal do lugar (prompt 19): miniatura de 40 pt, cantos 14.
-                PlaceThumb(placeId: place.placeId, refs: place.photoRefs, color: place.list?.color ?? .eat, size: 40)
+                PlaceThumb(placeId: place.placeId, refs: place.photoRefs, color: place.list?.color ?? .eat, size: 40, opensViewer: true)
                 if let number {
                     Text("\(number)").font(.must.mono(15, .semibold)).foregroundStyle(.white)
                         .frame(width: 44, height: 44).background(Circle().fill(stop?.done == true ? Color.must.green : Color.must.ink))

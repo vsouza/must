@@ -65,7 +65,7 @@ struct PlaceRow: View {
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
             if place.isDone { KanjiSeal(done: true, size: 26, look: .soft) }
-            PlaceThumb(placeId: place.placeId, refs: place.photoRefs, color: place.list?.color ?? .drink)
+            PlaceThumb(placeId: place.placeId, refs: place.photoRefs, color: place.list?.color ?? .drink, opensViewer: true)
             VStack(alignment: .leading, spacing: 5) {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text(place.name).mustPlace().lineLimit(1)

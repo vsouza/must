@@ -140,6 +140,9 @@ struct CorteResultRow: View {
                     .lineLimit(3).fixedSize(horizontal: false, vertical: true)
             }
             .frame(width: 84, alignment: .leading)
+            if !line.row.result.photos.isEmpty {
+                V8Thumb(placeId: line.row.result.googlePlaceId, refs: line.row.result.photos, size: 44, opensViewer: true)
+            }
             Button(action: onTap) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(line.row.result.name).font(V8Font.text(16, weight: .bold)).foregroundStyle(main).lineLimit(2)

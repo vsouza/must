@@ -8,9 +8,12 @@ struct PlaceThumb: View {
     var refs: [PlacePhotoRef]
     var color: MustColor
     var size: CGFloat = 44
+    /// Tocar na miniatura abre as fotos do lugar em carrossel (só com fotos do Google).
+    var opensViewer = false
 
     @Environment(Services.self) private var services: Services?
     @State private var url: URL?
+    @State private var carousel: PhotoCarousel?
 
     var body: some View {
         TintedPhoto(url: url, color: color, tintOpacity: 0, saturation: 1)
@@ -21,6 +24,12 @@ struct PlaceThumb: View {
                 if let cached = PlacePhotoStore.existingThumb(first) { url = cached; return }
                 url = await services.photoResolver.thumb(placeId: placeId, refs: refs)
             }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                guard opensViewer else { return }
+                carousel = .place(placeId: placeId, refs: refs, resolver: services?.photoResolver)
+            }
+            .photoCarousel($carousel)
             .accessibilityHidden(true)
     }
 }

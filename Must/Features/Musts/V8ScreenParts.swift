@@ -176,15 +176,24 @@ struct V8Thumb: View {
     var refs: [PlacePhotoRef]
     var size: CGFloat = 44
     var dimmed = false
+    /// Tocar na miniatura abre as fotos do lugar em carrossel.
+    var opensViewer = false
 
     @Environment(Services.self) private var services: Services?
     @State private var url: URL?
+    @State private var carousel: PhotoCarousel?
 
     var body: some View {
         V8Photo(url: url, placeholder: dimmed ? V8.mute.opacity(0.6) : Color(hex: 0x3A3A38))
             .frame(width: size, height: size)
             .clipShape(RoundedRectangle(cornerRadius: size * 0.27, style: .continuous))
             .opacity(dimmed ? 0.6 : 1)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                guard opensViewer else { return }
+                carousel = .place(placeId: placeId, refs: refs, resolver: services?.photoResolver)
+            }
+            .photoCarousel($carousel)
             .task(id: refs.first?.name ?? "") {
                 guard let first = refs.first else { url = nil; return }
                 if let cached = PlacePhotoStore.existingThumb(first) { url = cached; return }

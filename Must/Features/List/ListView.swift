@@ -12,6 +12,7 @@ struct ListView: View {
     @Environment(AppRouter.self) private var router
     @Environment(RegionStore.self) private var store
     @Environment(Services.self) private var services
+    @Environment(\.showEvents) private var showEvents
     @Environment(\.dayEngine) private var dayEngine
     @Environment(\.modelContext) private var context
 
@@ -27,6 +28,7 @@ struct ListView: View {
     @State private var openOnly = false
     @State private var cheapOnly = false
     @AppStorage(MustsPrefs.noPhotosKey) private var noPhotos = false
+    @State private var carousel: PhotoCarousel?
     /// O corte (prompt 30): a régua "↓ quero <lista>" abre o quero já filtrado pela lista.
     @State private var corte = CorteState()
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -171,6 +173,19 @@ struct ListView: View {
         .containerRelativeFrame(.vertical) { [pull = corte.pull.offset] height, _ in CutFrame.heights(pull: pull, rest: height * 0.38).band }
         .clipped()
         .frame(maxWidth: .infinity)
+        .contentShape(Rectangle())
+        .onTapGesture { openCover() }
+        .photoCarousel($carousel)
+    }
+
+    /// Toque na capa: todas as fotos do lugar que deu a capa; capa do Commons ou escolhida à mão, só ela.
+    private func openCover() {
+        guard let list, !saveForEndOnly else { return }
+        if PhotoStyle.current == .vivid, !ListCover.isManual(list), let place = ListCover.googlePlace(for: list) {
+            carousel = .place(placeId: place.placeId, refs: place.photoRefs, resolver: services.photoResolver)
+        } else if let url = coverURL, let photo = ListCover.photo(for: list) {
+            carousel = PhotoCarousel(pages: [.init(id: 0, url: url, credit: photo.credit, load: nil)])
+        }
     }
 
     /// "↓ quero <lista>": puxar abre o quero já filtrado pela lista. Sem lista (fica pro fim) a régua é estática.
@@ -179,7 +194,7 @@ struct ListView: View {
             CutRule()
         } else if let list {
             let noun = "quero \(list.name.lowercased())"
-            CutRule(pullLabel: CutPull.label(phase: corte.pull.phase, offset: corte.pull.offset, uses: corte.coach.uses, noun: noun))
+            CutRule(pullLabel: CutPull.label(phase: corte.pull.phase, offset: corte.pull.offset, noun: noun))
                 .cutPull(corte.pull, reduceMotion: reduceMotion, onOpen: { openQuero(list) }, onClose: { corte.close() })
                 .accessibilityAction(named: "Abrir quero") { openQuero(list) }
         }
@@ -229,7 +244,8 @@ struct ListView: View {
         let plan = dayEngine.plan(for: today, region: region, context: context)
         let base = QueroEnv.make(region: region, now: now, places: all, trip: trips.first, settings: settingsList.first, plan: plan,
                                  gps: services.location.current?.coordinate, online: services.connectivity.status != .offline,
-                                 upcoming: QueroEnv.upcomingDays(context: context, areas: AreaCatalog.areas(for: region), today: today))
+                                 upcoming: QueroEnv.upcomingDays(context: context, areas: AreaCatalog.areas(for: region), today: today),
+                                 shows: showEvents.today(region: region, at: now))
         return CorteState.corteEnv(base).scoped(toList: list.id)
     }
 
