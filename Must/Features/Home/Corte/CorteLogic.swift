@@ -46,7 +46,7 @@ enum CorteSplit {
     /// `rows` vêm do `QueroModel` (board da cidade de hoje + Google + lojas de marca). O board nunca é cortado por distância;
     /// fora do board só entra o que está perto. Ordem do board: dá hoje › tempo pra chegar.
     static func split(_ rows: [QueroRow], origin: CLLocationCoordinate2D, region: Region, walkMaxKm: Double,
-                      near: Double = nearMeters) -> Result {
+                      near: Double = nearMeters, now: Date = AppClock.now) -> Result {
         let o = CLLocation(latitude: origin.latitude, longitude: origin.longitude)
         func meters(_ r: QueroRow) -> Double { CLLocation(latitude: r.result.lat, longitude: r.result.lng).distance(from: o) }
 
@@ -56,21 +56,22 @@ enum CorteSplit {
                 if fa != fb { return fa }
                 return (a.minutes, a.id) < (b.minutes, b.id)
             }
-            .map { line($0, meters: meters($0), origin: origin, region: region, walkMaxKm: walkMaxKm) }
+            .map { line($0, meters: meters($0), origin: origin, region: region, walkMaxKm: walkMaxKm, now: now) }
         let outside = rows.filter { $0.result.origin != .board && meters($0) <= near }
             .sorted { (meters($0), $0.id) < (meters($1), $1.id) }
             .prefix(maxOutside)
-            .map { line($0, meters: meters($0), origin: origin, region: region, walkMaxKm: walkMaxKm) }
+            .map { line($0, meters: meters($0), origin: origin, region: region, walkMaxKm: walkMaxKm, now: now) }
         return Result(board: board, outside: Array(outside))
     }
 
-    static func line(_ r: QueroRow, meters: Double, origin: CLLocationCoordinate2D, region: Region, walkMaxKm: Double) -> CorteRow {
+    static func line(_ r: QueroRow, meters: Double, origin: CLLocationCoordinate2D, region: Region, walkMaxKm: Double,
+                     now: Date = AppClock.now) -> CorteRow {
         let leg = DaySolver.leg(origin, r.result.coordinate, walkMax: walkMaxKm)
         let mode = leg.mode == .walk ? "a pé" : transit(region)
         let isBoard = r.result.origin == .board
         let action: CorteRow.Action = !isBoard ? .addToBoard : (r.slot != nil ? .go : .later(laterLabel(r)))
         return CorteRow(row: r, meters: meters, distance: distanceParts(meters), travel: "\(max(1, r.minutes)) min · \(mode)",
-                        reason: reason(r, isBoard: isBoard), action: action)
+                        reason: reason(r, isBoard: isBoard, now: now, region: region), action: action)
     }
 
     /// "850" + "m", "2,1" + "km". Número grande em cima, unidade embaixo.
@@ -83,11 +84,20 @@ enum CorteSplit {
 
     static func transit(_ region: Region) -> String { region.rawValue == "jp" ? "trem" : "metrô" }
 
-    /// "do seu board · aberto até 19h" / "fecha 20h · não dá" / "casa de café · aberto".
-    static func reason(_ r: QueroRow, isBoard: Bool) -> String {
+    /// Sempre com motivo, e só afirma "aberto" com horário confirmado (o board só traz `until` quando o Google deu o horário):
+    /// "do seu board · aberto até 19h" / "do seu board · horário não confirmado" /
+    /// "a 26 min e fecha 17h" / "fecha 15h · não cabe no dia" / "dia cheio · horário não confirmado".
+    static func reason(_ r: QueroRow, isBoard: Bool, now: Date? = nil, region: Region? = nil) -> String {
         if isBoard {
-            if r.slot != nil { return ["do seu board", r.result.until.map { "aberto até \($0)" }].compactMap { $0 }.joined(separator: " · ") }
-            return r.result.until.map { "fecha \($0) · não dá" } ?? "não dá hoje"
+            if r.slot != nil {
+                return ["do seu board", r.result.until.map { "aberto até \($0)" } ?? PlaceTrust.hoursUnconfirmed].joined(separator: " · ")
+            }
+            guard let until = r.result.until else { return "dia cheio · \(PlaceTrust.hoursUnconfirmed)" }
+            if let now, let region, let close = QueroModel.closing(until, on: now, region: region),
+               now.addingTimeInterval(Double(max(1, r.minutes) + DayFit.minutes) * 60) > close {
+                return "a \(max(1, r.minutes)) min e fecha \(until)"
+            }
+            return "fecha \(until) · não cabe no dia"
         }
         let kind = r.result.note ?? QueroModel.typeLabel(r.result)
         return [kind, r.result.until.map { "até \($0)" } ?? "aberto"].compactMap { $0 }.joined(separator: " · ")
@@ -145,6 +155,12 @@ enum CorteEmpty {
 enum CorteCount {
     /// Quantas coisas abertas a 10 min a pé: seus Musts abertos + o que o cache de "por perto" diz que está aberto.
     static func openWithin10(places: [SuggestPlace], indicated: [NearbyPlace], here: CLLocationCoordinate2D) -> Int {
+        counts(places: places, indicated: indicated, here: here).open
+    }
+
+    /// `open` = aberto com horário confirmado (Google); `unconfirmed` = Musts perto sem horário confirmado: não dá pra
+    /// afirmar que estão abertos, então não entram no numeral.
+    static func counts(places: [SuggestPlace], indicated: [NearbyPlace], here: CLLocationCoordinate2D) -> (open: Int, unconfirmed: Int) {
         let origin = CLLocation(latitude: here.latitude, longitude: here.longitude)
         let reach = 10 * Walk.metersPerMinute
         func near(_ lat: Double, _ lng: Double) -> Bool {
@@ -153,7 +169,8 @@ enum CorteCount {
         let board = places.filter { !$0.done && $0.kind != .photo && $0.state.isOpen && near($0.lat, $0.lng) }
         let boardNames = Set(board.map { $0.name.lowercased() })
         let outside = indicated.filter { $0.openNow == true && near($0.lat, $0.lng) && !boardNames.contains($0.name.lowercased()) }
-        return board.count + outside.count
+        let unknown = places.filter { !$0.done && $0.kind != .photo && $0.state == .unknown && near($0.lat, $0.lng) }.count
+        return (board.count + outside.count, unknown)
     }
 }
 

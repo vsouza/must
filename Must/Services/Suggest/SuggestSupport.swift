@@ -39,17 +39,25 @@ struct SuggestPrefs {
 
 /// A linha de estado da capa e o card "Noite, pra onde?" (prompt 26 §1).
 enum SuggestCopy {
-    /// "18:10 · nada marcado · 6 Musts a 15 min" / "14:20 · agora: Fuunji · saia 14:35" / "…você deveria estar em X desde 17:40".
-    static func stateLine(region: Region, now: Date, plan: SuggestPlanStop?, mustsNearby: Int) -> String {
+    /// "18:10 · nada marcado · 2 abertos a 10 min" / "14:20 · agora: Fuunji · saia 14:35" /
+    /// "14:20 · Atrasou? Ajustei: faltam 5 paradas" / "16:10 · agora: Gyoen · a 18 min daqui · saia 16:29".
+    /// O número de "abertos a 10 min" é o mesmo do numeral da capa; o que não tem horário confirmado vai à parte.
+    static func stateLine(region: Region, now: Date, plan: SuggestPlanStop?, openNearby: Int, unconfirmed: Int = 0,
+                          adjustedRemaining: Int? = nil, awayMinutes: Int? = nil, problem: DayProblem? = nil) -> String {
         let time = region.timeString(now)
+        // Chegada, troca de cidade e último dia mandam na linha principal.
+        if let problem { return "\(time) · \(problem.headline)" }
         guard let plan else {
-            let count = mustsNearby > 0 ? "\(mustsNearby) \(mustsNearby == 1 ? "Must" : "Musts") a 15 min" : nil
-            return ([time, "nada marcado"] + [count].compactMap { $0 }).joined(separator: " · ")
+            var parts = [time, "nada marcado"]
+            if openNearby > 0 { parts.append("\(openNearby) \(openNearby == 1 ? "aberto" : "abertos") a 10 min") }
+            if unconfirmed > 0 { parts.append("\(unconfirmed) sem horário confirmado") }
+            return parts.joined(separator: " · ")
         }
-        if let late = plan.lateSince {
-            return "\(time) · você deveria estar em \(plan.label) desde \(region.timeString(late))"
+        if let left = adjustedRemaining {
+            return "\(time) · Atrasou? Ajustei: \(left == 1 ? "falta 1 parada" : "faltam \(left) paradas")"
         }
-        return [time, "agora: \(plan.label)", plan.action].filter { !$0.isEmpty }.joined(separator: " · ")
+        let away = awayMinutes.map { "a \($0) min daqui" }
+        return [time, "agora: \(plan.label)", away ?? "", plan.action].filter { !$0.isEmpty }.joined(separator: " · ")
     }
 
     struct Night: Equatable, Sendable {

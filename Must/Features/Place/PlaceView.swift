@@ -70,7 +70,7 @@ struct PlaceView: View {
     private func stopInfo(_ place: Place) -> (number: Int, total: Int, isNow: Bool, at: Date)? {
         guard let plan = dayEngine.plan(for: region.calendar.startOfDay(for: now), region: region, context: context),
               let index = plan.stops.firstIndex(where: { $0.placeId == place.id }) else { return nil }
-        let current = dayEngine.now(in: plan, at: now)?.current.placeId == place.id
+        let current = DayClock.read(engine: dayEngine, region: region, context: context, at: now).now?.current.placeId == place.id
         return (index + 1, plan.stops.count, current, plan.stops[index].start)
     }
 
@@ -411,6 +411,7 @@ struct PlaceView: View {
                     : (PlaceFicha.openTag(place, region: region, now: now) ?? PlaceFicha.queueTag(place, region: region)) {
                     V8Tag(text: second, style: .glass)
                 }
+                if let coord = PlaceFicha.coordTag(place) { V8Tag(text: coord, style: .glass) }
             }
         }
     }

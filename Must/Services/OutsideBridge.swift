@@ -69,10 +69,14 @@ enum OutsideBridge {
         let cal = region.calendar
         let start = cal.startOfDay(for: now)
         let running = Activity<NextStopAttributes>.activities
-        guard let plan = DayEngineV8.accepted(on: start, region: region, context: context) else {
+        guard let accepted = DayEngineV8.accepted(on: start, region: region, context: context) else {
             end(running, reason: "sem dia")
             return
         }
+        // O relógio único: feitos e o que ficou pra depois saem da conta (a Live Activity diz o mesmo que a capa).
+        let clock = DayClock.make(plan: accepted, doneIds: DayDoneStore().ids(day: BoardDates(timeZone: region.timeZone).dayString(now)),
+                                  at: now, region: region, position: services.location.current?.coordinate)
+        let plan = clock.active ?? accepted
         guard let state = liveState(plan, region: region, now: now, here: services.location.current, eta: services.eta) else {
             end(running, reason: "dia feito 済")
             return

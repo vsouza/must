@@ -11,6 +11,10 @@ final class CapaState {
     private(set) var content: CapaContent?
     private(set) var plan: DayPlan?
     private(set) var dayNow: DayNow?
+    /// O relógio único do dia (`DayClock`): o mesmo que a Linha, o Agora e o Guia leem.
+    private(set) var clock: DayClock?
+    /// Dia de chegada, de troca de cidade ou último dia (a linha principal da capa e do Bom dia). `nil` num dia comum.
+    private(set) var problem: DayProblem?
     /// Bairro do dia (do plano) ou do GPS.
     private(set) var areaId: String?
     /// Foto do bairro já no aparelho (ou forçada nos prints).
@@ -27,15 +31,21 @@ final class CapaState {
         var currentArea: Area?
         var nowWeather: Forecast.Now?
         var todayWeather: DayWeather?
+        /// GPS, pra o ajuste do dia partir de onde você está.
+        var position: CLLocationCoordinate2D? = nil
     }
 
     func refresh(_ i: Inputs) {
         let region = i.region
         let cal = region.calendar
         let start = cal.startOfDay(for: i.now)
-        let plan = i.engine.plan(for: start, region: region, context: i.context)
+        let clock = DayClock.read(engine: i.engine, region: region, context: i.context, at: i.now, position: i.position)
+        let plan = clock.plan
+        self.clock = clock
         self.plan = plan
-        dayNow = plan.flatMap { i.engine.now(in: $0, at: i.now) }
+        dayNow = clock.now
+
+        problem = Self.problem(i, calendar: cal)
 
         let areas = AreaCatalog.areas(for: region)
         areaId = plan?.area ?? i.currentArea?.id
@@ -48,7 +58,7 @@ final class CapaState {
         let spent = HomeState.spent(i.expenses, on: i.now, region: region)
 
         content = CapaContent.build(.init(
-            region: region, now: i.now, plan: plan, dayNow: dayNow, areaName: areaName,
+            region: region, now: i.now, plan: plan, dayNow: dayNow, skippedIds: clock.skippedIds, areaName: areaName,
             cityName: city?.name ?? Self.cityName(region),
             tripDay: DayText.tripDay(start: i.trip?.start, end: i.trip?.end, on: i.now, calendar: cal),
             tempText: i.nowWeather.map { "\(Int($0.temp.rounded()))°" },
@@ -57,6 +67,11 @@ final class CapaState {
             spentToday: spent > 0 ? spent : nil,
             upcoming: Self.upcoming(i, calendar: cal)
         ))
+    }
+
+    /// Dia-problema de hoje (voos, hospedagem das cidades, datas da viagem). Só em viagem; BH de casa não tem.
+    static func problem(_ i: Inputs, calendar cal: Calendar) -> DayProblem? {
+        DayProblem.today(context: i.context, trip: i.trip, region: i.region, now: i.now)
     }
 
     /// Viagem (não a casa) que ainda não começou: a capa vira contagem regressiva até o dia 1.

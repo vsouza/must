@@ -82,6 +82,8 @@ struct FlightSegment: Codable, Hashable, Sendable, Identifiable {
     var terminal: String?
     var gate: String?
     var status: FlightStatus
+    /// Terminal de pouso (AeroDataBox, `arrival.terminal`). Nil até a API dizer.
+    var arrivalTerminal: String? = nil
     /// Horário revisto pela companhia (AeroDataBox), se houver.
     var revisedDeparts: Date?
     var revisedArrives: Date?
@@ -92,7 +94,9 @@ struct FlightSegment: Codable, Hashable, Sendable, Identifiable {
 
     init(id: String = UUID().uuidString, number: String, from: String, to: String, departs: Date, arrives: Date? = nil,
          seat: String? = nil, terminal: String? = nil, gate: String? = nil, status: FlightStatus = .scheduled,
-         revisedDeparts: Date? = nil, revisedArrives: Date? = nil, statusFetchedAt: Date? = nil, note: String? = nil) {
+         revisedDeparts: Date? = nil, revisedArrives: Date? = nil, statusFetchedAt: Date? = nil, note: String? = nil,
+         arrivalTerminal: String? = nil) {
+        self.arrivalTerminal = arrivalTerminal
         self.id = id
         self.number = number
         self.from = from
@@ -121,6 +125,7 @@ struct FlightSegment: Codable, Hashable, Sendable, Identifiable {
         seat = try c.decodeIfPresent(String.self, forKey: .seat)
         terminal = try c.decodeIfPresent(String.self, forKey: .terminal)
         gate = try c.decodeIfPresent(String.self, forKey: .gate)
+        arrivalTerminal = try c.decodeIfPresent(String.self, forKey: .arrivalTerminal)
         status = try c.decodeIfPresent(FlightStatus.self, forKey: .status) ?? .scheduled
         revisedDeparts = try c.decodeIfPresent(Date.self, forKey: .revisedDeparts)
         revisedArrives = try c.decodeIfPresent(Date.self, forKey: .revisedArrives)
@@ -267,6 +272,22 @@ enum FlightRules {
     /// Chegada ao aeroporto: 3 h antes no internacional, 2 h no doméstico; o deslocamento vem de fora (estimativa 60 min sem rota).
     static func leaveForAirport(departs: Date, international: Bool, travelMinutes: Int = 60) -> Date {
         departs.addingTimeInterval(TimeInterval(-((international ? 180 : 120) + travelMinutes) * 60))
+    }
+
+    /// O chip "saia às" só aparece quando a hora de sair cai hoje (no fuso do aeroporto).
+    static func leaveChipApplies(leave: Date, now: Date, zone: TimeZone) -> Bool {
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = zone
+        return cal.isDate(leave, inSameDayAs: now)
+    }
+
+    /// "pouso HND 15:40 · terminal 2": a chegada do último trecho e o terminal de pouso, quando se sabe.
+    static func arrivalChip(_ leg: FlightSegment, fallback: TimeZone) -> String? {
+        guard let lands = leg.revisedArrives ?? leg.arrives else { return nil }
+        let zone = Airports.airport(leg.to)?.timeZone ?? fallback
+        var parts = ["pouso \(leg.to) \(FlightFormat.time(lands, zone: zone))"]
+        if let terminal = leg.arrivalTerminal { parts.append("terminal \(terminal)") }
+        return parts.joined(separator: " · ")
     }
 
     /// Hora de sair de casa pro voo (com o deslocamento até o aeroporto).

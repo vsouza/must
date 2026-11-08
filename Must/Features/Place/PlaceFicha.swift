@@ -161,8 +161,9 @@ enum PlaceFicha {
         if let h = place.hours, h.hasPeriods, let today = h.todayText(now, timeZone: region.timeZone) {
             return today.replacingOccurrences(of: ":00", with: "").replacingOccurrences(of: ", ", with: " · ")
         }
+        // Sem horário do Google: o que sobra é a janela do dia que você marcou, dita como estimativa.
         let windows = DayWindow.allCases.filter(place.windows.contains).map(\.label)
-        return windows.isEmpty ? "sem horário" : windows.joined(separator: " · ")
+        return windows.isEmpty ? "sem horário" : windows.joined(separator: " · ") + " · estimado"
     }
 
     /// "normal, com ovo" (o pedido das notas, sem o "Pedir o").
@@ -186,8 +187,13 @@ enum PlaceFicha {
         switch place.openState(at: now, timeZone: region.timeZone) {
         case .open(let until): return until.map { "aberto até \($0)" } ?? "aberto"
         case .closed(_, let at): return at.map { "abre \($0)" } ?? "fechado"
-        case .unknown: return nil
+        case .unknown: return PlaceTrust.hoursUnconfirmed
         }
+    }
+
+    /// "local aproximado" quando a coordenada ainda é chute (`approx`); `nil` com a coordenada resolvida no Google.
+    static func coordTag(_ place: Place) -> String? {
+        place.trust.coordConfirmed ? nil : PlaceTrust.coordApproximate
     }
 
     /// "fila ~20 min" / "sem reserva · fila ~40 min" (Roma, onde reserva é a regra).

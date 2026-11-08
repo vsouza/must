@@ -202,7 +202,7 @@ struct DayStopRow: View {
                     .font(V8Font.text(isMicro ? 15 : 17, weight: isMicro ? .semibold : .bold))
                     .foregroundStyle(main)
                     .lineLimit(1)
-                Text(state == .done && !stop.note.contains("feito") ? stop.note + " · feito ✓" : stop.note)
+                Text(state == .done && !stop.note.contains("feito") ? stop.note + " · feito ✓" : state == .skipped ? "ficou pra depois · " + stop.note : stop.note)
                     .font(V8Font.text(isMicro ? 12 : 12.5))
                     .foregroundStyle(sub)
                     .lineLimit(1)
@@ -222,7 +222,7 @@ struct DayStopRow: View {
                 IndexRule()
             }
         }
-        .opacity(state == .done ? 0.5 : 1)
+        .opacity(state == .done || state == .skipped ? 0.5 : 1)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(region.timeString(stop.start)), \(stop.label), \(stop.note)\(state == .done ? ", feito" : state == .now ? ", agora" : "")")

@@ -198,7 +198,7 @@ struct AtalhosPanel: View {
             return nil
         }
         let last = LastTrains.home(region: region, near: here, transit: transit)
-        let next = plan.flatMap { engine.now(in: $0, at: now) }
+        let next = DayClock.read(engine: engine, region: region, context: context, at: now, position: services.location.current?.coordinate).now
         lines.note = AtalhosRules.note(lastTrain: last, leaveAt: next.map { region.timeString($0.leaveAt) },
                                        next: next?.next.map { short($0.label) })
         return lines

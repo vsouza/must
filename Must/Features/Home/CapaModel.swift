@@ -43,6 +43,8 @@ extension CapaContent {
         var now: Date
         var plan: DayPlan?
         var dayNow: DayNow?
+        /// Paradas que ficaram pra depois no ajuste do dia (fora do "agora").
+        var skippedIds: Set<String> = []
         /// Nome do bairro do dia (do `Area`), ou do bairro do GPS sem dia montado.
         var areaName: String?
         /// Cidade de hoje ("Tóquio"); sem viagem, o nome da região.
@@ -112,9 +114,11 @@ extension CapaContent {
         if let now = i.dayNow, let k = plan.position(of: now.current) {
             let verb = now.arriveBy != nil ? "chegue" : "saia"
             let time = region.timeString(now.arriveBy ?? now.leaveAt)
-            agora = Agora(title: "Agora · \(k) de \(plan.stops.count)", line: "\(DayText.head(now.current.label)) · \(verb) \(time)",
+            let left = plan.stops.filter { !$0.done && !i.skippedIds.contains($0.id) }.count
+            let title = i.skippedIds.isEmpty ? "Agora · \(k) de \(plan.stops.count)" : "Ajustei · faltam \(left)"
+            agora = Agora(title: title, line: "\(DayText.head(now.current.label)) · \(verb) \(time)",
                           dayOver: false)
-        } else if let first = plan.stops.first(where: { !$0.done }), i.now < first.start, let k = plan.position(of: first) {
+        } else if let first = plan.stops.first(where: { !$0.done && !i.skippedIds.contains($0.id) }), i.now < first.start, let k = plan.position(of: first) {
             // Antes da primeira parada o motor não tem "agora" (`nil`), mas o dia não acabou: a primeira e a hora de sair.
             let leave = DayNowRules.leaveTime(to: first, in: plan)
             agora = Agora(title: "Primeira · \(k) de \(plan.stops.count)",

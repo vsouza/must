@@ -25,7 +25,7 @@ struct AgoraContent: Equatable {
     var walkMinutes: Int?
 
     static func build(plan: DayPlan, now dayNow: DayNow, at date: Date, region: Region, placeNotes: String?,
-                      distance: CLLocationDistance?) -> AgoraContent {
+                      distance: CLLocationDistance?, hidden: Set<String> = []) -> AgoraContent {
         let current = dayNow.current
         let time = dayNow.arriveBy ?? dayNow.leaveAt
         let minutes = Int((time.timeIntervalSince(date) / 60).rounded())
@@ -53,7 +53,7 @@ struct AgoraContent: Equatable {
         let progress = span > 0 ? min(1, max(0, date.timeIntervalSince(prevEnd) / span)) : 1
         let progressLabel = distance.map { Walk.distanceText($0) } ?? legBefore.map { DayLegRow.text($0) } ?? ""
 
-        let more = plan.stops.dropFirst(idx + 2).prefix(4).map { stop in
+        let more = plan.stops.dropFirst(idx + 2).filter { !$0.done && !hidden.contains($0.id) }.prefix(4).map { stop in
             let head = DayText.head(stop.label)
             let word = stop.kind == .micro ? (head.split(separator: " ").first.map(String.init)?.lowercased() ?? head) : head
             return "\(region.timeString(stop.start)) \(word)"
@@ -94,6 +94,7 @@ struct AgoraView: View {
     @Environment(\.tripTheme) private var theme
 
     @State private var plan: DayPlan?
+    @State private var clock: DayClock?
     @State private var content: AgoraContent?
     @State private var current: DayStop?
     /// Antes da primeira parada: ela e a hora de sair pra ela.
@@ -131,22 +132,13 @@ struct AgoraView: View {
 
     private func load() {
         let now = AppClock.now
-        let start = region.calendar.startOfDay(for: now)
-        plan = engine.plan(for: start, region: region, context: context)
-        let doneIds = DayDoneStore().ids(day: dayKey)
-        // O que você já marcou como feito aqui sai do "agora" (o motor ainda não sabe das micro-paradas).
-        let effective = plan.map { p in
-            var p = p
-            p.stops = p.stops.map { var s = $0; if doneIds.contains(s.id) { s.done = true }; return s }
-            return p
-        }
-        // "Agora" só entre as que faltam: a parada marcada como feita passa a vez pra próxima.
-        let pending = effective.map { p in var p = p; p.stops = p.stops.filter { !$0.done }; return p }
-        guard let effective, let pending, let dayNow = engine.now(in: pending, at: now) else {
-            // Antes da primeira parada o motor devolve `nil`: não é "o dia acabou", é "o dia começa às…".
-            upcoming = pending.flatMap { p in
-                p.stops.first.flatMap { now < $0.start ? ($0, DayNowRules.leaveTime(to: $0, in: p)) : nil }
-            }
+        // O relógio único (o mesmo da capa, da Linha e do Guia): feitos aplicados e, se atrasou, o resto já refeito.
+        let clock = DayClock.read(engine: engine, region: region, context: context, at: now, position: services.location.current?.coordinate)
+        plan = clock.plan
+        self.clock = clock
+        guard let effective = clock.plan, let dayNow = clock.now else {
+            // Antes da primeira parada o relógio não tem "agora": não é "o dia acabou", é "o dia começa às…".
+            upcoming = clock.upcoming.map { ($0.stop, $0.leaveAt) }
             content = nil; current = nil; loaded = true; return
         }
         upcoming = nil
@@ -154,7 +146,7 @@ struct AgoraView: View {
         let distance = place.flatMap { $0.distance(from: services.location.current) }
         current = dayNow.current
         content = AgoraContent.build(plan: effective, now: dayNow, at: now, region: region, placeNotes: place?.notes,
-                                     distance: distance)
+                                     distance: distance, hidden: clock.skippedIds)
         loaded = true
     }
 
@@ -175,6 +167,10 @@ struct AgoraView: View {
                             .foregroundStyle(V8.mute)
                             .lineLimit(2)
                             .padding(.top, 6)
+                        if let clock, clock.adjusted {
+                            Text(DayText.adjustedLine(remaining: clock.remaining))
+                                .font(V8Font.text(13, weight: .semibold)).foregroundStyle(V8.orangeDeep).padding(.top, 8)
+                        }
                         if !c.chips.isEmpty {
                             ScrollView(.horizontal) {
                                 HStack(spacing: 8) { ForEach(c.chips, id: \.self) { chip in contextChip(chip) } }
@@ -239,7 +235,8 @@ struct AgoraView: View {
     private func later(_ c: AgoraContent) -> [DayStop] {
         guard let next = c.next, let plan else { return [] }
         let done = DayDoneStore().ids(day: dayKey)
-        let rest = plan.stops.filter { $0.start > next.start && !$0.done && !done.contains($0.id) }
+        let skipped = clock?.skippedIds ?? []
+        let rest = plan.stops.filter { $0.start > next.start && !$0.done && !done.contains($0.id) && !skipped.contains($0.id) }
         return [next] + Array(rest.prefix(4))
     }
 

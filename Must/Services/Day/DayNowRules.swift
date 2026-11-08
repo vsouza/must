@@ -33,9 +33,11 @@ enum DayNowRules {
     }
 
     /// "Agora" em `date`. `nil` antes da primeira parada começar e depois da última sair (ou com tudo feito).
-    static func now(in plan: DayPlan, at date: Date) -> DayNow? {
+    /// `dayStarted`: o dia já começou (a primeira parada do dia inteiro, feita ou não, já passou). Sem ele, vale a primeira
+    /// parada de `plan`; o `DayClock` passa o do dia inteiro, pra quem já fez as primeiras não voltar a ver "o dia começa às…".
+    static func now(in plan: DayPlan, at date: Date, dayStarted: Bool? = nil) -> DayNow? {
         let stops = plan.stops
-        guard let first = stops.first, date >= first.start else { return nil }
+        guard let first = stops.first, dayStarted ?? (date >= first.start) else { return nil }
         guard let index = stops.indices.first(where: { !stops[$0].done && departure(from: $0, in: plan) > date }) else { return nil }
         let next = index + 1 < stops.count ? stops[index + 1] : nil
         return DayNow(current: stops[index], leaveAt: departure(from: index, in: plan), next: next, arriveBy: next.flatMap(arriveBy))

@@ -120,7 +120,7 @@ struct DicasView: View {
             ?? services.location.current.flatMap { CurrentAreaService.curated($0, in: areas) }
         var result = Context(areaName: area?.name)
         if let plan {
-            let current = dayEngine.now(in: plan, at: now)
+            let current = DayClock.read(engine: dayEngine, region: region, context: context, at: now).now
             result.current = current.map { tipStop($0.current, areaId: area?.id) }
             result.next = current?.next.map { tipStop($0, areaId: area?.id) }
             let after = current?.next?.start ?? now

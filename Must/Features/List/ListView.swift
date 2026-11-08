@@ -313,8 +313,7 @@ struct ListView: View {
 
     /// Lugar da parada de agora no dia aceito (motor do dia), se houver.
     private func currentStopPlaceId() -> String? {
-        guard let plan = dayEngine.plan(for: region.calendar.startOfDay(for: now), region: region, context: context) else { return nil }
-        return dayEngine.now(in: plan, at: now)?.current.placeId
+        DayClock.read(engine: dayEngine, region: region, context: context, at: now).now?.current.placeId
     }
 
     /// `openState` vem do `OpenNowIndex` (já calculado no minuto): a linha não relê o horário de cada lugar ao rolar.

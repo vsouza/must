@@ -128,8 +128,13 @@ struct FlightCardView: View {
             let days = WalletRules.daysBetween(now, first.departsNow, region: region)
             if days >= 0 { out.append(days == 0 ? "portão hoje" : "portão em \(days) \(days == 1 ? "dia" : "dias")") }
         }
+        let zone = FlightFormat.zone(first.from, fallback: region.timeZone)
         let leave = FlightRules.leaveForAirport(departs: first.departsNow, international: FlightRules.isInternational(first))
-        out.append("saia às \(FlightFormat.time(leave, zone: FlightFormat.zone(first.from, fallback: region.timeZone))) pro aeroporto")
+        // "Saia às" só no dia do voo: com o voo em semanas, a hora de sair não diz nada.
+        if FlightRules.leaveChipApplies(leave: leave, now: now, zone: zone) {
+            out.append("saia às \(FlightFormat.time(leave, zone: zone)) pro aeroporto")
+        }
+        if let arrival = FlightRules.arrivalChip(last, fallback: region.timeZone) { out.append(arrival) }
         return out
     }
 }

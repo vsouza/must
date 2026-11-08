@@ -113,10 +113,10 @@ struct IrView: View {
         guard let place, model == nil else { return }
         let now = AppClock.now
         // A parada do dia com este lugar: dá o "saia às" do plano.
-        if let plan = engine.plan(for: region.calendar.startOfDay(for: now), region: region, context: context),
-           let s = plan.stops.first(where: { $0.placeId == placeId }) {
+        let clock = DayClock.read(engine: engine, region: region, context: context, at: now, position: services.location.current?.coordinate)
+        if let plan = clock.plan, let s = plan.stops.first(where: { $0.placeId == placeId }) {
             stop = s
-            leaveAt = engine.now(in: plan, at: now).flatMap { $0.current.id == s.id ? ($0.arriveBy ?? $0.leaveAt) : nil }
+            leaveAt = clock.now.flatMap { $0.current.id == s.id ? ($0.arriveBy ?? $0.leaveAt) : nil }
         }
         let anchor = ComoChegarView.anchor(for: place, now: now, meeting: false, calendar: region.calendar)
         let m = ComoChegarModel(placeName: place.name, destination: place.coordinate, region: region, anchor: anchor,

@@ -14,10 +14,12 @@ struct LinhaDoDiaView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @Environment(\.tripTheme) private var theme
+    @Environment(Services.self) private var services
 
     @Query private var places: [Place]
 
     @State private var plan: DayPlan?
+    @State private var clock: DayClock?
     @State private var nowId: String?
     @State private var doneIds: Set<String> = []
     @State private var loaded = false
@@ -34,6 +36,7 @@ struct LinhaDoDiaView: View {
                     if plan != nil { controls }
                     if let plan {
                         if !shows.isEmpty { showsBand }
+                        if let clock, clock.adjusted { adjustedNote(clock) }
                         timeline(plan)
                     } else if loaded {
                         empty.padding(.horizontal, 20).padding(.top, 36)
@@ -52,9 +55,18 @@ struct LinhaDoDiaView: View {
 
     private func load() {
         let start = region.calendar.startOfDay(for: date)
-        plan = engine.plan(for: start, region: region, context: context)
         let now = AppClock.now
-        nowId = plan.flatMap { region.calendar.isDate(now, inSameDayAs: start) ? engine.now(in: $0, at: now)?.current.id : nil }
+        if region.calendar.isDate(now, inSameDayAs: start) {
+            // Hoje: o relógio único (o mesmo da capa, do Agora e do Guia).
+            let c = DayClock.read(engine: engine, region: region, context: context, at: now, position: services.location.current?.coordinate)
+            clock = c
+            plan = c.plan
+            nowId = c.now?.current.id
+        } else {
+            clock = nil
+            plan = engine.plan(for: start, region: region, context: context)
+            nowId = nil
+        }
         doneIds = DayDoneStore().ids(day: dayKey)
         loaded = true
     }
@@ -157,10 +169,24 @@ struct LinhaDoDiaView: View {
 
     // MARK: Linha
 
+    /// "Atrasou? Ajustei: faltam 5 paradas" (nunca "você deveria"): o resto do dia foi refeito a partir de agora.
+    private func adjustedNote(_ clock: DayClock) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(DayText.adjustedLine(remaining: clock.remaining))
+                .font(V8Font.text(15, weight: .semibold)).foregroundStyle(V8.ink)
+            Text("Ficou pra depois: " + clock.skipped.map { DayText.head($0.label) }.joined(separator: ", "))
+                .font(V8Font.text(12.5)).foregroundStyle(V8.mute).lineLimit(2)
+        }
+        .padding(.horizontal, 20).padding(.vertical, 12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .overlay(alignment: .bottom) { IndexRule() }
+        .accessibilityElement(children: .combine)
+    }
+
     private func timeline(_ plan: DayPlan) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             ForEach(Array(plan.stops.enumerated()), id: \.element.id) { i, stop in
-                let state = LinhaStopState.of(stop, nowId: nowId, doneIds: doneIds)
+                let state = LinhaStopState.of(stop, nowId: nowId, doneIds: doneIds, skippedIds: clock?.skippedIds ?? [])
                 DayStopRow(stop: stop, index: i + 1, state: state, region: region, onTap: tapAction(stop, state: state))
                 if let leg = plan.leg(after: stop) {
                     DayLegRow(leg: leg)

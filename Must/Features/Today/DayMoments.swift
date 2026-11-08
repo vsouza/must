@@ -12,6 +12,22 @@ enum DayText {
         return first.trimmingCharacters(in: .whitespaces)
     }
 
+    /// "Bom dia." até o meio-dia, "Boa tarde." até as 18h, "Boa noite." depois (o Bom dia lido tarde não diz que acordou).
+    static func greeting(_ date: Date, region: Region) -> String {
+        let hour = region.calendar.component(.hour, from: date)
+        return hour < 12 ? "Bom dia." : hour < 18 ? "Boa tarde." : "Boa noite."
+    }
+
+    /// Canto do bloco: "acordou" de manhã, "agora" depois do meio-dia.
+    static func wakeWord(_ date: Date, region: Region) -> String {
+        region.calendar.component(.hour, from: date) < 12 ? "acordou" : "agora"
+    }
+
+    /// "Atrasou? Ajustei: faltam 5 paradas." Sem culpa: o dia só se refez a partir de agora.
+    static func adjustedLine(remaining: Int) -> String {
+        "Atrasou? Ajustei: " + (remaining == 1 ? "falta 1 parada." : "faltam \(remaining) paradas.")
+    }
+
     /// "Sáb · 15 nov" (dia da semana com maiúscula, mês curto, no fuso da região).
     static func dayLine(_ date: Date, region: Region) -> String {
         "\(weekdayShort(date, region: region).capitalizedFirst) · \(region.shortDay(date))"
@@ -135,10 +151,12 @@ struct DayDoneStore {
 
 /// Estado de uma parada na Linha: feita (50 %), agora (laranja) ou ainda por vir.
 enum LinhaStopState: Equatable {
-    case done, now, upcoming
+    /// `skipped` = passou da hora sem "feito" e o dia foi ajustado: fica na Linha, esmaecido, fora do relógio.
+    case done, now, upcoming, skipped
 
-    static func of(_ stop: DayStop, nowId: String?, doneIds: Set<String>) -> LinhaStopState {
+    static func of(_ stop: DayStop, nowId: String?, doneIds: Set<String>, skippedIds: Set<String> = []) -> LinhaStopState {
         if stop.done || doneIds.contains(stop.id) { return .done }
+        if skippedIds.contains(stop.id) { return .skipped }
         if stop.id == nowId { return .now }
         return .upcoming
     }
