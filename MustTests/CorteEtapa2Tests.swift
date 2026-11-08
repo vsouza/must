@@ -39,8 +39,7 @@ struct CorteEtapa2Tests {
     }
 
     @Test func preencheOPedidoSemEnviar() {
-        let prefs = CortePrefs(defaults: UserDefaults(suiteName: "corte2-\(UUID())")!)
-        let state = CorteState(prefs: prefs, makeModel: { QueroModel(provider: nil) })
+        let state = CorteState(makeModel: { QueroModel(provider: nil) })
         state.open()
         state.preset(CorteListWish.wish(listId: "eat", name: "eat"))
         #expect(state.quero.text == "comer" && state.quero.verbOverride == .comer)

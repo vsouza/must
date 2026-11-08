@@ -124,8 +124,6 @@ corteshots() { # $1 = prefixo (jp|bh|it)
     WAIT=10 shot $r-corte-quero -debugScreen corte-quero -capaFoto
     WAIT=12 shot $r-corte-cafe -debugScreen corte-cafe -capaFoto
     WAIT=12 shot $r-corte-cafe-offline -debugScreen corte-cafe-offline -capaFoto -debugNetwork offline
-    WAIT=10 shot $r-corte-walk1 -debugScreen corte-walk1 -capaFoto
-    WAIT=10 shot $r-corte-walk2 -debugScreen corte-walk2 -capaFoto
     WAIT=12 shot $r-corte-xxxl-cafe -debugScreen corte-cafe -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
     WAIT=10 shot $r-corte-xxxl-capa -debugScreen corte-capa -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
   fi
@@ -161,6 +159,18 @@ cortediashots() { # $1 = prefixo (jp|bh)
 }
 ${=W} skipOnboarding -bool YES
 ${=W} dev.simDateOn -bool YES; ${=W} dev.simSetAt -float 0; ${=W} dev.simGPSOn -bool YES
+
+echo "→ p31 · quero em Nakano com o GPS no Brasil, quero em viagem futura, carrossel de fotos e Minhas viagens"
+${=W} region jp
+${=W} dev.simDate -float $(epoch 2026-11-15T14:20:00+09:00)
+${=W} dev.simLat -float -19.9385; ${=W} dev.simLng -float -43.9343
+WAIT=12 shot jp-quero-nakano -debugScreen quero-nakano -capaFoto
+WAIT=12 shot jp-fotos-carrossel -debugScreen fotos-carrossel:j01 -debugPhotos fake
+# Viagem futura: o automático (datas › GPS) cai em BH com o GPS no Brasil; o print mostra a região que abrir.
+${=W} dev.simDate -float $(epoch 2026-10-20T12:00:00+09:00)
+WAIT=12 shot jp-quero-viagem-futura -debugScreen quero-viagem-futura
+shot jp-viagens -debugScreen viagens
+if [ "${ONLY:-}" != "p31" ]; then
 
 echo "→ r23 · E · capa inteligente (sem dia aceito) e Minhas viagens; eventos de mentira (-debugEvents fake)"
 ${=W} region bh
@@ -359,6 +369,8 @@ ${=W} dev.simLat -float -19.9385; ${=W} dev.simLng -float -43.9343
 shot bh-bairros -debugScreen bairros
 
 fi # ONLY=v8
+
+fi # ONLY=p31
 
 echo "→ limpando simulações e chaves de debug"
 for k in dev.simDateOn dev.simDate dev.simSetAt dev.simGPSOn dev.simLat dev.simLng dev.simCloud skipOnboarding \

@@ -29,6 +29,9 @@ enum TripSwitcherModel {
         return "\(trip.name) · \(list)"
     }
 
+    /// "JPY ¥", "EUR €", "BRL R$": o código e o símbolo da moeda da viagem.
+    static func currencyLabel(_ region: Region) -> String { "\(region.currency) \(region.currencySymbol)" }
+
     /// Uma linha por viagem do registro (sem as arquivadas), na ordem dele.
     static func rows(trips: [Trip] = BuiltInTrip.all, active: Region, now: Date, gps: Region?, doneCount: Int) -> [TripRow] {
         trips.filter { !$0.archived }.map(Region.init(trip:)).map { region in

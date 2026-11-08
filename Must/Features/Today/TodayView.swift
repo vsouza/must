@@ -335,7 +335,7 @@ struct TodayView: View {
             HStack(alignment: .center, spacing: 14) {
                 KanjiSeal(done: false, number: index + 1, size: 30)
                 if let place {
-                    PlaceThumb(placeId: place.placeId, refs: place.photoRefs, color: place.list?.color ?? .eat, size: 44)
+                    PlaceThumb(placeId: place.placeId, refs: place.photoRefs, color: place.list?.color ?? .eat, size: 44, opensViewer: true)
                 }
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(alignment: .firstTextBaseline) {

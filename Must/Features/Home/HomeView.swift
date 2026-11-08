@@ -42,6 +42,8 @@ struct HomeView: View {
     /// `-capaFoto` (DEBUG, prints): baixa a foto do Commons uma vez pro bairro. Sem a flag, a capa só usa o que já está no disco.
     private var forcePhoto: Bool { DebugFlags.has("-capaFoto") }
     private var debugScreen: String { DebugFlags.string("debugScreen") ?? "" }
+    /// `quero-nakano` (DEBUG, prints): a capa sai do bairro Nakano com o GPS longe, como no uso real fora do país.
+    @State private var debugArea: Area?
     private var photoURL: URL? {
         guard debugScreen != "corte-capa-sem-foto" else { return nil }
         return state.photo.flatMap { URL(string: $0.largeURL ?? $0.url) }
@@ -55,7 +57,7 @@ struct HomeView: View {
     var body: some View {
         Group {
             if let content = state.content {
-                CapaCorteView(content: content, areaName: currentArea?.name ?? content.area, photoURL: photoURL, suggest: suggest,
+                CapaCorteView(content: content, areaName: debugArea?.name ?? currentArea?.name ?? content.area, photoURL: photoURL, suggest: suggest,
                               state: corte, tripId: region.trip.id, makeEnv: makeEnv, actions: actions)
             } else {
                 theme.cover.ignoresSafeArea()
@@ -69,7 +71,7 @@ struct HomeView: View {
         .accessibilityAction(named: "Linha do dia") { go(.up) }
         .accessibilityAction(named: "Dicas") { go(.left) }
         .accessibilityAction(named: "Atalhos") { go(.right) }
-        .overlay(alignment: .trailing) { if corte.stage == .rest, corte.walk == nil { atalhosHandle } }
+        .overlay(alignment: .trailing) { if corte.stage == .rest { atalhosHandle } }
         .fullScreenCover(isPresented: $showAtalhos, onDismiss: runAtalhoAction) {
             AtalhosPanel { action in
                 atalhoAction = action
@@ -222,7 +224,7 @@ struct HomeView: View {
 
     private var actions: CapaCorteView.Actions {
         .init(trips: { router.sheet = .viagens },
-              dicas: { router.push(.dicas, on: .hoje) },
+              assistente: { router.sheet = .assistant },
               openSuggestion: openSuggestion,
               openPlace: { router.push(.place(id: $0), on: .hoje) },
               route: { row in MapsLinks.openApple(to: row.row.result.coordinate, name: row.row.result.name) },
@@ -237,7 +239,16 @@ struct HomeView: View {
         return QueroEnv.make(region: region, now: now, places: places, trip: trips.first, settings: settingsList.first,
                              plan: state.plan, gps: services.location.current?.coordinate,
                              online: services.connectivity.status != .offline,
-                             upcoming: QueroEnv.upcomingDays(context: context, areas: areas, today: today))
+                             upcoming: QueroEnv.upcomingDays(context: context, areas: areas, today: today),
+                             areaHint: capaArea(areas), shows: showEvents.today(region: region, at: now))
+    }
+
+    /// O bairro que a capa mostra (GPS por célula, senão o do dia pelo nome): de onde o quero sai quando o GPS está longe.
+    private func capaArea(_ areas: [Area]) -> Area? {
+        if let debugArea { return debugArea }
+        if let currentArea { return currentArea }
+        guard let name = state.content?.area.lowercased() else { return nil }
+        return areas.first { $0.name.lowercased() == name || $0.aliases.contains { $0.lowercased() == name } }
     }
 
     /// "+ board": guarda o lugar de fora na lista certa (a mesma lógica do Quero…).
@@ -252,27 +263,27 @@ struct HomeView: View {
         router.push(.linha(date: today), on: .hoje)
     }
 
-    /// Passo a passo (primeira vez e primeira entrada em cada viagem) e os atalhos de DEBUG dos prints (`corte-*`).
+    /// Os atalhos de DEBUG dos prints (`corte-*`).
     private func startCorteExtras() async {
         let screen = debugScreen
         if screen.isEmpty {
             try? await Task.sleep(for: .milliseconds(400))
-            if let content = state.content, content.lead != "Primeiro dia" { corte.startWalk(tripId: region.trip.id) }
             return
         }
-        guard screen.hasPrefix("corte-") else { return }
+        guard screen.hasPrefix("corte-") || screen.hasPrefix("quero-") else { return }
+        if screen == "quero-nakano" { debugArea = AreaCatalog.areas(for: region).first { $0.id == "nakano" } }
         try? await Task.sleep(for: .milliseconds(900))
         switch screen {
+        case "quero-nakano", "quero-viagem-futura":
+            corte.open()
+            corte.quero.text = "comer"
+            corte.submit(makeEnv())
         case "corte-puxando": corte.pull.drag(translation: 70)
         case "corte-quero": corte.open()
         case "corte-cafe", "corte-cafe-offline":
             corte.open()
             corte.quero.text = "café"
             corte.submit(makeEnv())
-        case "corte-walk1": corte.startWalk(tripId: region.trip.id, force: true)
-        case "corte-walk2":
-            corte.startWalk(tripId: region.trip.id, force: true)
-            corte.open()
         default: break
         }
     }

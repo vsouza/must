@@ -158,15 +158,19 @@ enum WantParser {
         }
         var verb: WantVerb = .comprar
         var explicit = false
+        var verbWord: String?
         if let first = words.first {
             for (v, forms) in verbs where forms.contains(where: { $0.split(separator: " ").first.map(String.init) == first }) {
                 verb = v
                 // "procurar um lámen", "achar um Seiko": buscar não diz o quê (vale o verbo da categoria).
                 explicit = !searchVerbs.contains(first)
+                verbWord = first
                 words.removeFirst()
                 break
             }
         }
+        // Só o verbo ("comer", "ver", "fazer", "fotografar"): a vontade é o próprio verbo, não nada (era o "comer em Nakano não achou").
+        if words.isEmpty, let verbWord, !searchVerbs.contains(verbWord), WantCategory.match(verbWord) != nil { words = [verbWord] }
         let raw = " " + lower.folding(options: .diacriticInsensitive, locale: nil) + " "
         // Pontuação vira espaço ("agora, o melhor"); o raio lê o texto cru ("1,5 km").
         let folded = String(raw.map { ",.;!?".contains($0) ? " " : $0 })
@@ -180,7 +184,9 @@ enum WantParser {
         words = removingRadius(words)
         // Objeto: sem artigos nem "o melhor/mais barato" no começo e sem "bom/perto/hoje" no fim.
         while let first = words.first, articles.contains(first) || leadingQualifiers.contains(first) { words.removeFirst() }
-        while let last = words.last, trailingWords.contains(last) || articles.contains(last) { words.removeLast() }
+        // "noite" sozinha é uma vontade; "jantar de noite" perde o "noite".
+        while words.count > 1 || WantCategory.match(words.first ?? "") == nil,
+              let last = words.last, trailingWords.contains(last) || articles.contains(last) { words.removeLast() }
         // "um tonkatsu bom perto de casa": tira o que vem depois de "perto".
         if let cut = words.firstIndex(where: { $0 == "perto" || $0 == "hoje" || $0 == "amanhã" || $0 == "amanha" }) {
             words = Array(words[..<cut])

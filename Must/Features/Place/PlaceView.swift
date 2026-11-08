@@ -137,6 +137,12 @@ struct PlaceView: View {
                     corte.open()
                     return
                 }
+                if screen.hasPrefix("fotos-carrossel") {
+                    // Espera a foto principal e abre o carrossel na segunda foto (prints).
+                    try? await Task.sleep(for: .milliseconds(3500))
+                    viewer = ViewerStart(page: 1)
+                    return
+                }
                 if screen.hasPrefix("painel") || screen.hasPrefix("dicas") {
                     try? await Task.sleep(for: .milliseconds(600))
                     withAnimation { proxy.scrollTo(screen.hasPrefix("dicas") ? "tips" : "panel", anchor: .top) }
@@ -249,7 +255,8 @@ struct PlaceView: View {
         let plan = dayEngine.plan(for: today, region: region, context: context)
         let base = QueroEnv.make(region: region, now: now, places: all, trip: trips.first, settings: settingsList.first, plan: plan,
                                  gps: here?.coordinate, online: services.connectivity.status != .offline,
-                                 upcoming: QueroEnv.upcomingDays(context: context, areas: AreaCatalog.areas(for: region), today: today))
+                                 upcoming: QueroEnv.upcomingDays(context: context, areas: AreaCatalog.areas(for: region), today: today),
+                                 shows: showEvents.today(region: region, at: now))
         return CorteState.corteEnv(base.atPlace(place, places: all))
     }
 
@@ -267,11 +274,12 @@ struct PlaceView: View {
     }
 
     /// Páginas da galeria que já têm foto (as outras ainda não vieram: não abrem vazias no visualizador).
+    /// Todas as fotos do lugar: as que já vieram abrem na hora; as outras baixam só quando a pessoa desliza até elas.
     private func viewerPages(_ place: Place) -> [PhotoViewer.Page] {
-        (0..<pages(place)).compactMap { i in
-            guard let url = photoURL(place, page: i) else { return nil }
+        (0..<pages(place)).map { i in
             let photo = i > 0 ? galleryPhotos[i] : heroPhoto
-            return PhotoViewer.Page(id: i, url: url, credit: photo?.credit ?? "foto · Google")
+            if let url = photoURL(place, page: i) { return PhotoViewer.Page(id: i, url: url, credit: photo?.credit ?? "foto · Google") }
+            return PhotoViewer.Page.google(id: i, placeId: place.placeId, refs: place.photoRefs, resolver: services.photoResolver)
         }
     }
 

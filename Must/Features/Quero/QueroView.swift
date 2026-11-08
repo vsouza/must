@@ -15,13 +15,14 @@ struct QueroView: View {
     @Environment(AppRouter.self) private var router
     @Environment(RegionStore.self) private var store
     @Environment(Services.self) private var services
+    @Environment(\.showEvents) private var showEvents
 
     @Query(sort: \MustList.order) private var lists: [MustList]
     @Query private var places: [Place]
     @Query private var trips: [TripInfo]
     @Query private var settingsList: [Settings]
 
-    @State private var model = QueroModel(provider: QueroView.provider())
+    @State private var model = QueroModel(provider: QueroView.provider(), extras: QueroView.extras())
     @State private var speech = SpeechInput()
     @State private var secondary: AddMode?
     @State private var saved: String?
@@ -38,6 +39,14 @@ struct QueroView: View {
         if DebugFlags.string("debugPlaces") == "fake" || DebugFlags.string("debugAutocomplete") == "fake" { return FakeWantPlaces() }
         #endif
         return DevOverrides.liveData ? PlacesService() : nil
+    }
+
+    /// Wikipedia (sem chave) pro "ver"; fora no fake dos prints e com os dados ao vivo desligados.
+    static func extras() -> WantExtras? {
+        #if DEBUG
+        if DebugFlags.string("debugPlaces") == "fake" || DebugFlags.string("debugAutocomplete") == "fake" { return nil }
+        #endif
+        return DevOverrides.liveData ? .live : nil
     }
 
     var body: some View {
@@ -360,7 +369,8 @@ struct QueroView: View {
     private func env() -> QueroEnv {
         QueroEnv.make(region: region, now: now, places: places, trip: trip, settings: settingsList.first, plan: plan,
                       gps: services.location.current?.coordinate, online: services.connectivity.status != .offline,
-                      upcoming: QueroEnv.upcomingDays(context: context, areas: areas, today: today))
+                      upcoming: QueroEnv.upcomingDays(context: context, areas: areas, today: today),
+                      areaHint: planArea ?? gpsArea, shows: showEvents.today(region: region, at: now))
     }
 }
 

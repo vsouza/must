@@ -202,7 +202,7 @@ struct GuiaAreaView: View {
                     .strokeBorder(V8.ink.opacity(0.35), style: StrokeStyle(lineWidth: 1, dash: [3, 3]))
                     .frame(width: 44, height: 44)
             } else {
-                V8Thumb(placeId: place?.placeId, refs: place?.photoRefs ?? [], size: 44, dimmed: item.done)
+                V8Thumb(placeId: place?.placeId, refs: place?.photoRefs ?? [], size: 44, dimmed: item.done, opensViewer: true)
             }
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.title).font(V8Font.text(16, weight: .bold)).foregroundStyle(V8.ink).lineLimit(1)

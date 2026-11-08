@@ -435,14 +435,16 @@ enum DebugLaunch {
         case "filmes": router.push(.filmes(placeId: arg ?? "j105"), on: .musts)
         case "colecao": router.push(.colecao, on: .viagem)
         case "colecionavel-novo": router.push(.colecao, on: .viagem); CollectibleCelebration.present(for: arg ?? "p01")
-        case "trocar-viagem": router.select(.hoje); router.sheet = .viagens
+        case "trocar-viagem", "viagens": router.select(.hoje); router.sheet = .viagens
+        case "fotos-carrossel": router.push(.place(id: arg ?? "j01"), on: .musts)
+        case "quero-nakano", "quero-viagem-futura": router.select(.hoje)
         case "novaviagem1", "novaviagem2", "novaviagem3", "novaviagem4", "novaviagem5", "novaviagem6", "novaviagem7", "novaviagem8", "novaviagem9":
             router.cover = .novaViagem(step: Int(parts[0].dropFirst("novaviagem".count)) ?? 1) // prompt 28 · F3
         case "mapa-pino", "mapa-filtro": router.push(.mapa, on: .hoje) // o agente C lê o debugScreen pra abrir o card/filtro
         case "lugar-amigos", "lugar-emcartaz": router.push(.place(id: arg ?? "j28"), on: .musts)
         case "capa-inteligente": router.select(.hoje)
         // prompt 30 · o corte: a capa e os estados do gesto (o `HomeView` lê o `debugScreen` e monta cada um).
-        case "corte-capa", "corte-capa-cartaz", "corte-capa-sem-foto", "corte-puxando", "corte-quero", "corte-cafe", "corte-cafe-offline", "corte-walk1", "corte-walk2":
+        case "corte-capa", "corte-capa-cartaz", "corte-capa-sem-foto", "corte-puxando", "corte-quero", "corte-cafe", "corte-cafe-offline":
             router.select(.hoje)
         case "sincronizar":
             router.push(.settings, on: .hoje)

@@ -19,7 +19,7 @@ struct CapaCorteView: View {
     /// O que a capa pede pra fora (rota, Lugar, board, dia).
     struct Actions {
         var trips: () -> Void
-        var dicas: () -> Void
+        var assistente: () -> Void
         var openSuggestion: (Suggestion) -> Void
         var openPlace: (String) -> Void
         var route: (CorteRow) -> Void
@@ -38,37 +38,27 @@ struct CapaCorteView: View {
     var body: some View {
         GeometryReader { geo in
             let rest = max(200, geo.size.height * 0.46)
-            let pullNow = state.pull.offset + (state.pull.phase == .closed ? state.nudge : 0)
+            let pullNow = state.pull.offset
             let h = CorteLayout.heights(stage: state.stage, pull: pullNow, rest: rest)
             ZStack(alignment: .topLeading) {
                 V8.paper.ignoresSafeArea()
                 VStack(spacing: 0) {
                     band(progress: min(pullNow / CutPull.limit, 1))
                         .frame(height: h.band)
-                        .walkDim(state.walk == .pull)
                     slit
                         .frame(height: h.slit, alignment: .bottom)
                         .clipped()
-                        .walkDim(state.walk == .pull)
                     rule
                     paper
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                        .walkDim(state.walk == .pull)
                 }
                 .animation(reduceMotion ? .easeOut(duration: 0.2) : .spring(response: 0.45, dampingFraction: 0.82), value: state.stage)
-                if state.walk == .pull { walkOne(rest: rest) }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .ignoresSafeArea(.keyboard)
-        .simultaneousGesture(DragGesture(minimumDistance: 0).onChanged { _ in state.touched = true })
-        .onAppear { state.touched = false }
         .onChange(of: state.stage) { _, stage in focused = stage == .asking }
         .onChange(of: state.quero.phase) { _, _ in state.resultArrived() }
-        .onChange(of: state.walk) { _, step in
-            if step != nil { AccessibilityNotification.Announcement("Passo a passo: puxe a faixa preta pra baixo, ou use a ação Abrir quero.").post() }
-        }
-        .task(id: state.stage == .rest) { await nudgeWhenIdle() }
         .task {
             state.speech.onFinal = { text in
                 state.quero.text = text
@@ -84,23 +74,13 @@ struct CapaCorteView: View {
             if upcoming {
                 CutRule()
             } else {
-                CutRule(pullLabel: CutPull.label(phase: state.pull.phase, offset: state.pull.offset, uses: state.coach.uses))
+                CutRule(pullLabel: CutPull.label(phase: state.pull.phase, offset: state.pull.offset))
                     .cutPull(state.pull, reduceMotion: reduceMotion, onOpen: { state.open() }, onClose: { state.close() })
                     .accessibilityAction(named: state.stage == .rest ? "Abrir quero" : "Fechar quero") {
                         if state.stage == .rest { state.open() } else { state.close() }
                     }
             }
         }
-        .overlay { if state.walk == .pull { Rectangle().stroke(V8.orange, lineWidth: 2).allowsHitTesting(false) } }
-    }
-
-    private func nudgeWhenIdle() async {
-        guard state.stage == .rest, !upcoming, state.coach.nudges, !reduceMotion, state.walk == nil else { return }
-        try? await Task.sleep(for: .seconds(CutCoach.idleSeconds))
-        guard !Task.isCancelled, !state.touched, state.stage == .rest, state.pull.phase == .closed else { return }
-        withAnimation(.easeOut(duration: 0.3)) { state.nudge = CutCoach.nudgeDistance }
-        try? await Task.sleep(for: .milliseconds(420))
-        withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) { state.nudge = 0 }
     }
 
     // MARK: Bloco da foto
@@ -138,7 +118,7 @@ struct CapaCorteView: View {
             SpecStack(lines: content.topLeft, color: ink)
             Spacer(minLength: 6)
             SpecStack(lines: content.topRight, color: ink, alignment: .trailing)
-            RoundButton(systemImage: "sparkle", label: "Dicas", style: .line, tint: ink, size: 40, action: actions.dicas)
+            RoundButton(systemImage: "sparkle", label: "Assistente", style: .line, tint: ink, size: 40, action: actions.assistente)
         }
     }
 
@@ -307,7 +287,6 @@ struct CapaCorteView: View {
 
     private var askingPaper: some View {
         VStack(alignment: .leading, spacing: 10) {
-            if state.walk == .write { walkTwo }
             CorteWishChips(state: state, makeEnv: makeEnv)
             Spacer(minLength: 0)
         }
@@ -320,7 +299,6 @@ struct CapaCorteView: View {
     private var resultPaper: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                if state.walk == .done { walkDone }
                 resultBands
                 Color.clear.frame(height: 110)
             }
@@ -332,157 +310,12 @@ struct CapaCorteView: View {
     private var resultBands: some View {
         CorteResultBands(state: state, placeName: placeName,
                          actions: .init(openPlace: actions.openPlace, route: actions.route, addToBoard: actions.addToBoard,
-                                        fitToday: actions.fitToday))
-    }
-
-    // MARK: Passo a passo (§5)
-
-    /// Passo 1: tela tinta a 93 %, só a régua acesa, o dedo fantasma e a linha tracejada "até aqui".
-    private func walkOne(rest: CGFloat) -> some View {
-        ZStack(alignment: .topLeading) {
-            VStack(alignment: .leading, spacing: 12) {
-                Text("1 de 2 · novo")
-                    .font(V8Font.mono(10, weight: .semibold)).tracking(1)
-                    .foregroundStyle(V8.ink)
-                    .padding(.horizontal, 8).padding(.vertical, 4)
-                    .background(V8.orange)
-                Text("Mudou\no plano?")
-                    .font(V8Font.display(44)).tracking(-1.4).foregroundStyle(V8.paper)
-                Text("Puxe a faixa preta pra baixo e diga o que vocês querem agora. O app junta seus Musts e o que tem perto.")
-                    .font(V8Font.text(15)).foregroundStyle(V8.paper)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, 56)
-            .frame(maxWidth: 330, alignment: .leading)
-            .allowsHitTesting(false)
-            // "Até aqui": onde a régua precisa chegar.
-            let lineY = rest + CutRule.pullHeight + CutPull.limit
-            VStack(alignment: .leading, spacing: 6) {
-                DashedLine().stroke(V8.orange, style: StrokeStyle(lineWidth: 2, dash: [7, 5])).frame(height: 2)
-                MonoLabel("até aqui", size: 10, color: V8.orange)
-                HStack {
-                    // Letra grande: quebra em duas linhas em vez de cortar no meio.
-                    Text("FAÇA VOCÊ MESMO PRA CONTINUAR")
-                        .font(V8Font.mono(9)).tracking(0.9).foregroundStyle(V8.muteDark)
-                        .lineLimit(3).fixedSize(horizontal: false, vertical: true)
-                    Spacer(minLength: 12)
-                    Button { state.skipWalk() } label: {
-                        Text("PULAR").font(V8Font.mono(11, weight: .semibold)).tracking(1).foregroundStyle(V8.paper)
-                            .padding(.horizontal, 12).padding(.vertical, 10)
-                            .overlay(Rectangle().stroke(V8.paper, lineWidth: 2))
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Pular o passo a passo")
-                }
-            }
-            .padding(.horizontal, 20)
-            .offset(y: lineY)
-            GhostFinger(from: rest + CutRule.pullHeight / 2, distance: CutPull.limit, still: reduceMotion)
-                .allowsHitTesting(false)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .accessibilityElement(children: .contain)
-        .accessibilityAction(named: "Abrir quero") { state.open() }
-    }
-
-    private var walkTwo: some View {
-        HStack(alignment: .center, spacing: 12) {
-            VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    Text("2 de 2")
-                        .font(V8Font.mono(10, weight: .semibold)).tracking(1)
-                        .foregroundStyle(V8.ink)
-                        .padding(.horizontal, 8).padding(.vertical, 3)
-                        .background(V8.orange)
-                    Spacer(minLength: 8)
-                    Button { state.skipWalk() } label: {
-                        Text("PULAR").font(V8Font.mono(10, weight: .semibold)).tracking(1).foregroundStyle(V8.paper)
-                            .padding(.vertical, 6).contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                }
-                Text("Escreva ou fale. O \"café\" já está aí: envie.")
-                    .font(V8Font.text(14)).foregroundStyle(V8.paper)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            Button { state.submit(makeEnv()) } label: {
-                Text("ENVIAR").font(V8Font.mono(11, weight: .semibold)).tracking(1).foregroundStyle(V8.ink)
-                    .padding(.horizontal, 14).padding(.vertical, 12).background(V8.orange)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(V8.ink)
-    }
-
-    private var walkDone: some View {
-        HStack(alignment: .center, spacing: 12) {
-            Text("Pronto. É só puxar a faixa preta quando o plano mudar.")
-                .font(V8Font.text(14, weight: .semibold)).foregroundStyle(V8.paper)
-                .fixedSize(horizontal: false, vertical: true)
-            Button { state.finishWalk() } label: {
-                Text("PRONTO").font(V8Font.mono(11, weight: .semibold)).tracking(1).foregroundStyle(V8.ink)
-                    .padding(.horizontal, 14).padding(.vertical, 10).background(V8.orange)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(V8.ink)
+                                        fitToday: actions.fitToday),
+                         makeEnv: makeEnv)
     }
 }
 
 // MARK: - Peças
-
-private extension View {
-    /// Passo 1 do passo a passo: tudo menos a régua fica tinta a 93 %.
-    @ViewBuilder func walkDim(_ on: Bool) -> some View {
-        overlay { if on { V8.ink.opacity(0.93).ignoresSafeArea(edges: .top).allowsHitTesting(false) } }
-    }
-}
-
-private struct DashedLine: Shape {
-    func path(in rect: CGRect) -> Path {
-        var p = Path()
-        p.move(to: CGPoint(x: rect.minX, y: rect.midY))
-        p.addLine(to: CGPoint(x: rect.maxX, y: rect.midY))
-        return p
-    }
-}
-
-/// O dedo fantasma: desce da régua até a linha tracejada e volta, em laço. Reduzir movimento: seta parada.
-private struct GhostFinger: View {
-    var from: CGFloat
-    var distance: CGFloat
-    var still: Bool
-    @State private var down = false
-
-    var body: some View {
-        GeometryReader { geo in finger.position(x: geo.size.width / 2, y: from + (down && !still ? distance : 0)) }
-            .onAppear {
-                guard !still else { return }
-                withAnimation(.easeInOut(duration: 1.3).repeatForever(autoreverses: false)) { down = true }
-            }
-            .accessibilityHidden(true)
-    }
-
-    private var finger: some View {
-        Group {
-            if still {
-                Image(systemName: "arrow.down").font(.system(size: 22, weight: .bold)).foregroundStyle(V8.orange)
-                    .frame(width: 44, height: 44)
-            } else {
-                Circle().fill(V8.paper.opacity(0.4)).overlay(Circle().stroke(V8.orange, lineWidth: 2))
-                    .frame(width: 44, height: 44)
-            }
-        }
-    }
-}
 
 /// Chips que quebram de linha.
 struct CorteFlow: Layout {

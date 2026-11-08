@@ -28,12 +28,15 @@ enum ListCover {
 
     /// Foto do Google de um lugar da lista já no disco, na ordem do board (até 16 lugares). `nil` se não há.
     static func google(for list: MustList) -> CCPhoto? {
-        let places = list.places.sorted { $0.order < $1.order }.prefix(16)
-        for place in places {
-            guard let ref = place.photoRefs.first, let file = PlacePhotoStore.existing(ref) else { continue }
-            return PlacePhotoResolver.photo(ref, file: file, placeId: place.placeId ?? "")
+        guard let place = googlePlace(for: list), let ref = place.photoRefs.first, let file = PlacePhotoStore.existing(ref) else { return nil }
+        return PlacePhotoResolver.photo(ref, file: file, placeId: place.placeId ?? "")
+    }
+
+    /// O lugar cuja foto do Google já no disco é a capa (o toque na capa abre as fotos dele em carrossel).
+    static func googlePlace(for list: MustList) -> Place? {
+        list.places.sorted { $0.order < $1.order }.prefix(16).first { place in
+            place.photoRefs.first.flatMap(PlacePhotoStore.existing) != nil
         }
-        return nil
     }
 
     /// A capa: à mão › Google no disco (estilo vivo) › a do Commons. `nil` = gradiente da cor.

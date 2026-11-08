@@ -180,6 +180,7 @@
 		5A17C8A54779911934B2F031 /* BuscarNomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3C762D01CB6DE2F0014144A /* BuscarNomeView.swift */; };
 		5AC526B99D4B3A64C0C2CFEE /* MicroStops.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E63098BC20939AB29E6FFFA /* MicroStops.swift */; };
 		5B318E7CDB602D550B8ED6CD /* TripRegistryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19878D26E2BE9AE48855F053 /* TripRegistryTests.swift */; };
+		5B658063404836AE00D65B15 /* WantOrigin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5732E49FCA1972B6C257821F /* WantOrigin.swift */; };
 		5C31CF333FD9EAD6D2801698 /* Router.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5621525C6CB7D37030B2A19B /* Router.swift */; };
 		5C3EE9A409780995526B5459 /* V8Palette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35765003FEB4545A52A17799 /* V8Palette.swift */; };
 		5C919A01C05FDC219FECCD6D /* AddLinkView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 532D92C7D6879474355DB391 /* AddLinkView.swift */; };
@@ -196,6 +197,7 @@
 		619192508D674C3CF00785FF /* DataUsage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12D88D49FA4A5E026FEAA007 /* DataUsage.swift */; };
 		61DF603FD77370E0F0DDA38E /* PhotoViewer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30E84B1E454DD30366D1DA28 /* PhotoViewer.swift */; };
 		61FAA271404986E5142B7C18 /* NewTripSteps6to9.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EDB98BEA00F360087DFC055 /* NewTripSteps6to9.swift */; };
+		623AD48E92CDB9D70C2679CA /* Prompt31QueroTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D13D6E785168B1450C92187 /* Prompt31QueroTests.swift */; };
 		632A0A99D7BF63016ED23AED /* AtalhosPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2956ECFEBA11E08C398F3D10 /* AtalhosPanel.swift */; };
 		635768838BFBA13DD9B56F11 /* BoardRows.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76824D324E16F3429F510F1D /* BoardRows.swift */; };
 		64B398891C6575CFBFC186E2 /* PlacesService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0DE882D97FE358B156A3EE9 /* PlacesService.swift */; };
@@ -743,6 +745,7 @@
 		4BC3262DE7A7ABEA33FEABF2 /* ProposalAndCostTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProposalAndCostTests.swift; sourceTree = "<group>"; };
 		4C0634B47ACCAE7A2F9922E7 /* CorteRows.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CorteRows.swift; sourceTree = "<group>"; };
 		4C1BEA3A52142382A4E16718 /* ColarTextoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColarTextoView.swift; sourceTree = "<group>"; };
+		4D13D6E785168B1450C92187 /* Prompt31QueroTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Prompt31QueroTests.swift; sourceTree = "<group>"; };
 		4D464D945A49E20B455A3BEA /* Tips.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tips.swift; sourceTree = "<group>"; };
 		4D992925DC54DAC9FB74D5CB /* AIPlaceExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIPlaceExtractor.swift; sourceTree = "<group>"; };
 		4E4BD87DCADB35A5CAEE421B /* VideoReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoReaderTests.swift; sourceTree = "<group>"; };
@@ -764,6 +767,7 @@
 		5621525C6CB7D37030B2A19B /* Router.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Router.swift; sourceTree = "<group>"; };
 		56B2448E220317CEA9B0A97A /* Must.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Must.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		56C3EA6D3C29FD87F4AC83FE /* KindPanels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KindPanels.swift; sourceTree = "<group>"; };
+		5732E49FCA1972B6C257821F /* WantOrigin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WantOrigin.swift; sourceTree = "<group>"; };
 		585ECC1E8010850E5EFB54FD /* CutControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CutControls.swift; sourceTree = "<group>"; };
 		59C0F2D3F8FD625357FE147C /* BoardCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardCodec.swift; sourceTree = "<group>"; };
 		59E7929EF53EBA041A2D5E78 /* TicketRevisarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketRevisarView.swift; sourceTree = "<group>"; };
@@ -1492,6 +1496,7 @@
 				665DE0BC6E2B17D76CD0A488 /* MapSearch.swift */,
 				34D3551C275A60139698316F /* WantCategory.swift */,
 				7E4D9CA5D8E752AB2E79D6FF /* WantEnterprise.swift */,
+				5732E49FCA1972B6C257821F /* WantOrigin.swift */,
 				761C51BC1262F71E0EA381B3 /* WantParser.swift */,
 				19F3EE9521FA301D6B89622A /* WantSearch.swift */,
 			);
@@ -1606,6 +1611,7 @@
 				A108F02F9AAFC162F9B73BEF /* PlaceResolverTests.swift */,
 				69D2CE35646C5AB69AE732BB /* PocketRulesTests.swift */,
 				E639FA3C7D274B015BEEA574 /* PosterTests.swift */,
+				4D13D6E785168B1450C92187 /* Prompt31QueroTests.swift */,
 				4BC3262DE7A7ABEA33FEABF2 /* ProposalAndCostTests.swift */,
 				3ED71E74006BFAF0B24E307A /* ProximosTests.swift */,
 				AA488548E5855C26BB4C1C3C /* QAScenarioTests.swift */,
@@ -2744,6 +2750,7 @@
 				D008E59938102E6875832BE3 /* PlaceResolverTests.swift in Sources */,
 				0652B5F2C3142071D331EFC5 /* PocketRulesTests.swift in Sources */,
 				AD8CA8E33CF5D81A4500336E /* PosterTests.swift in Sources */,
+				623AD48E92CDB9D70C2679CA /* Prompt31QueroTests.swift in Sources */,
 				B6878DE0C69506B8CED8EF84 /* ProposalAndCostTests.swift in Sources */,
 				A9A3F116BA55739F2D63D274 /* ProximosTests.swift in Sources */,
 				74A382295FB822CD3957318E /* QAScenarioTests.swift in Sources */,
@@ -3175,6 +3182,7 @@
 				C786B79C3882A765B5F354F8 /* WalletView.swift in Sources */,
 				E2149ADCEE02EE832013EA80 /* WantCategory.swift in Sources */,
 				7900EC979EC39E2B77AEDFEC /* WantEnterprise.swift in Sources */,
+				5B658063404836AE00D65B15 /* WantOrigin.swift in Sources */,
 				589179B32EBBEF2D41FC66D5 /* WantParser.swift in Sources */,
 				D89D6A94C8A3BAB0F6310098 /* WantSearch.swift in Sources */,
 				01564ECC8188D499B5F272B8 /* WeatherService.swift in Sources */,

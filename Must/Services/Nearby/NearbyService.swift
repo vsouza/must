@@ -75,20 +75,21 @@ struct NearbyService: NearbyProviding {
     // MARK: Wikipedia geosearch (sem chave): contexto, não recomendação
 
     /// pt, depois en, depois ja; para quando já tem o teto. Cada chamada é gratuita.
-    func wikipedia(lat: Double, lng: Double) async throws -> [NearbyPlace] {
+    func wikipedia(lat: Double, lng: Double, radius: Double = NearbyService.radius, cap: Int? = nil) async throws -> [NearbyPlace] {
         var out: [NearbyPlace] = []
+        let limit = cap ?? Self.wikiCap
         for lang in Self.wikiLanguages {
-            out += try await wikiGeosearch(lang: lang, lat: lat, lng: lng)
-            if out.count >= Self.wikiCap { break }
+            out += try await wikiGeosearch(lang: lang, lat: lat, lng: lng, radius: radius)
+            if out.count >= limit { break }
         }
-        return Array(out.prefix(Self.wikiCap))
+        return Array(out.prefix(limit))
     }
 
-    private func wikiGeosearch(lang: String, lat: Double, lng: Double) async throws -> [NearbyPlace] {
+    private func wikiGeosearch(lang: String, lat: Double, lng: Double, radius: Double) async throws -> [NearbyPlace] {
         var comps = URLComponents(string: "https://\(lang).wikipedia.org/w/api.php")!
         comps.queryItems = [
             URLQueryItem(name: "action", value: "query"), URLQueryItem(name: "generator", value: "geosearch"),
-            URLQueryItem(name: "ggscoord", value: "\(lat)|\(lng)"), URLQueryItem(name: "ggsradius", value: "\(Int(Self.radius))"),
+            URLQueryItem(name: "ggscoord", value: "\(lat)|\(lng)"), URLQueryItem(name: "ggsradius", value: "\(Int(min(max(radius, 10), 10_000)))"),
             URLQueryItem(name: "ggslimit", value: "10"), URLQueryItem(name: "prop", value: "coordinates|extracts"),
             URLQueryItem(name: "colimit", value: "10"), URLQueryItem(name: "exintro", value: "1"),
             URLQueryItem(name: "explaintext", value: "1"), URLQueryItem(name: "exchars", value: "200"),

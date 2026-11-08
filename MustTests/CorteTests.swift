@@ -95,10 +95,10 @@ struct CorteTests {
     }
 
     @Test func rotuloDaRegua() {
-        #expect(CutPull.label(phase: .closed, offset: 0, uses: 0) == "↓ puxe · quero…")
-        #expect(CutPull.label(phase: .pulling, offset: 80, uses: 0) == "↓ mais um pouco")
-        #expect(CutPull.label(phase: .open, offset: 110, uses: 0) == "↑ fechar")
-        #expect(CutPull.label(phase: .closed, offset: 0, uses: 3) == "↓ quero")
+        #expect(CutPull.label(phase: .closed, offset: 0) == "↓ quero")
+        #expect(CutPull.label(phase: .pulling, offset: 80) == "↓ mais um pouco")
+        #expect(CutPull.label(phase: .open, offset: 110) == "↑ fechar")
+        #expect(CutPull.label(phase: .closed, offset: 0, noun: "quero café") == "↓ quero café")
     }
 
     @Test func fendaCrescePuxando() {
@@ -107,56 +107,6 @@ struct CorteTests {
         let mid = CorteLayout.heights(stage: .rest, pull: 55, rest: 400)
         #expect(mid.band < 400 && mid.slit > 0)
         #expect(CorteLayout.heights(stage: .result, pull: 0, rest: 400).slit == 0)
-    }
-
-    // MARK: Passo a passo e cutucão
-
-    @Test func passoAPassoPrimeiraVezEPorViagem() {
-        #expect(CorteWalk.shouldPresent(tripId: "jp", seen: []))
-        #expect(!CorteWalk.shouldPresent(tripId: "jp", seen: ["jp"]))
-        #expect(CorteWalk.shouldPresent(tripId: "portugal-ab12", seen: ["jp", "bh"]))
-        // Só avança com o gesto de verdade.
-        #expect(CorteWalk.next(.pull, .gotResult) == .pull)
-        #expect(CorteWalk.next(.pull, .pulledOpen) == .write)
-        #expect(CorteWalk.next(.write, .gotResult) == .done)
-        #expect(CorteWalk.next(.done, .skip) == nil)
-        #expect(CorteWalk.next(.pull, .skip) == nil)
-    }
-
-    @Test func prefsGuardamViagensEPuxadas() {
-        let defaults = UserDefaults(suiteName: "corte-\(UUID().uuidString)")!
-        let prefs = CortePrefs(defaults: defaults)
-        #expect(prefs.seenTrips.isEmpty)
-        prefs.markPresented("jp")
-        prefs.markPresented("jp")
-        #expect(CortePrefs(defaults: defaults).seenTrips == ["jp"])
-        var coach = prefs.coach
-        for _ in 0..<3 { coach.recordResult() }
-        prefs.coach = coach
-        #expect(CortePrefs(defaults: defaults).coach.uses == 3)
-    }
-
-    @Test func cutucaoParaDepoisDeTresPuxadas() {
-        var coach = CutCoach(uses: 0)
-        #expect(coach.nudges && !coach.isShort)
-        coach.recordResult(); coach.recordResult()
-        #expect(coach.nudges)
-        coach.recordResult()
-        #expect(!coach.nudges && coach.isShort)
-        #expect(CutCoach.idleSeconds == 5)
-    }
-
-    @Test func estadoConta3PuxadasEMarcaViagem() {
-        let defaults = UserDefaults(suiteName: "corte-\(UUID().uuidString)")!
-        let state = CorteState(prefs: CortePrefs(defaults: defaults), makeModel: { QueroModel(provider: nil) })
-        state.startWalk(tripId: "bh")
-        #expect(state.walk == .pull)
-        state.open()
-        #expect(state.walk == .write && state.stage == .asking && state.quero.text == "café")
-        state.skipWalk()
-        #expect(state.walk == nil && CortePrefs(defaults: defaults).seenTrips == ["bh"])
-        state.startWalk(tripId: "bh")
-        #expect(state.walk == nil)
     }
 
     // MARK: Cache do tratamento
