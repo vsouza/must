@@ -36,7 +36,7 @@ struct ExperienceLinkSheet: View {
                     .onSubmit { read() }
                     .padding(.horizontal, 16)
                     .frame(height: 52)
-                    .background(Capsule().fill(Color.must.surface))
+                    .background(Rectangle().fill(Color.must.surface))
 
                 PrimaryButton("Ler link", icon: .colarLink) { read() }
                     .disabled(model.text.trimmingCharacters(in: .whitespaces).isEmpty || model.isReading)

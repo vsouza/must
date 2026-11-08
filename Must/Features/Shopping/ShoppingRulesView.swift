@@ -85,7 +85,7 @@ struct ShoppingRulesView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(section.tint, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .background(section.tint, in: Rectangle())
     }
 
     private func ruleRow(_ rule: ShoppingRule, impact: ShoppingImpact?) -> some View {
@@ -132,7 +132,7 @@ struct ShoppingRulesView: View {
             .font(.must.archivo(11, .bold))
             .foregroundStyle(text)
             .frame(width: 20, height: 20)
-            .background(Circle().fill(fill))
+            .background(Rectangle().fill(fill))
             .padding(.top, 2)
     }
 

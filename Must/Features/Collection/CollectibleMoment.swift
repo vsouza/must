@@ -89,7 +89,6 @@ struct CollectibleMomentView: View {
                             .font(V8Font.text(17)).foregroundStyle(V8.muteDark).padding(.top, 8)
                         ScaledCollectibleCard(item: item, tint: tint, width: cardWidth, corner: 40)
                             .rotationEffect(.degrees(shown || reduceMotion ? -4 : 0))
-                            .shadow(color: .black.opacity(0.5), radius: 30, y: 16)
                             .offset(y: shown || reduceMotion ? 0 : 160)
                             .opacity(shown || !reduceMotion ? 1 : 0)
                             .frame(maxWidth: .infinity)
@@ -147,7 +146,6 @@ struct CollectibleDetailView: View {
                     }
                     ScaledCollectibleCard(item: item, format: model.format, tint: tint, width: width, corner: 32)
                         .frame(maxWidth: .infinity)
-                        .shadow(color: .black.opacity(0.4), radius: 24, y: 12)
                     CollectibleSendButton(model: model, item: item)
                     Text("Gerado no aparelho, sem foto. Vai pelo share sheet: Instagram, Facebook, WhatsApp, Mensagens ou Fotos.")
                         .font(V8Font.text(13)).foregroundStyle(V8.muteDark).fixedSize(horizontal: false, vertical: true)

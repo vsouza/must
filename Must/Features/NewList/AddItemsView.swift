@@ -107,7 +107,7 @@ struct AddItemsView: View {
                     Button { dismiss() } label: {
                         MustIconView(.voltar, size: 18).foregroundStyle(Color.must.ink)
                             .frame(width: 40, height: 40)
-                            .background(Circle().fill(Color.white.opacity(0.55)))
+                            .background(Rectangle().fill(Color.white.opacity(0.55)))
                     }
                     .buttonStyle(MustPressStyle())
                     .accessibilityLabel("Voltar")
@@ -117,7 +117,7 @@ struct AddItemsView: View {
                     Button { finish(openList: false) } label: {
                         Text("Depois").font(.must.archivo(15, .semibold)).foregroundStyle(color.text)
                             .padding(.horizontal, 16).frame(height: 36)
-                            .background(Capsule().fill(Color.white.opacity(0.55)))
+                            .background(Rectangle().fill(Color.white.opacity(0.55)))
                     }
                     .buttonStyle(MustPressStyle())
                 }
@@ -125,7 +125,7 @@ struct AddItemsView: View {
                     MustIconView(list?.icon ?? .cafe, size: 22)
                         .foregroundStyle(color.text)
                         .frame(width: 48, height: 48)
-                        .background(Circle().fill(Color.white.opacity(0.6)))
+                        .background(Rectangle().fill(Color.white.opacity(0.6)))
                     VStack(alignment: .leading, spacing: 2) {
                         Micro("criada agora", color: color.text)
                         HStack(alignment: .firstTextBaseline, spacing: 6) {
@@ -152,7 +152,7 @@ struct AddItemsView: View {
             Button { showLink = true } label: {
                 Text("link").font(.must.mono(12, .semibold)).foregroundStyle(.white)
                     .padding(.horizontal, 9).frame(height: 26)
-                    .background(Capsule().fill(Color.must.ink))
+                    .background(Rectangle().fill(Color.must.ink))
             }
             Button { showManual = true } label: {
                 Text("manual").font(.must.mono(12, .semibold)).foregroundStyle(Color.must.ink)
@@ -234,7 +234,7 @@ struct AddItemsView: View {
                     MustIconView(.adicionar, size: 18)
                         .foregroundStyle(color.text)
                         .frame(width: 32, height: 32)
-                        .background(Circle().fill(color.gradient))
+                        .background(Rectangle().fill(color.gradient))
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Adicionar à mão").font(.must.archivo(16, .semibold)).foregroundStyle(Color.must.ink)
                         Text(query.isEmpty ? "nome, bairro, preço, janela" : "“\(query)”").mustMeta()
@@ -247,8 +247,8 @@ struct AddItemsView: View {
             .buttonStyle(.plain)
         }
         .padding(.horizontal, 20)
-        .background(Color.white, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(Color.must.line))
+        .background(Color.white, in: Rectangle())
+        .overlay(Rectangle().strokeBorder(Color.must.line))
     }
 
     private func checkRow(selected: Bool, title: String, local: String?, meta: String, badge: String,
@@ -257,10 +257,10 @@ struct AddItemsView: View {
             HStack(spacing: 14) {
                 ZStack {
                     if selected {
-                        Circle().fill(color.strong)
+                        Rectangle().fill(color.strong)
                         MustIconView(.ok, size: 15).foregroundStyle(color.text)
                     } else {
-                        Circle().strokeBorder(Color(hex: 0xD5D8DD), lineWidth: 1.5)
+                        Rectangle().strokeBorder(Color(hex: 0xD5D8DD), lineWidth: 1.5)
                     }
                 }
                 .frame(width: 32, height: 32)
@@ -274,7 +274,7 @@ struct AddItemsView: View {
                 Spacer(minLength: 8)
                 Text(badge).font(.must.mono(11, .semibold)).foregroundStyle(Color.must.ink)
                     .padding(.horizontal, 8).padding(.vertical, 4)
-                    .background(Capsule().fill(Color.must.surface))
+                    .background(Rectangle().fill(Color.must.surface))
             }
             .padding(.vertical, 14)
             .contentShape(Rectangle())
@@ -288,8 +288,8 @@ struct AddItemsView: View {
             Button { showLink = true } label: {
                 MustIconView(.colarLink, size: 20).foregroundStyle(Color.must.ink)
                     .frame(width: 52, height: 52)
-                    .background(Circle().fill(.white))
-                    .overlay(Circle().strokeBorder(Color.must.lineStrong))
+                    .background(Rectangle().fill(.white))
+                    .overlay(Rectangle().strokeBorder(Color.must.lineStrong))
             }
             .buttonStyle(MustPressStyle())
             .accessibilityLabel("Colar link")
@@ -303,7 +303,7 @@ struct AddItemsView: View {
                 .foregroundStyle(color.text)
                 .frame(maxWidth: .infinity)
                 .frame(height: 52)
-                .background(Capsule().fill(color.gradient))
+                .background(Rectangle().fill(color.gradient))
             }
             .buttonStyle(MustPressStyle())
             .disabled(selectionCount == 0)

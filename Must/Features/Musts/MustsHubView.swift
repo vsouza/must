@@ -18,6 +18,7 @@ struct MustsHubView: View {
     @State private var openOnly = false
     @AppStorage(MustsPrefs.noPhotosKey) private var noPhotos = false
     @State private var openNow = OpenNowIndex()
+    @Environment(\.tripTheme) private var theme
 
     private var region: Region { store.region }
     private var now: Date { AppClock.now }
@@ -47,35 +48,35 @@ struct MustsHubView: View {
             return true
         }
         let done = scoped.filter(\.isDone).count
-        ScrollView {
-            LazyVStack(alignment: .leading, spacing: 0) {
-                header(total: scoped.count, done: done).padding(.top, 8)
-                HStack(alignment: .firstTextBaseline, spacing: 14) {
-                    Text("Musts")
-                        .font(V8Font.display(52))
-                        .tracking(-1.6)
-                        .foregroundStyle(V8.ink)
-                        .accessibilityAddTraits(.isHeader)
-                    BigNumeral("\(scoped.count)", size: 74, color: V8.orange)
+        VStack(spacing: 0) {
+            header(total: scoped.count, done: done)
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 0) {
+                    HStack(alignment: .center, spacing: 12) {
+                        BigNumeral("\(scoped.count)", size: 74, color: V8.orange).fixedSize()
+                        SpecLabel("lugares\n\(done) feitos")
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.top, 18)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("\(scoped.count) lugares, \(done) feitos")
+                    filters.padding(.top, 16)
+                    rows(scoped: scoped, snapshot: snapshot).padding(.top, 16)
+                    extras.padding(.top, 8)
+                    V8BarSpacer()
                 }
-                .padding(.top, 22)
-                filters.padding(.top, 20)
-                rows(scoped: scoped, snapshot: snapshot).padding(.top, 24)
-                extras.padding(.top, 8)
-                V8BarSpacer()
+                .padding(.horizontal, 20)
             }
-            .padding(.horizontal, 20)
+            .scrollIndicators(.hidden)
         }
-        .scrollIndicators(.hidden)
-        .background(V8PaperBackground())
+        .background(V8.paper.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
     }
 
     private func header(total: Int, done: Int) -> some View {
-        HStack(alignment: .top) {
-            V8SpecStack(lines: ["Musts · \(activeCity ?? region.shortName)", "\(total) lugares · \(done) feitos"]).padding(.top, 14)
-            Spacer(minLength: 12)
-            V8CornerButton(systemName: "plus", label: "Adicionar por link", filled: true) {
+        CutScreenHeader(title: "Musts", corner: ["Musts · \(activeCity ?? region.shortName)", "\(total) lugares · \(done) feitos"],
+                        height: 200) {
+            CutCornerButton(systemName: "plus", label: "Adicionar por link", tint: theme.coverInk) {
                 router.sheet = .addLink(url: nil, listId: nil)
             }
         }
@@ -112,7 +113,7 @@ struct MustsHubView: View {
                 .buttonStyle(.plain)
             }
         }
-        .overlay(alignment: .top) { Rectangle().fill(V8.ink.opacity(0.14)).frame(height: 1) }
+        .overlay(alignment: .top) { IndexRule() }
     }
 
     /// Fica pro fim, o board inteiro e a lista nova (o que o hub v5 tinha).

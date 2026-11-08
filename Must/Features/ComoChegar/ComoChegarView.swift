@@ -15,17 +15,14 @@ struct ComoChegarView: View {
     @Query private var trips: [TripInfo]
 
     @State private var model: ComoChegarModel?
+    @Environment(\.tripTheme) private var theme
 
     private var region: Region { store.region }
     private var place: Place? { places.first { $0.id == placeId } }
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            Color.must.bg.ignoresSafeArea()
-            BlobBackground(style: .custom([
-                Blob(cx: 360, cy: 150, rx: 80, ry: 46, rotation: -12, fill: .green, opacity: 0.7),
-                Blob(cx: 30, cy: 720, rx: 66, ry: 56, rotation: 10, fill: .blue, opacity: 0.6),
-            ]))
+            V8.paper.ignoresSafeArea()
             if let model {
                 content(model)
             } else {
@@ -64,9 +61,15 @@ struct ComoChegarView: View {
     // MARK: Conteúdo
 
     private func content(_ model: ComoChegarModel) -> some View {
+        VStack(spacing: 0) {
+            CutScreenHeader(title: "Como chegar", corner: ["como chegar · " + Self.sourceLabel(model.selectedOption?.source)],
+                            height: 170, onBack: { dismiss() }) {
+                CutCornerButton(systemName: "arrow.up.arrow.down", label: "Inverter origem e destino", tint: theme.coverInk) {
+                    Task { await model.swapEnds(routes: services.routes) }
+                }
+            }
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                topBar(model)
                 route(model)
                 times(model)
                 chips(model)
@@ -78,7 +81,8 @@ struct ComoChegarView: View {
                 Color.clear.frame(height: 110)
             }
             .padding(.horizontal, 22)
-            .padding(.top, 8)
+            .padding(.top, 16)
+        }
         }
         .safeAreaInset(edge: .bottom) { actions(model) }
     }
@@ -176,7 +180,7 @@ struct ComoChegarView: View {
                     .font(.must.archivo(16, .bold))
                     .foregroundStyle(Color.must.ink)
                     .frame(width: 120, height: 56)
-                    .overlay(Capsule().stroke(Color.must.lineStrong, lineWidth: 1.5))
+                    .overlay(Rectangle().stroke(Color.must.lineStrong, lineWidth: 1.5))
             }
         }
         .padding(.horizontal, 22)
@@ -217,7 +221,7 @@ private struct AlternativeTile: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 14)
             .padding(.vertical, 14)
-            .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(selected ? Color.must.ink : Color.must.surface2))
+            .background(Rectangle().fill(selected ? Color.must.ink : Color.must.surface2))
         }
         .buttonStyle(MustPressStyle())
         .accessibilityAddTraits(selected ? .isSelected : [])
@@ -250,8 +254,8 @@ private struct StepsCard: View {
         }
         .padding(.vertical, 18)
         .padding(.horizontal, 18)
-        .background(RoundedRectangle(cornerRadius: 28, style: .continuous).fill(Color.white))
-        .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).stroke(Color.must.line, lineWidth: 1))
+        .background(Rectangle().fill(Color.white))
+        .overlay(Rectangle().stroke(Color.must.line, lineWidth: 1))
     }
 }
 
@@ -398,7 +402,6 @@ private struct StreetViewCardView: View {
             } else {
                 Color.must.surface
             }
-            LinearGradient(colors: [.black.opacity(0), .black.opacity(0.72)], startPoint: .top, endPoint: .bottom)
             VStack(alignment: .leading, spacing: 6) {
                 Micro("street view · a porta").foregroundStyle(.white.opacity(0.9))
                 if let caption = card.caption {
@@ -412,16 +415,17 @@ private struct StreetViewCardView: View {
                     Button { openURL(card.viewURL) } label: {
                         Text("Ver 360°").font(.must.archivo(13, .bold)).foregroundStyle(Color.must.ink)
                             .padding(.horizontal, 12).padding(.vertical, 7)
-                            .background(Capsule().fill(.white.opacity(0.9)))
+                            .background(Rectangle().fill(.white.opacity(0.9)))
                     }
                     .buttonStyle(MustPressStyle())
                 }
             }
             .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(V8.ink)
         }
         .frame(height: 210)
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .rotationEffect(.degrees(-1))
+        .clipShape(Rectangle())
         .accessibilityElement(children: .contain)
     }
 }

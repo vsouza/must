@@ -33,56 +33,34 @@ struct TripView: View {
         let elapsed = TripStats.elapsedDays(period, now: now, calendar: cal)
         let stamps = AreaStamps.earned(areas: AreaCatalog.areas(for: region), places: places.map(HomeState.areaPlace))
 
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                topBar(period).padding(.top, 8)
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(trip == nil ? region.displayName : "Viagem").mustTitle()
-                    Text(subtitle(period: period)).mustSerif(18).foregroundStyle(Color.must.secondary)
+        VStack(spacing: 0) {
+            header(period)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    spendBlock(spent: spent, elapsed: elapsed).padding(.top, 22)
+                    dayRow(cells).padding(.top, 20)
+                    stampRow(stamps).padding(.top, 24)
+                    if let trip { cityCards(trip).padding(.top, 28) } else { weekCards(period: period).padding(.top, 28) }
+                    progressTags.padding(.top, 20)
+                    V8BarSpacer()
                 }
-                .padding(.top, 22)
-                spendBlock(spent: spent, elapsed: elapsed).padding(.top, 26)
-                dayRow(cells).padding(.top, 20)
-                stampRow(stamps).padding(.top, 24)
-                if let trip { cityCards(trip).padding(.top, 28) } else { weekCards(period: period).padding(.top, 28) }
-                progressTags.padding(.top, 20)
-                // Folga da tab bar: o conteúdo rola por trás do fade branco e termina acima dela.
-                TabBarSpacer().frame(height: 120)
+                .padding(.horizontal, 22)
             }
-            .padding(.horizontal, 22)
+            .scrollIndicators(.hidden)
         }
-        .scrollIndicators(.hidden)
-        .overlay(alignment: .bottom) {
-            LinearGradient(colors: [Color.white.opacity(0), Color.white], startPoint: .top, endPoint: .bottom)
-                .frame(height: 56)
-                .allowsHitTesting(false)
-        }
-        .tripWash()
-        .background {
-            ZStack {
-                Color.must.bg
-                BlobBackground(style: .custom([
-                    Blob(cx: 330, cy: 300, rx: 110, ry: 90, rotation: -10, fill: .green, opacity: 0.85),
-                    Blob(cx: 20, cy: 560, rx: 80, ry: 70, rotation: 10, fill: .sky),
-                ]))
-            }
-            .ignoresSafeArea()
-        }
+        .background(V8.paper.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
     }
 
     // MARK: Topo
 
-    private func topBar(_ period: ClosedRange<Date>) -> some View {
-        HStack {
-            IconButton(.voltar, label: "Voltar") { dismiss() }
-            Spacer()
-            Micro(trip == nil
-                  ? "\(region.shortName) · \(monthName(period.lowerBound))"
-                  : "\(region.displayName) · \(region.dayNumber(period.lowerBound))–\(region.dayNumber(period.upperBound)) \(region.monthShort(period.upperBound))",
-                  color: theme.labelColor)
-            Spacer()
-            IconButton(.ajustes, label: "Ajustes") { router.push(.settings, on: router.tab) }
+    private func header(_ period: ClosedRange<Date>) -> some View {
+        CutScreenHeader(title: trip == nil ? region.displayName : "Viagem",
+                        corner: [trip == nil
+                                 ? "\(region.shortName) · \(monthName(period.lowerBound))"
+                                 : "\(region.displayName) · \(region.dayNumber(period.lowerBound))–\(region.dayNumber(period.upperBound)) \(region.monthShort(period.upperBound))"],
+                        subtitle: subtitle(period: period), height: 210, onBack: { dismiss() }) {
+            CutCornerButton(systemName: "gearshape", label: "Ajustes", tint: theme.coverInk) { router.push(.settings, on: router.tab) }
         }
     }
 
@@ -126,7 +104,7 @@ struct TripView: View {
                     .foregroundStyle(.white)
                     .frame(width: 48)
                     .frame(maxHeight: .infinity)
-                    .background(Capsule().fill(Color.must.ink))
+                    .background(Rectangle().fill(Color.must.ink))
             }
             .buttonStyle(MustPressStyle())
             .accessibilityLabel("Voos e reservas")
@@ -173,9 +151,9 @@ struct TripView: View {
             .font(.must.mono(14, .semibold))
             .foregroundStyle(text)
             .frame(width: 40, height: 40)
-            .background(Circle().fill(fill))
+            .background(Rectangle().fill(fill))
             .overlay {
-                if cell.state == .today { Circle().strokeBorder(theme.tripColor, lineWidth: 2.5).padding(-4) }
+                if cell.state == .today { Rectangle().strokeBorder(theme.tripColor, lineWidth: 2.5).padding(-4) }
             }
             .overlay(alignment: .topTrailing) {
                 if trip == nil, cell.state == .done { Image(systemName: "checkmark").font(.system(size: 8, weight: .bold)).foregroundStyle(Color.must.greenText).offset(x: 2, y: -2) }
@@ -226,12 +204,11 @@ struct TripView: View {
         let current = trip.city(on: now, calendar: cal)
         let shown = Array(trip.cities.prefix(3))
         // Pilha com altura do conteúdo (nada de altura fixa): a sobreposição é só a decorativa (−8 pt, abaixo do limite de 12).
-        return VStack(alignment: .leading, spacing: -8) {
+        return VStack(alignment: .leading, spacing: 0) {
             ForEach(Array(shown.enumerated()), id: \.element.id) { index, city in
                 cityCard(city, trip: trip, isCurrent: city.id == current?.id, isLast: index == shown.count - 1, index: index)
                     .stackCard(tint: index == 0 ? .must(.eat) : index == 1 ? .must(.drink) : .sky,
                                rotation: index == 0 ? -2 : index == 1 ? 1.5 : 0)
-                    .padding(.leading, index == 0 ? 60 : index == 1 ? 30 : 0)
             }
         }
     }
@@ -295,13 +272,11 @@ struct TripView: View {
         let weekStart = cal.dateInterval(of: .weekOfYear, for: today)?.start ?? today
         let lastWeek = cal.date(byAdding: .day, value: -7, to: weekStart) ?? weekStart
         let saveForEnd = places.filter { $0.saveForEnd && !$0.isDone }
-        return VStack(alignment: .leading, spacing: -8) {
+        return VStack(alignment: .leading, spacing: 0) {
             weekCard(start: weekStart, title: "Esta semana")
                 .stackCard(color: .eat, rotation: -2)
-                .padding(.leading, 60)
             weekCard(start: lastWeek, title: "Semana passada")
                 .stackCard(color: .drink, rotation: 1.5)
-                .padding(.leading, 30)
             VStack(alignment: .leading, spacing: 8) {
                 Micro("fica pro fim · quando você pedir", color: Color.must.blueText)
                 saveForEndBlock(saveForEnd)

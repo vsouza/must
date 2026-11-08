@@ -53,8 +53,8 @@ struct NewTripStep6: View {
         Button(action: action) {
             HStack(spacing: 18) {
                 ZStack {
-                    Circle().fill(filled ? V8.ink : .clear)
-                    Circle().strokeBorder(V8.ink, lineWidth: 1.5)
+                    Rectangle().fill(filled ? V8.ink : .clear)
+                    Rectangle().strokeBorder(V8.ink, lineWidth: 1.5)
                     if let glyph { V8Glyph(glyph).frame(width: 22, height: 22).foregroundStyle(filled ? V8.white : V8.ink) }
                     if let system { Image(systemName: system).font(.system(size: 18, weight: .medium)).foregroundStyle(V8.ink) }
                 }
@@ -90,7 +90,7 @@ struct NewTripStep6: View {
             }
             .multilineTextAlignment(.leading)
             .padding(18)
-            .background(RoundedRectangle(cornerRadius: 28, style: .continuous).fill(V8.ink))
+            .background(Rectangle().fill(V8.ink))
         }
         .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
@@ -113,8 +113,7 @@ private struct PasteSheet: View {
             Text(title).font(V8Font.display(30)).tracking(-1).foregroundStyle(V8.ink)
             NewTripNote(text: prompt)
             TextEditor(text: $text).font(V8Font.text(15)).scrollContentBackground(.hidden)
-                .padding(10).background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(V8.white))
-                .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(V8.bone, lineWidth: 1))
+                .padding(10).overlay(Rectangle().strokeBorder(V8.ink, lineWidth: 2))
                 .frame(minHeight: 200)
             if !note.isEmpty { NewTripNote(text: note) }
             HStack(spacing: 12) {
@@ -230,7 +229,7 @@ struct NewTripStep7: View {
                             .keyboardType(.decimalPad).focused($fxFocused)
                             .font(V8Font.mono(16, weight: .semibold)).foregroundStyle(V8.ink)
                             .padding(.horizontal, 12).frame(minWidth: 70, maxWidth: 110, minHeight: 40)
-                            .background(Capsule().fill(V8.white)).overlay(Capsule().strokeBorder(V8.bone, lineWidth: 1))
+                            .overlay(Rectangle().strokeBorder(V8.ink, lineWidth: 2))
                         Text("· último câmbio guardado").font(V8Font.text(13)).foregroundStyle(V8.mute).lineLimit(2)
                     }
                 }
@@ -359,8 +358,8 @@ struct NewTripStep8: View {
             Text(detail).font(V8Font.text(15)).foregroundStyle(V8.mute).fixedSize(horizontal: false, vertical: true)
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    Capsule().fill(V8.rule)
-                    Capsule().fill(V8.orange).frame(width: geo.size.width * progress)
+                    Rectangle().fill(V8.ink.opacity(0.15))
+                    Rectangle().fill(V8.orange).frame(width: geo.size.width * progress)
                 }
             }
             .frame(height: 5).padding(.top, 8)
@@ -445,7 +444,7 @@ struct NewTripReady: View {
                 }
                 Spacer(minLength: 28)
                 HStack(spacing: 10) {
-                    Circle().strokeBorder(.white, lineWidth: 2).frame(width: 26, height: 26).overlay(Circle().fill(.white).frame(width: 12, height: 12))
+                    Rectangle().strokeBorder(.white, lineWidth: 2).frame(width: 26, height: 26).overlay(Rectangle().fill(.white).frame(width: 12, height: 12))
                     SpecLabel(model.draft.name, color: .white)
                 }
                 SpecLabel("Primeiro dia", color: .white.opacity(0.85)).padding(.top, 18)
@@ -482,11 +481,11 @@ struct NewTripReady: View {
                     .lineLimit(2).fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
-            Circle().fill(V8.paper).frame(width: 48, height: 48)
+            Rectangle().fill(V8.paper).frame(width: 48, height: 48)
                 .overlay { V8Glyph(.arrow).frame(width: 18, height: 18).foregroundStyle(V8.ink) }
         }
         .padding(16)
-        .background(RoundedRectangle(cornerRadius: 28, style: .continuous).fill(V8.ink))
+        .background(Rectangle().fill(V8.ink))
         .accessibilityElement(children: .combine)
     }
 }

@@ -146,13 +146,13 @@ struct AddLinkView: View {
                         .foregroundStyle(mode == option ? Color.white : Color.must.ink)
                         .padding(.horizontal, 16)
                         .frame(height: 40)
-                        .background(Capsule().fill(mode == option ? Color.must.ink : .clear))
+                        .background(Rectangle().fill(mode == option ? Color.must.ink : .clear))
                 }
                 .buttonStyle(MustPressStyle())
             }
         }
         .padding(3)
-        .background(Capsule().fill(Color.must.surface))
+        .background(Rectangle().fill(Color.must.surface))
         .accessibilityElement(children: .contain)
     }
 
@@ -194,7 +194,7 @@ struct AddLinkView: View {
         .padding(.leading, 18)
         .padding(.trailing, 8)
         .frame(height: 58)
-        .background(Color.must.surface, in: RoundedRectangle(cornerRadius: 29, style: .continuous))
+        .background(Color.must.surface, in: Rectangle())
     }
 
     private var badges: some View {
@@ -207,7 +207,7 @@ struct AddLinkView: View {
                     .frame(minWidth: 32)
                     .padding(.horizontal, 6)
                     .frame(height: 44)
-                    .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(on ? Color.must.ink : Color.must.surface))
+                    .background(Rectangle().fill(on ? Color.must.ink : Color.must.surface))
             }
             Text("Também pelo Atalho “Compartilhar → Must”").mustMeta().padding(.leading, 4)
         }
@@ -248,7 +248,7 @@ struct AddLinkView: View {
                 .font(.must.serif(18))
                 .lineLimit(3...8)
                 .padding(14)
-                .background(Color.white, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .background(Color.white, in: Rectangle())
             Button {
                 Task { await runPasted() }
             } label: { Pill("Ler texto", style: .green) }
@@ -264,7 +264,7 @@ struct AddLinkView: View {
             ForEach(Array(model.stepLines.enumerated()), id: \.offset) { _, step in
                 HStack(alignment: .top, spacing: 12) {
                     ZStack {
-                        Circle().fill(step.done ? Color.must.green : Color.must.surface)
+                        Rectangle().fill(step.done ? Color.must.green : Color.must.surface)
                         if step.done { MustIconView(.ok, size: 12).foregroundStyle(Color.must.greenText) }
                     }
                     .frame(width: 22, height: 22)

@@ -12,71 +12,67 @@ struct FlightChecklistView: View {
     var body: some View {
         let items = flight.checklist
         VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .top, spacing: 12) {
-                Text("Checklist deste voo · \(items.filter(\.done).count) de \(items.count)")
-                    .font(.must.archivo(22, .semibold)).foregroundStyle(Color.must.ink)
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                Text("Checklist · \(items.filter(\.done).count) de \(items.count)")
+                    .font(V8Font.text(20, weight: .bold)).foregroundStyle(V8.ink)
                     .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 8)
-                Text("modelo: \(FlightRules.templateLabel(flight.template, legs: flight.legs))")
-                    .font(.must.archivo(13)).foregroundStyle(Color.must.secondary)
-                    .padding(.horizontal, 12).padding(.vertical, 7)
-                    .background(Capsule().fill(Color.must.surface))
+                SpecLabel("modelo: \(FlightRules.templateLabel(flight.template, legs: flight.legs))").multilineTextAlignment(.trailing)
             }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
+            .overlay(alignment: .bottom) { IndexRule() }
             ForEach(ChecklistPhase.allCases) { phase in
                 let rows = items.filter { $0.phase == phase }
                 if !rows.isEmpty {
-                    Micro(phase.label).padding(.top, 20)
-                    RowDivider().padding(.top, 6)
+                    HStack {
+                        MonoLabel(phase.label, size: 10, color: V8.paper)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 8)
+                    .background(V8.ink)
                     ForEach(rows) { item in
                         row(item)
-                        if item.id != rows.last?.id { RowDivider() }
                     }
                 }
             }
         }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 26, style: .continuous).fill(Color.white))
-        .shadow(color: .black.opacity(0.06), radius: 18, y: 6)
     }
 
     private func row(_ item: ChecklistItem) -> some View {
         Button { onToggle(item) } label: {
             HStack(alignment: .top, spacing: 14) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(item.done ? Color.must.green : Color.clear)
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .strokeBorder(item.done ? Color.clear : Color.must.line, lineWidth: 1.5)
-                    if item.done { MustIconView(.ok, size: 14).foregroundStyle(Color.must.greenText) }
+                    Rectangle().fill(item.done ? V8.orange : Color.clear)
+                    Rectangle().strokeBorder(V8.ink, lineWidth: 2)
+                    if item.done { MustIconView(.ok, size: 14).foregroundStyle(V8.ink) }
                 }
-                .frame(width: 26, height: 26)
-                .padding(.top, 2)
+                .frame(width: 28, height: 28)
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(item.title)
-                        .font(.must.archivo(16, .semibold))
-                        .foregroundStyle(item.done ? Color.must.secondary : Color.must.ink)
+                        .font(V8Font.text(16, weight: .bold))
+                        .foregroundStyle(item.done ? V8.mute : V8.ink)
                         .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
                     if let note = noteLine(item) {
-                        Text(note).mustMeta().multilineTextAlignment(.leading)
+                        Text(note).font(V8Font.text(13)).foregroundStyle(V8.mute).multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
-                Spacer(minLength: 8)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 if let due = dueChip(item) {
-                    Text(due)
-                        .font(.must.archivo(13, .semibold))
-                        .foregroundStyle(Color(hex: 0x0F3B8C))
-                        .padding(.horizontal, 12).padding(.vertical, 7)
-                        .background(Capsule().fill(Color(hex: 0xEAF2FF)))
-                        .fixedSize()
+                    CutTag(text: due).fixedSize()
                 }
             }
+            .padding(.horizontal, 20)
             .padding(.vertical, 14)
             .frame(maxWidth: .infinity, alignment: .leading)
+            .overlay(alignment: .bottom) { IndexRule() }
             .contentShape(Rectangle())
         }
-        .buttonStyle(MustPressStyle())
+        .buttonStyle(.plain)
         .accessibilityHint(item.done ? "Desmarcar" : "Marcar como feito")
     }
 

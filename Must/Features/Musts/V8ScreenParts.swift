@@ -22,17 +22,17 @@ struct V8CornerButton: View {
                 .frame(width: 44, height: 44)
                 .background {
                     if filled {
-                        Circle().fill(onInk ? V8.paper : V8.ink)
+                        Rectangle().fill(onInk ? V8.paper : V8.ink)
                     } else if onPhoto {
-                        Circle().fill(V8.ink.opacity(0.28))
+                        Rectangle().fill(V8.ink.opacity(0.28))
                     }
                 }
                 .overlay {
                     if !filled {
-                        Circle().strokeBorder((onInk || onPhoto ? V8.white : V8.ink).opacity(onPhoto ? 0.85 : 0.9), lineWidth: 1)
+                        Rectangle().strokeBorder((onInk || onPhoto ? V8.white : V8.ink).opacity(onPhoto ? 0.85 : 0.9), lineWidth: 1)
                     }
                 }
-                .contentShape(Circle())
+                .contentShape(Rectangle())
         }
         .buttonStyle(MustPressStyle())
         .accessibilityLabel(label)
@@ -121,7 +121,7 @@ struct V8Tag: View {
             .foregroundStyle(foreground)
             .padding(.horizontal, 9)
             .padding(.vertical, 5)
-            .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(background))
+            .background(Rectangle().fill(background))
     }
 
     private var foreground: Color {
@@ -186,7 +186,7 @@ struct V8Thumb: View {
     var body: some View {
         V8Photo(url: url, placeholder: dimmed ? V8.mute.opacity(0.6) : Color(hex: 0x3A3A38))
             .frame(width: size, height: size)
-            .clipShape(RoundedRectangle(cornerRadius: size * 0.27, style: .continuous))
+            .clipShape(Rectangle())
             .opacity(dimmed ? 0.6 : 1)
             .contentShape(Rectangle())
             .onTapGesture {

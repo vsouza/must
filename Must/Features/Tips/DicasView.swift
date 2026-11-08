@@ -32,63 +32,56 @@ struct DicasView: View {
                                   time: region.timeString)
         let today = DayTips.filtered(cards, by: .now)
         let shown = DayTips.filtered(cards, by: filter)
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                header.padding(.top, 8)
-                HStack(alignment: .lastTextBaseline, spacing: 12) {
-                    Text("Dicas")
-                        .font(V8Font.display(52))
-                        .tracking(-1.6)
-                        .foregroundStyle(V8.ink)
-                        .accessibilityAddTraits(.isHeader)
-                    BigNumeral("\(today.count)", size: 74, color: V8.orange)
-                    SpecLabel("pra hoje").padding(.bottom, 10)
-                }
-                .padding(.top, 22)
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("Dicas: \(today.count) pra hoje")
-                filters(areaName: context.areaName).padding(.top, 18)
-                VStack(spacing: 12) {
+        VStack(spacing: 0) {
+            CutScreenHeader(title: "Dicas", corner: ["Dicas · \(region.timeString(now))", "pra agora e pro resto do dia"],
+                            height: 210, onBack: { dismiss() }, backIcon: "xmark")
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack(alignment: .center, spacing: 12) {
+                        BigNumeral("\(today.count)", size: 74, color: V8.orange)
+                            .fixedSize()
+                        SpecLabel("pra hoje")
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 18)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("\(today.count) dicas pra hoje")
+                    filters(areaName: context.areaName).padding(.horizontal, 20).padding(.vertical, 16)
+                    IndexRule()
                     ForEach(shown) { card in
-                        VStack(alignment: .leading, spacing: 6) {
+                        VStack(alignment: .leading, spacing: 0) {
                             Button { if let id = card.placeId { router.push(.place(id: id)) } } label: { DayTipCardView(card: card) }
-                                .buttonStyle(MustPressStyle())
+                                .buttonStyle(.plain)
                                 .contextMenu {
                                     Button(saved.contains(card.id) ? "Tirar das salvas" : "Salvar dica",
                                            systemImage: saved.contains(card.id) ? "bookmark.slash" : "bookmark") { toggleSaved(card.id) }
                                 }
                             // Amigos que foram a esse lugar (mock "exemplo" por enquanto): uma linha, some sem visita.
                             if let id = card.placeId, let line = FriendsLine.summary(friends.visits(placeId: id)) {
-                                HStack(spacing: 6) {
+                                HStack(spacing: 8) {
                                     Text(line).font(V8Font.text(13)).foregroundStyle(V8.mute).lineLimit(2)
-                                    if friends.isSample { V8Tag(text: "exemplo", style: .paper) }
+                                    if friends.isSample { CutTag(text: "exemplo") }
                                 }
-                                .padding(.horizontal, 6)
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 10)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .overlay(alignment: .bottom) { IndexRule() }
                             }
                         }
                     }
                     if shown.isEmpty {
                         Text(filter == .saved ? "Segure uma dica pra salvar." : "Nada aqui por enquanto.")
-                            .font(V8Font.text(15)).foregroundStyle(V8.mute).padding(.top, 20)
+                            .font(V8Font.text(15)).foregroundStyle(V8.mute).padding(20)
                     }
+                    V8BarSpacer()
                 }
-                .padding(.top, 20)
-                V8BarSpacer()
             }
-            .padding(.horizontal, 20)
+            .scrollIndicators(.hidden)
         }
-        .scrollIndicators(.hidden)
         .background(V8.paper.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
         .task { await loadPeopleTips(context) }
-    }
-
-    private var header: some View {
-        HStack(alignment: .top) {
-            V8SpecStack(lines: ["Dicas · \(region.timeString(now))", "pra agora e pro resto do dia"]).padding(.top, 14)
-            Spacer(minLength: 12)
-            V8CornerButton(systemName: "xmark", label: "Fechar") { dismiss() }
-        }
     }
 
     private func filters(areaName: String?) -> some View {
@@ -179,21 +172,18 @@ struct DicasView: View {
     }
 }
 
-/// Um card de dica: etiqueta e rótulo em cima, título forte, detalhe.
+/// Uma dica como faixa de índice (corte): laranja = é do seu board e abre o Lugar, tinta = o mundo lá fora, papel = o resto.
 struct DayTipCardView: View {
     var card: DayTips.Card
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .center) {
+            HStack(alignment: .firstTextBaseline) {
                 Text(card.tag.uppercased())
-                    .font(V8Font.mono(11))
+                    .font(V8Font.mono(11, weight: .semibold))
                     .tracking(1.1)
                     .lineLimit(1)
-                    .foregroundStyle(tagForeground)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(tagBackground))
+                    .foregroundStyle(tagColor)
                 Spacer(minLength: 8)
                 SpecLabel(card.corner, color: cornerColor)
             }
@@ -205,20 +195,17 @@ struct DayTipCardView: View {
             if !card.detail.isEmpty {
                 Text(card.detail)
                     .font(V8Font.text(14))
-                    .foregroundStyle(card.tone == .ink ? V8.muteDark : V8.ink.opacity(0.78))
+                    .foregroundStyle(card.tone == .ink ? V8.muteDark : card.tone == .orange ? V8.ink.opacity(0.8) : V8.mute)
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, 20)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(fill))
-        .overlay {
-            if card.tone == .white {
-                RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(V8.ink.opacity(0.1), lineWidth: 1)
-            }
-        }
+        .background(fill)
+        .overlay(alignment: .bottom) { IndexRule() }
+        .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }
 
@@ -226,30 +213,22 @@ struct DayTipCardView: View {
         switch card.tone {
         case .orange: V8.orange
         case .ink: V8.ink
-        case .white: V8.white
+        case .white: Color.clear
         }
     }
 
-    private var tagBackground: Color {
+    private var tagColor: Color {
         switch card.tone {
         case .orange: V8.ink
-        case .ink: V8.graphite
-        case .white: card.placeId != nil ? V8.orange : V8.ink.opacity(0.07)
-        }
-    }
-
-    private var tagForeground: Color {
-        switch card.tone {
-        case .orange: V8.orange
-        case .ink: V8.white
-        case .white: card.placeId != nil ? V8.ink : V8.mute
+        case .ink: V8.orange
+        case .white: card.placeId != nil ? V8.orangeDeep : V8.mute
         }
     }
 
     private var cornerColor: Color {
         switch card.tone {
         case .orange: V8.ink
-        case .ink: V8.orange
+        case .ink: V8.muteDark
         case .white: V8.mute
         }
     }

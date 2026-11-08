@@ -121,7 +121,6 @@ struct NewListView: View {
                         .overlay(alignment: .bottomTrailing) {
                             if let credit = shownCredit { Credit(credit, color: color.text).padding(10) }
                         }
-                        .shadow(color: Color(hex: 0x121316, opacity: 0.14), radius: 25, x: 0, y: 20)
                         .rotationEffect(.degrees(-1.2))
                         .padding(.top, 22)
 
@@ -178,7 +177,7 @@ struct NewListView: View {
                 }
                 .padding(.horizontal, 16)
                 .frame(height: 52)
-                .background(Color.must.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .background(Color.must.surface, in: Rectangle())
             }
         }
     }
@@ -193,7 +192,7 @@ struct NewListView: View {
                         MustIconView(item, size: 22)
                             .foregroundStyle(icon == item ? .white : Color.must.ink)
                             .frame(width: 44, height: 44)
-                            .background(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .background(Rectangle()
                                 .fill(icon == item ? Color.must.ink : Color.must.surface))
                     }
                     .buttonStyle(MustPressStyle())
@@ -204,7 +203,7 @@ struct NewListView: View {
                         .font(.must.archivo(13, .semibold))
                         .foregroundStyle(Color.must.ink)
                         .frame(width: 44, height: 44)
-                        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .overlay(Rectangle()
                             .strokeBorder(Color(hex: 0xD5D8DD), style: StrokeStyle(lineWidth: 1.2, dash: [4, 3])))
                 }
                 .buttonStyle(MustPressStyle())
@@ -221,11 +220,11 @@ struct NewListView: View {
                 HStack(spacing: 8) {
                     ForEach(MustColor.allCases) { c in
                         Button { color = c } label: {
-                            Circle()
+                            Rectangle()
                                 .fill(c.gradient)
                                 .frame(width: 34, height: 34)
                                 .padding(3)
-                                .overlay(Circle().strokeBorder(Color.must.ink, lineWidth: color == c ? 2 : 0))
+                                .overlay(Rectangle().strokeBorder(Color.must.ink, lineWidth: color == c ? 2 : 0))
                         }
                         .buttonStyle(MustPressStyle())
                         .accessibilityLabel(c.label)
@@ -280,24 +279,24 @@ struct NewListView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
                     Button { selectedPhoto = nil; photoChanged = true } label: {
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        Rectangle()
                             .fill(color.gradient)
                             .frame(width: 84, height: 64)
                             .overlay(Text("sem foto").font(.must.mono(9)).foregroundStyle(color.text))
-                            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.must.ink, lineWidth: selectedPhoto == nil ? 2 : 0))
+                            .overlay(Rectangle().strokeBorder(Color.must.ink, lineWidth: selectedPhoto == nil ? 2 : 0))
                     }
                     ForEach(photos.prefix(4)) { photo in
                         Button { selectedPhoto = photo; photoChanged = true } label: {
                             TintedPhoto(url: URL(string: photo.url), color: color, tintOpacity: 0.35)
                                 .frame(width: 84, height: 64)
-                                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                                .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.must.ink, lineWidth: selectedPhoto == photo ? 2 : 0))
+                                .clipShape(Rectangle())
+                                .overlay(Rectangle().strokeBorder(Color.must.ink, lineWidth: selectedPhoto == photo ? 2 : 0))
                         }
                         .accessibilityLabel("Foto de \(photo.owner)")
                     }
                     if photos.isEmpty {
                         ForEach(0..<3, id: \.self) { _ in
-                            RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color.must.surface).frame(width: 84, height: 64)
+                            Rectangle().fill(Color.must.surface).frame(width: 84, height: 64)
                         }
                     }
                 }
@@ -325,7 +324,7 @@ struct NewListView: View {
                         .foregroundStyle(Color.must.ink)
                         .padding(.vertical, 9)
                         .padding(.horizontal, 13)
-                        .background(Capsule().fill(Color.must.surface))
+                        .background(Rectangle().fill(Color.must.surface))
                     }
                 }
             }
@@ -340,7 +339,7 @@ struct NewListView: View {
             }
             .padding(.horizontal, 16)
             .frame(height: 52)
-            .background(Color.must.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .background(Color.must.surface, in: Rectangle())
             Text("Tirar uma sub-lista não apaga os lugares: eles ficam sem sub.").mustMeta()
         }
     }
@@ -376,8 +375,8 @@ struct NewListView: View {
                     .foregroundStyle(Color(hex: 0xC2261D))
                     .frame(maxWidth: .infinity)
                     .frame(height: 52)
-                    .background(Capsule().fill(.white))
-                    .overlay(Capsule().strokeBorder(Color(hex: 0xF1C9C6)))
+                    .background(Rectangle().fill(.white))
+                    .overlay(Rectangle().strokeBorder(Color(hex: 0xF1C9C6)))
             }
             .buttonStyle(MustPressStyle())
             .confirmationDialog("Apagar \(editing?.displayName ?? "lista")?", isPresented: $confirmDelete, titleVisibility: .visible) {
@@ -522,7 +521,7 @@ struct IconGridSheet: View {
                                 MustIconView(icon, size: 22)
                                     .foregroundStyle(selected == icon ? .white : Color.must.ink)
                                     .frame(width: 48, height: 48)
-                                    .background(Circle().fill(selected == icon ? Color.must.ink : Color.must.surface))
+                                    .background(Rectangle().fill(selected == icon ? Color.must.ink : Color.must.surface))
                                 Text(icon.label).font(.must.archivo(10)).foregroundStyle(Color.must.secondary).lineLimit(1)
                             }
                         }

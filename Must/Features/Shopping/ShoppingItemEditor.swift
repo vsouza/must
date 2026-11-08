@@ -43,7 +43,7 @@ struct ShoppingItemEditor: View {
                     Button(action: save) {
                         Text("Salvar").font(.must.archivo(15, .semibold)).foregroundStyle(.white)
                             .padding(.horizontal, 18).frame(height: 40)
-                            .background(Capsule().fill(trimmedName.isEmpty ? Color.must.secondary : Color.must.ink))
+                            .background(Rectangle().fill(trimmedName.isEmpty ? Color.must.secondary : Color.must.ink))
                     }
                     .buttonStyle(MustPressStyle())
                     .disabled(trimmedName.isEmpty)
@@ -90,7 +90,7 @@ struct ShoppingItemEditor: View {
                     Stepper("\(qty)", value: $qty, in: 1...99).font(.must.mono(15)).fixedSize()
                 }
                 .padding(.horizontal, 16).padding(.vertical, 10)
-                .background(Color.must.surface2, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .background(Color.must.surface2, in: Rectangle())
 
                 VStack(alignment: .leading, spacing: 10) {
                     Micro("situação")
@@ -156,7 +156,7 @@ struct ShoppingItemEditor: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.must.surface2, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .background(Color.must.surface2, in: Rectangle())
         }
     }
 

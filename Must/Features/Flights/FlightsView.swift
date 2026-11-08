@@ -32,25 +32,20 @@ struct FlightsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Voos").mustTitle()
-                    Text(subtitle).mustSerif(18).foregroundStyle(Color.must.secondary)
-                }
-                .padding(.top, 18)
-
-                if let flight = current {
-                    FlightCardView(flight: flight, region: region, now: now)
-                    FlightChecklistView(flight: flight, region: region, now: now) { item in toggle(item, in: flight) }
-                        .padding(.top, 18)
-                    remindersRow.padding(.top, 14)
-                    statusLine.padding(.top, 12)
-                    otherFlights(except: flight).padding(.top, 10)
-                } else {
-                    emptyState.padding(.top, 26)
-                }
-                TabBarSpacer()
+            Text(subtitle.uppercased()).font(V8Font.mono(10)).tracking(1).foregroundStyle(V8.mute)
+                .padding(.horizontal, 20).padding(.vertical, 14)
+            IndexRule()
+            if let flight = current {
+                FlightCardView(flight: flight, region: region, now: now)
+                FlightChecklistView(flight: flight, region: region, now: now) { item in toggle(item, in: flight) }
+                remindersRow
+                statusLine
+                otherFlights(except: flight)
+            } else {
+                emptyState
             }
-            .padding(.horizontal, 22)
+            V8BarSpacer()
+            }
         }
         .scrollIndicators(.hidden)
         .refreshable { await refreshAll() }
@@ -59,7 +54,7 @@ struct FlightsView: View {
 
     private var subtitle: String {
         guard let next = upcoming.first, let departs = next.departs else { return "nenhum voo pela frente" }
-        return "próximo \(FlightFormat.daysAway(departs, now: now, region: region)) · tudo que precisa estar pronto antes de cada perna"
+        return "Próximo \(FlightFormat.daysAway(departs, now: now, region: region)) · tudo pronto antes de cada perna"
     }
 
     // MARK: Status e checklist
@@ -99,8 +94,9 @@ struct FlightsView: View {
         let live = FlightStatusUpdater.activeSource() != nil
         let stamp = checkedAt.map { " · \(FlightFormat.time($0, zone: region.timeZone))" } ?? ""
         return Text(live ? "status ao vivo · AeroDataBox\(stamp)" : "só o horário programado · sem chave de status ao vivo")
-            .font(.must.micro).textCase(.uppercase).tracking(1.1)
-            .foregroundStyle(Color.must.secondary)
+            .font(V8Font.mono(10)).textCase(.uppercase).tracking(1)
+            .foregroundStyle(V8.mute)
+            .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
@@ -108,11 +104,16 @@ struct FlightsView: View {
 
     private var remindersRow: some View {
         Toggle(isOn: Binding(get: { reminders }, set: { setReminders($0) })) {
-            FormRow("Lembrar no horário", subtitle: "check-in, malas e portão · só o que tem hora marcada")
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Lembrar no horário").font(V8Font.text(16, weight: .bold)).foregroundStyle(V8.ink)
+                Text("check-in, malas e portão · só o que tem hora marcada").font(V8Font.text(13)).foregroundStyle(V8.mute)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
         .toggleStyle(.must)
-        .padding(16)
-        .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(Color.must.surface))
+        .padding(.horizontal, 20)
+        .padding(.vertical, 14)
+        .overlay(alignment: .bottom) { IndexRule() }
     }
 
     /// Ligar pede a permissão agora (nunca antes). Desligar tira o que estava agendado.
@@ -133,20 +134,24 @@ struct FlightsView: View {
     private func otherFlights(except flight: Flight) -> some View {
         let others = upcoming.filter { $0.id != flight.id }
         if !others.isEmpty {
-            VStack(alignment: .leading, spacing: 0) {
-                Micro("outros voos").padding(.bottom, 8)
-                ForEach(others) { other in
-                    Button { selectedId = other.id } label: {
-                        HStack {
-                            Text(other.legs.map(\.number).joined(separator: " · ")).font(.must.archivo(16, .semibold))
-                            Spacer()
-                            Text(other.routeLabel).font(.must.mono(13)).foregroundStyle(Color.must.secondary)
+            CutSection(label: "outros voos · \(others.count)", inset: false) {
+                VStack(spacing: 0) {
+                    ForEach(others) { other in
+                        Button { selectedId = other.id } label: {
+                            HStack {
+                                Text(other.legs.map(\.number).joined(separator: " · ")).font(V8Font.text(16, weight: .bold))
+                                Spacer()
+                                Text(other.routeLabel).font(V8Font.mono(12, weight: .semibold)).foregroundStyle(V8.mute)
+                            }
+                            .foregroundStyle(V8.ink)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 14)
+                            .frame(minHeight: 56)
+                            .overlay(alignment: .top) { IndexRule() }
+                            .contentShape(Rectangle())
                         }
-                        .foregroundStyle(Color.must.ink)
-                        .padding(.vertical, 12)
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(MustPressStyle())
-                    RowDivider()
                 }
             }
         }
@@ -154,11 +159,13 @@ struct FlightsView: View {
 
     private var emptyState: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Nenhum voo ainda.").font(.must.archivo(20, .semibold)).foregroundStyle(Color.must.ink)
-            Text("Traga o e-mail ou o PDF da companhia: o localizador e os trechos entram sozinhos.").mustMeta()
+            Text("Nenhum voo ainda.").font(V8Font.text(20, weight: .bold)).foregroundStyle(V8.ink)
+            Text("Traga o e-mail ou o PDF da companhia: o localizador e os trechos entram sozinhos.")
+                .font(V8Font.text(15)).foregroundStyle(V8.mute)
             GhostButton("Trazer ingresso", icon: .colarLink) { router.sheet = .ticketImport(inboxId: nil) }
                 .padding(.top, 6)
         }
+        .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

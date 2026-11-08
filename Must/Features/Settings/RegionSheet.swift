@@ -257,7 +257,7 @@ struct RegionSheet: View {
                     .textFieldStyle(.plain)
                     .padding(.horizontal, 12)
                     .frame(height: 40)
-                    .background(Color.white, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .background(Color.white, in: Rectangle())
                     HStack(spacing: 8) {
                         Button {
                             if let lat = Double(latText.replacingOccurrences(of: ",", with: ".")),
@@ -325,10 +325,10 @@ private struct RegionOption: View {
             HStack(spacing: 16) {
                 ZStack {
                     if selected {
-                        Circle().fill(Color.must.ink)
+                        Rectangle().fill(Color.must.ink)
                         MustIconView(.ok, size: 16).foregroundStyle(.white)
                     } else {
-                        Circle().strokeBorder(Color(hex: 0xB9BDC4), lineWidth: 1.5)
+                        Rectangle().strokeBorder(Color(hex: 0xB9BDC4), lineWidth: 1.5)
                     }
                 }
                 .frame(width: 28, height: 28)
@@ -336,9 +336,6 @@ private struct RegionOption: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(alignment: .firstTextBaseline, spacing: 6) {
                         Text(region.displayName).font(.must.archivo(19, .semibold))
-                        if let kanji = region.kanji {
-                            Text(kanji).font(.must.kanji(15, bold: false)).opacity(0.6)
-                        }
                     }
                     .foregroundStyle(Color.must.ink)
                     Text(subtitle)
@@ -355,7 +352,7 @@ private struct RegionOption: View {
             .padding(.vertical, 22)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background {
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                Rectangle()
                     .fill(selected ? AnyShapeStyle(region.color.gradient) : AnyShapeStyle(Color.must.surface2))
             }
         }

@@ -11,44 +11,19 @@ struct OfflineMapsView: View {
     private var maps: OfflineMaps { services.maps }
 
     var body: some View {
-        ZStack(alignment: .top) {
-            Color.must.bg.ignoresSafeArea()
-            BlobBackground(style: .custom([
-                Blob(cx: 340, cy: 120, rx: 96, ry: 54, rotation: -12, fill: .blue),
-                Blob(cx: 46, cy: 790, rx: 70, ry: 60, rotation: 8, fill: .green),
-            ]))
-
-            ScrollView {
-                VStack(alignment: .leading, spacing: 14) {
-                    HStack {
-                        IconButton(.voltar, label: "Voltar") { dismiss() }
-                        Spacer()
-                    }
-                    .padding(.top, 8)
-
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Mapas offline").mustTitle()
-                        Text("baixe a cidade e o mapa funciona sem internet").mustSerif(18).foregroundStyle(Color.must.secondary)
-                    }
-                    .padding(.top, 18)
-                    .padding(.bottom, 12)
-
-                    storage
-                    ForEach(regionsInOrder) { region in
-                        section(region)
-                    }
-                    Text(footer)
-                        .font(.must.meta)
-                        .foregroundStyle(Color.must.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(.horizontal, 4)
-                }
-                .padding(.horizontal, 22)
-                .padding(.bottom, 120)
+        CutPage(title: "Mapas offline", corner: ["Ajustes · mapa"], subtitle: "Baixe a cidade e o mapa funciona sem internet",
+                height: 210, onBack: { dismiss() }) {
+            storage
+            ForEach(regionsInOrder) { region in
+                section(region)
             }
-            .refreshable { await maps.refreshManifest() }
+            Text(footer)
+                .font(V8Font.text(13))
+                .foregroundStyle(V8.mute)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(20)
         }
-        .toolbar(.hidden, for: .navigationBar)
+        .refreshable { await maps.refreshManifest() }
         .task { await maps.refreshManifest() }
         .confirmationDialog(confirmDelete.map { "Apagar o mapa de \($0.title)?" } ?? "",
                             isPresented: Binding(get: { confirmDelete != nil }, set: { if !$0 { confirmDelete = nil } }),
@@ -137,7 +112,7 @@ struct OfflineMapsView: View {
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 8) {
                     Text(pack.title).font(.must.archivo(16, .semibold)).foregroundStyle(Color.must.ink)
-                    if isHere { Tag("você está aqui", dot: Color.must.green) }
+                    if isHere { Tag("você está aqui", style: .green) }
                 }
                 Text(subtitle(pack, installed: installed, phase: phase))
                     .font(.must.meta)
@@ -169,13 +144,12 @@ struct OfflineMapsView: View {
                     .monospacedDigit()
                 Button { maps.cancel(pack.id) } label: {
                     ZStack {
-                        Circle().stroke(Color.must.line, lineWidth: 3)
-                        Circle().trim(from: 0, to: max(0.02, fraction))
-                            .stroke(Color.must.green, style: StrokeStyle(lineWidth: 3, lineCap: .round))
-                            .rotationEffect(.degrees(-90))
-                        MustIconView(.fechar, size: 12).foregroundStyle(Color.must.ink)
+                        Rectangle().stroke(V8.ink.opacity(0.2), lineWidth: 2)
+                        Rectangle().trim(from: 0, to: max(0.02, fraction))
+                            .stroke(V8.orange, style: StrokeStyle(lineWidth: 2, lineCap: .butt))
+                        MustIconView(.fechar, size: 12).foregroundStyle(V8.ink)
                     }
-                    .frame(width: 32, height: 32)
+                    .frame(width: 44, height: 44)
                     .animation(.linear(duration: 0.2), value: fraction)
                 }
                 .buttonStyle(MustPressStyle())
@@ -196,9 +170,9 @@ struct OfflineMapsView: View {
                         Button { maps.download(pack) } label: { Pill("Atualizar", style: .green) }
                             .buttonStyle(MustPressStyle())
                     } else {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 20))
-                            .foregroundStyle(Color.must.green)
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundStyle(V8.ink)
                             .accessibilityLabel("Baixado")
                     }
                     IconButton(.remover, size: 34, label: "Apagar \(pack.title)") { confirmDelete = pack }
@@ -281,7 +255,7 @@ struct OfflineMapNudge: View {
                 .font(.system(size: 17, weight: .medium))
                 .foregroundStyle(Color.must.ink)
                 .frame(width: 38, height: 38)
-                .background(Circle().fill(Color.must.surface))
+                .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
             VStack(alignment: .leading, spacing: 2) {
                 Text(pack.title).font(.must.archivo(15, .semibold)).foregroundStyle(Color.must.ink).lineLimit(1)
                 Text(status(phase, bytes: bytes)).font(.must.meta).foregroundStyle(Color.must.secondary)
@@ -304,7 +278,8 @@ struct OfflineMapNudge: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
-        .glass(cornerRadius: 26)
+        .background(V8.paper)
+        .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
         .task { if services.maps.manifest?[pack.id] == nil { await services.maps.refreshManifest() } }
     }
 

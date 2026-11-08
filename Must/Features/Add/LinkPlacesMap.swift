@@ -153,8 +153,7 @@ struct LinkPlacesMap: View {
         }
         .overlay(alignment: .topTrailing) { expandButton }
         .frame(height: 226)
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .shadow(color: Color(hex: 0x121316, opacity: 0.12), radius: 18, x: 0, y: 14)
+        .clipShape(Rectangle())
         .onAppear { command = layout.command }
         .onChange(of: layout) { command = layout.command }
         .fullScreenCover(isPresented: $expanded) {

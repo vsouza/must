@@ -50,7 +50,7 @@ struct WalletEditor: View {
                     Button(action: save) {
                         Text("Salvar").font(.must.archivo(15, .semibold)).foregroundStyle(.white)
                             .padding(.horizontal, 18).frame(height: 40)
-                            .background(Capsule().fill(name.trimmingCharacters(in: .whitespaces).isEmpty ? Color.must.secondary : Color.must.ink))
+                            .background(Rectangle().fill(name.trimmingCharacters(in: .whitespaces).isEmpty ? Color.must.secondary : Color.must.ink))
                     }
                     .buttonStyle(MustPressStyle())
                     .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
@@ -152,7 +152,7 @@ struct WalletEditor: View {
                 .padding(.horizontal, 16)
                 .frame(minHeight: 52)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.must.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .background(Color.must.surface, in: Rectangle())
         }
     }
 
@@ -183,7 +183,7 @@ struct WalletEditor: View {
                 PhotosPicker(selection: $photo, matching: .images) {
                     Text("Foto").font(.must.archivo(13, .semibold)).foregroundStyle(Color.must.ink)
                         .padding(.vertical, 9).padding(.horizontal, 13)
-                        .background(Color.must.surface, in: Capsule())
+                        .background(Color.must.surface, in: Rectangle())
                 }
                 .buttonStyle(MustPressStyle())
                 Button { picking = true } label: { Pill(attachmentName == nil ? "Arquivo" : "trocar", icon: .exportar) }

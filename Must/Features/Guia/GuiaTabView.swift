@@ -43,6 +43,7 @@ struct GuiaAreaView: View {
 
     @State private var areaId: String?
     @State private var openNow = OpenNowIndex()
+    @State private var photo: URL?
 
     private var region: Region { store.region }
     private var now: Date { AppClock.now }
@@ -74,31 +75,35 @@ struct GuiaAreaView: View {
 
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                GuiaRouteBand(points: routePoints(plan: plan, stops: stops, area: area, inArea: inArea, byId: byId, nowStopId: nowStop?.id),
+                GuiaRouteBand(photo: photo, points: routePoints(plan: plan, stops: stops, area: area, inArea: inArea, byId: byId, nowStopId: nowStop?.id),
                               lines: ["Guia · \(area?.name ?? region.shortName)", "\(inArea.count) musts · \(open) \(open == 1 ? "aberto" : "abertos")"],
                               showsBack: showsBack, onBack: { dismiss() }, onMap: { router.push(.mapa) })
                 VStack(alignment: .leading, spacing: 0) {
-                    titleRow(area).padding(.top, 22)
+                    titleRow(area).padding(.top, 22).padding(.horizontal, 20)
                     Text(GuiaBlurbs.blurb(areaId: area?.id ?? "", name: area?.name ?? "", musts: inArea.count, open: open))
                         .font(V8Font.text(17))
                         .foregroundStyle(V8.ink)
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.top, 12)
-                    if let area, !area.neighbors.isEmpty { neighbors(area).padding(.top, 18) }
-                    ForEach(chapters) { chapter in chapterView(chapter).padding(.top, 34) }
+                        .padding(.horizontal, 20)
+                    if let area, !area.neighbors.isEmpty { neighbors(area).padding(.vertical, 18) }
+                    IndexRule()
+                    ForEach(chapters) { chapter in chapterView(chapter) }
                     if chapters.isEmpty {
                         Text("Nada seu neste bairro ainda. Cole um link no + ou veja os vizinhos.")
-                            .font(V8Font.text(15)).foregroundStyle(V8.mute).padding(.top, 30)
+                            .font(V8Font.text(15)).foregroundStyle(V8.mute).padding(20)
                     }
                     V8BarSpacer()
                 }
-                .padding(.horizontal, 20)
             }
         }
         .scrollIndicators(.hidden)
         .ignoresSafeArea(edges: .top)
         .background(V8.paper.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
+        .task(id: "\(region.trip.id)|\(area?.id ?? "")|\(places.count)") {
+            photo = await DayBand<EmptyView>.photo(region: region, areaId: area?.id, places: inArea)
+        }
     }
 
     // MARK: Cabeçalho
@@ -144,23 +149,24 @@ struct GuiaAreaView: View {
                             HStack(spacing: 8) {
                                 Text(edge.line?.code ?? "a pé")
                                     .font(V8Font.mono(10).weight(.bold))
-                                    .foregroundStyle(V8.white)
+                                    .foregroundStyle(V8.paper)
                                     .lineLimit(1)
                                     .minimumScaleFactor(0.6)
-                                    .frame(width: 30, height: 30)
-                                    .background(Circle().fill(V8.ink))
+                                    .frame(width: 32, height: 32)
+                                    .background(Rectangle().fill(V8.ink))
                                 Text("\(other.name) · \(edge.minutes) min")
-                                    .font(V8Font.text(15, weight: .semibold))
+                                    .font(V8Font.mono(11, weight: .semibold))
+                                    .tracking(0.6)
+                                    .textCase(.uppercase)
                                     .foregroundStyle(V8.ink)
                                     .lineLimit(1)
                             }
                             .padding(.leading, 4)
-                            .padding(.trailing, 14)
-                            .frame(minHeight: 38)
-                            .background(Capsule().fill(V8.white))
-                            .overlay(Capsule().strokeBorder(V8.ink.opacity(0.14), lineWidth: 1))
+                            .padding(.trailing, 12)
+                            .frame(minHeight: 40)
+                            .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
                         }
-                        .buttonStyle(MustPressStyle())
+                        .buttonStyle(.plain)
                         .accessibilityLabel("\(other.name), \(edge.minutes) minutos\(edge.line.map { " pela \($0.name)" } ?? " a pé")")
                     }
                 }
@@ -174,22 +180,25 @@ struct GuiaAreaView: View {
     // MARK: Capítulos
 
     private func chapterView(_ chapter: GuiaChapters.Chapter) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .lastTextBaseline, spacing: 12) {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
                 Text(chapter.period.title)
-                    .font(V8Font.display(34, width: 82))
+                    .font(V8Font.display(30, width: 82))
                     .tracking(-1)
-                    .foregroundStyle(V8.orangeDeep)
+                    .foregroundStyle(V8.ink)
+                Spacer(minLength: 8)
                 SpecLabel(GuiaChapters.rangeText(chapter, time: region.timeString))
             }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            .background(V8.paper)
+            .overlay(alignment: .bottom) { IndexRule() }
             .accessibilityElement(children: .combine)
             .accessibilityAddTraits(.isHeader)
-            VStack(spacing: 0) {
-                ForEach(chapter.items) { item in
-                    Button { if let id = item.placeId { router.push(.place(id: id)) } } label: { row(item) }
-                        .buttonStyle(.plain)
-                        .accessibilityAddTraits(item.placeId == nil ? [] : .isButton)
-                }
+            ForEach(chapter.items) { item in
+                Button { if let id = item.placeId { router.push(.place(id: id)) } } label: { row(item) }
+                    .buttonStyle(.plain)
+                    .accessibilityAddTraits(item.placeId == nil ? [] : .isButton)
             }
         }
     }
@@ -198,8 +207,8 @@ struct GuiaAreaView: View {
         let place = item.placeId.flatMap { id in places.first { $0.id == id } }
         return HStack(spacing: 14) {
             if item.micro {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .strokeBorder(V8.ink.opacity(0.35), style: StrokeStyle(lineWidth: 1, dash: [3, 3]))
+                Rectangle()
+                    .strokeBorder(V8.ink.opacity(0.5), style: StrokeStyle(lineWidth: 1.5, dash: [3, 3]))
                     .frame(width: 44, height: 44)
             } else {
                 V8Thumb(placeId: place?.placeId, refs: place?.photoRefs ?? [], size: 44, dimmed: item.done, opensViewer: true)
@@ -210,16 +219,18 @@ struct GuiaAreaView: View {
             }
             Spacer(minLength: 8)
             if item.isNow {
-                V8Tag(text: "agora", style: .orange)
+                CutTag(text: "agora", filled: true, orange: true)
             } else if let at = item.at {
                 Text(region.timeString(at)).font(V8Font.mono(14).weight(.bold)).foregroundStyle(V8.ink).fixedSize()
             } else if item.done {
                 SpecLabel("feito")
             }
         }
-        .padding(.vertical, 9)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 10)
+        .background(item.isNow ? V8.orange.opacity(0.14) : Color.clear)
         .opacity(item.done ? 0.55 : 1)
-        .overlay(alignment: .top) { Rectangle().fill(V8.ink.opacity(0.12)).frame(height: 1) }
+        .overlay(alignment: .bottom) { IndexRule() }
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }
@@ -265,6 +276,7 @@ struct GuiaAreaView: View {
 /// TODO(v8:A): com o tema escuro do mapa papel em relevo (`Must/DesignSystem/MapStyle/`), trocar este esquema pelo
 /// `MapLibreView` com o percurso; até lá, "Abrir o mapa" leva ao mapa de verdade.
 struct GuiaRouteBand: View {
+    var photo: URL?
     struct Point: Identifiable, Hashable {
         var id: String
         var coordinate: CLLocationCoordinate2D
@@ -292,22 +304,18 @@ struct GuiaRouteBand: View {
             let projected = project(size: size)
             let labels = labelPositions(projected, size: size)
             ZStack(alignment: .topLeading) {
-                V8.ink
-                grid(size: size)
-                Circle()
-                    .stroke(V8.white.opacity(0.28), lineWidth: 1)
-                    .frame(width: size.width * 1.15, height: size.width * 1.15)
-                    .position(x: size.width * 0.82, y: size.height * 0.55)
+                CutBand(photo: photo) { Color.clear }
                 Path { path in
                     guard let first = projected.first else { return }
                     path.move(to: first.1)
                     for p in projected.dropFirst() { path.addLine(to: p.1) }
                 }
-                .stroke(V8.orange, style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
+                .stroke(V8.white, style: StrokeStyle(lineWidth: 3, lineCap: .square, lineJoin: .miter))
                 ForEach(Array(projected.enumerated()), id: \.offset) { index, entry in
                     let (point, at) = entry
-                    Circle()
+                    Rectangle()
                         .fill(point.isNow ? V8.orange : V8.paper)
+                        .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
                         .frame(width: point.isNow ? 26 : (point.small ? 12 : 22), height: point.isNow ? 26 : (point.small ? 12 : 22))
                         .position(at)
                     if let label = labels[index] {
@@ -320,25 +328,28 @@ struct GuiaRouteBand: View {
             .clipped()
         }
         .frame(height: 290)
+        .overlay(alignment: .bottom) { CutRule() }
         .overlay(alignment: .topLeading) {
             HStack(alignment: .top) {
-                if showsBack { V8CornerButton(systemName: "chevron.left", label: "Voltar", onInk: true, action: onBack) }
+                if showsBack { CutCornerButton(systemName: "chevron.left", label: "Voltar", tint: V8.white, action: onBack) }
                 Spacer(minLength: 12)
-                V8SpecStack(lines: lines, color: V8.paper, alignment: .trailing).padding(.top, 10)
+                V8SpecStack(lines: lines, color: V8.white, alignment: .trailing).padding(.top, 10)
             }
             .padding(.horizontal, 20)
             .padding(.top, 58)
         }
         .overlay(alignment: .bottomTrailing) {
             Button(action: onMap) {
-                Text("Abrir o mapa")
-                    .font(V8Font.text(15, weight: .semibold))
+                Text("ABRIR O MAPA")
+                    .font(V8Font.mono(12, weight: .semibold))
+                    .tracking(1)
                     .foregroundStyle(V8.ink)
-                    .padding(.horizontal, 18)
+                    .padding(.horizontal, 16)
                     .frame(minHeight: 44)
-                    .background(Capsule().fill(V8.paper))
+                    .background(V8.paper)
+                    .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
             }
-            .buttonStyle(MustPressStyle())
+            .buttonStyle(.plain)
             .padding(.trailing, 20)
             .padding(.bottom, 16)
         }

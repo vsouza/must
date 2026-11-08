@@ -6,6 +6,7 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
     @Environment(RegionStore.self) private var store
+    @Environment(\.tripTheme) private var theme
     @Query private var settingsList: [Settings]
 
     @State private var showRegion = false
@@ -16,23 +17,16 @@ struct SettingsView: View {
     @State private var exportError: String?
 
     var body: some View {
-        ZStack(alignment: .top) {
-            Color.must.bg.ignoresSafeArea()
-            BlobBackground(style: .custom([
-                Blob(cx: 352, cy: 110, rx: 92, ry: 52, rotation: -14, fill: .green),
-                Blob(cx: 50, cy: 805, rx: 72, ry: 62, rotation: 10, fill: .blue),
-            ]))
-
+        VStack(spacing: 0) {
+            CutScreenHeader(title: "Ajustes", subtitle: "Como o Must monta o seu dia", height: 210, onBack: { dismiss() }) {
+                SpecLabel("Must · \(Self.version) · só pra mim", color: theme.coverInk.opacity(0.9))
+                    .padding(.vertical, 12)
+                    .contentShape(Rectangle())
+                    .onTapGesture(perform: countVersionTap)
+                    .accessibilityAddTraits(.isStaticText)
+            }
             ScrollView {
-                VStack(alignment: .leading, spacing: 14) {
-                    topBar
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Ajustes").mustTitle()
-                        Text("como o Must monta o seu dia").mustSerif(18).foregroundStyle(Color.must.secondary)
-                    }
-                    .padding(.top, 18)
-                    .padding(.bottom, 12)
-
+                VStack(alignment: .leading, spacing: 0) {
                     RegionPicker()
                     OfflineMapsRow()
                     if let settings = settingsList.first {
@@ -40,18 +34,19 @@ struct SettingsView: View {
                                          onExport: exportBoard, onReimport: { showReimport = true })
                     }
                     if let exportError {
-                        Text(exportError).font(.must.meta).foregroundStyle(Color(hex: 0xC2261D))
+                        Text(exportError).font(V8Font.text(13)).foregroundStyle(V8.orangeDeep).padding(20)
                     }
                     Text("Must · \(Self.version) · \(store.region.displayName)")
-                        .font(.must.mono(11))
-                        .foregroundStyle(Color.must.secondary)
+                        .font(V8Font.mono(11))
+                        .foregroundStyle(V8.mute)
                         .frame(maxWidth: .infinity)
-                        .padding(.top, 12)
+                        .padding(.vertical, 20)
+                    V8BarSpacer()
                 }
-                .padding(.horizontal, 22)
-                .padding(.bottom, 40)
             }
+            .scrollIndicators(.hidden)
         }
+        .background(V8.paper.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: $showRegion) { RegionSheet() }
         .sheet(isPresented: $showReimport) { ImportView(mode: .reimport) }
@@ -68,21 +63,6 @@ struct SettingsView: View {
 
     static var version: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
-    }
-
-    private var topBar: some View {
-        HStack {
-            IconButton(.voltar, label: "Voltar") { dismiss() }
-            Spacer()
-            Micro("Must · \(Self.version) · só pra mim")
-                .padding(.vertical, 12)
-                .contentShape(Rectangle())
-                .onTapGesture(perform: countVersionTap)
-                .accessibilityAddTraits(.isStaticText)
-            Spacer()
-            Color.clear.frame(width: 40, height: 40)
-        }
-        .padding(.top, 8)
     }
 
     /// 5 toques em menos de 3 s.
@@ -127,7 +107,7 @@ private struct SettingsSections: View {
     private static let startOptions: [Int] = stride(from: 6 * 60, through: 12 * 60, by: 30).map { $0 }
 
     var body: some View {
-        VStack(spacing: 14) {
+        VStack(spacing: 0) {
             day
             // Liga/desliga de cada aviso (prompt 23 §4): bom dia, saia em 5, golden, último trem, abre agora.
             AvisosDoGuiaSection()
@@ -221,7 +201,6 @@ private struct SettingsSections: View {
             .disabled(true)
             .opacity(0.6)
         }
-        .glass(cornerRadius: 22)
     }
 
     // MARK: Dados
@@ -230,7 +209,7 @@ private struct SettingsSections: View {
     private var flightRow: some View {
         FormRow("Status de voo", subtitle: flightSubtitle) {
             HStack(spacing: 8) {
-                Circle().fill(Secrets.aerodataboxKey == nil ? Color(hex: 0xC5C9D0) : Color.must.green).frame(width: 8, height: 8)
+                Rectangle().fill(Secrets.aerodataboxKey == nil ? V8.mute : V8.orange).frame(width: 8, height: 8)
                 MonoValue("\(FlightQuota.used()) / \(FlightQuota.planLimit)")
             }
         }
@@ -247,7 +226,7 @@ private struct SettingsSections: View {
             Button { router.push(.googleUsage, on: .hoje) } label: {
                 FormRow("Google Maps", subtitle: placesSubtitle) {
                     HStack(spacing: 8) {
-                        Circle().fill(Secrets.googlePlacesKey == nil ? Color(hex: 0xC5C9D0) : Color.must.green).frame(width: 8, height: 8)
+                        Rectangle().fill(Secrets.googlePlacesKey == nil ? V8.mute : V8.orange).frame(width: 8, height: 8)
                         MonoValue("\(ApiBudget.placesUsedThisMonth()) usados", chevron: true)
                     }
                 }
@@ -259,7 +238,7 @@ private struct SettingsSections: View {
                 HStack {
                     if let progress = services.sync.placesProgress {
                         ProgressView(value: Double(progress.done), total: Double(max(1, progress.total)))
-                            .tint(Color.must.green)
+                            .tint(V8.orange)
                         Text("\(progress.done)/\(progress.total)").font(.must.mono(13)).foregroundStyle(Color.must.secondary)
                     } else {
                         Pill("Sincronizar horários e preço", style: .green, icon: .outraProposta)

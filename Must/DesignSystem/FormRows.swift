@@ -15,14 +15,13 @@ struct FormSection<Content: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             if let title {
-                Micro(title).padding(.top, 16).padding(.bottom, 2)
+                Micro(title).padding(.top, 16).padding(.bottom, 4)
             }
             content
         }
-        .padding(.horizontal, 16)
-        .padding(.bottom, 4)
+        .padding(.horizontal, 20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(background, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay(alignment: .bottom) { Rectangle().fill(V8.ink).frame(height: 2) }
     }
 }
 
@@ -57,7 +56,7 @@ struct FormRow<Trailing: View>: View {
             trailing
         }
         .padding(.vertical, 14)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
         .contentShape(Rectangle())
     }
 }
@@ -71,7 +70,7 @@ extension FormRow where Trailing == EmptyView {
 /// Divisor 1pt `line`.
 struct RowDivider: View {
     var body: some View {
-        Rectangle().fill(Color(hex: 0xE9EBEF)).frame(height: 1)
+        Rectangle().fill(V8.ink).frame(height: 2)
     }
 }
 
@@ -104,11 +103,11 @@ struct StatusChip: View {
 
     var body: some View {
         HStack(spacing: 7) {
-            Circle().fill(on ? Color.must.green : Color(hex: 0xC5C9D0)).frame(width: 8, height: 8)
-            Text(text).font(.must.archivo(14)).foregroundStyle(Color.must.ink)
+            Rectangle().fill(on ? V8.orange : V8.mute).frame(width: 8, height: 8)
+            Text(text.uppercased()).font(V8Font.mono(11, weight: .semibold)).tracking(0.8).foregroundStyle(V8.ink)
         }
-        .padding(.vertical, 7)
-        .padding(.horizontal, 11)
-        .background(Color.must.surface, in: Capsule())
+        .padding(.vertical, 6)
+        .padding(.horizontal, 10)
+        .overlay(Rectangle().stroke(V8.ink, lineWidth: 1.5))
     }
 }
