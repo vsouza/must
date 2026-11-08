@@ -137,6 +137,12 @@ struct PlaceView: View {
                     corte.open()
                     return
                 }
+                if screen.hasPrefix("fotos-carrossel") {
+                    // Espera a foto principal e abre o carrossel na segunda foto (prints).
+                    try? await Task.sleep(for: .milliseconds(3500))
+                    viewer = ViewerStart(page: 1)
+                    return
+                }
                 if screen.hasPrefix("painel") || screen.hasPrefix("dicas") {
                     try? await Task.sleep(for: .milliseconds(600))
                     withAnimation { proxy.scrollTo(screen.hasPrefix("dicas") ? "tips" : "panel", anchor: .top) }

@@ -504,7 +504,14 @@ struct FakeWantPlaces: WantPlacesSearching {
                          lng: 12.47750, types: ["restaurant"], primaryType: "restaurant", businessStatus: "OPERATIONAL"),
             ]
         }
-        return junk
+        // Pedido genérico ("restaurant", "bar", "tourist attraction"…): três lugares de mentira colados no centro da busca.
+        let type = query.includedType ?? "point_of_interest"
+        let offsets: [(Double, Double, String)] = [(0.0012, 0.0008, "Fumi"), (-0.0018, 0.0011, "Kuro"), (0.0021, -0.0019, "Aoi")]
+        return junk + offsets.enumerated().map { i, o in
+            PlaceHit(id: "fake-\(t.replacingOccurrences(of: " ", with: "-"))-\(i)", name: "\(o.2) · \(query.text) (mentira)",
+                     address: "perto do centro da busca", lat: query.lat + o.0, lng: query.lng + o.1, types: [type, "point_of_interest"],
+                     primaryType: type, businessStatus: "OPERATIONAL")
+        }
     }
 }
 #endif

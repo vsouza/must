@@ -42,6 +42,8 @@ struct HomeView: View {
     /// `-capaFoto` (DEBUG, prints): baixa a foto do Commons uma vez pro bairro. Sem a flag, a capa só usa o que já está no disco.
     private var forcePhoto: Bool { DebugFlags.has("-capaFoto") }
     private var debugScreen: String { DebugFlags.string("debugScreen") ?? "" }
+    /// `quero-nakano` (DEBUG, prints): a capa sai do bairro Nakano com o GPS longe, como no uso real fora do país.
+    @State private var debugArea: Area?
     private var photoURL: URL? {
         guard debugScreen != "corte-capa-sem-foto" else { return nil }
         return state.photo.flatMap { URL(string: $0.largeURL ?? $0.url) }
@@ -55,7 +57,7 @@ struct HomeView: View {
     var body: some View {
         Group {
             if let content = state.content {
-                CapaCorteView(content: content, areaName: currentArea?.name ?? content.area, photoURL: photoURL, suggest: suggest,
+                CapaCorteView(content: content, areaName: debugArea?.name ?? currentArea?.name ?? content.area, photoURL: photoURL, suggest: suggest,
                               state: corte, tripId: region.trip.id, makeEnv: makeEnv, actions: actions)
             } else {
                 theme.cover.ignoresSafeArea()
@@ -243,6 +245,7 @@ struct HomeView: View {
 
     /// O bairro que a capa mostra (GPS por célula, senão o do dia pelo nome): de onde o quero sai quando o GPS está longe.
     private func capaArea(_ areas: [Area]) -> Area? {
+        if let debugArea { return debugArea }
         if let currentArea { return currentArea }
         guard let name = state.content?.area.lowercased() else { return nil }
         return areas.first { $0.name.lowercased() == name || $0.aliases.contains { $0.lowercased() == name } }
@@ -267,9 +270,14 @@ struct HomeView: View {
             try? await Task.sleep(for: .milliseconds(400))
             return
         }
-        guard screen.hasPrefix("corte-") else { return }
+        guard screen.hasPrefix("corte-") || screen.hasPrefix("quero-") else { return }
+        if screen == "quero-nakano" { debugArea = AreaCatalog.areas(for: region).first { $0.id == "nakano" } }
         try? await Task.sleep(for: .milliseconds(900))
         switch screen {
+        case "quero-nakano", "quero-viagem-futura":
+            corte.open()
+            corte.quero.text = "comer"
+            corte.submit(makeEnv())
         case "corte-puxando": corte.pull.drag(translation: 70)
         case "corte-quero": corte.open()
         case "corte-cafe", "corte-cafe-offline":
