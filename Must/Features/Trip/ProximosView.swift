@@ -28,6 +28,8 @@ struct ProximosView: View {
                 header(now: now).padding(.top, 8)
                 minhasViagens.padding(.top, 14)
                 presentesLinha.padding(.top, 10)
+                // Grupo na raiz da aba (antes ficava escondido em Viagem › Gasto e dias).
+                GrupoBlock(onInk: true).padding(.top, 22)
                 HStack(alignment: .firstTextBaseline, spacing: 14) {
                     Text("Próximos")
                         .font(V8Font.display(52))
@@ -161,7 +163,7 @@ struct ProximosView: View {
             link("Voos e reservas", "status e checklist") { router.push(.schedule(tab: .voos)) }
             link("Compras", "lista, cota e regras da volta") { router.push(.compras) }
             link("Mapas offline", "baixar a cidade no Wi-Fi") { router.push(.offlineMaps) }
-            link("Gasto e dias", "a viagem inteira") { router.push(.trip) }
+            link("Gasto e dias", "orçamento e o que já foi gasto") { router.push(.trip) }
             // Prompt 25 · B.5: a viagem inteira em PDF (um dia por página), o cartaz e o link do dia.
             link("Mandar a viagem", "PDF um dia por página · cartaz · link") { router.sheet = .mandar(date: nil) }
         }

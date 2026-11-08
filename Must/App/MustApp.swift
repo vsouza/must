@@ -377,7 +377,7 @@ enum DebugLaunch {
         case "viagem-aba": PresenteDemo.ensure(context: context, region: region); router.select(.viagem)
         case "viagem": router.push(.trip, on: .hoje)
         // prompt 32 · Grupo: pessoas, votação, acertar contas, gasto dividido (GrupoDemo põe os exemplos).
-        case "grupo", "grupo-viagem": GrupoDemo.ensure(context: context, region: region); router.push(.trip, on: .hoje)
+        case "grupo", "grupo-viagem": GrupoDemo.ensure(context: context, region: region); PresenteDemo.ensure(context: context, region: region); router.select(.viagem)
         case "grupo-pessoas": GrupoDemo.ensure(context: context, region: region); router.push(.pessoas, on: .hoje)
         case "grupo-votar": GrupoDemo.ensure(context: context, region: region); router.push(.votar, on: .hoje)
         case "grupo-votacao":
