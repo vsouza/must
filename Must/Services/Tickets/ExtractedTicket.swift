@@ -50,6 +50,14 @@ struct ExtractedTicket: Equatable, Sendable {
     var qrPayload: Extracted<String>?
     var meetingPoint: Extracted<String>?
     var cancelUntil: Extracted<Date>?
+    /// Local (museu, teatro, restaurante, estação): o endereço ou nome do lugar, quando não é ponto de encontro.
+    var venue: Extracted<String>?
+    /// Assento, fila, carro ou poltrona, como está no ingresso ("Carro 7 · 12A").
+    var seat: Extracted<String>?
+    /// Portão, plataforma, entrada ou porta.
+    var gate: Extracted<String>?
+    /// Nome do titular/passageiro.
+    var holder: Extracted<String>?
     var legs: [FlightLeg] = []
 }
 
