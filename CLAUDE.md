@@ -91,3 +91,8 @@ Os prompts em `prompts/` são executados em ordem (01 → 25; a rodada atual é 
 ## Capa inteligente (05/11/2026, pedido do Vinicius) — prompt 26
 - A capa sabe o bairro (GPS por célula), o que você deveria estar fazendo (dia aceito) e mostra até 4 cartões "Agora vale" escolhidos por um ranker local: plano, Musts perto e abertos, fecha logo, eventos de hoje, luz/tempo, indicados fora do board. Cada cartão diz o motivo.
 - Eventos sem API paga: Bandsintown + Ticketmaster Discovery + feeds públicos por cidade (validar URLs), cache de 6 h no Wi-Fi; Haiku low só pra estruturar feed sem estrutura, 1×/dia. Nunca inventa evento.
+
+## O corte (07/11/2026, pedido do Vinicius) — prompt 30
+- **Linguagem de todas as telas principais**: foto em cima (P&B contrastada × cor do lugar, trama de pontos, arcos de 1 pt), **régua preta grossa**, papel embaixo com índice separado por réguas de 2 pt. Brutalista: sem degradê, sem sombra, sem carrossel; cor só em bloco inteiro (**laranja = seu**, **tinta = de fora do board**). Referências: `design/v8/screens/CorteFundo.png` (opção C), `CorteFluxo.png`, `CorteGesto.png`.
+- **Puxar a régua = "quero…"**: só puxa a régua com pegador laranja e texto ("↓ puxe · quero…"); as outras são estáticas. Resultado em duas faixas: seus Musts do pedido **mesmo longe** (cidade de hoje) e o que tem **perto agora** fora do board. Sem API nova (é o Quero do prompt 25).
+- **Passo a passo** na primeira vez e na primeira entrada de cada viagem; depois a régua fala e cutuca (para após 3 usos). Mapa, Ajustes, sheets, SOS e Nova viagem ficam fora do corte.

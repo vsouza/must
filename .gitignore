@@ -37,3 +37,4 @@ dist/
 
 # worktrees dos agentes do Claude Code
 .claude/worktrees/
+.superpowers/

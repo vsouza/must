@@ -1,0 +1,121 @@
+<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><body style="background:#1d1d1f;color:#eee;font-family:system-ui;padding:24px">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Schibsted+Grotesk:wght@400;600;700&family=Martian+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  .row{display:flex;gap:26px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+  .col{width:300px}
+  .ph{width:300px;height:640px;border-radius:38px;overflow:hidden;position:relative;background:#F2F0EA;color:#121212;
+      box-shadow:0 0 0 8px #121212,0 18px 40px rgba(0,0,0,.25);font-family:'Schibsted Grotesk',sans-serif}
+  .mono{font-family:'Martian Mono',monospace;font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;line-height:1.5}
+  .disp{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;letter-spacing:-.045em;line-height:.88}
+  .band{position:absolute;left:0;right:0;top:0;overflow:hidden;background:#D7000F;color:#fff}
+  .band .p{position:absolute;inset:0;background:url(photos/shinjukublue.jpg) center 40%/cover;filter:grayscale(1) contrast(1.6) brightness(1.05);mix-blend-mode:multiply}
+  .band::after{content:"";position:absolute;inset:0;background:radial-gradient(circle,#121212 0 .9px,transparent 1.4px) 0 0/4px 4px;opacity:.25}
+  .band .in{position:absolute;inset:0;padding:50px 20px 14px;display:flex;flex-direction:column;z-index:2}
+  .top{display:flex;justify-content:space-between}
+  .rule{position:absolute;left:0;right:0;height:12px;background:#121212;z-index:3}
+  .grip{position:absolute;left:50%;top:3px;width:34px;height:6px;margin-left:-17px;border-radius:3px;background:#FF4A1C}
+  .arcs{position:absolute;inset:0;pointer-events:none;z-index:1}
+  .idx{position:absolute;left:0;right:0;bottom:0}
+  .it{display:flex;align-items:baseline;gap:10px;padding:10px 18px;border-top:2px solid #121212}
+  .it .n{font-family:'Bricolage Grotesque';font-weight:800;font-size:30px;letter-spacing:-.04em;width:62px;flex:none}
+  .it .n small{font-family:'Martian Mono';font-size:8px;letter-spacing:.08em;display:block;margin-top:-2px;font-weight:500}
+  .it b{display:block;font-size:14.5px}
+  .it span{font-size:11px;color:#6B6B66}
+  .it.or{background:#FF4A1C;color:#121212}.it.or span{color:#121212;opacity:.75}
+  .it.ink{background:#121212;color:#F2F0EA}.it.ink span{color:#A3A39C}
+  .tab{position:absolute;left:12px;right:12px;bottom:12px;height:46px;border-radius:23px;background:#121212;display:flex;align-items:center;justify-content:space-around;z-index:5}
+  .tab i{width:16px;height:16px;border:1.6px solid #F2F0EA;border-radius:4px;display:block}
+  .tab .on{background:#FF4A1C;width:88px;height:34px;border-radius:17px;border:none}
+  .caret{display:inline-block;width:3px;height:48px;background:#FF4A1C;vertical-align:-4px;margin-left:2px;animation:bl 1s steps(1) infinite}
+  @keyframes bl{50%{opacity:0}}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;padding:14px 18px}
+  .chip{font-family:'Martian Mono';font-size:9px;text-transform:uppercase;letter-spacing:.08em;padding:7px 10px;border:2px solid #121212;border-radius:0}
+  .chip.on{background:#121212;color:#F2F0EA}
+  .sec{display:flex;justify-content:space-between;align-items:baseline;padding:8px 18px;font-family:'Martian Mono';font-size:8.5px;letter-spacing:.1em;text-transform:uppercase}
+  .sec.or{background:#FF4A1C}.sec.ink{background:#121212;color:#F2F0EA}
+  .r{display:flex;gap:10px;align-items:center;padding:9px 18px;border-bottom:1px solid rgba(18,18,18,.18)}
+  .r .d{font-family:'Martian Mono';font-weight:700;font-size:15px;width:58px;flex:none;letter-spacing:-.02em}
+  .r .d small{display:block;font-weight:400;font-size:7.5px;letter-spacing:.08em;text-transform:uppercase;opacity:.7}
+  .r b{display:block;font-size:13.5px}.r span{font-size:10.5px;color:#6B6B66}
+  .r .go{margin-left:auto;font-family:'Martian Mono';font-size:8px;text-transform:uppercase;letter-spacing:.08em;border:2px solid #121212;padding:5px 7px;flex:none}
+  .dark .r{border-color:rgba(242,240,234,.15)} .dark .r span{color:#A3A39C} .dark .r .go{border-color:#F2F0EA}
+  .lbl{margin-top:16px;font-family:'Schibsted Grotesk'}
+  .lbl h3{margin:0 0 4px}.lbl p{margin:0;font-size:13px;color:#8a8a85}
+</style>
+
+<h2>"Corte" como linguagem: o fluxo de mudar o plano</h2>
+<p class="subtitle">Vocês estão em grupo, o plano caiu, e alguém diz "bora num café". Três momentos, da capa ao resultado. A régua preta grossa do corte vira o gesto do app.</p>
+
+<div class="row">
+  <!-- 1 · capa -->
+  <div class="col">
+    <div class="ph">
+      <div class="band" style="height:318px"><div class="p"></div>
+        <svg class="arcs" viewBox="0 0 300 318"><circle cx="300" cy="120" r="120" fill="none" stroke="#fff" stroke-opacity=".5"/></svg>
+        <div class="in">
+          <div class="top"><div class="mono">sex · 13 nov<br>18:10</div><div class="mono" style="text-align:right">16° · garoa<br>pôr do sol 16:31 · já foi</div></div>
+          <div style="margin-top:auto"><div class="mono">japão · vocês estão em</div><div class="disp" style="font-size:62px;margin-top:4px">Shinjuku</div></div>
+        </div>
+      </div>
+      <div class="rule" style="top:318px"><div class="grip"></div></div>
+      <div style="position:absolute;top:330px;left:0;right:0">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;padding:12px 18px 8px">
+          <div><div class="mono" style="color:#6B6B66">aberto agora · a 10 min</div><div style="font-size:12px;margin-top:2px">plano de hoje: <u>solto desde 17h</u></div></div>
+          <div class="disp" style="font-size:52px;color:#FF4A1C">14</div>
+        </div>
+        <div class="it or"><div class="n">240<small>metros</small></div><div><b>Fuunji · tsukemen</b><span>seu Must · fila 15 min · fecha 21h</span></div></div>
+        <div class="it"><div class="n">20h<small>hoje</small></div><div><b>Jazz no Dug</b><span>evento · ¥2.500 · 400 m</span></div></div>
+        <div class="it ink"><div class="n">6<small>min</small></div><div><b>Omoide Yokocho</b><span>fora do board · lotado agora</span></div></div>
+      </div>
+      <div class="tab"><i class="on"></i><i></i><i></i><i></i></div>
+    </div>
+    <div class="lbl"><h3>1 · Capa: onde vocês estão</h3><p>A foto do bairro em cima, cortada seco. Embaixo, um índice duro (sem carrossel): o que está aberto a 10 min, com a distância em número gigante. O "14" é o único numeral grande da tela: quantas coisas abertas perto agora.</p></div>
+  </div>
+
+  <!-- 2 · puxar o corte -->
+  <div class="col">
+    <div class="ph">
+      <div class="band" style="height:200px"><div class="p"></div>
+        <div class="in"><div class="mono">shinjuku · 18:11</div>
+          <div style="margin-top:auto"><div class="disp" style="font-size:40px">Shinjuku,<br>quero</div></div></div>
+      </div>
+      <div style="position:absolute;top:200px;left:0;right:0;height:120px;background:#FF4A1C;padding:16px 18px">
+        <div class="disp" style="font-size:54px">café<span class="caret"></span></div>
+        <div class="mono" style="margin-top:10px">digite ou fale · só lugares físicos</div>
+      </div>
+      <div class="rule" style="top:320px"><div class="grip" style="background:#F2F0EA"></div></div>
+      <div style="position:absolute;top:332px;left:0;right:0">
+        <div class="mono" style="padding:12px 18px 0;color:#6B6B66">vontades de agora</div>
+        <div class="chips"><span class="chip on">café</span><span class="chip">comer já</span><span class="chip">beber</span><span class="chip">sentar 1 h</span><span class="chip">fugir da chuva</span><span class="chip">barato</span><span class="chip">pra 4</span></div>
+        <div class="mono" style="padding:4px 18px 0;color:#6B6B66">puxe o corte pra baixo em qualquer capa · ou toque no nome do bairro</div>
+      </div>
+    </div>
+    <div class="lbl"><h3>2 · Puxar o corte = "quero…"</h3><p>Não tem lupa. Você puxa a régua preta pra baixo (ou toca no nome do bairro) e a capa vira uma frase: "Shinjuku, quero ___". O laranja abre como uma fenda onde você escreve.</p></div>
+  </div>
+
+  <!-- 3 · resultado -->
+  <div class="col">
+    <div class="ph">
+      <div class="band" style="height:120px"><div class="p"></div>
+        <div class="in" style="padding-top:44px"><div class="top"><div class="mono">quero · shinjuku</div><div class="mono">9 achados</div></div>
+          <div class="disp" style="font-size:44px;margin-top:auto">café</div></div>
+      </div>
+      <div class="rule" style="top:120px"></div>
+      <div style="position:absolute;top:132px;left:0;right:0">
+        <div class="sec or"><span>seus musts · 3</span><span>mesmo longe</span></div>
+        <div class="r"><div class="d">2,1<small>km · 9 min trem</small></div><div><b>Glitch Coffee</b><span>do seu board · aberto até 19h</span></div><div class="go">ir</div></div>
+        <div class="r"><div class="d">850<small>metros</small></div><div><b>Blue Bottle · NEWoMan</b><span>do seu board · fecha 21h</span></div><div class="go">ir</div></div>
+        <div class="r"><div class="d">4,8<small>km · fecha logo</small></div><div><b>Fuglen Tomigaya</b><span>do seu board · fecha 20h · não dá</span></div><div class="go" style="opacity:.35">amanhã</div></div>
+        <div class="dark" style="background:#121212;color:#F2F0EA">
+          <div class="sec ink" style="border-top:12px solid #121212"><span>aqui perto agora · 6</span><span>google · mesas</span></div>
+          <div class="r"><div class="d">180<small>metros</small></div><div><b>Paul Bassett</b><span>★ 4,3 · cabe 4 · aberto</span></div><div class="go">+ board</div></div>
+          <div class="r"><div class="d">260<small>metros</small></div><div><b>Streamer Coffee</b><span>★ 4,5 · pequeno · aberto</span></div><div class="go">+ board</div></div>
+          <div class="r" style="border:none"><div class="d">400<small>metros</small></div><div><b>Café Berg</b><span>★ 4,4 · subsolo · aberto</span></div><div class="go">+ board</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="lbl"><h3>3 · Resultado em duas faixas</h3><p>Laranja: os cafés do seu board, mesmo longe, com o tempo de chegar e se ainda dá hoje. Preto: o que tem aqui perto agora, fora da lista. "Ir" abre a rota; "+ board" guarda.</p></div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:22px">A ideia central: <b>o corte é o app</b>. Toda tela é foto em cima e papel embaixo, separadas pela mesma régua de 12 pt. Puxar a régua sempre abre o "quero…". Cor só em blocos inteiros (laranja = seu, preto = o mundo lá fora), nunca em degradê.</p>

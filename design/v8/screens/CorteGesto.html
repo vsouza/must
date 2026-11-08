@@ -1,0 +1,94 @@
+<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><body style="background:#1d1d1f;color:#eee;font-family:system-ui;padding:24px">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Schibsted+Grotesk:wght@400;600;700&family=Martian+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  .row{display:flex;gap:26px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+  .col{width:300px}
+  .ph{width:300px;height:640px;border-radius:38px;overflow:hidden;position:relative;background:#F2F0EA;color:#121212;
+      box-shadow:0 0 0 8px #121212,0 18px 40px rgba(0,0,0,.25);font-family:'Schibsted Grotesk',sans-serif}
+  .mono{font-family:'Martian Mono',monospace;font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;line-height:1.5}
+  .disp{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;letter-spacing:-.045em;line-height:.88}
+  .band{position:absolute;left:0;right:0;top:0;overflow:hidden;background:#D7000F;color:#fff}
+  .band .p{position:absolute;inset:0;background:url(photos/shinjukublue.jpg) center 40%/cover;filter:grayscale(1) contrast(1.6) brightness(1.05);mix-blend-mode:multiply}
+  .band::after{content:"";position:absolute;inset:0;background:radial-gradient(circle,#121212 0 .9px,transparent 1.4px) 0 0/4px 4px;opacity:.25}
+  .band .in{position:absolute;inset:0;padding:50px 20px 14px;display:flex;flex-direction:column;z-index:2}
+  .rule{position:absolute;left:0;right:0;height:26px;background:#121212;z-index:6;display:flex;align-items:center;justify-content:center;gap:10px;color:#F2F0EA}
+  .rule .mono{font-size:8px}
+  .rule .arrow{color:#FF4A1C;font-family:'Martian Mono';font-weight:700;font-size:11px}
+  .shade{position:absolute;inset:0;background:rgba(18,18,18,.93);z-index:5}
+  .coach{position:absolute;left:18px;right:18px;z-index:7;color:#F2F0EA}
+  .finger{position:absolute;left:50%;width:44px;height:44px;margin-left:-22px;border-radius:50%;background:rgba(242,240,234,.9);border:3px solid #FF4A1C;z-index:8;animation:pull 1.8s ease-in-out infinite}
+  @keyframes pull{0%{transform:translateY(0);opacity:0}15%{opacity:1}70%{transform:translateY(120px);opacity:1}100%{transform:translateY(120px);opacity:0}}
+  .ghost{position:absolute;left:0;right:0;z-index:6;border-top:2px dashed #FF4A1C}
+  .slot{position:absolute;left:0;right:0;background:#FF4A1C;z-index:4;padding:12px 18px}
+  .peek{animation:peek 3.2s ease-in-out infinite}
+  @keyframes peek{0%,60%,100%{transform:translateY(0)}70%{transform:translateY(22px)}80%{transform:translateY(0)}88%{transform:translateY(10px)}}
+  .it{display:flex;align-items:baseline;gap:10px;padding:10px 18px;border-top:2px solid #121212}
+  .it .n{font-family:'Bricolage Grotesque';font-weight:800;font-size:30px;letter-spacing:-.04em;width:62px;flex:none}
+  .it .n small{font-family:'Martian Mono';font-size:8px;letter-spacing:.08em;display:block;margin-top:-2px;font-weight:500}
+  .it b{display:block;font-size:14.5px}.it span{font-size:11px;color:#6B6B66}
+  .it.or{background:#FF4A1C}.it.or span{color:#121212;opacity:.75}
+  .step{display:inline-block;background:#FF4A1C;color:#121212;padding:3px 6px}
+  .lbl{margin-top:16px;font-family:'Schibsted Grotesk'}
+  .lbl h3{margin:0 0 4px}.lbl p{margin:0;font-size:13px;color:#8a8a85}
+</style>
+
+<h2>Ensinar o gesto: puxar o corte</h2>
+<p class="subtitle">Três camadas, da mais forte pra mais discreta: um passo a passo que só termina quando você faz o gesto, a régua que diz o que faz, e um "cutucão" quando você parece perdido.</p>
+
+<div class="row">
+  <!-- 1 · walkthrough interativo -->
+  <div class="col">
+    <div class="ph">
+      <div class="band" style="height:318px"><div class="p"></div>
+        <div class="in"><div class="mono">sex · 13 nov · 18:10</div><div style="margin-top:auto"><div class="mono">japão · vocês estão em</div><div class="disp" style="font-size:62px">Shinjuku</div></div></div>
+      </div>
+      <div class="shade"></div>
+      <div class="coach" style="top:64px">
+        <span class="mono step">1 de 2 · novo</span>
+        <div class="disp" style="font-size:40px;margin-top:12px">Mudou<br>o plano?</div>
+        <div style="font-size:14px;margin-top:12px;line-height:1.35">Puxe a faixa preta pra baixo e diga o que vocês querem agora. O app junta seus Musts e o que tem perto.</div>
+      </div>
+      <div class="rule" style="top:318px;box-shadow:0 0 0 3px #FF4A1C"><span class="arrow">↓</span><span class="mono">puxe · quero…</span><span class="arrow">↓</span></div>
+      <div class="finger" style="top:310px"></div>
+      <div class="ghost" style="top:456px"></div>
+      <div class="coach" style="top:470px"><div class="mono" style="color:#FF4A1C">até aqui</div><div class="mono" style="margin-top:4px;color:#A3A39C">faça você mesmo pra continuar · pular</div></div>
+    </div>
+    <div class="lbl"><h3>1 · Passo a passo que exige o gesto</h3><p>Na primeira vez que a capa abre (e quando chega numa viagem nova), a tela escurece, só a régua fica acesa e um dedo fantasma mostra o caminho. Só avança quando <i>você</i> puxa. O passo 2 te deixa escrever "café" de verdade e mostra o resultado.</p></div>
+  </div>
+
+  <!-- 2 · durante o gesto -->
+  <div class="col">
+    <div class="ph">
+      <div class="band" style="height:250px"><div class="p"></div>
+        <div class="in"><div class="mono">shinjuku · 18:11</div><div style="margin-top:auto"><div class="disp" style="font-size:44px">Shinjuku,<br>quero</div></div></div>
+      </div>
+      <div class="slot" style="top:250px;height:86px"><div class="disp" style="font-size:44px;opacity:.35">___</div><div class="mono" style="margin-top:6px">solte pra escrever</div></div>
+      <div class="rule" style="top:336px"><span class="arrow">↓</span><span class="mono">mais um pouco</span><span class="arrow">↓</span></div>
+      <div style="position:absolute;top:362px;left:0;right:0;padding:14px 18px">
+        <span class="mono step">2 de 2</span>
+        <div style="font-size:14px;margin-top:10px;line-height:1.35">A fenda laranja abre conforme você puxa; o título vira frase. Passou da linha, ela trava aberta com o teclado e um toque (háptico) confirma.</div>
+        <div class="mono" style="margin-top:14px;color:#6B6B66">puxou pouco: volta sozinha · puxou muito: abre</div>
+      </div>
+    </div>
+    <div class="lbl"><h3>2 · O gesto responde no meio</h3><p>A régua acompanha o dedo, a foto encolhe e a frase aparece antes de você soltar: dá pra entender o que vai acontecer no meio do caminho. Vibração leve ao travar.</p></div>
+  </div>
+
+  <!-- 3 · dia a dia -->
+  <div class="col">
+    <div class="ph">
+      <div class="band" style="height:318px"><div class="p"></div>
+        <div class="in"><div class="mono">sex · 13 nov · 18:10</div><div style="margin-top:auto"><div class="mono">japão · vocês estão em</div><div class="disp" style="font-size:62px">Shinjuku</div></div></div>
+      </div>
+      <div class="rule peek" style="top:318px"><span class="arrow">↓</span><span class="mono">puxe · quero…</span></div>
+      <div class="slot" style="top:318px;height:30px;padding:0"></div>
+      <div style="position:absolute;top:344px;left:0;right:0;background:#F2F0EA;z-index:5">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;padding:12px 18px 8px">
+          <div class="mono" style="color:#6B6B66">aberto agora · a 10 min</div><div class="disp" style="font-size:46px;color:#FF4A1C">14</div>
+        </div>
+        <div class="it or"><div class="n">240<small>metros</small></div><div><b>Fuunji · tsukemen</b><span>seu Must · fila 15 min</span></div></div>
+        <div class="it"><div class="n">20h<small>hoje</small></div><div><b>Jazz no Dug</b><span>evento · 400 m</span></div></div>
+      </div>
+    </div>
+    <div class="lbl"><h3>3 · Depois: a régua fala e cutuca</h3><p>A régua sempre leva escrito "↓ puxe · quero…". Se você fica parado na capa uns segundos sem rolar (cara de "e agora?"), ela desce um pouquinho e volta, mostrando o laranja embaixo. Depois de usar 3 vezes, o texto encurta pra "↓ quero" e o cutucão para. Reduzir movimento desliga o cutucão.</p></div>
+  </div>
+</div>
