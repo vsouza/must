@@ -22,13 +22,15 @@ enum TicketSamples {
     static func pdfData() -> Data {
         let renderer = UIGraphicsPDFRenderer(bounds: CGRect(x: 0, y: 0, width: 612, height: 792))
         let lines = [
-            "Viator · Confirmação de reserva",
-            "Sushi Making Class with a Chef in Tsukiji",
-            "Reference BR-7K2M-9931",
-            "Sat 15 Nov 2026 · 10:00 AM",
-            "2 travelers · ¥24,000 total paid",
-            "Meeting point: Tsukiji Outer Market, Gate 1",
-            "Free cancellation until 13 Nov 2026",
+            "teamLab Planets TOKYO",
+            "Admission Ticket · Date-time designated",
+            "Visit date: 16 Nov 2026",
+            "Entry time: 10:30 - 11:00",
+            "Venue: 6-1-16 Toyosu, Koto City, Tokyo 135-0061",
+            "Gate A · Seat 12A",
+            "Adult x 2 · ¥4,200 each",
+            "Ticket No. TLP-8F3K-2291",
+            "Name: SOUZA VINICIUS",
         ]
         return renderer.pdfData { context in
             context.beginPage()
@@ -39,7 +41,7 @@ enum TicketSamples {
             }
             UIColor.white.setFill()
             UIRectFill(CGRect(x: 370, y: 410, width: 200, height: 200))
-            TicketQR.image(for: "BR-7K2M-9931", points: 180)?.draw(in: CGRect(x: 380, y: 420, width: 180, height: 180))
+            TicketQR.image(for: "TLP-8F3K-2291", points: 180)?.draw(in: CGRect(x: 380, y: 420, width: 180, height: 180))
         }
     }
 }

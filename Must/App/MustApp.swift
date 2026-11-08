@@ -378,8 +378,8 @@ enum DebugLaunch {
         case "carteira": // itens de exemplo (Suica, JR Pass, eSIM, Visit Japan Web com QR) e a Carteira
             WalletDemo.ensure(context: context, region: region)
             router.push(.carteira, on: .hoje)
-        case "ingresso-entrada": router.sheet = .ticketImport(inboxId: nil)
-        case "ingresso-revisar": // PDF de exemplo na caixa (como o Share Extension faria) e a conferência
+        case "ingresso-entrada", "ingresso-fontes": router.sheet = .ticketImport(inboxId: nil)
+        case "ingresso-revisar", "ingresso-conferir": // PDF de exemplo na caixa (como o Share Extension faria) e a conferência
             router.sheet = .ticketImport(inboxId: TicketSamples.stashSamplePDF())
         case "ingresso": // ingresso: cria a experiência de exemplo (Tsukiji) e abre o Ingresso
             TicketDemo.ensure(context: context, region: region)

@@ -39,7 +39,9 @@
 		0D2A1069178A4BD56C893146 /* TravelMatrixLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F648A672D7C195C35608123B /* TravelMatrixLoader.swift */; };
 		0E36960D7152F3E4C5AC7940 /* seed-it.json in Resources */ = {isa = PBXBuildFile; fileRef = 6AA96C8CA5161951B90A00B5 /* seed-it.json */; };
 		0F1C84ADF931B6B6D7608BFC /* QueroModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E972DEC54FDECA9DD8F6866 /* QueroModel.swift */; };
+		0F35037B2B8ED0EEE1C56D8F /* trem-jp_PDF-texto.pdf in Resources */ = {isa = PBXBuildFile; fileRef = C562CA9C5DA0E4D63A517500 /* trem-jp_PDF-texto.pdf */; };
 		0FCBAB9B8E90602EF05DEEA6 /* Secrets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6221CDECA41AE4E770C02080 /* Secrets.swift */; };
+		1088C64E68C66A0050B461D7 /* coliseu-it_PDF-imagem.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 2A65DE20DC551DFF94375965 /* coliseu-it_PDF-imagem.pdf */; };
 		10EFA3115F7FFEFE05DDAAA9 /* DayEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C153FFED846D5383324C01 /* DayEngineTests.swift */; };
 		1131C570DEB4EBB911F0AC9D /* UpcomingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B153C6D708113FA364817E96 /* UpcomingTests.swift */; };
 		1142453E375A47869700D1FD /* SolverItalyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF88B4FA5C634D9BAC15E982 /* SolverItalyTests.swift */; };
@@ -56,6 +58,8 @@
 		162916E82CC805790AA86B70 /* TipsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA24FAA24E3A5A5FC3CB14EC /* TipsSection.swift */; };
 		169A7658B2D10B88262ADE14 /* ExpenseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B74D63E1FC2830947EF080AD /* ExpenseView.swift */; };
 		17A2EB98960C3BBB85394BE1 /* GuiaBairroView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36F805C942D29E1682813E17 /* GuiaBairroView.swift */; };
+		17F56DB60A3968E569C630FD /* museu-jp_PDF-imagem.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 9EE699807EC6429BFA6575C3 /* museu-jp_PDF-imagem.pdf */; };
+		18A09DD700FB810DE0EEAD84 /* voo_PDF-imagem.pdf in Resources */ = {isa = PBXBuildFile; fileRef = D9FAE689E721F40D2976CD3E /* voo_PDF-imagem.pdf */; };
 		18C88595C1D492BA5A42A6D6 /* ShoppingRulesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0C6510774C744A53AB78994 /* ShoppingRulesView.swift */; };
 		191F9E0A8D04AF99D4BD8D33 /* SchibstedGrotesk.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 92718E70DD5AC03FF2A232DC /* SchibstedGrotesk.ttf */; };
 		196E9A6E6BB184E582B1B23D /* AreaHeroes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11B1F60B561117721593C451 /* AreaHeroes.swift */; };
@@ -108,8 +112,10 @@
 		3113BDAF386AE5E23205A463 /* MapStyleLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8ABA50ADA5CB704BF467CFA /* MapStyleLoader.swift */; };
 		31B6F0B7287ABCA5FA15121D /* MapSearch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 665DE0BC6E2B17D76CD0A488 /* MapSearch.swift */; };
 		32DE61453E8E3ACE3798E321 /* BolsoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D5AF2353CFC137BC12A870 /* BolsoView.swift */; };
+		34059BC08F4255E5067CC517 /* coliseu-it_PDF-texto.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 3E6C56C6B9A0E419CF3B8520 /* coliseu-it_PDF-texto.pdf */; };
 		3444C3BC5BAE06660F12D3A7 /* GuiaTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEC5ED5660BA5BEB5DD5D5B3 /* GuiaTabView.swift */; };
 		345D55FBAF0D045350FAF93E /* FlightTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2FCC18F2FD107CBB17F43DD /* FlightTests.swift */; };
+		347039AB285800D4A7A04984 /* museu-jp_foto-torta-escura.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 4A5E05ECC0C25D53FD98A6F6 /* museu-jp_foto-torta-escura.jpg */; };
 		34B9F078469879EBFCB17A34 /* NewTripModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AECE3D08DF1181FD3719702C /* NewTripModelTests.swift */; };
 		34D24804DAFF68EE0520CCB8 /* RegionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8E14B85DA86388832F3C18B /* RegionSheet.swift */; };
 		34D6081A5CB2767A55D164EE /* DayFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF11D40BC1FD6464D2737BB /* DayFlowTests.swift */; };
@@ -120,6 +126,7 @@
 		39B2257026FA7AEBB083FA2F /* Board.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D95D7682A4AE8EC7C64CFBE /* Board.swift */; };
 		39B6A7E0DF540A19D82124C0 /* WalletItemSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5AF0D2662E476416DB5D54F /* WalletItemSheet.swift */; };
 		39BAC3B32DA8AB39E5ACA524 /* AtalhosTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DE57219F69A779B9ED60617 /* AtalhosTests.swift */; };
+		3A04CF48D6DD81AEA852A7A6 /* museu-jp_foto.png in Resources */ = {isa = PBXBuildFile; fileRef = 0EAB869A6FCE0978AB38F558 /* museu-jp_foto.png */; };
 		3A0EF3BCBD64F07CAA51B1C7 /* Areas.swift in Sources */ = {isa = PBXBuildFile; fileRef = 110E0567BD73A4C21332461A /* Areas.swift */; };
 		3AB64A66663C8A06CD161CF1 /* CollectibleMoment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7586B99859BD255DB4AC2DB0 /* CollectibleMoment.swift */; };
 		3C61E0B9BE4FB4FD3D1D7EB0 /* TicketView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E926F5C8871767F5183C44EB /* TicketView.swift */; };
@@ -152,6 +159,7 @@
 		494A874D8E4AEE61CFDA0A51 /* MustWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = DC4442205EBAF11DB237C5A7 /* MustWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		4972B806326AA9F90ED514DF /* TripTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 405F4964FEA3D89D253DFB7F /* TripTheme.swift */; };
 		49B0435297662F19DDD09942 /* SuggestionEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85EB07B30528BC8A1C98BF6A /* SuggestionEngineTests.swift */; };
+		4A368DC52CD580D238EA5B83 /* coliseu-it_foto.png in Resources */ = {isa = PBXBuildFile; fileRef = C23C0769F1DAAC0E5CB59EB2 /* coliseu-it_foto.png */; };
 		4AE5671FFA1B6228D38B1725 /* TicketScoring.swift in Sources */ = {isa = PBXBuildFile; fileRef = 898728B317F655E684057DBD /* TicketScoring.swift */; };
 		4C4BAD4FFC4A8FE4916290BA /* SwipeBack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42A529AE230489483D5F5535 /* SwipeBack.swift */; };
 		4D14BEB30174F19ACEA4E6F0 /* FriendsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2E25888E488A2E23925A535 /* FriendsSection.swift */; };
@@ -181,15 +189,18 @@
 		59FD70DB580536D3A736758D /* AgoraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 545A48190080E288023E2C5D /* AgoraView.swift */; };
 		5A17C8A54779911934B2F031 /* BuscarNomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3C762D01CB6DE2F0014144A /* BuscarNomeView.swift */; };
 		5AC526B99D4B3A64C0C2CFEE /* MicroStops.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E63098BC20939AB29E6FFFA /* MicroStops.swift */; };
+		5ADC706EF011814425616DCC /* show-bh_foto-torta-escura.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 8AD5D7DC3DA7D209A7314835 /* show-bh_foto-torta-escura.jpg */; };
 		5B318E7CDB602D550B8ED6CD /* TripRegistryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19878D26E2BE9AE48855F053 /* TripRegistryTests.swift */; };
 		5C31CF333FD9EAD6D2801698 /* Router.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5621525C6CB7D37030B2A19B /* Router.swift */; };
 		5C3EE9A409780995526B5459 /* V8Palette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35765003FEB4545A52A17799 /* V8Palette.swift */; };
 		5C919A01C05FDC219FECCD6D /* AddLinkView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 532D92C7D6879474355DB391 /* AddLinkView.swift */; };
+		5D3C16478A34AA926EE4EC8E /* voo_foto-torta-escura.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 2594E2D0C5BDA5856837B4A6 /* voo_foto-torta-escura.jpg */; };
 		5DB32EC9D52A691EDD1C7D27 /* CorteAcabamentoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7980E5F33AA9FC2F4C1057C8 /* CorteAcabamentoTests.swift */; };
 		5DC26DC2B52C46CF1F68D6F7 /* FilmsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CF5822CDA543D2B8C091012 /* FilmsSection.swift */; };
 		5E280721697733309D36E7A5 /* ListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BCA759B67391FBACD605A54 /* ListView.swift */; };
 		5E5BB9AB96564B986F46B325 /* OpenNowIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABAFA8CC3395AD088CBB5317 /* OpenNowIndex.swift */; };
 		5EA8F39179AD3853B92293A3 /* GoogleRoutesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F46BBCF517C68884FEA25E0 /* GoogleRoutesTests.swift */; };
+		5EC310FC81AD9061F6497921 /* trem-jp_foto.png in Resources */ = {isa = PBXBuildFile; fileRef = 55C79B581944C45C1D9A763D /* trem-jp_foto.png */; };
 		5EF11C99EC883178148C0CB5 /* GoogleUsageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C628E2DBF6D02DCC1304D22F /* GoogleUsageView.swift */; };
 		5F510CCBAA6FE8C3A929FF25 /* DayLinkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2427CED4225BA61981DA73B4 /* DayLinkTests.swift */; };
 		5F5948805FF666ECE9573D24 /* TravelText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 368E3A56E58BFCDD87F59395 /* TravelText.swift */; };
@@ -208,6 +219,7 @@
 		65D5DDC186BF29A87026BCEA /* EmergencyKitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E126F76CCCB44867BD3E6DB7 /* EmergencyKitTests.swift */; };
 		6772A963CAAD89191D23E7F2 /* HomePhotos.swift in Sources */ = {isa = PBXBuildFile; fileRef = 979FD930EB7EA3C770898A00 /* HomePhotos.swift */; };
 		67BEEE9773A82874943B84D4 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10E1AAF40DE6541D6FB3D78D /* RootView.swift */; };
+		67E838B65EC74766FF0544E3 /* trem-jp_foto-torta-escura.jpg in Resources */ = {isa = PBXBuildFile; fileRef = E482C84BAC0AF68700D06A57 /* trem-jp_foto-torta-escura.jpg */; };
 		682E2C00BD69F88552577F8E /* TicketFiles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F12ADC96D7618625F1CFDF3 /* TicketFiles.swift */; };
 		6836CDC83A2EF220F0F13615 /* CompassBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7762045A378DADBDFF7270E0 /* CompassBridge.swift */; };
 		686A165FBE125614E7CB9FA5 /* BairrosModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E16D153F0E8CEBCF78909D9 /* BairrosModel.swift */; };
@@ -233,6 +245,7 @@
 		6F9FDEA4AD47A0A01AD6C254 /* PlacePhotoResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAB611BBDE9483718E4EA58B /* PlacePhotoResolver.swift */; };
 		6FDCD52BCB5A79CC97C75C86 /* countries in Resources */ = {isa = PBXBuildFile; fileRef = 21D913BB237CF1428036DAA9 /* countries */; };
 		7199C6A699F49912E9178140 /* BoardQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F85FDAC58E26C57ACABA07A /* BoardQuery.swift */; };
+		730FEE8F88E915C67087A34E /* coliseu-it_foto-torta-escura.jpg in Resources */ = {isa = PBXBuildFile; fileRef = A2BD403757F19B48BE4B8D41 /* coliseu-it_foto-torta-escura.jpg */; };
 		736D8A4F7FF72ECCE24DD814 /* ListTile.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC36E91C1CF51423882FC3F4 /* ListTile.swift */; };
 		736ED6B65BFF4FC38AAA284F /* Glass.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF9EDF96B7E35C8B90CD7648 /* Glass.swift */; };
 		737822D681C37B219F07B091 /* TripFlag.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9B9DEB58AA7B562728D180C /* TripFlag.swift */; };
@@ -295,7 +308,9 @@
 		9135D34C7422A8348AC2FEE5 /* RegionSwitchLifetimeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D83BC76DE0D694C809B308C9 /* RegionSwitchLifetimeTests.swift */; };
 		92A21515165448B1895C1DF4 /* SuggestionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2854A07C6377973210E6FBC /* SuggestionEngine.swift */; };
 		930C3451311B48537EBBE0BE /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 249BE4A213B5ED57BBC9CB4E /* README.md */; };
+		9311221D00B20509FB9D4574 /* restaurante-jp_PDF-texto.pdf in Resources */ = {isa = PBXBuildFile; fileRef = E813252C85E8909CCDC87C17 /* restaurante-jp_PDF-texto.pdf */; };
 		933197275D17891043431DF6 /* ExperienceSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE8E48F35361E7F9CD7715BF /* ExperienceSource.swift */; };
+		942B49EA9FE0DA09CB91AB3B /* show-bh_foto.png in Resources */ = {isa = PBXBuildFile; fileRef = 151603DBC6DF985528E447A4 /* show-bh_foto.png */; };
 		94513B346BACF6822CA28595 /* TicketReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 125CF367B38BCAE97640D336 /* TicketReader.swift */; };
 		94774E26A0C6C57A165985A7 /* AddItemsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C738346CC8CF5261BCCCB131 /* AddItemsView.swift */; };
 		9532122E8A862D8B7500C4BD /* LinkPlacesMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3C575A126CAA351D0D5198A /* LinkPlacesMap.swift */; };
@@ -356,6 +371,7 @@
 		AB6A66226DA6985DBD083977 /* ApiBudget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75D868B5A981073D5AED5B21 /* ApiBudget.swift */; };
 		ABA5A860189F03E44A8E9A14 /* MustShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 32C5A3C526057B2F0A5A397C /* MustShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		ABAFAE36F34140D65898D859 /* DayShareBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE07089DD4B669E2D6332C3E /* DayShareBuilder.swift */; };
+		ABC53E09FA9FEB81AD0A5526 /* show-bh_PDF-texto.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 7F9A548BA247F23C4365BC10 /* show-bh_PDF-texto.pdf */; };
 		AC8590E7B10762D44AF9B1BC /* ShoppingDemo.swift in Sources */ = {isa = PBXBuildFile; fileRef = B420422491355F5C63B447E9 /* ShoppingDemo.swift */; };
 		AC93C36A928764F301522D26 /* Fonts.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2F0E7CAB62A868911308C5F /* Fonts.swift */; };
 		ACD292EBDDB0E19A10CB96AA /* TripStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE1345D1DE7A1AD47D268668 /* TripStoreTests.swift */; };
@@ -432,6 +448,7 @@
 		CC4F06DCB750FDF94F1B9779 /* DiaRecebidoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D4CC75A7B82537AC4B7B862 /* DiaRecebidoView.swift */; };
 		CC88FAF6A0CAC7729A946C75 /* GuideNudges.swift in Sources */ = {isa = PBXBuildFile; fileRef = 122443946B121FE8AE6BA94A /* GuideNudges.swift */; };
 		CCA8324D9DD82E71F2ABBF7A /* ExperienceListModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49DA7DD87E48EE08301AC389 /* ExperienceListModel.swift */; };
+		CCD11E10B608A72CE0A196E1 /* trem-jp_PDF-imagem.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 10EE88DE7FC8388320616666 /* trem-jp_PDF-imagem.pdf */; };
 		CD99F9CA26B40D92FA1EAD90 /* StreetViewCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EAA3B3E02DC8284CFF5B2E7 /* StreetViewCard.swift */; };
 		CF3CCDF840F35213881572F5 /* CollectionGrouping.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F016D6B0C0E6C739470D5D9 /* CollectionGrouping.swift */; };
 		CFEF1EEEF23F2E6143CE32E0 /* EventExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B3BAD889BA5DE6380B5FBF /* EventExtractor.swift */; };
@@ -451,6 +468,7 @@
 		D460975DE94DE0127A234DAA /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE8D645E4788CC466551C27A /* ShareViewController.swift */; };
 		D4FBDCBCB38A99686CE6275A /* PhotoBatch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38B2DF8690DB2CE16127BA08 /* PhotoBatch.swift */; };
 		D5F4B5ABE702F8B2B2C9DADB /* ResilienciaFixtures.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7C18807325F06EC8A47A2D2 /* ResilienciaFixtures.swift */; };
+		D608A9077D0479F8F85E45DC /* voo_PDF-texto.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 373ABF95A0E6C9316E4F27C2 /* voo_PDF-texto.pdf */; };
 		D6C8A98A1AE102D60705D9F8 /* BoardCodecTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3847B720AFE775247C5B85A9 /* BoardCodecTests.swift */; };
 		D72D093D3714A87B651EC71E /* BomDiaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0425F7B058E948914542FB70 /* BomDiaView.swift */; };
 		D78A4698F8C40F767F97FA15 /* TicketRevisarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59E7929EF53EBA041A2D5E78 /* TicketRevisarView.swift */; };
@@ -470,13 +488,16 @@
 		DC7CF09BCFAAC95A5746AA19 /* NetResilienceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 954DFD2565943C15811989EF /* NetResilienceTests.swift */; };
 		DC9065D7211FD2C3437A4DF2 /* PlaceResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE5FAB772ABA07FE675459CB /* PlaceResolver.swift */; };
 		DC95376E70B9E4971D35883C /* AreaIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11DDAB70F40C5BF814253FA /* AreaIndex.swift */; };
+		DCA8C0BC92AC45C40ED55F4F /* voo_foto.png in Resources */ = {isa = PBXBuildFile; fileRef = 72829367D2BB0C71993FB03F /* voo_foto.png */; };
 		DCAC8C624A6D32223A8F27CA /* BairrosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F4F0061A29EDC53D23B6F5F /* BairrosView.swift */; };
 		DCE0DA691445504732588B4F /* ButtonMetrics.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4F94C13523A4CCA7E209DE /* ButtonMetrics.swift */; };
 		DD5E6D8A757E93CC8EC8EBD3 /* MapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE3E6D8F34B608E1137D706F /* MapView.swift */; };
+		DF166D5654DEF94A271287D1 /* museu-jp_PDF-texto.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 0040CE7ACCAB1C12D43A318B /* museu-jp_PDF-texto.pdf */; };
 		DF2F8D6E2859C0FA860B406C /* AtalhosModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFC0A766C4380909AE162B3A /* AtalhosModel.swift */; };
 		DF33ABA8412044E8B80E3A10 /* DayNowRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = C48BCB9C1791221259AC88B4 /* DayNowRules.swift */; };
 		DF4F19CE91B0B6F7DCC4A00D /* Place3DView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2566C0B7787EE54B4AC19DF1 /* Place3DView.swift */; };
 		DF5199B3537DA416CEC41B7C /* WikidataFilms.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E03D1F4996DAA65D5C6C5A1 /* WikidataFilms.swift */; };
+		DF6AA8C2CDBD371911DCD16E /* show-bh_PDF-imagem.pdf in Resources */ = {isa = PBXBuildFile; fileRef = E9C7D7D3204F8145F815B94A /* show-bh_PDF-imagem.pdf */; };
 		DF8F70A609137F4388F796EB /* WalletFromTicket.swift in Sources */ = {isa = PBXBuildFile; fileRef = A149B44B7559E98D2061497F /* WalletFromTicket.swift */; };
 		DFEF67076FB254230F0E2657 /* EmCartazModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC4A5496784A2DA852377E9F /* EmCartazModel.swift */; };
 		E01B83D8F0899D3101B309D4 /* AddLinkModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27618FF94A526CC1D58D3E7D /* AddLinkModel.swift */; };
@@ -488,6 +509,7 @@
 		E1F8E3B3C50D4210ABEB06BD /* TripSwitcherModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FA0D8F4E00D60D3AC6AC4CF /* TripSwitcherModel.swift */; };
 		E20109521989BBA072BA7171 /* TicketEntradaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E068DA0153A5BB98EA3E8BEB /* TicketEntradaView.swift */; };
 		E2149ADCEE02EE832013EA80 /* WantCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34D3551C275A60139698316F /* WantCategory.swift */; };
+		E33DDAF1A3C9D99D052305AB /* restaurante-jp_foto.png in Resources */ = {isa = PBXBuildFile; fileRef = 12D03FD668A43532C0DB8E57 /* restaurante-jp_foto.png */; };
 		E4041EB8347B9BC2BC29332E /* RegionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7FBEB4202ADD7DA375DEE4B /* RegionStore.swift */; };
 		E547EA2E6628AFD1565AC0DC /* CountryProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 440190EFF9300D4AA05A2835 /* CountryProfile.swift */; };
 		E60C155C748C47F895886F7D /* ChatModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C5943257B1D5B2724BAFF /* ChatModel.swift */; };
@@ -503,6 +525,7 @@
 		E81A3E6B83DDFFF21E556A41 /* RegionAutoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEA42B989F6A1E92CFCAF228 /* RegionAutoTests.swift */; };
 		E87174357FA887F8991F2A23 /* Services.swift in Sources */ = {isa = PBXBuildFile; fileRef = 285FD848392F6AFEB450AFE3 /* Services.swift */; };
 		E8A5D57977D44754170D4FDF /* FilmsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93C546271D99E6CB597CC869 /* FilmsTests.swift */; };
+		E95D971A9D7BB2C04739EC7A /* restaurante-jp_foto-torta-escura.jpg in Resources */ = {isa = PBXBuildFile; fileRef = BE5B9BFC01FFF9C9C34D05FD /* restaurante-jp_foto-torta-escura.jpg */; };
 		EB4B75F6D6AC1ED277AF6970 /* DayComposer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E4E41FED6CFD5D7312B3E60 /* DayComposer.swift */; };
 		EB7E17F3019B950A1B592B55 /* VideoReadCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25319916077EDAB648AD9E76 /* VideoReadCard.swift */; };
 		EBEEA6018D8D2D1DEED0C76D /* seed-it.json in Resources */ = {isa = PBXBuildFile; fileRef = 6AA96C8CA5161951B90A00B5 /* seed-it.json */; };
@@ -540,6 +563,7 @@
 		FBA71EC9E0B46B8DA2707B7F /* Flight.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40115E243E085BD0D1D7F7DD /* Flight.swift */; };
 		FBCFC52FA3C2B92EBB0B4ACC /* RoutesSamples.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54047A0D8E61EF399BD51F24 /* RoutesSamples.swift */; };
 		FC673A5BEC7A5571363E095B /* MapMustFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0630B9FA5F12C5507329752F /* MapMustFilter.swift */; };
+		FDF2328FB8EE44203749CB44 /* restaurante-jp_PDF-imagem.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 623BFA9A0EA77259B4C318CF /* restaurante-jp_PDF-imagem.pdf */; };
 		FE391B26F92D6E130D85E84F /* OutsideBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2A8FAEF80A8121A587A860A /* OutsideBridge.swift */; };
 		FE87FD2895E02680C6CB45F8 /* MapSearchModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABA162F5917B92091C567032 /* MapSearchModel.swift */; };
 		FEFE0EE4458622F1FCC1355C /* BoaNoiteTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA4807C0EC34C53EF1278382 /* BoaNoiteTests.swift */; };
@@ -595,6 +619,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		0040CE7ACCAB1C12D43A318B /* museu-jp_PDF-texto.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "museu-jp_PDF-texto.pdf"; sourceTree = "<group>"; };
 		01C978BEB3995473BF8B3039 /* Blobs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Blobs.swift; sourceTree = "<group>"; };
 		01CA46FCD9F5308090F395DB /* AddToListTypingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddToListTypingTests.swift; sourceTree = "<group>"; };
 		03253802B39EE1C2C9B2E6D4 /* Extras.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extras.swift; sourceTree = "<group>"; };
@@ -610,21 +635,25 @@
 		0C74768FA26896CDFA1961F8 /* ButtonMetricsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ButtonMetricsTests.swift; sourceTree = "<group>"; };
 		0C832B556BB2DF99EF2A23CD /* ExtractedTicket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtractedTicket.swift; sourceTree = "<group>"; };
 		0DB3D5B44041AE54E0274A81 /* CapaTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapaTests.swift; sourceTree = "<group>"; };
+		0EAB869A6FCE0978AB38F558 /* museu-jp_foto.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "museu-jp_foto.png"; sourceTree = "<group>"; };
 		0ECE91A8AC13EB4F448E14CE /* TravelMatrixTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TravelMatrixTests.swift; sourceTree = "<group>"; };
 		0F9CE3F785580679B015C4ED /* TicketReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketReaderTests.swift; sourceTree = "<group>"; };
 		0FA0D8F4E00D60D3AC6AC4CF /* TripSwitcherModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripSwitcherModel.swift; sourceTree = "<group>"; };
 		0FF11D40BC1FD6464D2737BB /* DayFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayFlowTests.swift; sourceTree = "<group>"; };
 		10E1AAF40DE6541D6FB3D78D /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		10EE88DE7FC8388320616666 /* trem-jp_PDF-imagem.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "trem-jp_PDF-imagem.pdf"; sourceTree = "<group>"; };
 		110E0567BD73A4C21332461A /* Areas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Areas.swift; sourceTree = "<group>"; };
 		11B1F60B561117721593C451 /* AreaHeroes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AreaHeroes.swift; sourceTree = "<group>"; };
 		122443946B121FE8AE6BA94A /* GuideNudges.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuideNudges.swift; sourceTree = "<group>"; };
 		125CF367B38BCAE97640D336 /* TicketReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketReader.swift; sourceTree = "<group>"; };
+		12D03FD668A43532C0DB8E57 /* restaurante-jp_foto.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "restaurante-jp_foto.png"; sourceTree = "<group>"; };
 		12D1A0B2AC9C79AA10DC38BE /* ShoppingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShoppingTests.swift; sourceTree = "<group>"; };
 		12D88D49FA4A5E026FEAA007 /* DataUsage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataUsage.swift; sourceTree = "<group>"; };
 		1332B2144F43EC270FFE4560 /* DiscoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoverView.swift; sourceTree = "<group>"; };
 		13650DD58C410E7C58B9CB69 /* DayPoster.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayPoster.swift; sourceTree = "<group>"; };
 		14EE015D01CFA6FF04C99D5C /* MustUITestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MustUITestCase.swift; sourceTree = "<group>"; };
 		14F1FF680FC1F945C2FC0E92 /* QueroView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueroView.swift; sourceTree = "<group>"; };
+		151603DBC6DF985528E447A4 /* show-bh_foto.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "show-bh_foto.png"; sourceTree = "<group>"; };
 		152B888DEEFD8182E7E1B1CC /* MapCameraTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapCameraTests.swift; sourceTree = "<group>"; };
 		158DBD6828FAD7F280C029D6 /* TipsModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipsModel.swift; sourceTree = "<group>"; };
 		15EAB5484E9E593810CF42F8 /* TipsSources.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipsSources.swift; sourceTree = "<group>"; };
@@ -660,6 +689,7 @@
 		2502CD8F01FD295741AB40FD /* SOSProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SOSProfile.swift; sourceTree = "<group>"; };
 		25319916077EDAB648AD9E76 /* VideoReadCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoReadCard.swift; sourceTree = "<group>"; };
 		2566C0B7787EE54B4AC19DF1 /* Place3DView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Place3DView.swift; sourceTree = "<group>"; };
+		2594E2D0C5BDA5856837B4A6 /* voo_foto-torta-escura.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "voo_foto-torta-escura.jpg"; sourceTree = "<group>"; };
 		2600D7AFCBEE653999263137 /* MustWidgets.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MustWidgets.entitlements; sourceTree = "<group>"; };
 		263C7C344090120AAEF01937 /* AddLinkResults.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddLinkResults.swift; sourceTree = "<group>"; };
 		26530EFFE4125A5BE2DEA5EB /* TravelMatrix.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TravelMatrix.swift; sourceTree = "<group>"; };
@@ -670,6 +700,7 @@
 		285FD848392F6AFEB450AFE3 /* Services.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services.swift; sourceTree = "<group>"; };
 		28667C21C5D43EA32114C4A6 /* EmCartazDayTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmCartazDayTests.swift; sourceTree = "<group>"; };
 		2956ECFEBA11E08C398F3D10 /* AtalhosPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AtalhosPanel.swift; sourceTree = "<group>"; };
+		2A65DE20DC551DFF94375965 /* coliseu-it_PDF-imagem.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "coliseu-it_PDF-imagem.pdf"; sourceTree = "<group>"; };
 		2B64D1B6B9C678CF295B9B62 /* ColarTextoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColarTextoTests.swift; sourceTree = "<group>"; };
 		2C3FA1BBED3FFB04BDE12D5F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		2C553381C1ACF36D47BABC10 /* ShoppingRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShoppingRules.swift; sourceTree = "<group>"; };
@@ -698,6 +729,7 @@
 		368E3A56E58BFCDD87F59395 /* TravelText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TravelText.swift; sourceTree = "<group>"; };
 		36F805C942D29E1682813E17 /* GuiaBairroView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuiaBairroView.swift; sourceTree = "<group>"; };
 		370D0CA48E024F76392572E5 /* FriendsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsTests.swift; sourceTree = "<group>"; };
+		373ABF95A0E6C9316E4F27C2 /* voo_PDF-texto.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "voo_PDF-texto.pdf"; sourceTree = "<group>"; };
 		3840ECE0F90F2549AFD6169B /* TicketEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketEditor.swift; sourceTree = "<group>"; };
 		3847B720AFE775247C5B85A9 /* BoardCodecTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardCodecTests.swift; sourceTree = "<group>"; };
 		3878708DC3E7F204DE560538 /* SOSView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SOSView.swift; sourceTree = "<group>"; };
@@ -711,6 +743,7 @@
 		3CB000EE62BDE36108585388 /* StartupSyncTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartupSyncTests.swift; sourceTree = "<group>"; };
 		3CBC7567CFD052587BA81D39 /* SOSQuickAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SOSQuickAction.swift; sourceTree = "<group>"; };
 		3E4E41FED6CFD5D7312B3E60 /* DayComposer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayComposer.swift; sourceTree = "<group>"; };
+		3E6C56C6B9A0E419CF3B8520 /* coliseu-it_PDF-texto.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "coliseu-it_PDF-texto.pdf"; sourceTree = "<group>"; };
 		3EB0211FCC84D9ED73E17DAE /* PlacePanelFichaTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlacePanelFichaTests.swift; sourceTree = "<group>"; };
 		3ED71E74006BFAF0B24E307A /* ProximosTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProximosTests.swift; sourceTree = "<group>"; };
 		3F016D6B0C0E6C739470D5D9 /* CollectionGrouping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionGrouping.swift; sourceTree = "<group>"; };
@@ -745,6 +778,7 @@
 		4941019DD40EDD78216F4C68 /* it-br.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "it-br.json"; sourceTree = "<group>"; };
 		4951EC86E9EA941B4767895F /* tokyocheapo-events.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "tokyocheapo-events.xml"; sourceTree = "<group>"; };
 		49DA7DD87E48EE08301AC389 /* ExperienceListModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperienceListModel.swift; sourceTree = "<group>"; };
+		4A5E05ECC0C25D53FD98A6F6 /* museu-jp_foto-torta-escura.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "museu-jp_foto-torta-escura.jpg"; sourceTree = "<group>"; };
 		4AC3CBA2A9F2C12CC697A0D5 /* BoardModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardModel.swift; sourceTree = "<group>"; };
 		4B02C9FD57F462B5DD7ED9AB /* MapSearchViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapSearchViews.swift; sourceTree = "<group>"; };
 		4B265EE23EBB5953B8879351 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
@@ -769,6 +803,7 @@
 		538013AE01AF2A312E0ACF82 /* FilmsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmsUITests.swift; sourceTree = "<group>"; };
 		54047A0D8E61EF399BD51F24 /* RoutesSamples.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutesSamples.swift; sourceTree = "<group>"; };
 		545A48190080E288023E2C5D /* AgoraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgoraView.swift; sourceTree = "<group>"; };
+		55C79B581944C45C1D9A763D /* trem-jp_foto.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "trem-jp_foto.png"; sourceTree = "<group>"; };
 		5621525C6CB7D37030B2A19B /* Router.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Router.swift; sourceTree = "<group>"; };
 		56B2448E220317CEA9B0A97A /* Must.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Must.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		56C3EA6D3C29FD87F4AC83FE /* KindPanels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KindPanels.swift; sourceTree = "<group>"; };
@@ -788,6 +823,7 @@
 		61A720A1C71162BCB57BD0BB /* DayMoments.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayMoments.swift; sourceTree = "<group>"; };
 		6203051D7235625CB4C776EC /* Shopping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shopping.swift; sourceTree = "<group>"; };
 		6221CDECA41AE4E770C02080 /* Secrets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Secrets.swift; sourceTree = "<group>"; };
+		623BFA9A0EA77259B4C318CF /* restaurante-jp_PDF-imagem.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "restaurante-jp_PDF-imagem.pdf"; sourceTree = "<group>"; };
 		62985D320484912E83C676DB /* PlacePanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlacePanel.swift; sourceTree = "<group>"; };
 		62AC6FD638195A396A098578 /* CurrentAreaTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrentAreaTests.swift; sourceTree = "<group>"; };
 		635E55993E353F1C88A5FE5D /* CorteTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CorteTests.swift; sourceTree = "<group>"; };
@@ -820,6 +856,7 @@
 		6FF43B0D7C49597680F405C1 /* BuscarNomeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuscarNomeModel.swift; sourceTree = "<group>"; };
 		70F3839B1D3C5EF7721DE77E /* GuideNudgeScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuideNudgeScheduler.swift; sourceTree = "<group>"; };
 		71224347FB8D44E54B5CF3C3 /* GuiaChapters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuiaChapters.swift; sourceTree = "<group>"; };
+		72829367D2BB0C71993FB03F /* voo_foto.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = voo_foto.png; sourceTree = "<group>"; };
 		732B5F13FE5EC8126CDD2586 /* CorteEtapa2Tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CorteEtapa2Tests.swift; sourceTree = "<group>"; };
 		745317422880B10B468C2413 /* EventsFeedTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventsFeedTests.swift; sourceTree = "<group>"; };
 		7465A8B2F0C5AAD5F25BE2AD /* FilmsProviding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmsProviding.swift; sourceTree = "<group>"; };
@@ -858,6 +895,7 @@
 		7F254E195A33BA760DE16C3A /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		7F491CD7ECF7543E2E1DEDEA /* NumberInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NumberInput.swift; sourceTree = "<group>"; };
 		7F834696C3413518EE98CD49 /* HomeLinhaTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeLinhaTests.swift; sourceTree = "<group>"; };
+		7F9A548BA247F23C4365BC10 /* show-bh_PDF-texto.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "show-bh_PDF-texto.pdf"; sourceTree = "<group>"; };
 		80374DD7C366832956DAD9EC /* FlowLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowLayout.swift; sourceTree = "<group>"; };
 		80B7D115A99FE730A613B42B /* MapRatings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapRatings.swift; sourceTree = "<group>"; };
 		81ADBEA332F02C068F3ED632 /* ColarTextoCloudTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColarTextoCloudTests.swift; sourceTree = "<group>"; };
@@ -874,6 +912,7 @@
 		888774E525344E91000A78D6 /* SolverTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolverTypes.swift; sourceTree = "<group>"; };
 		897C9F43BE0507A3E020BDFC /* V8Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V8Components.swift; sourceTree = "<group>"; };
 		898728B317F655E684057DBD /* TicketScoring.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketScoring.swift; sourceTree = "<group>"; };
+		8AD5D7DC3DA7D209A7314835 /* show-bh_foto-torta-escura.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "show-bh_foto-torta-escura.jpg"; sourceTree = "<group>"; };
 		8AF4D6B074C6FFB19206566C /* TravelTextExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TravelTextExtractor.swift; sourceTree = "<group>"; };
 		8B67BB698E0083068BE34A90 /* MartianMono.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = MartianMono.ttf; sourceTree = "<group>"; };
 		8B70DEBB2AAB73A25CCF4BC0 /* BomDiaTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BomDiaTests.swift; sourceTree = "<group>"; };
@@ -919,6 +958,7 @@
 		9DD765ACD487D6B8F8554980 /* WalletView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletView.swift; sourceTree = "<group>"; };
 		9E16D153F0E8CEBCF78909D9 /* BairrosModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BairrosModel.swift; sourceTree = "<group>"; };
 		9EE1F5F9BEC80D1BBF79AFE7 /* CapaCorteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapaCorteView.swift; sourceTree = "<group>"; };
+		9EE699807EC6429BFA6575C3 /* museu-jp_PDF-imagem.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "museu-jp_PDF-imagem.pdf"; sourceTree = "<group>"; };
 		9F2EF01EBB004820D24C6BD5 /* TicketText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketText.swift; sourceTree = "<group>"; };
 		9F4F0061A29EDC53D23B6F5F /* BairrosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BairrosView.swift; sourceTree = "<group>"; };
 		9F547CB67FA4B99CA849984C /* AreaStamps.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AreaStamps.swift; sourceTree = "<group>"; };
@@ -931,6 +971,7 @@
 		A16DDE8C735137628D242159 /* Checklists.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Checklists.swift; sourceTree = "<group>"; };
 		A1FFE8AE055F17EBC0BA100E /* ColarTextoHighlight.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColarTextoHighlight.swift; sourceTree = "<group>"; };
 		A210A259B0E3A8E5D91B2D56 /* hospitals.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = hospitals.json; sourceTree = "<group>"; };
+		A2BD403757F19B48BE4B8D41 /* coliseu-it_foto-torta-escura.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "coliseu-it_foto-torta-escura.jpg"; sourceTree = "<group>"; };
 		A2CF9EAE4D6D93B42028633E /* SuggestionTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuggestionTypes.swift; sourceTree = "<group>"; };
 		A3F38CC9A34BCE9763AB73ED /* PlaceRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceRow.swift; sourceTree = "<group>"; };
 		A53EF3E304761D067B014383 /* ProposalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProposalView.swift; sourceTree = "<group>"; };
@@ -985,6 +1026,7 @@
 		BE1345D1DE7A1AD47D268668 /* TripStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripStoreTests.swift; sourceTree = "<group>"; };
 		BE19BE004132D6C56297A38F /* IrView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IrView.swift; sourceTree = "<group>"; };
 		BE3E6D8F34B608E1137D706F /* MapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapView.swift; sourceTree = "<group>"; };
+		BE5B9BFC01FFF9C9C34D05FD /* restaurante-jp_foto-torta-escura.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "restaurante-jp_foto-torta-escura.jpg"; sourceTree = "<group>"; };
 		BE8E48F35361E7F9CD7715BF /* ExperienceSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperienceSource.swift; sourceTree = "<group>"; };
 		BEDD1A07B7B67EB8441B28EF /* EmCartazSamples.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmCartazSamples.swift; sourceTree = "<group>"; };
 		BEE8DC22489334B4E4841AAB /* LaunchTiming.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchTiming.swift; sourceTree = "<group>"; };
@@ -993,12 +1035,14 @@
 		C054F92E6B2E036506AFE5F0 /* SuggestSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuggestSupport.swift; sourceTree = "<group>"; };
 		C19753175267A3F77CA73538 /* MapCardFacts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapCardFacts.swift; sourceTree = "<group>"; };
 		C197B5A3FAD05B710839EDE4 /* EmergencyKit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmergencyKit.swift; sourceTree = "<group>"; };
+		C23C0769F1DAAC0E5CB59EB2 /* coliseu-it_foto.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "coliseu-it_foto.png"; sourceTree = "<group>"; };
 		C2D330548D70860483B0F638 /* ActivityKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ActivityKit.framework; path = System/Library/Frameworks/ActivityKit.framework; sourceTree = SDKROOT; };
 		C3179781E81E77B5D303D63F /* CaptionFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptionFetcher.swift; sourceTree = "<group>"; };
 		C34295159CAF70FE35C4BB47 /* AssistantWarmTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantWarmTests.swift; sourceTree = "<group>"; };
 		C357927156A4E1A7515C2CA7 /* TripSharing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripSharing.swift; sourceTree = "<group>"; };
 		C3C762D01CB6DE2F0014144A /* BuscarNomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuscarNomeView.swift; sourceTree = "<group>"; };
 		C48BCB9C1791221259AC88B4 /* DayNowRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayNowRules.swift; sourceTree = "<group>"; };
+		C562CA9C5DA0E4D63A517500 /* trem-jp_PDF-texto.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "trem-jp_PDF-texto.pdf"; sourceTree = "<group>"; };
 		C5648D89581F35ECD0F6F139 /* BricolageGrotesque.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = BricolageGrotesque.ttf; sourceTree = "<group>"; };
 		C57B659458753E4FDE33A97E /* V8TripTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V8TripTheme.swift; sourceTree = "<group>"; };
 		C5AF0D2662E476416DB5D54F /* WalletItemSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletItemSheet.swift; sourceTree = "<group>"; };
@@ -1048,6 +1092,7 @@
 		D887738AD1C78720E2B6DF1D /* colar-texto-amostra.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "colar-texto-amostra.txt"; sourceTree = "<group>"; };
 		D99E300E5DA343D4F2D8B213 /* MapStyle */ = {isa = PBXFileReference; lastKnownFileType = folder; name = MapStyle; path = Must/DesignSystem/MapStyle; sourceTree = SOURCE_ROOT; };
 		D9E45EB741EE7A4B0C62B1E9 /* MustTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MustTests.swift; sourceTree = "<group>"; };
+		D9FAE689E721F40D2976CD3E /* voo_PDF-imagem.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "voo_PDF-imagem.pdf"; sourceTree = "<group>"; };
 		D9FB39078393F13EE9197529 /* TipsDayTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipsDayTests.swift; sourceTree = "<group>"; };
 		DA4807C0EC34C53EF1278382 /* BoaNoiteTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoaNoiteTests.swift; sourceTree = "<group>"; };
 		DA6E59F40F1B2D3D5518007E /* Region.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Region.swift; sourceTree = "<group>"; };
@@ -1073,13 +1118,16 @@
 		E2F0E7CAB62A868911308C5F /* Fonts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Fonts.swift; sourceTree = "<group>"; };
 		E3365991AC7E1A9351BEF366 /* VideoReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoReader.swift; sourceTree = "<group>"; };
 		E472129BD157938345D871BF /* UniformTypeIdentifiers.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UniformTypeIdentifiers.framework; path = System/Library/Frameworks/UniformTypeIdentifiers.framework; sourceTree = SDKROOT; };
+		E482C84BAC0AF68700D06A57 /* trem-jp_foto-torta-escura.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "trem-jp_foto-torta-escura.jpg"; sourceTree = "<group>"; };
 		E639FA3C7D274B015BEEA574 /* PosterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PosterTests.swift; sourceTree = "<group>"; };
 		E73E37133E3474A471011CD9 /* WalletCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletCardView.swift; sourceTree = "<group>"; };
 		E7CD9A7E3C0765F23B3798EA /* BairrosGuiaTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BairrosGuiaTests.swift; sourceTree = "<group>"; };
+		E813252C85E8909CCDC87C17 /* restaurante-jp_PDF-texto.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "restaurante-jp_PDF-texto.pdf"; sourceTree = "<group>"; };
 		E8255AE0AB8B4482CA3A9462 /* PlaceEmCartazTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceEmCartazTests.swift; sourceTree = "<group>"; };
 		E884E5C34972411E3851FCFF /* ServiceParsingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceParsingTests.swift; sourceTree = "<group>"; };
 		E8DF958C7A3147E7A4671A15 /* Gallery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gallery.swift; sourceTree = "<group>"; };
 		E926F5C8871767F5183C44EB /* TicketView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketView.swift; sourceTree = "<group>"; };
+		E9C7D7D3204F8145F815B94A /* show-bh_PDF-imagem.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "show-bh_PDF-imagem.pdf"; sourceTree = "<group>"; };
 		E9D9A83588A513DDF30DBDFB /* TicketImportFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketImportFlow.swift; sourceTree = "<group>"; };
 		EA24FAA24E3A5A5FC3CB14EC /* TipsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipsSection.swift; sourceTree = "<group>"; };
 		EAC6DEACCA3E50210D113839 /* EventsFakes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventsFakes.swift; sourceTree = "<group>"; };
@@ -2171,6 +2219,7 @@
 			isa = PBXGroup;
 			children = (
 				7AE118808CE3C56B397D5693 /* feeds */,
+				E07A6099E4DD2633B92DF06C /* tickets */,
 				D887738AD1C78720E2B6DF1D /* colar-texto-amostra.txt */,
 				3F0975C84BFB5BD6E0199B5F /* wikidata-films.json */,
 			);
@@ -2320,6 +2369,37 @@
 				A53EF3E304761D067B014383 /* ProposalView.swift */,
 			);
 			path = Plan;
+			sourceTree = "<group>";
+		};
+		E07A6099E4DD2633B92DF06C /* tickets */ = {
+			isa = PBXGroup;
+			children = (
+				A2BD403757F19B48BE4B8D41 /* coliseu-it_foto-torta-escura.jpg */,
+				C23C0769F1DAAC0E5CB59EB2 /* coliseu-it_foto.png */,
+				2A65DE20DC551DFF94375965 /* coliseu-it_PDF-imagem.pdf */,
+				3E6C56C6B9A0E419CF3B8520 /* coliseu-it_PDF-texto.pdf */,
+				4A5E05ECC0C25D53FD98A6F6 /* museu-jp_foto-torta-escura.jpg */,
+				0EAB869A6FCE0978AB38F558 /* museu-jp_foto.png */,
+				9EE699807EC6429BFA6575C3 /* museu-jp_PDF-imagem.pdf */,
+				0040CE7ACCAB1C12D43A318B /* museu-jp_PDF-texto.pdf */,
+				BE5B9BFC01FFF9C9C34D05FD /* restaurante-jp_foto-torta-escura.jpg */,
+				12D03FD668A43532C0DB8E57 /* restaurante-jp_foto.png */,
+				623BFA9A0EA77259B4C318CF /* restaurante-jp_PDF-imagem.pdf */,
+				E813252C85E8909CCDC87C17 /* restaurante-jp_PDF-texto.pdf */,
+				8AD5D7DC3DA7D209A7314835 /* show-bh_foto-torta-escura.jpg */,
+				151603DBC6DF985528E447A4 /* show-bh_foto.png */,
+				E9C7D7D3204F8145F815B94A /* show-bh_PDF-imagem.pdf */,
+				7F9A548BA247F23C4365BC10 /* show-bh_PDF-texto.pdf */,
+				E482C84BAC0AF68700D06A57 /* trem-jp_foto-torta-escura.jpg */,
+				55C79B581944C45C1D9A763D /* trem-jp_foto.png */,
+				10EE88DE7FC8388320616666 /* trem-jp_PDF-imagem.pdf */,
+				C562CA9C5DA0E4D63A517500 /* trem-jp_PDF-texto.pdf */,
+				2594E2D0C5BDA5856837B4A6 /* voo_foto-torta-escura.jpg */,
+				72829367D2BB0C71993FB03F /* voo_foto.png */,
+				D9FAE689E721F40D2976CD3E /* voo_PDF-imagem.pdf */,
+				373ABF95A0E6C9316E4F27C2 /* voo_PDF-texto.pdf */,
+			);
+			path = tickets;
 			sourceTree = "<group>";
 		};
 		E1EE3C3E39E17E59E337E078 /* areas */ = {
@@ -2612,11 +2692,35 @@
 			files = (
 				9CC8B06D8C1B600330DC67A4 /* atom-sample.xml in Resources */,
 				F922FBFB3A97A41ADECAF17F /* colar-texto-amostra.txt in Resources */,
+				1088C64E68C66A0050B461D7 /* coliseu-it_PDF-imagem.pdf in Resources */,
+				34059BC08F4255E5067CC517 /* coliseu-it_PDF-texto.pdf in Resources */,
+				730FEE8F88E915C67087A34E /* coliseu-it_foto-torta-escura.jpg in Resources */,
+				4A368DC52CD580D238EA5B83 /* coliseu-it_foto.png in Resources */,
 				BD1CFBD869AE79B5E9B25CB1 /* map-packs.json in Resources */,
+				17F56DB60A3968E569C630FD /* museu-jp_PDF-imagem.pdf in Resources */,
+				DF166D5654DEF94A271287D1 /* museu-jp_PDF-texto.pdf in Resources */,
+				347039AB285800D4A7A04984 /* museu-jp_foto-torta-escura.jpg in Resources */,
+				3A04CF48D6DD81AEA852A7A6 /* museu-jp_foto.png in Resources */,
+				FDF2328FB8EE44203749CB44 /* restaurante-jp_PDF-imagem.pdf in Resources */,
+				9311221D00B20509FB9D4574 /* restaurante-jp_PDF-texto.pdf in Resources */,
+				E95D971A9D7BB2C04739EC7A /* restaurante-jp_foto-torta-escura.jpg in Resources */,
+				E33DDAF1A3C9D99D052305AB /* restaurante-jp_foto.png in Resources */,
 				486C94238E5229A67D788E4A /* seed-bh.json in Resources */,
 				EBEEA6018D8D2D1DEED0C76D /* seed-it.json in Resources */,
 				403322E17FFB7E87AA7A2809 /* seed-jp.json in Resources */,
+				DF6AA8C2CDBD371911DCD16E /* show-bh_PDF-imagem.pdf in Resources */,
+				ABC53E09FA9FEB81AD0A5526 /* show-bh_PDF-texto.pdf in Resources */,
+				5ADC706EF011814425616DCC /* show-bh_foto-torta-escura.jpg in Resources */,
+				942B49EA9FE0DA09CB91AB3B /* show-bh_foto.png in Resources */,
 				7C92011B66DB89ACD7A05C4B /* tokyocheapo-events.xml in Resources */,
+				CCD11E10B608A72CE0A196E1 /* trem-jp_PDF-imagem.pdf in Resources */,
+				0F35037B2B8ED0EEE1C56D8F /* trem-jp_PDF-texto.pdf in Resources */,
+				67E838B65EC74766FF0544E3 /* trem-jp_foto-torta-escura.jpg in Resources */,
+				5EC310FC81AD9061F6497921 /* trem-jp_foto.png in Resources */,
+				18A09DD700FB810DE0EEAD84 /* voo_PDF-imagem.pdf in Resources */,
+				D608A9077D0479F8F85E45DC /* voo_PDF-texto.pdf in Resources */,
+				5D3C16478A34AA926EE4EC8E /* voo_foto-torta-escura.jpg in Resources */,
+				DCA8C0BC92AC45C40ED55F4F /* voo_foto.png in Resources */,
 				79704C1DD3092979057D13B5 /* wikidata-films.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

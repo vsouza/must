@@ -35,5 +35,13 @@ struct TicketCorpusTests {
             try table.write(toFile: path, atomically: true, encoding: .utf8)
         }
         #expect(scores.count == TicketCorpus.all.count * TicketForm.allCases.count)
+        // Metas mínimas por campo (o corpus é sintético e limpo; no aparelho, foto real fica abaixo disso).
+        let goals: [TicketField2: Double] = [.titulo: 0.9, .data: 0.95, .hora: 0.9, .local: 0.9, .assento: 0.9, .portao: 0.9,
+                                             .codigo: 0.95, .qr: 0.95, .nome: 0.9]
+        for (field, goal) in goals {
+            let values = scores.compactMap { $0.hits[field] }
+            let rate = Double(values.filter { $0 }.count) / Double(max(values.count, 1))
+            #expect(rate >= goal, "\(field.rawValue): \(rate) < \(goal)")
+        }
     }
 }

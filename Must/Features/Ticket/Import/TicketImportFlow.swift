@@ -21,7 +21,7 @@ struct TicketImportFlow: View {
             case .revisar: TicketRevisarView(model: model, close: { dismiss() })
             }
         }
-        .background(Color.must.bg)
+        .background(V8.paper)
         .task {
             model.configure(context: context, region: store.region, provider: services.places)
             if let inboxId { await model.loadInbox(id: inboxId) }
