@@ -114,28 +114,66 @@ struct BairrosView: View {
                         path.addLine(to: b)
                     }
                     .stroke(V8.ink.opacity(0.5), style: StrokeStyle(lineWidth: 1.2, dash: [3, 4]))
+                    if edgeLabelClear(CGPoint(x: (a.x + b.x) / 2, y: (a.y + b.y) / 2), in: size) {
                     Text("\(edge.minutes)′")
                         .font(V8Font.mono(11, weight: .bold))
                         .foregroundStyle(Color.must.ink)
                         .padding(.horizontal, 3)
                         .background(V8.paper.opacity(0.9))
                         .position(x: (a.x + b.x) / 2, y: (a.y + b.y) / 2)
+                    }
                 }
             }
         }
         .allowsHitTesting(false)
     }
 
+    private func edgeLabelClear(_ m: CGPoint, in size: CGSize) -> Bool {
+        let box = CGRect(x: m.x - 18, y: m.y - 10, width: 36, height: 20)
+        if labelRects(in: size).values.contains(where: { $0.intersects(box) }) { return false }
+        return !model.bubbles.contains { b in
+            guard let q = model.point(lat: b.lat, lng: b.lng, in: size) else { return false }
+            return hypot(q.x - m.x, q.y - m.y) < b.diameter / 2 + 14
+        }
+    }
+
     private func bubbles(in size: CGSize) -> some View {
-        ZStack {
+        let labels = Set(labelRects(in: size).keys)
+        return ZStack {
             ForEach(model.bubbles) { bubble in
                 if let p = model.point(lat: bubble.lat, lng: bubble.lng, in: size) {
-                    AreaBubbleView(bubble: bubble, selected: model.selectedId == bubble.id)
+                    AreaBubbleView(bubble: bubble, selected: model.selectedId == bubble.id, showLabel: labels.contains(bubble.id))
                         .position(p)
                         .onTapGesture { model.select(model.selectedId == bubble.id ? nil : bubble.id) }
                 }
             }
         }
+    }
+
+    /// Rótulos sem colisão: do maior bairro pro menor (o escolhido primeiro), o nome só entra se o retângulo dele não
+    /// cobrir outro nome nem outra bolha. O resto continua no índice embaixo.
+    private func labelRects(in size: CGSize) -> [String: CGRect] {
+        let placed: [(AreaBubble, CGPoint)] = model.bubbles.compactMap { b in
+            model.point(lat: b.lat, lng: b.lng, in: size).map { (b, $0) }
+        }
+        let order = placed.sorted { a, b in
+            if (a.0.id == model.selectedId) != (b.0.id == model.selectedId) { return a.0.id == model.selectedId }
+            return a.0.count > b.0.count
+        }
+        var taken: [CGRect] = []
+        var out: [String: CGRect] = [:]
+        for (bubble, p) in order {
+            let w = CGFloat(bubble.name.count) * 7.5 + 8
+            let rect = CGRect(x: p.x - w / 2, y: p.y + bubble.diameter / 2 + 8, width: w, height: 14)
+            let hitsBubble = placed.contains { other, q in
+                let r = other.diameter / 2
+                return rect.intersects(CGRect(x: q.x - r, y: q.y - r, width: r * 2, height: r * 2))
+            }
+            guard !hitsBubble, !taken.contains(where: { $0.intersects(rect) }) else { continue }
+            taken.append(rect)
+            out[bubble.id] = rect
+        }
+        return out
     }
 
     @ViewBuilder
@@ -205,6 +243,7 @@ struct BairrosView: View {
 struct AreaBubbleView: View {
     var bubble: AreaBubble
     var selected: Bool
+    var showLabel = true
 
     var body: some View {
         let d = bubble.diameter
@@ -221,6 +260,7 @@ struct AreaBubbleView: View {
         }
         .frame(width: d, height: d)
         .overlay(alignment: .bottom) {
+            if showLabel {
             Text(bubble.name.uppercased())
                 .font(V8Font.text(10, weight: .bold))
                 .tracking(1)
@@ -228,6 +268,7 @@ struct AreaBubbleView: View {
                 .lineLimit(1)
                 .fixedSize()
                 .offset(y: 20)
+            }
         }
         .contentShape(Circle())
         .accessibilityElement(children: .combine)

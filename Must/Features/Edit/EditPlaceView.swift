@@ -52,7 +52,7 @@ struct EditPlaceView: View {
     var body: some View {
         CutSheet(title: isNew ? "Novo lugar" : "Editar lugar", corner: ["Board", region.shortName],
                  subtitle: isNew ? nil : draft.name, height: 150,
-                 footer: "Salvar", onFooter: save) {
+                 footer: "Salvar", footerId: "edit.save", onFooter: save) {
             nameFields
             listPicker
             cityAndPrice

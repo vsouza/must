@@ -111,13 +111,16 @@ struct ShoppingView: View {
                         .font(.must.mono(14, .semibold)).foregroundStyle(V8.orange)
                 }
             }
-            HStack(alignment: .firstTextBaseline, spacing: 10) {
-                Text(symbol).font(.must.mono(26, .semibold)).foregroundStyle(.white)
-                MonoNumber(ShoppingReport.yen(planned), size: 34).foregroundStyle(.white)
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                    Text(symbol).font(.must.mono(26, .semibold)).foregroundStyle(.white)
+                    MonoNumber(ShoppingReport.yen(planned), size: 34).foregroundStyle(.white)
+                        .dynamicTypeSize(...DynamicTypeSize.xLarge)
+                        .lineLimit(1).minimumScaleFactor(0.6)
+                }
                 Text("≈ \(ShoppingReport.money(report.amount(yen: report.planned, in: other), currency: other)) · volta ~\(symbol)\(ShoppingReport.compact(refund))")
                     .font(.must.mono(13)).foregroundStyle(.white.opacity(0.75))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
+                    .lineLimit(2)
             }
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
@@ -191,7 +194,8 @@ struct ShoppingView: View {
                 .foregroundStyle(Color.must.ink)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
-                .frame(width: 72)
+                .minimumScaleFactor(0.8)
+                .frame(width: 96)
         }
     }
 

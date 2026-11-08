@@ -53,7 +53,7 @@ struct CutScreenHeader<Trailing: View>: View {
                 .padding(.top, 10)
                 .padding(.bottom, 16)
             }
-            .frame(height: height * min(scale, 1.4))
+            .frame(height: height * min(scale, 1.12))
             CutRule()
         }
     }
@@ -207,7 +207,7 @@ struct CutField: View {
 
 extension View {
     /// Botão principal da folha/tela: laranja de ponta a ponta no pé, régua de tinta em cima, mono caixa alta.
-    func cutFooter(_ title: String, enabled: Bool = true, arrow: Bool = true, action: @escaping () -> Void) -> some View {
+    func cutFooter(_ title: String, enabled: Bool = true, arrow: Bool = true, id: String? = nil, action: @escaping () -> Void) -> some View {
         safeAreaInset(edge: .bottom, spacing: 0) {
             Button(action: action) {
                 HStack(spacing: 10) {
@@ -228,6 +228,7 @@ extension View {
             }
             .buttonStyle(.plain)
             .disabled(!enabled)
+            .accessibilityIdentifier(id ?? "")
         }
     }
 }
@@ -322,6 +323,7 @@ struct CutSheet<Content: View>: View {
     var footer: String?
     var footerEnabled = true
     var footerArrow = true
+    var footerId: String?
     var onFooter: () -> Void = {}
     var onClose: (() -> Void)?
     @ViewBuilder var content: Content
@@ -343,7 +345,7 @@ struct CutSheet<Content: View>: View {
             .scrollDismissesKeyboard(.interactively)
         }
         .background(V8.paper.ignoresSafeArea())
-        .modifier(CutSheetFooter(title: footer, enabled: footerEnabled, arrow: footerArrow, action: onFooter))
+        .modifier(CutSheetFooter(title: footer, enabled: footerEnabled, arrow: footerArrow, id: footerId, action: onFooter))
     }
 }
 
@@ -351,11 +353,12 @@ private struct CutSheetFooter: ViewModifier {
     var title: String?
     var enabled: Bool
     var arrow: Bool
+    var id: String?
     var action: () -> Void
 
     @ViewBuilder func body(content: Content) -> some View {
         if let title {
-            content.cutFooter(title, enabled: enabled, arrow: arrow, action: action)
+            content.cutFooter(title, enabled: enabled, arrow: arrow, id: id, action: action)
         } else {
             content
         }

@@ -169,7 +169,8 @@ struct LinkPlacesMap: View {
             .lineLimit(1)
             .padding(.horizontal, 10)
             .padding(.vertical, 5)
-            .glass(cornerRadius: 999)
+            .background(V8.paper)
+            .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
             .padding(10)
     }
 
@@ -194,8 +195,9 @@ struct LinkPlacesMap: View {
             Image(systemName: "arrow.up.left.and.arrow.down.right")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(Color.must.ink)
-                .frame(width: 30, height: 30)
-                .glass(cornerRadius: 15)
+                .frame(width: 34, height: 34)
+                .background(V8.paper)
+                .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
         }
         .buttonStyle(MustPressStyle())
         .padding(10)
