@@ -71,6 +71,7 @@ struct MontarView: View {
     @Environment(RegionStore.self) private var store
     @Environment(Services.self) private var services
     @Environment(\.dayEngine) private var engine
+    @Environment(\.tripTheme) private var theme
 
     @Query private var places: [Place]
     @Query private var trips: [TripInfo]
@@ -131,7 +132,7 @@ struct MontarView: View {
         Task { await p.prefetchTravel(catalog: places.solverCatalog, trip: trips.first, settings: settingsList.first,
                                       location: services.location.current, flights: dayFlights(p)) }
         #if DEBUG
-        if let screen = DebugFlags.string("debugScreen"), ["proposta", "trocar", "outra"].contains(screen) {
+        if let screen = DebugFlags.string("debugScreen"), ["proposta", "trocar", "outra", "corte-proposta"].contains(screen) {
             Task { await generate(p) }
         }
         #endif
@@ -174,19 +175,22 @@ struct MontarView: View {
     // MARK: Tela
 
     private func content(_ planner: DayPlanner) -> some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                header(planner)
-                areaSection.padding(.top, 24)
-                paceSection.padding(.top, 26)
-                budgetSection(planner).padding(.top, 22)
-                includeSection(planner).padding(.top, 24)
-                Color.clear.frame(height: 130)
+        VStack(spacing: 0) {
+            header(planner)
+            CutRule()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    areaSection.padding(.top, 22)
+                    paceSection.padding(.top, 26)
+                    budgetSection(planner).padding(.top, 22)
+                    includeSection(planner).padding(.top, 24)
+                    Color.clear.frame(height: 130)
+                }
+                .padding(.horizontal, 20)
             }
-            .padding(.horizontal, 20)
+            .scrollIndicators(.hidden)
+            .scrollDismissesKeyboard(.interactively)
         }
-        .scrollIndicators(.hidden)
-        .scrollDismissesKeyboard(.interactively)
         .overlay(alignment: .bottom) {
             BigButton(title: working ? "Montando…" : "Gerar o dia · \(pace.rawValue) paradas", style: .orange,
                       systemImage: working ? nil : "arrow.up.right") {
@@ -203,46 +207,39 @@ struct MontarView: View {
                     .allowsHitTesting(false)
             }
         }
-        .background {
-            ZStack {
-                V8.ink
-                Rings(color: V8.white, count: 1, diameter: 560, opacity: 0.28, offset: CGSize(width: 110, height: -340))
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            }
-            .ignoresSafeArea()
-        }
+        .background(V8.ink.ignoresSafeArea())
         .navigationDestination(isPresented: $showProposal) {
             ProposalView(planner: planner, plan: generated, another: { await another(planner) }).toolbar(.hidden, for: .navigationBar)
         }
         .sheet(isPresented: $editingStart) { startSheet(planner) }
     }
 
+    /// Bloco do bairro escolhido (o corte): fechar, hora de sair, "Montar o dia".
     private func header(_ planner: DayPlanner) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .top) {
-                RoundButton(systemImage: "xmark", label: "Fechar", style: .line, tint: V8.white) { dismiss() }
-                Spacer(minLength: 12)
-                Button { editingStart = true } label: {
-                    SpecStack(lines: [DayText.dayLine(planner.date, region: region),
-                                      "a partir das \(region.timeString(planner.startAt))"],
-                              color: V8.muteDark, alignment: .trailing)
+        DayBand(areaId: area, places: places, height: 230) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(alignment: .top) {
+                    RoundButton(systemImage: "xmark", label: "Fechar", style: .line, tint: theme.coverInk, size: 40) { dismiss() }
+                    Spacer(minLength: 12)
+                    Button { editingStart = true } label: {
+                        DayBandCorners(left: [], right: [DayText.dayLine(planner.date, region: region),
+                                                         "a partir das \(region.timeString(planner.startAt))"])
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityHint("Muda a hora de sair")
                 }
-                .buttonStyle(.plain)
-                .accessibilityHint("Muda a hora de sair")
-                .padding(.top, 4)
+                Spacer(minLength: 8)
+                Text("Montar o dia")
+                    .font(V8Font.display(46))
+                    .foregroundStyle(theme.coverInk)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.6)
+                Text("Diga o bairro e o ritmo. O resto eu encaixo nos seus Musts.")
+                    .font(V8Font.text(14))
+                    .foregroundStyle(theme.coverInk.opacity(0.9))
+                    .lineLimit(2)
+                    .padding(.top, 4)
             }
-            .padding(.top, 10)
-            Text("Montar o dia")
-                .font(V8Font.display(44))
-                .foregroundStyle(V8.white)
-                .lineLimit(2)
-                .minimumScaleFactor(0.7)
-                .padding(.top, 16)
-            Text("Diga o bairro e o ritmo. O resto eu encaixo nos seus Musts.")
-                .font(V8Font.text(16))
-                .foregroundStyle(V8.muteDark)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.top, 6)
         }
     }
 

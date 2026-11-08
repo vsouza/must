@@ -91,6 +91,7 @@ struct AgoraView: View {
 
     @Query private var places: [Place]
     @Query private var trips: [TripInfo]
+    @Environment(\.tripTheme) private var theme
 
     @State private var plan: DayPlan?
     @State private var content: AgoraContent?
@@ -113,14 +114,7 @@ struct AgoraView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .background {
-            ZStack {
-                V8.ink
-                Rings(color: V8.white, count: 2, diameter: 560, opacity: 0.28, offset: CGSize(width: -60, height: 40))
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            }
-            .ignoresSafeArea()
-        }
+        .background(V8.paper.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
         .onAppear(perform: load)
         .task { await clock() }
@@ -165,61 +159,92 @@ struct AgoraView: View {
     }
 
     private func screen(_ c: AgoraContent, current: DayStop) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .top) {
-                SpecStack(lines: ["Agora · \(region.timeString(AppClock.now))", "parada \(c.position)"], color: V8.muteDark)
-                Spacer(minLength: 12)
-                SpecStack(lines: [[areaName(current), tempText].compactMap { $0 }.joined(separator: " · "),
-                                  services.connectivity.isOffline ? "sem rede · offline ok" : "offline ok"],
-                          color: V8.muteDark, alignment: .trailing)
-            }
-            .padding(.top, 10)
-
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .top) {
-                    MonoLabel(c.verb, size: 10.5, color: V8.orange)
-                    Spacer(minLength: 8)
-                    SpecStack(lines: [c.countdown, c.travel].compactMap { $0 }, color: V8.muteDark, alignment: .trailing)
-                }
-                .padding(.top, 34)
-                BigNumeral(region.timeString(c.time), size: 140, color: V8.orange)
-                    .padding(.leading, -6)
-                    .frame(maxWidth: .infinity, minHeight: 130, alignment: .leading)
-            }
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel("\(c.verb) \(region.timeString(c.time)), \(c.countdown)")
-
-            Text(c.title)
-                .font(V8Font.display(46))
-                .foregroundStyle(V8.white)
-                .lineLimit(2)
-                .minimumScaleFactor(0.6)
-                .padding(.top, 12)
-            Text(c.meta)
-                .font(V8Font.text(15))
-                .foregroundStyle(V8.muteDark)
-                .lineLimit(1)
-                .padding(.top, 6)
-            if !c.chips.isEmpty {
-                ScrollView(.horizontal) {
-                    HStack(spacing: 6) {
-                        ForEach(c.chips, id: \.self) { chip in contextChip(chip) }
+        VStack(spacing: 0) {
+            band(c, current: current)
+            CutRule()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(c.title)
+                            .font(V8Font.display(42))
+                            .foregroundStyle(V8.ink)
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.6)
+                        Text(c.meta)
+                            .font(V8Font.text(15))
+                            .foregroundStyle(V8.mute)
+                            .lineLimit(2)
+                            .padding(.top, 6)
+                        if !c.chips.isEmpty {
+                            ScrollView(.horizontal) {
+                                HStack(spacing: 8) { ForEach(c.chips, id: \.self) { chip in contextChip(chip) } }
+                                    .padding(2)
+                            }
+                            .scrollIndicators(.hidden)
+                            .padding(.top, 12)
+                        }
+                        progressBar(c).padding(.top, 20)
                     }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 18)
+                    .padding(.bottom, 18)
+                    IndexRule()
+                    ForEach(later(c)) { stop in
+                        DayStopRow(stop: stop, index: 0, state: .upcoming, region: region, onTap: openLater(stop))
+                    }
+                    Color.clear.frame(height: 190)
                 }
-                .scrollIndicators(.hidden)
-                .padding(.top, 14)
             }
-
-            progressBar(c).padding(.top, 22)
-
-            if let next = c.next { nextCard(next).padding(.top, 20) }
-            if !c.more.isEmpty { morePills(c.more).padding(.top, 16) }
-
-            Spacer(minLength: 16)
-            actions(c, current: current)
-            Color.clear.frame(height: 96)
+            .scrollIndicators(.hidden)
+            .overlay(alignment: .bottom) {
+                actions(c, current: current)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 28)
+                    .padding(.bottom, 96)
+                    .background {
+                        LinearGradient(colors: [V8.paper.opacity(0), V8.paper], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.3))
+                            .ignoresSafeArea().allowsHitTesting(false)
+                    }
+            }
         }
-        .padding(.horizontal, 20)
+    }
+
+    /// Bloco do bairro da parada de agora: cantos, "saia às" e o numeral gigante (a hora de sair).
+    private func band(_ c: AgoraContent, current: DayStop) -> some View {
+        DayBand(areaId: current.area ?? plan?.bandArea(from: AppClock.now), places: places, height: 300) {
+            VStack(alignment: .leading, spacing: 0) {
+                DayBandCorners(left: ["Agora · \(region.timeString(AppClock.now))", "parada \(c.position)"],
+                               right: [[areaName(current), tempText].compactMap { $0 }.joined(separator: " · "),
+                                       services.connectivity.isOffline ? "sem rede · offline ok" : "offline ok"])
+                Spacer(minLength: 8)
+                HStack(alignment: .lastTextBaseline) {
+                    MonoLabel(c.verb, size: 11, color: theme.coverInk)
+                    Spacer(minLength: 8)
+                    SpecStack(lines: [c.countdown, c.travel].compactMap { $0 }, color: theme.coverInk.opacity(0.9), alignment: .trailing)
+                }
+                Text(region.timeString(c.time))
+                    .font(V8Font.numeral(118))
+                    .tracking(2)
+                    .foregroundStyle(theme.coverInk)
+                    .padding(.leading, -4)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("\(c.verb) \(region.timeString(c.time)), \(c.countdown)")
+            }
+        }
+    }
+
+    /// O que vem depois: a próxima parada e até mais quatro (do plano, sem as já feitas).
+    private func later(_ c: AgoraContent) -> [DayStop] {
+        guard let next = c.next, let plan else { return [] }
+        let done = DayDoneStore().ids(day: dayKey)
+        let rest = plan.stops.filter { $0.start > next.start && !$0.done && !done.contains($0.id) }
+        return [next] + Array(rest.prefix(4))
+    }
+
+    private func openLater(_ stop: DayStop) -> () -> Void {
+        { if let id = stop.placeId { router.push(.place(id: id), on: .hoje) } else { router.push(.linha(date: today), on: .hoje) } }
     }
 
     private var tempText: String? {
@@ -233,31 +258,30 @@ struct AgoraView: View {
 
     private func contextChip(_ text: String) -> some View {
         HStack(spacing: 6) {
-            Circle().fill(V8.orange).frame(width: 6, height: 6)
-            Text(text).font(V8Font.text(13, weight: .semibold)).foregroundStyle(V8.white).lineLimit(1)
+            Rectangle().fill(V8.orange).frame(width: 7, height: 7)
+            Text(text).font(V8Font.text(13, weight: .semibold)).foregroundStyle(V8.ink).lineLimit(1)
         }
-        .padding(.horizontal, 14)
-        .frame(minHeight: ButtonMetrics.smallPillHeight)
-        .overlay(Capsule().strokeBorder(V8.white.opacity(0.3), lineWidth: 1))
+        .padding(.horizontal, 12)
+        .frame(minHeight: 34)
+        .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
     }
 
     private func progressBar(_ c: AgoraContent) -> some View {
         VStack(spacing: 8) {
             HStack {
-                MonoLabel("Você", color: V8.muteDark)
+                MonoLabel("Você", color: V8.mute)
                 Spacer(minLength: 8)
-                MonoLabel(c.progressLabel, color: V8.muteDark)
+                MonoLabel(c.progressLabel, color: V8.mute)
                 Spacer(minLength: 8)
-                MonoLabel(c.title, color: V8.orange)
+                MonoLabel(c.title, color: V8.ink)
             }
             GeometryReader { geo in
                 let x = geo.size.width * c.progress
                 ZStack(alignment: .leading) {
-                    Capsule().fill(V8.white.opacity(0.18)).frame(height: 6)
-                    Capsule().fill(V8.orange).frame(width: max(6, x), height: 6)
-                    Circle().fill(V8.white).frame(width: 16, height: 16)
-                        .overlay(Circle().strokeBorder(V8.ink, lineWidth: 3).padding(-3))
-                        .offset(x: min(max(0, x - 8), geo.size.width - 16))
+                    Rectangle().fill(V8.ink.opacity(0.15)).frame(height: 6)
+                    Rectangle().fill(V8.orange).frame(width: max(6, x), height: 6)
+                    Rectangle().fill(V8.ink).frame(width: 14, height: 14)
+                        .offset(x: min(max(0, x - 7), geo.size.width - 14))
                 }
                 .frame(maxHeight: .infinity)
             }
@@ -267,64 +291,17 @@ struct AgoraView: View {
         .accessibilityLabel("Trajeto até \(c.title): \(Int(c.progress * 100)) por cento do tempo até a saída")
     }
 
-    private func nextCard(_ next: DayStop) -> some View {
-        Button {
-            if let id = next.placeId { router.push(.place(id: id), on: .hoje) } else { router.push(.linha(date: today), on: .hoje) }
-        } label: {
-            HStack(spacing: 14) {
-                VStack(spacing: 2) {
-                    MonoLabel("Depois", size: 9.5, color: V8.mute)
-                    Text(region.timeString(next.start)).font(V8Font.mono(16)).fontWeight(.semibold).foregroundStyle(V8.ink)
-                }
-                .frame(minWidth: 56)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(next.label).font(V8Font.text(15, weight: .bold)).foregroundStyle(V8.ink).lineLimit(1)
-                    Text(next.note).font(V8Font.text(12)).foregroundStyle(V8.mute).lineLimit(1)
-                }
-                Spacer(minLength: 0)
-                if next.kind == .anchor {
-                    Text("ÂNCORA").font(V8Font.mono(9)).fontWeight(.semibold).tracking(0.7).foregroundStyle(V8.ink)
-                        .padding(.horizontal, 8).padding(.vertical, 5)
-                        .background(RoundedRectangle(cornerRadius: 6).fill(V8.orange))
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-            .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(V8.paper))
-        }
-        .buttonStyle(MustPressStyle())
-    }
-
-    private func morePills(_ more: [String]) -> some View {
-        HStack(spacing: 8) {
-            MonoLabel("e mais", color: V8.muteDark).fixedSize()
-            ScrollView(.horizontal) {
-                HStack(spacing: 8) {
-                    ForEach(more, id: \.self) { text in
-                        Button { router.push(.linha(date: today), on: .hoje) } label: {
-                            Text(text).font(V8Font.text(13, weight: .semibold)).foregroundStyle(V8.white).lineLimit(1)
-                                .padding(.horizontal, 14).frame(minHeight: ButtonMetrics.pillHeight)
-                                .overlay(Capsule().strokeBorder(V8.white.opacity(0.3), lineWidth: 1))
-                        }
-                        .buttonStyle(MustPressStyle())
-                    }
-                }
-            }
-            .scrollIndicators(.hidden)
-        }
-    }
-
     private var today: Date { region.calendar.startOfDay(for: AppClock.now) }
 
     private func actions(_ c: AgoraContent, current: DayStop) -> some View {
         HStack(spacing: 10) {
-            RoundButton(systemImage: "arrow.up.arrow.down", label: "Trocar parada", style: .line, tint: V8.white, size: 56) {
+            RoundButton(systemImage: "arrow.up.arrow.down", label: "Trocar parada", style: .line, tint: V8.ink, size: 56) {
                 router.push(.montar(date: today), on: .hoje)
             }
             BigButton(title: irTitle(c), style: .orange, systemImage: "arrow.up.right") {
                 if let id = current.placeId { router.push(.ir(placeId: id), on: .hoje) } else { router.push(.linha(date: today), on: .hoje) }
             }
-            RoundButton(systemImage: "checkmark", label: "Marcar como feito", style: .paper, size: 56) { markDone(current) }
+            RoundButton(systemImage: "checkmark", label: "Marcar como feito", style: .ink, size: 56) { markDone(current) }
         }
     }
 
@@ -341,38 +318,42 @@ struct AgoraView: View {
     }
 
     private var empty: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            SpecStack(lines: ["Agora · \(region.timeString(AppClock.now))",
-                              plan == nil ? "sem dia montado" : upcoming != nil ? "antes da primeira parada" : "dia feito"],
-                      color: V8.muteDark)
-                .padding(.top, 10)
-            Spacer()
-            if let upcoming {
-                Text("O dia começa às \(region.timeString(upcoming.stop.start)).")
-                    .font(V8Font.display(40))
-                    .foregroundStyle(V8.white)
-                Text("Primeira parada: \(upcoming.stop.label). Saia às \(region.timeString(upcoming.leaveAt)).")
-                    .font(V8Font.text(15))
-                    .foregroundStyle(V8.muteDark)
-                BigButton(title: "Ver o dia", style: .orange, systemImage: "arrow.up.right") {
-                    router.push(.linha(date: today), on: .hoje)
-                }
-                .padding(.top, 8)
-            } else {
-                Text(plan == nil ? "Nada marcado agora." : "O dia acabou.")
-                    .font(V8Font.display(40))
-                    .foregroundStyle(V8.white)
-                Text(plan == nil ? "Monte o dia e o Agora mostra a hora de sair, o caminho e o que vem depois."
-                                 : "Todas as paradas passaram. A Boa noite fecha o dia.")
-                    .font(V8Font.text(15))
-                    .foregroundStyle(V8.muteDark)
-                BigButton(title: plan == nil ? "Montar o dia" : "Boa noite", style: .orange, systemImage: "arrow.up.right") {
-                    router.push(plan == nil ? .montar(date: today) : .boaNoite, on: .hoje)
-                }
-                .padding(.top, 8)
-            }
-            Color.clear.frame(height: 96)
+        let title: String
+        let text: String
+        if let upcoming {
+            title = "O dia começa às \(region.timeString(upcoming.stop.start))."
+            text = "Primeira parada: \(upcoming.stop.label). Saia às \(region.timeString(upcoming.leaveAt))."
+        } else if plan == nil {
+            title = "Nada marcado agora."
+            text = "Monte o dia e o Agora mostra a hora de sair, o caminho e o que vem depois."
+        } else {
+            title = "O dia acabou."
+            text = "Todas as paradas passaram. A Boa noite fecha o dia."
         }
-        .padding(.horizontal, 20)
+        return VStack(alignment: .leading, spacing: 0) {
+            DayBand(areaId: plan?.bandArea(from: AppClock.now), places: places, height: 300) {
+                VStack(alignment: .leading, spacing: 0) {
+                    DayBandCorners(left: ["Agora · \(region.timeString(AppClock.now))",
+                                          plan == nil ? "sem dia montado" : upcoming != nil ? "antes da primeira parada" : "dia feito"],
+                                   right: [])
+                    Spacer(minLength: 8)
+                    Text(title).font(V8Font.display(44)).foregroundStyle(theme.coverInk).lineLimit(3).minimumScaleFactor(0.6)
+                }
+            }
+            CutRule()
+            VStack(alignment: .leading, spacing: 14) {
+                Text(text).font(V8Font.text(15)).foregroundStyle(V8.mute)
+                if upcoming != nil {
+                    BigButton(title: "Ver o dia", style: .orange, systemImage: "arrow.up.right") { router.push(.linha(date: today), on: .hoje) }
+                } else {
+                    BigButton(title: plan == nil ? "Montar o dia" : "Boa noite", style: .orange, systemImage: "arrow.up.right") {
+                        router.push(plan == nil ? .montar(date: today) : .boaNoite, on: .hoje)
+                    }
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 20)
+            Spacer(minLength: 0)
+        }
     }
 }

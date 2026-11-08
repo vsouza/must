@@ -340,7 +340,7 @@ enum DebugLaunch {
             acceptToday(context: context, region: region, location: location)
             router.select(.hoje)
             prefetchDays(services: services, context: context, region: region)
-        case "montar", "proposta", "trocar", "outra": router.push(.montar(date: region.calendar.startOfDay(for: AppClock.now)), on: .hoje)
+        case "montar", "proposta", "trocar", "outra", "corte-proposta", "corte-montar": router.push(.montar(date: region.calendar.startOfDay(for: AppClock.now)), on: .hoje)
         case "gasto": router.select(.hoje); router.sheet = .expense(placeId: nil)
         case "aceitar":
             acceptToday(context: context, region: region, location: location)
@@ -413,12 +413,12 @@ enum DebugLaunch {
         case "aceitar-dia": // aceitar-dia:<bairro>: o motor v8 monta (ritmo 9, micro-paradas) e aceita hoje; abre a capa
             acceptEngineToday(context: context, region: region, engine: engine, areaId: arg)
             router.select(.hoje)
-        case "bom-dia": router.push(.bomDia, on: .hoje)
-        case "agora": router.push(.agora, on: .hoje)
-        case "dia", "linha": router.push(.linha(date: region.calendar.startOfDay(for: AppClock.now)), on: .hoje)
+        case "bom-dia", "corte-bomdia": router.push(.bomDia, on: .hoje)
+        case "agora", "corte-agora": router.push(.agora, on: .hoje)
+        case "dia", "linha", "corte-dia": router.push(.linha(date: region.calendar.startOfDay(for: AppClock.now)), on: .hoje)
         case "ir": router.push(.ir(placeId: arg ?? "j05"), on: .hoje)
-        case "noite": router.push(.boaNoite, on: .hoje)
-        case "bolso": router.push(.bolso, on: .hoje)
+        case "noite", "corte-boanoite": router.push(.boaNoite, on: .hoje)
+        case "bolso", "corte-bolso": router.push(.bolso, on: .hoje)
         case "proximos": router.select(.viagem)
         case "museu": router.push(.place(id: arg ?? "r46"), on: .musts)
         // prompt 25 (contrato): Atalhos é um painel sobre a capa (o agente 25/1 lê `-debugScreen atalhos`).

@@ -77,6 +77,7 @@
 		205D792216B142FEBD43EB70 /* IrView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE19BE004132D6C56297A38F /* IrView.swift */; };
 		2112256931B46241E389365A /* Network.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C5AA907B51E3A312E8DEA0D /* Network.swift */; };
 		2186C2D630E29F138D951F86 /* SeedTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CD8C8F6456C640A41F53D6A /* SeedTests.swift */; };
+		219FF791B338E87A1AFDE315 /* DayCut.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84748EB5C0B98D3B749D9CE5 /* DayCut.swift */; };
 		22D230B4C5811B7A165D26B1 /* Typography.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEA9433C369F5E569448A38F /* Typography.swift */; };
 		2322AACA982A239264D2019F /* WalletCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E73E37133E3474A471011CD9 /* WalletCardView.swift */; };
 		23E5F5CBB10426C71A2EDFBB /* PlaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 486E283B4CB2889203AE8597 /* PlaceView.swift */; };
@@ -848,6 +849,7 @@
 		8391FD0C8B7A30480FCE9EF4 /* EventPaste.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventPaste.swift; sourceTree = "<group>"; };
 		84244FBA91E62E69B6DD87A0 /* CapaModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapaModel.swift; sourceTree = "<group>"; };
 		84263FD4BE0F1E37ADFB243C /* AreaCoverPrefetch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AreaCoverPrefetch.swift; sourceTree = "<group>"; };
+		84748EB5C0B98D3B749D9CE5 /* DayCut.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayCut.swift; sourceTree = "<group>"; };
 		84A3772999467B2DD84F0755 /* MapPins.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapPins.swift; sourceTree = "<group>"; };
 		857547316EC7074891DD51AD /* Colors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Colors.swift; sourceTree = "<group>"; };
 		85EB07B30528BC8A1C98BF6A /* SuggestionEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuggestionEngineTests.swift; sourceTree = "<group>"; };
@@ -1512,6 +1514,14 @@
 				ABE00570D9BDE416E0F7C77E /* TravelOptions.swift */,
 			);
 			path = Google;
+			sourceTree = "<group>";
+		};
+		5BF15E0C0855A97E499CAFB3 /* Corte */ = {
+			isa = PBXGroup;
+			children = (
+				84748EB5C0B98D3B749D9CE5 /* DayCut.swift */,
+			);
+			path = Corte;
 			sourceTree = "<group>";
 		};
 		5F304D00EE58B264F556A108 /* MustTests */ = {
@@ -2373,6 +2383,7 @@
 		FEDF3038C50A9EEE9A79400A /* Today */ = {
 			isa = PBXGroup;
 			children = (
+				5BF15E0C0855A97E499CAFB3 /* Corte */,
 				545A48190080E288023E2C5D /* AgoraView.swift */,
 				0425F7B058E948914542FB70 /* BomDiaView.swift */,
 				61A720A1C71162BCB57BD0BB /* DayMoments.swift */,
@@ -2857,6 +2868,7 @@
 				7D8F5E416C711C28C3E45DC0 /* CurrentAreaService.swift in Sources */,
 				619192508D674C3CF00785FF /* DataUsage.swift in Sources */,
 				EB4B75F6D6AC1ED277AF6970 /* DayComposer.swift in Sources */,
+				219FF791B338E87A1AFDE315 /* DayCut.swift in Sources */,
 				D29C5CF20D1B44D9934100FE /* DayEngineV8.swift in Sources */,
 				BD942595AB2E5844426823AC /* DayFit.swift in Sources */,
 				85DEF06661EE5CA7B733CDD4 /* DayLink.swift in Sources */,
