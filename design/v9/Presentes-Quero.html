@@ -1,0 +1,99 @@
+<!doctype html><html lang="pt-BR"><head><title>Presentes · no quero</title><meta charset="utf-8"><meta name="viewport" content="width=390"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Martian+Mono:wght@400;500;700;800&display=block" rel="stylesheet"><style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#121212;--paper:#F2F0EA;--bone:#E4E0D5;--or:#FF4A1C;--g1:#6B6B66;--g2:#A3A39C;--place:#D7000F;--jp:#D7000F;--br:#007A33;--it:#1F5FB4}
+html,body{background:var(--paper);color:var(--ink);font-family:'Schibsted Grotesk',sans-serif;-webkit-font-smoothing:antialiased}
+.scr{position:relative;width:390px;height:844px;overflow:hidden;display:flex;flex-direction:column;background:var(--paper)}
+.mono{font-family:'Martian Mono',monospace;font-size:9px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;line-height:1.55}
+.disp{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;letter-spacing:-.045em;line-height:.88}
+.g1{color:var(--g1)}.g2{color:var(--g2)}.orc{color:var(--or)}
+/* status bar */
+.sb{height:47px;flex:none;display:flex;justify-content:space-between;align-items:flex-end;padding:0 26px 7px 34px;font-weight:700;font-size:15px;letter-spacing:-.01em;position:relative;z-index:6}
+.sb.w{color:#fff}.sb svg{display:block}
+/* bloco da foto (CutBand) */
+.band{position:relative;flex:none;overflow:hidden;background:var(--place);color:#fff}
+.band>.p{position:absolute;inset:0;background-size:cover;background-position:center 40%;filter:grayscale(1) contrast(1.6) brightness(1.05);mix-blend-mode:multiply}
+.band::after{content:"";position:absolute;inset:0;background:radial-gradient(circle,#121212 0 .9px,transparent 1.3px) 0 0/4px 4px;opacity:.25;pointer-events:none;z-index:1}
+.band>.arcs{position:absolute;inset:0;z-index:2;pointer-events:none}
+.band>.in{position:relative;z-index:3;height:100%;display:flex;flex-direction:column;padding:0 20px 16px}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+/* régua */
+.rule{height:12px;background:var(--ink);flex:none;position:relative;z-index:4}
+.rule.pull{height:26px;display:flex;align-items:center;justify-content:center}
+.rule.pull .grip{width:38px;height:6px;background:var(--or)}
+.rule.pull .rl{position:absolute;right:16px;top:8px;color:var(--paper);font-family:'Martian Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;line-height:1}
+.rule.pull .ll{position:absolute;left:16px;top:8px;color:var(--g2);font-family:'Martian Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;line-height:1}
+/* botões quadrados */
+.sq{width:40px;height:40px;flex:none;border:2px solid currentColor;display:flex;align-items:center;justify-content:center;font-family:'Martian Mono',monospace;font-size:15px;font-weight:700}
+.sq.f{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.act{font-family:'Martian Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border:2px solid currentColor;padding:7px 8px;flex:none;line-height:1;white-space:nowrap}
+.act.f{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+/* faixas de seção */
+.sec{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:9px 18px;font-family:'Martian Mono',monospace;font-size:9px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;line-height:1.3;flex:none}
+.sec.or{background:var(--or)}.sec.ink{background:var(--ink);color:var(--paper)}.sec.ln{border-top:2px solid var(--ink)}
+/* índice */
+.ix{display:flex;align-items:center;gap:12px;padding:11px 18px;border-top:2px solid var(--ink);flex:none}
+.ix .n{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:30px;letter-spacing:-.04em;line-height:.9;width:70px;flex:none}
+.ix .n small{display:block;font-family:'Martian Mono',monospace;font-size:7.5px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;margin-top:4px;line-height:1.3}
+.ix .d{font-family:'Martian Mono',monospace;font-weight:700;font-size:16px;letter-spacing:-.02em;width:66px;flex:none;line-height:1}
+.ix .d small{display:block;font-weight:400;font-size:7.5px;letter-spacing:.08em;text-transform:uppercase;margin-top:4px;line-height:1.3;opacity:.75}
+.ix .t{flex:1;min-width:0}
+.ix .t b{display:block;font-size:15px;font-weight:700;line-height:1.2;letter-spacing:-.01em}
+.ix .t span{display:block;font-size:11.5px;color:var(--g1);line-height:1.35;margin-top:2px}
+.ix.or{background:var(--or)}.ix.or .t span{color:rgba(18,18,18,.72)}
+.ix.ink{background:var(--ink);color:var(--paper);border-top-color:#3a3a38}.ix.ink .t span{color:var(--g2)}
+.ix.ink+.ix:not(.ink){border-top-color:var(--ink)}
+.thumb{width:54px;height:54px;flex:none;position:relative;overflow:hidden;background:var(--place)}
+.thumb>.p{position:absolute;inset:0;background-size:cover;background-position:center;filter:grayscale(1) contrast(1.6) brightness(1.05);mix-blend-mode:multiply}
+.thumb::after{content:"";position:absolute;inset:0;background:radial-gradient(circle,#121212 0 .7px,transparent 1.1px) 0 0/3px 3px;opacity:.25}
+.thumb .pn{position:absolute;left:0;top:0;z-index:2;width:18px;height:18px;background:var(--ink);color:var(--paper);font-family:'Martian Mono',monospace;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.thumb .pn.k{background:var(--paper);color:var(--ink)}
+/* chips quadrados */
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-family:'Martian Mono',monospace;font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;padding:8px 10px;border:2px solid var(--ink);line-height:1;white-space:nowrap}
+.chip.on{background:var(--ink);color:var(--paper)}
+.chip.o{background:var(--or)}
+/* barra v9: faixa de tinta, sem cápsula */
+.bar{margin-top:auto;flex:none;background:var(--ink);color:var(--paper);position:relative;z-index:8}
+.bar .cells{display:grid;grid-template-columns:repeat(4,1fr) 74px;height:58px}
+.bar .c{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-family:'Martian Mono',monospace;font-size:7.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;border-right:1px solid #2f2f2d}
+.bar .c.on{background:var(--paper);color:var(--ink);font-weight:800;box-shadow:inset 0 3px 0 var(--or)}
+.bar .plus{background:var(--or);color:var(--ink);display:flex;align-items:center;justify-content:center;font-family:'Bricolage Grotesque';font-weight:800;font-size:34px;line-height:1}
+.bar .hm,.home{height:28px;display:flex;align-items:center;justify-content:center}
+.bar .hm i,.home i{display:block;width:134px;height:5px;border-radius:3px;background:var(--paper)}
+.home{flex:none}.home.k i{background:var(--ink)}
+.cta{flex:none;display:grid;height:58px}
+.cta>div{display:flex;align-items:center;justify-content:center;gap:8px;font-weight:800;font-size:16px;letter-spacing:-.01em}
+.cta .o{background:var(--or);color:var(--ink)}.cta .k{background:var(--ink);color:var(--paper)}.cta .pp{background:var(--paper);color:var(--ink)}
+.caret{display:inline-block;width:3px;background:var(--or);margin-left:3px;vertical-align:-3px}
+.lbl{font-family:'Martian Mono',monospace;font-size:8px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;line-height:1.4}
+.flag{flex:none;border:2px solid var(--ink);display:block}
+</style>
+<style>
+.ix{padding-top:9px;padding-bottom:9px}
+.ix .d{font-size:15px}
+.dark .ix .act{border-color:var(--paper)}
+</style></head><body>
+<div class="scr">
+  <div class="band" style="height:150px">
+    <div class="p" style="background-image:url(../v8/screens/photos/shinjukublue.jpg)"></div>
+    <div class="in">
+      <div class="sb w"><span>18:14</span><span style="display:flex;gap:6px;align-items:center"><svg width="18" height="11" viewBox="0 0 18 11" fill="currentColor"><rect x="0" y="7" width="3" height="4"/><rect x="5" y="5" width="3" height="6"/><rect x="10" y="2.5" width="3" height="8.5"/><rect x="15" y="0" width="3" height="11"/></svg><span style="font-size:12px;font-weight:800">5G</span><svg width="27" height="12" viewBox="0 0 27 12"><rect x=".5" y=".5" width="23" height="11" fill="none" stroke="currentColor" opacity=".5"/><rect x="2" y="2" width="16" height="8" fill="currentColor"/><rect x="24.5" y="4" width="2" height="4" fill="currentColor" opacity=".5"/></svg></span></div>
+      <div class="top" style="margin-top:2px"><div class="mono">quero · shinjuku</div><div class="mono">6 achados</div></div>
+      <div class="disp" style="font-size:48px;margin-top:auto">presente</div>
+    </div>
+  </div>
+  <div class="rule"></div>
+  <div class="sec or"><span>seus presentes · 3</span><span>dá pra comprar aqui</span></div>
+  <div class="ix"><div class="d">300 m<small>4 min a pé</small></div><div class="t"><b>Disk Union Shinjuku</b><span>disco de city pop · Pedro · até 21h</span></div><div class="act">ir</div></div>
+  <div class="ix"><div class="d">450 m<small>6 min a pé</small></div><div class="t"><b>Don Quijote</b><span>Kit Kat de matcha × 3 · Ana · 24 h</span></div><div class="act">ir</div></div>
+  <div class="ix"><div class="d">1,2 km<small>15 min a pé</small></div><div class="t"><b>Tokyu Hands</b><span>furoshiki · Mãe · fecha 21h</span></div><div class="act">ir</div></div>
+  <div class="sec or" style="border-top:2px solid var(--ink)"><span>seus musts shop · 1</span><span>mesmo longe</span></div>
+  <div class="ix"><div class="d">2,9 km<small>5 min trem</small></div><div class="t"><b>Nakano Broadway</b><span>seu Must shop · até 20h</span></div><div class="act">ir</div></div>
+  <div class="dark" style="background:var(--ink);color:var(--paper);flex:1;border-top:12px solid var(--ink)">
+    <div class="sec ink" style="padding-top:2px"><span>aqui perto agora · 2</span><span>google</span></div>
+    <div class="ix ink"><div class="d">200 m<small>3 min a pé</small></div><div class="t"><b>Bic Camera Shinjuku</b><span>★ 4,2 · tax-free · até 22h</span></div><div class="act">+ board</div></div>
+    <div class="ix ink"><div class="d">350 m<small>5 min a pé</small></div><div class="t"><b>Loft Shinjuku</b><span>★ 4,3 · papelaria · até 21h</span></div><div class="act">+ board</div></div>
+  </div>
+  <div class="home" style="background:var(--ink)"><i></i></div>
+</div>
+</body></html>

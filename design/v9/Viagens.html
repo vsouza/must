@@ -1,0 +1,112 @@
+<!doctype html><html lang="pt-BR"><head><title>Minhas viagens</title><meta charset="utf-8"><meta name="viewport" content="width=390"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Martian+Mono:wght@400;500;700;800&display=block" rel="stylesheet"><style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#121212;--paper:#F2F0EA;--bone:#E4E0D5;--or:#FF4A1C;--g1:#6B6B66;--g2:#A3A39C;--place:#D7000F;--jp:#D7000F;--br:#007A33;--it:#1F5FB4}
+html,body{background:var(--paper);color:var(--ink);font-family:'Schibsted Grotesk',sans-serif;-webkit-font-smoothing:antialiased}
+.scr{position:relative;width:390px;height:844px;overflow:hidden;display:flex;flex-direction:column;background:var(--paper)}
+.mono{font-family:'Martian Mono',monospace;font-size:9px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;line-height:1.55}
+.disp{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;letter-spacing:-.045em;line-height:.88}
+.g1{color:var(--g1)}.g2{color:var(--g2)}.orc{color:var(--or)}
+/* status bar */
+.sb{height:47px;flex:none;display:flex;justify-content:space-between;align-items:flex-end;padding:0 26px 7px 34px;font-weight:700;font-size:15px;letter-spacing:-.01em;position:relative;z-index:6}
+.sb.w{color:#fff}.sb svg{display:block}
+/* bloco da foto (CutBand) */
+.band{position:relative;flex:none;overflow:hidden;background:var(--place);color:#fff}
+.band>.p{position:absolute;inset:0;background-size:cover;background-position:center 40%;filter:grayscale(1) contrast(1.6) brightness(1.05);mix-blend-mode:multiply}
+.band::after{content:"";position:absolute;inset:0;background:radial-gradient(circle,#121212 0 .9px,transparent 1.3px) 0 0/4px 4px;opacity:.25;pointer-events:none;z-index:1}
+.band>.arcs{position:absolute;inset:0;z-index:2;pointer-events:none}
+.band>.in{position:relative;z-index:3;height:100%;display:flex;flex-direction:column;padding:0 20px 16px}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+/* régua */
+.rule{height:12px;background:var(--ink);flex:none;position:relative;z-index:4}
+.rule.pull{height:26px;display:flex;align-items:center;justify-content:center}
+.rule.pull .grip{width:38px;height:6px;background:var(--or)}
+.rule.pull .rl{position:absolute;right:16px;top:8px;color:var(--paper);font-family:'Martian Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;line-height:1}
+.rule.pull .ll{position:absolute;left:16px;top:8px;color:var(--g2);font-family:'Martian Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;line-height:1}
+/* botões quadrados */
+.sq{width:40px;height:40px;flex:none;border:2px solid currentColor;display:flex;align-items:center;justify-content:center;font-family:'Martian Mono',monospace;font-size:15px;font-weight:700}
+.sq.f{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.act{font-family:'Martian Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border:2px solid currentColor;padding:7px 8px;flex:none;line-height:1;white-space:nowrap}
+.act.f{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+/* faixas de seção */
+.sec{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:9px 18px;font-family:'Martian Mono',monospace;font-size:9px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;line-height:1.3;flex:none}
+.sec.or{background:var(--or)}.sec.ink{background:var(--ink);color:var(--paper)}.sec.ln{border-top:2px solid var(--ink)}
+/* índice */
+.ix{display:flex;align-items:center;gap:12px;padding:11px 18px;border-top:2px solid var(--ink);flex:none}
+.ix .n{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:30px;letter-spacing:-.04em;line-height:.9;width:70px;flex:none}
+.ix .n small{display:block;font-family:'Martian Mono',monospace;font-size:7.5px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;margin-top:4px;line-height:1.3}
+.ix .d{font-family:'Martian Mono',monospace;font-weight:700;font-size:16px;letter-spacing:-.02em;width:66px;flex:none;line-height:1}
+.ix .d small{display:block;font-weight:400;font-size:7.5px;letter-spacing:.08em;text-transform:uppercase;margin-top:4px;line-height:1.3;opacity:.75}
+.ix .t{flex:1;min-width:0}
+.ix .t b{display:block;font-size:15px;font-weight:700;line-height:1.2;letter-spacing:-.01em}
+.ix .t span{display:block;font-size:11.5px;color:var(--g1);line-height:1.35;margin-top:2px}
+.ix.or{background:var(--or)}.ix.or .t span{color:rgba(18,18,18,.72)}
+.ix.ink{background:var(--ink);color:var(--paper);border-top-color:#3a3a38}.ix.ink .t span{color:var(--g2)}
+.ix.ink+.ix:not(.ink){border-top-color:var(--ink)}
+.thumb{width:54px;height:54px;flex:none;position:relative;overflow:hidden;background:var(--place)}
+.thumb>.p{position:absolute;inset:0;background-size:cover;background-position:center;filter:grayscale(1) contrast(1.6) brightness(1.05);mix-blend-mode:multiply}
+.thumb::after{content:"";position:absolute;inset:0;background:radial-gradient(circle,#121212 0 .7px,transparent 1.1px) 0 0/3px 3px;opacity:.25}
+.thumb .pn{position:absolute;left:0;top:0;z-index:2;width:18px;height:18px;background:var(--ink);color:var(--paper);font-family:'Martian Mono',monospace;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.thumb .pn.k{background:var(--paper);color:var(--ink)}
+/* chips quadrados */
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-family:'Martian Mono',monospace;font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;padding:8px 10px;border:2px solid var(--ink);line-height:1;white-space:nowrap}
+.chip.on{background:var(--ink);color:var(--paper)}
+.chip.o{background:var(--or)}
+/* barra v9: faixa de tinta, sem cápsula */
+.bar{margin-top:auto;flex:none;background:var(--ink);color:var(--paper);position:relative;z-index:8}
+.bar .cells{display:grid;grid-template-columns:repeat(4,1fr) 74px;height:58px}
+.bar .c{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-family:'Martian Mono',monospace;font-size:7.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;border-right:1px solid #2f2f2d}
+.bar .c.on{background:var(--paper);color:var(--ink);font-weight:800;box-shadow:inset 0 3px 0 var(--or)}
+.bar .plus{background:var(--or);color:var(--ink);display:flex;align-items:center;justify-content:center;font-family:'Bricolage Grotesque';font-weight:800;font-size:34px;line-height:1}
+.bar .hm,.home{height:28px;display:flex;align-items:center;justify-content:center}
+.bar .hm i,.home i{display:block;width:134px;height:5px;border-radius:3px;background:var(--paper)}
+.home{flex:none}.home.k i{background:var(--ink)}
+.cta{flex:none;display:grid;height:58px}
+.cta>div{display:flex;align-items:center;justify-content:center;gap:8px;font-weight:800;font-size:16px;letter-spacing:-.01em}
+.cta .o{background:var(--or);color:var(--ink)}.cta .k{background:var(--ink);color:var(--paper)}.cta .pp{background:var(--paper);color:var(--ink)}
+.caret{display:inline-block;width:3px;background:var(--or);margin-left:3px;vertical-align:-3px}
+.lbl{font-family:'Martian Mono',monospace;font-size:8px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;line-height:1.4}
+.flag{flex:none;border:2px solid var(--ink);display:block}
+</style>
+<style>
+.tr{display:flex;align-items:center;gap:14px;padding:0 0 0 18px;border-top:2px solid var(--ink);flex:none;min-height:84px}
+.tr:first-of-type{border-top:none}
+.tr .t{flex:1;min-width:0;padding:12px 0}
+.tr .t b{display:block;font-size:17px;font-weight:800;letter-spacing:-.01em;line-height:1.2}
+.tr .t span{display:block;font-size:12px;color:var(--g1);margin-top:3px;line-height:1.35}
+.tr .tag{font-style:normal;display:inline-block;font-family:'Martian Mono';font-size:7.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;background:var(--ink);color:var(--paper);padding:3px 5px;margin-top:6px}
+.cur{width:76px;flex:none;align-self:stretch;border-left:2px solid var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.cur b{font-family:'Martian Mono';font-size:11px;font-weight:800;letter-spacing:.06em}
+.cur i{font-style:normal;font-family:'Bricolage Grotesque';font-weight:800;font-size:28px;line-height:.9;letter-spacing:-.03em}
+.tr.or{background:var(--or)} .tr.or .t span{color:rgba(18,18,18,.72)}
+.auto{display:flex;align-items:center;gap:12px;padding:12px 18px;border-top:2px solid var(--ink);flex:none}
+.tg{width:44px;height:24px;border:2px solid var(--ink);display:flex;flex:none}
+.tg i{width:20px;background:var(--ink);margin-left:auto}
+</style></head><body>
+<div class="scr">
+  <div class="band" style="height:250px">
+    <div class="p" style="background-image:url(../v8/screens/photos/shinjukublue.jpg)"></div>
+    <svg class="arcs" viewBox="0 0 390 250" preserveAspectRatio="none" width="390" height="250"><circle cx="350" cy="30" r="120" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="1"/><circle cx="30" cy="280" r="100" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="1"/></svg>
+    <div class="in">
+      <div class="sb w"><span>18:10</span><span style="display:flex;gap:6px;align-items:center"><svg width="18" height="11" viewBox="0 0 18 11" fill="currentColor"><rect x="0" y="7" width="3" height="4"/><rect x="5" y="5" width="3" height="6"/><rect x="10" y="2.5" width="3" height="8.5"/><rect x="15" y="0" width="3" height="11"/></svg><span style="font-size:12px;font-weight:800">5G</span><svg width="27" height="12" viewBox="0 0 27 12"><rect x=".5" y=".5" width="23" height="11" fill="none" stroke="currentColor" opacity=".5"/><rect x="2" y="2" width="16" height="8" fill="currentColor"/><rect x="24.5" y="4" width="2" height="4" fill="currentColor" opacity=".5"/></svg></span></div>
+      <div class="top" style="margin-top:4px;align-items:center">
+        <div class="sq">✕</div>
+        <div class="mono" style="flex:1">agora · japão<br>dia 3 de 14 · tóquio</div>
+      </div>
+      <div style="margin-top:auto;display:flex;align-items:flex-end;justify-content:space-between">
+        <div class="disp" style="font-size:52px">Minhas<br>viagens</div>
+        <div class="disp" style="font-size:88px;line-height:.8">4</div>
+      </div>
+    </div>
+  </div>
+  <div class="rule"></div>
+  <div class="tr or"><svg class="flag" width="38" height="26" viewBox="0 0 36 24" preserveAspectRatio="none"><rect width="36" height="24" fill="#fff"/><circle cx="18" cy="12" r="7.2" fill="#BC002D"/></svg><div class="t"><b>Japão · Tóquio e Kyoto</b><span>11–24 nov 2026 · dia 3 de 14 · 38 feitos</span><em class="tag">agora</em></div><div class="cur"><b>JPY</b><i>¥</i></div></div>
+  <div class="tr"><svg class="flag" width="38" height="26" viewBox="0 0 36 24" preserveAspectRatio="none"><rect width="36" height="24" fill="#009C3B"/><path d="M18 3L33 12 18 21 3 12z" fill="#FFDF00"/><circle cx="18" cy="12" r="5.4" fill="#002776"/><path d="M12.8 11.2q5.4-1.6 10.4 1.4" stroke="#fff" stroke-width="1" fill="none"/></svg><div class="t"><b>Belo Horizonte · casa</b><span>Savassi · sempre disponível · 21 feitos</span><em class="tag" style="background:transparent;color:var(--ink);border:1.5px solid var(--ink)">gps</em></div><div class="cur"><b>BRL</b><i>R$</i></div></div>
+  <div class="tr"><svg class="flag" width="38" height="26" viewBox="0 0 36 24" preserveAspectRatio="none"><rect width="12" height="24" fill="#009246"/><rect x="12" width="12" height="24" fill="#fff"/><rect x="24" width="12" height="24" fill="#CE2B37"/></svg><div class="t"><b>Itália · Roma</b><span>abr 2027 · a confirmar · 63 Musts</span></div><div class="cur"><b>EUR</b><i>€</i></div></div>
+  <div class="tr"><svg class="flag" width="38" height="26" viewBox="0 0 36 24" preserveAspectRatio="none"><rect width="14.4" height="24" fill="#006600"/><rect x="14.4" width="21.6" height="24" fill="#FF0000"/><circle cx="14.4" cy="12" r="4.6" fill="#FFCC00"/><circle cx="14.4" cy="12" r="2.6" fill="#fff" stroke="#FF0000" stroke-width="1.2"/></svg><div class="t"><b>Portugal · Lisboa e Porto</b><span>3–12 mai 2027 · faltam 176 dias</span></div><div class="cur"><b>EUR</b><i>€</i></div></div>
+  <div class="auto"><div style="flex:1"><b style="font-size:15px">Automático</b><div style="font-size:12px;color:var(--g1);margin-top:2px">viagem com hoje nas datas › país do GPS › casa</div></div><div class="tg"><i></i></div></div>
+  <div class="cta" style="grid-template-columns:1fr;border-top:2px solid var(--ink)"><div class="k">+ Nova viagem</div></div>
+  <div class="mono g1" style="padding:12px 18px;flex:none">trocar não apaga nada · cada viagem tem board, gastos e mapas</div>
+  <div class="home k"><i></i></div>
+</div>
+</body></html>

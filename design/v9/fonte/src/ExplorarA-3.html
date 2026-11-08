@@ -1,0 +1,42 @@
+<!doctype html><html lang="pt-BR"><head><title>Explorar A · índice cheio</title>{{HEAD}}
+<style>
+.map{position:relative;height:150px;flex:none;overflow:hidden}
+.map>svg{position:absolute;inset:0}
+.ov{position:absolute;left:0;right:0;top:0;z-index:3}
+.ovt{display:flex;justify-content:space-between;align-items:flex-start;padding:6px 18px 0}
+.ovt .tag{background:var(--paper);border:2px solid var(--ink);padding:6px 8px}
+.sort{display:grid;grid-template-columns:1fr 1.3fr 1fr;flex:none}
+.sort div{padding:10px 12px;font-family:'Martian Mono';font-size:8.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-right:2px solid var(--ink);line-height:1.2}
+.sort div:last-child{border-right:none}
+.sort .on{background:var(--ink);color:var(--paper)}
+.ix{padding-top:10px;padding-bottom:10px}
+</style></head><body>
+<div class="scr">
+  <div class="map">
+    <svg width="390" height="150" viewBox="0 0 390 150">
+      {{MAP:390|150|7|rail=M120 -10 C 130 60, 140 110, 150 160}}
+      <rect x="168" y="72" width="120" height="62" fill="none" stroke="#121212" stroke-width="2" stroke-dasharray="5 4"/>
+      {{DOT:200|100|or}}{{DOT:230|90|or}}{{DOT:260|115|or}}{{DOT:186|122|k}}{{DOT:60|110|or}}{{DOT:40|128|or}}{{DOT:330|60|k}}
+      {{ME:214|106}}
+    </svg>
+    <div class="ov">
+      {{SBI}}
+      <div class="ovt">
+        <div class="tag mono" style="line-height:1.45">shinjuku + vizinhos<br>22 musts · 31 abertos</div>
+        <div class="sq f">✦</div>
+      </div>
+    </div>
+  </div>
+  <div class="rule pull"><span class="ll">↕ mapa · lista</span><div class="grip" style="background:var(--paper)"></div><span class="rl">lista</span></div>
+  <div class="sort"><div class="on">perto</div><div>aberto até tarde</div><div>por bairro</div></div>
+  <div class="sec ink"><span>aqui · shinjuku · 9</span><span>a pé</span></div>
+  <div class="ix or"><div class="d">240 m<small>3 min a pé</small></div><div class="t"><b>Fuunji · tsukemen</b><span>seu Must · fila 15 min · fecha 21h</span></div><div class="thumb"><div class="p" style="background-image:url({{PH:tsukemen.jpg}})"></div><span class="pn">1</span></div></div>
+  <div class="ix ink"><div class="d">450 m<small>6 min a pé</small></div><div class="t"><b>Omoide Yokocho</b><span>fora do board · ★ 4,4 · lotado</span></div><div class="thumb"><div class="p" style="background-image:url({{PH:shinjukublue.jpg}})"></div><span class="pn k">2</span></div></div>
+  <div class="ix or"><div class="d">650 m<small>8 min a pé</small></div><div class="t"><b>Shinjuku Gyoen</b><span>seu Must photo · fecha 16:30</span></div><div class="thumb"><span class="pn">3</span></div></div>
+  <div class="sec ink"><span>nakano · 5 min de trem · 4</span><span>jc chūō</span></div>
+  <div class="ix or"><div class="d">5 min<small>trem · 2,9 km</small></div><div class="t"><b>Nakano Broadway</b><span>seu Must shop · aberto até 20h</span></div><div class="thumb"><span class="pn">4</span></div></div>
+  <div class="ix or"><div class="d">6 min<small>trem · 3,1 km</small></div><div class="t"><b>Daily Chico</b><span>seu Must eat · sorvete de 8 andares</span></div><div class="thumb"><span class="pn">5</span></div></div>
+  <div class="ix"><div class="d">7 min<small>trem · 3,3 km</small></div><div class="t"><b>Bar Zingaro</b><span>seu Must drink · abre 19h · daqui 50 min</span></div><div class="thumb"><span class="pn">6</span></div></div>
+  {{BAR:explorar}}
+</div>
+</body></html>

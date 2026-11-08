@@ -1,0 +1,44 @@
+<!doctype html><html lang="pt-BR"><head><title>Presentes · adicionar</title>{{HEAD}}
+<style>
+.head{background:var(--ink);color:var(--paper);flex:none;padding:0 18px 12px}
+.blk{padding:12px 18px;flex:none}
+.blk+.blk{border-top:2px solid var(--ink)}
+.seg5{display:grid;grid-template-columns:repeat(5,1fr);border-top:2px solid var(--ink);border-bottom:2px solid var(--ink);flex:none}
+.seg5 div{padding:10px 0;text-align:center;font-family:'Martian Mono';font-size:8.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-right:2px solid var(--ink);line-height:1}
+.seg5 div:last-child{border-right:none}
+.seg5 .on{background:var(--ink);color:var(--paper)}
+.src{background:var(--ink);color:var(--paper);padding:12px 18px;display:flex;gap:12px;align-items:center;flex:none}
+.src .vid{width:48px;height:64px;flex:none;position:relative;background:var(--place);overflow:hidden}
+.src .vid .p{position:absolute;inset:0;background-size:cover;background-position:center;filter:grayscale(1) contrast(1.6);mix-blend-mode:multiply}
+.src .vid::after{content:"▶";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px}
+.price{display:flex;align-items:center;gap:12px}
+.step{display:flex}
+.step div{width:34px;height:34px;border:2px solid var(--ink);display:flex;align-items:center;justify-content:center;font-family:'Martian Mono';font-weight:800;font-size:13px}
+.step div+div{border-left:none}
+.wh{display:flex;align-items:center;gap:12px;padding:11px 18px;border-top:2px solid var(--ink);flex:none}
+.wh b{display:block;font-size:14.5px}.wh span{display:block;font-size:11.5px;color:var(--g1);margin-top:2px}
+.wh.or{background:var(--or)} .wh.or span{color:rgba(18,18,18,.72)}
+.wh .t{flex:1}
+</style></head><body>
+<div class="scr">
+  <div class="head">
+    {{SB:18:12}}
+    <div class="top" style="margin-top:4px;align-items:center"><div class="sq" style="border-color:var(--paper)">✕</div><div class="mono" style="flex:1">novo presente<br>japão · moeda ¥</div></div>
+  </div>
+  <div class="blk"><div class="lbl g1">o quê</div><div class="disp" style="font-size:36px;margin-top:8px">Kit Kat de matcha<span class="caret" style="height:30px"></span></div></div>
+  <div class="seg5"><div>nome</div><div>link</div><div class="on">vídeo</div><div>local</div><div>foto</div></div>
+  <div class="src">
+    <div class="vid"><div class="p" style="background-image:url({{PH:teamlab.jpg}})"></div></div>
+    <div style="flex:1;min-width:0"><div class="mono">instagram · @tokyosnacks · 0:41</div><div style="font-size:13px;margin-top:4px;line-height:1.35">Lido no aparelho (fala e texto na tela): Kit Kat matcha, Don Quijote, ¥ 1.200.</div></div>
+  </div>
+  <div class="blk"><div class="lbl g1">pra quem</div><div class="chips" style="margin-top:9px"><span class="chip on">Ana</span><span class="chip">Pedro</span><span class="chip">Mãe</span><span class="chip">Lucas</span><span class="chip">Equipe</span><span class="chip">+ pessoa</span></div></div>
+  <div class="blk"><div class="lbl g1">preço estimado · cada</div>
+    <div class="price" style="margin-top:8px"><span style="font-family:'Martian Mono';font-weight:800;font-size:24px;letter-spacing:-.02em">¥ 1.200</span><div class="step"><div>−</div><div>3</div><div>+</div></div><span style="font-size:12px;color:var(--g1);margin-left:auto">≈ R$ 130 no total</span></div></div>
+  <div class="blk" style="padding-bottom:8px"><div class="lbl g1">onde comprar</div></div>
+  <div class="wh or"><div class="t"><b>Don Quijote Shinjuku</b><span>do vídeo · 450 m · aberto 24 h</span></div><span class="act">✓</span></div>
+  <div class="wh"><div class="t"><b>Qualquer Don Quijote</b><span>avisa perto de qualquer loja da rede</span></div></div>
+  <div class="wh"><div class="t"><b>Escolher no board ou no mapa</b><span>uma loja sua ou do Explorar</span></div><span class="mono">→</span></div>
+  <div class="cta" style="margin-top:auto;grid-template-columns:1fr"><div class="o">Guardar presente</div></div>
+  {{HOMEK}}
+</div>
+</body></html>

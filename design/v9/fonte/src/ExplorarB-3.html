@@ -1,0 +1,45 @@
+<!doctype html><html lang="pt-BR"><head><title>Explorar B · recorte aberto</title>{{HEAD}}
+<style>
+.win{position:absolute;left:14px;right:14px;top:104px;bottom:14px;border:3px solid var(--ink);background:var(--paper);overflow:hidden;z-index:4}
+.win svg{position:absolute;inset:0}
+.layers{color:var(--ink);position:absolute;left:0;right:0;bottom:0;z-index:3;display:grid;grid-template-columns:repeat(4,1fr);background:var(--paper);border-top:2px solid var(--ink)}
+.layers div{padding:7px 6px 6px;border-right:2px solid var(--ink);font-family:'Martian Mono';font-size:7px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;line-height:1.35;display:flex;gap:5px;align-items:flex-start}
+.layers div:last-child{border-right:none}
+.layers i{width:8px;height:8px;flex:none;margin-top:1px;border:2px solid var(--ink)}
+.layers .on i{background:var(--ink)} .layers .on.o{background:var(--or)}
+.stamp{width:40px;height:40px;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-family:'Martian Mono';font-weight:800;font-size:11px;flex:none}
+</style></head><body>
+<div class="scr">
+  <div class="band" style="height:540px">
+    {{ARCS:390|540|360,60,140|10,500,120}}
+    <div class="in">
+      {{SB}}
+      <div class="top" style="margin-top:4px;align-items:center">
+        <div class="stamp">NKN</div>
+        <div style="flex:1"><div class="disp" style="font-size:30px">Nakano</div><div class="mono">5 min · jc chūō · hoje 19h</div></div>
+        <div class="sq" style="color:#fff">✕</div>
+      </div>
+    </div>
+    <div class="win"><svg width="356" height="416" viewBox="0 0 356 416">
+      {{MAP:356|416|23|rail=M-10 250 C 120 240, 240 236, 370 226|label=20,272,NAKANO STA.|label=170,92,SUN MALL}}
+      <rect x="150" y="104" width="34" height="120" fill="#121212" fill-opacity=".12" stroke="#121212" stroke-width="2"/>
+      <path d="M128 330 L168 214 L166 150 L230 120" stroke="#FF4A1C" stroke-width="3" fill="none"/>
+      {{PIN:166|150|1|or}}{{PIN:168|200|2|or}}{{PIN:230|120|3|plan}}{{PIN:80|150|4|ink}}{{PIN:280|300|5|ink|20}}{{PIN:60|340|6|or|20}}
+      {{DOT:300|160|or}}{{DOT:40|60|k}}{{DOT:250|360|or}}
+      {{ME:128|330}}
+      <text x="190" y="190" font-family="Martian Mono" font-size="8" font-weight="700" fill="#121212">BROADWAY</text>
+    </svg>
+    <div class="layers">
+      <div class="on"><i></i><span>aberto<br>agora</span></div>
+      <div class="on o"><i></i><span>seus<br>musts · 8</span></div>
+      <div><i></i><span>fora do<br>board</span></div>
+      <div class="on"><i></i><span>trilha<br>do dia</span></div>
+    </div></div>
+  </div>
+  <div class="rule pull"><div class="grip"></div><span class="rl">↓ quero em nakano</span></div>
+  <div class="sec ln" style="border-top:none"><span>na tela · 8</span><span>pino 1 de 8</span></div>
+  <div class="ix or"><div class="d">2,9 km<small>5 min trem</small></div><div class="t"><b>Nakano Broadway</b><span>seu Must shop · 4 andares · até 20h</span></div><div class="thumb"><span class="pn">1</span></div></div>
+  <div class="ix or"><div class="d">3,0 km<small>5 min trem</small></div><div class="t"><b>Daily Chico</b><span>seu Must eat · no subsolo do Broadway</span></div><div class="thumb"><span class="pn">2</span></div></div>
+  {{BAR:explorar}}
+</div>
+</body></html>

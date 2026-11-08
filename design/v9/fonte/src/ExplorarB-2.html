@@ -1,0 +1,47 @@
+<!doctype html><html lang="pt-BR"><head><title>Explorar B · trilho de estações</title>{{HEAD}}
+<style>
+.stage{position:relative;flex:1;display:flex;min-height:0}
+.left{width:120px;flex:none;display:flex;flex-direction:column}
+.panel{flex:1;background:var(--ink);color:var(--paper);display:flex;flex-direction:column;position:relative}
+.ph{padding:14px 16px 10px;border-bottom:2px solid #3a3a38}
+.row{display:flex;align-items:center;gap:10px;padding:0 16px;height:46px;border-bottom:1px solid #2f2f2d;position:relative}
+.row b{font-family:'Martian Mono';font-size:10px;font-weight:800;letter-spacing:.06em;width:30px;flex:none}
+.row .nm{font-family:'Bricolage Grotesque';font-weight:800;font-size:21px;letter-spacing:-.03em;flex:1;white-space:nowrap}
+.row .m{font-family:'Martian Mono';font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--g2);white-space:nowrap}
+.row .tg{font-family:'Martian Mono';font-size:7.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border:1.5px solid var(--paper);padding:3px 4px;margin-left:6px;white-space:nowrap}
+.row.cur{background:var(--or);color:var(--ink);height:92px;border-bottom:none}
+.row.cur .nm{font-size:36px}
+.row.cur .m{color:var(--ink)}
+.row.cur .tg{border-color:var(--ink)}
+.row.here .nm{color:var(--g2)}
+.touch{position:absolute;right:6px;top:50%;margin-top:-26px;width:52px;height:52px;border-radius:50%;border:2px solid var(--ink);background:rgba(242,240,234,.35)}
+.tick{position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--paper)}
+</style></head><body>
+<div class="scr">
+  <div style="position:absolute;top:0;left:0;right:0;z-index:9">{{SB}}</div>
+  <div class="stage">
+    <div class="left">
+      <div class="band" style="height:100%">
+        {{ARCS:120|760|160,240,150|-20,600,140}}
+        
+      </div>
+    </div>
+    <div class="panel">
+      <div style="height:47px"></div>
+      <div class="ph"><div class="mono">trilho · tóquio · 23 bairros</div><div class="mono" style="color:var(--g2)">ordem: tempo de trem de você · solte pra ir</div></div>
+      <div class="row here"><b>SJK</b><span class="nm">Shinjuku</span><span class="m">aqui</span></div>
+      <div class="row"><b>SOK</b><span class="nm">Shin-Okubo</span><span class="m">3 min</span></div>
+      <div class="row cur"><b>NKN</b><div style="flex:1"><div class="nm">Nakano</div><div class="m" style="margin-top:6px">5 min · jc chūō<br>hoje 19h · 8 musts</div></div><span class="touch"></span></div>
+      <div class="row"><span class="tick"></span><b>HJK</b><span class="nm">Harajuku</span><span class="tg">feito</span></div>
+      <div class="row"><b>SBY</b><span class="nm">Shibuya</span><span class="m">7 min</span></div>
+      <div class="row"><b>IKB</b><span class="nm">Ikebukuro</span><span class="m">9 min</span></div>
+      <div class="row"><b>KCJ</b><span class="nm">Kichijoji</span><span class="m">15 min</span></div>
+      <div class="row"><b>GNZ</b><span class="nm">Ginza</span><span class="m">16 min</span></div>
+      <div class="row"><b>AKB</b><span class="nm">Akihabara</span><span class="m">17 min</span></div>
+      <div class="row"><b>UEN</b><span class="nm">Ueno</span><span class="m">22 min</span></div>
+      <div class="row"><b>ASK</b><span class="nm">Asakusa</span><span class="m">28 min</span></div>
+    </div>
+  </div>
+  {{BAR:explorar}}
+</div>
+</body></html>

@@ -1,0 +1,52 @@
+<!doctype html><html lang="pt-BR"><head><title>Presentes · comprado</title>{{HEAD}}
+<style>
+.ck{display:flex;align-items:center;gap:12px;padding:10px 18px;border-top:2px solid var(--ink);flex:none}
+.sec+.ck{border-top:none}
+.box{width:22px;height:22px;border:2px solid var(--ink);flex:none;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px}
+.box.on{background:var(--ink);color:var(--paper)}
+.ck .t{flex:1;min-width:0}
+.ck .t b{display:block;font-size:15px;font-weight:700;line-height:1.2}
+.ck .t span{display:block;font-size:11.5px;color:var(--g1);line-height:1.35;margin-top:2px}
+.ck .r{font-family:'Martian Mono';font-weight:700;font-size:13px;text-align:right;flex:none;line-height:1}
+.ck .r small{display:block;font-weight:400;font-size:7.5px;letter-spacing:.08em;text-transform:uppercase;margin-top:4px;opacity:.75}
+.ck.done .t b{text-decoration:line-through;text-decoration-thickness:2px}
+.ck.done .t b,.ck.done .r{color:var(--g1)}
+.ck.just{background:var(--ink);color:var(--paper)} .ck.just .box{border-color:var(--paper);background:var(--or);color:var(--ink)} .ck.just .t span{color:var(--g2)}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--ink);color:var(--paper);z-index:9;border-top:12px solid var(--or)}
+.sheet .bd{padding:16px 18px 14px}
+.amt{display:flex;align-items:flex-end;gap:10px;margin-top:10px;border-bottom:2px solid var(--paper);padding-bottom:8px}
+.goes{display:flex;gap:10px;margin-top:12px;font-size:12.5px;line-height:1.35}
+.goes div{flex:1;border:2px solid #3a3a38;padding:8px 10px}
+.goes b{display:block;font-family:'Martian Mono';font-size:12px}
+.meter{height:8px;border:2px solid var(--paper);margin-top:7px;position:relative}
+.meter i{position:absolute;left:0;top:0;bottom:0;width:65%;background:var(--or)}
+.cta{grid-template-columns:1fr 1.4fr}
+.cta .pp{border-top:2px solid var(--paper)}
+</style></head><body>
+<div class="scr">
+  <div class="band" style="height:150px">
+    {{ARCS:390|150|340,10,100}}
+    <div class="in">{{SB:18:31}}
+      <div class="top" style="margin-top:4px;align-items:center"><div class="sq">←</div><div class="disp" style="font-size:40px;flex:1">Presentes</div></div>
+    </div>
+  </div>
+  <div class="rule pull"><div class="grip"></div><span class="rl">↓ presentes perto</span></div>
+  <div class="sec ink"><span>ana · 2 de 2</span><span>¥ 6.190</span></div>
+  <div class="ck just"><span class="box on">✓</span><div class="t"><b>Kit Kat de matcha × 3</b><span>agora · Don Quijote Shinjuku</span></div><div class="r">18:31<small>agora</small></div></div>
+  <div class="ck done"><span class="box on">✓</span><div class="t"><b>Caneta Pilot Custom 74</b><span>comprado · Itoya Ginza · ¥ 2.950</span></div><div class="r">feito<small>dia 2</small></div></div>
+  <div class="sheet">
+    <div class="bd">
+      <div class="mono">comprado · pra ana · don quijote</div>
+      <div class="lbl" style="margin-top:14px;color:var(--g2)">quanto pagou? (previsto ¥ 3.600)</div>
+      <div class="amt"><span style="font-family:'Martian Mono';font-weight:800;font-size:40px;letter-spacing:-.03em;line-height:1">¥ 3.240</span><span class="caret" style="height:36px"></span><span style="margin-left:auto;font-size:12px;color:var(--g2)">≈ R$ 117</span></div>
+      <div class="goes">
+        <div><b>Gastos</b>entra no dia 3 · categoria presentes</div>
+        <div><b>Tax-free</b>¥ 3.240 de ¥ 5.000 nessa loja hoje<div class="meter"><i></i></div></div>
+      </div>
+      <div class="mono" style="margin-top:12px;color:var(--g2)">foto do recibo: opcional · no aparelho</div>
+    </div>
+    <div class="cta"><div class="pp">Desfazer</div><div class="o">Ok</div></div>
+    <div class="home"><i></i></div>
+  </div>
+</div>
+</body></html>

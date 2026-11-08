@@ -1,0 +1,51 @@
+<!doctype html><html lang="pt-BR"><head><title>Explorar A · meio a meio</title>{{HEAD}}
+<style>
+.map{position:relative;height:420px;flex:none;overflow:hidden}
+.map>svg{position:absolute;inset:0}
+.ov{position:absolute;left:0;right:0;top:0;z-index:3}
+.ovt{display:flex;justify-content:space-between;align-items:flex-start;padding:6px 18px 0}
+.ovt .tag{background:var(--paper);border:2px solid var(--ink);padding:6px 8px}
+.layers{position:absolute;left:0;right:0;bottom:0;z-index:3;display:grid;grid-template-columns:repeat(4,1fr);background:var(--paper);border-top:2px solid var(--ink)}
+.layers div{padding:7px 8px 6px;border-right:2px solid var(--ink);font-family:'Martian Mono';font-size:7.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;line-height:1.35;display:flex;gap:6px;align-items:flex-start}
+.layers div:last-child{border-right:none}
+.layers i{width:9px;height:9px;flex:none;margin-top:1px;border:2px solid var(--ink)}
+.layers .on i{background:var(--ink)}
+.layers .on.o{background:var(--or)}
+.layers .on.k{background:var(--ink);color:var(--paper)} .layers .on.k i{border-color:var(--paper);background:var(--paper)}
+.hd{display:flex;justify-content:space-between;align-items:flex-end;padding:10px 18px 8px;flex:none}
+</style></head><body>
+<div class="scr">
+  <div class="map">
+    <svg width="390" height="420" viewBox="0 0 390 420">
+      {{MAP:390|420|7|park=250,250,150,110|rail=M120 -10 C 140 120, 150 250, 175 430|label=36,212,SHINJUKU STA.}}
+      <path d="M195 236 L232 200 L276 174 L318 132" stroke="#FF4A1C" stroke-width="3" fill="none"/>
+      {{PIN:232|200|1|or}}{{PIN:276|174|5|or|20}}{{PIN:318|132|8|or|20}}
+      {{PIN:298|300|3|or}}{{PIN:96|166|2|ink}}{{PIN:70|300|4|ink|20}}{{PIN:240|120|6|or|20}}{{PIN:150|330|7|ink|20}}
+      {{DOT:340|230|or}}{{DOT:40|120|k}}{{DOT:210|330|k}}<rect x="300" y="333" width="48" height="13" fill="#F2F0EA"/><text x="304" y="343" font-family="Martian Mono" font-size="8" font-weight="700" fill="#121212">GYOEN</text>{{DOT:360|70|or}}
+      {{ME:195|236}}
+    </svg>
+    <div class="ov">
+      {{SBI}}
+      <div class="ovt">
+        <div class="tag mono" style="line-height:1.45">explorar · shinjuku<br>14 na tela · 18:10</div>
+        <div style="display:flex;gap:6px"><div class="sq" style="background:var(--paper)">⌖</div><div class="sq f">✦</div></div>
+      </div>
+    </div>
+    <div class="layers">
+      <div class="on"><i></i><span>aberto<br>agora</span></div>
+      <div class="on o"><i></i><span>seus<br>musts · 9</span></div>
+      <div><i></i><span>fora do<br>board</span></div>
+      <div class="on"><i></i><span>trilha<br>do dia</span></div>
+    </div>
+  </div>
+  <div class="rule pull"><span class="ll">↕ mapa · lista</span><div class="grip" style="background:var(--paper)"></div><span class="rl">meio</span></div>
+  <div class="hd">
+    <div><div class="mono g1">na tela · aberto agora</div><div style="font-size:12.5px;margin-top:3px">ordem: perto de você · <u>Shinjuku</u></div></div>
+    <div class="disp orc" style="font-size:54px">14</div>
+  </div>
+  <div class="ix or"><div class="d">240 m<small>3 min a pé</small></div><div class="t"><b>Fuunji · tsukemen</b><span>seu Must · fila 15 min · fecha 21h</span></div><div class="thumb"><div class="p" style="background-image:url({{PH:tsukemen.jpg}})"></div><span class="pn">1</span></div></div>
+  <div class="ix ink"><div class="d">450 m<small>6 min a pé</small></div><div class="t"><b>Omoide Yokocho</b><span>fora do board · ★ 4,4 · lotado</span></div><div class="thumb"><div class="p" style="background-image:url({{PH:shinjukublue.jpg}})"></div><span class="pn k">2</span></div></div>
+  <div class="ix or"><div class="d">650 m<small>8 min a pé</small></div><div class="t"><b>Shinjuku Gyoen</b><span>seu Must photo · fecha 16:30</span></div><div class="thumb"><span class="pn">3</span></div></div>
+  {{BAR:explorar}}
+</div>
+</body></html>
