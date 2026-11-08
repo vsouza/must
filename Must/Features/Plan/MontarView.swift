@@ -98,7 +98,7 @@ struct MontarView: View {
 
     var body: some View {
         Group {
-            if let planner { content(planner) } else { V8.ink.ignoresSafeArea() }
+            if let planner { content(planner) } else { V8.paper.ignoresSafeArea() }
         }
         .toolbar(.hidden, for: .navigationBar)
         .onAppear(perform: setUp)
@@ -180,34 +180,42 @@ struct MontarView: View {
             CutRule()
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    areaSection.padding(.top, 22)
-                    paceSection.padding(.top, 26)
-                    budgetSection(planner).padding(.top, 22)
-                    includeSection(planner).padding(.top, 24)
-                    Color.clear.frame(height: 130)
+                    areaSection
+                    paceSection
+                    budgetSection(planner)
+                    includeSection(planner)
+                    Color.clear.frame(height: 120)
                 }
-                .padding(.horizontal, 20)
             }
             .scrollIndicators(.hidden)
             .scrollDismissesKeyboard(.interactively)
         }
         .overlay(alignment: .bottom) {
-            BigButton(title: working ? "Montando…" : "Gerar o dia · \(pace.rawValue) paradas", style: .orange,
-                      systemImage: working ? nil : "arrow.up.right") {
+            // Botão principal: laranja inteiro no pé, de ponta a ponta, régua de tinta em cima.
+            Button {
                 textFocused = false
                 Task { await generate(planner) }
+            } label: {
+                HStack(spacing: 10) {
+                    Text((working ? "Montando…" : "Gerar o dia · \(pace.rawValue) paradas").uppercased())
+                        .font(V8Font.mono(14, weight: .semibold)).tracking(1.2)
+                        .lineLimit(2).multilineTextAlignment(.leading)
+                    Spacer(minLength: 8)
+                    if !working { Image(systemName: "arrow.up.right").font(.system(size: 16, weight: .bold)) }
+                }
+                .foregroundStyle(V8.ink)
+                .padding(.horizontal, 20)
+                .padding(.top, 18)
+                .padding(.bottom, 26)
+                .frame(maxWidth: .infinity, minHeight: 72, alignment: .leading)
+                .background(V8.orange.ignoresSafeArea(edges: .bottom))
+                .overlay(alignment: .top) { Rectangle().fill(V8.ink).frame(height: 2) }
+                .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
             .disabled(working)
-            .padding(.horizontal, 20)
-            .padding(.top, 28)
-            .padding(.bottom, 24) // sem barra de abas nesta tela (`AppRouter.hidesNavBar`)
-            .background {
-                LinearGradient(colors: [V8.ink.opacity(0), V8.ink], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.25))
-                    .ignoresSafeArea()
-                    .allowsHitTesting(false)
-            }
         }
-        .background(V8.ink.ignoresSafeArea())
+        .background(V8.paper.ignoresSafeArea())
         .navigationDestination(isPresented: $showProposal) {
             ProposalView(planner: planner, plan: generated, another: { await another(planner) }).toolbar(.hidden, for: .navigationBar)
         }
@@ -243,154 +251,146 @@ struct MontarView: View {
         }
     }
 
+    /// Uma pergunta = uma faixa: micro-rótulo mono, o conteúdo e a régua de 2 pt embaixo.
+    private func band<Content: View>(_ label: String, trailing: String? = nil, @ViewBuilder _ content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .firstTextBaseline) {
+                MonoLabel(label, size: 10, color: V8.mute)
+                Spacer(minLength: 8)
+                if let trailing { MonoLabel(trailing, size: 10, color: V8.ink) }
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 16)
+            .padding(.bottom, 12)
+            content()
+            Color.clear.frame(height: 18)
+            CorteRule2()
+        }
+    }
+
     // MARK: Bairro
 
     private var areaSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            MonoLabel("Bairro de hoje", size: 10, color: V8.muteDark)
+        band("Bairro de hoje", trailing: MontarOptions.neighborLine(area.flatMap { id in areas.first { $0.id == id } }, areas: areas)) {
             if chips.isEmpty {
-                Text("Nenhum Must com bairro ainda: o dia sai da cidade toda.").font(V8Font.text(14)).foregroundStyle(V8.muteDark)
+                Text("Nenhum Must com bairro ainda: o dia sai da cidade toda.")
+                    .font(V8Font.text(14)).foregroundStyle(V8.mute).padding(.horizontal, 20)
             }
             ScrollView(.horizontal) {
                 HStack(spacing: 8) {
                     ForEach(chips) { chip in
                         let on = chip.id == area
                         Button { area = chip.id } label: {
-                            HStack(spacing: 8) {
-                                Text(chip.name).font(V8Font.text(15, weight: .semibold)).foregroundStyle(on ? V8.ink : V8.white)
-                                Text("\(chip.count)").font(V8Font.mono(12)).fontWeight(.semibold)
-                                    .foregroundStyle(on ? V8.orangeDeep : V8.orange)
-                            }
-                            .lineLimit(1)
-                            .padding(.horizontal, 16)
-                            .frame(height: 44)
-                            .background(Capsule().fill(on ? V8.white : .clear))
-                            .overlay(Capsule().strokeBorder(on ? .clear : V8.white.opacity(0.35), lineWidth: 1))
+                            CutChip(text: "\(chip.name) \(chip.count)", isOn: on, minHeight: 44)
                         }
-                        .buttonStyle(MustPressStyle())
+                        .buttonStyle(.plain)
                         .accessibilityLabel("\(chip.name), \(chip.count) Musts")
-                        .accessibilityAddTraits(on ? .isSelected : [])
                     }
                 }
             }
             .scrollIndicators(.hidden)
-            .padding(.horizontal, -20)
             .contentMargins(.horizontal, 20, for: .scrollContent)
-            if let line = MontarOptions.neighborLine(area.flatMap { id in areas.first { $0.id == id } }, areas: areas) {
-                MonoLabel(line, size: 10, color: V8.orange)
-            }
         }
     }
 
     // MARK: Ritmo
 
     private var paceSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            MonoLabel("Ritmo", size: 10, color: V8.muteDark)
-            HStack(spacing: 10) {
+        band("Ritmo · paradas no dia") {
+            HStack(spacing: 8) {
                 ForEach(Pace.allCases, id: \.self) { p in
                     let on = p == pace
                     Button { pace = p } label: {
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("\(p.rawValue)").font(V8Font.numeral(38)).foregroundStyle(on ? V8.ink : V8.white)
+                            Text("\(p.rawValue)").font(V8Font.numeral(44)).foregroundStyle(on ? V8.paper : V8.ink)
+                                .lineLimit(1).minimumScaleFactor(0.6)
                                 .accessibilityHidden(true)
-                            Text(MontarOptions.paceLine(p)).font(V8Font.text(13))
-                                .foregroundStyle(on ? V8.ink.opacity(0.7) : V8.muteDark)
+                            Text(MontarOptions.paceLine(p)).font(V8Font.mono(10)).foregroundStyle(on ? V8.paper.opacity(0.85) : V8.mute)
                                 .fixedSize(horizontal: false, vertical: true)
                                 .multilineTextAlignment(.leading)
                         }
-                        .padding(14)
+                        .padding(12)
                         .frame(maxWidth: .infinity, minHeight: 96, alignment: .topLeading)
-                        .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(on ? V8.orange : .clear))
-                        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous)
-                            .strokeBorder(on ? .clear : V8.white.opacity(0.25), lineWidth: 1))
+                        .background(on ? V8.ink : Color.clear)
+                        .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
+                        .contentShape(Rectangle())
                     }
-                    .buttonStyle(MustPressStyle())
+                    .buttonStyle(.plain)
                     .accessibilityLabel("\(p.rawValue) paradas, \(MontarOptions.paceLine(p))")
                     .accessibilityAddTraits(on ? .isSelected : [])
                 }
             }
+            .padding(.horizontal, 20)
         }
     }
 
     // MARK: Grana e horário
 
     private func budgetSection(_ planner: DayPlanner) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            MonoLabel("Grana e horário", size: 10, color: V8.muteDark)
-            HStack(spacing: 6) {
-                ForEach(MontarOptions.budgets(region), id: \.self) { value in
-                    let on = planner.budget == value
-                    Button { planner.budget = value } label: {
-                        chip(region.money(value), on: on)
+        band("Grana e horário", trailing: "até \(untilText)") {
+            VStack(alignment: .leading, spacing: 12) {
+                Text(region.money(planner.budget))
+                    .font(V8Font.numeral(44)).foregroundStyle(V8.ink)
+                    .lineLimit(1).minimumScaleFactor(0.5)
+                    .accessibilityLabel("Grana do dia \(region.money(planner.budget))")
+                ScrollView(.horizontal) {
+                    HStack(spacing: 8) {
+                        ForEach(MontarOptions.budgets(region), id: \.self) { value in
+                            Button { planner.budget = value } label: {
+                                CutChip(text: region.money(value), isOn: planner.budget == value, minHeight: 44)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        Button { untilMinutes = MontarOptions.nextUntil(after: untilMinutes) } label: {
+                            CutChip(text: "até \(untilText)", minHeight: 44)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Até \(untilText)")
+                        .accessibilityHint("Toque pra mudar")
                     }
-                    .buttonStyle(MustPressStyle())
                 }
-                Spacer(minLength: 4)
-                Button { untilMinutes = MontarOptions.nextUntil(after: untilMinutes) } label: {
-                    HStack(spacing: 6) {
-                        Text("até").font(V8Font.text(14, weight: .semibold))
-                        Text(untilText).font(V8Font.mono(13)).fontWeight(.semibold)
-                    }
-                    .foregroundStyle(V8.white)
-                    .lineLimit(1)
-                    .fixedSize()
-                    .padding(.horizontal, 12)
-                    .frame(height: 42)
-                    .overlay(Capsule().strokeBorder(V8.white.opacity(0.35), lineWidth: 1))
-                }
-                .buttonStyle(MustPressStyle())
-                .accessibilityLabel("Até \(untilText)")
-                .accessibilityHint("Toque pra mudar")
+                .scrollIndicators(.hidden)
+                .padding(.horizontal, -20)
+                .contentMargins(.horizontal, 20, for: .scrollContent)
             }
+            .padding(.horizontal, 20)
         }
     }
 
     private var untilText: String { String(format: "%02d:%02d", (untilMinutes / 60) % 24, untilMinutes % 60) }
 
-    private func chip(_ text: String, on: Bool) -> some View {
-        Text(text)
-            .font(V8Font.text(14, weight: .semibold))
-            .foregroundStyle(on ? V8.ink : V8.white)
-            .lineLimit(1)
-            .minimumScaleFactor(0.8)
-            .padding(.horizontal, 11)
-            .frame(height: 42)
-            .background(Capsule().fill(on ? V8.white : .clear))
-            .overlay(Capsule().strokeBorder(on ? .clear : V8.white.opacity(0.35), lineWidth: 1))
-            .accessibilityAddTraits(on ? .isSelected : [])
-    }
-
     // MARK: Incluir
 
     private func includeSection(_ planner: DayPlanner) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            MonoLabel("Incluir", size: 10, color: V8.muteDark).padding(.bottom, 10)
-            includeRow(MontarOptions.microLine(region), .micro)
-            includeRow("Foto no golden" + (golden.map { " (\(region.timeString($0)))" } ?? ""), .goldenPhoto)
-            includeRow("Compras na volta", .shopping)
-            Rectangle().fill(V8.white.opacity(0.14)).frame(height: 1)
-            TextField("", text: Binding(get: { planner.text }, set: { planner.text = $0 }),
-                      prompt: Text("ou diga: templo cedo, ramen, andar pouco").foregroundStyle(V8.muteDark), axis: .vertical)
-                .font(V8Font.text(15))
-                .foregroundStyle(V8.white)
-                .tint(V8.orange)
-                .lineLimit(1...3)
-                .focused($textFocused)
-                .submitLabel(.done)
-                .onSubmit { Task { await parse(planner) } }
-                .accessibilityIdentifier("montar.ask")
-                .padding(.vertical, 16)
+        band("Incluir") {
+            VStack(alignment: .leading, spacing: 0) {
+                includeRow(MontarOptions.microLine(region), .micro)
+                includeRow("Foto no golden" + (golden.map { " (\(region.timeString($0)))" } ?? ""), .goldenPhoto)
+                includeRow("Compras na volta", .shopping)
+                TextField("", text: Binding(get: { planner.text }, set: { planner.text = $0 }),
+                          prompt: Text("OU DIGA: TEMPLO CEDO, RAMEN, ANDAR POUCO").font(V8Font.mono(11)).foregroundStyle(V8.mute), axis: .vertical)
+                    .font(V8Font.text(15))
+                    .foregroundStyle(V8.ink)
+                    .tint(V8.orange)
+                    .lineLimit(1...3)
+                    .focused($textFocused)
+                    .submitLabel(.done)
+                    .onSubmit { Task { await parse(planner) } }
+                    .accessibilityIdentifier("montar.ask")
+                    .padding(.vertical, 14)
+                    .overlay(alignment: .top) { Rectangle().fill(V8.ink.opacity(0.2)).frame(height: 1) }
+            }
+            .padding(.horizontal, 20)
         }
     }
 
     private func includeRow(_ title: String, _ item: DayInclude) -> some View {
         VStack(spacing: 0) {
-            Rectangle().fill(V8.white.opacity(0.14)).frame(height: 1)
+            Rectangle().fill(V8.ink.opacity(0.2)).frame(height: 1)
             Toggle(isOn: Binding(get: { includes.contains(item) }, set: { on in
                 if on { includes.insert(item) } else { includes.remove(item) }
             })) {
-                Text(title).font(V8Font.text(15)).foregroundStyle(V8.white)
+                Text(title).font(V8Font.text(15)).foregroundStyle(V8.ink)
             }
             .tint(V8.orange)
             .padding(.vertical, 9)
