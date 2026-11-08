@@ -311,6 +311,8 @@ enum DebugLaunch {
         if DebugFlags.string("debugSyncOnly") != nil {
             Task { await services.sync.syncPlaces(context: context, region: region) }
         }
+        // `-debugProblemDemo YES`: hospedagem e voos de exemplo pros dias de chegada, de trem e o último dia (relatório do viajante).
+        if DebugFlags.bool("debugProblemDemo") { DayProblemDemo.ensure(context: context, region: region) }
         guard let screen = DebugFlags.string("debugScreen") else { return }
         let parts = screen.split(separator: ":", maxSplits: 1).map(String.init)
         let arg = parts.count > 1 ? parts[1] : nil

@@ -11,9 +11,10 @@ DEVICE=${DEVICE:-"iPhone 17"}
 DD=${DD:-build/qa-dd}
 mkdir -p "$OUT"
 
-echo "→ build ($DEVICE)"
-xcodebuild -project Must.xcodeproj -scheme Must -destination "platform=iOS Simulator,name=$DEVICE" -derivedDataPath "$DD" build >/dev/null
-UDID=$(xcrun simctl list devices available | grep -m1 "$DEVICE (" | sed -E 's/.*\(([0-9A-F-]{36})\).*/\1/')
+# `UDID=<id>` fixa o simulador (vários agentes dividem a máquina: o nome sozinho pode pegar o de outro).
+UDID=${UDID:-$(xcrun simctl list devices available | grep -m1 "$DEVICE (" | sed -E 's/.*\(([0-9A-F-]{36})\).*/\1/')}
+echo "→ build ($DEVICE · $UDID)"
+xcodebuild -project Must.xcodeproj -scheme Must -destination "platform=iOS Simulator,id=$UDID" -derivedDataPath "$DD" build >/dev/null
 xcrun simctl boot "$UDID" 2>/dev/null || true
 xcrun simctl bootstatus "$UDID" -b >/dev/null
 xcrun simctl install "$UDID" "$DD/Build/Products/Debug-iphonesimulator/Must.app"
@@ -161,6 +162,53 @@ cortediashots() { # $1 = prefixo (jp|bh)
 }
 ${=W} skipOnboarding -bool YES
 ${=W} dev.simDateOn -bool YES; ${=W} dev.simSetAt -float 0; ${=W} dev.simGPSOn -bool YES
+
+# Relatório do viajante (08/11/2026): um relógio só e os dias-problema. `ONLY=viajante scripts/qa-screens.sh` tira só estas.
+#  - viajante-1420-*: capa, Linha, Agora e Guia no MESMO instante (sáb 15 nov, 14:20, dia montado às 08:30, sem nada marcado).
+#  - viajante-atrasou-*: o mesmo dia às 16:45 (passou da hora sem "feito": "Atrasou? Ajustei: faltam N paradas").
+#  - dia-chegada-*, dia-trem-*, ultimo-dia-*: capa e Bom dia nos três dias estressantes (hospedagem e voos de exemplo).
+viajanteshots() {
+  echo "→ viajante · Japão · sáb 15 nov 14:20 (capa, Linha, Agora e Guia no mesmo instante)"
+  ${=W} region jp
+  ${=W} dev.simLat -float 35.6909; ${=W} dev.simLng -float 139.7003
+  ${=W} dev.simDate -float $(epoch 2026-11-15T14:20:00+09:00)
+  WAIT=12 shot viajante-aceitar -debugScreen aceitar-dia:shinjuku -dev.simDate $(epoch 2026-11-15T08:30:00+09:00) -dev.simSetAt 0
+  shot viajante-1420-capa -debugScreen capa
+  shot viajante-1420-linha -debugScreen dia
+  shot viajante-1420-agora -debugScreen agora
+  shot viajante-1420-guia -debugScreen guia
+  ${=W} dev.simDate -float $(epoch 2026-11-15T16:45:00+09:00)
+  shot viajante-atrasou-capa -debugScreen capa
+  shot viajante-atrasou-linha -debugScreen dia
+  shot viajante-atrasou-agora -debugScreen agora
+
+  echo "→ viajante · dias-problema (-debugProblemDemo: hospedagem e voos de exemplo)"
+  ${=W} dev.simLat -float 35.7720; ${=W} dev.simLng -float 140.3929   # Narita
+  ${=W} dev.simDate -float $(epoch 2026-11-11T15:30:00+09:00)
+  shot dia-chegada-capa -debugScreen capa -debugProblemDemo YES
+  shot dia-chegada-bom-dia -debugScreen bom-dia -debugProblemDemo YES
+  shot dia-chegada-voos -debugScreen voos -debugProblemDemo YES
+  ${=W} dev.simLat -float 35.6812; ${=W} dev.simLng -float 139.7671   # Tokyo Station
+  ${=W} dev.simDate -float $(epoch 2026-11-17T08:00:00+09:00)
+  shot dia-trem-capa -debugScreen capa -debugProblemDemo YES
+  shot dia-trem-bom-dia -debugScreen bom-dia -debugProblemDemo YES
+  ${=W} dev.simLat -float 35.6909; ${=W} dev.simLng -float 139.7003
+  ${=W} dev.simDate -float $(epoch 2026-11-24T08:00:00+09:00)
+  shot ultimo-dia-capa -debugScreen capa -debugProblemDemo YES
+  shot ultimo-dia-bom-dia -debugScreen bom-dia -debugProblemDemo YES
+  ${=W} dev.simDate -float $(epoch 2026-11-24T15:10:00+09:00)
+  shot ultimo-dia-boa-tarde -debugScreen bom-dia -debugProblemDemo YES
+}
+if [ "${ONLY:-}" = "viajante" ]; then
+  viajanteshots
+  for k in dev.simDateOn dev.simDate dev.simSetAt dev.simGPSOn dev.simLat dev.simLng dev.simCloud skipOnboarding \
+           debugPlaces debugNearby debugFlight debugTips debugAsk debugRoutes debugAutocomplete; do
+    xcrun simctl spawn "$UDID" defaults delete $PREFS $k 2>/dev/null || true
+  done
+  ${=W} region bh
+  echo "pronto: $OUT/"
+  exit 0
+fi
 
 echo "→ r23 · E · capa inteligente (sem dia aceito) e Minhas viagens; eventos de mentira (-debugEvents fake)"
 ${=W} region bh

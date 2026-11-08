@@ -30,7 +30,9 @@ enum DayReplanner {
         // A parada de agora: a primeira que falta e ainda não passou da hora de sair (o mesmo critério do relógio).
         guard let current = stops.indices.first(where: { !stops[$0].done && DayNowRules.departure(from: $0, in: plan) > now }) else { return nil }
         let overdue = stops.indices.filter { $0 < current && !stops[$0].done }
-        guard !overdue.isEmpty else { return nil }
+        // A parada de agora que já devia ter acabado (e ninguém marcou): conta como atraso, ela anda pra agora.
+        let lateCurrent = stops[current].kind != .anchor && stops[current].end < now
+        guard !overdue.isEmpty || lateCurrent else { return nil }
 
         let day = region.calendar.startOfDay(for: plan.date)
         let latest = day.addingTimeInterval(Double(DayFit.latestEnd.hour * 60 + DayFit.latestEnd.minute) * 60)
@@ -53,6 +55,16 @@ enum DayReplanner {
             var s = stops[k]
             if s.done { continue }
             let coord = DayComposer.coordinate(s)
+            if k == current, lateCurrent {
+                let length = s.end.timeIntervalSince(s.start)
+                s.start = MicroStops.roundDown(now, day: day)
+                s.end = s.start.addingTimeInterval(length)
+                shifted.append(s.id)
+                out.append(s)
+                prevEnd = s.end
+                prevCoord = coord ?? prevCoord
+                continue
+            }
             if fixed(k) {
                 out.append(s)
                 prevEnd = max(s.end, now)

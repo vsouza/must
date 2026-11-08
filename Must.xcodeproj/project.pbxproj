@@ -267,6 +267,7 @@
 		827F381522A0CE0E17588B88 /* EventPaste.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8391FD0C8B7A30480FCE9EF4 /* EventPaste.swift */; };
 		838817593500F5CAD1D78EA9 /* DataConfidence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AD855A47632101379E0D769 /* DataConfidence.swift */; };
 		84BC80D387C9068BA8B64472 /* RoutesService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 972BE7D900669A53822A7176 /* RoutesService.swift */; };
+		8552449EE103EBC0DEBBC532 /* DayProblemDemo.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDDD0F80798B876B7A813010 /* DayProblemDemo.swift */; };
 		85DEF06661EE5CA7B733CDD4 /* DayLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 452BE28FBD83100D5BF71CD7 /* DayLink.swift */; };
 		85EB93503AA3C7CFC40DBBD3 /* SOSSheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DA359AA7FA60B4936787DEB /* SOSSheets.swift */; };
 		85FF5B41404618DAEC523F24 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 988D5ED4FA848499B21CF6FD /* SettingsView.swift */; };
@@ -1023,6 +1024,7 @@
 		CD003A9FD001A3033A4A1DBF /* Features.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features.swift; sourceTree = "<group>"; };
 		CD8ED542F5F6E77A4C04125A /* FlightFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightFormat.swift; sourceTree = "<group>"; };
 		CDB549F85EE5F358276DB0ED /* NewTripChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewTripChrome.swift; sourceTree = "<group>"; };
+		CDDD0F80798B876B7A813010 /* DayProblemDemo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayProblemDemo.swift; sourceTree = "<group>"; };
 		CE5FAB772ABA07FE675459CB /* PlaceResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceResolver.swift; sourceTree = "<group>"; };
 		CE8D645E4788CC466551C27A /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
 		CEA9433C369F5E569448A38F /* Typography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Typography.swift; sourceTree = "<group>"; };
@@ -2423,6 +2425,7 @@
 				545A48190080E288023E2C5D /* AgoraView.swift */,
 				0425F7B058E948914542FB70 /* BomDiaView.swift */,
 				61A720A1C71162BCB57BD0BB /* DayMoments.swift */,
+				CDDD0F80798B876B7A813010 /* DayProblemDemo.swift */,
 				332D29466FF6E504EE389341 /* LinhaDoDiaView.swift */,
 				6675C1F44B4037B9EE207B20 /* TodayView.swift */,
 				D7B1042BAFD7D795F786B882 /* V8DayParts.swift */,
@@ -2925,6 +2928,7 @@
 				3619F6D38403652B6D73676A /* DayPosterRenderer.swift in Sources */,
 				912E7C55D7659F76EE2F9F65 /* DayPrefetch.swift in Sources */,
 				0CF4200D87A44CED62FB2482 /* DayProblem.swift in Sources */,
+				8552449EE103EBC0DEBBC532 /* DayProblemDemo.swift in Sources */,
 				59BE8F2A5E113F9B9E2284C9 /* DayReplanner.swift in Sources */,
 				ABAFAE36F34140D65898D859 /* DayShareBuilder.swift in Sources */,
 				C826618BD1B4AD4D059647D9 /* DaySolver.swift in Sources */,

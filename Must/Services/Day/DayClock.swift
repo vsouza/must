@@ -40,7 +40,7 @@ struct DayClock: Sendable {
 
     var skippedIds: Set<String> { Set(skipped.map(\.id)) }
     /// O dia foi refeito agora ("Atrasou? Ajustei").
-    var adjusted: Bool { !skipped.isEmpty }
+    var adjusted: Bool { !skipped.isEmpty || !shifted.isEmpty }
     /// Quantas paradas ainda faltam (a de agora conta).
     var remaining: Int { active?.stops.count ?? 0 }
 
