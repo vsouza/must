@@ -2,11 +2,10 @@ import CoreLocation
 import SwiftData
 import SwiftUI
 
-/// 07 · Dicas (prompt 23 §2, `Dicas.png`): papel, numeral "N pra hoje", filtros Agora / bairro / país / Etiqueta / Salvas
-/// e os cards do dia (`DayTips`). Lê o dia do motor, as notas do board, as regras do país e só o cache das Dicas de quem
-/// foi: nenhuma chamada de rede.
-struct DicasView: View {
-    @Environment(\.dismiss) private var dismiss
+/// Dicas v9: a primeira página do Assistente ("O que eu sei de hoje", `Assistente-1.png`). Filtros quadrados (Agora ·
+/// bairro · país · Salvas), numeral laranja = dicas de agora e linhas de índice. Lê o dia do motor, as notas do board, as
+/// regras do país e só o cache das Dicas de quem foi: nenhuma chamada de rede. Não rola sozinha (o Assistente rola).
+struct DicasPage: View {
     @Environment(AppRouter.self) private var router
     @Environment(RegionStore.self) private var store
     @Environment(Services.self) private var services
@@ -16,6 +15,9 @@ struct DicasView: View {
 
     @Query private var places: [Place]
     @Query private var trips: [TripInfo]
+
+    /// Fecha o Assistente antes de abrir um Lugar (a tela de dicas mora numa sheet).
+    var onOpenPlace: (String) -> Void = { _ in }
 
     @State private var filter: DayTips.Filter = .now
     @State private var peopleTips: [String: String] = [:]
@@ -32,63 +34,47 @@ struct DicasView: View {
                                   time: region.timeString)
         let today = DayTips.filtered(cards, by: .now)
         let shown = DayTips.filtered(cards, by: filter)
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                header.padding(.top, 8)
-                HStack(alignment: .lastTextBaseline, spacing: 12) {
-                    Text("Dicas")
-                        .font(V8Font.display(52))
-                        .tracking(-1.6)
-                        .foregroundStyle(V8.ink)
-                        .accessibilityAddTraits(.isHeader)
-                    BigNumeral("\(today.count)", size: 74, color: V8.orange)
-                    SpecLabel("pra hoje").padding(.bottom, 10)
-                }
-                .padding(.top, 22)
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("Dicas: \(today.count) pra hoje")
-                filters(areaName: context.areaName).padding(.top, 18)
-                VStack(spacing: 12) {
-                    ForEach(shown) { card in
-                        VStack(alignment: .leading, spacing: 6) {
-                            Button { if let id = card.placeId { router.push(.place(id: id)) } } label: { DayTipCardView(card: card) }
-                                .buttonStyle(MustPressStyle())
-                                .contextMenu {
-                                    Button(saved.contains(card.id) ? "Tirar das salvas" : "Salvar dica",
-                                           systemImage: saved.contains(card.id) ? "bookmark.slash" : "bookmark") { toggleSaved(card.id) }
-                                }
-                            // Amigos que foram a esse lugar (mock "exemplo" por enquanto): uma linha, some sem visita.
-                            if let id = card.placeId, let line = FriendsLine.summary(friends.visits(placeId: id)) {
-                                HStack(spacing: 6) {
-                                    Text(line).font(V8Font.text(13)).foregroundStyle(V8.mute).lineLimit(2)
-                                    if friends.isSample { V8Tag(text: "exemplo", style: .paper) }
-                                }
-                                .padding(.horizontal, 6)
-                            }
-                        }
-                    }
-                    if shown.isEmpty {
-                        Text(filter == .saved ? "Segure uma dica pra salvar." : "Nada aqui por enquanto.")
-                            .font(V8Font.text(15)).foregroundStyle(V8.mute).padding(.top, 20)
-                    }
-                }
-                .padding(.top, 20)
-                V8BarSpacer()
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .center, spacing: 12) {
+                filters(areaName: context.areaName)
+                BigNumeral("\(today.count)", size: 64, color: V8.orange)
+                    .fixedSize()
+                    .accessibilityLabel("\(today.count) dicas pra agora")
             }
-            .padding(.horizontal, 20)
+            .padding(.leading, 20)
+            .padding(.trailing, 20)
+            .padding(.vertical, 14)
+            Rectangle().fill(V8.ink).frame(height: 2)
+            ForEach(shown) { card in
+                VStack(alignment: .leading, spacing: 0) {
+                    Button { if let id = card.placeId { onOpenPlace(id) } } label: { DayTipRow(card: card) }
+                        .buttonStyle(.plain)
+                        .contextMenu {
+                            Button(saved.contains(card.id) ? "Tirar das salvas" : "Salvar dica",
+                                   systemImage: saved.contains(card.id) ? "bookmark.slash" : "bookmark") { toggleSaved(card.id) }
+                        }
+                        .accessibilityAction(named: saved.contains(card.id) ? "Tirar das salvas" : "Salvar dica") { toggleSaved(card.id) }
+                    // Amigos que foram a esse lugar (mock "exemplo" por enquanto): uma linha, some sem visita.
+                    if let id = card.placeId, let line = FriendsLine.summary(friends.visits(placeId: id)) {
+                        HStack(spacing: 6) {
+                            Text(line).font(V8Font.text(13)).foregroundStyle(V8.mute).lineLimit(2)
+                            if friends.isSample { V8Tag(text: "exemplo", style: .paper) }
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 8)
+                    }
+                }
+                .overlay(alignment: .bottom) { Rectangle().fill(V8.ink).frame(height: 2) }
+            }
+            if shown.isEmpty {
+                Text(filter == .saved ? "Segure uma dica pra salvar." : "Nada aqui por enquanto.")
+                    .font(V8Font.text(15)).foregroundStyle(V8.mute).padding(20)
+            }
+            MonoLabel("do seu board, \(PocketRules.country(region).name.lowercased()) e do dia · funciona sem rede", size: 9, color: V8.mute)
+                .padding(.horizontal, 20)
+                .padding(.top, 14)
         }
-        .scrollIndicators(.hidden)
-        .background(V8.paper.ignoresSafeArea())
-        .toolbar(.hidden, for: .navigationBar)
         .task { await loadPeopleTips(context) }
-    }
-
-    private var header: some View {
-        HStack(alignment: .top) {
-            V8SpecStack(lines: ["Dicas · \(region.timeString(now))", "pra agora e pro resto do dia"]).padding(.top, 14)
-            Spacer(minLength: 12)
-            V8CornerButton(systemName: "xmark", label: "Fechar") { dismiss() }
-        }
     }
 
     private func filters(areaName: String?) -> some View {
@@ -96,10 +82,9 @@ struct DicasView: View {
             .init(id: DayTips.Filter.now.rawValue, title: "Agora", on: filter == .now),
             .init(id: DayTips.Filter.area.rawValue, title: areaName ?? "Bairro", on: filter == .area),
             .init(id: DayTips.Filter.country.rawValue, title: PocketRules.country(region).name, on: filter == .country),
-            .init(id: DayTips.Filter.etiquette.rawValue, title: "Etiqueta", on: filter == .etiquette),
             .init(id: DayTips.Filter.saved.rawValue, title: "Salvas", on: filter == .saved),
         ]
-        return V8FilterRow(items: items) { id in
+        return V8FilterRow(items: items, bleed: false) { id in
             if let f = DayTips.Filter(rawValue: id) { filter = f }
         }
     }
@@ -179,46 +164,50 @@ struct DicasView: View {
     }
 }
 
-/// Um card de dica: etiqueta e rótulo em cima, título forte, detalhe.
-struct DayTipCardView: View {
+/// Uma dica como linha de índice: rótulo mono (hora, valor, tipo) à esquerda, título e detalhe à direita. Laranja = é seu e
+/// dá agora; tinta = de fora do board; papel = o resto.
+struct DayTipRow: View {
     var card: DayTips.Card
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .center) {
+        let stacked = typeSize > .xLarge
+        let layout = stacked ? AnyLayout(VStackLayout(alignment: .leading, spacing: 6)) : AnyLayout(HStackLayout(alignment: .firstTextBaseline, spacing: 14))
+        layout {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(card.corner.uppercased())
+                    .font(V8Font.mono(11, weight: .bold))
+                    .tracking(1)
+                    .foregroundStyle(cornerColor)
+                    .lineLimit(2)
                 Text(card.tag.uppercased())
-                    .font(V8Font.mono(11))
-                    .tracking(1.1)
-                    .lineLimit(1)
-                    .foregroundStyle(tagForeground)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(tagBackground))
-                Spacer(minLength: 8)
-                SpecLabel(card.corner, color: cornerColor)
+                    .font(V8Font.mono(9))
+                    .tracking(0.9)
+                    .foregroundStyle(subColor)
+                    .lineLimit(2)
             }
-            Text(card.title)
-                .font(V8Font.text(18, weight: .bold))
-                .foregroundStyle(card.tone == .ink ? V8.white : V8.ink)
-                .multilineTextAlignment(.leading)
-                .fixedSize(horizontal: false, vertical: true)
-            if !card.detail.isEmpty {
-                Text(card.detail)
-                    .font(V8Font.text(14))
-                    .foregroundStyle(card.tone == .ink ? V8.muteDark : V8.ink.opacity(0.78))
+            .frame(width: stacked ? nil : 92, alignment: .leading)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(card.title)
+                    .font(V8Font.text(17, weight: .bold))
+                    .foregroundStyle(titleColor)
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
+                if !card.detail.isEmpty {
+                    Text(card.detail)
+                        .font(V8Font.text(14))
+                        .foregroundStyle(subColor)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 16)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(fill))
-        .overlay {
-            if card.tone == .white {
-                RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(V8.ink.opacity(0.1), lineWidth: 1)
-            }
-        }
+        .background(fill)
+        .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }
 
@@ -226,31 +215,22 @@ struct DayTipCardView: View {
         switch card.tone {
         case .orange: V8.orange
         case .ink: V8.ink
-        case .white: V8.white
+        case .white: V8.paper
         }
     }
-
-    private var tagBackground: Color {
+    private var titleColor: Color { card.tone == .ink ? V8.white : V8.ink }
+    private var subColor: Color {
         switch card.tone {
-        case .orange: V8.ink
-        case .ink: V8.graphite
-        case .white: card.placeId != nil ? V8.orange : V8.ink.opacity(0.07)
+        case .orange: V8.ink.opacity(0.78)
+        case .ink: V8.muteDark
+        case .white: V8.mute
         }
     }
-
-    private var tagForeground: Color {
-        switch card.tone {
-        case .orange: V8.orange
-        case .ink: V8.white
-        case .white: card.placeId != nil ? V8.ink : V8.mute
-        }
-    }
-
     private var cornerColor: Color {
         switch card.tone {
         case .orange: V8.ink
         case .ink: V8.orange
-        case .white: V8.mute
+        case .white: V8.orangeDeep
         }
     }
 }

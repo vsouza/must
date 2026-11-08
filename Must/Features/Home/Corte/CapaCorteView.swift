@@ -20,6 +20,8 @@ struct CapaCorteView: View {
     struct Actions {
         var trips: () -> Void
         var assistente: () -> Void
+        /// "Continuar no Assistente" da faixa de pergunta (v9): leva o texto.
+        var continueInAssistant: (String) -> Void
         var openSuggestion: (Suggestion) -> Void
         var openPlace: (String) -> Void
         var route: (CorteRow) -> Void
@@ -114,11 +116,11 @@ struct CapaCorteView: View {
     private var topRow: some View {
         let ink = theme.coverInk
         return HStack(alignment: .top, spacing: 10) {
-            RoundButton(systemImage: "arrow.left.arrow.right", label: "Minhas viagens", style: .line, tint: ink, size: 40, action: actions.trips)
+            V8CornerButton(systemName: "arrow.left.arrow.right", label: "Minhas viagens", tint: ink, action: actions.trips)
             SpecStack(lines: content.topLeft, color: ink)
             Spacer(minLength: 6)
             SpecStack(lines: content.topRight, color: ink, alignment: .trailing)
-            RoundButton(systemImage: "sparkle", label: "Assistente", style: .line, tint: ink, size: 40, action: actions.assistente)
+            V8CornerButton(systemName: "sparkle", label: "Assistente", tint: ink, action: actions.assistente)
         }
     }
 
@@ -286,12 +288,17 @@ struct CapaCorteView: View {
     // MARK: Pedindo (vontades de agora)
 
     private var askingPaper: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            CorteWishChips(state: state, makeEnv: makeEnv)
+        VStack(alignment: .leading, spacing: 0) {
+            if let question = state.quero.question {
+                QueroQuestionSlab(question: question) { actions.continueInAssistant(question.text) }
+            }
+            CorteWishChips(state: state, makeEnv: makeEnv,
+                           label: state.quero.question == nil ? "vontades de agora" : "ou um lugar agora")
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 12)
+        .padding(.top, state.quero.question == nil ? 0 : 0)
     }
 
     // MARK: Resultado

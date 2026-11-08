@@ -52,8 +52,10 @@ enum Route: Hashable {
     case ir(placeId: String)
     /// 14 · Boa noite (22h+). Agente C.
     case boaNoite
-    /// 07 · Dicas pra hoje. Agente D.
+    /// Dicas (v9): não é mais tela própria. `AppRouter.push(.dicas)` abre o Assistente na página de dicas.
     case dicas
+    /// Presente novo (v9, `+ › Presente`): o agente dos Presentes troca o destino pela folha de verdade.
+    case presenteNovo
     /// 08 · Bolso (utilidades offline). Agente D.
     case bolso
     /// 12 · Próximos (Viagem). Agente D.
@@ -85,6 +87,8 @@ final class AppRouter {
         case newPlace(listId: String?)
         case expense(placeId: String?)
         case assistant
+        /// Assistente com uma pergunta já digitada ("Continuar no Assistente" do Quero…, v9).
+        case assistantAsk(text: String)
         /// Trazer ingresso (prompt 15 · A). `inboxId`: item da caixa do Share Extension, se veio por `must://import`.
         case ticketImport(inboxId: String?)
         /// Buscar por nome (prompt 17 · A): sheet, cobre a tab bar. `query` pré-preenche o campo.
@@ -103,6 +107,7 @@ final class AppRouter {
             case .newPlace(let list): "new-\(list ?? "")"
             case .expense(let id): "expense-\(id ?? "")"
             case .assistant: "assistant"
+            case .assistantAsk(let text): "assistant-\(text)"
             case .ticketImport(let id): "import-\(id ?? "")"
             case .buscarNome(let query, let list): "buscar-\(query)-\(list ?? "")"
             case .quero(let text): "quero-\(text ?? "")"
@@ -158,6 +163,11 @@ final class AppRouter {
     }
 
     func push(_ route: Route, on tab: MustTab? = nil) {
+        // v9: as Dicas são a primeira página do Assistente, não uma tela empilhada.
+        if route == .dicas {
+            sheet = .assistant
+            return
+        }
         let target = tab ?? self.tab
         self.tab = target
         paths[target, default: []].append(route)
@@ -177,6 +187,8 @@ final class AppRouter {
         switch url.host() {
         case "add":
             sheet = .addLink(url: items.first { $0.name == "url" }?.value, listId: nil)
+        case "assistente":
+            sheet = .assistant
         case "hoje":
             sheet = nil
             select(.hoje)
@@ -272,7 +284,8 @@ extension View {
             case .linha(let date): LinhaDoDiaView(date: date)
             case .ir(let placeId): IrView(placeId: placeId)
             case .boaNoite: BoaNoiteView()
-            case .dicas: DicasView()
+            case .dicas: AssistantView()
+            case .presenteNovo: PresenteNovoPlaceholder()
             case .bolso: BolsoView()
             case .proximos: ProximosView()
             case .mapa: MapView()

@@ -173,20 +173,18 @@ enum CapaSwipe: Equatable, Sendable {
             if (4..<10).contains(hour) { return .bomDia }
             if hour >= 21 || hour < 4 { return .boaNoite }
             return nil
+        // v9: ← abre o Assistente na página de dicas (`AppRouter.push` leva `.dicas` pra lá); → abre o Bolso (com os Atalhos no topo).
         case .left: return .dicas
-        // O Bolso agora mora dentro dos Atalhos (prompt 25 · D): a capa abre o painel (`action`), não empilha a tela.
         case .right: return .bolso
         }
     }
 
-    /// O que o deslize faz na capa: pra direita abre o painel de Atalhos por cima; os outros empilham a tela.
+    /// O que o deslize faz na capa.
     static func action(for swipe: CapaSwipe, now: Date, region: Region) -> CapaAction? {
-        if swipe == .right { return .atalhos }
-        return route(for: swipe, now: now, region: region).map(CapaAction.route)
+        route(for: swipe, now: now, region: region).map(CapaAction.route)
     }
 }
 
 enum CapaAction: Equatable, Sendable {
     case route(Route)
-    case atalhos
 }

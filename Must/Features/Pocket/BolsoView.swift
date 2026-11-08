@@ -15,6 +15,7 @@ struct BolsoView: View {
     @Query private var settingsList: [Settings]
     @Query(sort: \WalletItem.order) private var wallet: [WalletItem]
 
+    @Environment(\.openURL) private var openURL
     @State private var open: PocketCard?
     @State private var showConverter = false
     @State private var showPhrases = false
@@ -38,6 +39,10 @@ struct BolsoView: View {
             CutRule()
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
+                    AtalhosPanel { run($0) }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 18)
+                        .overlay(alignment: .bottom) { IndexRule() }
                     ForEach(cards) { card in cell(card) }
                     sosCard
                     V8BarSpacer()
@@ -67,10 +72,11 @@ struct BolsoView: View {
     private var header: some View {
         CutBand(photo: nil) {
             VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .top) {
+                HStack(alignment: .top, spacing: 10) {
+                    V8CornerButton(systemName: "xmark", label: "Fechar", tint: theme.coverInk) { dismiss() }
                     DayBandCorners(left: [region.profile.day?.pocketTitle ?? "Bolso · \(region.shortName)", "Tudo funciona offline"], right: [])
                     Spacer(minLength: 12)
-                    V8CornerButton(systemName: "xmark", label: "Fechar") { dismiss() }
+                    AssistantCorner(tint: theme.coverInk)
                 }
                 Spacer(minLength: 8)
                 Text("Bolso")
@@ -88,7 +94,17 @@ struct BolsoView: View {
             .padding(.top, 10)
             .padding(.bottom, 16)
         }
-        .frame(height: 220 * min(scale, 1.4))
+        .frame(height: 190 * min(scale, 1.4))
+    }
+
+    /// O que um toque nos atalhos do topo faz (o Bolso é uma tela empurrada: as rotas empilham em cima dele).
+    private func run(_ action: AtalhosAction) {
+        switch action {
+        case .route(let route): router.push(route)
+        case .sheet(let sheet): router.sheet = sheet
+        case .selectTab(let tab): router.select(tab)
+        case .url(let url): openURL(url)
+        }
     }
 
     // MARK: SOS (prompt 25 · C.3: item fixo do Bolso)

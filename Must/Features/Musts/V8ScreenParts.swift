@@ -4,7 +4,8 @@ import SwiftUI
 // contorno do canto, a pilha de micro-rótulos, a fileira de filtros e a foto com placeholder de cor.
 // Usam só os tokens do contrato (`V8`, `V8Font`, `SpecLabel`, `V8Pill`); o agente A troca o miolo deles.
 
-/// Botão redondo de contorno (voltar, fechar, carteira), 44 pt, no canto da tela.
+/// Botão de canto v9: quadrado de 44 pt, borda de 2 pt, sem raio (voltar, fechar, trocar, ✦). Cantos fixos: ⇄/←/✕ à
+/// esquerda e ✦ (Assistente) à direita. `tint` força a cor do traço (bloco da foto com a cor do lugar).
 struct V8CornerButton: View {
     var systemName: String
     var label: String
@@ -12,30 +13,42 @@ struct V8CornerButton: View {
     /// Sobre foto: fundo tinta translúcido pra ler em qualquer foto.
     var onPhoto = false
     var filled = false
+    var tint: Color?
     var action: () -> Void
 
     var body: some View {
+        let stroke = tint ?? (onInk || onPhoto ? V8.white : V8.ink)
         Button(action: action) {
             Image(systemName: systemName)
-                .font(.system(size: 17, weight: .medium))
-                .foregroundStyle(filled ? (onInk ? V8.ink : V8.white) : (onInk || onPhoto ? V8.white : V8.ink))
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(filled ? (onInk ? V8.ink : V8.white) : stroke)
                 .frame(width: 44, height: 44)
                 .background {
                     if filled {
-                        Circle().fill(onInk ? V8.paper : V8.ink)
+                        Rectangle().fill(onInk ? V8.paper : V8.ink)
                     } else if onPhoto {
-                        Circle().fill(V8.ink.opacity(0.28))
+                        Rectangle().fill(V8.ink.opacity(0.28))
                     }
                 }
-                .overlay {
-                    if !filled {
-                        Circle().strokeBorder((onInk || onPhoto ? V8.white : V8.ink).opacity(onPhoto ? 0.85 : 0.9), lineWidth: 1)
-                    }
-                }
-                .contentShape(Circle())
+                .overlay { if !filled { Rectangle().strokeBorder(stroke, lineWidth: 2) } }
+                .contentShape(Rectangle())
         }
         .buttonStyle(MustPressStyle())
         .accessibilityLabel(label)
+    }
+}
+
+/// ✦ do canto superior direito: abre o Assistente (sempre aí, em todo bloco de foto).
+struct AssistantCorner: View {
+    var onInk = false
+    var onPhoto = false
+    var tint: Color?
+    @Environment(AppRouter.self) private var router
+
+    var body: some View {
+        V8CornerButton(systemName: "sparkle", label: "Assistente", onInk: onInk, onPhoto: onPhoto, tint: tint) {
+            router.sheet = .assistant
+        }
     }
 }
 
@@ -65,6 +78,8 @@ struct V8FilterRow: View {
 
     var items: [Item]
     var onInk = false
+    /// Sangra 20 pt pros lados (dentro de uma tela com margem de 20); `false` quando a linha já está dentro do próprio padding.
+    var bleed = true
     var onTap: (String) -> Void
 
     var body: some View {
@@ -76,9 +91,9 @@ struct V8FilterRow: View {
                         .accessibilityAddTraits(item.on ? .isSelected : [])
                 }
             }
-            .padding(.horizontal, 20)
+            .padding(.horizontal, bleed ? 20 : 0)
         }
-        .padding(.horizontal, -20)
+        .padding(.horizontal, bleed ? -20 : 0)
         .scrollClipDisabled()
     }
 }

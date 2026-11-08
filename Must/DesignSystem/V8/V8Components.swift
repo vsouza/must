@@ -100,16 +100,21 @@ struct SpecLabel: View {
 
 // MARK: - Navegação
 
-/// Barra v8 (`Nav.png`, `.nav` do `v8.css`): cápsula preta de 66 pt; aba ativa = pílula laranja com ícone e rótulo
-/// (mais larga); inativas = só o ícone branco; `+` = círculo papel à direita (toque: Montar o dia).
+/// Barra v9 (`design/v9/Fluxos.png`): faixa de tinta de largura total, sem cápsula e sem sombra. Aba ativa = bloco de papel
+/// com filete laranja de 3 pt em cima e rótulo mono em caixa alta; inativas = ícone branco; `+` = célula laranja de 74 pt
+/// à direita (toque: Quero · Guardar; segurar: Montar o dia). Acima de XL os rótulos somem (o VoiceOver lê o nome).
 struct V8NavBar: View {
+    static let height: CGFloat = 58
+    static let plusWidth: CGFloat = 74
+
     var active: MustTab
     var onSelect: (MustTab) -> Void
     var onPlus: () -> Void
-    /// Toque longo no `+` (prompt 25: o toque abre o Quero…, o longo monta o dia). `nil` = sem toque longo.
+    /// Toque longo no `+`: monta o dia de hoje. `nil` = sem toque longo.
     var onPlusHold: (() -> Void)?
     /// O toque longo já disparou: o "soltar" que vem depois não abre o toque simples.
     @State private var held = false
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     init(active: MustTab, onSelect: @escaping (MustTab) -> Void = { _ in }, onPlus: @escaping () -> Void = {},
          onPlusHold: (() -> Void)? = nil) {
@@ -119,41 +124,44 @@ struct V8NavBar: View {
         self.onPlusHold = onPlusHold
     }
 
+    private var showsLabels: Bool { typeSize <= .xLarge }
+
     var body: some View {
-        NavRow(activeIndex: MustTab.allCases.firstIndex(of: active) ?? 0) {
+        HStack(spacing: 0) {
             ForEach(MustTab.allCases) { tab in
                 let on = tab == active
                 Button { onSelect(tab) } label: {
-                    HStack(spacing: 9) {
+                    VStack(spacing: 4) {
                         V8Glyph(tab.glyph).frame(width: 20, height: 20)
-                        if on {
-                            Text(tab.title)
-                                .font(V8Font.text(14, weight: .bold))
+                        if showsLabels {
+                            Text(tab.title.uppercased())
+                                .font(V8Font.mono(9, weight: on ? .bold : .medium))
+                                .tracking(0.9)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.7)
                         }
                     }
                     .foregroundStyle(on ? V8.ink : V8.white)
-                    .padding(.horizontal, on ? 14 : 0)
-                    .frame(maxWidth: .infinity, minHeight: 54, maxHeight: 54)
-                    .background(Capsule().fill(on ? V8.orange : Color.clear))
-                    .contentShape(Capsule())
+                    .frame(maxWidth: .infinity, minHeight: Self.height, maxHeight: Self.height)
+                    .background(on ? V8.paper : Color.clear)
+                    .overlay(alignment: .top) { if on { Rectangle().fill(V8.orange).frame(height: 3) } }
+                    .contentShape(Rectangle())
                 }
-                .buttonStyle(MustPressStyle())
+                .buttonStyle(.plain)
                 .accessibilityLabel(tab.title)
                 .accessibilityAddTraits(on ? .isSelected : [])
             }
             Button {
                 if held { held = false } else { onPlus() }
             } label: {
-                V8Glyph(.plus)
-                    .frame(width: 20, height: 20)
+                V8Glyph(.plus, lineWidth: 3)
+                    .frame(width: 22, height: 22)
                     .foregroundStyle(V8.ink)
-                    .frame(width: 54, height: 54)
-                    .background(Circle().fill(V8.paper))
-                    .contentShape(Circle())
+                    .frame(width: Self.plusWidth, height: Self.height)
+                    .background(V8.orange)
+                    .contentShape(Rectangle())
             }
-            .buttonStyle(MustPressStyle())
+            .buttonStyle(.plain)
             .simultaneousGesture(LongPressGesture(minimumDuration: 0.45).onEnded { _ in
                 held = true
                 onPlusHold?()
@@ -163,41 +171,14 @@ struct V8NavBar: View {
                     held = false
                 }
             }, isEnabled: onPlusHold != nil)
-            .accessibilityLabel(onPlusHold == nil ? "Adicionar" : "Quero…")
-            .accessibilityHint(onPlusHold == nil ? "Montar o dia" : "o que você quer agora; toque longo monta o dia")
+            .accessibilityLabel(onPlusHold == nil ? "Adicionar" : "Quero ou guardar")
+            .accessibilityHint(onPlusHold == nil ? "Montar o dia" : "diga o que quer ou guarde um link, vídeo, texto, ingresso ou presente; toque longo monta o dia")
             .accessibilityAction(named: "Montar o dia") { onPlusHold?() }
         }
-        .padding(6)
-        .frame(height: 66)
-        .background(Capsule().fill(V8.ink))
-        .shadow(color: V8.ink.opacity(0.28), radius: 22, x: 0, y: 18)
-        .padding(.horizontal, 18)
-        .dynamicTypeSize(...DynamicTypeSize.xxLarge)
-    }
-}
-
-/// Distribui a barra como o `flex` do CSS: aba ativa 2,2, as outras 1, o `+` fixo em 54 pt, 4 pt entre elas.
-private struct NavRow: Layout {
-    var activeIndex: Int
-    var gap: CGFloat = 4
-    var plus: CGFloat = 54
-    var activeFlex: CGFloat = 2.2
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        CGSize(width: proposal.width ?? 360, height: 54)
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        guard !subviews.isEmpty else { return }
-        let tabs = subviews.count - 1
-        let free = max(0, bounds.width - plus - gap * CGFloat(subviews.count - 1))
-        let unit = free / (activeFlex + CGFloat(max(tabs - 1, 0)))
-        var x = bounds.minX
-        for (i, view) in subviews.enumerated() {
-            let w = i == tabs ? plus : (i == activeIndex ? unit * activeFlex : unit)
-            view.place(at: CGPoint(x: x, y: bounds.midY), anchor: .leading, proposal: ProposedViewSize(width: w, height: 54))
-            x += w + gap
-        }
+        .frame(height: Self.height)
+        .frame(maxWidth: .infinity)
+        // A faixa sangra até a borda de baixo (área do indicador de início); nada de sombra.
+        .background(V8.ink.ignoresSafeArea(edges: .bottom))
     }
 }
 

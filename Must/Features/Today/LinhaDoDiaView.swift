@@ -66,7 +66,7 @@ struct LinhaDoDiaView: View {
         DayBand(areaId: plan?.bandArea(from: nowId == nil ? nil : AppClock.now), places: places) {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(alignment: .top) {
-                    RoundButton(systemImage: "chevron.left", label: "Voltar", style: .line, tint: theme.coverInk, size: 40) { dismiss() }
+                    V8CornerButton(systemName: "chevron.left", label: "Voltar", tint: theme.coverInk) { dismiss() }
                     Spacer(minLength: 12)
                     DayBandCorners(left: [], right: [DayText.dayLine(date, region: region),
                                                      plan.map { "\($0.anchors.count == 1 ? "1 âncora" : "\($0.anchors.count) âncoras")"
@@ -99,7 +99,7 @@ struct LinhaDoDiaView: View {
         HStack(spacing: 10) {
             toggle
             Spacer(minLength: 8)
-            RoundButton(systemImage: "paperplane", label: "Mandar o dia", style: .line, tint: V8.ink, size: 40) {
+            V8CornerButton(systemName: "paperplane", label: "Mandar o dia", tint: V8.ink) {
                 router.sheet = .mandar(date: region.calendar.startOfDay(for: date))
             }
         }

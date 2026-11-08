@@ -60,9 +60,6 @@ struct TodayView: View {
                     .allowsHitTesting(false)
                 }
 
-                Fab { router.sheet = .assistant }
-                    .padding(.trailing, 22)
-                    .padding(.bottom, 92)
             }
             .tripWash()
             .background {

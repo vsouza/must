@@ -4,7 +4,7 @@ import SwiftUI
 
 /// 01 · Hoje, a capa do corte (prompt 30 §2, `CorteFluxo.png`): foto tratada em cima, régua preta puxável, papel embaixo.
 /// Gestos: pra cima = Linha do dia; pra baixo (fora da régua) = Bom dia / Boa noite; pra esquerda = Dicas; pra direita
-/// (ou o toque na alça da borda) = Atalhos. **Arrastar começando na régua** (ou tocar no nome do bairro) abre o "quero…".
+/// (ou o toque na alça da borda) = Bolso; ← = Assistente. **Arrastar começando na régua** (ou tocar no nome do bairro) abre o "quero…".
 /// Tudo sai de `CapaState` e `CapaSuggestState`, recalculado nos gatilhos; o `body` só desenha.
 struct HomeView: View {
     @Environment(AppRouter.self) private var router
@@ -30,9 +30,6 @@ struct HomeView: View {
     @State private var saveRefresh: Task<Void, Never>?
     /// O corte: régua, fenda do quero…, resultado e passo a passo.
     @State private var corte = CorteState()
-    @State private var showAtalhos = false
-    /// O que o toque nos Atalhos pediu: roda quando o painel termina de fechar.
-    @State private var atalhoAction: AtalhosAction?
     @Environment(\.openURL) private var openURL
 
     private var region: Region { store.region }
@@ -69,21 +66,18 @@ struct HomeView: View {
             go(swipe)
         }, including: corte.stage == .rest ? .all : .subviews)
         .accessibilityAction(named: "Linha do dia") { go(.up) }
-        .accessibilityAction(named: "Dicas") { go(.left) }
-        .accessibilityAction(named: "Atalhos") { go(.right) }
-        .overlay(alignment: .trailing) { if corte.stage == .rest { atalhosHandle } }
-        .fullScreenCover(isPresented: $showAtalhos, onDismiss: runAtalhoAction) {
-            AtalhosPanel { action in
-                atalhoAction = action
-                withoutAnimation { showAtalhos = false }
-            }
-            .presentationBackground(.clear)
-        }
+        .accessibilityAction(named: "Assistente") { go(.left) }
+        .accessibilityAction(named: "Bolso") { go(.right) }
+        .overlay(alignment: .trailing) { if corte.stage == .rest { bolsoHandle } }
         .onAppear {
+            corte.answerer = { [context, services, store] text in
+                await QueroAnswerer.answer(text, context: context, region: store.region, services: services,
+                                           useModel: (try? context.fetch(FetchDescriptor<Settings>()).first?.onDeviceAI) ?? true)
+            }
             router.setQuero("capa", open: corte.stage != .rest)
             refresh()
-            // `-debugScreen atalhos` (prints): abre o painel em cima da capa.
-            if debugScreen == "atalhos", !showAtalhos { openAtalhos() }
+            // `-debugScreen atalhos` (prints): o Bolso (com os Atalhos no topo).
+            if debugScreen == "atalhos", router.paths[.hoje]?.isEmpty ?? true { go(.right) }
         }
         .task { await clock() }
         .task { await startCorteExtras() }
@@ -175,40 +169,14 @@ struct HomeView: View {
 
     private func go(_ swipe: CapaSwipe) {
         switch CapaSwipe.action(for: swipe, now: AppClock.now, region: region) {
-        case .atalhos: openAtalhos()
         case .route(let route): router.push(route, on: .hoje)
         case nil: break
         }
     }
 
-    // MARK: Atalhos (prompt 25 · D)
-
-    /// O painel anima sozinho (entra pela direita); a apresentação em si não tem animação (abre na hora).
-    private func openAtalhos() {
-        atalhoAction = nil
-        withoutAnimation { showAtalhos = true }
-    }
-
-    private func withoutAnimation(_ body: () -> Void) {
-        var t = Transaction()
-        t.disablesAnimations = true
-        withTransaction(t, body)
-    }
-
-    private func runAtalhoAction() {
-        guard let action = atalhoAction else { return }
-        atalhoAction = nil
-        switch action {
-        case .route(let route): router.push(route, on: .hoje)
-        case .sheet(let sheet): router.sheet = sheet
-        case .selectTab(let tab): router.select(tab)
-        case .url(let url): openURL(url)
-        }
-    }
-
-    /// Alça na borda direita da capa: o "toque no canto" que abre os Atalhos sem deslizar.
-    private var atalhosHandle: some View {
-        Button(action: openAtalhos) {
+    /// Alça na borda direita da capa: o "toque no canto" que abre o Bolso sem deslizar.
+    private var bolsoHandle: some View {
+        Button { go(.right) } label: {
             Capsule()
                 .fill(ink.opacity(0.35))
                 .frame(width: 5, height: 46)
@@ -216,8 +184,8 @@ struct HomeView: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Atalhos")
-        .accessibilityHint("Suica, ingressos, mapa offline, SOS e linhas perto")
+        .accessibilityLabel("Bolso")
+        .accessibilityHint("Suica, ingressos, mapa offline, SOS, câmbio, frases e último trem")
     }
 
     // MARK: O corte
@@ -225,6 +193,10 @@ struct HomeView: View {
     private var actions: CapaCorteView.Actions {
         .init(trips: { router.sheet = .viagens },
               assistente: { router.sheet = .assistant },
+              continueInAssistant: { text in
+                  corte.close()
+                  router.sheet = .assistantAsk(text: text)
+              },
               openSuggestion: openSuggestion,
               openPlace: { router.push(.place(id: $0), on: .hoje) },
               route: { row in MapsLinks.openApple(to: row.row.result.coordinate, name: row.row.result.name) },
@@ -274,6 +246,10 @@ struct HomeView: View {
         if screen == "quero-nakano" { debugArea = AreaCatalog.areas(for: region).first { $0.id == "nakano" } }
         try? await Task.sleep(for: .milliseconds(900))
         switch screen {
+        case "quero-pergunta":
+            corte.open()
+            corte.quero.text = "dá tempo do Gyoen antes do pôr do sol?"
+            corte.submit(makeEnv())
         case "quero-nakano", "quero-viagem-futura":
             corte.open()
             corte.quero.text = "comer"

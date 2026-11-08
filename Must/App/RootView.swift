@@ -29,7 +29,6 @@ struct RootView: View {
                 V8NavBar(active: router.tab, onSelect: { router.select($0) },
                          onPlus: { router.sheet = .quero(text: nil) },
                          onPlusHold: { router.push(.montar(date: store.region.calendar.startOfDay(for: AppClock.now)), on: .hoje) })
-                    .padding(.bottom, 4)
                     .ignoresSafeArea(.keyboard)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
@@ -43,10 +42,11 @@ struct RootView: View {
             case .editPlace(let id): EditPlaceView(placeId: id)
             case .newPlace(let listId): EditPlaceView(newInListId: listId)
             case .expense(let placeId): ExpenseView(placeId: placeId)
-            case .assistant: AssistantView()
+            case .assistant: AssistantView().presentationCornerRadius(0)
+            case .assistantAsk(let text): AssistantView(initialQuestion: text).presentationCornerRadius(0)
             case .ticketImport(let inboxId): TicketImportFlow(inboxId: inboxId)
             case .buscarNome(let query, let listId): BuscarNomeView(initialQuery: query, preferredListId: listId)
-            case .quero(let text): QueroView(initialText: text)
+            case .quero(let text): QueroView(initialText: text).presentationCornerRadius(0)
             case .mandar(let date): MandarView(date: date)
             case .viagens: TripSwitcherSheet()
             }

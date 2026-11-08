@@ -144,6 +144,7 @@ struct ListView: View {
                     Spacer(minLength: 12)
                     V8SpecStack(lines: ["\(listName) · \(city)", "\(count) lugares"], color: V8.white, alignment: .trailing)
                         .padding(.top, 14)
+                    AssistantCorner(onPhoto: true)
                 }
                 .padding(.top, 58)
                 Spacer(minLength: 16)

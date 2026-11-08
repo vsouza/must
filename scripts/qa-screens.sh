@@ -170,7 +170,20 @@ WAIT=12 shot jp-fotos-carrossel -debugScreen fotos-carrossel:j01 -debugPhotos fa
 ${=W} dev.simDate -float $(epoch 2026-10-20T12:00:00+09:00)
 WAIT=12 shot jp-quero-viagem-futura -debugScreen quero-viagem-futura
 shot jp-viagens -debugScreen viagens
-if [ "${ONLY:-}" != "p31" ]; then
+
+echo "→ p31 · navegação v9: barra, Assistente (dicas e conversa), Quero com pergunta, Bolso, + e aba Viagem (design/v9/Fluxos.png, Assistente-*.png)"
+${=W} region jp
+${=W} dev.simDate -float $(epoch 2026-11-15T14:20:00+09:00)
+${=W} dev.simLat -float 35.6909; ${=W} dev.simLng -float 139.7003
+WAIT=10 shot jp-v9-barra -debugScreen barra -capaFoto                              # Fluxos · a barra
+WAIT=10 shot jp-v9-assistente -debugScreen assistente                              # Assistente-1 · dicas
+WAIT=12 shot jp-v9-assistente-conversa -debugScreen assistente-conversa -debugAsk "e se chover amanhã?"  # Assistente-2
+WAIT=12 shot jp-v9-quero-pergunta -debugScreen quero-pergunta -capaFoto            # Assistente-3
+WAIT=10 shot jp-v9-bolso-novo -debugScreen bolso-novo                              # Bolso = Atalhos + Bolso
+WAIT=8 shot jp-v9-mais -debugScreen mais                                           # + = Quero · Guardar
+WAIT=8 shot jp-v9-viagem-aba -debugScreen viagem-aba                               # Viagem com "Minhas viagens"
+WAIT=10 shot jp-v9-xxxl-barra -debugScreen barra -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
+if [ "${ONLY:-}" != "p31" ] && [ "${ONLY:-}" != "p31n" ]; then
 
 echo "→ r23 · E · capa inteligente (sem dia aceito) e Minhas viagens; eventos de mentira (-debugEvents fake)"
 ${=W} region bh
