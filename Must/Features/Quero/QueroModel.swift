@@ -21,6 +21,8 @@ struct QueroEnv: Sendable {
     var board: [WantBoardPlace]
     var useModel: Bool
     var walkMaxKm: Double = 1.5
+    /// O corte (prompt 30): o board da cidade entra a qualquer distância.
+    var boardAnyDistance = false
     /// Próximos dias aceitos e os bairros de cada um: "sáb · Ginza" quando hoje não cabe.
     var upcoming: [(date: Date, areaIds: Set<String>)] = []
 }
@@ -60,6 +62,10 @@ final class QueroModel {
     var text: String
     /// Chip escolhido à mão (vale sobre o que o parser entendeu).
     var verbOverride: WantVerb?
+    /// O corte pede "agora" quando a pessoa não disse quando (a faixa de fora é o que está aberto perto).
+    @ObservationIgnored var defaultWhen: WantWhen?
+    /// Quantas linhas guardar (a tela do Quero… mostra 8; o corte mostra o board inteiro).
+    @ObservationIgnored var rowLimit = 8
     private(set) var intent: WantIntent?
     private(set) var rows: [QueroRow] = []
     private(set) var phase: Phase = .idle
@@ -99,6 +105,7 @@ final class QueroModel {
                 if let c = intent.category, WantVerb(rawValue: c) != nil { intent.category = forced.rawValue }
             }
             guard !Task.isCancelled else { return }
+            if intent.when == nil, let when = self.defaultWhen { intent.when = when }
             self.intent = intent
             let output = await WantSearch.run(Self.input(intent, env), provider: self.provider)
             guard !Task.isCancelled else { return }
@@ -113,11 +120,11 @@ final class QueroModel {
 
     static func input(_ intent: WantIntent, _ env: QueroEnv) -> WantSearchInput {
         WantSearchInput(intent: intent, region: env.region, center: env.center, cityGroup: env.cityGroup, online: env.online,
-                        board: env.board, now: env.now)
+                        board: env.board, now: env.now, boardAnyDistance: env.boardAnyDistance)
     }
 
     private func apply(_ output: WantSearchOutput, intent: WantIntent, env: QueroEnv) {
-        rows = Self.rows(output.results, intent: intent, env: env)
+        rows = Self.rows(output.results, intent: intent, env: env, limit: rowLimit)
         offline = output.offline
         notice = output.notice
         dropped = output.dropped
@@ -127,8 +134,8 @@ final class QueroModel {
 
     // MARK: Linhas (puro, testado)
 
-    /// Cabe hoje primeiro (pelo tempo até lá), depois o resto (pelo tempo). No máximo 8.
-    static func rows(_ results: [WantResult], intent: WantIntent, env: QueroEnv) -> [QueroRow] {
+    /// Cabe hoje primeiro (pelo tempo até lá), depois o resto (pelo tempo). No máximo `limit` (8).
+    static func rows(_ results: [WantResult], intent: WantIntent, env: QueroEnv, limit: Int = 8) -> [QueroRow] {
         let areas = AreaCatalog.areas(for: env.region)
         let assigner = AreaAssigner(areas: areas)
         let rows = results.map { r -> QueroRow in
@@ -143,7 +150,7 @@ final class QueroModel {
         }
         let fits = rows.filter { $0.slot != nil }.sorted { ($0.minutes, $0.id) < ($1.minutes, $1.id) }
         let rest = rows.filter { $0.slot == nil }.sorted { ($0.minutes, $0.id) < ($1.minutes, $1.id) }
-        return Array((fits + rest).prefix(8))
+        return Array((fits + rest).prefix(limit))
     }
 
     /// "relógios · tax-free · até 22h · 300 m" / "loja da marca · Grand Seiko… · até 19h".
@@ -283,5 +290,52 @@ enum QueroSave {
             Task { await GuideNudgeScheduler.refresh(context: context, region: env.region, origin: origin, askPermission: false) }
         }
         return plan
+    }
+}
+
+// MARK: - Ambiente (o Quero… e o corte da capa leem do mesmo jeito)
+
+extension QueroEnv {
+    /// Monta o ambiente da busca com o que já está no aparelho (sem rede): bairro de hoje, origem (GPS na cidade, senão o
+    /// bairro do dia ou o centro), board da cidade e os próximos dias aceitos.
+    @MainActor
+    static func make(region: Region, now: Date, places: [Place], trip: TripInfo?, settings: Settings?, plan: DayPlan?,
+                     gps: CLLocationCoordinate2D?, online: Bool, upcoming: [(date: Date, areaIds: Set<String>)]) -> QueroEnv {
+        let areas = AreaCatalog.areas(for: region)
+        let city = trip?.city(on: now, calendar: region.calendar)
+        let cityCenter = city.map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lng) } ?? region.defaultCenter
+        let planArea = plan?.area.flatMap { id in areas.first { $0.id == id } }
+        let gpsInCity = gps.map { DaySolver.streetKm($0, cityCenter) < 60 } ?? false
+        let origin = gpsInCity ? gps! : (planArea?.centroid.clCoordinate ?? cityCenter)
+        let center = plan.flatMap { _ in planArea?.centroid.clCoordinate } ?? origin
+        let cityId = city?.id ?? trip?.cities.first?.id ?? region.rawValue
+        let group = AreaCatalog.cityGroup(forCityId: cityId)
+        var gpsArea: Area?
+        if let gps {
+            let id = AreaAssigner(areas: areas).areaId(name: nil, cityId: city?.id ?? region.rawValue, lat: gps.latitude, lng: gps.longitude)
+            gpsArea = id.flatMap { id in areas.first { $0.id == id } }
+        }
+        let name = planArea?.name ?? gpsArea?.name ?? city?.name ?? region.displayName
+        let board = QueroEnv.board(places, cityGroup: group, now: now, timeZone: region.timeZone)
+        return QueroEnv(region: region, now: now, plan: plan, center: center, origin: origin, areaName: name, cityGroup: group,
+                        cityId: cityId, online: online, board: board, useModel: settings?.onDeviceAI ?? true,
+                        walkMaxKm: settings?.walkMaxKm ?? 1.5, upcoming: upcoming)
+    }
+
+    /// Próximos 14 dias aceitos e os bairros das paradas (pro "sáb · Ginza").
+    @MainActor
+    static func upcomingDays(context: ModelContext, areas: [Area], today: Date) -> [(date: Date, areaIds: Set<String>)] {
+        let start = today.addingTimeInterval(86_400)
+        let end = today.addingTimeInterval(15 * 86_400)
+        let days = (try? context.fetch(FetchDescriptor<PlannedDay>(predicate: #Predicate { $0.date >= start && $0.date < end && $0.accepted },
+                                                                     sortBy: [SortDescriptor(\.date)]))) ?? []
+        let assigner = AreaAssigner(areas: areas)
+        return days.map { day in
+            let ids = day.stops.compactMap { stop -> String? in
+                guard let p = stop.place else { return nil }
+                return assigner.areaId(name: p.area, cityId: p.cityId, lat: p.lat, lng: p.lng)
+            }
+            return (day.date, Set(ids))
+        }
     }
 }

@@ -16,6 +16,8 @@ final class CapaSuggestState {
     private(set) var sources: [String] = []
     /// Eventos de hoje (feeds + board) pro chip "Em cartaz".
     private(set) var showsToday = 0
+    /// O numeral da capa do corte: quantas coisas abertas a 10 min (board + fora do board).
+    private(set) var openNearby = 0
     /// Cache de "por perto" da célula atual (fora do board).
     @ObservationIgnored var indicated: [NearbyPlace] = []
     @ObservationIgnored private let prefs = SuggestPrefs()
@@ -85,6 +87,9 @@ final class CapaSuggestState {
         let reach = Double(SuggestionEngine.mustWalkMinutes) * Walk.metersPerMinute
         let nearby = places.filter { !$0.done && $0.kind != .photo
             && CLLocation(latitude: $0.lat, longitude: $0.lng).distance(from: origin) * SuggestionEngine.streetFactor <= reach }.count
+        // Horário desconhecido não é "fechado": o que o ranker pôs na capa (Must, fecha logo, indicado) também conta.
+        openNearby = max(CorteCount.openWithin10(places: places, indicated: indicated, here: here),
+                         cards.filter { [.must, .closing, .indicated].contains($0.kind) }.count)
         stateLine = SuggestCopy.stateLine(region: region, now: i.now, plan: planStop, mustsNearby: nearby)
 
         let focus = i.currentArea ?? areas.first { $0.id == i.plan?.area }

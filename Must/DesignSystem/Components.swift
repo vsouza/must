@@ -374,7 +374,7 @@ enum PhotoStyle: Sendable {
 ///
 /// Telas v5–v7 escrevem texto **por cima** da foto com a tinta: pra continuarem legíveis até serem redesenhadas, com
 /// `tintOpacity > 0` entra uma faixa de papel por baixo do texto (`ramp`). As telas v8 usam `tintOpacity: 0` e põem o
-/// texto numa `CutBand` (faixa preta sólida).
+/// texto numa `InkBand` (faixa preta sólida).
 struct TintedPhoto: View {
     var url: URL?
     var color: MustColor

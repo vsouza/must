@@ -153,7 +153,7 @@ struct Gallery: View {
             }
             .frame(height: 170)
             .clipShape(RoundedRectangle(cornerRadius: 20))
-            CutBand {
+            InkBand {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Fuunji").font(V8Font.display(44))
                     Text("mostre ao atendente · tsukemen desde 2007").font(V8Font.text(14)).foregroundStyle(V8.muteDark)

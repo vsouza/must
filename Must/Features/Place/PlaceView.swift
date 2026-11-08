@@ -3,7 +3,7 @@ import SwiftData
 import SwiftUI
 
 /// 09 · Lugar em tela cheia (prompt 23 §2, `LugarFoto.png`, `MuseuFoto.png`; Roma `LugarIT.png`, `MuseuIT.png`; sem foto
-/// no disco, `Lugar.png`). Foto grande em cor cheia e, embaixo, a **faixa preta sólida** (`CutBand`) com o nome latino e o
+/// no disco, `Lugar.png`). Foto grande em cor cheia e, embaixo, a **faixa preta sólida** (`InkBand`) com o nome latino e o
 /// nome local "mostre ao atendente" (único lugar com escrita local); ficha 3×2, "Sua nota", pílulas, Ir agora / Feito.
 /// Museu e reserva: o bilhete da âncora por cima da foto, "chegar" e "saia de". O v8 substitui as fotos vivas: nada de
 /// cor do Must atrás do texto, sem degradê, sem zoom. Foto: uma por lugar, do disco; sem nada no disco, uma `/media` só
@@ -391,7 +391,7 @@ struct PlaceView: View {
 
     private func band(_ place: Place, anchor: PlaceFicha.Anchor?, stop: (number: Int, total: Int, isNow: Bool, at: Date)?) -> some View {
         let numeral = numeral(place, anchor: anchor, stop: stop)
-        return CutBand {
+        return InkBand {
             VStack(alignment: .leading, spacing: 0) {
                 Text(place.name)
                     .font(V8Font.display(50))
