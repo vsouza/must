@@ -80,6 +80,15 @@ enum Route: Hashable {
     case presentes
     /// Detalhe de um presente (`Gift.id`).
     case presente(id: String)
+    // MARK: prompt 32 · Grupo
+    /// Quem viaja junto (nomes).
+    case pessoas
+    /// Votações "A ou B?".
+    case votar
+    /// Uma votação (`PlacePoll.id`).
+    case votacao(id: String)
+    /// Acertar contas dos gastos divididos.
+    case acertar
 }
 
 /// Navegação do app: aba atual, pilha de cada aba e o que está apresentado por cima.
@@ -107,6 +116,8 @@ final class AppRouter {
         /// Novo presente (prompt 31). `source` = link colado ou `must-video://<id da caixa>` (Share Extension); nil = em branco.
         /// É a folha que o `+` (Quero · Guardar › Presente) e a conferência do Share abrem.
         case presenteNovo(source: String?)
+        /// "A ou B?": nova votação; `placeId` já entra como A.
+        case aOuB(placeId: String?)
 
         var id: String {
             switch self {
@@ -122,6 +133,7 @@ final class AppRouter {
             case .mandar(let date): "mandar-\(date?.timeIntervalSince1970 ?? 0)"
             case .viagens: "viagens"
             case .presenteNovo(let source): "presente-novo-\(source ?? "")"
+            case .aOuB(let id): "aoub-\(id ?? "")"
             }
         }
     }
@@ -305,6 +317,10 @@ extension View {
             case .diaRecebido(let payload): DiaRecebidoView(payload: payload)
             case .presentes: PresentesView()
             case .presente(let id): PresenteItemView(giftId: id)
+            case .pessoas: PessoasView()
+            case .votar: VotarView()
+            case .votacao(let id): VotacaoView(pollId: id)
+            case .acertar: AcertarView()
             }
         }
     }

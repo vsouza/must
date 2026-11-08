@@ -627,6 +627,19 @@ struct PlaceView: View {
                     FriendsSection(visits: visits, isSample: friends.isSample).padding(.top, 36)
                 }
                 FilmsSection(place: place, region: region, areaName: place.area).padding(.top, 36)
+                // Grupo (prompt 32): este lugar contra outro, pro grupo votar.
+                Button { router.sheet = .aOuB(placeId: place.id) } label: {
+                    HStack {
+                        Text("A OU B? MANDE PRO GRUPO").font(V8Font.mono(12, weight: .semibold)).tracking(1).lineLimit(2)
+                        Spacer(minLength: 8)
+                        Image(systemName: "arrow.up.right").font(.system(size: 14, weight: .bold))
+                    }
+                    .foregroundStyle(V8.ink).padding(.horizontal, 14).frame(maxWidth: .infinity, minHeight: 48)
+                    .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 36)
                 Color.clear.frame(height: 40)
             }
             .padding(.horizontal, 20)

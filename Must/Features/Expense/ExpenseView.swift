@@ -15,7 +15,13 @@ struct ExpenseView: View {
     @Query private var expenses: [Expense]
     @Query private var days: [PlannedDay]
     @Query private var settingsList: [Settings]
+    @Query(sort: [SortDescriptor(\Companion.order), SortDescriptor(\Companion.createdAt)]) private var people: [Companion]
 
+    private enum SplitMode { case none, all, choose }
+
+    @State private var paidBy = ""
+    @State private var splitMode: SplitMode = .all
+    @State private var chosen: Set<String> = []
     @State private var digits = ""
     @State private var selectedPlaceId: String?
     @State private var noPlace = false
@@ -85,6 +91,7 @@ struct ExpenseView: View {
 
                     placeCard.padding(.horizontal, 20).padding(.top, 16)
                     categories.padding(.top, 14)
+                    if !people.isEmpty { group.padding(.horizontal, 20).padding(.top, 14) }
                     keypad.padding(.horizontal, 20).padding(.top, 14)
                     payment.padding(.horizontal, 20).padding(.top, 14)
                     Color.clear.frame(height: 16)
@@ -163,16 +170,16 @@ struct ExpenseView: View {
         (.coffee, "Café"), (.food, "Comida"), (.transit, "Metrô"), (.shop, "Compra"), (.ticket, "Entrada"), (.other, "Outro"),
     ]
 
+    /// Quebra de linha (nada de rolar pro lado): em letra grande o último item não some mais.
     private var categories: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                ForEach(Self.categoryOrder, id: \.0) { cat, label in
-                    Button { category = cat } label: { Pill(label, isOn: (category ?? .other) == cat) }
-                        .buttonStyle(MustPressStyle())
-                }
+        FlowLayout(spacing: 8) {
+            ForEach(Self.categoryOrder, id: \.0) { cat, label in
+                Button { category = cat } label: { CutChip(text: label, isOn: (category ?? .other) == cat) }
+                    .buttonStyle(MustPressStyle())
             }
-            .padding(.horizontal, 22)
         }
+        .padding(.horizontal, 20)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // MARK: Teclado
@@ -218,19 +225,80 @@ struct ExpenseView: View {
     // MARK: Pagamento
 
     private var payment: some View {
-        HStack(spacing: 8) {
+        FlowLayout(spacing: 8) {
             ForEach(region.profile.money?.paymentMethods?.compactMap(PaymentMethod.init(rawValue:)) ?? [.cash, .card], id: \.self) { m in
                 Button { method = m } label: {
                     Text(m == .cash ? "pago em dinheiro" : m.label)
                         .font(V8Font.text(14))
                         .foregroundStyle(Color.must.ink)
                         .padding(.horizontal, 14)
-                        .frame(height: 36)
+                        .frame(minHeight: 36)
                         .background(method == m ? V8.orange : Color.clear)
                         .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
                 }
                 .buttonStyle(MustPressStyle())
             }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    // MARK: Grupo (prompt 32)
+
+    private func personLabel(_ name: String) -> String { name == Settlement.me ? "Você" : name }
+
+    /// Quem pagou e com quem dividiu. Só aparece com pessoas cadastradas na viagem.
+    private var group: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            MonoLabel("quem pagou", size: 10, color: V8.mute)
+            FlowLayout(spacing: 8) {
+                ForEach([Settlement.me] + people.map(\.name), id: \.self) { name in
+                    let on = (paidBy.isEmpty ? Settlement.me : paidBy) == name
+                    Button { paidBy = name == Settlement.me ? "" : name } label: { CutChip(text: personLabel(name), isOn: on) }
+                        .buttonStyle(MustPressStyle())
+                }
+            }
+            MonoLabel("dividido com", size: 10, color: V8.mute).padding(.top, 6)
+            FlowLayout(spacing: 8) {
+                modeChip("Todos", .all)
+                modeChip("Escolher", .choose)
+                modeChip("Só meu", .none)
+            }
+            if splitMode == .choose {
+                FlowLayout(spacing: 8) {
+                    ForEach([Settlement.me] + people.map(\.name), id: \.self) { name in
+                        Button {
+                            if chosen.contains(name) { chosen.remove(name) } else { chosen.insert(name) }
+                        } label: { CutChip(text: personLabel(name), isOn: chosen.contains(name)) }
+                            .buttonStyle(MustPressStyle())
+                    }
+                }
+            }
+            if let share = shareLine { Text(share).font(V8Font.text(13)).foregroundStyle(V8.mute) }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func modeChip(_ title: String, _ mode: SplitMode) -> some View {
+        Button {
+            splitMode = mode
+            if mode == .choose, chosen.isEmpty { chosen = Set([Settlement.me] + people.map(\.name)) }
+        } label: { CutChip(text: title, isOn: splitMode == mode) }.buttonStyle(MustPressStyle())
+    }
+
+    /// "R$ 40 por pessoa" — a conta de cabeça antes de registrar.
+    private var shareLine: String? {
+        guard amount > 0 else { return nil }
+        let count = splitMode == .all ? people.count + 1 : splitMode == .choose ? chosen.count : 0
+        guard count > 1 else { return nil }
+        return "\(region.money((amount / Double(count)).rounded())) por pessoa · \(count) pessoas"
+    }
+
+    private var splitWith: String {
+        guard !people.isEmpty else { return "" }
+        switch splitMode {
+        case .none: return ""
+        case .all: return Settlement.everyone
+        case .choose: return Settlement.join(([Settlement.me] + people.map(\.name)).filter { chosen.contains($0) })
         }
     }
 
@@ -254,7 +322,8 @@ struct ExpenseView: View {
     }
 
     private func save() {
-        PlaceActions.record(amount: amount, place: place, category: category, method: method, day: today, context: context)
+        PlaceActions.record(amount: amount, place: place, category: category, method: method, day: today,
+                            paidBy: people.isEmpty ? "" : paidBy, splitWith: splitWith, context: context)
         dismiss()
     }
 }

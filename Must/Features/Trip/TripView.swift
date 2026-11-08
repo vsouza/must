@@ -39,6 +39,7 @@ struct TripView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     spendBlock(spent: spent, elapsed: elapsed).padding(.top, 22)
                     dayRow(cells).padding(.top, 20)
+                    GrupoBlock().padding(.top, 24)
                     stampRow(stamps).padding(.top, 24)
                     if let trip { cityCards(trip).padding(.top, 28) } else { weekCards(period: period).padding(.top, 28) }
                     progressTags.padding(.top, 20)

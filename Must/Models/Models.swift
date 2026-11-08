@@ -174,6 +174,11 @@ final class Expense {
     var categoryRaw: String
     var place: Place?
     var methodRaw: String
+    /// Grupo (prompt 32): quem pagou. Vazio = você. Aditivo (migração leve).
+    var paidBy: String = ""
+    /// Grupo: com quem dividiu. Vazio = não dividido (só seu); `Settlement.everyone` = todos; senão nomes separados por `|`
+    /// (`Settlement.me` = você).
+    var splitWith: String = ""
 
     init(at: Date, amount: Double, category: ExpenseCategory = .other, place: Place? = nil, method: PaymentMethod = .card) {
         self.id = UUID()
@@ -404,7 +409,7 @@ extension ModelContext {
 enum MustSchema {
     static let models: [any PersistentModel.Type] = [
         MustList.self, Place.self, Expense.self, PlannedDay.self, Stop.self, TripInfo.self, Settings.self, TripEvent.self,
-        WalletItem.self, Flight.self, ShoppingItem.self, OutboxItem.self, Gift.self,
+        WalletItem.self, Flight.self, ShoppingItem.self, OutboxItem.self, Gift.self, Companion.self, PlacePoll.self,
     ]
     static var schema: Schema { Schema(models) }
 }

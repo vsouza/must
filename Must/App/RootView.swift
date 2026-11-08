@@ -50,6 +50,7 @@ struct RootView: View {
             case .mandar(let date): MandarView(date: date)
             case .viagens: TripSwitcherSheet()
             case .presenteNovo(let source): PresenteNovoView(source: source)
+            case .aOuB(let placeId): NovaVotacaoView(placeId: placeId)
             }
         }
         .collectibleCelebration()

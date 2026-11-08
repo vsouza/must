@@ -106,14 +106,25 @@ struct LinhaDoDiaView: View {
         plan?.dayNumber.map(String.init) ?? region.dayNumber(date)
     }
 
-    /// Mandar o dia (prompt 25 · B.5) e Linha | Mapa, numa faixa de papel.
+    /// Linha | Mapa e, embaixo do dia, "Mandar o dia" por extenso (prompt 32: o ícone sozinho ninguém achava).
     private var controls: some View {
-        HStack(spacing: 10) {
+        VStack(alignment: .leading, spacing: 10) {
             toggle
-            Spacer(minLength: 8)
-            V8CornerButton(systemName: "paperplane", label: "Mandar o dia", tint: V8.ink) {
-                router.sheet = .mandar(date: region.calendar.startOfDay(for: date))
+            Button { router.sheet = .mandar(date: region.calendar.startOfDay(for: date)) } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "paperplane").font(.system(size: 15, weight: .bold))
+                    Text("MANDAR O DIA").font(V8Font.mono(12, weight: .semibold)).tracking(1).lineLimit(1)
+                    Spacer(minLength: 8)
+                    Text("cartaz · link · PDF").font(V8Font.text(12)).foregroundStyle(V8.mute).lineLimit(1)
+                }
+                .foregroundStyle(V8.ink)
+                .padding(.horizontal, 14)
+                .frame(maxWidth: .infinity, minHeight: 48)
+                .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
+                .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Mandar o dia")
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 12)

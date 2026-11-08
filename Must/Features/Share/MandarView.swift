@@ -136,8 +136,7 @@ struct MandarView: View {
         return DayPosterView(poster: day.poster, options: options)
             .scaleEffect(k, anchor: .topLeading)
             .frame(width: width, height: DayPosterView.size.height * k, alignment: .topLeading)
-            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .shadow(color: V8.ink.opacity(0.25), radius: 18, y: 16)
+            .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Prévia do cartaz: dia \(day.poster.numeral), \(day.poster.area), \(day.poster.stops.count) paradas")
     }
@@ -146,8 +145,8 @@ struct MandarView: View {
         Button { value.wrappedValue.toggle() } label: {
             HStack(spacing: 8) {
                 ZStack {
-                    Circle().fill(value.wrappedValue && enabled ? V8.ink : .clear)
-                    Circle().strokeBorder(V8.ink, lineWidth: 1.5)
+                    Rectangle().fill(value.wrappedValue && enabled ? V8.ink : .clear)
+                    Rectangle().strokeBorder(V8.ink, lineWidth: 2)
                     if value.wrappedValue && enabled {
                         Image(systemName: "checkmark").font(.system(size: 10, weight: .heavy)).foregroundStyle(V8.orange)
                     }
@@ -228,8 +227,8 @@ struct MandarView: View {
                 .font(.system(size: 16, weight: .medium))
                 .foregroundStyle(filled ? V8.white : V8.ink)
                 .frame(width: 40, height: 40)
-                .background(Circle().fill(filled ? V8.ink : .clear))
-                .overlay(Circle().strokeBorder(V8.ink, lineWidth: filled ? 0 : 1))
+                .background(Rectangle().fill(filled ? V8.ink : .clear))
+                .overlay(Rectangle().strokeBorder(V8.ink, lineWidth: filled ? 0 : 2))
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(V8Font.text(14.5, weight: .bold)).foregroundStyle(V8.ink).lineLimit(1)
                 Text(meta).font(V8Font.text(12)).foregroundStyle(V8.mute).lineLimit(1).truncationMode(.tail)
@@ -262,8 +261,8 @@ struct MandarView: View {
                 .foregroundStyle(V8.white)
                 .padding(.horizontal, 20)
                 .frame(maxWidth: .infinity, minHeight: 56)
-                .background(Capsule().fill(V8.ink))
-                .contentShape(Capsule())
+                .background(Rectangle().fill(V8.ink))
+                .contentShape(Rectangle())
             }
             .buttonStyle(MustPressStyle())
         } else {
