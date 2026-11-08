@@ -11,6 +11,12 @@ struct ExplorarMapOpen: View {
     var photoURL: URL?
     var quero: () -> Void
     var onClose: () -> Void
+    /// Ambiente do dia (plano de hoje, origem) pra calcular o "+ dia" do pino escolhido.
+    var makeEnv: () -> QueroEnv
+    /// "+ dia": grava a parada no buraco; `true` se encaixou.
+    var onFit: (ExplorarItem, DayFit.Slot) -> Bool
+    /// "+ board": guarda o de fora no board; devolve o id do Must novo (o pino vira seu).
+    var onSave: (ExplorarItem) -> String?
 
     @Environment(AppRouter.self) private var router
     @Environment(Services.self) private var services
@@ -23,6 +29,8 @@ struct ExplorarMapOpen: View {
     @State private var mapSize: CGSize = .zero
     @State private var visible: GeoRect?
     @State private var selected: String?
+    @State private var pinDay: ExplorarPinActions.Day?
+    @State private var notice: String?
 
     private var layers: Set<ExplorarLayer> { model.layers }
     private var outsideReady: Bool { !model.items.filter { !$0.isOwn }.isEmpty }
@@ -41,9 +49,19 @@ struct ExplorarMapOpen: View {
         }
         .background(V8.paper.ignoresSafeArea())
         .ignoresSafeArea(edges: .top)
+        .task(id: selected) { await computePinDay() }
         .task {
             command = MapCameraCommand(target: .center(lat: area.centroid.lat, lng: area.centroid.lng,
                                                        widthMeters: ExplorarSnapshot.widthMeters * 1.15), animated: false)
+            #if DEBUG
+            // Prints: `explorar-recorte-pino` abre o primeiro Must; `-fora` o primeiro de fora (se houver).
+            let screen = DebugFlags.string("debugScreen")
+            if screen == "explorar-recorte-pino" || screen == "explorar-recorte-fora" {
+                try? await Task.sleep(for: .seconds(1.5))
+                let wantOwn = screen == "explorar-recorte-pino"
+                selected = ExplorarLayers.listed(model.items, layers: layers).first { $0.isOwn == wantOwn }?.id
+            }
+            #endif
         }
     }
 
@@ -169,6 +187,10 @@ struct ExplorarMapOpen: View {
 
     private func cellLabel(_ layer: ExplorarLayer) -> String {
         if layer == .own { return "\(layer.label) · \(model.items.filter(\.isOwn).count)".uppercased() }
+        if layer == .openNow {
+            let others = layers.subtracting([.openNow])
+            return ExplorarLayers.openSummary(ExplorarLayers.filter(model.items, layers: others)).label.uppercased()
+        }
         return layer.label.uppercased()
     }
 
@@ -189,8 +211,8 @@ struct ExplorarMapOpen: View {
                 Spacer(minLength: 8)
                 if let selected, let i = ExplorarLayers.index(ofPin: selected, in: listed) {
                     MonoLabel("pino \(i + 1) de \(listed.count)", size: 11, color: V8.ink)
-                } else if services.connectivity.isOffline {
-                    MonoLabel("sem internet · só seus musts", size: 10, color: V8.mute)
+                } else if let note = model.outsideState.note {
+                    MonoLabel(note, size: 10, color: V8.mute).lineLimit(2).multilineTextAlignment(.trailing)
                 }
             }
             .padding(.horizontal, 20).padding(.vertical, 14)
@@ -251,11 +273,20 @@ struct ExplorarMapOpen: View {
             .clipped()
             HStack(spacing: 0) {
                 actionButton("Ir", filled: true) { MapsLinks.openApple(to: item.coordinate, name: item.name) }
-                if let id = item.placeId {
+                dayButton(item)
+                if ExplorarPinActions.canSave(item) {
+                    actionButton("+ board", filled: false) {
+                        if let id = onSave(item) { selected = id } else { notice = "não deu pra guardar agora" }
+                    }
+                } else if let id = item.placeId {
                     actionButton("Abrir", filled: false) { router.push(.place(id: id), on: router.tab) }
                 }
             }
             .overlay(alignment: .bottom) { Rectangle().fill(V8.ink).frame(height: 2) }
+            if let notice {
+                MonoLabel(notice, size: 10, color: V8.mute).frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 20).padding(.vertical, 8)
+            }
         }
         .simultaneousGesture(DragGesture(minimumDistance: 30).onEnded { value in
             guard abs(value.translation.width) > abs(value.translation.height) * 1.5 else { return }
@@ -265,6 +296,41 @@ struct ExplorarMapOpen: View {
         .accessibilityAction(named: "Próximo pino") {
             if let next = ExplorarLayers.neighbor(of: item.id, in: listed, by: 1) { select(next) }
         }
+    }
+
+    private func computePinDay() async {
+        notice = nil
+        guard let selected, let item = model.items.first(where: { $0.id == selected }) else { pinDay = nil; return }
+        pinDay = ExplorarPinActions.day(for: item, env: makeEnv())
+    }
+
+    /// "+ dia" / "no dia · 15:30" / "não cabe hoje" (nada quando já está feito).
+    @ViewBuilder private func dayButton(_ item: ExplorarItem) -> some View {
+        switch pinDay {
+        case .fit(let slot)?:
+            actionButton("+ dia", filled: false) {
+                if onFit(item, slot) { notice = "no dia · \(region.timeString(slot.start))"; pinDay = .inDay(time: region.timeString(slot.start)) }
+                else { notice = "não deu pra gravar o dia" }
+            }
+        case .inDay(let time)?:
+            staticCell("no dia" + (time.map { " · \($0)" } ?? ""))
+        case .noFit?:
+            staticCell("não cabe hoje")
+        case .none?, nil:
+            EmptyView()
+        }
+    }
+
+    private func staticCell(_ title: String) -> some View {
+        Text(title.uppercased())
+            .font(V8Font.mono(11, weight: .bold)).tracking(0.8)
+            .foregroundStyle(V8.ink.opacity(0.7))
+            .lineLimit(2).minimumScaleFactor(0.7).multilineTextAlignment(.center)
+            .padding(.horizontal, 4)
+            .frame(maxWidth: .infinity, minHeight: 52)
+            .background(V8.paper)
+            .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
+            .accessibilityLabel(title)
     }
 
     private func actionButton(_ title: String, filled: Bool, action: @escaping () -> Void) -> some View {

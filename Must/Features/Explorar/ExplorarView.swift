@@ -46,7 +46,8 @@ struct ExplorarView: View {
             page
             if railActive, let preview = railPreview { railPanel(preview) }
             if mapOpen, let area = model.area {
-                ExplorarMapOpen(model: model, area: area, region: region, photoURL: photo, quero: { openQuero() }, onClose: { close() })
+                ExplorarMapOpen(model: model, area: area, region: region, photoURL: photo, quero: { openQuero() }, onClose: { close() },
+                                makeEnv: { queroEnv(area) }, onFit: { fitToday($0, slot: $1, area: area) }, onSave: { saveToBoard($0, area: area) })
                     .transition(reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: 0.97)))
             }
             if corte.stage != .rest, let area = model.area {
@@ -59,6 +60,7 @@ struct ExplorarView: View {
         .id(region)
         .task(id: refreshKey) { await refresh() }
         .task(id: model.areaId) { await loadVisuals() }
+        .task(id: "\(mapOpen)|\(model.areaId ?? "-")|\(online)") { await loadOutsideLive() }
         .onChange(of: corte.stage) { _, stage in router.setQuero("explorar", open: stage != .rest) }
         .onChange(of: corte.quero.phase) { _, _ in corte.resultArrived() }
         .onDisappear { router.setQuero("explorar", open: false) }
@@ -117,7 +119,7 @@ struct ExplorarView: View {
         case "explorar-trilho":
             railActive = true
             railPreview = min(2, max(model.count - 1, 0))
-        case "explorar-recorte":
+        case "explorar-recorte", "explorar-recorte-pino", "explorar-recorte-fora":
             model.select(area: "nakano")
             mapOpen = true
         default: break
@@ -129,6 +131,21 @@ struct ExplorarView: View {
     private func refreshInputs() {
         let today = region.calendar.startOfDay(for: now)
         model.refresh(inputs(snapshotOf: dayEngine.plan(for: today, region: region, context: context)))
+    }
+
+    /// Recorte aberto: uma busca do Por perto (Google Nearby + fontes grátis) do centro do bairro, uma vez por bairro por sessão.
+    /// Cache primeiro (já mostrado por `loadVisuals`); sem rede ou com Pouco Dados, só o que estava guardado.
+    private func loadOutsideLive() async {
+        guard mapOpen, let area = model.area else { return }
+        let decision = model.outsideDecision(area: area.id, region: region, status: services.connectivity.status)
+        guard decision == .fetch else { return }
+        let batch = await services.nearby.load(lat: area.centroid.lat, lng: area.centroid.lng, region: region)
+        model.outsideFinished()
+        let fresh = batch.places.filter { !$0.sources.contains(.board) }
+        if fresh != outside {
+            outside = fresh
+            refreshInputs()
+        }
     }
 
     /// Foto do bairro (só o que já está no disco), snapshot do mapa e o "fora do board" do cache do Por perto.
@@ -351,6 +368,29 @@ struct ExplorarView: View {
     }
 
     private func openQuero() { corte.open() }
+
+    /// "+ dia" do pino: grava o Must (o do board ou um novo) e a parada no buraco calculado.
+    private func fitToday(_ item: ExplorarItem, slot: DayFit.Slot, area: Area) -> Bool {
+        let env = queroEnv(area)
+        let lists = (try? context.fetch(FetchDescriptor<MustList>())) ?? []
+        let row = ExplorarPinActions.row(for: item, slot: slot, areaId: area.id)
+        guard let place = QueroSave.place(for: row, intent: nil, text: "", lists: lists, cityId: env.cityId, region: region,
+                                          sync: services.sync, context: context),
+              (try? QueroSave.encaixar(row, place: place, env: env, context: context)) != nil else { return false }
+        refreshInputs()
+        return true
+    }
+
+    /// "+ board" do pino de fora.
+    private func saveToBoard(_ item: ExplorarItem, area: Area) -> String? {
+        let env = queroEnv(area)
+        let lists = (try? context.fetch(FetchDescriptor<MustList>())) ?? []
+        let row = ExplorarPinActions.row(for: item, slot: nil, areaId: area.id)
+        guard let place = QueroSave.place(for: row, intent: nil, text: "", lists: lists, cityId: env.cityId, region: region,
+                                          sync: services.sync, context: context) else { return nil }
+        refreshInputs()
+        return place.id
+    }
 
     private func queroEnv(_ area: Area) -> QueroEnv {
         let all = (try? context.fetch(FetchDescriptor<Place>())) ?? []

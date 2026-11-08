@@ -113,6 +113,7 @@ struct BoardGift: Codable, Equatable, Sendable {
     var storeName: String?
     var storeLat: Double?
     var storeLng: Double?
+    var storeAddress: String?
     var chain: Bool?
     var note: String?
     var order: Int?

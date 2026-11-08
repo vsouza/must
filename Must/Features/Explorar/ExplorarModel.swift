@@ -54,6 +54,23 @@ final class ExplorarModel {
 
     var layers: Set<ExplorarLayer> = ExplorarLayer.standard
 
+    /// "Fora do board" ao vivo: uma busca por bairro por sessão (`ExplorarOutsidePolicy`), nunca offline nem com Pouco Dados.
+    private(set) var outsideState: ExplorarOutsideState = .idle
+    static var outsidePolicy = ExplorarOutsidePolicy()
+
+    func outsideDecision(area id: String, region: Region, status: Connectivity.Status) -> ExplorarOutsidePolicy.Decision {
+        let decision = Self.outsidePolicy.decide(area: id, region: region, status: status)
+        switch decision {
+        case .fetch: outsideState = .loading
+        case .offline: outsideState = .offline
+        case .lowData: outsideState = .lowData
+        case .alreadyThisSession: outsideState = .loaded
+        }
+        return decision
+    }
+
+    func outsideFinished() { outsideState = .loaded }
+
     /// Bairro escolhido à mão (trilho, deslize); `nil` = o inicial (GPS › dia › primeiro).
     @ObservationIgnored private var chosen: String?
     @ObservationIgnored private var lastInputs: Inputs?
@@ -162,10 +179,13 @@ final class ExplorarModel {
         for place in byArea[area.id] ?? [] where place.lat != 0 || place.lng != 0 {
             let open = i.openIds.contains(place.id)
             let tone: ExplorarItem.Tone = open && !place.isDone ? .own : .paper
+            let trust = place.trust
+            let planStart = planStops.first { $0.placeId == place.id && $0.kind != .micro }?.start
             built.append(ExplorarItem(
                 id: place.id, placeId: place.id, name: place.name, lat: place.lat, lng: place.lng, tone: tone, isOpen: open,
                 done: place.isDone, inPlan: planIds.contains(place.id), meta: Self.meta(place, open: open, region: i.region, now: i.now),
-                meters: i.distances[place.id] ?? place.location.distance(from: originLoc)))
+                meters: i.distances[place.id] ?? place.location.distance(from: originLoc),
+                planTime: planStart.map { i.region.timeString($0) }, hoursConfirmed: trust.hoursConfirmed))
         }
         let boardNames = Set(i.places.map { $0.name.lowercased() })
         for outside in i.outside where !outside.sources.contains(.board) && !boardNames.contains(outside.name.lowercased()) {
@@ -174,7 +194,7 @@ final class ExplorarModel {
             built.append(ExplorarItem(
                 id: "out-\(outside.id)", placeId: nil, name: outside.name, lat: outside.lat, lng: outside.lng, tone: .outside,
                 isOpen: outside.openNow == true, done: false, inPlan: false, meta: Self.outsideMeta(outside),
-                meters: here.distance(from: originLoc)))
+                meters: here.distance(from: originLoc), googleId: outside.googlePlaceId, hoursConfirmed: outside.openNow != nil))
         }
         items = built
 
@@ -200,6 +220,7 @@ final class ExplorarModel {
         if place.isDone { parts.append("feito") }
         else if case .open(let until) = place.openState(at: now, timeZone: region.timeZone) { parts.append(until.map { "fecha \($0)" } ?? "aberto") }
         else if case .closed(_, let at) = place.openState(at: now, timeZone: region.timeZone) { parts.append(at.map { "abre \($0)" } ?? "fechado") }
+        if !place.trust.hoursConfirmed { parts.append(PlaceTrust.hoursEstimated) }
         _ = open
         return parts.joined(separator: " · ")
     }
