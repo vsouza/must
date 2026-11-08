@@ -136,6 +136,8 @@ corte2shots() { # $1 = prefixo, $2 = lugar de exemplo, $3 = lista de exemplo
   WAIT=10 shot $r-corte-lugar -debugScreen corte-lugar:$2
   WAIT=12 shot $r-corte-lugar-quero -debugScreen corte-lugar-quero:$2
   WAIT=10 shot $r-corte-board -debugScreen corte-board
+  WAIT=10 shot $r-corte-board-filtro -debugScreen corte-board-filtro
+  WAIT=10 shot $r-corte-montar -debugScreen corte-montar
   WAIT=10 shot $r-corte-lista -debugScreen corte-lista:$3
   WAIT=12 shot $r-corte-lista-quero -debugScreen corte-lista-quero:$3
 }
@@ -152,6 +154,8 @@ cortediashots() { # $1 = prefixo (jp|bh)
   if [ "$r" = "jp" ]; then
     shot $r-corte-xxxl-dia -debugScreen corte-dia -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
     shot $r-corte-xxxl-bolso -debugScreen corte-bolso -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
+    WAIT=10 shot $r-corte-xxxl-board -debugScreen corte-board -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
+    WAIT=10 shot $r-corte-xxxl-montar -debugScreen corte-montar -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
   fi
 }
 ${=W} skipOnboarding -bool YES

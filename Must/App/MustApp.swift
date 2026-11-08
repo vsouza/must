@@ -327,7 +327,7 @@ enum DebugLaunch {
         // prompt 30 · etapa 2: o corte no Lugar, na Lista e no Board (o `PlaceView`/`ListView` lêem o `debugScreen` pro quero aberto).
         case "corte-lugar", "corte-lugar-quero": router.push(.place(id: arg ?? "p01"), on: .musts)
         case "corte-lista", "corte-lista-quero": router.push(.list(id: arg ?? "eat"), on: .musts)
-        case "corte-board": router.push(.board(edit: false), on: .musts)
+        case "corte-board", "corte-board-filtro": router.push(.board(edit: false), on: .musts)
         case "fim": router.push(.saveForEnd, on: .musts)
         case "lugar": router.push(.place(id: arg ?? "p01"), on: .musts)
         case "painel": router.push(.place(id: arg ?? "j18"), on: .musts) // rola até o painel do tipo (PlaceView)

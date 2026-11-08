@@ -12,6 +12,7 @@ struct BoardView: View {
     @Environment(\.modelContext) private var context
     @Environment(AppRouter.self) private var router
     @Environment(RegionStore.self) private var store
+    @Environment(Services.self) private var services
 
     @Query(sort: \MustList.order) private var lists: [MustList]
     @Query(sort: \Place.name) private var places: [Place]
@@ -39,8 +40,8 @@ struct BoardView: View {
                     cutBlock
                     CutRule()
                     VStack(alignment: .leading, spacing: 0) {
-                        SearchPill(text: searchText, placeholder: "Nome, bairro, nota, fonte…") { sortChip }
-                            .padding(.top, 18)
+                        CutSearchField(text: searchText, placeholder: "Nome, bairro, nota, fonte…") { sortChip }
+                            .padding(.top, 8)
                         chips.padding(.top, 14).padding(.bottom, 18)
                         if groups.isEmpty {
                             Text(query.isFiltering ? "Nada com “\(query.text)” no board." : "Nenhum lugar no board.")
@@ -77,6 +78,9 @@ struct BoardView: View {
         .sheet(isPresented: $showNameSearch) { BuscarNomeView() }
         .toolbar(.hidden, for: .navigationBar)
         .onAppear {
+            #if DEBUG
+            if DebugFlags.string("debugScreen") == "corte-board-filtro" { model.query.filter = .saveForEnd }
+            #endif
             guard startEditing else { return }
             editMode = .active
             #if DEBUG
@@ -154,13 +158,15 @@ struct BoardView: View {
     private var sortChip: some View {
         Button { model.query.sort = query.sort.next } label: {
             Text(query.sort.label)
-                .font(.must.archivo(13, .semibold))
-                .foregroundStyle(Color.must.ink)
-                .padding(.vertical, 7)
-                .padding(.horizontal, 12)
-                .background(Capsule().fill(.white))
+                .font(V8Font.mono(10.5, weight: .semibold)).tracking(0.8)
+                .textCase(.uppercase)
+                .foregroundStyle(V8.ink)
+                .padding(.vertical, 8)
+                .padding(.horizontal, 10)
+                .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
+                .contentShape(Rectangle())
         }
-        .buttonStyle(MustPressStyle())
+        .buttonStyle(.plain)
         .accessibilityLabel("Ordenar por \(query.sort.label)")
     }
 
@@ -169,16 +175,16 @@ struct BoardView: View {
             HStack(spacing: 8) {
                 ForEach(BoardGrouping.allCases, id: \.self) { grouping in
                     Button { model.query.grouping = grouping } label: {
-                        Pill(grouping.label, isOn: query.grouping == grouping)
+                        CutChip(text: grouping.label, isOn: query.grouping == grouping)
                     }
                 }
                 ForEach(BoardFilter.allCases) { filter in
                     Button { model.query.filter = query.filter == filter ? nil : filter } label: {
-                        Pill(chipTitle(filter), isOn: query.filter == filter)
+                        CutChip(text: chipTitle(filter), isOn: query.filter == filter)
                     }
                 }
             }
-            .buttonStyle(MustPressStyle())
+            .buttonStyle(.plain)
         }
         .scrollClipDisabled()
     }
@@ -206,33 +212,35 @@ struct BoardView: View {
                     drop(items, onto: group)
                 }
             ForEach(shown) { place in
-                BoardRow(place: place, region: region, isEditing: editing, isSelected: model.selection.contains(place.id))
+                BoardRow(place: place, region: region, isEditing: editing, isSelected: model.selection.contains(place.id),
+                         here: services.location.current)
                     .boardRow()
                     .contentShape(Rectangle())
                     .onTapGesture { tap(place) }
                     .draggable(PlaceDragItem(id: place.id))
                     .swipeActions(edge: .leading, allowsFullSwipe: false) {
                         Button { sheet = .done(place.id) } label: { Label("Feito", systemImage: "checkmark") }
-                            .tint(Color.must.green)
+                            .tint(V8.orange)
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button(role: .destructive) { pendingDelete = [place.id] } label: { Label("Apagar", systemImage: "trash") }
                         Button { toggleSaveForEnd([place]) } label: { Label("Fica pro fim", systemImage: "clock") }
-                            .tint(Color.must.ink)
+                            .tint(V8.ink)
                     }
             }
             .onMove(perform: reorderable ? { reorder(group, $0, $1) } : nil)
             if collapsed {
                 Button { model.expanded.insert(group.id) } label: {
-                    Text("+ \(group.places.count - shown.count) em \(group.title)")
-                        .font(.must.archivo(14, .semibold))
-                        .foregroundStyle(Color.must.ink)
+                    Text("+ \(group.places.count - shown.count) em \(group.title)".uppercased())
+                        .font(V8Font.mono(11, weight: .semibold)).tracking(0.8)
+                        .foregroundStyle(V8.ink)
                         .padding(.vertical, 10)
-                        .padding(.horizontal, 16)
-                        .background(Capsule().fill(Color.must.surface))
-                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal, 14)
+                        .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
                 }
-                .buttonStyle(MustPressStyle())
+                .buttonStyle(.plain)
                 .boardRow()
             }
         }

@@ -269,6 +269,7 @@
 		87A771375F4DF10DBDDCB9C3 /* SavedPlacesImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CE017A72A1FB6FBBC0A7C46 /* SavedPlacesImporter.swift */; };
 		8830F2E219AC5FF3BBF0D226 /* ShoppingRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C553381C1ACF36D47BABC10 /* ShoppingRules.swift */; };
 		883D9CE61B3D1FCD6AE4F679 /* PlaceEmCartazTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8255AE0AB8B4482CA3A9462 /* PlaceEmCartazTests.swift */; };
+		891A2BA9FDC35F3C55A32123 /* CutControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 585ECC1E8010850E5EFB54FD /* CutControls.swift */; };
 		891ADB3F914224B66EB00D77 /* DicasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B63DF9BA2DEAD2F156E5ECDC /* DicasView.swift */; };
 		8979F515E284293541A15421 /* EmergencyKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = C197B5A3FAD05B710839EDE4 /* EmergencyKit.swift */; };
 		8A8A34CBBC66706B777BA3C5 /* DayPrefetchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96B6023D7FE3D8AF2A2D0583 /* DayPrefetchTests.swift */; };
@@ -762,6 +763,7 @@
 		5621525C6CB7D37030B2A19B /* Router.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Router.swift; sourceTree = "<group>"; };
 		56B2448E220317CEA9B0A97A /* Must.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Must.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		56C3EA6D3C29FD87F4AC83FE /* KindPanels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KindPanels.swift; sourceTree = "<group>"; };
+		585ECC1E8010850E5EFB54FD /* CutControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CutControls.swift; sourceTree = "<group>"; };
 		59C0F2D3F8FD625357FE147C /* BoardCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardCodec.swift; sourceTree = "<group>"; };
 		59E7929EF53EBA041A2D5E78 /* TicketRevisarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketRevisarView.swift; sourceTree = "<group>"; };
 		5A1B075763A86D919443CA48 /* Values.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Values.swift; sourceTree = "<group>"; };
@@ -1152,6 +1154,7 @@
 			isa = PBXGroup;
 			children = (
 				AF4F94C13523A4CCA7E209DE /* ButtonMetrics.swift */,
+				585ECC1E8010850E5EFB54FD /* CutControls.swift */,
 				897C9F43BE0507A3E020BDFC /* V8Components.swift */,
 				BFC0F8EA6EB89AD006961183 /* V8Cut.swift */,
 				35765003FEB4545A52A17799 /* V8Palette.swift */,
@@ -2874,6 +2877,7 @@
 				F95B19C91AA33E2A9D6F6528 /* CorteState.swift in Sources */,
 				E547EA2E6628AFD1565AC0DC /* CountryProfile.swift in Sources */,
 				7D8F5E416C711C28C3E45DC0 /* CurrentAreaService.swift in Sources */,
+				891A2BA9FDC35F3C55A32123 /* CutControls.swift in Sources */,
 				619192508D674C3CF00785FF /* DataUsage.swift in Sources */,
 				EB4B75F6D6AC1ED277AF6970 /* DayComposer.swift in Sources */,
 				219FF791B338E87A1AFDE315 /* DayCut.swift in Sources */,
