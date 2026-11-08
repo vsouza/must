@@ -82,9 +82,9 @@ struct QueroView: View {
             }
         }
         .onAppear {
-            model.answerer = { [context, services, store] text in
+            model.answerer = { [context, services, store, engine] text in
                 await QueroAnswerer.answer(text, context: context, region: store.region, services: services,
-                                           useModel: (try? context.fetch(FetchDescriptor<Settings>()).first?.onDeviceAI) ?? true)
+                                           useModel: (try? context.fetch(FetchDescriptor<Settings>()).first?.onDeviceAI) ?? true, engine: engine)
             }
             speech.onFinal = { text in
                 model.text = text

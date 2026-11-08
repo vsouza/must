@@ -58,7 +58,7 @@ final class ChatModel {
         """
     }
 
-    func send(_ text: String, snapshot: AssistantSnapshot, useModel: Bool) async {
+    func send(_ text: String, snapshot: AssistantSnapshot, useModel: Bool, clock: DayClock? = nil) async {
         let question = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !question.isEmpty, !busy else { return }
         busy = true
@@ -68,7 +68,15 @@ final class ChatModel {
         usesModel = useModel && OnDeviceAI.isAvailable
         // Pedido reconhecido (gasto, troca, abertos, metrô, tempo, roteiro): resposta montada com os dados exatos —
         // o modelo pequeno do aparelho erra número. O modelo fica pras perguntas abertas, com as ferramentas.
-        let deterministic = FallbackAssistant.answer(question, snapshot: snapshot)
+        var deterministic = FallbackAssistant.answer(question, snapshot: snapshot)
+        // Perguntas factuais (dá tempo, preço, horário, como chegar, vale a pena, agora): `QuestionAnswerer`, com número exato.
+        let factual = QuestionAnswerer.answer(question, snapshot: snapshot, clock: clock)
+        if factual.recognized {
+            let keepsCards = factual.kind == .nowNearby && deterministic.recognized
+            deterministic = AssistantReply(text: factual.text, actions: keepsCards ? deterministic.actions : [], note: nil, quickReplies: [], recognized: true)
+        } else if !deterministic.recognized, factual.kind != .unknown {
+            deterministic.text = factual.text
+        }
         guard usesModel, !deterministic.recognized else {
             messages.append(ChatMessage(role: .assistant, text: deterministic.text, actions: deterministic.actions,
                                         note: deterministic.note, quickReplies: deterministic.quickReplies))
