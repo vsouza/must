@@ -322,6 +322,7 @@ struct BoardCodec {
             gift.storeName = item.storeName ?? ""
             gift.storeLat = item.storeLat
             gift.storeLng = item.storeLng
+            gift.storeAddress = item.storeAddress ?? ""
             gift.chain = item.chain ?? false
             gift.note = item.note ?? ""
             gift.order = item.order ?? 0
@@ -446,7 +447,7 @@ struct BoardCodec {
                           estimatedPrice: g.estimatedPrice, paidPrice: g.paidPrice, boughtAt: g.boughtAt,
                           source: g.sourceRaw, sourceURL: g.sourceURL, sourceLabel: g.sourceLabel.isEmpty ? nil : g.sourceLabel,
                           videoClip: g.videoClip, placeId: g.placeId, storeName: g.storeName.isEmpty ? nil : g.storeName,
-                          storeLat: g.storeLat, storeLng: g.storeLng, chain: g.chain ? true : nil,
+                          storeLat: g.storeLat, storeLng: g.storeLng, storeAddress: g.storeAddress.isEmpty ? nil : g.storeAddress, chain: g.chain ? true : nil,
                           note: g.note.isEmpty ? nil : g.note, order: g.order)
             }
         )

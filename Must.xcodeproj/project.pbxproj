@@ -40,6 +40,7 @@
 		0CBAD53053908EC4DEAFC80A /* FlightFromTicket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DAE4E5A94DC47A124F16E29 /* FlightFromTicket.swift */; };
 		0CF4200D87A44CED62FB2482 /* DayProblem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05C93DEF801F0F91C92AC57F /* DayProblem.swift */; };
 		0D2A1069178A4BD56C893146 /* TravelMatrixLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F648A672D7C195C35608123B /* TravelMatrixLoader.swift */; };
+		0D38BD38164E522AF2E4C766 /* ExplorarPinTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BB74C441790520DD7BD7D3E /* ExplorarPinTests.swift */; };
 		0E36960D7152F3E4C5AC7940 /* seed-it.json in Resources */ = {isa = PBXBuildFile; fileRef = 6AA96C8CA5161951B90A00B5 /* seed-it.json */; };
 		0F1C84ADF931B6B6D7608BFC /* QueroModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E972DEC54FDECA9DD8F6866 /* QueroModel.swift */; };
 		0F35037B2B8ED0EEE1C56D8F /* trem-jp_PDF-texto.pdf in Resources */ = {isa = PBXBuildFile; fileRef = C562CA9C5DA0E4D63A517500 /* trem-jp_PDF-texto.pdf */; };
@@ -134,6 +135,7 @@
 		3A04CF48D6DD81AEA852A7A6 /* museu-jp_foto.png in Resources */ = {isa = PBXBuildFile; fileRef = 0EAB869A6FCE0978AB38F558 /* museu-jp_foto.png */; };
 		3A0EF3BCBD64F07CAA51B1C7 /* Areas.swift in Sources */ = {isa = PBXBuildFile; fileRef = 110E0567BD73A4C21332461A /* Areas.swift */; };
 		3AB64A66663C8A06CD161CF1 /* CollectibleMoment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7586B99859BD255DB4AC2DB0 /* CollectibleMoment.swift */; };
+		3B0C2DA78FBE14AB618A356B /* GiftStoreSearch.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC35F26721818216DD186E74 /* GiftStoreSearch.swift */; };
 		3C61E0B9BE4FB4FD3D1D7EB0 /* TicketView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E926F5C8871767F5183C44EB /* TicketView.swift */; };
 		3C71B2B681CE23ED5BCF95E9 /* NewTripDraft.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6FDD71566ED21F52A5FEDF4 /* NewTripDraft.swift */; };
 		3CAEEB87BFFB8E9C93BE3274 /* GiftTaxFree.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5EC81CECDB97AA86F142CF1 /* GiftTaxFree.swift */; };
@@ -260,6 +262,7 @@
 		6FDBA498416AB987A504F7A4 /* DayClockTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54DFBA25CB8B568FEFF0D5B8 /* DayClockTests.swift */; };
 		6FDCD52BCB5A79CC97C75C86 /* countries in Resources */ = {isa = PBXBuildFile; fileRef = 21D913BB237CF1428036DAA9 /* countries */; };
 		7199C6A699F49912E9178140 /* BoardQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F85FDAC58E26C57ACABA07A /* BoardQuery.swift */; };
+		7227CDC86BF5663337C1D5CF /* ExplorarPinActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = E33A37D0CA42E5911278BC3E /* ExplorarPinActions.swift */; };
 		730FEE8F88E915C67087A34E /* coliseu-it_foto-torta-escura.jpg in Resources */ = {isa = PBXBuildFile; fileRef = A2BD403757F19B48BE4B8D41 /* coliseu-it_foto-torta-escura.jpg */; };
 		736D8A4F7FF72ECCE24DD814 /* ListTile.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC36E91C1CF51423882FC3F4 /* ListTile.swift */; };
 		736ED6B65BFF4FC38AAA284F /* Glass.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF9EDF96B7E35C8B90CD7648 /* Glass.swift */; };
@@ -926,6 +929,7 @@
 		7A7566B89D919661CCD45CCF /* SOSTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SOSTests.swift; sourceTree = "<group>"; };
 		7B514A86BB604B08856786EA /* SunServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SunServiceTests.swift; sourceTree = "<group>"; };
 		7BA25CA47124E3E6E046ED06 /* map-packs.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "map-packs.json"; sourceTree = "<group>"; };
+		7BB74C441790520DD7BD7D3E /* ExplorarPinTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExplorarPinTests.swift; sourceTree = "<group>"; };
 		7BC23CD2D9B7A3D345E2FA14 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
 		7BCA759B67391FBACD605A54 /* ListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListView.swift; sourceTree = "<group>"; };
 		7BE657609A52624784F3B083 /* ExperienceLinkSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperienceLinkSheet.swift; sourceTree = "<group>"; };
@@ -1078,6 +1082,7 @@
 		B9B9DEB58AA7B562728D180C /* TripFlag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripFlag.swift; sourceTree = "<group>"; };
 		BA84783523E1CAF2DB54207B /* NewListFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewListFlow.swift; sourceTree = "<group>"; };
 		BAB611BBDE9483718E4EA58B /* PlacePhotoResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlacePhotoResolver.swift; sourceTree = "<group>"; };
+		BC35F26721818216DD186E74 /* GiftStoreSearch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GiftStoreSearch.swift; sourceTree = "<group>"; };
 		BDA371C417B2B9F722B417BE /* WalletDemo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletDemo.swift; sourceTree = "<group>"; };
 		BE1345D1DE7A1AD47D268668 /* TripStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripStoreTests.swift; sourceTree = "<group>"; };
 		BE19BE004132D6C56297A38F /* IrView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IrView.swift; sourceTree = "<group>"; };
@@ -1177,6 +1182,7 @@
 		E2EF19863E8E2FA56659FD65 /* LightDayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LightDayView.swift; sourceTree = "<group>"; };
 		E2F0E7CAB62A868911308C5F /* Fonts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Fonts.swift; sourceTree = "<group>"; };
 		E3365991AC7E1A9351BEF366 /* VideoReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoReader.swift; sourceTree = "<group>"; };
+		E33A37D0CA42E5911278BC3E /* ExplorarPinActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExplorarPinActions.swift; sourceTree = "<group>"; };
 		E41C54294A7729E505D90F69 /* ExplorarParts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExplorarParts.swift; sourceTree = "<group>"; };
 		E472129BD157938345D871BF /* UniformTypeIdentifiers.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UniformTypeIdentifiers.framework; path = System/Library/Frameworks/UniformTypeIdentifiers.framework; sourceTree = SDKROOT; };
 		E482C84BAC0AF68700D06A57 /* trem-jp_foto-torta-escura.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "trem-jp_foto-torta-escura.jpg"; sourceTree = "<group>"; };
@@ -1501,6 +1507,7 @@
 				B8E42EC4FD03A7FCDC4B0F6E /* ExplorarMapOpen.swift */,
 				65D26F12409B094181F965A5 /* ExplorarModel.swift */,
 				E41C54294A7729E505D90F69 /* ExplorarParts.swift */,
+				E33A37D0CA42E5911278BC3E /* ExplorarPinActions.swift */,
 				57AFCF3CCD1E6680D30B5F48 /* ExplorarSnapshot.swift */,
 				9601E8058AA4B292A170A30B /* ExplorarView.swift */,
 			);
@@ -1713,6 +1720,7 @@
 				E126F76CCCB44867BD3E6DB7 /* EmergencyKitTests.swift */,
 				745317422880B10B468C2413 /* EventsFeedTests.swift */,
 				D87ABAC6821287A24AB7EF71 /* ExperienceTests.swift */,
+				7BB74C441790520DD7BD7D3E /* ExplorarPinTests.swift */,
 				1789F2AC76B621EE0DFA0515 /* ExplorarTests.swift */,
 				93C546271D99E6CB597CC869 /* FilmsTests.swift */,
 				538013AE01AF2A312E0ACF82 /* FilmsUITests.swift */,
@@ -2314,6 +2322,7 @@
 			children = (
 				117E37EB0A3A8F2A371B724E /* GiftBoughtPanel.swift */,
 				78D60C5FBCF52AD71C1A4342 /* GiftReading.swift */,
+				BC35F26721818216DD186E74 /* GiftStoreSearch.swift */,
 				106171833175099147BCB448 /* PresenteDemo.swift */,
 				435578636CAC7AF66F2A2754 /* PresenteItemView.swift */,
 				1C65FE337558C0FBF33BF7D5 /* PresenteNovoView.swift */,
@@ -2943,6 +2952,7 @@
 				65D5DDC186BF29A87026BCEA /* EmergencyKitTests.swift in Sources */,
 				D81C747D6E1B9B44CA0443AD /* EventsFeedTests.swift in Sources */,
 				C873A054C109C6743931A96E /* ExperienceTests.swift in Sources */,
+				0D38BD38164E522AF2E4C766 /* ExplorarPinTests.swift in Sources */,
 				AAFC3C2145EDDB1FFCCB25A9 /* ExplorarTests.swift in Sources */,
 				E8A5D57977D44754170D4FDF /* FilmsTests.swift in Sources */,
 				7A209634EAB7034CAD02944F /* FilmsUITests.swift in Sources */,
@@ -3180,6 +3190,7 @@
 				5116B678C89B6A6E4EC96115 /* ExplorarMapOpen.swift in Sources */,
 				C0851CAA54CF8FF51AF78010 /* ExplorarModel.swift in Sources */,
 				A1D5476355BF0F86DA655005 /* ExplorarParts.swift in Sources */,
+				7227CDC86BF5663337C1D5CF /* ExplorarPinActions.swift in Sources */,
 				411FD1978E787A668CE56D6B /* ExplorarSnapshot.swift in Sources */,
 				4D3FCC4A8C7809B5BF2AA191 /* ExplorarView.swift in Sources */,
 				B6CBBAED191C9ED0014DC878 /* ExtractedTicket.swift in Sources */,
@@ -3211,6 +3222,7 @@
 				D759A1D89519BA1EF33875AC /* Gift.swift in Sources */,
 				21D06FDF67142C39B9B2EF92 /* GiftBoughtPanel.swift in Sources */,
 				FA6EAFB7157759F5EC499A08 /* GiftReading.swift in Sources */,
+				3B0C2DA78FBE14AB618A356B /* GiftStoreSearch.swift in Sources */,
 				3CAEEB87BFFB8E9C93BE3274 /* GiftTaxFree.swift in Sources */,
 				736ED6B65BFF4FC38AAA284F /* Glass.swift in Sources */,
 				4D9B608D2B88AC32A791505E /* GooglePlacePhotos.swift in Sources */,

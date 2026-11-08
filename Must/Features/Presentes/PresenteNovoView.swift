@@ -1,3 +1,4 @@
+import MapKit
 import PhotosUI
 import SwiftData
 import SwiftUI
@@ -15,10 +16,13 @@ struct PresenteNovoView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
     @Environment(RegionStore.self) private var store
+    @Environment(Services.self) private var services
 
     @Query private var gifts: [Gift]
     @Query private var places: [Place]
     @Query private var settingsList: [Settings]
+    @Query private var trips: [TripInfo]
+    @Query private var lists: [MustList]
 
     @State private var title = ""
     @State private var tab: GiftSource = .name
@@ -30,6 +34,7 @@ struct PresenteNovoView: View {
     @State private var storeName = ""
     @State private var storeLat: Double?
     @State private var storeLng: Double?
+    @State private var storeAddress = ""
     @State private var chain = false
     @State private var note = ""
     @State private var sourceURL: String?
@@ -57,6 +62,35 @@ struct PresenteNovoView: View {
     private var price: Double { Double(priceText.replacingOccurrences(of: ",", with: ".")) ?? 0 }
     private var people: [String] { Array(Set(GiftLogic.people(gifts) + extraPeople)).sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending } }
     private var canSave: Bool { !title.trimmingCharacters(in: .whitespaces).isEmpty }
+    /// Região da busca de loja de fora: a cidade da viagem (GPS só se estiver nela).
+    private var storeSearchRegion: MKCoordinateRegion {
+        let city = GiftStoreSearch.cityCenter(trip: trips.first, now: AppClock.now, region: region)
+        return GiftStoreSearch.searchRegion(gps: services.location.current?.coordinate, cityCenter: city.center, hasCurrentCity: city.current)
+    }
+
+    /// Loja de fora: fica no presente (nome, coordenada, endereço); "+ board" também guarda no board (lista Shop).
+    private func pickOutside(_ hit: GiftStoreSearch.Hit, addToBoard: Bool) {
+        chain = false
+        if tab == .name { tab = .place }
+        if addToBoard {
+            let trip = trips.first
+            let cityId = trip?.city(on: AppClock.now, calendar: region.calendar)?.id ?? trip?.cities.first?.id ?? region.rawValue
+            let row = QueroRow.minimal(GiftStoreSearch.wantResult(hit))
+            if let place = QueroSave.place(for: row, intent: nil, text: title, lists: lists, cityId: cityId, region: region,
+                                           sync: services.sync, context: context) {
+                placeId = place.id
+                storeName = place.name
+                storeLat = nil; storeLng = nil; storeAddress = ""
+                return
+            }
+        }
+        placeId = nil
+        storeName = hit.name
+        storeLat = hit.lat
+        storeLng = hit.lng
+        storeAddress = hit.address
+    }
+
     private var shopStores: [GiftTextGuess.Store] { places.filter { $0.list?.id == "shop" }.map { .init(id: $0.id, name: $0.name) } }
 
     var body: some View {
@@ -93,14 +127,16 @@ struct PresenteNovoView: View {
             }
         }
         .sheet(isPresented: $picking) {
-            GiftStorePicker(places: places) { place in
+            GiftStorePicker(places: places, searchRegion: storeSearchRegion, online: services.connectivity.status != .offline,
+                            onPick: { place in
                 placeId = place.id
                 storeName = place.name
                 storeLat = nil
                 storeLng = nil
+                storeAddress = ""
                 chain = false
                 if tab == .name { tab = .place }
-            }
+            }, onPickOutside: { hit, addToBoard in pickOutside(hit, addToBoard: addToBoard) })
         }
         .onChange(of: pickedVideo) { _, item in
             guard let item else { return }
@@ -214,7 +250,7 @@ struct PresenteNovoView: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(storeName.isEmpty ? "Escolher a loja" : storeName).font(V8Font.text(16, weight: .bold)).foregroundStyle(V8.ink)
-                        Text("do seu board (Compras e Musts)").font(V8Font.text(13)).foregroundStyle(V8.mute)
+                        Text("do seu board ou do mapa da cidade").font(V8Font.text(13)).foregroundStyle(V8.mute)
                     }
                     Spacer()
                     Text("→").foregroundStyle(V8.ink)
@@ -344,13 +380,15 @@ struct PresenteNovoView: View {
                     if chain { placeId = nil; storeLat = nil; storeLng = nil }
                 }
             }
-            storeRow("Escolher no board ou no mapa", sub: "uma loja sua ou do Explorar", selected: false, orange: false, arrow: true) { picking = true }
+            storeRow("Escolher no board ou buscar no mapa", sub: "uma loja sua ou qualquer loja da cidade", selected: false, orange: false, arrow: true) { picking = true }
         }
         .overlay(alignment: .top) { IndexRule() }
     }
 
     private var chosenSub: String {
-        [tab.metaLabel, placeId != nil ? "do board" : nil].compactMap { $0 }.first ?? "loja escolhida"
+        if placeId != nil { return "do board" }
+        if storeLat != nil { return ["fora do board", storeAddress.isEmpty ? nil : storeAddress].compactMap { $0 }.joined(separator: " · ") }
+        return tab.metaLabel ?? "loja escolhida"
     }
 
     private func storeRow(_ title: String, sub: String, selected: Bool, orange: Bool, arrow: Bool = false, action: @escaping () -> Void) -> some View {
@@ -402,7 +440,7 @@ struct PresenteNovoView: View {
             storeName = s
             placeId = guess.storeId
             chain = guess.chain
-            if let id = guess.storeId, let p = places.first(where: { $0.id == id }) { storeLat = nil; storeLng = nil; storeName = p.name }
+            if let id = guess.storeId, let p = places.first(where: { $0.id == id }) { storeLat = nil; storeLng = nil; storeAddress = ""; storeName = p.name }
         }
         readNote = nil
     }
@@ -413,7 +451,7 @@ struct PresenteNovoView: View {
         if let g = editing {
             title = g.title; person = g.person == GiftLogic.noPerson ? "" : g.person; quantity = g.quantity
             priceText = g.estimatedPrice > 0 ? g.estimatedPrice.formatted(.number.grouping(.never).precision(.fractionLength(0...2)).locale(Locale(identifier: "en_US"))) : ""
-            placeId = g.placeId; storeName = g.storeName; storeLat = g.storeLat; storeLng = g.storeLng; chain = g.chain
+            placeId = g.placeId; storeName = g.storeName; storeLat = g.storeLat; storeLng = g.storeLng; storeAddress = g.storeAddress; chain = g.chain
             note = g.note; sourceURL = g.sourceURL; sourceLabel = g.sourceLabel; clip = g.videoClip; videoInboxId = g.videoInboxId
             tab = g.source; linkInput = g.sourceURL ?? ""
             if let id = g.placeId, let p = places.first(where: { $0.id == id }) { storeName = p.name }
@@ -464,6 +502,7 @@ struct PresenteNovoView: View {
         gift.storeName = storeName
         gift.storeLat = chain ? nil : storeLat
         gift.storeLng = chain ? nil : storeLng
+        gift.storeAddress = chain || placeId != nil ? "" : storeAddress
         gift.chain = chain
         gift.note = note
         gift.sourceURL = sourceURL
@@ -476,18 +515,29 @@ struct PresenteNovoView: View {
     }
 }
 
-/// Seletor de loja do board (Compras primeiro, depois o resto), com busca por nome.
+/// Seletor de loja: as do board em cima (laranja) e, buscando, as de fora embaixo (tinta). A busca de fora é o MapKit na cidade da
+/// viagem, só ao enviar; sem internet, só o board.
 struct GiftStorePicker: View {
     var places: [Place]
+    var searchRegion: MKCoordinateRegion
+    var online: Bool
     var onPick: (Place) -> Void
+    var onPickOutside: (GiftStoreSearch.Hit, Bool) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var query = ""
+    @State private var hits: [GiftStoreSearch.Hit] = []
+    @State private var searching = false
+    @State private var searched = ""
 
     private var filtered: [Place] {
         let all = places.sorted { ($0.list?.id == "shop" ? 0 : 1, $0.name) < ($1.list?.id == "shop" ? 0 : 1, $1.name) }
         guard !query.isEmpty else { return all }
         return all.filter { $0.matches(query) }
+    }
+
+    private var outside: [GiftStoreSearch.Hit] {
+        GiftStoreSearch.outside(hits, board: places.map { ($0.name, $0.lat, $0.lng) })
     }
 
     var body: some View {
@@ -498,26 +548,87 @@ struct GiftStorePicker: View {
                 Spacer()
             }
             .padding(.horizontal, 16).padding(.vertical, 10).background(V8.ink)
-            CutSearchField(text: $query, placeholder: "Nome da loja") { EmptyView() }.padding(.horizontal, 20)
+            CutSearchField(text: $query, placeholder: "Nome da loja") { EmptyView() }
+                .padding(.horizontal, 20)
+                .onSubmit { Task { await search() } }
             ScrollView {
                 LazyVStack(spacing: 0) {
                     ForEach(filtered) { place in
                         Button { onPick(place); dismiss() } label: {
                             VStack(alignment: .leading, spacing: 3) {
                                 Text(place.name).font(V8Font.text(16, weight: .bold)).foregroundStyle(V8.ink).lineLimit(2)
-                                Text([place.list?.name.capitalized, place.area].compactMap { $0 }.joined(separator: " · "))
-                                    .font(V8Font.text(13)).foregroundStyle(V8.mute).lineLimit(1)
+                                Text(["seu board", place.list?.name.capitalized, place.area].compactMap { $0 }.joined(separator: " · "))
+                                    .font(V8Font.text(13)).foregroundStyle(V8.ink.opacity(0.75)).lineLimit(1)
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 20).padding(.vertical, 12)
+                            .background(V8.orange)
                             .overlay(alignment: .bottom) { IndexRule() }
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
                     }
+                    outsideSection
                 }
             }
         }
         .background(V8.paper.ignoresSafeArea())
+    }
+
+    @ViewBuilder private var outsideSection: some View {
+        let typed = query.trimmingCharacters(in: .whitespaces)
+        if typed.count >= 2 {
+            if !online {
+                note("sem internet · só as lojas do seu board")
+            } else if searched != typed || searching {
+                Button { Task { await search() } } label: {
+                    Text(searching ? "BUSCANDO NO MAPA…" : "BUSCAR “\(typed.uppercased())” NA CIDADE")
+                        .font(V8Font.mono(11, weight: .semibold)).tracking(1).foregroundStyle(V8.paper)
+                        .frame(maxWidth: .infinity, minHeight: 48).background(V8.ink).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain).disabled(searching)
+            } else if outside.isEmpty {
+                note("nenhuma loja de fora do board com esse nome na cidade")
+            }
+            ForEach(outside) { hit in outsideRow(hit) }
+        }
+    }
+
+    private func note(_ text: String) -> some View {
+        MonoLabel(text, size: 10, color: V8.mute).frame(maxWidth: .infinity, alignment: .leading).padding(20)
+    }
+
+    private func outsideRow(_ hit: GiftStoreSearch.Hit) -> some View {
+        HStack(spacing: 0) {
+            Button { onPickOutside(hit, false); dismiss() } label: {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(hit.name).font(V8Font.text(16, weight: .bold)).foregroundStyle(V8.white).lineLimit(2)
+                    Text(["fora do board", hit.address.isEmpty ? nil : hit.address].compactMap { $0 }.joined(separator: " · "))
+                        .font(V8Font.text(13)).foregroundStyle(V8.white.opacity(0.75)).lineLimit(1)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.leading, 20).padding(.vertical, 12)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            Button { onPickOutside(hit, true); dismiss() } label: {
+                Text("+ BOARD").font(V8Font.mono(11, weight: .bold)).tracking(1).foregroundStyle(V8.ink)
+                    .padding(.horizontal, 12).frame(minWidth: 44, minHeight: 44).background(V8.orange).contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, 12)
+            .accessibilityLabel("Guardar \(hit.name) no board")
+        }
+        .background(V8.ink)
+        .overlay(alignment: .bottom) { Rectangle().fill(V8.paper).frame(height: 1) }
+    }
+
+    private func search() async {
+        let typed = query.trimmingCharacters(in: .whitespaces)
+        guard online, typed.count >= 2, !searching else { return }
+        searching = true
+        hits = await GiftStoreSearch.search(typed, region: searchRegion)
+        searched = typed
+        searching = false
     }
 }

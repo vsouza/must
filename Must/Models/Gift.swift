@@ -60,6 +60,8 @@ final class Gift {
     var storeName: String = ""
     var storeLat: Double?
     var storeLng: Double?
+    /// Endereço da loja de fora do board (MapKit), pra mostrar ao atendente/abrir no mapa.
+    var storeAddress: String = ""
     /// "Qualquer <rede>": só vira loja concreta dentro do quero, sob demanda.
     var chain: Bool = false
     var note: String = ""

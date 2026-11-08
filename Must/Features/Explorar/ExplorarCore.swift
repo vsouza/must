@@ -162,6 +162,12 @@ struct ExplorarItem: Identifiable, Hashable, Sendable {
     var meters: Double
     /// Número do pino na ordem atual (1…); `nil` = ponto de 8 pt (passou do limite de números).
     var number: Int? = nil
+    /// "15:30" quando o Must já é parada do dia (o bloco do pino mostra "no dia · 15:30" em vez de "+ dia").
+    var planTime: String? = nil
+    /// Id do Google (fora do board) pra guardar no board sem perder o placeId.
+    var googleId: String? = nil
+    /// O horário vem do Google (confirmado). Falso = estimado (seed) ou desconhecido: "aberto agora" não afirma.
+    var hoursConfirmed: Bool = true
 
     var coordinate: CLLocationCoordinate2D { CLLocationCoordinate2D(latitude: lat, longitude: lng) }
     var isOwn: Bool { placeId != nil }
@@ -183,7 +189,8 @@ enum ExplorarLayers {
     static func filter(_ items: [ExplorarItem], layers: Set<ExplorarLayer>) -> [ExplorarItem] {
         items.filter { item in
             if item.isOwn ? !layers.contains(.own) : !layers.contains(.outside) { return false }
-            if layers.contains(.openNow), !item.isOpen { return false }
+            // "Aberto agora" só tira o que se sabe fechado: sem horário confirmado fica (marcado), não some.
+            if layers.contains(.openNow), !item.isOpen, item.hoursConfirmed { return false }
             return true
         }
     }
@@ -233,9 +240,33 @@ enum ExplorarLayers {
         (items.filter(\.isOwn).count, items.filter { !$0.isOwn }.count, items.filter(\.isOpen).count)
     }
 
+    /// O que a camada "aberto agora" sabe dizer: nunca um 0 seco quando falta horário confirmado.
+    static func openSummary(_ items: [ExplorarItem]) -> ExplorarOpenSummary {
+        ExplorarOpenSummary(confirmed: items.filter { $0.isOpen && $0.hoursConfirmed }.count,
+                            estimated: items.filter { $0.isOpen && !$0.hoursConfirmed }.count,
+                            unknown: items.filter { !$0.isOpen && !$0.hoursConfirmed }.count)
+    }
+
     /// A trilha do dia: as paradas do plano dentro do bairro, em ordem (a linha laranja de 3 pt).
     static func trail(stops: [CLLocationCoordinate2D]) -> [[CLLocationCoordinate2D]] {
         stops.count >= 2 ? [stops] : []
+    }
+}
+
+/// Contagem da camada "aberto agora": confirmados, abertos só por horário estimado e sem horário nenhum.
+struct ExplorarOpenSummary: Equatable, Sendable {
+    var confirmed: Int
+    var estimated: Int
+    var unknown: Int
+
+    /// "aberto agora · 2 · 14 sem horário" / "aberto agora · 5" / "aberto agora · nenhum" (só quando tudo é confirmado e fechado).
+    var label: String {
+        var parts = ["aberto agora"]
+        if confirmed > 0 { parts.append("\(confirmed)") }
+        else if estimated == 0 && unknown == 0 { parts.append("nenhum") }
+        if estimated > 0 { parts.append("\(estimated) \(estimated == 1 ? "estimado" : "estimados")") }
+        if unknown > 0 { parts.append("\(unknown) sem horário") }
+        return parts.joined(separator: " · ")
     }
 }
 
