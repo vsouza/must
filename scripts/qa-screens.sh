@@ -124,8 +124,6 @@ corteshots() { # $1 = prefixo (jp|bh|it)
     WAIT=10 shot $r-corte-quero -debugScreen corte-quero -capaFoto
     WAIT=12 shot $r-corte-cafe -debugScreen corte-cafe -capaFoto
     WAIT=12 shot $r-corte-cafe-offline -debugScreen corte-cafe-offline -capaFoto -debugNetwork offline
-    WAIT=10 shot $r-corte-walk1 -debugScreen corte-walk1 -capaFoto
-    WAIT=10 shot $r-corte-walk2 -debugScreen corte-walk2 -capaFoto
     WAIT=12 shot $r-corte-xxxl-cafe -debugScreen corte-cafe -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
     WAIT=10 shot $r-corte-xxxl-capa -debugScreen corte-capa -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
   fi

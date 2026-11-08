@@ -18,6 +18,10 @@ struct WantCategory: Hashable, Sendable {
     var queryWord: String? = nil
     /// "loja física" / "restaurante" / "lugar pra ver": a frase do "Entendi".
     var kind: String
+    /// Texto da busca quando a pessoa só disse o verbo ("comer" → "restaurant"): o Google acha lugar, não a palavra "comer".
+    var searchText: String? = nil
+    /// Listas do board que entram inteiras quando o pedido é genérico ("comer" = tudo do Must eat da cidade).
+    var boardLists: [String] = []
 
     // MARK: Tabela
 
@@ -63,20 +67,38 @@ struct WantCategory: Hashable, Sendable {
                      types: ["place_of_worship", "buddhist_temple", "hindu_temple", "shinto_shrine", "church", "tourist_attraction",
                              "historical_landmark"], listId: "see", kind: "lugar pra ver"),
         WantCategory(label: "museu", keywords: ["museu", "museus", "museum", "exposicao", "galeria", "arte"], verb: .ver,
-                     types: ["museum", "art_gallery", "cultural_center"], listId: "art", kind: "museu"),
+                     types: ["museum", "art_gallery", "cultural_center"], listId: "art", kind: "museu", searchText: "museum",
+                     boardLists: ["art"]),
         WantCategory(label: "vista", keywords: ["fuji", "monte", "mirante", "vista", "por do sol", "skyline", "observatorio", "serra"],
                      verb: .ver, types: ["observation_deck", "tourist_attraction", "park", "hiking_area", "national_park", "scenic_spot",
                                          "historical_landmark"], listId: "see", kind: "lugar pra ver"),
         WantCategory(label: "onsen", keywords: ["onsen", "sento", "spa", "banho", "massagem"], verb: .fazer,
                      types: ["spa", "public_bath", "sauna", "wellness_center"], listId: "do", kind: "lugar"),
-        // Genéricos por verbo: entram quando o objeto não casa com nada acima.
+        // Genéricos por verbo / por tipo de Must: entram quando o objeto não casa com nada acima. Cada um traz o texto da busca
+        // externa e as listas do board que entram inteiras (comer→eat, beber→drink, ver→see, comprar→shop, ouvir→listen,
+        // noite→listen+drink, foto→photo, fazer→do+sport).
         WantCategory(label: "comer", keywords: ["comer", "restaurante", "almoco", "jantar", "comida"], verb: .comer, types: ["restaurant"],
-                     includedType: "restaurant", listId: "eat", kind: "restaurante"),
+                     includedType: "restaurant", listId: "eat", kind: "restaurante", searchText: "restaurant", boardLists: ["eat"]),
         WantCategory(label: "beber", keywords: ["beber"], verb: .beber, types: ["bar", "pub", "wine_bar", "cafe", "coffee_shop"],
-                     listId: "drink", kind: "bar ou café"),
+                     listId: "drink", kind: "bar ou café", searchText: "bar", boardLists: ["drink"]),
         WantCategory(label: "ver", keywords: ["ver"], verb: .ver,
                      types: ["tourist_attraction", "museum", "park", "observation_deck", "historical_landmark", "art_gallery"],
-                     listId: "see", kind: "lugar pra ver"),
+                     listId: "see", kind: "lugar pra ver", searchText: "tourist attraction", boardLists: ["see"]),
+        WantCategory(label: "comprar", keywords: ["comprar", "loja", "lojas", "compras", "shopping"], verb: .comprar,
+                     types: ["store", "department_store", "shopping_mall", "clothing_store", "book_store", "electronics_store", "gift_shop"],
+                     listId: "shop", kind: "loja física", searchText: "shopping", boardLists: ["shop"]),
+        WantCategory(label: "fazer", keywords: ["fazer", "experiencia", "experiencias", "passeio", "atividade"], verb: .fazer,
+                     types: ["tourist_attraction", "amusement_park", "spa", "park", "cultural_center", "performing_arts_theater"],
+                     listId: "do", kind: "o que fazer", searchText: "things to do", boardLists: ["do", "sport"]),
+        WantCategory(label: "ouvir", keywords: ["ouvir", "musica", "show", "shows", "jazz", "ao vivo", "concerto", "live"], verb: .fazer,
+                     types: ["night_club", "live_music_venue", "concert_hall", "bar", "performing_arts_theater", "music_venue"],
+                     listId: "listen", kind: "música ao vivo", searchText: "live music", boardLists: ["listen"]),
+        WantCategory(label: "noite", keywords: ["noite", "balada", "night", "boate", "nightlife"], verb: .beber,
+                     types: ["night_club", "bar", "pub", "cocktail_bar", "izakaya_restaurant", "live_music_venue"],
+                     listId: "drink", kind: "bar ou balada", searchText: "nightlife bar", boardLists: ["listen", "drink"]),
+        WantCategory(label: "foto", keywords: ["foto", "fotos", "fotografia", "fotografar", "fotografico"], verb: .ver,
+                     types: ["tourist_attraction", "observation_deck", "park", "scenic_spot", "historical_landmark"], listId: "photo",
+                     kind: "lugar pra fotografar", searchText: "viewpoint", boardLists: ["photo"]),
     ]
 
     /// Comida que pede restaurante (tipo único, vai no pedido com `strictTypeFiltering`).
@@ -112,6 +134,9 @@ struct WantCategory: Hashable, Sendable {
         }
         return ordered.first { has($0.1) }?.0
     }
+
+    /// O objeto é só a palavra genérica da categoria ("comer", "ouvir"): vale o `searchText` e as listas inteiras do board.
+    func isGeneric(_ object: String) -> Bool { keywords.contains(Self.fold(object)) && (searchText != nil) }
 
     /// Categoria de uma vontade: a do objeto, senão a da marca, senão a genérica do verbo.
     static func of(_ intent: WantIntent) -> WantCategory? {

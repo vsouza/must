@@ -53,13 +53,23 @@ struct CorteResultBands: View {
     /// De onde a busca saiu ("Shinjuku", o nome do Lugar): "procurando perto de …".
     var placeName: String
     var actions: CorteResultActions
+    /// Pro "ampliar pra 5 km" e "outro bairro" do vazio.
+    var makeEnv: () -> QueroEnv
 
     var body: some View {
         let query = state.quero.intent?.object ?? state.quero.text
+        let origin = state.originName(fallback: placeName)
         if state.quero.phase == .searching {
-            Text("procurando perto de \(placeName)…")
+            Text("procurando perto de \(origin)…")
                 .font(V8Font.text(14)).foregroundStyle(V8.mute)
                 .padding(20)
+        } else if state.quero.phase == .idle {
+            Text("Não entendi. Diga o que você quer: café, ramen, um mirante, jazz.")
+                .font(V8Font.text(15, weight: .semibold)).foregroundStyle(V8.ink)
+                .padding(20)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        } else if state.split.board.isEmpty && state.split.outside.isEmpty {
+            emptyBlock(query: query, origin: origin)
         } else {
             HStack {
                 MonoLabel("seus musts · \(state.split.board.count)", size: 10, color: V8.ink)
@@ -92,7 +102,7 @@ struct CorteResultBands: View {
                         .font(V8Font.text(15, weight: .semibold)).foregroundStyle(V8.white)
                         .padding(.horizontal, 20).padding(.bottom, 20)
                 } else if state.split.outside.isEmpty {
-                    Text(state.quero.notice ?? "nada aberto perto, fora do seu board")
+                    Text(CorteEmpty.outsideLine(offline: false, note: state.quero.outsideNote) ?? "nada aberto perto, fora do seu board")
                         .font(V8Font.text(14)).foregroundStyle(V8.muteDark)
                         .padding(.horizontal, 20).padding(.bottom, 20)
                 }
@@ -105,6 +115,46 @@ struct CorteResultBands: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(V8.ink)
         }
+    }
+
+    /// As duas faixas vazias: o porquê, "ampliar pra 5 km" e os bairros perto (chips quadrados de borda 2 pt).
+    private func emptyBlock(query: String, origin: String) -> some View {
+        let env = state.lastEnv.map { state.adjusted($0) }
+        let total = CorteEmpty.total(query: query, areaName: origin, offline: state.quero.offline, note: state.quero.outsideNote,
+                                     radiusMeters: env?.radiusMeters)
+        return VStack(alignment: .leading, spacing: 14) {
+            Text(total.headline)
+                .font(V8Font.display(30)).tracking(-0.8).foregroundStyle(V8.ink)
+                .fixedSize(horizontal: false, vertical: true)
+            Text(total.reason)
+                .font(V8Font.text(15)).foregroundStyle(V8.ink)
+                .fixedSize(horizontal: false, vertical: true)
+            if total.canWiden {
+                Button { state.widen(makeEnv()) } label: {
+                    Text("AMPLIAR PRA 5 KM").font(V8Font.mono(11, weight: .semibold)).tracking(1).foregroundStyle(V8.ink)
+                        .padding(.horizontal, 14).padding(.vertical, 12).background(V8.orange)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+            let others = state.otherAreas()
+            if !others.isEmpty && !state.quero.offline {
+                MonoLabel("outro bairro", size: 10, color: V8.mute)
+                CorteFlow(spacing: 8) {
+                    ForEach(others) { area in
+                        Button { state.pickArea(area, env: makeEnv()) } label: {
+                            Text(area.name.uppercased()).font(V8Font.mono(11, weight: .semibold)).tracking(1).foregroundStyle(V8.ink)
+                                .padding(.horizontal, 12).padding(.vertical, 10)
+                                .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -229,7 +279,7 @@ struct CorteQueroOverlay: View {
         case .result:
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    CorteResultBands(state: state, placeName: originName, actions: actions)
+                    CorteResultBands(state: state, placeName: originName, actions: actions, makeEnv: makeEnv)
                     Color.clear.frame(height: 60)
                 }
             }

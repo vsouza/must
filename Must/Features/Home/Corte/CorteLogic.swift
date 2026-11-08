@@ -100,6 +100,46 @@ enum CorteSplit {
     }
 }
 
+// MARK: - Vazio com motivo (prompt 31 · 2)
+
+/// O resultado nunca volta vazio à toa: diz por quê e oferece "ampliar pra 5 km" / "outro bairro".
+@MainActor
+enum CorteEmpty {
+    static let widenedMeters: Double = 5_000
+
+    struct Total: Equatable, Sendable {
+        var headline: String
+        var reason: String
+        var canWiden: Bool
+    }
+
+    /// A linha da faixa tinta quando ela não tem nada: o motivo certo (sem internet, sem chave, cota…), ou `nil` se a busca foi
+    /// normal e só não achou nada aberto.
+    static func outsideLine(offline: Bool, note: String?) -> String? {
+        if offline { return "sem internet · só seus Musts" }
+        return note.map { "\($0) · só seus Musts" }
+    }
+
+    /// As duas faixas vazias: a frase, o porquê e se dá pra ampliar.
+    static func total(query: String, areaName: String, offline: Bool, note: String?, radiusMeters: Double?) -> Total {
+        let radius = radiusMeters ?? CorteSplit.nearMeters
+        let km = radius >= 1_000 ? "\(Int((radius / 1_000).rounded())) km" : "\(Int(radius)) m"
+        let headline = "nada de \(query) por aqui"
+        if let line = outsideLine(offline: offline, note: note) {
+            return Total(headline: headline, reason: "\(line), e nenhum \(query) seu nesta cidade.", canWiden: false)
+        }
+        return Total(headline: headline, reason: "Nada aberto em até \(km) de \(areaName), e nenhum \(query) seu nesta cidade.",
+                     canWiden: radius < widenedMeters)
+    }
+
+    /// Os bairros mais perto do ponto de partida, da mesma cidade, sem o atual.
+    static func nearbyAreas(_ areas: [Area], from point: CLLocationCoordinate2D, cityGroup: String, excluding name: String, limit: Int = 6) -> [Area] {
+        areas.filter { AreaCatalog.cityGroup(forCityId: $0.cityId) == cityGroup && $0.name != name }
+            .sorted { DaySolver.streetKm(point, $0.centroid.clCoordinate) < DaySolver.streetKm(point, $1.centroid.clCoordinate) }
+            .prefix(limit).map { $0 }
+    }
+}
+
 // MARK: - Abertos a 10 min (o numeral da capa)
 
 enum CorteCount {
@@ -156,63 +196,6 @@ struct CorteShowLine: Equatable, Sendable {
     }
 }
 
-// MARK: - Passo a passo (§5)
-
-/// O passo a passo da capa: na primeira vez e na primeira entrada em cada viagem. Só avança com o gesto de verdade.
-enum CorteWalk {
-    enum Step: Int, Sendable { case pull = 1, write = 2, done = 3 }
-    enum Event: Sendable { case pulledOpen, gotResult, skip }
-
-    /// Primeira vez (nenhuma viagem apresentada) ou viagem ainda não apresentada.
-    static func shouldPresent(tripId: String, seen: Set<String>) -> Bool { !seen.contains(tripId) }
-
-    static func next(_ step: Step, _ event: Event) -> Step? {
-        switch (step, event) {
-        case (_, .skip): nil
-        case (.pull, .pulledOpen): .write
-        case (.write, .gotResult): .done
-        default: step
-        }
-    }
-}
-
-// MARK: - Cutucão e contador de puxadas
-
-/// Quantas puxadas com resultado (o texto encurta e o cutucão para depois de 3).
-struct CutCoach: Equatable, Sendable {
-    var uses: Int
-
-    /// Parado ~5 s na capa, a régua desce ~22 pt e volta.
-    static let idleSeconds: Double = 5
-    static let nudgeDistance: CGFloat = 22
-
-    var isShort: Bool { uses >= CutPull.usesBeforeShort }
-    var nudges: Bool { !isShort }
-
-    mutating func recordResult() { uses += 1 }
-}
-
-/// O que o corte lembra entre aberturas: viagens já apresentadas e quantas puxadas deram resultado.
-struct CortePrefs {
-    private let defaults: UserDefaults
-    static let seenKey = "corte.walkSeenTrips"
-    static let usesKey = "corte.pullUses"
-
-    init(defaults: UserDefaults = .standard) { self.defaults = defaults }
-
-    var seenTrips: Set<String> {
-        get { Set(defaults.stringArray(forKey: Self.seenKey) ?? []) }
-        nonmutating set { defaults.set(newValue.sorted(), forKey: Self.seenKey) }
-    }
-
-    func markPresented(_ tripId: String) { seenTrips.insert(tripId) }
-
-    var coach: CutCoach {
-        get { CutCoach(uses: defaults.integer(forKey: Self.usesKey)) }
-        nonmutating set { defaults.set(newValue.uses, forKey: Self.usesKey) }
-    }
-}
-
 // MARK: - Vontades de agora (chips)
 
 /// Os chips da fenda: o texto que vai pro Quero… e, quando existe, o verbo (`WantVerb`).
@@ -230,5 +213,12 @@ struct CorteWish: Identifiable, Hashable, Sendable {
         CorteWish(label: "fugir da chuva", text: "fugir da chuva", verb: nil),
         CorteWish(label: "barato", text: "comer barato", verb: nil),
         CorteWish(label: "pra 4", text: "restaurante pra 4", verb: nil),
+        CorteWish(label: "ver", text: "ver", verb: .ver),
+        CorteWish(label: "comprar", text: "comprar", verb: .comprar),
+        CorteWish(label: "ouvir", text: "ouvir", verb: nil),
+        CorteWish(label: "noite", text: "noite", verb: nil),
+        CorteWish(label: "foto", text: "foto", verb: nil),
+        CorteWish(label: "arte", text: "arte", verb: .ver),
+        CorteWish(label: "fazer", text: "fazer", verb: .fazer),
     ]
 }

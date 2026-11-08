@@ -25,6 +25,12 @@ struct QueroEnv: Sendable {
     var boardAnyDistance = false
     /// Próximos dias aceitos e os bairros de cada um: "sáb · Ginza" quando hoje não cabe.
     var upcoming: [(date: Date, areaIds: Set<String>)] = []
+    /// De onde a busca saiu (GPS, bairro, cidade de hoje, primeira cidade).
+    var originBasis: WantOrigin.Basis = .gps
+    /// Raio pedido ("ampliar pra 5 km"). `nil` = o de sempre (2 km perto, 6 km no Google).
+    var radiusMeters: Double?
+    /// Em cartaz hoje (pra "ouvir" e "noite"): lido do aparelho, sem rede.
+    var shows: [ShowEvent] = []
 }
 
 extension QueroEnv {
@@ -35,7 +41,7 @@ extension QueroEnv {
             guard AreaCatalog.cityGroup(forCityId: p.cityId) == cityGroup, p.lat != 0 || p.lng != 0 else { return nil }
             let until = p.hours?.closesAt(now, timeZone: timeZone).map(ListGrouping.hourLabel)
             return WantBoardPlace(id: p.id, name: p.name, lat: p.lat, lng: p.lng, listId: p.list?.id, sub: p.sub, notes: p.notes,
-                                  placeId: p.placeId, area: p.area, until: until, done: p.isDone)
+                                  placeId: p.placeId, area: p.area, until: until, done: p.isDone, photoRefs: p.photoRefs)
         }
     }
 }
@@ -73,14 +79,19 @@ final class QueroModel {
     private(set) var notice: String?
     /// Quantos o filtro tirou (site, loja só online, sem coordenada): o rodapé "fora: …" só aparece com algo.
     private(set) var dropped = 0
+    /// Por que a busca de fora ficou só no board ("sem internet", "sem chave do Google"…).
+    private(set) var outsideNote: String?
     var selectedId: String?
     @ObservationIgnored private var searchTask: Task<Void, Never>?
 
     @ObservationIgnored let provider: (any WantPlacesSearching)?
+    /// Fontes além do Google (Wikipedia pro "ver"). Os prints com Places falso e os testes não saem pra rede.
+    @ObservationIgnored let extras: WantExtras?
 
-    init(text: String = "", provider: (any WantPlacesSearching)?) {
+    init(text: String = "", provider: (any WantPlacesSearching)?, extras: WantExtras? = nil) {
         self.text = text
         self.provider = provider
+        self.extras = extras
     }
 
     var verb: WantVerb? { verbOverride ?? intent?.verb }
@@ -107,7 +118,7 @@ final class QueroModel {
             guard !Task.isCancelled else { return }
             if intent.when == nil, let when = self.defaultWhen { intent.when = when }
             self.intent = intent
-            let output = await WantSearch.run(Self.input(intent, env), provider: self.provider)
+            let output = await WantSearch.run(Self.input(intent, env), provider: self.provider, extras: self.extras)
             guard !Task.isCancelled else { return }
             self.apply(output, intent: intent, env: env)
         }
@@ -120,7 +131,8 @@ final class QueroModel {
 
     static func input(_ intent: WantIntent, _ env: QueroEnv) -> WantSearchInput {
         WantSearchInput(intent: intent, region: env.region, center: env.center, cityGroup: env.cityGroup, online: env.online,
-                        board: env.board, now: env.now, boardAnyDistance: env.boardAnyDistance)
+                        board: env.board, now: env.now, boardAnyDistance: env.boardAnyDistance, radiusMeters: env.radiusMeters,
+                        shows: env.shows)
     }
 
     private func apply(_ output: WantSearchOutput, intent: WantIntent, env: QueroEnv) {
@@ -128,6 +140,7 @@ final class QueroModel {
         offline = output.offline
         notice = output.notice
         dropped = output.dropped
+        outsideNote = output.outsideNote
         selectedId = rows.first?.id
         phase = .done
     }
@@ -300,26 +313,41 @@ extension QueroEnv {
     /// bairro do dia ou o centro), board da cidade e os próximos dias aceitos.
     @MainActor
     static func make(region: Region, now: Date, places: [Place], trip: TripInfo?, settings: Settings?, plan: DayPlan?,
-                     gps: CLLocationCoordinate2D?, online: Bool, upcoming: [(date: Date, areaIds: Set<String>)]) -> QueroEnv {
+                     gps: CLLocationCoordinate2D?, online: Bool, upcoming: [(date: Date, areaIds: Set<String>)],
+                     areaHint: Area? = nil, shows: [ShowEvent] = []) -> QueroEnv {
         let areas = AreaCatalog.areas(for: region)
         let city = trip?.city(on: now, calendar: region.calendar)
-        let cityCenter = city.map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lng) } ?? region.defaultCenter
+        // Viagem futura: `city(on:)` já devolve a primeira cidade; sem coordenada ainda, o centro da região.
+        let cityCenter = city.flatMap { $0.hasCoordinate ? CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lng) : nil }
+            ?? trip?.cities.first(where: \.hasCoordinate).map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lng) }
+            ?? region.defaultCenter
         let planArea = plan?.area.flatMap { id in areas.first { $0.id == id } }
-        let gpsInCity = gps.map { DaySolver.streetKm($0, cityCenter) < 60 } ?? false
-        let origin = gpsInCity ? gps! : (planArea?.centroid.clCoordinate ?? cityCenter)
-        let center = plan.flatMap { _ in planArea?.centroid.clCoordinate } ?? origin
+        let resolved = WantOrigin.resolve(gps: gps, cityCenter: cityCenter, hasCurrentCity: Self.tripStarted(trip, now: now, calendar: region.calendar),
+                                          areaHint: areaHint, planArea: planArea)
+        let origin = resolved.origin
+        let center = resolved.basis == .gps ? (planArea?.centroid.clCoordinate ?? origin) : origin
         let cityId = city?.id ?? trip?.cities.first?.id ?? region.rawValue
         let group = AreaCatalog.cityGroup(forCityId: cityId)
         var gpsArea: Area?
-        if let gps {
-            let id = AreaAssigner(areas: areas).areaId(name: nil, cityId: city?.id ?? region.rawValue, lat: gps.latitude, lng: gps.longitude)
+        if resolved.basis == .gps, let gps {
+            let id = AreaAssigner(areas: areas).areaId(name: nil, cityId: cityId, lat: gps.latitude, lng: gps.longitude)
             gpsArea = id.flatMap { id in areas.first { $0.id == id } }
         }
-        let name = planArea?.name ?? gpsArea?.name ?? city?.name ?? region.displayName
+        let name = (resolved.basis == .gps ? planArea?.name ?? gpsArea?.name : resolved.area?.name) ?? city?.name ?? region.displayName
         let board = QueroEnv.board(places, cityGroup: group, now: now, timeZone: region.timeZone)
-        return QueroEnv(region: region, now: now, plan: plan, center: center, origin: origin, areaName: name, cityGroup: group,
-                        cityId: cityId, online: online, board: board, useModel: settings?.onDeviceAI ?? true,
-                        walkMaxKm: settings?.walkMaxKm ?? 1.5, upcoming: upcoming)
+        var env = QueroEnv(region: region, now: now, plan: plan, center: center, origin: origin, areaName: name, cityGroup: group,
+                           cityId: cityId, online: online, board: board, useModel: settings?.onDeviceAI ?? true,
+                           walkMaxKm: settings?.walkMaxKm ?? 1.5, upcoming: upcoming)
+        env.shows = shows
+        env.originBasis = resolved.basis
+        return env
+    }
+
+    /// A viagem já começou (e não acabou): a cidade de hoje existe de verdade. Antes disso, vale a primeira cidade.
+    @MainActor
+    static func tripStarted(_ trip: TripInfo?, now: Date, calendar: Calendar) -> Bool {
+        guard let start = trip?.start, let end = trip?.end else { return false }
+        return calendar.startOfDay(for: start) <= now && now < (calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: end)) ?? end)
     }
 
     /// Próximos 14 dias aceitos e os bairros das paradas (pro "sáb · Ginza").

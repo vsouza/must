@@ -56,6 +56,17 @@ struct WantSearchInput: Sendable {
     var now: Date = AppClock.now
     /// O corte (prompt 30): os Musts do board da cidade entram a qualquer distância (o raio só vale pro que vem de fora).
     var boardAnyDistance = false
+    /// "Ampliar pra 5 km": raio pedido (metros). `nil` = o padrão (2 km perto, 6 km no Google).
+    var radiusMeters: Double? = nil
+    /// Em cartaz hoje (do aparelho): "ouvir" e "noite" somam o que acontece perto.
+    var shows: [ShowEvent] = []
+}
+
+/// Fontes externas já aprovadas além do Google: a Wikipedia (geosearch, sem chave) pro "ver". Fecha sobre o serviço real ou o fake.
+struct WantExtras: Sendable {
+    var wikipedia: @Sendable (_ lat: Double, _ lng: Double, _ radius: Double) async throws -> [NearbyPlace]
+
+    static let live = WantExtras { lat, lng, radius in try await NearbyService().wikipedia(lat: lat, lng: lng, radius: radius, cap: 5) }
 }
 
 /// Um lugar do board, sem SwiftData (pra rodar fora do main).
@@ -71,6 +82,8 @@ struct WantBoardPlace: Sendable, Hashable {
     var area: String?
     var until: String?
     var done = false
+    /// Fotos do Google que o lugar já tem (o carrossel do resultado abre com elas).
+    var photoRefs: [PlacePhotoRef] = []
 }
 
 struct WantSearchOutput: Sendable, Hashable {
@@ -81,6 +94,8 @@ struct WantSearchOutput: Sendable, Hashable {
     var notice: String? = nil
     /// Quantos o filtro tirou (sem coordenada, só online, fechado de vez).
     var dropped = 0
+    /// Por que a busca de fora não trouxe nada além do board ("sem internet", "sem chave do Google", cota…). `nil` = tudo certo.
+    var outsideNote: String? = nil
 }
 
 enum WantSearch {
@@ -94,16 +109,23 @@ enum WantSearch {
 
     /// "relógio Seiko" (marca com a palavra da categoria), "tonkatsu", "pão de queijo", "Fuji".
     static func text(for intent: WantIntent, category: WantCategory?) -> String {
+        // Só o verbo ("comer", "ouvir"): o Google acha "restaurant", "live music"; a palavra "comer" não acha nada.
+        if let category, let generic = category.searchText, category.isGeneric(intent.object) { return generic }
         if let brand = intent.brand, let word = category?.queryWord, !intent.object.localizedCaseInsensitiveContains(word) {
             return "\(word) \(brand)"
         }
         return intent.object
     }
 
+    /// O raio do Google: o pedido ("ampliar"), senão "perto" (2 km), senão 6 km.
+    static func searchRadius(_ input: WantSearchInput) -> Double {
+        input.radiusMeters ?? (input.intent.near ? nearRadius : radius)
+    }
+
     static func query(for input: WantSearchInput) -> PlacesTextQuery {
         let category = WantCategory.of(input.intent)
         return PlacesTextQuery(text: text(for: input.intent, category: category), lat: input.center.latitude, lng: input.center.longitude,
-                               radius: input.intent.near ? nearRadius : radius, includedType: category?.includedType,
+                               radius: searchRadius(input), includedType: category?.includedType,
                                openNow: input.intent.when == .hoje, rankByDistance: true)
     }
 
@@ -154,15 +176,18 @@ enum WantSearch {
     /// O board que casa com a vontade: nome, sub-lista ou nota com a palavra (ex.: "pão de queijo" na nota), não feito.
     static func boardResults(_ input: WantSearchInput, category: WantCategory?) -> [WantResult] {
         let words = keywords(input.intent, category: category)
-        guard !words.isEmpty else { return [] }
+        // Pedido genérico ("comer", "ouvir"): a lista inteira do Must daquele tipo, na cidade, sem depender do nome.
+        let lists: Set<String> = category.map { $0.isGeneric(input.intent.object) ? Set($0.boardLists) : [] } ?? []
+        guard !words.isEmpty || !lists.isEmpty else { return [] }
         return input.board.filter { p in
             guard !p.done, p.lat != 0 || p.lng != 0 else { return false }
+            if let id = p.listId, lists.contains(id) { return true }
             let hay = " " + WantCategory.fold("\(p.name) \(p.sub ?? "") \(p.notes)") + " "
             return words.contains { hay.contains(" \($0)") }
         }
         .map { p in
             WantResult(id: "board:\(p.id)", name: p.name, lat: p.lat, lng: p.lng, origin: .board, area: p.area, googlePlaceId: p.placeId,
-                       boardPlaceId: p.id, note: "no seu board", until: p.until, distance: meters(input.center, p.lat, p.lng))
+                       boardPlaceId: p.id, note: "no seu board", until: p.until, photos: p.photoRefs, distance: meters(input.center, p.lat, p.lng))
         }
         .filter { input.boardAnyDistance || $0.distance <= (input.intent.near ? nearRadius : radius) * 1.5 }
     }
@@ -235,8 +260,9 @@ enum WantSearch {
 
     // MARK: Rodar
 
-    /// Marca + board sempre; Places só online e com chave (cache primeiro). Sem rede: `offline` e nada de espera.
-    static func run(_ input: WantSearchInput, provider: (any WantPlacesSearching)?, cache: WantSearchCache = .shared) async -> WantSearchOutput {
+    /// Marca + board sempre; Places, Wikipedia e Em cartaz conforme o tipo (cache primeiro). Sem rede: `offline` e nada de espera.
+    static func run(_ input: WantSearchInput, provider: (any WantPlacesSearching)?, extras: WantExtras? = nil,
+                    cache: WantSearchCache = .shared) async -> WantSearchOutput {
         let category = WantCategory.of(input.intent)
         let brand = brandResults(input, category: category)
         let board = boardResults(input, category: category)
@@ -254,15 +280,53 @@ enum WantSearch {
             } catch ServiceError.budget(let message) {
                 notice = message
             } catch ServiceError.missingKey {
-                notice = nil
+                notice = "sem chave do Google"
             } catch {
-                if isOffline(error) { offline = true } else { notice = "o Google não respondeu · mostrando o que já está no aparelho" }
+                if isOffline(error) { offline = true } else { notice = "o Google não respondeu" }
             }
+        } else {
+            notice = provider == nil ? "dados ao vivo desligados" : "sem chave do Google"
         }
         let (kept, dropped) = filter(hits, category: category)
         let areas = AreaCatalog.areas(for: input.region)
         let places = kept.compactMap { result($0, input: input, areas: areas) }
-        return WantSearchOutput(results: merge(board: board, places: places, brand: brand), offline: offline, notice: notice, dropped: dropped)
+        var more: [WantResult] = []
+        if input.online, wantsWikipedia(input.intent, category), let extras {
+            let found = (try? await extras.wikipedia(input.center.latitude, input.center.longitude, min(searchRadius(input), 10_000))) ?? []
+            more += found.map { wikiResult($0, input: input) }
+        }
+        if wantsShows(category) { more += showResults(input) }
+        return WantSearchOutput(results: merge(board: board, places: places + more, brand: brand), offline: offline, notice: notice,
+                                dropped: dropped, outsideNote: offline ? "sem internet" : notice)
+    }
+
+    // MARK: Fontes por tipo de Must
+
+    /// "ver" (e templo, vista, foto): a Wikipedia acha o que vale ver perto (sem chave).
+    static func wantsWikipedia(_ intent: WantIntent, _ category: WantCategory?) -> Bool {
+        guard let category else { return intent.verb == .ver }
+        return ["ver", "templo", "vista", "foto", "museu"].contains(category.label)
+    }
+
+    /// "ouvir" e "noite": o Em cartaz de hoje.
+    static func wantsShows(_ category: WantCategory?) -> Bool { category.map { ["ouvir", "noite"].contains($0.label) } ?? false }
+
+    static func wikiResult(_ place: NearbyPlace, input: WantSearchInput) -> WantResult {
+        WantResult(id: "w:\(place.name)", name: place.name, lat: place.lat, lng: place.lng, origin: .places, note: "Wikipedia · lugar pra ver",
+                   distance: meters(input.center, place.lat, place.lng))
+    }
+
+    /// Eventos de hoje (show, jogo) com coordenada, perto do centro da busca.
+    static func showResults(_ input: WantSearchInput) -> [WantResult] {
+        let cal = input.region.calendar
+        return input.shows.compactMap { e -> WantResult? in
+            guard e.kind != .exhibition, let lat = e.lat, let lng = e.lng, EmCartazModel.happensToday(e, now: input.now, calendar: cal) else { return nil }
+            let when = EmCartazModel.nextDate(e, now: input.now).map { input.region.timeString($0) }
+            return WantResult(id: "e:\(e.id)", name: e.title, lat: lat, lng: lng, origin: .places, address: e.venue,
+                              note: ["em cartaz hoje", when].compactMap { $0 }.joined(separator: " · "),
+                              distance: meters(input.center, lat, lng))
+        }
+        .filter { $0.distance <= searchRadius(input) }
     }
 }
 

@@ -10,7 +10,7 @@ import UIKit
 //
 //   CutBand(photo: url, height: …) { texto do bloco }      // foto tratada (ou só a cor do lugar) + trama + arcos
 //   CutRule()                                              // régua estática, 12 pt
-//   CutRule(pullLabel: "↓ puxe · quero…")                  // régua puxável, 26 pt (+ `.cutPull(pull) { … }`)
+//   CutRule(pullLabel: "↓ quero")                            // régua puxável, 26 pt (+ `.cutPull(pull) { … }`)
 //
 // A foto **nunca é baixada** por causa do corte: o chamador passa a URL de uma foto que o app já tem (arquivo do Google,
 // cópia do Commons no `DiskCache`). O tratamento roda fora do main e fica em disco por `foto + cor`.
@@ -296,7 +296,7 @@ struct CutBand<Content: View>: View {
 // MARK: - Régua
 
 /// Régua preta de largura total. **Estática** (12 pt): só estrutura, sem pegador e sem texto. **Puxável** (26 pt): pegador
-/// laranja no centro e o micro-rótulo ("↓ puxe · quero…", depois "↓ quero"). Regra de ouro: só se puxa a régua que tem
+/// laranja no centro e o micro-rótulo ("↓ quero"). Regra de ouro: só se puxa a régua que tem
 /// pegador e texto. O gesto vem de `.cutPull(_:)`.
 struct CutRule: View {
     static let fixedHeight: CGFloat = 12
@@ -345,8 +345,6 @@ final class CutPull {
     nonisolated static let limit: CGFloat = 110
     /// A partir daqui o rótulo diz "mais um pouco".
     nonisolated static let almost: CGFloat = 40
-    /// Depois de tantas puxadas com resultado, o texto encurta pra "↓ quero" e o cutucão para.
-    nonisolated static let usesBeforeShort = 3
 
     enum Phase: Equatable { case closed, pulling, open }
 
@@ -373,7 +371,7 @@ final class CutPull {
         offset = 0
     }
 
-    /// Abre sem gesto (toque no nome do bairro, VoiceOver, passo a passo).
+    /// Abre sem gesto (toque no nome do bairro, VoiceOver).
     func lock() {
         guard phase != .open else { return }
         phase = .open
@@ -386,12 +384,12 @@ final class CutPull {
         offset = 0
     }
 
-    /// O rótulo da régua: "↓ puxe · quero…" → "↓ mais um pouco" (no meio do gesto) → "↑ fechar" (aberta); depois de 3 usos "↓ quero".
-    static func label(phase: Phase, offset: CGFloat, uses: Int, noun: String = "quero") -> String {
+    /// O rótulo da régua: "↓ quero" → "↓ mais um pouco" (no meio do gesto) → "↑ fechar" (aberta).
+    static func label(phase: Phase, offset: CGFloat, noun: String = "quero") -> String {
         switch phase {
         case .open: return "↑ fechar"
         case .pulling where offset >= almost: return "↓ mais um pouco"
-        default: return uses >= usesBeforeShort ? "↓ \(noun)" : "↓ puxe · \(noun)…"
+        default: return "↓ \(noun)"
         }
     }
 

@@ -69,7 +69,7 @@ struct HomeView: View {
         .accessibilityAction(named: "Linha do dia") { go(.up) }
         .accessibilityAction(named: "Dicas") { go(.left) }
         .accessibilityAction(named: "Atalhos") { go(.right) }
-        .overlay(alignment: .trailing) { if corte.stage == .rest, corte.walk == nil { atalhosHandle } }
+        .overlay(alignment: .trailing) { if corte.stage == .rest { atalhosHandle } }
         .fullScreenCover(isPresented: $showAtalhos, onDismiss: runAtalhoAction) {
             AtalhosPanel { action in
                 atalhoAction = action
@@ -222,7 +222,7 @@ struct HomeView: View {
 
     private var actions: CapaCorteView.Actions {
         .init(trips: { router.sheet = .viagens },
-              dicas: { router.push(.dicas, on: .hoje) },
+              assistente: { router.sheet = .assistant },
               openSuggestion: openSuggestion,
               openPlace: { router.push(.place(id: $0), on: .hoje) },
               route: { row in MapsLinks.openApple(to: row.row.result.coordinate, name: row.row.result.name) },
@@ -237,7 +237,15 @@ struct HomeView: View {
         return QueroEnv.make(region: region, now: now, places: places, trip: trips.first, settings: settingsList.first,
                              plan: state.plan, gps: services.location.current?.coordinate,
                              online: services.connectivity.status != .offline,
-                             upcoming: QueroEnv.upcomingDays(context: context, areas: areas, today: today))
+                             upcoming: QueroEnv.upcomingDays(context: context, areas: areas, today: today),
+                             areaHint: capaArea(areas), shows: showEvents.today(region: region, at: now))
+    }
+
+    /// O bairro que a capa mostra (GPS por célula, senão o do dia pelo nome): de onde o quero sai quando o GPS está longe.
+    private func capaArea(_ areas: [Area]) -> Area? {
+        if let currentArea { return currentArea }
+        guard let name = state.content?.area.lowercased() else { return nil }
+        return areas.first { $0.name.lowercased() == name || $0.aliases.contains { $0.lowercased() == name } }
     }
 
     /// "+ board": guarda o lugar de fora na lista certa (a mesma lógica do Quero…).
@@ -252,12 +260,11 @@ struct HomeView: View {
         router.push(.linha(date: today), on: .hoje)
     }
 
-    /// Passo a passo (primeira vez e primeira entrada em cada viagem) e os atalhos de DEBUG dos prints (`corte-*`).
+    /// Os atalhos de DEBUG dos prints (`corte-*`).
     private func startCorteExtras() async {
         let screen = debugScreen
         if screen.isEmpty {
             try? await Task.sleep(for: .milliseconds(400))
-            if let content = state.content, content.lead != "Primeiro dia" { corte.startWalk(tripId: region.trip.id) }
             return
         }
         guard screen.hasPrefix("corte-") else { return }
@@ -269,10 +276,6 @@ struct HomeView: View {
             corte.open()
             corte.quero.text = "café"
             corte.submit(makeEnv())
-        case "corte-walk1": corte.startWalk(tripId: region.trip.id, force: true)
-        case "corte-walk2":
-            corte.startWalk(tripId: region.trip.id, force: true)
-            corte.open()
         default: break
         }
     }
