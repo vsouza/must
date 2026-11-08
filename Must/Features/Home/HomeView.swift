@@ -2,11 +2,10 @@ import CoreLocation
 import SwiftData
 import SwiftUI
 
-/// 01 · Hoje, a capa do dia (prompt 23 §2, `CapaJP/BR/IT.png`; com foto: `CapaFoto.png`).
-/// Cor do lugar, ficha técnica nos cantos, "Hoje é <bairro> / e <noite>", numeral do dia sangrando e o card "Agora".
-/// Gestos: pra cima = Linha do dia; pra baixo = Bom dia (antes das 10h) / Boa noite (depois das 21h);
-/// pra esquerda = Dicas; pra direita (ou o toque na alça da borda) = Atalhos, com o Bolso dentro (prompt 25 · D). Tudo sai de `CapaState`, recalculado nos gatilhos.
-/// Saíram da Home (v8): "Por perto" (fica em Guia/Lista), orçamento (Ajustes) e os cards v7.
+/// 01 · Hoje, a capa do corte (prompt 30 §2, `CorteFluxo.png`): foto tratada em cima, régua preta puxável, papel embaixo.
+/// Gestos: pra cima = Linha do dia; pra baixo (fora da régua) = Bom dia / Boa noite; pra esquerda = Dicas; pra direita
+/// (ou o toque na alça da borda) = Atalhos. **Arrastar começando na régua** (ou tocar no nome do bairro) abre o "quero…".
+/// Tudo sai de `CapaState` e `CapaSuggestState`, recalculado nos gatilhos; o `body` só desenha.
 struct HomeView: View {
     @Environment(AppRouter.self) private var router
     @Environment(RegionStore.self) private var store
@@ -21,12 +20,16 @@ struct HomeView: View {
     @Query private var places: [Place]
     @Query private var expenses: [Expense]
     @Query private var trips: [TripInfo]
+    @Query(sort: \MustList.order) private var lists: [MustList]
+    @Query private var settingsList: [Settings]
 
     @State private var state = CapaState()
     /// "Agora vale" (prompt 26): cartões, linha de estado e card da noite.
     @State private var suggest = CapaSuggestState()
     @State private var currentArea: Area?
     @State private var saveRefresh: Task<Void, Never>?
+    /// O corte: régua, fenda do quero…, resultado e passo a passo.
+    @State private var corte = CorteState()
     @State private var showAtalhos = false
     /// O que o toque nos Atalhos pediu: roda quando o painel termina de fechar.
     @State private var atalhoAction: AtalhosAction?
@@ -36,10 +39,12 @@ struct HomeView: View {
     private var today: Date { region.calendar.startOfDay(for: AppClock.now) }
     private var ink: Color { theme.coverInk }
 
+    /// `-capaFoto` (DEBUG, prints): baixa a foto do Commons uma vez pro bairro. Sem a flag, a capa só usa o que já está no disco.
     private var forcePhoto: Bool { DebugFlags.has("-capaFoto") }
-    private var usesPhoto: Bool {
-        CapaPhotoPolicy.usesPhoto(hasDiskPhoto: state.photo != nil, forced: forcePhoto,
-                                  debugScreen: DebugFlags.string("debugScreen") != nil) && state.photo != nil
+    private var debugScreen: String { DebugFlags.string("debugScreen") ?? "" }
+    private var photoURL: URL? {
+        guard debugScreen != "corte-capa-sem-foto" else { return nil }
+        return state.photo.flatMap { URL(string: $0.largeURL ?? $0.url) }
     }
 
     private var locationCell: String {
@@ -50,20 +55,21 @@ struct HomeView: View {
     var body: some View {
         Group {
             if let content = state.content {
-                if smartMode { smartCover(content) } else if usesPhoto { photoCover(content) } else { colorCover(content) }
+                CapaCorteView(content: content, areaName: currentArea?.name ?? content.area, photoURL: photoURL, suggest: suggest,
+                              state: corte, tripId: region.trip.id, makeEnv: makeEnv, actions: actions)
             } else {
                 theme.cover.ignoresSafeArea()
             }
         }
         .contentShape(Rectangle())
         .gesture(DragGesture(minimumDistance: 30).onEnded { value in
-            guard let swipe = CapaSwipe.from(value.translation) else { return }
+            guard corte.stage == .rest, corte.pull.phase == .closed, let swipe = CapaSwipe.from(value.translation) else { return }
             go(swipe)
-        })
+        }, including: corte.stage == .rest ? .all : .subviews)
         .accessibilityAction(named: "Linha do dia") { go(.up) }
         .accessibilityAction(named: "Dicas") { go(.left) }
         .accessibilityAction(named: "Atalhos") { go(.right) }
-        .overlay(alignment: .trailing) { atalhosHandle }
+        .overlay(alignment: .trailing) { if corte.stage == .rest, corte.walk == nil { atalhosHandle } }
         .fullScreenCover(isPresented: $showAtalhos, onDismiss: runAtalhoAction) {
             AtalhosPanel { action in
                 atalhoAction = action
@@ -74,9 +80,10 @@ struct HomeView: View {
         .onAppear {
             refresh()
             // `-debugScreen atalhos` (prints): abre o painel em cima da capa.
-            if DebugFlags.string("debugScreen") == "atalhos", !showAtalhos { openAtalhos() }
+            if debugScreen == "atalhos", !showAtalhos { openAtalhos() }
         }
         .task { await clock() }
+        .task { await startCorteExtras() }
         .task(id: locationCell) {
             await resolveCurrentArea()
             await loadIndicated()
@@ -101,9 +108,6 @@ struct HomeView: View {
     }
 
     // MARK: Agora vale (prompt 26)
-
-    /// Capa inteligente: sem dia aceito, ou você saiu do bairro do plano. Com o plano em dia, a capa clássica.
-    private var smartMode: Bool { CapaSuggestState.isSmart(plan: state.plan, currentArea: currentArea) }
 
     private func recomputeSuggestions(now: Date) {
         events.loadCached(region: region)
@@ -210,270 +214,68 @@ struct HomeView: View {
         .accessibilityHint("Suica, ingressos, mapa offline, SOS e linhas perto")
     }
 
-    private func openAgora(_ content: CapaContent) {
-        if content.agora?.dayOver == true {
-            router.push(.boaNoite, on: .hoje)
-        } else if content.hasPlan {
-            router.push(.agora, on: .hoje)
-        } else {
-            router.push(.montar(date: today), on: .hoje)
-        }
+    // MARK: O corte
+
+    private var actions: CapaCorteView.Actions {
+        .init(trips: { router.sheet = .viagens },
+              dicas: { router.push(.dicas, on: .hoje) },
+              openSuggestion: openSuggestion,
+              openPlace: { router.push(.place(id: $0), on: .hoje) },
+              route: { row in MapsLinks.openApple(to: row.row.result.coordinate, name: row.row.result.name) },
+              addToBoard: addToBoard,
+              fitToday: fitToday)
     }
 
-    // MARK: Capa com a cor do lugar (01)
-
-    private func colorCover(_ content: CapaContent) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            topRow(content).padding(.top, 10)
-            Spacer(minLength: 20).frame(maxHeight: 170)
-            HStack(alignment: .top) {
-                SpecStack(lines: content.midLeft, color: ink)
-                Spacer(minLength: 12)
-                SpecStack(lines: content.midRight, color: ink, alignment: .trailing)
-            }
-            Spacer(minLength: 16).frame(maxHeight: 64)
-            title(content)
-            Spacer(minLength: 16)
-            VStack(alignment: .trailing, spacing: 12) {
-                emCartazChip
-                agoraCard(content).frame(maxWidth: 236)
-            }
-            .frame(maxWidth: .infinity, alignment: .trailing)
-            Color.clear.frame(height: 96)
-        }
-        .padding(.horizontal, 20)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        // Texturas no fundo: não entram na conta do layout (o numeral e os arcos sangram a tela).
-        .background { coverBackground(content, numeralAt: .bottomLeading) }
+    private func makeEnv() -> QueroEnv {
+        let now = AppClock.now
+        let areas = AreaCatalog.areas(for: region)
+        return QueroEnv.make(region: region, now: now, places: places, trip: trips.first, settings: settingsList.first,
+                             plan: state.plan, gps: services.location.current?.coordinate,
+                             online: services.connectivity.status != .offline,
+                             upcoming: QueroEnv.upcomingDays(context: context, areas: areas, today: today))
     }
 
-    private func coverBackground(_ content: CapaContent, numeralAt: Alignment) -> some View {
-        ZStack {
-            theme.cover
-            Rings(color: ink, count: 3, diameter: 420, opacity: 0.55, offset: CGSize(width: 60, height: 40))
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            BigNumeral(content.numeral, size: 430, color: ink)
-                .fixedSize()
-                .offset(x: numeralAt == .bottomLeading ? -12 : 150, y: 96)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: numeralAt)
-        }
-        .ignoresSafeArea()
-        .accessibilityHidden(true)
+    /// "+ board": guarda o lugar de fora na lista certa (a mesma lógica do Quero…).
+    private func addToBoard(_ row: CorteRow) {
+        let env = makeEnv()
+        guard let place = QueroSave.place(for: row.row, intent: corte.quero.intent, text: corte.quero.text, lists: lists, cityId: env.cityId,
+                                          region: region, sync: services.sync, context: context) else { return }
+        corte.markAdded(row.id, note: "Guardado em \(place.list?.name.capitalized ?? "Musts")")
     }
 
-    /// "Em cartaz · 2 hoje" (feeds + board); só aparece com algo hoje.
-    @ViewBuilder private var emCartazChip: some View {
-        if suggest.showsToday > 0 { EmCartazChip(count: suggest.showsToday) { router.push(.emCartaz, on: .hoje) } }
+    /// Toque longo: "Encaixar hoje" (prompt 25), o mesmo do Quero….
+    private func fitToday(_ row: CorteRow) {
+        let env = makeEnv()
+        guard row.row.slot != nil,
+              let place = QueroSave.place(for: row.row, intent: corte.quero.intent, text: corte.quero.text, lists: lists, cityId: env.cityId,
+                                          region: region, sync: services.sync, context: context),
+              (try? QueroSave.encaixar(row.row, place: place, env: env, context: context)) != nil else { return }
+        corte.close()
+        router.push(.linha(date: today), on: .hoje)
     }
 
-    // MARK: Capa inteligente (prompt 26 · `CapaInteligente.png`)
-
-    /// "Você está em <bairro>", a linha de estado, "Agora vale" (até 4 cartões), "Noite, pra onde?" e o numeral.
-    private func smartCover(_ content: CapaContent) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            topRow(content).padding(.horizontal, 20).padding(.top, 10)
-            Spacer(minLength: 12).frame(maxHeight: 72)
-            VStack(alignment: .leading, spacing: 10) {
-                countryLine(content, suffix: "você está em")
-                Text(currentArea?.name ?? content.area)
-                    .font(V8Font.display(54))
-                    .foregroundStyle(ink)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.6)
-                Text(suggest.stateLine)
-                    .font(V8Font.text(18))
-                    .foregroundStyle(ink.opacity(0.92))
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.8)
-            }
-            .padding(.horizontal, 20)
-            .accessibilityElement(children: .combine)
-            Spacer(minLength: 20).frame(maxHeight: 48)
-            if !suggest.cards.isEmpty {
-                AgoraValeRow(cards: suggest.cards, sources: suggest.sources, ink: ink, open: openSuggestion,
-                             dismiss: { suggest.dismiss($0, region: region, now: AppClock.now) })
-            }
-            Spacer(minLength: 16)
-            VStack(alignment: .trailing, spacing: 12) {
-                if let night = suggest.night {
-                    NightCard(night: night) { router.push(.montar(date: today, focusArea: suggest.nightAreaId), on: .hoje) }
-                } else {
-                    agoraCard(content)
-                }
-                emCartazChip
-            }
-            .padding(.horizontal, 20)
-            Color.clear.frame(height: 96)
+    /// Passo a passo (primeira vez e primeira entrada em cada viagem) e os atalhos de DEBUG dos prints (`corte-*`).
+    private func startCorteExtras() async {
+        let screen = debugScreen
+        if screen.isEmpty {
+            try? await Task.sleep(for: .milliseconds(400))
+            if let content = state.content, content.lead != "Primeiro dia" { corte.startWalk(tripId: region.trip.id) }
+            return
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .background { coverBackground(content, numeralAt: .bottomTrailing) }
-    }
-
-    private func topRow(_ content: CapaContent, onPhoto: Bool = false) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            RoundButton(systemImage: "arrow.left.arrow.right", label: "Minhas viagens", style: .line, tint: ink) { router.sheet = .viagens }
-                .padding(.top, -8)
-            SpecStack(lines: content.topLeft, color: ink).modifier(PhotoChip(on: onPhoto))
-            Spacer(minLength: 8)
-            SpecStack(lines: content.topRight, color: ink, alignment: .trailing).modifier(PhotoChip(on: onPhoto)).padding(.top, 2)
-            RoundButton(systemImage: "sparkle", label: "Dicas", style: .line, tint: ink) { router.push(.dicas, on: .hoje) }
-                .padding(.top, -8)
+        guard screen.hasPrefix("corte-") else { return }
+        try? await Task.sleep(for: .milliseconds(900))
+        switch screen {
+        case "corte-puxando": corte.pull.drag(translation: 70)
+        case "corte-quero": corte.open()
+        case "corte-cafe", "corte-cafe-offline":
+            corte.open()
+            corte.quero.text = "café"
+            corte.submit(makeEnv())
+        case "corte-walk1": corte.startWalk(tripId: region.trip.id, force: true)
+        case "corte-walk2":
+            corte.startWalk(tripId: region.trip.id, force: true)
+            corte.open()
+        default: break
         }
-    }
-
-    private func title(_ content: CapaContent) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            countryLine(content, suffix: nil)
-            MonoLabel(content.lead, size: 10, color: ink.opacity(0.85))
-            Text(content.area)
-                .font(V8Font.display(54))
-                .foregroundStyle(ink)
-                .lineLimit(2)
-                .minimumScaleFactor(0.6)
-            if let evening = content.evening {
-                Text(evening)
-                    .font(V8Font.display(28, weight: 500))
-                    .foregroundStyle(ink.opacity(0.9))
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.7)
-            }
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Dia \(content.numeral). \(content.lead) \(content.area)\(content.evening.map { ", \($0)" } ?? "")")
-    }
-
-    private func countryLine(_ content: CapaContent, suffix: String?) -> some View {
-        HStack(spacing: 8) {
-            theme.flag.frame(width: 22, height: 22)
-            SpecLabel([content.country, suffix].compactMap { $0 }.joined(separator: " · "), color: ink)
-        }
-    }
-
-    /// Card preto "Agora · k de n" com ↗ (abre o Agora). Sem dia: "Hoje, pra onde?" → Montar.
-    private func agoraCard(_ content: CapaContent) -> some View {
-        Button { openAgora(content) } label: {
-            HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 4) {
-                    MonoLabel(content.agora?.title ?? "Hoje, pra onde?", size: 10, color: V8.orange)
-                    Text(content.agora?.line ?? "Montar o dia")
-                        .font(V8Font.text(15, weight: .bold))
-                        .foregroundStyle(V8.white)
-                        .lineLimit(2)
-                }
-                Spacer(minLength: 0)
-                Image(systemName: "arrow.up.right")
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(V8.ink)
-                    .frame(width: 40, height: 40)
-                    .background(Circle().fill(V8.white))
-            }
-            .padding(.leading, 16)
-            .padding(.trailing, 10)
-            .padding(.vertical, 14)
-            .frame(minHeight: 70)
-            .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(V8.ink))
-            .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-        }
-        .buttonStyle(MustPressStyle())
-        .accessibilityLabel("\(content.agora?.title ?? "Hoje, pra onde?"): \(content.agora?.line ?? "montar o dia")")
-    }
-
-    // MARK: Capa com foto (01b/01c)
-
-    /// Foto do bairro em cor cheia em cima; embaixo, faixa sólida na cor do lugar com o texto (sem degradê, sem foto
-    /// atrás do texto). A ficha técnica de cima fica sobre a foto, como no design.
-    private func photoCover(_ content: CapaContent) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            topRow(content, onPhoto: true)
-                .padding(.horizontal, 20)
-                .padding(.top, 10)
-            Spacer(minLength: 24)
-            if let photo = state.photo {
-                Text("\(content.area) · \(photo.source ?? "Wikimedia Commons")".uppercased())
-                    .font(V8Font.mono(8))
-                    .tracking(0.8)
-                    .foregroundStyle(V8.white.opacity(0.9))
-                    .lineLimit(1)
-                    .padding(.horizontal, 7)
-                    .padding(.vertical, 4)
-                    .background(RoundedRectangle(cornerRadius: 6).fill(V8.ink.opacity(0.6)))
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                    .padding(.horizontal, 12)
-                    .padding(.bottom, 12)
-                    .accessibilityLabel(photo.credit)
-            }
-            // Faixa sólida na cor do lugar: o texto nunca fica em cima da foto.
-            VStack(alignment: .leading, spacing: 8) {
-                countryLine(content, suffix: "hoje é")
-                Text(content.area)
-                    .font(V8Font.display(48))
-                    .foregroundStyle(ink)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.6)
-                if let evening = content.evening {
-                    Text(evening).font(V8Font.display(24, weight: 500)).foregroundStyle(ink.opacity(0.9))
-                        .lineLimit(1).minimumScaleFactor(0.7)
-                }
-                agoraCard(content).frame(maxWidth: 236).padding(.top, 22)
-                Color.clear.frame(height: 96)
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, 22)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background {
-                ZStack {
-                    theme.cover
-                    BigNumeral(content.numeral, size: 300, color: ink)
-                        .fixedSize()
-                        .offset(x: 40, y: 70)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-                }
-                .clipped()
-                .ignoresSafeArea(edges: .bottom)
-                .accessibilityHidden(true)
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        // A foto em cor cheia ocupa a tela toda por trás; a faixa de baixo a cobre.
-        .background {
-            CapaPhoto(photo: state.photo, placeholder: theme.cover)
-                .ignoresSafeArea()
-        }
-    }
-}
-
-/// Ficha técnica sobre a foto: num retângulo de tinta sólido (sem degradê), pra ler em qualquer foto.
-private struct PhotoChip: ViewModifier {
-    var on: Bool
-    func body(content: Content) -> some View {
-        if on {
-            content.padding(.horizontal, 7).padding(.vertical, 5)
-                .background(RoundedRectangle(cornerRadius: 6).fill(V8.ink.opacity(0.6)))
-        } else {
-            content
-        }
-    }
-}
-
-/// Foto da capa: só o que já está no aparelho (arquivo do Google ou cópia do Commons no `DiskCache`). Enquanto lê,
-/// a cor do lugar (placeholder). Sem rede, nada muda.
-private struct CapaPhoto: View {
-    var photo: CCPhoto?
-    var placeholder: Color
-    @State private var image: UIImage?
-
-    private var url: URL? { photo.flatMap { URL(string: $0.largeURL ?? $0.url) } }
-
-    var body: some View {
-        placeholder
-            .overlay {
-                if let image { Image(uiImage: image).resizable().scaledToFill() }
-            }
-            .clipped()
-            .accessibilityHidden(true)
-            .task(id: url) {
-                guard let url else { image = nil; return }
-                image = await PhotoLoader.load(url)
-            }
     }
 }

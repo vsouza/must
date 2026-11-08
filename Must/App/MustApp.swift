@@ -437,6 +437,9 @@ enum DebugLaunch {
         case "mapa-pino", "mapa-filtro": router.push(.mapa, on: .hoje) // o agente C lê o debugScreen pra abrir o card/filtro
         case "lugar-amigos", "lugar-emcartaz": router.push(.place(id: arg ?? "j28"), on: .musts)
         case "capa-inteligente": router.select(.hoje)
+        // prompt 30 · o corte: a capa e os estados do gesto (o `HomeView` lê o `debugScreen` e monta cada um).
+        case "corte-capa", "corte-capa-sem-foto", "corte-puxando", "corte-quero", "corte-cafe", "corte-cafe-offline", "corte-walk1", "corte-walk2":
+            router.select(.hoje)
         case "sincronizar":
             router.push(.settings, on: .hoje)
             Task { await services.sync.syncPlaces(context: context, region: region) }

@@ -190,17 +190,3 @@ enum CapaAction: Equatable, Sendable {
     case route(Route)
     case atalhos
 }
-
-// MARK: - Capa com foto
-
-/// Quando a capa usa a foto do bairro (01b/01c, `CapaFoto.png`): **só quando a foto já está no aparelho** — a do Google
-/// de um Must do bairro (Lugar aberto ou dia baixado) ou a do Commons já escolhida e baixada pelo pré-download do Wi-Fi.
-/// A capa nunca baixa nada pra si; sem foto no disco (ou no Modo de Pouco Dados, que não deixa o pré-download trazer
-/// fotos), fica a cor do lugar. Nos prints (`-debugScreen`), a cor é fixa e `-capaFoto` força a foto.
-enum CapaPhotoPolicy {
-    static func usesPhoto(hasDiskPhoto: Bool, forced: Bool, debugScreen: Bool) -> Bool {
-        if forced { return true }
-        if debugScreen { return false }
-        return hasDiskPhoto
-    }
-}
