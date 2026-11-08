@@ -43,8 +43,10 @@ enum SuggestCopy {
     /// "14:20 · Atrasou? Ajustei: faltam 5 paradas" / "16:10 · agora: Gyoen · a 18 min daqui · saia 16:29".
     /// O número de "abertos a 10 min" é o mesmo do numeral da capa; o que não tem horário confirmado vai à parte.
     static func stateLine(region: Region, now: Date, plan: SuggestPlanStop?, openNearby: Int, unconfirmed: Int = 0,
-                          adjustedRemaining: Int? = nil, awayMinutes: Int? = nil) -> String {
+                          adjustedRemaining: Int? = nil, awayMinutes: Int? = nil, problem: DayProblem? = nil) -> String {
         let time = region.timeString(now)
+        // Chegada, troca de cidade e último dia mandam na linha principal.
+        if let problem { return "\(time) · \(problem.headline)" }
         guard let plan else {
             var parts = [time, "nada marcado"]
             if openNearby > 0 { parts.append("\(openNearby) \(openNearby == 1 ? "aberto" : "abertos") a 10 min") }

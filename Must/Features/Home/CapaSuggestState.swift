@@ -22,6 +22,8 @@ final class CapaSuggestState {
     private(set) var openNearby = 0
     /// Perto (10 min) mas sem horário confirmado: não conta como aberto.
     private(set) var unconfirmedNearby = 0
+    /// A próxima ação em uma frase ("saia às 15:46 · Shinjuku Gyoen"), pro bloco da capa quando não há foto.
+    private(set) var heroAction: String?
     /// Cache de "por perto" da célula atual (fora do board).
     @ObservationIgnored var indicated: [NearbyPlace] = []
     @ObservationIgnored private let prefs = SuggestPrefs()
@@ -36,6 +38,8 @@ final class CapaSuggestState {
         var dayNow: DayNow?
         /// O relógio único do dia (ajuste, quantas faltam).
         var clock: DayClock? = nil
+        /// Dia de chegada / troca de cidade / último dia.
+        var problem: DayProblem? = nil
         var events: [ShowEvent]
         var boardShows: [ShowEvent]
         var forecast: DayWeather?
@@ -47,6 +51,14 @@ final class CapaSuggestState {
         guard let plan else { return true }
         guard let here = currentArea?.id, let planArea = plan.area else { return false }
         return here != planArea
+    }
+
+    /// O que o bloco sem foto mostra no lugar do vazio: o dia-problema ("pouso 15:40") ou a próxima parada ("saia às 15:46").
+    static func heroAction(problem: DayProblem?, plan: SuggestPlanStop?, adjusted: Bool, region: Region) -> String? {
+        if let problem { return problem.hero }
+        guard let plan else { return nil }
+        let action = plan.action.isEmpty ? nil : plan.action.replacingOccurrences(of: "saia ", with: "saia às ").replacingOccurrences(of: "chegue ", with: "chegue às ")
+        return [action, plan.label].compactMap { $0 }.joined(separator: " · ")
     }
 
     /// Minutos a pé/trem daqui até a parada do plano, só quando ela está longe (≥ 10 min): "agora: X · a 18 min daqui".
@@ -106,9 +118,10 @@ final class CapaSuggestState {
         for e in events { if let id = e.placeId, let p = i.places.first(where: { $0.id == id }) { eventCoords[e.id] = CLLocationCoordinate2D(latitude: p.lat, longitude: p.lng) } }
         showLine = CorteShowLine.make(events: events, now: i.now, region: region, here: here, coordinates: eventCoords)
         if showLine?.countsNearby == true { openNearby += 1 }
+        heroAction = Self.heroAction(problem: i.problem, plan: planStop, adjusted: i.clock?.adjusted == true, region: region)
         stateLine = SuggestCopy.stateLine(region: region, now: i.now, plan: planStop, openNearby: openNearby, unconfirmed: unconfirmedNearby,
                                           adjustedRemaining: i.clock?.adjusted == true ? i.clock?.remaining : nil,
-                                          awayMinutes: planStop?.away)
+                                          awayMinutes: planStop?.away, problem: i.problem)
 
         let focus = i.currentArea ?? areas.first { $0.id == i.plan?.area }
         let neighbor = focus?.neighbors.min { $0.minutes < $1.minutes }.flatMap { n in areas.first { $0.id == n.areaId } }

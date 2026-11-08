@@ -15,6 +15,8 @@ struct FlightStatusReport: Equatable, Sendable {
     var arrives: Date?
     var terminal: String?
     var gate: String?
+    /// Terminal de pouso.
+    var arrivalTerminal: String? = nil
 }
 
 /// Quem entrega o status de um trecho. O real é `AeroDataBoxService`; a fake vem só no build de debug (prints).
@@ -48,7 +50,8 @@ enum AeroDataBoxParser {
             departs: revised,
             arrives: localTime(arrival["revisedTime"]) ?? localTime(arrival["scheduledTime"]),
             terminal: text(departure["terminal"]),
-            gate: text(departure["gate"])
+            gate: text(departure["gate"]),
+            arrivalTerminal: text(arrival["terminal"])
         )
     }
 
@@ -235,6 +238,7 @@ enum FlightStatusUpdater {
                     legs[index].revisedArrives = report.arrives
                     legs[index].terminal = report.terminal ?? legs[index].terminal
                     legs[index].gate = report.gate ?? legs[index].gate
+                    legs[index].arrivalTerminal = report.arrivalTerminal ?? legs[index].arrivalTerminal
                 }
                 legs[index].statusFetchedAt = now
             } catch ServiceError.offline {

@@ -12,6 +12,17 @@ enum DayText {
         return first.trimmingCharacters(in: .whitespaces)
     }
 
+    /// "Bom dia." até o meio-dia, "Boa tarde." até as 18h, "Boa noite." depois (o Bom dia lido tarde não diz que acordou).
+    static func greeting(_ date: Date, region: Region) -> String {
+        let hour = region.calendar.component(.hour, from: date)
+        return hour < 12 ? "Bom dia." : hour < 18 ? "Boa tarde." : "Boa noite."
+    }
+
+    /// Canto do bloco: "acordou" de manhã, "agora" depois do meio-dia.
+    static func wakeWord(_ date: Date, region: Region) -> String {
+        region.calendar.component(.hour, from: date) < 12 ? "acordou" : "agora"
+    }
+
     /// "Atrasou? Ajustei: faltam 5 paradas." Sem culpa: o dia só se refez a partir de agora.
     static func adjustedLine(remaining: Int) -> String {
         "Atrasou? Ajustei: " + (remaining == 1 ? "falta 1 parada." : "faltam \(remaining) paradas.")

@@ -58,6 +58,7 @@ struct BomDiaView: View {
     @State private var items: [MorningItem] = []
     @State private var checked: Set<String> = []
     @State private var sentence = ""
+    @State private var problem: DayProblem?
     @State private var specRight: [String] = []
 
     private var region: Region { store.region }
@@ -69,10 +70,10 @@ struct BomDiaView: View {
         VStack(spacing: 0) {
             DayBand(areaId: plan?.bandArea(from: now), places: places, height: 270) {
                 VStack(alignment: .leading, spacing: 0) {
-                    DayBandCorners(left: [DayText.dayLine(now, region: region), "\(region.timeString(now)) · acordou"], right: specRight)
+                    DayBandCorners(left: [DayText.dayLine(now, region: region), "\(region.timeString(now)) · \(DayText.wakeWord(now, region: region))"], right: specRight)
                     Spacer(minLength: 8)
                     HStack(alignment: .bottom, spacing: 10) {
-                        Text("Bom dia.")
+                        Text(DayText.greeting(now, region: region))
                             .font(V8Font.display(56))
                             .foregroundStyle(theme.coverInk)
                             .lineLimit(1)
@@ -86,6 +87,7 @@ struct BomDiaView: View {
             CutRule()
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
+                    if let problem { problemStrip(problem) }
                     Text(sentence)
                         .font(V8Font.text(17, weight: .semibold))
                         .foregroundStyle(V8.ink)
@@ -109,7 +111,8 @@ struct BomDiaView: View {
     private func load() {
         let trip = trips.first
         let cal = region.calendar
-        plan = engine.plan(for: today, region: region, context: context)
+        plan = DayClock.read(engine: engine, region: region, context: context, at: now).plan
+        problem = DayProblem.today(context: context, trip: trip, region: region, now: now)
         let weather = services.sync.weather(on: now, region: region, trip: trip)
         let city = trip?.city(on: now, calendar: cal)
         let center = CLLocationCoordinate2D(latitude: city?.lat ?? region.defaultCenter.latitude,
@@ -133,6 +136,18 @@ struct BomDiaView: View {
             .map { MorningChecklist.TransitCard(name: $0.name, balance: $0.balance ?? 0) }
         items = MorningChecklist.items(plan: plan, placeNotes: notes, transitCard: card, weather: weather, region: region)
         checked = Set(UserDefaults.standard.stringArray(forKey: MorningChecklist.checkedKey(dayKey)) ?? [])
+    }
+
+    /// Dia de chegada / de trem / último dia: a linha principal do Bom dia, em tinta (o mundo lá fora).
+    private func problemStrip(_ problem: DayProblem) -> some View {
+        DayStrip(tone: .ink) {
+            VStack(alignment: .leading, spacing: 4) {
+                MonoLabel(problem.title, size: 9, color: V8.orange)
+                Text(problem.headline).font(V8Font.text(16, weight: .bold)).foregroundStyle(V8.white).fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .accessibilityElement(children: .combine)
     }
 
     // MARK: Âncoras

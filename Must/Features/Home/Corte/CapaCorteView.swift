@@ -165,6 +165,10 @@ struct CapaCorteView: View {
             .accessibilityLabel(upcoming ? "\(content.topLeft.first ?? "")" : "\(placeName). Toque pra dizer o que você quer")
             .accessibilityAddTraits(.isHeader)
             if upcoming { MonoLabel("Primeiro dia · \(content.area)", size: 10, color: ink) }
+            // Sem foto o bloco não fica vazio: a próxima ação ("saia às 15:46 · Gyoen", "pouso 15:40").
+            if !upcoming, photoURL == nil, let action = suggest.heroAction {
+                Text(action).font(V8Font.text(18, weight: .semibold)).foregroundStyle(ink).lineLimit(2)
+            }
         }
     }
 

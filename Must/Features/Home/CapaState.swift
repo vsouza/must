@@ -13,6 +13,8 @@ final class CapaState {
     private(set) var dayNow: DayNow?
     /// O relógio único do dia (`DayClock`): o mesmo que a Linha, o Agora e o Guia leem.
     private(set) var clock: DayClock?
+    /// Dia de chegada, de troca de cidade ou último dia (a linha principal da capa e do Bom dia). `nil` num dia comum.
+    private(set) var problem: DayProblem?
     /// Bairro do dia (do plano) ou do GPS.
     private(set) var areaId: String?
     /// Foto do bairro já no aparelho (ou forçada nos prints).
@@ -43,6 +45,8 @@ final class CapaState {
         self.plan = plan
         dayNow = clock.now
 
+        problem = Self.problem(i, calendar: cal)
+
         let areas = AreaCatalog.areas(for: region)
         areaId = plan?.area ?? i.currentArea?.id
         let areaName = areaId.flatMap { id in areas.first { $0.id == id }?.name } ?? (plan == nil ? i.currentArea?.name : nil)
@@ -63,6 +67,11 @@ final class CapaState {
             spentToday: spent > 0 ? spent : nil,
             upcoming: Self.upcoming(i, calendar: cal)
         ))
+    }
+
+    /// Dia-problema de hoje (voos, hospedagem das cidades, datas da viagem). Só em viagem; BH de casa não tem.
+    static func problem(_ i: Inputs, calendar cal: Calendar) -> DayProblem? {
+        DayProblem.today(context: i.context, trip: i.trip, region: i.region, now: i.now)
     }
 
     /// Viagem (não a casa) que ainda não começou: a capa vira contagem regressiva até o dia 1.
