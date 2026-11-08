@@ -37,7 +37,7 @@ struct TripSwitcherSheet: View {
             }
             .padding(.top, 22)
             .padding(.bottom, 14)
-            Rectangle().fill(V8.rule).frame(height: 1)
+            Rectangle().fill(V8.ink).frame(height: 2)
             ForEach(rows) { row in
                 SwipeToActRow(enabled: row.region.trip.kind != .home, openRow: $openSwipe, id: row.id,
                               onArchive: { store.archive(row.region.rawValue) }, onDelete: { confirmDelete = row }) {
@@ -45,7 +45,7 @@ struct TripSwitcherSheet: View {
                         .buttonStyle(MustPressStyle())
                 }
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel("\(row.title). \(row.subtitle). \(row.tag.rawValue)\(row.isActive ? ". Ativa" : "")")
+                .accessibilityLabel("\(row.title). \(row.subtitle). Moeda \(TripSwitcherModel.currencyLabel(row.region)). \(row.tag.rawValue)\(row.isActive ? ". Ativa" : "")")
                 .accessibilityAddTraits(row.isActive ? [.isSelected, .isButton] : .isButton)
                 .accessibilityAction { select(row) }
                 .accessibilityActions {
@@ -54,7 +54,7 @@ struct TripSwitcherSheet: View {
                         Button("Apagar") { confirmDelete = row }
                     }
                 }
-                Rectangle().fill(V8.rule).frame(height: 1)
+                Rectangle().fill(V8.ink).frame(height: 2)
             }
             if Self.newTripEnabled {
                 Button { newTrip() } label: { newTripRow }
@@ -110,7 +110,7 @@ struct TripSwitcherSheet: View {
     private var newTripRow: some View {
         HStack(spacing: 16) {
             Image(systemName: "plus").font(.system(size: 22, weight: .semibold)).foregroundStyle(V8.ink)
-                .frame(width: 56, height: 56).background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(V8.orange))
+                .frame(width: 56, height: 56).background(V8.orange)
             VStack(alignment: .leading, spacing: 2) {
                 Text("Nova viagem").font(V8Font.text(20, weight: .bold)).foregroundStyle(V8.ink)
                 Text("destino, datas, cidades, voos, Musts").font(V8Font.text(14)).foregroundStyle(V8.mute)
@@ -118,7 +118,7 @@ struct TripSwitcherSheet: View {
             Spacer(minLength: 0)
         }
         .padding(14)
-        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(V8.mute.opacity(0.6), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4])))
+        .overlay(Rectangle().strokeBorder(V8.ink, style: StrokeStyle(lineWidth: 2, dash: [6, 4])))
     }
 }
 
@@ -127,16 +127,18 @@ private struct TripRowView: View {
 
     var body: some View {
         HStack(spacing: 16) {
-            ZStack(alignment: .topTrailing) {
-                RoundedRectangle(cornerRadius: 16, style: .continuous).fill(TripTheme.forRegion(row.region).cover)
-                Circle().strokeBorder(V8.white.opacity(0.45), lineWidth: 1).frame(width: 38, height: 38).offset(x: 12, y: -12)
+            // Bloco quadrado na cor do lugar com a bandeira; a ativa leva a régua de 2 pt em volta.
+            ZStack {
+                Rectangle().fill(TripTheme.forRegion(row.region).cover)
+                TripFlag(country: row.region.trip.countryCode, size: 30)
             }
-            .frame(width: 48, height: 48)
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(V8.ink, lineWidth: row.isActive ? 2.5 : 0).padding(-4))
+            .frame(width: 52, height: 52)
+            .overlay(Rectangle().strokeBorder(V8.ink, lineWidth: row.isActive ? 3 : 0).padding(-4))
             VStack(alignment: .leading, spacing: 3) {
                 Text(row.title).font(V8Font.text(19, weight: .bold)).foregroundStyle(V8.ink).lineLimit(2)
                 Text(row.subtitle).font(V8Font.text(14)).foregroundStyle(V8.mute).lineLimit(2)
+                Text(TripSwitcherModel.currencyLabel(row.region)).font(V8Font.mono(11, weight: .semibold)).tracking(1)
+                    .foregroundStyle(V8.ink).lineLimit(1)
             }
             Spacer(minLength: 8)
             tag
@@ -149,8 +151,7 @@ private struct TripRowView: View {
         let text = Text(row.tag.rawValue.uppercased()).font(V8Font.mono(11)).tracking(1.2)
         switch row.tag {
         case .agora:
-            text.foregroundStyle(V8.ink).padding(.horizontal, 10).padding(.vertical, 6)
-                .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(V8.orange))
+            text.foregroundStyle(V8.ink).padding(.horizontal, 10).padding(.vertical, 6).background(V8.orange)
         case .gps, .plano:
             text.foregroundStyle(V8.mute)
         }
@@ -214,7 +215,7 @@ private struct SwipeToActRow<Content: View>: View {
             .foregroundStyle(ink)
             .frame(width: 80)
             .frame(maxHeight: .infinity)
-            .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(fill))
+            .background(fill)
         }
         .buttonStyle(MustPressStyle())
     }
