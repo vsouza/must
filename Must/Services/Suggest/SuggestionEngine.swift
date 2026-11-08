@@ -11,6 +11,8 @@ enum SuggestionEngine {
     static let eventWalkMinutes = 20
     /// Linha reta → rua.
     static let streetFactor = 1.25
+    /// Teto do "perto" quando nada mais serve: ~2 km de rua (25 min a pe ou um trem curto). Mais que isso a capa nao sugere.
+    static let fallbackMeters: Double = 2_000
 
     static func suggest(_ i: SuggestInputs) -> [Suggestion] {
         var all: [Suggestion] = []
@@ -57,6 +59,7 @@ enum SuggestionEngine {
         let origin = CLLocation(latitude: here.latitude, longitude: here.longitude)
         return i.places.filter { !$0.done && !i.dismissed.contains("must:\($0.id)") }
             .map { ($0, CLLocation(latitude: $0.lat, longitude: $0.lng).distance(from: origin) * streetFactor) }
+            .filter { $0.1 <= fallbackMeters }
             .sorted { $0.1 < $1.1 }.prefix(maxCards)
             .map { place, meters in
                 Suggestion(id: "must:\(place.id)", kind: .must, style: .ink, label: "MUST \(place.listName.uppercased())",

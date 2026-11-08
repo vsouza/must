@@ -70,6 +70,10 @@ struct ComoChegarView: View {
             }
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
+                if let place, !place.trust.coordConfirmed {
+                    MonoLabel("\(PlaceTrust.coordApproximate) · confira no mapa", size: 10.5, color: V8.orange)
+                        .accessibilityLabel("Local aproximado. Confira no mapa antes de sair.")
+                }
                 route(model)
                 times(model)
                 chips(model)

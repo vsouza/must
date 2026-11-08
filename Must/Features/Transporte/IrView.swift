@@ -174,6 +174,12 @@ struct IrView: View {
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel("\(minutes) minutos até o \(place.name)")
 
+                if !place.trust.coordConfirmed {
+                    MonoLabel("\(PlaceTrust.coordApproximate) · confira no mapa", size: 10.5, color: V8.orange)
+                        .padding(.top, 14)
+                        .accessibilityLabel("Local aproximado. Confira no mapa antes de sair.")
+                }
+
                 modes(model).padding(.top, 26)
 
                 VStack(spacing: 0) {

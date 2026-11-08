@@ -45,6 +45,8 @@ struct BolsoView: View {
                         .overlay(alignment: .bottom) { IndexRule() }
                     ForEach(cards) { card in cell(card) }
                     sosCard
+                    // A linha de confiança: "105 lugares · 94 confirmados · sincronizar" (a mesma de Ajustes).
+                    VStack(spacing: 0) { TrustSyncRows() }.padding(.horizontal, 20)
                     V8BarSpacer()
                 }
             }

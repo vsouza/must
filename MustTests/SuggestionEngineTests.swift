@@ -179,3 +179,40 @@ struct SuggestionEngineTests {
         #expect(CapaSuggestState.taste(places) == ["eat": 2, "drink": 1])
     }
 }
+
+/// Capa longe da cidade do board (GPS em Narita): nunca sugere Must a dezenas de km.
+@MainActor
+struct SuggestionFarTests {
+    @Test func naritaNaoSugereMustA60km() {
+        let narita = CLLocationCoordinate2D(latitude: 35.7720, longitude: 140.3929)
+        let far = SuggestPlace(id: "k", name: "Kameido Gyoza", listName: "eat", color: "eat", kind: .place, sub: nil,
+                               lat: 35.6980, lng: 139.8250, done: false, state: .unknown, windows: [])
+        let inputs = SuggestInputs(region: .jp, now: Date(), here: narita, places: [far], events: [], boardNames: ["kameido gyoza"])
+        #expect(SuggestionEngine.suggest(inputs).isEmpty)
+    }
+
+    @Test func fallbackPertoAindaFunciona() {
+        let here = CLLocationCoordinate2D(latitude: 35.6900, longitude: 139.7000)
+        let near = SuggestPlace(id: "n", name: "Perto", listName: "eat", color: "eat", kind: .place, sub: nil,
+                                lat: 35.6930, lng: 139.7000, done: false, state: .closed(opensDay: nil, opensAt: "09:00"), windows: [])
+        let inputs = SuggestInputs(region: .jp, now: Date(), here: here, places: [near], events: [], boardNames: ["perto"])
+        #expect(SuggestionEngine.suggest(inputs).map(\.id) == ["must:n"])
+    }
+}
+
+/// A foto do bloco acompanha o bairro buscado no quero.
+struct BlockPhotoTests {
+    let capa = URL(string: "https://x/shinjuku.jpg")
+    let nakano = URL(string: "https://x/nakano.jpg")
+
+    @Test func bairroBuscadoUsaAFotoDele() {
+        #expect(CapaState.blockPhoto(searchedAreaId: "nakano", capaAreaId: "shinjuku", searched: nakano, capa: capa) == nakano)
+    }
+    @Test func semFotoDoBairroBuscadoFicaSemFoto() {
+        #expect(CapaState.blockPhoto(searchedAreaId: "nakano", capaAreaId: "shinjuku", searched: nil, capa: capa) == nil)
+    }
+    @Test func mesmoBairroOuSemBuscaUsaACapa() {
+        #expect(CapaState.blockPhoto(searchedAreaId: "shinjuku", capaAreaId: "shinjuku", searched: nil, capa: capa) == capa)
+        #expect(CapaState.blockPhoto(searchedAreaId: nil, capaAreaId: "shinjuku", searched: nakano, capa: capa) == capa)
+    }
+}

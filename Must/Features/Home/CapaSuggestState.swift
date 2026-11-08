@@ -24,6 +24,8 @@ final class CapaSuggestState {
     private(set) var unconfirmedNearby = 0
     /// A próxima ação em uma frase ("saia às 15:46 · Shinjuku Gyoen"), pro bloco da capa quando não há foto.
     private(set) var heroAction: String?
+    /// O que o indice diz quando nao ha nada perto (longe da cidade do board): a linha do dia-problema ou do plano.
+    private(set) var emptyLine = ""
     /// Cache de "por perto" da célula atual (fora do board).
     @ObservationIgnored var indicated: [NearbyPlace] = []
     @ObservationIgnored private let prefs = SuggestPrefs()
@@ -125,6 +127,8 @@ final class CapaSuggestState {
         stateLine = SuggestCopy.stateLine(region: region, now: i.now, plan: planStop, openNearby: openNearby, unconfirmed: unconfirmedNearby,
                                           adjustedRemaining: i.clock?.adjusted == true ? i.clock?.remaining : nil,
                                           awayMinutes: planStop?.away, problem: i.problem)
+
+        emptyLine = i.problem.map(\.headline) ?? (planStop != nil ? stateLine : "")
 
         let focus = i.currentArea ?? areas.first { $0.id == i.plan?.area }
         let neighbor = focus?.neighbors.min { $0.minutes < $1.minutes }.flatMap { n in areas.first { $0.id == n.areaId } }
