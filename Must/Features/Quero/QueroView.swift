@@ -510,7 +510,7 @@ private struct QueroDark: ViewModifier {
 
     func body(content: Content) -> some View {
         if inTab {
-            content.environment(\.colorScheme, .dark)
+            content.environment(\.colorScheme, .dark).lightStatusBar()
         } else {
             content.preferredColorScheme(.dark)
         }

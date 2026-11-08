@@ -55,7 +55,6 @@ struct PresentesView: View {
         }
         .background(V8.paper.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
-        .lightStatusBar()
         .sensoryFeedback(.impact(weight: .light), trigger: tick)
         .onChange(of: buying?.id) { _, id in router.setQuero("presentes", open: id != nil) }
         .onDisappear { router.setQuero("presentes", open: false); commitDelete() }

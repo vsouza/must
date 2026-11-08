@@ -72,6 +72,7 @@ struct ProximosView: View {
             .ignoresSafeArea()
         }
         .toolbar(.hidden, for: .navigationBar)
+        .lightStatusBar() // tinta no topo
         #if DEBUG
         .task {
             if DebugFlags.string("debugScreen") == "proximos" { ProximosDemo.ensure(context: context, region: region) }
