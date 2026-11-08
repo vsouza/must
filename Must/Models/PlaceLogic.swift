@@ -222,10 +222,13 @@ extension Region {
 enum PlaceActions {
     /// Marca 済 e registra o gasto (pode ser 0).
     static func markDone(_ place: Place, spent: Double, category: ExpenseCategory? = nil, method: PaymentMethod = .card,
-                         at date: Date = AppClock.now, context: ModelContext) {
+                         at date: Date = AppClock.now, paidBy: String = "", splitWith: String = "", context: ModelContext) {
         place.done = DoneMark(at: date, spent: spent)
         if spent > 0 {
-            context.insert(Expense(at: date, amount: spent, category: category ?? place.defaultCategory, place: place, method: method))
+            let expense = Expense(at: date, amount: spent, category: category ?? place.defaultCategory, place: place, method: method)
+            expense.paidBy = paidBy
+            expense.splitWith = splitWith
+            context.insert(expense)
         }
         try? context.save()
         Log.data.info("済 \(place.id, privacy: .public) · \(spent)")
@@ -233,12 +236,15 @@ enum PlaceActions {
 
     /// Registrar gasto: cria o `Expense` (se > 0) e, com lugar, marca 済 no lugar e na parada do dia.
     static func record(amount: Double, place: Place?, category: ExpenseCategory?, method: PaymentMethod,
-                       day: PlannedDay?, at date: Date = AppClock.now, context: ModelContext) {
+                       day: PlannedDay?, at date: Date = AppClock.now, paidBy: String = "", splitWith: String = "", context: ModelContext) {
         if let place {
-            markDone(place, spent: amount, category: category, method: method, at: date, context: context)
+            markDone(place, spent: amount, category: category, method: method, at: date, paidBy: paidBy, splitWith: splitWith, context: context)
             for stop in day?.stops ?? [] where stop.place?.id == place.id { stop.done = true }
         } else if amount > 0 {
-            context.insert(Expense(at: date, amount: amount, category: category ?? .other, place: nil, method: method))
+            let expense = Expense(at: date, amount: amount, category: category ?? .other, place: nil, method: method)
+            expense.paidBy = paidBy
+            expense.splitWith = splitWith
+            context.insert(expense)
         }
         try? context.save()
     }

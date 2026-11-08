@@ -376,6 +376,16 @@ enum DebugLaunch {
         case "mais": router.sheet = .quero(text: nil)
         case "viagem-aba": router.select(.viagem)
         case "viagem": router.push(.trip, on: .hoje)
+        // prompt 32 · Grupo: pessoas, votação, acertar contas, gasto dividido (GrupoDemo põe os exemplos).
+        case "grupo", "grupo-viagem": GrupoDemo.ensure(context: context, region: region); router.push(.trip, on: .hoje)
+        case "grupo-pessoas": GrupoDemo.ensure(context: context, region: region); router.push(.pessoas, on: .hoje)
+        case "grupo-votar": GrupoDemo.ensure(context: context, region: region); router.push(.votar, on: .hoje)
+        case "grupo-votacao":
+            GrupoDemo.ensure(context: context, region: region)
+            if let id = GrupoDemo.firstPollId(context: context) { router.push(.votacao(id: id), on: .hoje) }
+        case "grupo-aoub": GrupoDemo.ensure(context: context, region: region); router.sheet = .aOuB(placeId: GrupoDemo.firstPlaceId(context: context))
+        case "grupo-acertar": GrupoDemo.ensure(context: context, region: region); router.push(.acertar, on: .hoje)
+        case "gasto-grupo": GrupoDemo.ensure(context: context, region: region); router.select(.hoje); router.sheet = .expense(placeId: nil)
         case "reservas": router.push(.reservations, on: .hoje)
         case "experiencias", "experiencia-link":
             ExperienceDemo.ensure(context: context, region: region)
