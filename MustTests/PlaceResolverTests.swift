@@ -150,4 +150,15 @@ struct LinkMapLayoutTests {
         #expect(layout.area?.count == 65)
         #expect(layout.spreadMeters.map { $0 > 100 && $0 < 400 } == true)
     }
+
+    @Test func areaNameNeverShowsKanji() {
+        var kanji = match("Tsukiji Outer Market", located: true, lat: 35.6654, lng: 139.7707)
+        kanji.extracted.area = "築地"
+        let station = TransitStation(name: "築地", coordinate: .init(latitude: 35.6680, longitude: 139.7720), lines: ["H"])
+        let transit = TransitMap(lines: [], stations: [station])
+        let layout = LinkMapLayout.make(matches: [kanji], region: .jp, transit: transit)
+        #expect(layout.areaName.map(LinkMapLayout.hasCJK) != true)
+        #expect(LinkMapLayout.hasCJK("築地"))
+        #expect(!LinkMapLayout.hasCJK("Tsukiji"))
+    }
 }

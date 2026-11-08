@@ -38,9 +38,10 @@ struct LinkMapLayout: Equatable {
             layout.spreadMeters = maxSpread(points)
             layout.area = ellipse(points).map { $0.map { MapCameraCommand.Coordinate($0) } }
         }
-        let areas = located.compactMap { $0.existing?.area ?? $0.extracted.area }
+        // Rótulo sempre em letras latinas (nada de kanji na interface): nome de bairro em CJK cai pra estação mais perto.
+        let areas = located.compactMap { $0.existing?.area ?? $0.extracted.area }.filter { !hasCJK($0) }
         layout.areaName = Dictionary(grouping: areas, by: { $0 }).max { $0.value.count < $1.value.count }?.key
-            ?? nearestStation(to: center, in: transit)
+            ?? nearestStation(to: center, in: transit).flatMap { AtalhosRules.latinName($0, areas: AreaCatalog.areas(for: region)) }
         return layout
     }
 
@@ -119,10 +120,14 @@ struct LinkMapLayout: Equatable {
         }
     }
 
-    static func nearestStation(to center: CLLocationCoordinate2D, in transit: TransitMap) -> String? {
+    static func hasCJK(_ text: String) -> Bool {
+        text.unicodeScalars.contains { $0.properties.isIdeographic || (0x3040...0x30FF).contains($0.value) }
+    }
+
+    static func nearestStation(to center: CLLocationCoordinate2D, in transit: TransitMap) -> TransitStation? {
         guard let station = transit.stations.min(by: { meters(center, $0.coordinate) < meters(center, $1.coordinate) }),
               meters(center, station.coordinate) <= 1_000 else { return nil }
-        return station.name
+        return station
     }
 }
 
