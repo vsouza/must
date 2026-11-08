@@ -137,7 +137,7 @@ struct CorteResultRow: View {
                     .lineLimit(1).minimumScaleFactor(0.6)
                 Text((line.isBoard ? "\(line.distance.unit)\n\(line.travel)" : line.distance.unit).uppercased())
                     .font(V8Font.mono(8.5)).tracking(0.6).foregroundStyle(sub)
-                    .lineLimit(2).fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(3).fixedSize(horizontal: false, vertical: true)
             }
             .frame(width: 84, alignment: .leading)
             Button(action: onTap) {
