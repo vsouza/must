@@ -277,11 +277,13 @@ struct SOSLine: View {
                         .tracking(0.9)
                         .foregroundStyle(V8.muteDark)
                         .lineLimit(2)
+                        .minimumScaleFactor(0.6) // letra grande: encolhe em vez de quebrar "HOSPITAL" no meio
                         .frame(width: 84, alignment: .leading)
                     VStack(alignment: .leading, spacing: 2) {
                         HStack(spacing: 6) {
                             Text(value).font(V8Font.text(14, weight: .bold)).foregroundStyle(V8.white).lineLimit(1)
-                            if check { V8Tag(text: "conferir", style: .orange) }
+                                .layoutPriority(-1)
+                            if check { V8Tag(text: "conferir", style: .orange).fixedSize() }
                         }
                         Text(detail).font(V8Font.text(12)).foregroundStyle(V8.muteDark).lineLimit(1)
                     }

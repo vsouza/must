@@ -362,7 +362,10 @@ struct CapaCorteView: View {
                 DashedLine().stroke(V8.orange, style: StrokeStyle(lineWidth: 2, dash: [7, 5])).frame(height: 2)
                 MonoLabel("até aqui", size: 10, color: V8.orange)
                 HStack {
-                    MonoLabel("faça você mesmo pra continuar", size: 9, color: V8.muteDark)
+                    // Letra grande: quebra em duas linhas em vez de cortar no meio.
+                    Text("FAÇA VOCÊ MESMO PRA CONTINUAR")
+                        .font(V8Font.mono(9)).tracking(0.9).foregroundStyle(V8.muteDark)
+                        .lineLimit(3).fixedSize(horizontal: false, vertical: true)
                     Spacer(minLength: 12)
                     Button { state.skipWalk() } label: {
                         Text("PULAR").font(V8Font.mono(11, weight: .semibold)).tracking(1).foregroundStyle(V8.paper)

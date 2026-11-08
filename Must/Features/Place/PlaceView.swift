@@ -9,6 +9,7 @@ import SwiftUI
 /// cor do Must atrás do texto, sem degradê, sem zoom. Foto: uma por lugar, do disco; sem nada no disco, uma `/media` só
 /// pro Lugar aberto (o resolvedor decide). `-debugNoPhotos` força o layout sem foto.
 struct PlaceView: View {
+    @Environment(\.dynamicTypeSize) private var typeSize
     let placeId: String
 
     @Environment(\.dismiss) private var dismiss
@@ -210,7 +211,10 @@ struct PlaceView: View {
                 }
             }
         }
-        .containerRelativeFrame(.vertical) { [pull = corte.pull.offset] height, _ in CutFrame.heights(pull: pull, rest: height * 0.5).band }
+        // Letra grande (o app vai até XXXL, `mustCap`): o bloco cresce (o bilhete, as etiquetas, o nome e o nome local não cabem em meia tela e eram cortados pela régua).
+        .containerRelativeFrame(.vertical) { [pull = corte.pull.offset, big = typeSize >= .xxLarge] height, _ in
+            CutFrame.heights(pull: pull, rest: height * (big ? 0.66 : 0.5)).band
+        }
         .clipped()
         .frame(maxWidth: .infinity)
         // Toque na foto: ela inteira, em tela cheia, com zoom (as mesmas URLs: nada novo baixa).

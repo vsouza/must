@@ -83,21 +83,26 @@ struct V8FilterRow: View {
     }
 }
 
-/// Chip de filtro do design (`Agora`, `Perto`): ligado = tinta cheia com texto papel; desligado = contorno.
+/// Chip de filtro (`Agora`, `Perto`), no corte (prompt 30 §1): quadrado de borda 2 pt, mono em caixa alta; ligado = tinta cheia
+/// com texto papel. Mesmo desenho do `CutChip` do Board, pra Lista, Musts, Dicas e Em cartaz falarem a mesma língua.
 struct V8FilterChip: View {
     var title: String
     var on: Bool
     var onInk = false
 
+    private var line: Color { onInk ? V8.white : V8.ink }
+
     var body: some View {
         Text(title)
-            .font(V8Font.text(14, weight: .semibold))
+            .font(V8Font.mono(11, weight: .semibold))
+            .tracking(0.8)
+            .textCase(.uppercase)
             .lineLimit(1)
-            .foregroundStyle(on ? (onInk ? V8.ink : V8.paper) : (onInk ? V8.white : V8.ink))
-            .padding(.horizontal, 16)
-            .frame(minHeight: 38)
-            .background(Capsule().fill(on ? (onInk ? V8.paper : V8.ink) : Color.clear))
-            .overlay(Capsule().strokeBorder(on ? Color.clear : (onInk ? V8.white : V8.ink).opacity(0.85), lineWidth: 1))
+            .foregroundStyle(on ? (onInk ? V8.ink : V8.paper) : line)
+            .padding(.horizontal, 12)
+            .frame(minHeight: 40)
+            .background(Rectangle().fill(on ? (onInk ? V8.paper : V8.ink) : Color.clear))
+            .overlay(Rectangle().strokeBorder(line, lineWidth: 2))
     }
 }
 
