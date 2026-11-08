@@ -4,7 +4,7 @@ import SwiftData
 
 /// Campos da conferência, na ordem da tela. A confiança e a origem de cada um vêm do extrator.
 enum TicketField: String, CaseIterable, Sendable {
-    case supplier, title, when, people, price, confirmation, meeting, cancel
+    case supplier, title, when, people, price, confirmation, meeting, cancel, venue, seat, gate, holder
 }
 
 /// Confiança (0–1) e de onde veio o valor. Editar à mão põe 1 e "à mão".
@@ -33,6 +33,10 @@ struct TicketDraft: Equatable, Sendable {
     var confirmation = ""
     var qrPayload = ""
     var meetingPoint = ""
+    var venue = ""
+    var seat = ""
+    var gate = ""
+    var holder = ""
     var cancelUntil: Date?
     var legs: [FlightLeg] = []
     var attachment: Attachment?
@@ -43,6 +47,18 @@ struct TicketDraft: Equatable, Sendable {
     var remindLeave = false
 
     init(at: Date) { self.at = at }
+
+    /// Observação que vai pra sessão: código, assento, portão e titular, numa linha.
+    var sessionNote: String? {
+        let parts = [confirmation, seat, gate.isEmpty ? "" : "portão \(gate)", holder].filter { !$0.isEmpty }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    }
+
+    /// Campos lidos (não vazios) e campos que o ingresso pede pra esse tipo: o numeral gigante da conferência.
+    var readCount: Int {
+        [!title.isEmpty, meta[.when] != nil, !venue.isEmpty || !meetingPoint.isEmpty, !confirmation.isEmpty || !qrPayload.isEmpty,
+         !seat.isEmpty, !gate.isEmpty, !holder.isEmpty, !supplier.isEmpty, price != nil].filter { $0 }.count
+    }
 
     /// Rascunho a partir do que o extrator leu. Campo que não veio fica vazio, com confiança zero (pede conferência).
     init(_ e: ExtractedTicket, region: Region, now: Date, sourceLabel: String) {
@@ -59,6 +75,10 @@ struct TicketDraft: Equatable, Sendable {
         if let code = e.confirmation { confirmation = code.value; meta[.confirmation] = FieldMeta(confidence: code.confidence, origin: code.origin) }
         if let qr = e.qrPayload { qrPayload = qr.value }
         if let meeting = e.meetingPoint { meetingPoint = meeting.value; meta[.meeting] = FieldMeta(confidence: meeting.confidence, origin: meeting.origin) }
+        if let v = e.venue { venue = v.value; meta[.venue] = FieldMeta(confidence: v.confidence, origin: v.origin) }
+        if let v = e.seat { seat = v.value; meta[.seat] = FieldMeta(confidence: v.confidence, origin: v.origin) }
+        if let v = e.gate { gate = v.value; meta[.gate] = FieldMeta(confidence: v.confidence, origin: v.origin) }
+        if let v = e.holder { holder = v.value; meta[.holder] = FieldMeta(confidence: v.confidence, origin: v.origin) }
         if let cancel = e.cancelUntil { cancelUntil = cancel.value; meta[.cancel] = FieldMeta(confidence: cancel.confidence, origin: cancel.origin) }
     }
 
@@ -244,9 +264,8 @@ final class TicketImportModel {
             let pages = reading.codePages.first.map { "na página \($0)" } ?? ""
             progress.append(ReadLine(id: 1, done: true, text: "QR encontrado \(pages)".trimmingCharacters(in: .whitespaces)))
         }
-        var extracted = TicketExtractor.extract(reading, region: region)
-        progress.append(ReadLine(id: 2, done: true, text: "Data, hora, pessoas e preço · no aparelho"))
-        extracted = await TicketModelExtractor.enrich(extracted, text: reading.text)
+        progress.append(ReadLine(id: 2, done: true, text: "Data, hora, local, assento e preço · no aparelho"))
+        let extracted = await TicketPipeline.extract(reading, region: region)
         progress.append(ReadLine(id: 3, done: false, text: "Combinando com o board…"))
 
         candidate = await candidate(for: extracted)
@@ -265,7 +284,7 @@ final class TicketImportModel {
     /// Ingresso com o que se sabe pra casar: título, ponto de encontro e, se o Places conferir, placeId e coordenada.
     private func candidate(for e: ExtractedTicket) async -> TicketCandidate {
         let title = e.title?.value ?? e.supplier?.value ?? ""
-        let address = e.meetingPoint?.value
+        let address = e.meetingPoint?.value ?? e.venue?.value
         var out = TicketCandidate(title: title, placeId: nil, lat: nil, lng: nil, address: address)
         let query = address ?? (title.isEmpty ? nil : title)
         guard let provider, provider.isConfigured, DevOverrides.liveData, let query else { return out }
@@ -347,7 +366,7 @@ final class TicketImportModel {
             let sameCurrency = draft.currency.map { $0 == region.currency } ?? true
             let paid = sameCurrency ? draft.price : nil
             let session = EventSession(at: draft.at, title: draft.title, price: paid, bought: true,
-                                       note: draft.confirmation.isEmpty ? nil : draft.confirmation)
+                                       note: draft.sessionNote)
             Self.attach(session, to: place, draft: draft)
             let ticket = Ticket(at: draft.at, sessionId: session.id,
                                 confirmation: draft.confirmation.isEmpty ? nil : draft.confirmation,
@@ -462,7 +481,7 @@ final class TicketImportModel {
             extra.sport = sport
         default:
             var experience = extra.experience ?? ExperienceInfo(supplier: supplier(draft.supplier),
-                                                                 meetingPoint: draft.meetingPoint.isEmpty ? nil : draft.meetingPoint)
+                                                                 meetingPoint: draft.meetingPoint.isEmpty ? (draft.venue.isEmpty ? nil : draft.venue) : draft.meetingPoint)
             if !experience.sessions.contains(where: { $0.id == session.id }) { experience.sessions.append(session) }
             extra.experience = experience
         }

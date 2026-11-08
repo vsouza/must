@@ -11,7 +11,7 @@ struct TicketCorpusTests {
         let start = Date()
         let extracted: ExtractedTicket
         do {
-            extracted = try await TicketPipeline.run(source, region: ticket.region)
+            extracted = try await TicketPipeline.run(source, region: ticket.region, useModel: false)
         } catch {
             return TicketScore(caseID: ticket.id, kindLabel: ticket.label, form: form, hits: [:], seconds: 0)
         }

@@ -143,6 +143,7 @@
 		4538C644C2CC9C45E20DE6FA /* TicketModelExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAF874CE82AC9FC5CC550BC2 /* TicketModelExtractor.swift */; };
 		4593673397FDC4046B5DBE61 /* ColarTextoSample.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46E5C4E5A84CA30D2FD63E08 /* ColarTextoSample.swift */; };
 		4628B77FF846856371DDBBC9 /* ColarTextoHighlight.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1FFE8AE055F17EBC0BA100E /* ColarTextoHighlight.swift */; };
+		466330AA60B9117E268242C7 /* TicketFields.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CDA9A71D3AA56132B5F452E /* TicketFields.swift */; };
 		467CCDE766F60AB9CEF82C04 /* ButtonMetricsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C74768FA26896CDFA1961F8 /* ButtonMetricsTests.swift */; };
 		477A6B28C3F63FCC5A97499C /* WhereAmI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 777DE3C7EC6186B8235C3E85 /* WhereAmI.swift */; };
 		486C94238E5229A67D788E4A /* seed-bh.json in Resources */ = {isa = PBXBuildFile; fileRef = 50B7B2806BAB98E03649662B /* seed-bh.json */; };
@@ -543,6 +544,7 @@
 		FE87FD2895E02680C6CB45F8 /* MapSearchModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABA162F5917B92091C567032 /* MapSearchModel.swift */; };
 		FEFE0EE4458622F1FCC1355C /* BoaNoiteTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA4807C0EC34C53EF1278382 /* BoaNoiteTests.swift */; };
 		FF8BB9597D49FB3D62392FD9 /* CountryProfileTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F39592A383AE3D589B550C7B /* CountryProfileTests.swift */; };
+		FF9C1D3502021EAFCAC8D2BB /* TicketHardCasesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BED4ED95E26276EF8E801EB /* TicketHardCasesTests.swift */; };
 		FFA15BA3DF0A181F252A3D4A /* TicketTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC71475B7DB916C20DF808A1 /* TicketTests.swift */; };
 /* End PBXBuildFile section */
 
@@ -601,6 +603,7 @@
 		0630B9FA5F12C5507329752F /* MapMustFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapMustFilter.swift; sourceTree = "<group>"; };
 		073EE5D0C62BCB42F2F0FB7C /* last-trains.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "last-trains.json"; sourceTree = "<group>"; };
 		0B09B23123A531606C10D583 /* GuideNudgesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuideNudgesTests.swift; sourceTree = "<group>"; };
+		0BED4ED95E26276EF8E801EB /* TicketHardCasesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketHardCasesTests.swift; sourceTree = "<group>"; };
 		0BF316C9E5E57177953F695F /* ExperienceDemo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperienceDemo.swift; sourceTree = "<group>"; };
 		0C42FCB610CD3F0DCA2D3DAF /* MustsHubView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MustsHubView.swift; sourceTree = "<group>"; };
 		0C5AA907B51E3A312E8DEA0D /* Network.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Network.swift; sourceTree = "<group>"; };
@@ -808,6 +811,7 @@
 		6C519B4D5927F28CDE89D882 /* OpenNowIndexTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenNowIndexTests.swift; sourceTree = "<group>"; };
 		6C9849256E110EA3402843D3 /* ShoppingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShoppingView.swift; sourceTree = "<group>"; };
 		6CB585AFBCB8973E3B46F059 /* ProximosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProximosView.swift; sourceTree = "<group>"; };
+		6CDA9A71D3AA56132B5F452E /* TicketFields.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketFields.swift; sourceTree = "<group>"; };
 		6CE017A72A1FB6FBBC0A7C46 /* SavedPlacesImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedPlacesImporter.swift; sourceTree = "<group>"; };
 		6D59E2E32C6D785A134C2FC4 /* PlacePhotoRef.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlacePhotoRef.swift; sourceTree = "<group>"; };
 		6DAA627C8B6252421E6A7996 /* PerformanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PerformanceTests.swift; sourceTree = "<group>"; };
@@ -1636,6 +1640,7 @@
 				7B514A86BB604B08856786EA /* SunServiceTests.swift */,
 				B36E598F6C67D2AADA88CB44 /* TicketCorpus.swift */,
 				CA23CE6FC8CA135BEDFFE697 /* TicketCorpusTests.swift */,
+				0BED4ED95E26276EF8E801EB /* TicketHardCasesTests.swift */,
 				1A0026A9B2FF86CB80C7B4E5 /* TicketMatcherTests.swift */,
 				0F9CE3F785580679B015C4ED /* TicketReaderTests.swift */,
 				898728B317F655E684057DBD /* TicketScoring.swift */,
@@ -2373,6 +2378,7 @@
 				0C832B556BB2DF99EF2A23CD /* ExtractedTicket.swift */,
 				D5E3F65868D18050715124E1 /* PKPassReader.swift */,
 				B982B5C9A85023A0BF2D3B2E /* ShareInbox.swift */,
+				6CDA9A71D3AA56132B5F452E /* TicketFields.swift */,
 				8BB210A83EBD126A299726C3 /* TicketLeaveReminder.swift */,
 				A0CDF92BF817A26184F4637E /* TicketMatcher.swift */,
 				CAF874CE82AC9FC5CC550BC2 /* TicketModelExtractor.swift */,
@@ -2778,6 +2784,7 @@
 				D96A8AC25C1AEEACBBD1E5AB /* SunServiceTests.swift in Sources */,
 				BB9473E0A0B6DB731F961957 /* TicketCorpus.swift in Sources */,
 				DB35AFD6395BAEFC27AE86F8 /* TicketCorpusTests.swift in Sources */,
+				FF9C1D3502021EAFCAC8D2BB /* TicketHardCasesTests.swift in Sources */,
 				6E16E2AA9F1FA639A98A22EE /* TicketMatcherTests.swift in Sources */,
 				753E02476613A94EF1BBE9FF /* TicketReaderTests.swift in Sources */,
 				4AE5671FFA1B6228D38B1725 /* TicketScoring.swift in Sources */,
@@ -3133,6 +3140,7 @@
 				304931CC76265A963B70CDB0 /* TicketDemo.swift in Sources */,
 				2BBE5013A361E4C3286625EE /* TicketEditor.swift in Sources */,
 				E20109521989BBA072BA7171 /* TicketEntradaView.swift in Sources */,
+				466330AA60B9117E268242C7 /* TicketFields.swift in Sources */,
 				682E2C00BD69F88552577F8E /* TicketFiles.swift in Sources */,
 				8C7BADBAFB9DC29FEA639206 /* TicketImportFlow.swift in Sources */,
 				B7AC5192D9B2C12006645647 /* TicketImportModel.swift in Sources */,

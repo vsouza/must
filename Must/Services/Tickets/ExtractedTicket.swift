@@ -92,12 +92,21 @@ enum TicketExtractor {
 
         // Pernas de voo (PNR com duas ou mais linhas "LA 8084 · … · GRU → DOH").
         out.legs = flightLegs(in: text, region: region)
+        if out.legs.isEmpty, let leg = TicketFields.flightLeg(in: text) { out.legs = [leg] }
 
         // Data e hora: o passe manda; senão a primeira data que não seja de cancelamento.
         if let date = reading.pass?.relevantDate {
             out.at = Extracted(value: date, confidence: 0.9, origin: "do passe")
-        } else if let found = TicketDates.first(in: mainText(text), region: region) {
-            out.at = Extracted(value: found.date, confidence: found.hasTime ? 0.9 : 0.6, origin: "lido do texto")
+        } else if let found = TicketDates.first(in: mainText(text), region: region) ?? TicketDates.detected(in: mainText(text), region: region) {
+            var date = found.date
+            var confidence = found.hasTime ? 0.9 : 0.6
+            // Data sem hora na mesma expressão: a hora vem do rótulo ("Início: 21:00", "Departs 10:33").
+            if !found.hasTime, let clock = TicketFields.time(in: mainText(text)) {
+                let day = region.calendar.startOfDay(for: found.date)
+                date = region.calendar.date(bySettingHour: clock.hour, minute: clock.minute, second: 0, of: day) ?? found.date
+                confidence = clock.labelled ? 0.85 : 0.7
+            }
+            out.at = Extracted(value: date, confidence: confidence, origin: "lido do texto")
         } else if let leg = out.legs.first?.departs {
             out.at = Extracted(value: leg, confidence: 0.85, origin: "lido do texto")
         }
@@ -112,7 +121,10 @@ enum TicketExtractor {
         }
 
         // Pessoas.
-        if let found = people(in: text) {
+        if let party = TicketText.first(#"(?i)party of (\d{1,2})\b|mesa para (\d{1,2})\b|(\d{1,2}) (?:covers|couverts)"#, in: text),
+           let n = Int(party[1] + party[2] + party[3]), (1...50).contains(n) {
+            out.people = Extracted(value: n, confidence: 0.85, origin: "lido do texto")
+        } else if let found = people(in: text) {
             out.people = Extracted(value: found.value, confidence: found.confidence, origin: "lido do texto")
         }
 
@@ -139,7 +151,19 @@ enum TicketExtractor {
             out.cancelUntil = cancel
         }
 
+        out.venue = TicketFields.venue(in: text)
+        out.seat = TicketFields.seat(in: text)
+        out.gate = TicketFields.gate(in: text)
+        out.holder = TicketFields.holder(in: text)
+        if out.legs.count == 1, out.legs[0].departs == nil { out.legs[0].departs = out.at?.value }
+
         out.kind = kind(text: text, supplier: out.supplier?.value, legs: out.legs, codes: reading.codes)
+        // Voo e trem: o título é o que o viajante procura ("LA 8084 · GRU → DOH", "Shinkansen Nozomi 225").
+        if out.kind == .flight, let leg = out.legs.first, reading.pass?.description == nil {
+            out.title = Extracted(value: "\(leg.number) · \(leg.from) → \(leg.to)", confidence: 0.85, origin: "lido do texto")
+        } else if out.kind == .rail, reading.pass?.description == nil, let train = TicketFields.trainTitle(in: text) {
+            out.title = Extracted(value: train, confidence: 0.8, origin: "lido do texto")
+        }
         if out.kind == .entry {
             out.title = Extracted(value: entryName(text: text), confidence: 0.9, origin: "lido do texto")
         }
@@ -150,7 +174,7 @@ enum TicketExtractor {
 
     /// Código depois de um rótulo ("Código de reserva: XKQ7MP", "Reference BR-7K2M-9931"). Maiúsculas e dígitos, sem palavra comum.
     static func labelledCode(in text: String) -> String? {
-        let label = #"(?i:código de reserva|codigo de reserva|reservation code|booking reference|booking code|confirmation code|código de confirmação|codigo de confirmacao|confirmation number|número da reserva|numero da reserva|localizador|pnr|reference|referência|referencia|confirmação|confirmacao|confirmation)"#
+        let label = #"(?i:código de reserva|codigo de reserva|reservation code|booking reference|booking code|confirmation code|código de confirmação|codigo de confirmacao|confirmation number|número da reserva|numero da reserva|ticket no\.?|ticket number|ticket id|order number|order no\.?|pedido|codice prenotazione|codice|prenotazione|localizador|pnr|reference|referência|referencia|confirmação|confirmacao|confirmation)"#
         for m in TicketText.matches(label + #"\s*(?:number|#|nº|n°)?\s*[:#.]?\s*([A-Za-z0-9][A-Za-z0-9-]{3,23})"#, in: text) {
             let candidate = m.groups[1]
             if candidate.uppercased() == candidate, TicketText.looksLikeCode(candidate) { return candidate }
@@ -181,18 +205,23 @@ enum TicketExtractor {
     }
 
     static func labelledTitle(in text: String) -> String? {
-        let label = #"(?i)(?:experi[eê]ncia|experience|atividade|activity|tour|produto|product|evento|event|ingresso|ticket|aula|class|show)\s*:\s*([^\n]{4,120})"#
+        let label = #"(?im)^\s*(?:experi[eê]ncia|experience|atividade|activity|tour|produto|product|evento|event|aula|class|show)\s*:\s*([^\n]{4,120})"#
         guard let value = TicketText.first(label, in: text)?[1].trimmingCharacters(in: .whitespacesAndNewlines), !value.isEmpty else { return nil }
         return value
     }
 
-    /// Primeira linha com cara de título: 3 a 14 palavras, sem número e sem palavra de cabeçalho/rótulo.
+    /// Primeira linha com cara de título nas primeiras linhas: sem "rótulo: valor", sem cabeçalho genérico ("Boarding pass",
+    /// "Ingresso eletrônico"), sem ruído de reserva, mais letra que número. Aceita "·", "—" e números ("Nozomi 225").
     static func titleLine(in text: String) -> String? {
         let noise = #"(?i)confirm|reserv|booking|reference|refer[eê]ncia|passag|passenger|travel|meeting|encontro|cancel|pessoas|total|pago|price|pre[çc]o|e-?mail|www\.|http|código|codigo|localizador|pnr|checkin|check-in|seat|assento|terminal|gate"#
-        for line in TicketText.lines(text) {
+        let generic = #"(?i)ingresso|ticket|biglietto|admission|boarding|cart[aã]o|embarque|voucher|e-?ticket|receipt|bilhete|entry|invoice|fatura|pedido|order"#
+        for line in TicketText.lines(text).prefix(8) {
             let words = line.split(separator: " ")
-            guard (3...14).contains(words.count), line.count <= 120, line.rangeOfCharacter(from: .decimalDigits) == nil,
-                  !line.contains(":"), !line.contains("·"), TicketText.matches(noise, in: line).isEmpty else { continue }
+            let letters = line.filter(\.isLetter).count
+            guard (2...16).contains(words.count), (4...100).contains(line.count), letters * 10 >= line.count * 6,
+                  TicketText.first(#"^[^:：]{1,28}[:：]\s"#, in: line) == nil, !line.contains("→"),
+                  TicketText.matches(noise, in: line).isEmpty, TicketText.matches(generic, in: line).isEmpty,
+                  TicketText.first(#"\d{1,2}[:/]\d{2}"#, in: line) == nil else { continue }
             return line
         }
         return nil
