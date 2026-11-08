@@ -271,8 +271,8 @@ ${=W} dev.simDate -float $(epoch 2026-11-26T11:00:00+09:00)
 shot jp-arte -debugScreen lugar:j20
 shot jp-arte-painel -debugScreen painel:j20
 shot jp-musts -debugScreen musts
-shot jp-ingresso-entrada -debugScreen ingresso-entrada
-shot jp-ingresso-revisar -debugScreen ingresso-revisar
+shot jp-ingresso-entrada -debugScreen ingresso-fontes   # escolher a fonte (corte, prompt 31 · 6)
+WAIT=8 shot jp-ingresso-revisar -debugScreen ingresso-conferir  # conferência: campos lidos, incerto em laranja
 
 echo "→ BH · sport · Pampulha dom 1 nov 07:40"
 ${=W} region bh

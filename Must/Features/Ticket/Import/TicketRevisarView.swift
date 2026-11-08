@@ -15,7 +15,8 @@ struct TicketRevisarView: View {
     @State private var openField: TicketField?
 
     private var region: Region { store.region }
-    private var amber: Color { Color(hex: 0xFFB020) }
+    /// Incerto = laranja (a única cor da identidade v8); certo fica em tinta.
+    private var amber: Color { V8.orange }
 
     var body: some View {
         ScrollView {
@@ -29,10 +30,9 @@ struct TicketRevisarView: View {
                 }
                 .padding(.top, 8)
 
-                Text("Conferir").mustTitle().padding(.top, 22)
-                legend.padding(.top, 6)
+                reviewHeader.padding(.top, 22)
 
-                fieldsCard.padding(.top, 20)
+                fieldsCard.padding(.top, 18)
 
                 if model.isWalletKind {
                     walletCard.padding(.top, 26)
@@ -62,7 +62,7 @@ struct TicketRevisarView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .scrollIndicators(.hidden)
-        .background(Color.must.bg)
+        .background(V8.paper)
         .sheet(isPresented: $choosing) {
             TicketPlacePicker(model: model, close: { choosing = false })
         }
@@ -96,16 +96,26 @@ struct TicketRevisarView: View {
         .background(Color.must.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 
-    /// Legenda que quebra linha (um HStack não quebra e empurra a tela pra fora).
-    private var legend: some View {
-        let muted = Color.must.secondary
-        return (Text("toque em qualquer campo pra corrigir · ").foregroundStyle(muted)
-            + Text("●").foregroundStyle(Color.must.green)
-            + Text(" certo · ").foregroundStyle(muted)
-            + Text("●").foregroundStyle(amber)
-            + Text(" conferir").foregroundStyle(muted))
-            .mustSerif(17)
-            .frame(maxWidth: .infinity, alignment: .leading)
+    /// Título + numeral gigante (quantos campos lidos) + quantos pedem conferência, em laranja.
+    private var reviewHeader: some View {
+        let read = model.draft?.readCount ?? 0
+        let doubtful = (model.draft?.meta.values.filter(\.needsReview).count ?? 0)
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .lastTextBaseline, spacing: 12) {
+                Text("\(read)")
+                    .font(V8Font.numeral(96)).tracking(-3).foregroundStyle(V8.orange)
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Conferir").font(V8Font.display(34)).foregroundStyle(V8.ink)
+                    Text("\(read) CAMPOS LIDOS").font(V8Font.mono(10, weight: .semibold)).tracking(1).foregroundStyle(V8.mute)
+                }
+            }
+            Text(doubtful == 0 ? "Tudo certo. Toque num campo pra corrigir."
+                 : "\(doubtful) \(doubtful == 1 ? "campo" : "campos") em laranja: confira antes de salvar. Toque pra corrigir.")
+                .font(V8Font.text(14)).foregroundStyle(doubtful == 0 ? V8.mute : V8.orangeDeep)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .accessibilityElement(children: .combine)
     }
 
     // MARK: Campos
@@ -116,11 +126,11 @@ struct TicketRevisarView: View {
             field(.supplier, "Fornecedor", value: nonEmpty(d?.supplier)) {
                 editorBox { TextField("—", text: text(\.supplier, .supplier), axis: .vertical).lineLimit(1...3) }
             }
-            RowDivider()
+            RuleLine()
             field(.title, "Título", value: nonEmpty(d?.title, "—")) {
                 editorBox { TextField("nome da experiência", text: text(\.title, .title), axis: .vertical).lineLimit(1...3) }
             }
-            RowDivider()
+            RuleLine()
             field(.when, "Quando", value: whenText, mono: true) {
                 editorBox {
                     DatePicker("Quando", selection: date(\.at, .when), displayedComponents: [.date, .hourAndMinute])
@@ -132,7 +142,7 @@ struct TicketRevisarView: View {
                 }
             }
             if !model.isWalletKind && !model.isFlight {
-                RowDivider()
+                RuleLine()
                 field(.people, "Pessoas", value: "\(d?.people ?? 1)", mono: true) {
                     editorBox {
                         Stepper(value: integer(\.people, .people), in: 1...12) {
@@ -141,13 +151,19 @@ struct TicketRevisarView: View {
                     }
                 }
             }
-            RowDivider()
+            ForEach(extraRows, id: \.field) { row in
+                RuleLine()
+                field(row.field, row.label, value: row.value) {
+                    editorBox { TextField(row.label.lowercased(), text: text(row.path, row.field), axis: .vertical).lineLimit(1...3) }
+                }
+            }
+            RuleLine()
             field(.price, "Pago", value: d?.price.map { region.money($0) } ?? "—", mono: true) {
                 editorBox {
                     TextField("24.000 (\(currencyMark))", text: price()).keyboardType(.numberPad).font(.must.mono(16, .semibold))
                 }
             }
-            RowDivider()
+            RuleLine()
             field(.confirmation, "Confirmação", value: nonEmpty(d?.confirmation), mono: true) {
                 editorBox {
                     TextField("código", text: text(\.confirmation, .confirmation))
@@ -156,18 +172,18 @@ struct TicketRevisarView: View {
                 }
             }
             if !model.isWalletKind && !model.isFlight {
-                RowDivider()
+                RuleLine()
                 field(.meeting, "Encontro", value: nonEmpty(d?.meetingPoint)) {
                     editorBox { TextField("ponto de encontro", text: text(\.meetingPoint, .meeting), axis: .vertical).lineLimit(1...3) }
                 }
-                RowDivider()
+                RuleLine()
                 field(.cancel, "Cancelamento", value: cancelText) {
                     editorBox { cancelControl }
                 }
             }
-            RowDivider()
+            RuleLine()
             HStack(spacing: 12) {
-                Text("Anexos").font(.must.archivo(14)).foregroundStyle(Color.must.secondary).frame(width: 96, alignment: .leading)
+                Text("ANEXOS").font(V8Font.mono(10, weight: .semibold)).tracking(0.8).foregroundStyle(V8.mute).frame(width: 96, alignment: .leading)
                 Spacer(minLength: 0)
                 if let attachment = d?.attachment {
                     Pill(attachmentLabel(attachment))
@@ -176,40 +192,56 @@ struct TicketRevisarView: View {
             }
             .padding(.horizontal, 16).padding(.vertical, 14)
         }
-        .background(Color.must.surface2, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay(alignment: .top) { RuleLine() }
+        .overlay(alignment: .bottom) { RuleLine() }
     }
 
-    /// Linha compacta: rótulo · ● valor · origem. Tocar abre (ou fecha) o controle logo abaixo; abrir outro fecha este.
+    /// Local, assento, portão, titular: só aparecem quando o ingresso trouxe algum (ou quando o leitor ficou em dúvida).
+    private var extraRows: [(field: TicketField, label: String, value: String, path: WritableKeyPath<TicketDraft, String>)] {
+        guard let d = model.draft, !model.isWalletKind else { return [] }
+        let all: [(TicketField, String, String, WritableKeyPath<TicketDraft, String>)] = [
+            (.venue, "Local", d.venue, \.venue), (.seat, "Assento", d.seat, \.seat),
+            (.gate, "Portão", d.gate, \.gate), (.holder, "Titular", d.holder, \.holder),
+        ]
+        return all.filter { !$0.2.isEmpty }.map { (field: $0.0, label: $0.1, value: $0.2, path: $0.3) }
+    }
+
+    /// Linha de índice: rótulo mono · valor · origem. Incerto = barra e valor em laranja + "CONFERIR". Tocar abre o controle
+    /// logo abaixo (um de cada vez).
     private func field<Editor: View>(_ target: TicketField, _ label: String, value: String, mono: Bool = false,
                                      @ViewBuilder editor: () -> Editor) -> some View {
         let meta = model.draft?.meta[target]
         let isOpen = openField == target
+        let doubt = meta?.needsReview ?? false
         return VStack(alignment: .leading, spacing: 0) {
             Button {
                 withAnimation(.snappy(duration: 0.2)) { openField = isOpen ? nil : target }
             } label: {
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text(label)
-                        .font(.must.archivo(14)).foregroundStyle(Color.must.secondary)
-                        .frame(width: 96, alignment: .leading)
-                    Spacer(minLength: 0)
-                    Circle().fill(dot(meta)).frame(width: 8, height: 8)
-                    Text(value)
-                        .font(mono ? .must.mono(15, .semibold) : .must.archivo(15, .semibold))
-                        .foregroundStyle(Color.must.ink)
-                        .multilineTextAlignment(.trailing)
-                        .lineLimit(2)
-                    if let origin = meta?.origin {
-                        Text(origin).font(.must.mono(11)).foregroundStyle(Color.must.secondary).lineLimit(1)
+                HStack(alignment: .top, spacing: 10) {
+                    Text(label.uppercased())
+                        .font(V8Font.mono(10, weight: .semibold)).tracking(0.8).foregroundStyle(V8.mute)
+                        .frame(width: 92, alignment: .leading).padding(.top, 4)
+                    VStack(alignment: .trailing, spacing: 3) {
+                        Text(value)
+                            .font(mono ? V8Font.mono(14, weight: .semibold) : V8Font.text(16, weight: .bold))
+                            .foregroundStyle(doubt ? V8.orangeDeep : V8.ink)
+                            .multilineTextAlignment(.trailing)
+                            .lineLimit(2)
+                        if let origin = meta?.origin {
+                            Text((doubt ? "conferir · " : "") + origin)
+                                .font(V8Font.mono(9)).tracking(0.4).foregroundStyle(doubt ? V8.orangeDeep : V8.mute).lineLimit(1)
+                        }
                     }
+                    .frame(maxWidth: .infinity, alignment: .trailing)
                 }
-                .padding(.horizontal, 16).padding(.vertical, 14)
+                .padding(.vertical, 13).padding(.leading, 12)
+                .overlay(alignment: .leading) { Rectangle().fill(doubt ? V8.orange : .clear).frame(width: 4) }
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .accessibilityHint(doubt ? "leitura incerta, confira" : "")
             if isOpen {
-                editor()
-                    .padding(.horizontal, 16).padding(.bottom, 14)
+                editor().padding(.leading, 14).padding(.bottom, 14)
             }
         }
     }
@@ -221,8 +253,8 @@ struct TicketRevisarView: View {
             .foregroundStyle(Color.must.ink)
             .padding(.horizontal, 14).padding(.vertical, 12)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.white, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(Color.must.line))
+            .background(V8.white)
+            .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
     }
 
     private func nonEmpty(_ value: String?, _ placeholder: String = "—") -> String {
@@ -248,7 +280,7 @@ struct TicketRevisarView: View {
 
     private func dot(_ meta: FieldMeta?) -> Color {
         guard let meta else { return .clear }
-        return meta.needsReview ? amber : Color.must.green
+        return meta.needsReview ? amber : V8.ink
     }
 
     private func attachmentLabel(_ attachment: TicketDraft.Attachment) -> String {
@@ -451,4 +483,9 @@ private struct TicketPlacePicker: View {
         .scrollIndicators(.hidden)
         .background(Color.must.bg)
     }
+}
+
+/// Régua de 2 pt de tinta (corte, prompt 30 §1).
+struct RuleLine: View {
+    var body: some View { Rectangle().fill(V8.ink).frame(height: 2) }
 }

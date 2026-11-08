@@ -49,7 +49,7 @@ enum TicketText {
 /// Datas em português, inglês, ISO e japonês, no fuso da região (prompt 15 · A).
 enum TicketDates {
     private static let months: [String: Int] = [
-        "jan": 1, "fev": 2, "feb": 2, "mar": 3, "abr": 4, "apr": 4, "mai": 5, "may": 5, "jun": 6, "jul": 7,
+        "jan": 1, "gen": 1, "mag": 5, "giu": 6, "ott": 10, "dic": 12, "fev": 2, "feb": 2, "mar": 3, "abr": 4, "apr": 4, "mai": 5, "may": 5, "jun": 6, "jul": 7, "lug": 7,
         "ago": 8, "aug": 8, "set": 9, "sep": 9, "out": 10, "oct": 10, "nov": 11, "dez": 12, "dec": 12,
     ]
 
@@ -66,11 +66,11 @@ enum TicketDates {
             hits.append((m.location, int(m.groups[3]), int(m.groups[2]), int(m.groups[1]), optionalInt(m.groups[4]), optionalInt(m.groups[5])))
         }
         // 2026年11月15日 10:00
-        for m in TicketText.matches(#"(\d{4})年(\d{1,2})月(\d{1,2})日(?:\D{0,8}?(\d{1,2}):(\d{2}))?"#, in: text) {
+        for m in TicketText.matches(#"(\d{4})年(\d{1,2})月(\d{1,2})日(?:[^\d\n]{0,8}?(\d{1,2}):(\d{2}))?"#, in: text) {
             hits.append((m.location, int(m.groups[1]), int(m.groups[2]), int(m.groups[3]), optionalInt(m.groups[4]), optionalInt(m.groups[5])))
         }
         // 15 Nov 2026 · 10:00 AM · 15 de novembro de 2026 · sáb 15 nov 2026 10h30
-        let monthWord = #"(jan|fev|feb|mar|abr|apr|mai|may|jun|jul|ago|aug|set|sep|out|oct|nov|dez|dec)[a-zç]*\.?"#
+        let monthWord = #"(jan|gen|fev|feb|mar|abr|apr|mai|mag|may|jun|giu|jul|lug|ago|aug|set|sep|out|ott|oct|nov|dez|dic|dec)[a-zç]*\.?"#
         for m in TicketText.matches(#"(?i)\b(\d{1,2})\s*(?:de\s+)?"# + monthWord + #",?\s*(?:de\s+)?(\d{4})(?:[^\d\n]{0,12}?(\d{1,2}):(\d{2})\s*([ap]m)?)?"#, in: text) {
             hits.append((m.location, int(m.groups[3]), months[m.groups[2].lowercased().prefix(3).description] ?? 0, int(m.groups[1]),
                          clock(m.groups[4], m.groups[5], m.groups[6]).hour, clock(m.groups[4], m.groups[5], m.groups[6]).minute))
@@ -89,6 +89,24 @@ enum TicketDates {
         parts.minute = hit.minute ?? 0
         guard let date = region.calendar.date(from: parts) else { return nil }
         return (date, hit.hour != nil)
+    }
+
+    /// Reserva: `NSDataDetector` (a Apple lê "sábado, 21 de novembro às 21h", "next Friday 7pm", "domenica 11 aprile ore 9:30").
+    /// Só quando as regras não acharam nada. Sem ano no texto o detector assume o ano corrente (confiança baixa fica com o chamador).
+    static func detected(in text: String, region: Region) -> (date: Date, hasTime: Bool)? {
+        guard let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.date.rawValue) else { return nil }
+        let ns = text as NSString
+        for match in detector.matches(in: text, range: NSRange(location: 0, length: ns.length)) {
+            guard let date = match.date else { continue }
+            let raw = ns.substring(with: match.range)
+            let hasTime = raw.contains(":") || TicketText.first(#"\d\s*(?:h|am|pm)\b"#, in: raw.lowercased()) != nil
+            // O detector usa o fuso do aparelho; reinterpreta a parede do relógio no fuso da região.
+            var parts = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: date)
+            parts.second = 0
+            if let adjusted = region.calendar.date(from: parts) { return (adjusted, hasTime) }
+            return (date, hasTime)
+        }
+        return nil
     }
 
     private static func int(_ s: String) -> Int { Int(s) ?? 0 }

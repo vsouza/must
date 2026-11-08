@@ -102,7 +102,7 @@ enum TicketReader {
 
     /// Texto por página (PDFKit) e QR por página (página rasterizada a 2×, Vision). Página sem texto cai no OCR.
     static func readPDF(_ data: Data) async throws -> TicketReading {
-        try await Task.detached(priority: .userInitiated) { () throws -> TicketReading in
+        try await Task.detached(priority: .userInitiated) { () async throws -> TicketReading in
             guard let document = PDFDocument(data: data), document.pageCount > 0 else { throw TicketReaderError.unreadablePDF }
             var reading = TicketReading(pages: document.pageCount)
             var texts: [String] = []
@@ -111,11 +111,13 @@ enum TicketReader {
                 let pageText = (page.string ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
                 let box = page.bounds(for: .mediaBox)
                 let scale: CGFloat = 2
-                let size = CGSize(width: box.width * scale, height: box.height * scale)
-                let raster = page.thumbnail(of: size, for: .mediaBox).cgImage
+                    // Camada de texto do PDF primeiro; só página sem texto (ou com quase nada) vai pro OCR, a 3×.
+                let needsOCR = pageText.count < 30
+                let renderScale: CGFloat = needsOCR ? 3 : scale
+                let raster = page.thumbnail(of: CGSize(width: box.width * renderScale, height: box.height * renderScale), for: .mediaBox).cgImage
                 var found = ScanResult()
                 if let raster {
-                    found = scan(raster, recognizeText: pageText.isEmpty)
+                    found = await scan(raster, recognizeText: needsOCR)
                 }
                 if !pageText.isEmpty { texts.append(pageText) }
                 if !found.text.isEmpty { texts.append(found.text) }
@@ -133,31 +135,73 @@ enum TicketReader {
     // MARK: Imagem
 
     static func readImage(_ data: Data) async throws -> TicketReading {
-        try await Task.detached(priority: .userInitiated) { () throws -> TicketReading in
+        try await Task.detached(priority: .userInitiated) { () async throws -> TicketReading in
             guard let cgImage = UIImage(data: data)?.cgImage else { throw TicketReaderError.unreadableImage }
-            let found = scan(cgImage, recognizeText: true)
+            let found = await scan(cgImage, recognizeText: true)
             return TicketReading(text: found.text, codes: found.codes, codePages: found.codes.map { _ in 1 }, pages: 1,
                                  sourceLabel: "Foto")
         }.value
     }
 
-    /// Códigos de barras de um `CGImage` (QR, Aztec, PDF417, Code 128) e, se pedido, OCR em pt, en e ja.
-    static func scan(_ image: CGImage, recognizeText: Bool) -> ScanResult {
+    /// Idiomas do OCR: pt, en, ja e it (ingressos do Brasil, do Japão e da Itália).
+    static let ocrLanguages = ["pt-BR", "en-US", "ja-JP", "it-IT"]
+
+    /// Códigos de barras de um `CGImage` (QR, Aztec, PDF417, Code 128) e, se pedido, o texto. OCR em duas passadas:
+    /// original e, se saiu pouco texto (foto escura, torta, de pouco contraste), a imagem realçada; vale a que leu mais.
+    static func scan(_ image: CGImage, recognizeText: Bool) async -> ScanResult {
         let barcodes = VNDetectBarcodesRequest()
         barcodes.symbologies = [.qr, .aztec, .pdf417, .code128]
-        var requests: [VNRequest] = [barcodes]
-        let text = VNRecognizeTextRequest()
-        if recognizeText {
-            text.recognitionLevel = .accurate
-            text.recognitionLanguages = ["pt-BR", "en-US", "ja-JP"]
-            text.usesLanguageCorrection = true
-            requests.append(text)
+        try? VNImageRequestHandler(cgImage: image, options: [:]).perform([barcodes])
+        var codes = (barcodes.results ?? []).compactMap(\.payloadStringValue)
+        if codes.isEmpty { codes = qrCodes(image) }
+        guard recognizeText else { return ScanResult(codes: codes, text: "") }
+
+        var text = await recognize(image)
+        if text.count < 80 || codes.isEmpty, let better = enhanced(image) {
+            let second = await recognize(better)
+            if second.count > text.count { text = second }
+            if codes.isEmpty { codes = qrCodes(better) }
         }
-        let handler = VNImageRequestHandler(cgImage: image, options: [:])
-        try? handler.perform(requests)
-        let codes = (barcodes.results ?? []).compactMap(\.payloadStringValue)
-        let lines = (text.results ?? []).compactMap { $0.topCandidates(1).first?.string }
-        return ScanResult(codes: codes.isEmpty ? qrCodes(image) : codes, text: lines.joined(separator: "\n"))
+        return ScanResult(codes: codes, text: text)
+    }
+
+    /// OCR de um `CGImage`: `RecognizeDocumentsRequest` (iOS 26: lê o documento em linhas, com idioma automático) e, se falhar
+    /// ou vier vazio, `VNRecognizeTextRequest` `.accurate` com correção de idioma.
+    static func recognize(_ image: CGImage) async -> String {
+        var request = RecognizeDocumentsRequest()
+        request.textRecognitionOptions.recognitionLanguages = ocrLanguages.map { Locale.Language(identifier: $0) }
+        request.textRecognitionOptions.automaticallyDetectLanguage = true
+        request.textRecognitionOptions.useLanguageCorrection = true
+        request.barcodeDetectionOptions.enabled = false
+        if let observations = try? await request.perform(on: image) {
+            let lines = observations.flatMap { $0.document.text.lines.map(\.transcript) }
+            let joined = lines.joined(separator: "\n")
+            if joined.count >= 12 { return joined }
+        }
+        let text = VNRecognizeTextRequest()
+        text.recognitionLevel = .accurate
+        text.recognitionLanguages = ocrLanguages
+        text.usesLanguageCorrection = true
+        text.automaticallyDetectsLanguage = true
+        try? VNImageRequestHandler(cgImage: image, options: [:]).perform([text])
+        return (text.results ?? []).compactMap { $0.topCandidates(1).first?.string }.joined(separator: "\n")
+    }
+
+    /// Foto difícil: auto-ajuste (exposição/tom), cinza e contraste. Só pra uma segunda tentativa de leitura.
+    static func enhanced(_ image: CGImage) -> CGImage? {
+        var ci = CIImage(cgImage: image)
+        for filter in ci.autoAdjustmentFilters(options: [.redEye: false]) {
+            filter.setValue(ci, forKey: kCIInputImageKey)
+            if let out = filter.outputImage { ci = out }
+        }
+        ci = ci.applyingFilter("CIColorControls", parameters: [kCIInputSaturationKey: 0, kCIInputContrastKey: 1.5, kCIInputBrightnessKey: 0.1])
+        // Imagem pequena demais lê mal: sobe pra pelo menos 2000 px no maior lado.
+        let longest = max(ci.extent.width, ci.extent.height)
+        if longest < 2000 {
+            let factor = 2000 / longest
+            ci = ci.applyingFilter("CILanczosScaleTransform", parameters: [kCIInputScaleKey: factor, kCIInputAspectRatioKey: 1])
+        }
+        return CIContext().createCGImage(ci, from: ci.extent)
     }
 
     /// Fallback de QR pelo CoreImage (`CIDetector`, offline). No simulador o Vision de código de barras
