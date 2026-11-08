@@ -55,7 +55,12 @@ struct MapPin: Identifiable, Equatable, Sendable {
         case preview(number: Int, label: String?)
         /// Resultado da busca do mapa ("Melhor agora"): número da ordem; o escolhido sai em laranja (`highlighted`).
         case result(number: Int)
+        /// Explorar (prompt 31 · 8): pino quadrado de borda 2 pt com o número do índice; sem número = ponto de 8 pt.
+        case block(number: Int?, tone: BlockTone, selected: Bool)
     }
+
+    /// Cor por linha inteira do corte: laranja = seu Must aberto, papel = seu Must fechado/plano, tinta = fora do board.
+    enum BlockTone: Equatable, Sendable { case own, paper, outside }
 
     enum TodayStatus: Equatable, Sendable { case future, next, done }
 
@@ -90,6 +95,7 @@ struct MapPin: Identifiable, Equatable, Sendable {
         case .callout, .badge: 6
         case .preview(_, let label): label == nil ? 4 : 7
         case .result: 5
+        case .block(_, _, let selected): selected ? 7 : 3
         }
     }
 }
@@ -240,9 +246,55 @@ final class PinView: MLNAnnotationView {
             setSize(30)
             fill(PinStyle.ink, stroke: .white, width: 1.5)
             text("\(number)", font: PinStyle.mono(13), color: .white)
+        case .block(let number, let tone, let selected):
+            configureBlock(number: number, tone: tone, selected: selected)
         }
         if pin.highlighted { highlight() }
         accessibilityLabel = pin.placeId
+    }
+
+    /// Pino quadrado do Explorar: borda de 2 pt; selecionado = 34 pt com dois arcos de 1 pt.
+    private func configureBlock(number: Int?, tone: MapPin.BlockTone, selected: Bool) {
+        let fillColor: UIColor, textColor: UIColor, border: UIColor
+        switch tone {
+        case .own: fillColor = PinStyle.orange; textColor = PinStyle.ink; border = PinStyle.ink
+        case .paper: fillColor = UIColor(V8.paper); textColor = PinStyle.ink; border = PinStyle.ink
+        case .outside: fillColor = PinStyle.ink; textColor = .white; border = PinStyle.ink
+        }
+        disc.shadowOpacity = 0
+        guard let number else {
+            setSize(10)
+            disc.path = UIBezierPath(rect: bounds.insetBy(dx: 1, dy: 1)).cgPath
+            disc.fillColor = fillColor.cgColor
+            disc.strokeColor = tone == .own ? border.cgColor : (tone == .paper ? border.cgColor : UIColor.white.cgColor)
+            disc.lineWidth = 2
+            label.isHidden = true
+            return
+        }
+        setSize(selected ? 34 : 26)
+        disc.path = UIBezierPath(rect: bounds.insetBy(dx: 1, dy: 1)).cgPath
+        disc.fillColor = fillColor.cgColor
+        disc.strokeColor = (tone == .outside ? UIColor.white : border).cgColor
+        disc.lineWidth = 2
+        text("\(number)", font: PinStyle.mono(selected ? 15 : 12, .bold), color: textColor)
+        if selected {
+            for (i, r) in [CGFloat(26), 34].enumerated() {
+                let path = UIBezierPath(ovalIn: CGRect(x: bounds.midX - r, y: bounds.midY - r, width: r * 2, height: r * 2))
+                if i == 0 {
+                    ring.path = path.cgPath
+                    ring.fillColor = UIColor.clear.cgColor
+                    ring.strokeColor = border.withAlphaComponent(0.6).cgColor
+                    ring.lineWidth = 1
+                    ring.isHidden = false
+                } else {
+                    arc.path = path.cgPath
+                    arc.fillColor = UIColor.clear.cgColor
+                    arc.strokeColor = border.withAlphaComponent(0.35).cgColor
+                    arc.lineWidth = 1
+                    arc.isHidden = false
+                }
+            }
+        }
     }
 
     /// Escolhido: disco laranja 44 pt com contorno tinta e halo laranja a 25 % (o texto do pino fica, em tinta).
@@ -396,7 +448,7 @@ final class YouView: MLNAnnotationView {
         layer.zPosition = 3
 
         halo.type = .radial
-        halo.colors = [PinStyle.blue.withAlphaComponent(0.35).cgColor, PinStyle.blue.withAlphaComponent(0).cgColor]
+        halo.colors = [PinStyle.orange.withAlphaComponent(0.35).cgColor, PinStyle.orange.withAlphaComponent(0).cgColor]
         halo.startPoint = CGPoint(x: 0.5, y: 0.5)
         halo.endPoint = CGPoint(x: 1, y: 1)
         halo.frame = bounds
@@ -408,14 +460,14 @@ final class YouView: MLNAnnotationView {
         path.addArc(withCenter: c, radius: 34, startAngle: -.pi / 2 - 0.42, endAngle: -.pi / 2 + 0.42, clockwise: true)
         path.close()
         cone.path = path.cgPath
-        cone.fillColor = PinStyle.blue.withAlphaComponent(0.22).cgColor
+        cone.fillColor = PinStyle.orange.withAlphaComponent(0.22).cgColor
         cone.frame = bounds
         cone.isHidden = true
         layer.addSublayer(cone)
 
         dot.path = UIBezierPath(ovalIn: CGRect(x: 34 - 7.5, y: 34 - 7.5, width: 15, height: 15)).cgPath
-        dot.fillColor = PinStyle.blue.cgColor
-        dot.strokeColor = UIColor.white.cgColor
+        dot.fillColor = PinStyle.orange.cgColor
+        dot.strokeColor = PinStyle.ink.cgColor
         dot.lineWidth = 2.5
         PinStyle.applyShadow(dot)
         layer.addSublayer(dot)

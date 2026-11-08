@@ -221,6 +221,18 @@ if [ "${ONLY:-}" = "viajante" ]; then
   echo "pronto: $OUT/"
   exit 0
 fi
+echo "→ p31 · Explorar (prompt 31 · 8): página do bairro, trilho, recorte aberto, Kyoto, sem foto e XXXL. Compare com design/v9/ExplorarB-*.png"
+${=W} region jp
+${=W} dev.simDate -float $(epoch 2026-11-15T18:10:00+09:00)
+${=W} dev.simLat -float 35.6909; ${=W} dev.simLng -float 139.7003
+WAIT=10 shot jp-explorar -debugScreen explorar                  # ExplorarB-1
+WAIT=10 shot jp-explorar-trilho -debugScreen explorar-trilho    # ExplorarB-2
+WAIT=10 shot jp-explorar-recorte -debugScreen explorar-recorte  # ExplorarB-3
+WAIT=10 shot jp-explorar-kyoto -debugScreen explorar-kyoto      # ExplorarB-4
+WAIT=10 shot jp-explorar-sem-foto -debugScreen explorar-sem-foto
+WAIT=10 shot jp-xxxl-explorar -debugScreen explorar -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
+if [ "${ONLY:-}" != "explorar" ]; then
+
 echo "→ p31 · quero em Nakano com o GPS no Brasil, quero em viagem futura, carrossel de fotos e Minhas viagens"
 ${=W} region jp
 ${=W} dev.simDate -float $(epoch 2026-11-15T14:20:00+09:00)
@@ -457,6 +469,8 @@ shot bh-bairros -debugScreen bairros
 fi # ONLY=v8
 
 fi # ONLY=p31
+
+fi # ONLY=explorar
 
 echo "→ limpando simulações e chaves de debug"
 for k in dev.simDateOn dev.simDate dev.simSetAt dev.simGPSOn dev.simLat dev.simLng dev.simCloud skipOnboarding \

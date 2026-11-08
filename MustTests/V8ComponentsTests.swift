@@ -84,7 +84,7 @@ struct V8ComponentsTests {
     }
 
     @Test func barraTemQuatroAbasNaOrdemDoDesign() {
-        #expect(MustTab.allCases == [.hoje, .guia, .musts, .viagem])
+        #expect(MustTab.allCases == [.hoje, .explorar, .musts, .viagem])
         #expect(MustTab.allCases.map(\.title) == ["Hoje", "Explorar", "Musts", "Viagem"])
         #expect(MustTab.allCases.map(\.glyph) == [.clock, .map, .lines, .briefcase])
     }

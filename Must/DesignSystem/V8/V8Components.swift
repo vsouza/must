@@ -187,7 +187,7 @@ extension MustTab {
     var glyph: V8Glyph.Kind {
         switch self {
         case .hoje: .clock
-        case .guia: .map
+        case .explorar: .map
         case .musts: .lines
         case .viagem: .briefcase
         }

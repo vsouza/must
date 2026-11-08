@@ -1,8 +1,8 @@
 import SwiftData
 import SwiftUI
 
-/// Guia do dia (rota `.guia(date:)`, prompt 18 · C.16) no v8: o mesmo Guia do bairro da aba (`GuiaAreaView`), aberto no
-/// bairro do dia aceito dessa data (foco do Montar, ou o bairro principal do motor do dia).
+/// Guia do dia (rota `.guia(date:)`, prompt 18 · C.16): agora abre o Explorar (prompt 31 · 8) no bairro do dia aceito dessa data
+/// (foco do Montar, ou o bairro principal do motor do dia). O texto, os vizinhos e as dicas do bairro moram na página dele.
 /// O cálculo de paradas e deslocamentos do v5 continua em `GuideModel` (avisos e testes).
 struct GuiaBairroView: View {
     /// Meia-noite do dia do guia.
@@ -14,7 +14,7 @@ struct GuiaBairroView: View {
     @Query private var days: [PlannedDay]
 
     var body: some View {
-        GuiaAreaView(initialArea: area, showsBack: true)
+        ExplorarView(initialArea: area, showsBack: true)
     }
 
     private var area: String? {

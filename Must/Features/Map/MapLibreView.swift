@@ -274,8 +274,8 @@ struct MapLibreView: UIViewRepresentable {
             style.addLayer(tomorrow)
 
             let done = MLNLineStyleLayer(identifier: "rt-done", source: source("rt-done"))
-            done.lineColor = NSExpression(forConstantValue: Self.blue)
-            done.lineWidth = NSExpression(forConstantValue: 3.5)
+            done.lineColor = NSExpression(forConstantValue: PinStyle.orange)
+            done.lineWidth = NSExpression(forConstantValue: 3)
             done.lineCap = round
             done.lineJoin = round
             style.addLayer(done)

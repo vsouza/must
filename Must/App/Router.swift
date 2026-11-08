@@ -160,7 +160,7 @@ final class AppRouter {
     /// Mapa com o card do pino aberto.
     var hidesNavBar: Bool {
         if queroOpen { return true }
-        if mapCardOpen, paths[tab]?.last == .mapa || tab == .guia { return true }
+        if mapCardOpen, paths[tab]?.last == .mapa || tab == .explorar { return true }
         switch paths[tab]?.last {
         case .montar, .ir, .comoChegar, .place, .sos, .presente: return true
         default: return false
@@ -287,7 +287,7 @@ extension View {
             case .compras: ShoppingView()
             case .regrasVolta: ShoppingRulesView()
             case .bairros(let areaId): BairrosView(initialArea: areaId)
-            case .guia(let date): GuiaBairroView(date: date)
+            case .guia(let date): GuiaBairroView(date: date) // abre o Explorar no bairro do dia
             case .bomDia: BomDiaView()
             case .agora: AgoraView()
             case .linha(let date): LinhaDoDiaView(date: date)
