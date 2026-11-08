@@ -12,6 +12,7 @@ struct DicasPage: View {
     @Environment(\.dayEngine) private var dayEngine
     @Environment(\.modelContext) private var context
     @Environment(\.friends) private var friends
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     @Query private var places: [Place]
     @Query private var trips: [TripInfo]
@@ -35,11 +36,20 @@ struct DicasPage: View {
         let today = DayTips.filtered(cards, by: .now)
         let shown = DayTips.filtered(cards, by: filter)
         VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .center, spacing: 12) {
-                filters(areaName: context.areaName)
-                BigNumeral("\(today.count)", size: 64, color: V8.orange)
-                    .fixedSize()
-                    .accessibilityLabel("\(today.count) dicas pra agora")
+            // Letra grande: o numeral sobe pra cima dos filtros (lado a lado a linha estourava a largura da tela).
+            let stacked = typeSize > .xLarge
+            AnyLayout(stacked ? AnyLayout(VStackLayout(alignment: .leading, spacing: 10)) : AnyLayout(HStackLayout(alignment: .center, spacing: 12))) {
+                if stacked {
+                    BigNumeral("\(today.count)", size: 64, color: V8.orange)
+                        .fixedSize()
+                        .accessibilityLabel("\(today.count) dicas pra agora")
+                    filters(areaName: context.areaName).frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    filters(areaName: context.areaName)
+                    BigNumeral("\(today.count)", size: 64, color: V8.orange)
+                        .fixedSize()
+                        .accessibilityLabel("\(today.count) dicas pra agora")
+                }
             }
             .padding(.leading, 20)
             .padding(.trailing, 20)

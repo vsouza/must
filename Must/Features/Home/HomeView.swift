@@ -82,9 +82,9 @@ struct HomeView: View {
         .accessibilityAction(named: "Bolso") { go(.right) }
         .overlay(alignment: .trailing) { if corte.stage == .rest { bolsoHandle } }
         .onAppear {
-            corte.answerer = { [context, services, store] text in
+            corte.answerer = { [context, services, store, engine] text in
                 await QueroAnswerer.answer(text, context: context, region: store.region, services: services,
-                                           useModel: (try? context.fetch(FetchDescriptor<Settings>()).first?.onDeviceAI) ?? true)
+                                           useModel: (try? context.fetch(FetchDescriptor<Settings>()).first?.onDeviceAI) ?? true, engine: engine)
             }
             router.setQuero("capa", open: corte.stage != .rest)
             refresh()

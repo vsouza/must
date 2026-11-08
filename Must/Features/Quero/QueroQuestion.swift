@@ -54,12 +54,15 @@ struct QueroQuestionState: Equatable, Sendable {
 }
 
 /// Responde no aparelho, com o retrato do Assistente (board, dia, tempo). Nunca sai pra rede além do que o Assistente já faz.
+/// Sem Foundation Models (ou nas perguntas que o `QuestionAnswerer` reconhece) a resposta é determinística.
 @MainActor
 enum QueroAnswerer {
-    static func answer(_ question: String, context: ModelContext, region: Region, services: Services, useModel: Bool) async -> String {
+    static func answer(_ question: String, context: ModelContext, region: Region, services: Services, useModel: Bool,
+                       engine: (any DayEngine)? = nil) async -> String {
         let chat = ChatModel()
         let snapshot = AssistantSnapshot.make(context: context, region: region, services: services)
-        await chat.send(question, snapshot: snapshot, useModel: useModel)
+        let clock = engine.map { DayClock.read(engine: $0, region: region, context: context, at: snapshot.now, position: snapshot.here) }
+        await chat.send(question, snapshot: snapshot, useModel: useModel, clock: clock)
         guard let reply = chat.messages.last(where: { $0.role == .assistant }), !reply.text.isEmpty else { return QueroQuestion.fallback }
         return QueroQuestion.shorten(reply.text)
     }

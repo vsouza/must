@@ -17,6 +17,7 @@ struct AssistantView: View {
     @Environment(RegionStore.self) private var store
     @Environment(Services.self) private var services
     @Environment(\.tripTheme) private var theme
+    @Environment(\.dayEngine) private var dayEngine
     @Query private var places: [Place]
     @Query private var settingsList: [Settings]
 
@@ -24,6 +25,8 @@ struct AssistantView: View {
     @State private var speech = SpeechInput()
     @State private var input = ""
     @State private var markingDone: String?
+    /// Foto do bairro de agora, só a que já está no disco (a mesma da capa); sem ela, cor + trama.
+    @State private var photo: URL?
     /// Mostra a página de dicas mesmo com conversa (o "↑ dicas" do topo).
     @State private var showDicas = false
     /// Pergunta em curso: cancelada quando a tela fecha (prompt 18 · A.7).
@@ -45,6 +48,7 @@ struct AssistantView: View {
         .background(V8.paper.ignoresSafeArea())
         // Modelo aquecido só agora que o Assistente abre (nunca na abertura do app), e a geração para se a tela fecha.
         .task { chat.warm(snapshot: snapshot, useModel: useModel) }
+        .task(id: snapshot.areaName) { photo = await diskPhoto(areaName: snapshot.areaName) }
         .onDisappear { asking?.cancel(); speech.cancel() }
         .onAppear {
             speech.onFinal = { text in ask(text) }
@@ -63,7 +67,7 @@ struct AssistantView: View {
 
     private var band: some View {
         let ink = theme.coverInk
-        return CutBand(photo: nil) {
+        return CutBand(photo: photo) {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(alignment: .top, spacing: 10) {
                     V8CornerButton(systemName: "xmark", label: "Fechar", tint: ink) { dismiss() }
@@ -216,9 +220,10 @@ struct AssistantView: View {
     private var footer: some View {
         VStack(spacing: 0) {
             if onDicas {
-                CorteFlow(spacing: 8) {
+                // Cada sugestão é uma caixa que quebra linha (em letra grande a de uma linha só estourava a largura da tela).
+                VStack(alignment: .leading, spacing: 8) {
                     ForEach(Array(FallbackAssistant.suggestions(snapshot).prefix(2)), id: \.self) { suggestion in
-                        Button { ask(suggestion) } label: { V8FilterChip(title: suggestion, on: false) }.buttonStyle(.plain)
+                        Button { ask(suggestion) } label: { SuggestionBox(title: suggestion) }.buttonStyle(.plain)
                     }
                 }
                 .padding(.horizontal, 20)
@@ -279,7 +284,16 @@ struct AssistantView: View {
         focused = false
         showDicas = false
         let snap = snapshot
-        asking = Task { await chat.send(question, snapshot: snap, useModel: useModel) }
+        let clock = DayClock.read(engine: dayEngine, region: region, context: context, at: snap.now, position: snap.here)
+        asking = Task { await chat.send(question, snapshot: snap, useModel: useModel, clock: clock) }
+    }
+
+    /// A foto do bairro que já está no disco (nunca baixa): Google de um Must do bairro › Commons já escolhida.
+    private func diskPhoto(areaName: String) async -> URL? {
+        guard let area = AreaCatalog.areas(for: region).first(where: { $0.name == areaName }),
+              let (_, candidates) = CapaState.areaCandidates(region: region, areaId: area.id, places: places),
+              let found = await CapaState.diskPhoto(region: region, areaId: area.id, candidates: candidates) else { return nil }
+        return URL(string: found.largeURL ?? found.url)
     }
 
     private func run(_ action: AssistantAction, message: ChatMessage) {
@@ -298,6 +312,25 @@ struct AssistantView: View {
         } else {
             ask(reply)
         }
+    }
+}
+
+/// Sugestão de pergunta: caixa de borda 2 pt que cresce em altura em vez de passar da largura.
+private struct SuggestionBox: View {
+    var title: String
+
+    var body: some View {
+        Text(title)
+            .font(V8Font.mono(11, weight: .semibold))
+            .tracking(0.8)
+            .textCase(.uppercase)
+            .foregroundStyle(V8.ink)
+            .multilineTextAlignment(.leading)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .frame(minHeight: 40, alignment: .leading)
+            .overlay(Rectangle().strokeBorder(V8.ink, lineWidth: 2))
     }
 }
 

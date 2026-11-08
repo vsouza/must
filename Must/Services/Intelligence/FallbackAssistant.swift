@@ -72,7 +72,7 @@ enum FallbackAssistant {
         if has("ultimo metro", "ultimo trem", "metro pra casa", "trem pra casa", "voltar pra casa") {
             parts.append(AssistantEngine.lastTrainText(s))
         }
-        if has("tempo", "chuva", "chover", "frio", "calor", "previsao") {
+        if (has("tempo") && !has("da tempo", "dar tempo", "tenho tempo", "tem tempo", "sobra tempo", "a tempo")) || has("chuva", "chover", "frio", "calor", "previsao") {
             parts.append(AssistantEngine.weatherText(s, tomorrow: has("amanha")))
         }
         if has("roteiro", "plano", "o que vem", "proxima", "hoje tem", "programa") {
