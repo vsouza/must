@@ -356,6 +356,7 @@
 		AA2097BF2E92929E0460AEC7 /* PKPassReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E3F65868D18050715124E1 /* PKPassReader.swift */; };
 		AA244140B24B6A2E8F605DF4 /* BoardModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AC3CBA2A9F2C12CC697A0D5 /* BoardModel.swift */; };
 		AAAAD9818A21029537CD486C /* TripThemeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5C8629E902F9A6B0F451A9 /* TripThemeTests.swift */; };
+		AAFC3C2145EDDB1FFCCB25A9 /* ExplorarTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1789F2AC76B621EE0DFA0515 /* ExplorarTests.swift */; };
 		AB6A66226DA6985DBD083977 /* ApiBudget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75D868B5A981073D5AED5B21 /* ApiBudget.swift */; };
 		ABA5A860189F03E44A8E9A14 /* MustShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 32C5A3C526057B2F0A5A397C /* MustShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		ABAFAE36F34140D65898D859 /* DayShareBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE07089DD4B669E2D6332C3E /* DayShareBuilder.swift */; };
@@ -630,6 +631,7 @@
 		15EAB5484E9E593810CF42F8 /* TipsSources.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipsSources.swift; sourceTree = "<group>"; };
 		1628272D6061D4C591EE5118 /* BoardShowEvents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardShowEvents.swift; sourceTree = "<group>"; };
 		16948024C7E738EE615EA8B4 /* DayPlanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayPlanner.swift; sourceTree = "<group>"; };
+		1789F2AC76B621EE0DFA0515 /* ExplorarTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExplorarTests.swift; sourceTree = "<group>"; };
 		18B098156A055B3876CFAC44 /* LightRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LightRules.swift; sourceTree = "<group>"; };
 		19878D26E2BE9AE48855F053 /* TripRegistryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripRegistryTests.swift; sourceTree = "<group>"; };
 		19EFD690D19C8AFDD98E2B46 /* Connectivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Connectivity.swift; sourceTree = "<group>"; };
@@ -1599,6 +1601,7 @@
 				E126F76CCCB44867BD3E6DB7 /* EmergencyKitTests.swift */,
 				745317422880B10B468C2413 /* EventsFeedTests.swift */,
 				D87ABAC6821287A24AB7EF71 /* ExperienceTests.swift */,
+				1789F2AC76B621EE0DFA0515 /* ExplorarTests.swift */,
 				93C546271D99E6CB597CC869 /* FilmsTests.swift */,
 				538013AE01AF2A312E0ACF82 /* FilmsUITests.swift */,
 				F2FCC18F2FD107CBB17F43DD /* FlightTests.swift */,
@@ -2738,6 +2741,7 @@
 				65D5DDC186BF29A87026BCEA /* EmergencyKitTests.swift in Sources */,
 				D81C747D6E1B9B44CA0443AD /* EventsFeedTests.swift in Sources */,
 				C873A054C109C6743931A96E /* ExperienceTests.swift in Sources */,
+				AAFC3C2145EDDB1FFCCB25A9 /* ExplorarTests.swift in Sources */,
 				E8A5D57977D44754170D4FDF /* FilmsTests.swift in Sources */,
 				7A209634EAB7034CAD02944F /* FilmsUITests.swift in Sources */,
 				345D55FBAF0D045350FAF93E /* FlightTests.swift in Sources */,

@@ -192,7 +192,7 @@ enum ExplorarLayers {
     /// dentro de cada grupo. Estável (empate: nome).
     static func sorted(_ items: [ExplorarItem]) -> [ExplorarItem] {
         func rank(_ item: ExplorarItem) -> Int {
-            if item.isOwn { return (item.isOpen ? 0 : 2) + (item.done ? 1 : 0) }
+            if item.isOwn { return (item.done ? 2 : 0) + (item.isOpen ? 0 : 1) }
             return 4
         }
         return items.sorted { a, b in

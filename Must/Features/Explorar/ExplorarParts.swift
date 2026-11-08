@@ -423,3 +423,24 @@ struct ExplorarRow: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
+
+/// Micro-rótulo mono em caixa alta que quebra linha em vez de truncar (Dynamic Type até XXXL).
+struct ExplorarMono: View {
+    var text: String
+    var size: CGFloat = 10
+    var color: Color
+
+    init(_ text: String, size: CGFloat = 10, color: Color) {
+        self.text = text
+        self.size = size
+        self.color = color
+    }
+
+    var body: some View {
+        Text(text.uppercased())
+            .font(V8Font.mono(size))
+            .tracking(size * 0.1)
+            .foregroundStyle(color)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+}

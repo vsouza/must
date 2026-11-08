@@ -212,12 +212,12 @@ struct ExplorarView: View {
         .overlay(alignment: .topTrailing) {
             if !model.stations.isEmpty {
                 ExplorarRailView(stations: model.stations, currentId: model.areaId, tint: Color(hex: theme.coverRGB),
-                                 showsCaptions: !type.isAccessibilitySize,
+                                 showsCaptions: type <= .xLarge,
                                  onPreview: { index in railChanged(index) },
                                  onCommit: { index in railCommit(index) },
                                  onEnd: { railActive = false; railPreview = nil })
-                    .frame(width: type.isAccessibilitySize ? 80 : 168)
-                    .padding(.top, 126)
+                    .frame(width: type <= .xLarge ? 168 : 80)
+                    .padding(.top, type <= .xLarge ? 126 : 150)
                     .padding(.trailing, 14)
             }
         }
@@ -244,8 +244,12 @@ struct ExplorarView: View {
             if model.cities.count > 1 { citySegment }
             Spacer(minLength: 8)
             VStack(alignment: .trailing, spacing: 3) {
-                MonoLabel("bairro \(model.index + 1) de \(model.count)", size: 10, color: V8.white)
-                MonoLabel(model.cities.count > 1 && !model.tripStarted ? "viagem futura" : "← → próximo", size: 9, color: V8.white.opacity(0.85))
+                if type <= .xLarge {
+                    ExplorarMono("bairro \(model.index + 1) de \(model.count)", size: 10, color: V8.white)
+                    ExplorarMono(model.cities.count > 1 && !model.tripStarted ? "viagem futura" : "← → próximo", size: 9, color: V8.white.opacity(0.85))
+                } else {
+                    ExplorarMono("\(model.index + 1)/\(model.count)", size: 10, color: V8.white)
+                }
             }
             .padding(.top, 6)
             squareButton("sparkle", label: "Assistente") { router.sheet = .assistant }
@@ -299,8 +303,8 @@ struct ExplorarView: View {
     private var recorteCaption: some View {
         let c = model.counts
         return VStack(alignment: .leading, spacing: 2) {
-            MonoLabel("mapa · toque pra abrir", size: 10, color: V8.white)
-            MonoLabel("\(c.open) \(c.open == 1 ? "aberto" : "abertos") · \(c.own) musts", size: 10, color: V8.white)
+            ExplorarMono("mapa · toque pra abrir", size: 10, color: V8.white)
+            ExplorarMono("\(c.open) \(c.open == 1 ? "aberto" : "abertos") · \(c.own) musts", size: 10, color: V8.white)
         }
         .frame(maxWidth: ExplorarSnapshot.side + 40, alignment: .leading)
         .fixedSize(horizontal: false, vertical: true)
@@ -316,10 +320,9 @@ struct ExplorarView: View {
                 .overlay(Rectangle().stroke(V8.white, lineWidth: 3))
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 3) {
-                MonoLabel(sealLine1(area: area, station: station), size: 10, color: V8.white)
-                    .lineLimit(2).fixedSize(horizontal: false, vertical: true)
+                ExplorarMono(sealLine1(area: area, station: station), size: 10, color: V8.white)
                 if !model.lineCodes.isEmpty {
-                    MonoLabel(model.lineCodes.prefix(6).joined(separator: " · "), size: 10, color: V8.white.opacity(0.9))
+                    ExplorarMono(model.lineCodes.prefix(6).joined(separator: " · "), size: 10, color: V8.white.opacity(0.9))
                 }
             }
             Spacer(minLength: 0)
