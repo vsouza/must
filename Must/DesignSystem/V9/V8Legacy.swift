@@ -19,7 +19,7 @@ extension Route {
     /// Rotas que ainda são V8 (ficam no claro). As outras já são V9 (Fases 1 e 2 do prompt 32).
     var legacyLight: Bool {
         switch self {
-        case .montar, .day, .bomDia, .boaNoite, .guia, .bairros, .irBairro, .mapa: return true
+        case .montar, .day, .bomDia, .boaNoite: return true
         default: return false
         }
     }

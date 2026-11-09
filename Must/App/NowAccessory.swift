@@ -54,9 +54,6 @@ struct NowAccessory: View {
             .buttonStyle(.plain)
             .accessibilityHint(onHoje && clock.phase == .noPlan ? "abre o pedido" : (clock.phase == .noPlan ? "monta o dia de hoje" : "abre a linha do dia"))
         }
-        // Atrás da faixa, o mapa (estilo papel, sempre claro) e as telas V8 (Musts) continuam claros: no modo escuro o
-        // vidro fica claro e o texto branco sumia. Nessas abas a faixa segue o claro.
-        .modifier(LightBehind(enabled: !router.queroSelected && router.tab == .explorar))
         .onReceive(NotificationCenter.default.publisher(for: ModelContext.didSave).receive(on: RunLoop.main)) { _ in saves &+= 1 }
     }
 }
@@ -116,9 +113,3 @@ struct NowAccessoryModifier: ViewModifier {
     }
 }
 
-private struct LightBehind: ViewModifier {
-    var enabled: Bool
-    @ViewBuilder func body(content: Content) -> some View {
-        if enabled { content.environment(\.colorScheme, .light) } else { content }
-    }
-}
