@@ -81,29 +81,56 @@ struct LocationFix: Sendable, Equatable {
     }
 }
 
-/// Quando o GPS pode propor "Você chegou em X". **Agente C implementa** (com `ContextRuleTests`); o contrato é:
-/// `feed` recebe cada leitura com o bairro dela (já resolvido fora do main) e devolve o id proposto ou `nil`.
+/// Quando o GPS pode propor "Você chegou em X" (prompt 32 §3). `feed` recebe cada leitura com o bairro dela (já resolvido
+/// fora do main) e devolve o id proposto ou `nil`. Só propõe com precisão válida < 100 m, parado (< 1,5 m/s; velocidade
+/// desconhecida vale como parado só se a posição não saiu > 50 m do começo da janela), **≥ 2 min seguidos no mesmo bairro**,
+/// bairro diferente do mostrado, dentro da cidade da viagem e não dispensado (✕ vale 1 h). Leitura ruim, bairro novo,
+/// andando ou fora da cidade reiniciam a janela: no metrô (precisão ruim, bairros trocando) nunca propõe.
 struct ArrivalProposer: Sendable {
     static let maxAccuracy: Double = 100
     static let maxSpeed: Double = 1.5
     static let dwell: TimeInterval = 120
     static let dismissFor: TimeInterval = 3600
+    /// Quanto a posição pode variar numa janela com velocidade desconhecida.
+    static let maxDrift: Double = 50
 
     /// Bairros dispensados (✕) e até quando.
     var dismissed: [String: Date] = [:]
 
+    private struct Window: Sendable {
+        var areaId: String
+        var start: Date
+        var latitude: Double
+        var longitude: Double
+    }
+    private var window: Window?
+
     init() {}
 
-    /// - Parameters:
-    ///   - areaId: bairro da leitura (`nil` = fora de qualquer bairro conhecido).
-    ///   - shownAreaId: bairro que Hoje está mostrando.
-    ///   - insideTripCity: a leitura está na cidade da viagem de hoje.
     mutating func feed(_ fix: LocationFix, areaId: String?, shownAreaId: String?, insideTripCity: Bool) -> String? {
-        nil // stub do contrato r32/0
+        guard insideTripCity, let areaId,
+              fix.horizontalAccuracy >= 0, fix.horizontalAccuracy < Self.maxAccuracy else { window = nil; return nil }
+        if fix.speed >= Self.maxSpeed { window = nil; return nil }
+        if let w = window, w.areaId == areaId {
+            if fix.speed < 0, Self.meters(w.latitude, w.longitude, fix.latitude, fix.longitude) > Self.maxDrift {
+                window = Window(areaId: areaId, start: fix.timestamp, latitude: fix.latitude, longitude: fix.longitude)
+                return nil
+            }
+        } else {
+            window = Window(areaId: areaId, start: fix.timestamp, latitude: fix.latitude, longitude: fix.longitude)
+        }
+        guard let w = window, fix.timestamp.timeIntervalSince(w.start) >= Self.dwell else { return nil }
+        guard areaId != shownAreaId else { return nil }
+        if let until = dismissed[areaId], fix.timestamp < until { return nil }
+        return areaId
     }
 
     mutating func dismiss(_ areaId: String, now: Date) {
         dismissed[areaId] = now.addingTimeInterval(Self.dismissFor)
+    }
+
+    private static func meters(_ lat1: Double, _ lng1: Double, _ lat2: Double, _ lng2: Double) -> Double {
+        CLLocation(latitude: lat1, longitude: lng1).distance(from: CLLocation(latitude: lat2, longitude: lng2))
     }
 }
 
@@ -143,15 +170,17 @@ final class TodayContextModel {
     private(set) var proposal: Area?
 
     private var memory: ContextMemory?
+    private let defaults: UserDefaults?
     private var proposer = ArrivalProposer()
     private var lastInputs: ContextInputs?
     private var areas: [Area] = []
 
-    init() {}
+    /// `defaults` só nos testes (suíte própria); no app, o App Group.
+    init(defaults: UserDefaults? = nil) { self.defaults = defaults }
 
     /// Recalcula com o que o dia diz agora. `areas` = catálogo da região (pra achar o último confirmado).
     func update(tripId: String, areas: [Area], dayStop: Area?, baseAreaId: String?, baseName: String, now: Date, calendar: Calendar) {
-        if memory?.tripId != tripId { memory = ContextMemory(tripId: tripId) }
+        if memory?.tripId != tripId { memory = defaults.map { ContextMemory(tripId: tripId, defaults: $0) } ?? ContextMemory(tripId: tripId) }
         self.areas = areas
         let confirmed = memory?.lastConfirmedAreaId.flatMap { id in areas.first { $0.id == id } }
         let inputs = ContextInputs(manual: memory?.manual, dayStop: dayStop, lastConfirmed: confirmed,
