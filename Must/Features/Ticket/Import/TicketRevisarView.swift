@@ -1,9 +1,19 @@
 import SwiftData
 import SwiftUI
 
-/// TicketRevisar (`design/screens/TicketRevisar.png`): linhas compactas "rótulo · ● valor · origem"; tocar numa linha
-/// abre o controle logo abaixo (um de cada vez). "Vincular a" com o lugar do board; exceção de orçamento e
-/// "Avisar saia às" (lembrete local). "Salvar ingresso" é o único que grava.
+extension TicketImportModel {
+    /// Tudo lido com confiança alta: obrigatórios (título e quando; voo e Carteira só pedem o que o tipo pede) com leitura,
+    /// nenhum campo em dúvida e dá pra salvar. Aí o "Salvar" fica em destaque, ainda depois da revisão.
+    var isAllConfident: Bool {
+        guard let draft, canSave, !draft.meta.isEmpty else { return false }
+        let required: [TicketField] = (isFlight || isWalletKind) ? [] : [.title, .when]
+        guard required.allSatisfy({ draft.meta[$0] != nil }) else { return false }
+        return !draft.meta.values.contains { $0.needsReview }
+    }
+}
+
+/// Conferir (V9): `Form` nativo. Cada campo mostra o valor editável e, embaixo, a confiança com ícone e texto
+/// ("lido do texto", "lido da imagem", "conferir · …"). "Salvar" é o único que grava.
 struct TicketRevisarView: View {
     @Bindable var model: TicketImportModel
     var close: () -> Void
@@ -11,58 +21,54 @@ struct TicketRevisarView: View {
     @Environment(RegionStore.self) private var store
     @State private var choosing = false
     @State private var saveError: String?
-    /// Campo com o controle aberto (nil = todos fechados).
-    @State private var openField: TicketField?
 
     private var region: Region { store.region }
-    /// Incerto = laranja (a única cor da identidade v8); certo fica em tinta.
-    private var amber: Color { V8.orange }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                HStack {
-                    IconButton(.voltar, style: .gray, label: "Voltar pra entrada") { model.step = .entrada }
-                    Spacer()
-                    Micro("ingresso · 3 de 3")
-                    Spacer()
-                    Color.clear.frame(width: 40, height: 40)
-                }
-                .padding(.top, 8)
-
-                reviewHeader.padding(.top, 22)
-
-                fieldsCard.padding(.top, 18)
-
-                if model.isWalletKind {
-                    walletCard.padding(.top, 26)
-                } else if model.isFlight {
-                    Micro("voo · vai pra Voos").padding(.top, 26)
-                    flightCard.padding(.top, 10)
-                } else {
-                    Micro("vincular a").padding(.top, 26)
-                    matchCard.padding(.top, 10)
-                    HStack(spacing: 10) {
-                        GhostButton("Outro lugar do board") { choosing = true }
-                        GhostButton("Criar novo") { model.target = .new }
-                    }
-                    .padding(.top, 12)
-
-                    optionsCard.padding(.top, 18)
-                }
-
-                if let saveError { Text(saveError).font(.must.meta).foregroundStyle(Color(hex: 0xC2261D)).padding(.top, 12) }
-
-                PrimaryButton(saveTitle, icon: .ok, iconTrailing: true) { save() }
-                    .disabled(!model.canSave)
-                    .padding(.top, 18)
-                Color.clear.frame(height: 40)
+        Form {
+            Section {
+                summary
             }
-            .padding(.horizontal, 22)
-            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Section("Dados do ingresso") { fieldRows }
+
+            Section("Anexos") {
+                HStack {
+                    if let attachment = model.draft?.attachment { Label(attachmentLabel(attachment), systemImage: "paperclip") }
+                    if model.draft?.qrPayload.isEmpty == false { Label("QR lido", systemImage: "qrcode") }
+                    if model.draft?.attachment == nil && model.draft?.qrPayload.isEmpty != false {
+                        Text("Nenhum anexo").foregroundStyle(.secondary)
+                    }
+                }
+            }
+
+            if model.isWalletKind {
+                walletSection
+            } else if model.isFlight {
+                flightSection
+            } else {
+                matchSection
+                optionsSection
+            }
+
+            Section {
+                if let saveError { Label(saveError, systemImage: "exclamationmark.triangle.fill").foregroundStyle(V9.alert) }
+                Button(action: save) {
+                    Label(model.isAllConfident ? "Tudo certo · \(saveTitle)" : saveTitle, systemImage: "checkmark")
+                        .frame(maxWidth: .infinity)
+                }
+                .v9Primary()
+                .disabled(!model.canSave)
+                .listRowBackground(Color.clear)
+            }
         }
-        .scrollIndicators(.hidden)
-        .background(V8.paper)
+        .navigationTitle("Conferir")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Salvar", action: save).disabled(!model.canSave).fontWeight(.semibold)
+            }
+        }
         .sheet(isPresented: $choosing) {
             TicketPlacePicker(model: model, close: { choosing = false })
         }
@@ -73,203 +79,109 @@ struct TicketRevisarView: View {
         return model.isWalletKind ? "Salvar na Carteira" : "Salvar ingresso"
     }
 
-    /// Trechos lidos: número, rota e partida no fuso do aeroporto. Chegada, portão e terminal vêm do status ao vivo.
-    private var flightCard: some View {
-        let segments = FlightFromTicket.segments(from: model.draft ?? TicketDraft(at: AppClock.now), region: region)
-        return VStack(alignment: .leading, spacing: 12) {
-            ForEach(Array(segments.enumerated()), id: \.offset) { index, segment in
-                if index > 0 { RowDivider() }
-                HStack(alignment: .firstTextBaseline) {
-                    Text(segment.number).font(.must.mono(15, .semibold))
-                    Text("\(segment.from) → \(segment.to)").font(.must.archivo(15, .semibold)).foregroundStyle(Color.must.ink)
-                    Spacer(minLength: 8)
-                    Text("\(FlightFormat.day(segment.departs, zone: FlightFormat.zone(segment.from, fallback: region.timeZone))) · \(FlightFormat.time(segment.departs, zone: FlightFormat.zone(segment.from, fallback: region.timeZone)))")
-                        .font(.must.mono(13)).foregroundStyle(Color.must.secondary)
-                }
-            }
-            if segments.isEmpty {
-                Text("Nenhum trecho lido. Confira o número do voo e os aeroportos antes de salvar.").font(.must.meta).foregroundStyle(Color.must.secondary)
-            }
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.must.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-    }
+    // MARK: Resumo
 
-    /// Título + numeral gigante (quantos campos lidos) + quantos pedem conferência, em laranja.
-    private var reviewHeader: some View {
+    private var summary: some View {
         let read = model.draft?.readCount ?? 0
-        let doubtful = (model.draft?.meta.values.filter(\.needsReview).count ?? 0)
-        return VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .lastTextBaseline, spacing: 12) {
-                Text("\(read)")
-                    .font(V8Font.numeral(96)).tracking(-3).foregroundStyle(V8.orange)
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Conferir").font(V8Font.display(34)).foregroundStyle(V8.ink)
-                    Text("\(read) CAMPOS LIDOS").font(V8Font.mono(10, weight: .semibold)).tracking(1).foregroundStyle(V8.mute)
-                }
+        let doubtful = model.draft?.meta.values.filter(\.needsReview).count ?? 0
+        let ok = model.isAllConfident
+        return Label {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(ok ? "Tudo certo" : (doubtful == 0 ? "Confira antes de salvar" : "\(doubtful) \(doubtful == 1 ? "campo" : "campos") pra conferir"))
+                    .font(.headline)
+                Text("\(read) \(read == 1 ? "campo lido" : "campos lidos") no aparelho. " + (ok ? "Pode salvar; é só mudar o que estiver errado." : "Os marcados com ⚠ pedem sua atenção."))
+                    .font(.subheadline).foregroundStyle(.secondary)
             }
-            Text(doubtful == 0 ? "Tudo certo. Toque num campo pra corrigir."
-                 : "\(doubtful) \(doubtful == 1 ? "campo" : "campos") em laranja: confira antes de salvar. Toque pra corrigir.")
-                .font(V8Font.text(14)).foregroundStyle(doubtful == 0 ? V8.mute : V8.orangeDeep)
-                .frame(maxWidth: .infinity, alignment: .leading)
+        } icon: {
+            Image(systemName: ok ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
+                .foregroundStyle(ok ? V9.accent : V9.alert)
         }
         .accessibilityElement(children: .combine)
     }
 
     // MARK: Campos
 
-    private var fieldsCard: some View {
+    @ViewBuilder private var fieldRows: some View {
         let d = model.draft
-        return VStack(spacing: 0) {
-            field(.supplier, "Fornecedor", value: nonEmpty(d?.supplier)) {
-                editorBox { TextField("—", text: text(\.supplier, .supplier), axis: .vertical).lineLimit(1...3) }
-            }
-            RuleLine()
-            field(.title, "Título", value: nonEmpty(d?.title, "—")) {
-                editorBox { TextField("nome da experiência", text: text(\.title, .title), axis: .vertical).lineLimit(1...3) }
-            }
-            RuleLine()
-            field(.when, "Quando", value: whenText, mono: true) {
-                editorBox {
-                    DatePicker("Quando", selection: date(\.at, .when), displayedComponents: [.date, .hourAndMinute])
-                        .labelsHidden()
-                        .datePickerStyle(.compact)
-                        .environment(\.timeZone, region.timeZone)
-                        .environment(\.locale, region.locale)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-            }
-            if !model.isWalletKind && !model.isFlight {
-                RuleLine()
-                field(.people, "Pessoas", value: "\(d?.people ?? 1)", mono: true) {
-                    editorBox {
-                        Stepper(value: integer(\.people, .people), in: 1...12) {
-                            Text("\(d?.people ?? 1) \((d?.people ?? 1) == 1 ? "pessoa" : "pessoas")").font(.must.archivo(16))
-                        }
-                    }
-                }
-            }
-            ForEach(extraRows, id: \.field) { row in
-                RuleLine()
-                field(row.field, row.label, value: row.value) {
-                    editorBox { TextField(row.label.lowercased(), text: text(row.path, row.field), axis: .vertical).lineLimit(1...3) }
-                }
-            }
-            RuleLine()
-            field(.price, "Pago", value: d?.price.map { region.money($0) } ?? "—", mono: true) {
-                editorBox {
-                    TextField("24.000 (\(currencyMark))", text: price()).keyboardType(.numberPad).font(.must.mono(16, .semibold))
-                }
-            }
-            RuleLine()
-            field(.confirmation, "Confirmação", value: nonEmpty(d?.confirmation), mono: true) {
-                editorBox {
-                    TextField("código", text: text(\.confirmation, .confirmation))
-                        .font(.must.mono(16, .semibold))
-                        .textInputAutocapitalization(.characters)
-                }
-            }
-            if !model.isWalletKind && !model.isFlight {
-                RuleLine()
-                field(.meeting, "Encontro", value: nonEmpty(d?.meetingPoint)) {
-                    editorBox { TextField("ponto de encontro", text: text(\.meetingPoint, .meeting), axis: .vertical).lineLimit(1...3) }
-                }
-                RuleLine()
-                field(.cancel, "Cancelamento", value: cancelText) {
-                    editorBox { cancelControl }
-                }
-            }
-            RuleLine()
-            HStack(spacing: 12) {
-                Text("ANEXOS").font(V8Font.mono(10, weight: .semibold)).tracking(0.8).foregroundStyle(V8.mute).frame(width: 96, alignment: .leading)
-                Spacer(minLength: 0)
-                if let attachment = d?.attachment {
-                    Pill(attachmentLabel(attachment))
-                }
-                if d?.qrPayload.isEmpty == false { Pill("QR") }
-            }
-            .padding(.horizontal, 16).padding(.vertical, 14)
+        field(.supplier, "Fornecedor") {
+            TextField("Fornecedor", text: text(\.supplier, .supplier), axis: .vertical).lineLimit(1...3)
         }
-        .overlay(alignment: .top) { RuleLine() }
-        .overlay(alignment: .bottom) { RuleLine() }
+        field(.title, "Título") {
+            TextField("Nome da experiência", text: text(\.title, .title), axis: .vertical).lineLimit(1...3)
+        }
+        field(.when, "Quando") {
+            DatePicker("Quando", selection: date(\.at, .when), displayedComponents: [.date, .hourAndMinute])
+                .labelsHidden()
+                .environment(\.timeZone, region.timeZone)
+                .environment(\.locale, region.locale)
+        }
+        if !model.isWalletKind && !model.isFlight {
+            field(.people, "Pessoas") {
+                Stepper(value: integer(\.people, .people), in: 1...12) {
+                    Text("\(d?.people ?? 1) \((d?.people ?? 1) == 1 ? "pessoa" : "pessoas")").monospacedDigit()
+                }
+            }
+        }
+        ForEach(extraRows, id: \.field) { row in
+            field(row.field, row.label) {
+                TextField(row.label, text: text(row.path, row.field), axis: .vertical).lineLimit(1...3)
+            }
+        }
+        field(.price, "Pago (\(currencyMark))") {
+            TextField("24.000", text: price()).keyboardType(.numberPad).monospacedDigit()
+        }
+        field(.confirmation, "Confirmação") {
+            TextField("Código", text: text(\.confirmation, .confirmation))
+                .font(.body.monospaced())
+                .textInputAutocapitalization(.characters)
+                .autocorrectionDisabled()
+        }
+        if !model.isWalletKind && !model.isFlight {
+            field(.meeting, "Encontro") {
+                TextField("Ponto de encontro", text: text(\.meetingPoint, .meeting), axis: .vertical).lineLimit(1...3)
+            }
+            field(.cancel, "Cancelamento") { cancelControl }
+        }
     }
 
-    /// Local, assento, portão, titular: só aparecem quando o ingresso trouxe algum (ou quando o leitor ficou em dúvida).
-    private var extraRows: [(field: TicketField, label: String, value: String, path: WritableKeyPath<TicketDraft, String>)] {
+    /// Local, assento, portão, titular: só aparecem quando o ingresso trouxe algum.
+    private var extraRows: [(field: TicketField, label: String, path: WritableKeyPath<TicketDraft, String>)] {
         guard let d = model.draft, !model.isWalletKind else { return [] }
         let all: [(TicketField, String, String, WritableKeyPath<TicketDraft, String>)] = [
             (.venue, "Local", d.venue, \.venue), (.seat, "Assento", d.seat, \.seat),
             (.gate, "Portão", d.gate, \.gate), (.holder, "Titular", d.holder, \.holder),
         ]
-        return all.filter { !$0.2.isEmpty }.map { (field: $0.0, label: $0.1, value: $0.2, path: $0.3) }
+        return all.filter { !$0.2.isEmpty }.map { (field: $0.0, label: $0.1, path: $0.3) }
     }
 
-    /// Linha de índice: rótulo mono · valor · origem. Incerto = barra e valor em laranja + "CONFERIR". Tocar abre o controle
-    /// logo abaixo (um de cada vez).
-    private func field<Editor: View>(_ target: TicketField, _ label: String, value: String, mono: Bool = false,
-                                     @ViewBuilder editor: () -> Editor) -> some View {
+    /// Rótulo, controle editável e a linha de confiança (ícone + texto: nunca só cor).
+    private func field<Control: View>(_ target: TicketField, _ label: String, @ViewBuilder control: () -> Control) -> some View {
         let meta = model.draft?.meta[target]
-        let isOpen = openField == target
-        let doubt = meta?.needsReview ?? false
-        return VStack(alignment: .leading, spacing: 0) {
-            Button {
-                withAnimation(.snappy(duration: 0.2)) { openField = isOpen ? nil : target }
-            } label: {
-                HStack(alignment: .top, spacing: 10) {
-                    Text(label.uppercased())
-                        .font(V8Font.mono(10, weight: .semibold)).tracking(0.8).foregroundStyle(V8.mute)
-                        .frame(width: 92, alignment: .leading).padding(.top, 4)
-                    VStack(alignment: .trailing, spacing: 3) {
-                        Text(value)
-                            .font(mono ? V8Font.mono(14, weight: .semibold) : V8Font.text(16, weight: .bold))
-                            .foregroundStyle(doubt ? V8.orangeDeep : V8.ink)
-                            .multilineTextAlignment(.trailing)
-                            .lineLimit(2)
-                        if let origin = meta?.origin {
-                            Text((doubt ? "conferir · " : "") + origin)
-                                .font(V8Font.mono(9)).tracking(0.4).foregroundStyle(doubt ? V8.orangeDeep : V8.mute).lineLimit(1)
-                        }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                }
-                .padding(.vertical, 13).padding(.leading, 12)
-                .overlay(alignment: .leading) { Rectangle().fill(doubt ? V8.orange : .clear).frame(width: 4) }
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityHint(doubt ? "leitura incerta, confira" : "")
-            if isOpen {
-                editor().padding(.leading, 14).padding(.bottom, 14)
-            }
+        return VStack(alignment: .leading, spacing: 6) {
+            Text(label).font(.subheadline).foregroundStyle(.secondary)
+            control()
+            if let meta { confidence(meta) }
+        }
+        .padding(.vertical, 2)
+        .accessibilityElement(children: .contain)
+    }
+
+    @ViewBuilder private func confidence(_ meta: FieldMeta) -> some View {
+        if meta.needsReview {
+            Label("Conferir · \(originText(meta))", systemImage: "exclamationmark.triangle.fill")
+                .font(.footnote.weight(.semibold)).foregroundStyle(V9.alert)
+        } else {
+            Label(originText(meta).sentenceCased, systemImage: "checkmark.circle.fill")
+                .font(.footnote).foregroundStyle(.secondary)
         }
     }
 
-    /// Caixa do controle aberto (texto, data, passo, preço).
-    private func editorBox<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
-        content()
-            .font(.must.archivo(16))
-            .foregroundStyle(Color.must.ink)
-            .padding(.horizontal, 14).padding(.vertical, 12)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(V8.white)
-            .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
-    }
-
-    private func nonEmpty(_ value: String?, _ placeholder: String = "—") -> String {
-        guard let value, !value.trimmingCharacters(in: .whitespaces).isEmpty else { return placeholder }
-        return value
-    }
-
-    private var whenText: String {
-        let at = model.draft?.at ?? AppClock.now
-        return "\(FlightFormat.day(at, zone: region.timeZone)) · \(FlightFormat.time(at, zone: region.timeZone))"
-    }
-
-    private var cancelText: String {
-        guard let until = model.draft?.cancelUntil else { return "sem cancelamento grátis" }
-        return "grátis até \(FlightFormat.day(until, zone: region.timeZone)) · \(FlightFormat.time(until, zone: region.timeZone))"
+    /// "lido do texto" vira "lido da imagem" quando a fonte foi foto/print.
+    private func originText(_ meta: FieldMeta) -> String {
+        if meta.origin == "lido do texto", case .pending(_, let ext)? = model.draft?.attachment, ext != "pdf" {
+            return "lido da imagem"
+        }
+        return meta.origin
     }
 
     /// "¥" quando a moeda do ingresso é a da região; senão o código ("USD").
@@ -278,32 +190,28 @@ struct TicketRevisarView: View {
         return currency
     }
 
-    private func dot(_ meta: FieldMeta?) -> Color {
-        guard let meta else { return .clear }
-        return meta.needsReview ? amber : V8.ink
-    }
-
     private func attachmentLabel(_ attachment: TicketDraft.Attachment) -> String {
         switch attachment {
-        case .pending(_, let ext): ext == "pdf" ? "PDF" : "foto"
-        case .stored(let name): name.hasSuffix(".pdf") ? "PDF" : "foto"
+        case .pending(_, let ext): ext == "pdf" ? "PDF" : "Foto"
+        case .stored(let name): name.hasSuffix(".pdf") ? "PDF" : "Foto"
         }
     }
 
     @ViewBuilder private var cancelControl: some View {
         if let until = model.draft?.cancelUntil {
-            HStack(spacing: 10) {
-                DatePicker("Até", selection: date(\.cancelUntil, .cancel, fallback: until), displayedComponents: [.date, .hourAndMinute])
-                    .labelsHidden()
-                    .environment(\.timeZone, region.timeZone)
-                Button { model.edit(.cancel) { $0.cancelUntil = nil } } label: { Pill("sem", icon: .remover) }
-                    .buttonStyle(MustPressStyle())
-            }
+            DatePicker("Grátis até", selection: date(\.cancelUntil, .cancel, fallback: until), displayedComponents: [.date, .hourAndMinute])
+                .environment(\.timeZone, region.timeZone)
+                .environment(\.locale, region.locale)
+            Button("Sem cancelamento grátis", role: .destructive) { model.edit(.cancel) { $0.cancelUntil = nil } }
+                .font(.subheadline)
         } else {
-            Button { model.edit(.cancel) { $0.cancelUntil = $0.at } } label: { Pill("sem cancelamento grátis") }
-                .buttonStyle(MustPressStyle())
+            Text("Sem cancelamento grátis")
+            Button("Tem cancelamento grátis") { model.edit(.cancel) { $0.cancelUntil = $0.at } }
+                .font(.subheadline)
         }
     }
+
+    // MARK: Bindings
 
     /// Binding de texto que marca o campo como "à mão" (100%) ao ser editado.
     private func text(_ path: WritableKeyPath<TicketDraft, String>, _ field: TicketField) -> Binding<String> {
@@ -326,7 +234,7 @@ struct TicketRevisarView: View {
                 set: { value in model.edit(field) { $0[keyPath: path] = Self.minute(value, region: region) } })
     }
 
-    /// Valor em reais/ienes inteiro: "24.000" → 24000 (separador de milhar não conta).
+    /// Valor inteiro: "24.000" → 24000 (separador de milhar não conta).
     private func price() -> Binding<String> {
         Binding(get: { NumberInput.intText(model.draft?.price) },
                 set: { value in
@@ -341,57 +249,74 @@ struct TicketRevisarView: View {
         return region.calendar.date(from: c) ?? date
     }
 
-    // MARK: Vincular
+    // MARK: Destino
 
-    private var matchCard: some View {
+    /// Trechos lidos: número, rota e partida no fuso do aeroporto.
+    private var flightSection: some View {
+        let segments = FlightFromTicket.segments(from: model.draft ?? TicketDraft(at: AppClock.now), region: region)
+        return Section {
+            ForEach(Array(segments.enumerated()), id: \.offset) { _, segment in
+                let zone = FlightFormat.zone(segment.from, fallback: region.timeZone)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("\(segment.number) · \(segment.from) → \(segment.to)").font(.body.weight(.semibold))
+                    Text("\(FlightFormat.day(segment.departs, zone: zone)) · \(FlightFormat.time(segment.departs, zone: zone))")
+                        .font(.subheadline).foregroundStyle(.secondary).monospacedDigit()
+                }
+            }
+            if segments.isEmpty {
+                Text("Nenhum trecho lido. Confira o número do voo e os aeroportos antes de salvar.").foregroundStyle(.secondary)
+            }
+        } header: {
+            Text("Vai pra Voos")
+        } footer: {
+            Text("Chegada, portão e terminal vêm do status ao vivo.")
+        }
+    }
+
+    private var matchSection: some View {
         let draft = model.draft
         let match = model.chosenMatch
         let title = match?.name ?? (draft?.title.isEmpty == false ? draft?.title ?? "" : "Lugar novo")
-        let subtitle: String = {
-            if let match {
-                return "já no board · \(match.percent)% · vira âncora de \(KindLines.weekdayDay(draft?.at ?? .now, region: region))"
+        let subtitle: String = match.map {
+            "Já no board · \($0.percent)% · vira âncora de \(KindLines.weekdayDay(draft?.at ?? .now, region: region))"
+        } ?? "Criar novo · vai pra Must do"
+        return Section("Vincular a") {
+            Label {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title).font(.body.weight(.semibold))
+                    Text(subtitle).font(.subheadline).foregroundStyle(.secondary)
+                }
+            } icon: {
+                Image(systemName: match == nil ? "plus.circle" : "mappin.circle.fill").foregroundStyle(V9.accent)
             }
-            return "criar novo · vai pra Must do"
-        }()
-        return HStack(spacing: 14) {
-            MustIconView(.ok, size: 16)
-                .foregroundStyle(.white)
-                .frame(width: 34, height: 34)
-                .background(Color.must.ink, in: Circle())
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title).font(.must.archivo(16, .semibold)).foregroundStyle(Color.must.blueText).lineLimit(2)
-                Text(subtitle).font(.must.archivo(13)).foregroundStyle(Color.must.blueText.opacity(0.8))
-            }
-            Spacer(minLength: 0)
+            .accessibilityElement(children: .combine)
+            Button("Outro lugar do board") { choosing = true }
+            Button("Criar lugar novo") { model.target = .new }
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(LinearGradient(colors: [Color(hex: 0xD6E8FF), Color(hex: 0x9FD6FF)], startPoint: .topLeading, endPoint: .bottomTrailing),
-                    in: RoundedRectangle(cornerRadius: 22, style: .continuous))
     }
 
     /// Exceção de orçamento e aviso "saia às" (lembrete local; sem Live Activity).
-    private var optionsCard: some View {
+    private var optionsSection: some View {
         let budget = Binding(get: { model.draft?.budgetException ?? false },
                              set: { value in model.draft?.budgetException = value })
         let remind = Binding(get: { model.draft?.remindLeave ?? false },
                              set: { value in model.draft?.remindLeave = value })
         let price = model.draft?.price.map { region.money($0) } ?? "—"
-        return VStack(spacing: 0) {
+        return Section("Opções") {
             Toggle(isOn: budget) {
-                FormRow("Vale a exceção de orçamento", subtitle: "\(price) fica fora da meta do dia")
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Vale a exceção de orçamento")
+                    Text("\(price) fica fora da meta do dia").font(.subheadline).foregroundStyle(.secondary)
+                }
             }
-            .toggleStyle(.must)
-            .padding(16)
-            RowDivider()
             Toggle(isOn: remind) {
-                FormRow("Avisar \"saia às\"", subtitle: leaveText)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Avisar \"saia às\"")
+                    Text(leaveText).font(.subheadline).foregroundStyle(.secondary)
+                }
             }
-            .toggleStyle(.must)
-            .padding(16)
         }
-        .background(Color.white, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(Color.must.line))
+        .tint(V9.accent)
     }
 
     /// Hora de sair: a visita menos 40 min de deslocamento (estimativa), no fuso da região.
@@ -400,27 +325,23 @@ struct TicketRevisarView: View {
     }
 
     private var leaveText: String {
-        "saia às \(FlightFormat.time(leaveAt, zone: region.timeZone)) · estimativa de 40 min"
+        "Saia às \(FlightFormat.time(leaveAt, zone: region.timeZone)) · estimativa de 40 min"
     }
 
     /// Trem e QR de entrada: vão pra Carteira, não pra um lugar do board.
-    private var walletCard: some View {
+    private var walletSection: some View {
         let kind = WalletFromTicket.kind(for: model.draft?.kind ?? .other) ?? .other
-        return HStack(spacing: 14) {
-            MustIconView(kind == .entryQR ? .colarLink : .shinkansenTrem, size: 16)
-                .foregroundStyle(.white)
-                .frame(width: 34, height: 34)
-                .background(Color.must.ink, in: Circle())
-            VStack(alignment: .leading, spacing: 4) {
-                Text("vai pra Carteira").font(.must.archivo(16, .semibold)).foregroundStyle(Color.must.ink)
-                Text("\(kind.label) · não vira lugar do board").font(.must.archivo(13)).foregroundStyle(Color.must.secondary)
+        return Section {
+            Label {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Vai pra Carteira").font(.body.weight(.semibold))
+                    Text("\(kind.label) · não vira lugar do board").font(.subheadline).foregroundStyle(.secondary)
+                }
+            } icon: {
+                Image(systemName: kind == .entryQR ? "qrcode" : "tram.fill").foregroundStyle(V9.accent)
             }
-            Spacer(minLength: 0)
+            .accessibilityElement(children: .combine)
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.must.surface2, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(Color.must.line))
     }
 
     private func save() {
@@ -439,6 +360,10 @@ struct TicketRevisarView: View {
     }
 }
 
+private extension String {
+    var sentenceCased: String { prefix(1).uppercased() + dropFirst() }
+}
+
 /// "Outro lugar do board": lista do board com busca. Escolher põe o ingresso nesse lugar.
 private struct TicketPlacePicker: View {
     @Bindable var model: TicketImportModel
@@ -454,38 +379,20 @@ private struct TicketPlacePicker: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
-                SheetHandle().frame(maxWidth: .infinity)
-                Text("Outro lugar do board").mustTitle()
-                TextField("buscar no board", text: $query)
-                    .font(.must.archivo(16))
-                    .padding(.horizontal, 16).frame(height: 48)
-                    .background(Color.must.surface, in: Capsule())
-                VStack(spacing: 0) {
-                    ForEach(filtered) { place in
-                        RowDivider()
-                        Button {
-                            model.target = .place(place.id)
-                            close()
-                        } label: {
-                            FormRow(place.name, subtitle: [place.list?.displayName, place.area].compactMap { $0 }.joined(separator: " · ")) {
-                                EmptyView()
-                            }
-                        }
-                        .buttonStyle(.plain)
-                    }
+        NavigationStack {
+            List(filtered) { place in
+                Button {
+                    model.target = .place(place.id)
+                    close()
+                } label: {
+                    V9Row(title: place.name, detail: [place.list?.displayName, place.area].compactMap { $0 }.joined(separator: " · "))
                 }
+                .buttonStyle(.plain)
             }
-            .padding(.horizontal, 22)
-            .padding(.bottom, 40)
+            .searchable(text: $query, prompt: "Buscar no board")
+            .navigationTitle("Outro lugar do board")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancelar", action: close) } }
         }
-        .scrollIndicators(.hidden)
-        .background(Color.must.bg)
     }
-}
-
-/// Régua de 2 pt de tinta (corte, prompt 30 §1).
-struct RuleLine: View {
-    var body: some View { Rectangle().fill(V8.ink).frame(height: 2) }
 }
