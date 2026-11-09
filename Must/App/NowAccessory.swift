@@ -21,9 +21,14 @@ struct NowAccessory: View {
             let today = region.calendar.startOfDay(for: now)
             let clock = DayClock.read(engine: engine, region: region, context: context, at: now,
                                       position: services.location.current?.coordinate)
-            let line = NowAccessoryLine.make(clock: clock, region: region)
+            // Em Hoje (a própria tela já mostra a próxima parada e o botão Montar o dia) a faixa diz outra coisa: o que vem
+            // depois, ou "Pedir algo…" sem dia. Nas outras abas ela é o atalho do dia.
+            let onHoje = router.tab == .hoje && !router.queroSelected && (router.paths[.hoje] ?? []).isEmpty
+            let line = NowAccessoryLine.make(clock: clock, region: region, onHoje: onHoje)
             Button {
-                if clock.phase == .noPlan {
+                if onHoje, clock.phase == .noPlan || clock.phase == .finished {
+                    router.openQuero()
+                } else if clock.phase == .noPlan {
                     router.push(.montar(date: today), on: .hoje)
                 } else {
                     router.push(.linha(date: today), on: .hoje)
@@ -47,7 +52,7 @@ struct NowAccessory: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityHint(clock.phase == .noPlan ? "monta o dia de hoje" : "abre a linha do dia")
+            .accessibilityHint(onHoje && clock.phase == .noPlan ? "abre o pedido" : (clock.phase == .noPlan ? "monta o dia de hoje" : "abre a linha do dia"))
         }
         // Atrás da faixa, o mapa (estilo papel, sempre claro) e as telas V8 (Musts) continuam claros: no modo escuro o
         // vidro fica claro e o texto branco sumia. Nessas abas a faixa segue o claro.
@@ -58,7 +63,8 @@ struct NowAccessory: View {
 
 /// O texto da faixa, puro (testável).
 enum NowAccessoryLine {
-    static func make(clock: DayClock, region: Region) -> String {
+    static func make(clock: DayClock, region: Region, onHoje: Bool = false) -> String {
+        if onHoje, let line = hojeLine(clock: clock, region: region) { return line }
         switch clock.phase {
         case .noPlan: return "Montar o dia de hoje"
         case .running:
@@ -70,6 +76,28 @@ enum NowAccessoryLine {
             guard let up = clock.upcoming else { return "Seu dia" }
             return "Próxima: \(up.stop.label) · \(DayClock.actionText(verb: clock.actionVerb, at: up.leaveAt, now: clock.at, region: region))"
         case .finished: return "Dia concluído · ver a Linha"
+        }
+    }
+}
+
+extension NowAccessoryLine {
+    /// A faixa sobre a Hoje: não repete o cartão "Próxima/Agora" nem o "Montar o dia" da tela.
+    /// Com dia: "Depois: Depachika · 18:10" (ou "Última parada de hoje"). Sem dia: "Pedir algo… · o que fazer agora".
+    static func hojeLine(clock: DayClock, region: Region) -> String? {
+        let stops = clock.active?.stops.filter { $0.kind != .micro } ?? []
+        switch clock.phase {
+        case .noPlan, .finished:
+            return "Pedir algo… · o que fazer agora"
+        case .running:
+            guard let now = clock.now else { return nil }
+            guard let after = stops.first(where: { $0.start >= now.current.end && $0.id != now.current.id }) ?? now.next else {
+                return "Última parada de hoje"
+            }
+            return "Depois: \(DayText.head(after.label)) · \(region.timeString(after.start))"
+        case .before:
+            guard let up = clock.upcoming else { return nil }
+            guard let after = stops.first(where: { $0.id != up.stop.id && $0.start >= up.stop.end }) else { return "Só essa parada hoje" }
+            return "Depois: \(DayText.head(after.label)) · \(region.timeString(after.start))"
         }
     }
 }

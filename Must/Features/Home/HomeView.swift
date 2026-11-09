@@ -34,6 +34,8 @@ struct HomeView: View {
     @State private var now = AppClock.now
     /// `hoje-chegou` (DEBUG, prints): força a faixa "Você chegou em…".
     @State private var debugProposal: Area?
+    /// Chave do ajuste que o "Ajustar" já confirmou (some o botão, fica a linha do que saiu).
+    @State private var adjustAck: String?
 
     private var region: Region { store.region }
     private var today: Date { region.calendar.startOfDay(for: now) }
@@ -59,6 +61,8 @@ struct HomeView: View {
             .listRowBackground(Color.clear)
             .listRowInsets(EdgeInsets(top: 6, leading: V9.gutter, bottom: 6, trailing: V9.gutter))
 
+            if let special = state.special { specialSection(special) }
+
             if let next {
                 nextSection(next)
             } else {
@@ -76,6 +80,8 @@ struct HomeView: View {
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
+        // Borda dura embaixo: o texto da lista não aparece por trás do vidro da barra de abas (relatório v9, item 13).
+        .scrollEdgeEffectStyle(.hard, for: .bottom)
         .v9Screen(grouped: true)
         .accessibilityAction(named: "Linha do dia") { router.push(.linha(date: today), on: .hoje) }
         .accessibilityAction(named: "Assistente") { router.sheet = .assistant }
@@ -118,10 +124,12 @@ struct HomeView: View {
 
     private var header: some View {
         HStack(alignment: .top, spacing: 8) {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 2) {
+                // O dia em cima, pequeno; o lugar embaixo, numa linha só (em BH "Sáb, 7 nov · Belo Horizonte" quebrava em duas).
+                Text(dayText).font(.subheadline).foregroundStyle(.secondary).lineLimit(1)
                 Button { showAreaPicker = true } label: {
                     HStack(spacing: 4) {
-                        Text("\(dayText) · \(contextName)").font(.title3.weight(.semibold)).multilineTextAlignment(.leading)
+                        Text(contextName).font(.title2.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.7)
                         Image(systemName: "chevron.down").font(.footnote.weight(.semibold)).foregroundStyle(.secondary)
                     }
                     .foregroundStyle(.primary)
@@ -180,6 +188,7 @@ struct HomeView: View {
 
     private func nextSection(_ n: HojeNext) -> some View {
         Section {
+            if let summary = replanSummary { adjustNotice(summary) }
             VStack(alignment: .leading, spacing: 12) {
                 Text(n.phase == .next ? "Próxima" : "Agora").font(.subheadline).foregroundStyle(.secondary)
                 Text(n.name).font(.title2.weight(.semibold)).lineLimit(2)
@@ -224,10 +233,53 @@ struct HomeView: View {
         if let id = stop.placeId { router.push(.place(id: id), on: .hoje) } else { router.push(.linha(date: today), on: .hoje) }
     }
 
+    // MARK: Atrasou? Ajustar
+
+    private var replanSummary: ReplanSummary? {
+        state.clock.flatMap { ReplanSummary.make(clock: $0, region: region) }
+    }
+
+    /// O dia já foi refeito (todas as telas leem o mesmo relógio); aqui está o que saiu e por quê, e um toque confirma.
+    private func adjustNotice(_ summary: ReplanSummary) -> some View {
+        let confirmed = adjustAck == summary.key
+        return VStack(alignment: .leading, spacing: 8) {
+            Label(confirmed ? "Dia ajustado" : summary.headline, systemImage: "arrow.triangle.2.circlepath")
+                .font(.subheadline.weight(.semibold))
+            ForEach(summary.removed, id: \.self) { line in
+                Text(line).font(.footnote).foregroundStyle(.secondary)
+            }
+            if !confirmed {
+                Button { adjustAck = summary.key; refresh() } label: { Text("Ajustar").frame(maxWidth: .infinity) }
+                    .v9Secondary()
+                    .accessibilityHint("confirma o dia refeito a partir de agora")
+            }
+        }
+        .padding(.vertical, 4)
+        .accessibilityElement(children: .contain)
+    }
+
+    // MARK: Dia especial (chegada · troca de cidade · último dia)
+
+    private func specialSection(_ day: SpecialDay) -> some View {
+        Section {
+            ForEach(day.items) { item in
+                V9Row(title: item.title, detail: nil, reason: item.detail, systemImage: item.icon, dimmed: item.done) { EmptyView() }
+            }
+        } header: {
+            Text(day.title)
+        } footer: {
+            Text(day.headline)
+        }
+    }
+
     // MARK: Sem dia
 
     private var suggestSection: some View {
         Section {
+            if !suggest.stateLine.isEmpty {
+                // No topo (e não no rodapé): a linha "14:20 · nada marcado · …" ficava atrás do vidro da barra.
+                Text(suggest.stateLine).font(.footnote).foregroundStyle(.secondary).monospacedDigit()
+            }
             if suggest.cards.isEmpty {
                 Text(suggest.emptyLine.isEmpty ? "Nada aberto por perto agora. Peça algo ou monte o dia." : suggest.emptyLine)
                     .font(.subheadline).foregroundStyle(.secondary)
@@ -248,8 +300,6 @@ struct HomeView: View {
             .listRowSeparator(.hidden)
         } header: {
             Text("Agora vale")
-        } footer: {
-            if !suggest.stateLine.isEmpty { Text(suggest.stateLine) }
         }
     }
 
