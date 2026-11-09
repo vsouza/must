@@ -563,7 +563,16 @@ struct ExplorarView: View {
 
     // MARK: Recorte aberto
 
-    private func open() { withAnimation { mapOpen = true } }
+    /// Recorte: o mapa da raiz do Explorar mostrando os Musts do bairro ("Mostrando: Nakano ✕"), sem um segundo mapa vivo.
+    /// Bairro sem Must nenhum (ou os prints do recorte) ainda abrem o recorte antigo.
+    private func open() {
+        let ids = model.items.compactMap(\.placeId)
+        if let area = model.area, !ids.isEmpty, !debugScreen.hasPrefix("explorar-recorte") {
+            router.showOnMap(MapShowcase(title: area.name, placeIds: ids))
+            return
+        }
+        withAnimation { mapOpen = true }
+    }
     private func close() { withAnimation { mapOpen = false } }
 
     // MARK: Painel do trilho (B-2)

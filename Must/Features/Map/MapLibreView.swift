@@ -21,6 +21,8 @@ struct MapScene {
     var area: [CLLocationCoordinate2D]? = nil
     /// Percurso do Guia do dia (prompt 18 · C.16): trecho de trem na cor da linha, ou a pé (pontilhado).
     var legs: [MapLegPath] = []
+    /// V9: "você" é o ponto azul do sistema (o v8 era laranja).
+    var systemYou = false
 }
 
 /// Um trecho do percurso: `color` nil = a pé (pontilhado cinza); senão a cor oficial da linha (`0xRRGGBB`).
@@ -454,6 +456,7 @@ struct MapLibreView: UIViewRepresentable {
                 map.addAnnotation(a)
             }
             if let you, let view = map.view(for: you) as? YouView {
+                view.setSystemStyle(scene.systemYou)
                 view.setHeading(youHeading.map { $0 - map.direction })
             }
         }
@@ -583,6 +586,7 @@ struct MapLibreView: UIViewRepresentable {
             return MainActor.assumeIsolated {
                 if annotation is YouAnnotation {
                     let view = mapView.dequeueReusableAnnotationView(withIdentifier: "you") as? YouView ?? YouView(reuseIdentifier: "you")
+                    view.setSystemStyle(parent.scene.systemYou)
                     view.setHeading(youHeading.map { $0 - mapView.direction })
                     return view
                 }

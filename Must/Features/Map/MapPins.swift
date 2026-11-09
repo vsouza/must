@@ -28,7 +28,7 @@ enum MapLayer: String, CaseIterable, Identifiable, Sendable {
 }
 
 /// Situação de horário de um must sem plano, como o pino mostra.
-enum PinOpenState: Equatable, Sendable {
+enum PinOpenState: Hashable, Sendable {
     case unknown
     case closed
     case open
@@ -57,6 +57,18 @@ struct MapPin: Identifiable, Equatable, Sendable {
         case result(number: Int)
         /// Explorar (prompt 31 · 8): pino quadrado de borda 2 pt com o número do índice; sem número = ponto de 8 pt.
         case block(number: Int?, tone: BlockTone, selected: Bool)
+        /// Explorar V9 (prompt 32 §4): Must na cor da lista, feito cinza, parada numerada, evento e indicado; o selecionado
+        /// sai no acento (`V9.accent`).
+        case v9(style: V9Style, selected: Bool)
+    }
+
+    /// Pino do mapa V9. `rgb` = cor da lista (0xRRGGBB).
+    enum V9Style: Equatable, Sendable {
+        case must(letter: String, rgb: UInt32, state: PinOpenState)
+        case done
+        case stop(number: Int, next: Bool, done: Bool)
+        case event
+        case indicated
     }
 
     /// Cor por linha inteira do corte: laranja = seu Must aberto, papel = seu Must fechado/plano, tinta = fora do board.
@@ -96,6 +108,16 @@ struct MapPin: Identifiable, Equatable, Sendable {
         case .preview(_, let label): label == nil ? 4 : 7
         case .result: 5
         case .block(_, _, let selected): selected ? 7 : 3
+        case .v9(let style, let selected):
+            if selected { 8 } else {
+                switch style {
+                case .stop(_, let next, _): next ? 6 : 5
+                case .event: 4
+                case .must: 3
+                case .indicated: 2
+                case .done: 1
+                }
+            }
         }
     }
 }
@@ -248,9 +270,113 @@ final class PinView: MLNAnnotationView {
             text("\(number)", font: PinStyle.mono(13), color: .white)
         case .block(let number, let tone, let selected):
             configureBlock(number: number, tone: tone, selected: selected)
+        case .v9(let style, let selected):
+            configureV9(style, selected: selected)
         }
         if pin.highlighted { highlight() }
         accessibilityLabel = pin.placeId
+    }
+
+    /// Pino V9: disco na cor da lista com a letra em branco; feito = cinza com ✓; parada = número; evento = quadrado arredondado
+    /// com estrela; indicado = disco branco pequeno. Selecionado = 36 pt no acento com halo.
+    private func configureV9(_ style: MapPin.V9Style, selected: Bool) {
+        let white = UIColor.white
+        let ink = UIColor(v9Hex: 0x1C1C1E)
+        let gray = UIColor(v9Hex: 0x8E8E93)
+        let glyph: String
+        let glyphColor: UIColor
+        switch style {
+        case .must(let letter, let rgb, let state):
+            glyph = letter
+            glyphColor = white
+            guard !selected else { break }
+            let color = UIColor(v9Hex: rgb)
+            switch state {
+            case .open:
+                setSize(26)
+                fill(color, stroke: white, width: 2)
+                let r: CGFloat = 18
+                ring.path = UIBezierPath(ovalIn: CGRect(x: bounds.midX - r, y: bounds.midY - r, width: r * 2, height: r * 2)).cgPath
+                ring.fillColor = UIColor.clear.cgColor
+                ring.strokeColor = color.withAlphaComponent(0.55).cgColor
+                ring.lineWidth = 2
+                ring.isHidden = false
+            case .closingSoon(let remaining):
+                setSize(26)
+                fill(color, stroke: white, width: 2)
+                let r: CGFloat = 17
+                let start = -CGFloat.pi / 2
+                arc.path = UIBezierPath(arcCenter: CGPoint(x: bounds.midX, y: bounds.midY), radius: r, startAngle: start,
+                                        endAngle: start + 2 * .pi * CGFloat(max(0.02, min(1, remaining))), clockwise: true).cgPath
+                arc.fillColor = UIColor.clear.cgColor
+                arc.strokeColor = color.cgColor
+                arc.lineWidth = 2
+                arc.lineCap = .round
+                arc.isHidden = false
+            case .closed:
+                setSize(22)
+                fill(color.withAlphaComponent(0.45), stroke: white, width: 1.5)
+            case .unknown:
+                setSize(24)
+                fill(color, stroke: white, width: 2)
+            }
+            text(letter, font: .systemFont(ofSize: bounds.width < 24 ? 10 : 12, weight: .bold), color: white)
+            return
+        case .done:
+            glyph = "✓"
+            glyphColor = white
+            if !selected {
+                setSize(20)
+                fill(gray, stroke: white, width: 1.5)
+                text(glyph, font: .systemFont(ofSize: 11, weight: .bold), color: white)
+                return
+            }
+        case .stop(let number, let next, let done):
+            glyph = done ? "✓" : "\(number)"
+            glyphColor = white
+            if !selected {
+                setSize(next ? 30 : 26)
+                if done { fill(gray, stroke: white, width: 2) }
+                else if next { fill(ink, stroke: white, width: 2.5) }
+                else { fill(white, stroke: ink, width: 2) }
+                text(glyph, font: .monospacedDigitSystemFont(ofSize: next ? 14 : 12, weight: .bold), color: done || next ? white : ink)
+                return
+            }
+        case .event:
+            glyph = "★"
+            glyphColor = white
+            if !selected {
+                setSize(26)
+                disc.path = UIBezierPath(roundedRect: bounds.insetBy(dx: 1, dy: 1), cornerRadius: 7).cgPath
+                disc.fillColor = ink.cgColor
+                disc.strokeColor = white.cgColor
+                disc.lineWidth = 2
+                PinStyle.applyShadow(disc)
+                disc.shadowPath = UIBezierPath(roundedRect: bounds, cornerRadius: 7).cgPath
+                text(glyph, font: .systemFont(ofSize: 13, weight: .bold), color: white)
+                return
+            }
+        case .indicated:
+            glyph = "•"
+            glyphColor = white
+            if !selected {
+                setSize(18)
+                fill(white, stroke: gray, width: 2)
+                text("•", font: .systemFont(ofSize: 14, weight: .bold), color: gray)
+                return
+            }
+        }
+        // Selecionado: 36 pt no acento (o laranja calmo do V9 no claro: o mapa é claro nos dois modos), halo de 25 %.
+        let accent = UIColor(v9Hex: 0xD9572B)
+        setSize(36)
+        fill(accent, stroke: white, width: 2.5)
+        text(glyph, font: .systemFont(ofSize: 15, weight: .bold), color: glyphColor)
+        let r: CGFloat = 26
+        ring.path = UIBezierPath(ovalIn: CGRect(x: bounds.midX - r, y: bounds.midY - r, width: r * 2, height: r * 2)).cgPath
+        ring.fillColor = accent.withAlphaComponent(0.2).cgColor
+        ring.strokeColor = accent.withAlphaComponent(0.35).cgColor
+        ring.lineWidth = 1
+        ring.isHidden = false
     }
 
     /// Pino quadrado do Explorar: borda de 2 pt; selecionado = 34 pt com dois arcos de 1 pt.
@@ -475,6 +601,20 @@ final class YouView: MLNAnnotationView {
     }
 
     required init?(coder: NSCoder) { fatalError("init(coder:) não usado") }
+
+    private var system = false
+
+    /// V9: o ponto azul do sistema (azul com borda branca e halo azul), no lugar do laranja do v8.
+    func setSystemStyle(_ on: Bool) {
+        guard on != system else { return }
+        system = on
+        let main = on ? UIColor.systemBlue : PinStyle.orange
+        halo.colors = [main.withAlphaComponent(on ? 0.22 : 0.35).cgColor, main.withAlphaComponent(0).cgColor]
+        cone.fillColor = main.withAlphaComponent(0.22).cgColor
+        dot.fillColor = main.cgColor
+        dot.strokeColor = on ? UIColor.white.cgColor : PinStyle.ink.cgColor
+        dot.lineWidth = on ? 3 : 2.5
+    }
 
     /// Direção em graus em relação à tela (já descontada a rotação do mapa).
     func setHeading(_ degrees: Double?) {
