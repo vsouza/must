@@ -234,6 +234,118 @@ acabamentoshots() {
   shot acab-xxxl-viagem -debugScreen viagem-aba $=XL
   shot acab-xxxl-bairros -debugScreen bairros $=XL
 }
+
+# Rodada 32 · fase 1 (v9): Hoje, Explorar (3 alturas + pino), Quero, Lugar e "Você chegou em…", em JP e BH, claro e escuro.
+# `ONLY=v9 scripts/qa-screens.sh [pasta]` tira só estas (UDID=<id> fixa o simulador). Nomes: <região>-<claro|escuro>-v9-<tela>.
+# BH: a coordenada negativa vai por `defaults write` (como argumento de lançamento `-19.9` seria lido como flag).
+# Extras da QA: ONLY=v9 EXTRA=1 também tira XXXL (Hoje, Explorar médio/pino, Quero, Lugar, Viagem) e o modo avião.
+v9shots() { # $1 = jp|bh, $2 = lugar de exemplo, $3 = bairro do dia, $4 = epoch do dia, $5 = lat, $6 = lng, $7 = quero (seiko), $8 = região
+  local r=$1
+  ${=W} region $8
+  ${=W} dev.simDate -float $4
+  ${=W} dev.simLat -float $5; ${=W} dev.simLng -float $6
+  for mode in light dark; do
+    xcrun simctl ui "$UDID" appearance $mode
+    local m=$([ $mode = light ] && echo claro || echo escuro)
+    local p=$r-$m-v9
+    WAIT=12 shot $p-hoje-sem-plano -debugScreen inicio
+    WAIT=12 shot $p-hoje-plano -debugScreen hoje-plano:$3
+    WAIT=10 shot $p-chegou-em -debugScreen hoje-chegou
+    WAIT=14 shot $p-explorar-recolhida -debugScreen v9-explorar-recolhida
+    WAIT=14 shot $p-explorar-media -debugScreen v9-explorar-media
+    WAIT=14 shot $p-explorar-pino -debugScreen v9-explorar-pino
+    WAIT=12 shot $p-quero-seiko -debugScreen v9-quero-seiko
+    WAIT=12 shot $p-quero-konbini -debugScreen v9-quero-konbini
+    WAIT=10 shot $p-lugar -debugScreen lugar:$2
+    shot $p-linha -debugScreen v9-linha:$3
+    shot $p-agora -debugScreen v9-agora:$3
+    shot $p-viagem -debugScreen viagem-aba
+    shot $p-sos -debugScreen sos
+  done
+  xcrun simctl ui "$UDID" appearance light
+  if [ -n "${EXTRA:-}" ]; then
+    local XL="-UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL" OFF="-debugNetwork offline"
+    local p=$r-claro-v9
+    xcrun simctl ui "$UDID" content_size accessibility-extra-extra-extra-large
+    WAIT=12 shot $p-xxxl-hoje-plano -debugScreen hoje-plano:$3
+    WAIT=14 shot $p-xxxl-explorar-media -debugScreen v9-explorar-media
+    WAIT=14 shot $p-xxxl-explorar-pino -debugScreen v9-explorar-pino
+    WAIT=12 shot $p-xxxl-quero-seiko -debugScreen v9-quero-seiko
+    WAIT=10 shot $p-xxxl-lugar -debugScreen lugar:$2
+    shot $p-xxxl-viagem -debugScreen viagem-aba
+    xcrun simctl ui "$UDID" content_size large
+    WAIT=12 shot $p-off-hoje-plano -debugScreen hoje-plano:$3 ${=OFF}
+    WAIT=14 shot $p-off-explorar-media -debugScreen v9-explorar-media ${=OFF}
+    WAIT=14 shot $p-off-explorar-pino -debugScreen v9-explorar-pino ${=OFF}
+    WAIT=12 shot $p-off-quero-seiko -debugScreen v9-quero-seiko ${=OFF}
+    WAIT=10 shot $p-off-lugar -debugScreen lugar:$2 ${=OFF}
+    shot $p-off-sos -debugScreen sos ${=OFF}
+  fi
+}
+v9cleanup() {
+  for k in dev.simDateOn dev.simDate dev.simSetAt dev.simGPSOn dev.simLat dev.simLng dev.simCloud skipOnboarding \
+           debugPlaces debugNearby debugFlight debugTips debugAsk debugRoutes debugAutocomplete; do
+    xcrun simctl spawn "$UDID" defaults delete $PREFS $k 2>/dev/null || true
+  done
+  ${=W} region bh
+}
+if [ "${ONLY:-}" = "v9" ]; then
+  ${=W} debugRoutes -string fake; ${=W} debugAutocomplete -string fake; ${=W} debugEvents -string fake
+  echo "→ v9 · Japão · Shinjuku 15 nov 14:20"
+  v9shots jp j05 shinjuku $(epoch 2026-11-15T14:20:00+09:00) 35.6909 139.7003 "quero comprar um Seiko" jp
+  echo "→ v9 · BH · Savassi 7 nov 14:35"
+  v9shots bh p01 savassi $(epoch 2026-11-07T14:35:00-03:00) -19.9385 -43.9343 "quero comprar um Seiko" bh
+  v9cleanup
+  echo "pronto: $OUT/"
+  exit 0
+fi
+
+# Rodada 32 · QA viajante v9: os cenários 2, 3, 4 e 9 do `docs/relatorio-viajante.md` no app atual + tela Ir.
+# `ONLY=v9cenarios scripts/qa-screens.sh [pasta]`. Prefixo `c2-`, `c3-`, `c4-`, `c9-`, `ir-`.
+v9cenarios() {
+  ${=W} debugRoutes -string fake; ${=W} debugAutocomplete -string fake; ${=W} debugEvents -string fake
+  xcrun simctl ui "$UDID" appearance light
+  echo "→ c2 · dia 1, chegando em Shinjuku às 15:30 (chuva) · dia montado só às 15:30"
+  ${=W} region jp
+  ${=W} dev.simDate -float $(epoch 2026-11-11T15:30:00+09:00)
+  ${=W} dev.simLat -float 35.6909; ${=W} dev.simLng -float 139.7003
+  WAIT=12 shot c2-hoje-sem-plano -debugScreen inicio -debugProblemDemo YES
+  WAIT=12 shot c2-hoje-chegou -debugScreen hoje-chegou -debugProblemDemo YES
+  WAIT=10 shot c2-quero-comer -debugScreen "quero:quero comer algo leve perto do hotel"
+  echo "→ c3 · dia cheio em Shinjuku/Harajuku, reserva 19:00, 14:20"
+  ${=W} dev.simDate -float $(epoch 2026-11-15T14:20:00+09:00)
+  WAIT=12 shot c3-hoje -debugScreen hoje-plano:shinjuku
+  shot c3-linha -debugScreen v9-linha:shinjuku
+  shot c3-agora -debugScreen v9-agora:shinjuku
+  shot c3-explorar -debugScreen v9-explorar-media
+  echo "→ c3 · atrasou: 16:45 (o resto do dia se refaz)"
+  ${=W} dev.simDate -float $(epoch 2026-11-15T16:45:00+09:00)
+  shot c3-atrasou-hoje -debugScreen hoje
+  shot c3-atrasou-linha -debugScreen v9-linha
+  echo "→ c4 · 16h, o grupo mudou: café/comer perto, Nakano"
+  ${=W} dev.simDate -float $(epoch 2026-11-15T16:00:00+09:00)
+  WAIT=12 shot c4-quero-cafe -debugScreen "quero:quero um café"
+  ${=W} dev.simLat -float 35.7056; ${=W} dev.simLng -float 139.6657   # Nakano
+  WAIT=12 shot c4-quero-comer-nakano -debugScreen "quero:quero comer em Nakano"
+  WAIT=12 shot c4-nakano-hoje -debugScreen hoje
+  WAIT=12 shot c4-off-quero-nakano -debugScreen "quero:quero comer em Nakano" -debugNetwork offline
+  echo "→ ir · tela Ir (V8?)"
+  ${=W} dev.simLat -float 35.6909; ${=W} dev.simLng -float 139.7003
+  shot ir-j05 -debugScreen ir:j05
+  echo "→ c9 · sábado em BH, Savassi, sem viagem"
+  ${=W} region bh
+  ${=W} dev.simDate -float $(epoch 2026-11-07T14:35:00-03:00)
+  ${=W} dev.simLat -float -19.9385; ${=W} dev.simLng -float -43.9343
+  WAIT=12 shot c9-hoje -debugScreen inicio
+  WAIT=12 shot c9-quero-pao -debugScreen "quero:quero comer um pão de queijo"
+  WAIT=14 shot c9-explorar -debugScreen v9-explorar-media
+  shot c9-musts -debugScreen musts
+}
+if [ "${ONLY:-}" = "v9cenarios" ]; then
+  v9cenarios; v9cleanup
+  echo "pronto: $OUT/"
+  exit 0
+fi
 if [ "${ONLY:-}" = "acabamento" ]; then
   acabamentoshots
   for k in dev.simDateOn dev.simDate dev.simSetAt dev.simGPSOn dev.simLat dev.simLng dev.simCloud skipOnboarding \

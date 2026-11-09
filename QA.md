@@ -794,3 +794,13 @@ Varredura `grep -rn "DragGesture\|onLongPress\|LongPressGesture" Must/Features` 
 | `Map/MapPlaceCard.swift` | arrastar o card pra cima/baixo abre/fecha | `accessibilityAction` "Abrir o lugar"; botão "Abrir o lugar" visível no card (`MapPlaceCard` l.194) |
 | `List/PlaceRow.swift` | toque longo = Editar | `accessibilityAction` "Editar"; toque abre o Lugar, que tem "Editar" no menu (`PlaceView` l.354); atalho redundante |
 | `Place/PhotoViewer.swift` | arrastar pra baixo fecha | gesto padrão de visualizador de foto (fechar tem botão ✕) |
+
+### Rodada 32 · fase 1 (QA viajante, 09/11/2026)
+Relatório: `docs/relatorio-viajante-v9.md`; prints em `docs/qa-v9/` (`ONLY=v9 EXTRA=1 scripts/qa-screens.sh` e `ONLY=v9cenarios scripts/qa-screens.sh`, JP e BH, claro e escuro).
+- [x] 9 prints v9 (hoje-plano, hoje-sem-plano, explorar recolhida/média/pino, quero-seiko, quero-konbini, lugar, chegou-em) em JP e BH, claro e escuro. BH abriu em BH (Savassi, R$) com GPS gravado por `defaults write`.
+- [x] Problema 1 (relógio único): Hoje, faixa "agora", Agora e Linha mostram o mesmo horário no mesmo instante (JP 14:16/14:21, BH 14:36/14:41, offline). Resolvido.
+- [x] Cenários 2, 3, 4 e 9 refeitos: notas 3, 4, 3,5 e 3,5 (antes 2, 3, 3, 3).
+- [x] Modo avião: Hoje, Explorar, Quero (aviso "sem internet · seus Musts" com consulta nova; com cache quente mostra o guardado sem aviso), Lugar e SOS funcionam. Falta o chip "sem internet · offline ok" em Hoje/Explorar.
+- [x] Gestos: 9 usos no grep; 2 novos na lista (pegador do Explorar: botão + ajuste VoiceOver, ok; `TripSwitcherSheet` deslizar = Arquivar/Apagar **sem controle visível**: pendente).
+- [x] Dynamic Type (XXXL no simulador; o app limita em .xxxLarge): Hoje, Explorar médio e pino, Quero, Lugar e Viagem sem corte nem sobreposição.
+- Pendências abertas: tela Ir ainda V8; "Não cabe hoje" sem motivo (pino e Quero); "saia às" no passado sem tratamento; chip offline; sugestão de horário sem sentido no Quero. Corrigidos no `main` c9ed42f: motivo "Agora vale" e rótulo VoiceOver dos pinos.
