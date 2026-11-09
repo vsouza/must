@@ -169,6 +169,7 @@
 		4628B77FF846856371DDBBC9 /* ColarTextoHighlight.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1FFE8AE055F17EBC0BA100E /* ColarTextoHighlight.swift */; };
 		466330AA60B9117E268242C7 /* TicketFields.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CDA9A71D3AA56132B5F452E /* TicketFields.swift */; };
 		467CCDE766F60AB9CEF82C04 /* ButtonMetricsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C74768FA26896CDFA1961F8 /* ButtonMetricsTests.swift */; };
+		4693C95F8C395304E08097D3 /* CaminhosTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 143E59999E09A0AD49EF3317 /* CaminhosTests.swift */; };
 		477A6B28C3F63FCC5A97499C /* WhereAmI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 777DE3C7EC6186B8235C3E85 /* WhereAmI.swift */; };
 		486C94238E5229A67D788E4A /* seed-bh.json in Resources */ = {isa = PBXBuildFile; fileRef = 50B7B2806BAB98E03649662B /* seed-bh.json */; };
 		48AA788A7B981CC9E7AECA9D /* Values.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A1B075763A86D919443CA48 /* Values.swift */; };
@@ -279,6 +280,7 @@
 		74988FB4DD27477EAE2C8F3E /* NumberInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F491CD7ECF7543E2E1DEDEA /* NumberInput.swift */; };
 		74A382295FB822CD3957318E /* QAScenarioTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA488548E5855C26BB4C1C3C /* QAScenarioTests.swift */; };
 		74C95F429CC8FE7797EEC73B /* PlaceEmCartaz.swift in Sources */ = {isa = PBXBuildFile; fileRef = A78B9E6C82575BF9A7209A69 /* PlaceEmCartaz.swift */; };
+		750E59D371FEF9EF7A6CE5A3 /* PollPosterRenderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB3358AA6F9FBD2A561BF2A6 /* PollPosterRenderTests.swift */; };
 		7515BCB530926F9F3AFB26D0 /* AIPlaceExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D992925DC54DAC9FB74D5CB /* AIPlaceExtractor.swift */; };
 		753E02476613A94EF1BBE9FF /* TicketReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F9CE3F785580679B015C4ED /* TicketReaderTests.swift */; };
 		759F171E39B5E115E37B5974 /* EmCartazDayTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28667C21C5D43EA32114C4A6 /* EmCartazDayTests.swift */; };
@@ -707,6 +709,7 @@
 		12D88D49FA4A5E026FEAA007 /* DataUsage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataUsage.swift; sourceTree = "<group>"; };
 		1332B2144F43EC270FFE4560 /* DiscoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoverView.swift; sourceTree = "<group>"; };
 		13650DD58C410E7C58B9CB69 /* DayPoster.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayPoster.swift; sourceTree = "<group>"; };
+		143E59999E09A0AD49EF3317 /* CaminhosTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaminhosTests.swift; sourceTree = "<group>"; };
 		14EE015D01CFA6FF04C99D5C /* MustUITestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MustUITestCase.swift; sourceTree = "<group>"; };
 		14F1FF680FC1F945C2FC0E92 /* QueroView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueroView.swift; sourceTree = "<group>"; };
 		151603DBC6DF985528E447A4 /* show-bh_foto.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "show-bh_foto.png"; sourceTree = "<group>"; };
@@ -1153,6 +1156,7 @@
 		CADD5F9374A790F5A38E2DB1 /* FlightChecklistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightChecklistView.swift; sourceTree = "<group>"; };
 		CAECC0529BFFBFB99C5A3899 /* V8ComponentsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V8ComponentsTests.swift; sourceTree = "<group>"; };
 		CAF874CE82AC9FC5CC550BC2 /* TicketModelExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketModelExtractor.swift; sourceTree = "<group>"; };
+		CB3358AA6F9FBD2A561BF2A6 /* PollPosterRenderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PollPosterRenderTests.swift; sourceTree = "<group>"; };
 		CC23952826FB005F21DCCFA8 /* ShowEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowEvent.swift; sourceTree = "<group>"; };
 		CC25B14DB4001E11FC55A852 /* EditPlaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditPlaceView.swift; sourceTree = "<group>"; };
 		CC6D754D2886CDC8009499B2 /* BoardBatchBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardBatchBar.swift; sourceTree = "<group>"; };
@@ -1805,6 +1809,7 @@
 				ED1C3E7250F21EAC59316249 /* PlacePhotosTests.swift */,
 				A108F02F9AAFC162F9B73BEF /* PlaceResolverTests.swift */,
 				69D2CE35646C5AB69AE732BB /* PocketRulesTests.swift */,
+				CB3358AA6F9FBD2A561BF2A6 /* PollPosterRenderTests.swift */,
 				E639FA3C7D274B015BEEA574 /* PosterTests.swift */,
 				4D13D6E785168B1450C92187 /* Prompt31QueroTests.swift */,
 				4BC3262DE7A7ABEA33FEABF2 /* ProposalAndCostTests.swift */,
@@ -2093,6 +2098,7 @@
 			isa = PBXGroup;
 			children = (
 				01CA46FCD9F5308090F395DB /* AddToListTypingTests.swift */,
+				143E59999E09A0AD49EF3317 /* CaminhosTests.swift */,
 				36899479817CC171CDE3AA7E /* FieldsTypingTests.swift */,
 				14EE015D01CFA6FF04C99D5C /* MustUITestCase.swift */,
 				F218A54953D816BEF8F17DD7 /* NavigationStressTests.swift */,
@@ -3060,6 +3066,7 @@
 				50F5B54674C5E298D76B8208 /* PlacePhotosTests.swift in Sources */,
 				D008E59938102E6875832BE3 /* PlaceResolverTests.swift in Sources */,
 				0652B5F2C3142071D331EFC5 /* PocketRulesTests.swift in Sources */,
+				750E59D371FEF9EF7A6CE5A3 /* PollPosterRenderTests.swift in Sources */,
 				AD8CA8E33CF5D81A4500336E /* PosterTests.swift in Sources */,
 				623AD48E92CDB9D70C2679CA /* Prompt31QueroTests.swift in Sources */,
 				B6878DE0C69506B8CED8EF84 /* ProposalAndCostTests.swift in Sources */,
@@ -3124,6 +3131,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				57E97430EA39B4C0FAC86334 /* AddToListTypingTests.swift in Sources */,
+				4693C95F8C395304E08097D3 /* CaminhosTests.swift in Sources */,
 				2D6545265A9E4F569F900F47 /* FieldsTypingTests.swift in Sources */,
 				DBB6274E8C85B500E7EDD0F6 /* MustUITestCase.swift in Sources */,
 				696707CE1EF4263AB1569763 /* NavigationStressTests.swift in Sources */,
