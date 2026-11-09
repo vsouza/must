@@ -28,6 +28,8 @@ struct DayClock: Sendable {
     var skipped: [DayStop]
     /// Mudaram de hora no ajuste.
     var shifted: [String]
+    /// Por que cada parada saiu (id → motivo); vazio sem ajuste.
+    var skipReasons: [String: DayReplanner.SkipReason] = [:]
     /// A parada de agora e a hora de sair dela.
     var now: DayNow?
     /// Antes da primeira parada: ela e a hora de sair pra ela.
@@ -68,10 +70,12 @@ struct DayClock: Sendable {
         plan.stops = plan.stops.map { var s = $0; if doneIds.contains(s.id) { s.done = true }; return s }
         var skipped: [DayStop] = []
         var shifted: [String] = []
+        var reasons: [String: DayReplanner.SkipReason] = [:]
         if let replan = DayReplanner.replan(plan, at: date, region: region, position: position) {
             plan = replan.plan
             skipped = replan.skipped
             shifted = replan.shifted
+            reasons = replan.reasons
         }
         let hidden = Set(skipped.map(\.id))
         var active = plan
@@ -83,7 +87,7 @@ struct DayClock: Sendable {
             upcoming = Upcoming(stop: first, leaveAt: DayNowRules.leaveTime(to: first, in: active))
         }
         let phase: Phase = now != nil ? .running : (upcoming != nil ? .before : .finished)
-        return DayClock(at: date, phase: phase, plan: plan, active: active, skipped: skipped, shifted: shifted, now: now, upcoming: upcoming)
+        return DayClock(at: date, phase: phase, plan: plan, active: active, skipped: skipped, shifted: shifted, skipReasons: reasons, now: now, upcoming: upcoming)
     }
 
     /// Lê o dia aceito de hoje no motor e o "feito" do dia. É o que toda tela chama.

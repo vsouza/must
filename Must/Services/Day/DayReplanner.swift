@@ -17,6 +17,18 @@ enum DayReplanner {
         var skipped: [DayStop]
         /// Quais mudaram de hora.
         var shifted: [String]
+        /// Por que cada um saiu (id da parada → motivo).
+        var reasons: [String: SkipReason] = [:]
+    }
+
+    /// Por que uma parada ficou pra depois. Nunca é culpa: é conta de tempo.
+    enum SkipReason: Equatable, Sendable {
+        /// Passou da hora sem "feito".
+        case passed
+        /// Não cabe mais antes de uma âncora (id da âncora).
+        case beforeAnchor(String)
+        /// Empurrada, passaria do fim do dia.
+        case tooLate
     }
 
     /// Margem do "saia às" (a mesma do relógio).
@@ -48,6 +60,7 @@ enum DayReplanner {
 
         var out: [DayStop] = []
         var skippedIds = Set(overdue.map { stops[$0].id })
+        var reasons = Dictionary(uniqueKeysWithValues: overdue.map { (stops[$0].id, SkipReason.passed) })
         var shifted: [String] = []
         var prevEnd = now
         var prevCoord = origin
@@ -87,7 +100,11 @@ enum DayReplanner {
                 let gap = travel(coord ?? prevCoord, DayComposer.coordinate(stops[nf]))
                 fits = fits && s.end.addingTimeInterval(Double(gap + margin) * 60) <= stops[nf].start
             }
-            guard fits else { skippedIds.insert(s.id); continue }
+            guard fits else {
+                skippedIds.insert(s.id)
+                if let nf = nextFixed, s.end <= latest || s.start == original { reasons[s.id] = .beforeAnchor(stops[nf].id) } else { reasons[s.id] = .tooLate }
+                continue
+            }
             if s.start != stops[k].start { shifted.append(s.id) }
             out.append(s)
             prevEnd = s.end
@@ -107,6 +124,6 @@ enum DayReplanner {
         legs += fresh.map { leg in plan.legs.first { $0.from == leg.from && $0.to == leg.to && $0.minutes == leg.minutes } ?? leg }
         result.legs = legs
         let skipped = newStops.filter { skippedIds.contains($0.id) }
-        return Result(plan: result, skipped: skipped, shifted: shifted)
+        return Result(plan: result, skipped: skipped, shifted: shifted, reasons: reasons)
     }
 }
