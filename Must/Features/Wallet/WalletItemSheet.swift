@@ -21,31 +21,38 @@ struct WalletItemSheet: View {
     private var now: Date { AppClock.now }
 
     var body: some View {
-        CutSheet(title: item.name, corner: [item.kind.label, region.shortName],
-                 subtitle: [item.nameLocal, item.detail.isEmpty ? nil : item.detail].compactMap { $0 }.joined(separator: " · "),
-                 height: 170) {
-            qrBlock
-            validityRow
-            if item.kind == .transitCard { balanceBlock }
-            if let coverage = item.coverage, !coverage.isEmpty {
-                FormSection { FormRow("Cobre", subtitle: coverage) }
-            }
-            actions
-            if !item.notes.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    MonoLabel("instruções", color: V8.mute)
-                    Text(item.notes).font(V8Font.text(15)).foregroundStyle(Color.must.ink)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+        NavigationStack {
+            List {
+                if !item.detail.isEmpty || item.nameLocal != nil {
+                    Section {
+                        VStack(alignment: .leading, spacing: 4) {
+                            if let local = item.nameLocal, !local.isEmpty { Text(local).font(.title3.weight(.semibold)) }
+                            if !item.detail.isEmpty { Text(item.detail).font(.subheadline).foregroundStyle(.secondary) }
+                        }
+                        .accessibilityElement(children: .combine)
+                    }
                 }
-                .padding(16)
-                .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
+                qrBlock
+                if let text = WalletRules.validity(from: item.validFrom, until: item.validUntil, now: now, region: region) {
+                    Section("Validade") { Text(text) }
+                }
+                if item.kind == .transitCard { balanceBlock }
+                if let coverage = item.coverage, !coverage.isEmpty {
+                    Section("Cobre") { Text(coverage) }
+                }
+                actions
+                if !item.notes.isEmpty {
+                    Section("Instruções") { Text(item.notes).textSelection(.enabled) }
+                }
+                Section {
+                    Button { editing = true } label: { Label("Editar", systemImage: "pencil") }
+                    Button(role: .destructive) { confirmDelete = true } label: { Label("Apagar", systemImage: "trash") }
+                }
             }
-            HStack(spacing: 10) {
-                GhostButton("Editar", icon: .editar) { editing = true }
-                GhostButton("Apagar", icon: .remover) { confirmDelete = true }
-            }
-            .padding(.top, 4)
-            Color.clear.frame(height: 20)
+            .navigationTitle(item.name)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Fechar") { dismiss() } } }
+            .v9Screen(grouped: true)
         }
         .quickLookPreview($preview)
         .fullScreenCover(isPresented: $bigQR) {
@@ -62,10 +69,10 @@ struct WalletItemSheet: View {
 
     // MARK: Blocos
 
-    /// QR desenhado no aparelho (CoreImage): funciona sem rede e sem o arquivo original.
+    /// QR desenhado no aparelho (CoreImage): funciona sem rede e sem o arquivo original. Fundo branco fixo (leitor).
     @ViewBuilder private var qrBlock: some View {
         if let payload = item.qrPayload, let image = TicketQR.image(for: payload, points: 220) {
-            VStack(alignment: .leading, spacing: 10) {
+            Section {
                 Button { bigQR = true } label: {
                     Image(uiImage: image)
                         .interpolation(.none)
@@ -73,40 +80,31 @@ struct WalletItemSheet: View {
                         .scaledToFit()
                         .frame(width: 220, height: 220)
                         .padding(14)
-                        .background(.white, in: Rectangle())
+                        .background(.white, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(MustPressStyle())
+                .buttonStyle(.plain)
                 .accessibilityLabel("Mostrar QR grande")
-                Text("salvo no aparelho · funciona sem internet · toque pra mostrar grande").font(V8Font.text(13)).foregroundStyle(V8.mute)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .multilineTextAlignment(.center)
+            } footer: {
+                Text("Salvo no aparelho · funciona sem internet · toque pra mostrar grande").frame(maxWidth: .infinity, alignment: .center)
             }
-        }
-    }
-
-    @ViewBuilder private var validityRow: some View {
-        if let text = WalletRules.validity(from: item.validFrom, until: item.validUntil, now: now, region: region) {
-            FormSection { FormRow("Validade", subtitle: text) }
         }
     }
 
     /// Saldo: sempre anotado à mão. Não há API pública pra ler o saldo da Suica.
     private var balanceBlock: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            MonoLabel("saldo anotado à mão", color: V8.mute)
+        Section {
             HStack(alignment: .firstTextBaseline) {
                 Text(item.balance.map { region.money($0) } ?? "sem saldo anotado")
-                    .font(V8Font.mono(26, weight: .semibold)).foregroundStyle(Color.must.ink)
+                    .font(.title2.weight(.semibold)).monospacedDigit()
                 Spacer(minLength: 8)
-                Button { annotating = true } label: { Pill("anotar saldo", icon: .editar) }
-                    .buttonStyle(MustPressStyle())
+                Button("Anotar saldo") { annotating = true }.buttonStyle(.bordered)
             }
-            Text(balanceNote).font(V8Font.text(13)).foregroundStyle(V8.mute)
+        } header: {
+            Text("Saldo anotado à mão")
+        } footer: {
+            Text(balanceNote)
         }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
     }
 
     private var balanceNote: String {
@@ -115,16 +113,20 @@ struct WalletItemSheet: View {
         return "\(honest) Anotado \(WalletRules.balanceNote(noted: noted, now: now, region: region))."
     }
 
-    private var actions: some View {
-        VStack(spacing: 10) {
-            if item.opensWallet {
-                PrimaryButton("Abrir no Wallet ↗", style: .dark) { openURL(WalletRules.walletURL) }
-            }
-            if let url = attachmentURL {
-                PrimaryButton(item.attachmentIsPDF ? "Abrir PDF" : "Abrir foto", style: .dark) { preview = url }
-            }
-            if let link = item.link, let url = URL(string: link) {
-                GhostButton("Abrir o site ↗") { openURL(url) }
+    @ViewBuilder private var actions: some View {
+        if item.opensWallet || attachmentURL != nil || item.link.flatMap({ URL(string: $0) }) != nil {
+            Section {
+                if item.opensWallet {
+                    Button { openURL(WalletRules.walletURL) } label: { Label("Abrir no Wallet", systemImage: "wallet.pass") }
+                }
+                if let url = attachmentURL {
+                    Button { preview = url } label: {
+                        Label(item.attachmentIsPDF ? "Abrir PDF" : "Abrir foto", systemImage: item.attachmentIsPDF ? "doc.text" : "photo")
+                    }
+                }
+                if let link = item.link, let url = URL(string: link) {
+                    Button { openURL(url) } label: { Label("Abrir o site", systemImage: "safari") }
+                }
             }
         }
     }
@@ -158,21 +160,26 @@ struct WalletBalanceSheet: View {
     private var region: Region { store.region }
 
     var body: some View {
-        CutSheet(title: "Anotar saldo", corner: [item.name], footer: "Salvar", footerEnabled: !amount.isEmpty, onFooter: save) {
-            CutBox(label: "saldo que você viu (\(region.currencySymbol))") {
-                TextField("3240", text: $amount)
-                    .font(V8Font.mono(20, weight: .semibold))
-                    .keyboardType(.numberPad)
-                    .foregroundStyle(V8.ink)
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("3240", text: $amount).font(.title3.weight(.semibold)).monospacedDigit().keyboardType(.numberPad)
+                } header: { Text("Saldo que você viu (\(region.currencySymbol))") }
+                Section {
+                    DatePicker("Anotado em", selection: $notedAt, displayedComponents: [.date, .hourAndMinute])
+                        .environment(\.timeZone, region.timeZone)
+                        .environment(\.locale, region.locale)
+                } footer: {
+                    Text("Anotado à mão: não há API pública pra ler o saldo. O valor é o que você viu no app ou no Wallet, na hora que anotou.")
+                }
             }
-
-            DatePicker("Anotado em", selection: $notedAt, displayedComponents: [.date, .hourAndMinute])
-                .font(V8Font.text(15)).tint(V8.orange)
-                .environment(\.timeZone, region.timeZone)
-                .environment(\.locale, region.locale)
-
-            Text("Anotado à mão: não há API pública pra ler o saldo. O valor é o que você viu no app ou no Wallet, na hora que anotou.")
-                .font(V8Font.text(13)).foregroundStyle(V8.mute)
+            .navigationTitle("Anotar saldo")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancelar") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) { Button("Salvar", action: save).disabled(amount.isEmpty) }
+            }
+            .v9Screen(grouped: true)
         }
         .onAppear {
             amount = NumberInput.intText(item.balance)

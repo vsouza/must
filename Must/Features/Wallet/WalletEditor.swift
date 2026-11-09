@@ -41,67 +41,71 @@ struct WalletEditor: View {
     private var symbol: String { region.currencySymbol }
 
     var body: some View {
-        CutSheet(title: item == nil ? "Novo item" : "Editar item", corner: ["Carteira", region.shortName],
-                 footer: "Salvar", footerEnabled: !name.trimmingCharacters(in: .whitespaces).isEmpty, onFooter: save) {
-            VStack(alignment: .leading, spacing: 10) {
-                MonoLabel("tipo", color: V8.mute)
-                FlowLayout(spacing: 8) {
-                    ForEach(WalletKind.allCases) { option in
-                        Button { kind = option } label: { Pill(option.label, isOn: kind == option) }
-                            .buttonStyle(MustPressStyle())
+        NavigationStack {
+            Form {
+                Section("Tipo") {
+                    Picker("Tipo", selection: $kind) {
+                        ForEach(WalletKind.allCases) { option in Text(option.label).tag(option) }
+                    }
+                    .pickerStyle(.menu)
+                }
+                Section {
+                    field("Nome") { TextField("Suica", text: $name) }
+                    field("Nome local (opcional)") { TextField("como está escrito no cartão", text: $nameLocal) }
+                    field("Linha de apoio (opcional)") { TextField("onde vale, de onde vem", text: $detail) }
+                    if kind == .railPass {
+                        field("Cobre") { TextField("Tóquio → Kyoto → Tóquio", text: $coverage) }
                     }
                 }
-            }
-
-            field("nome") { TextField("Suica", text: $name).font(V8Font.text(16, weight: .semibold)) }
-            field("nome local (opcional)") { TextField("como está escrito no cartão", text: $nameLocal).font(V8Font.text(16)) }
-            field("linha de apoio (opcional)") { TextField("onde vale, de onde vem", text: $detail).font(V8Font.text(15)) }
-
-            if kind == .railPass {
-                field("cobre") { TextField("Tóquio → Kyoto → Tóquio", text: $coverage).font(V8Font.text(15)) }
-            }
-            if kind == .transitCard {
-                field("saldo que você anota (\(symbol))") {
-                    TextField("3240", text: $balanceText).font(V8Font.mono(17)).keyboardType(.numberPad)
+                if kind == .transitCard {
+                    Section {
+                        field("Saldo que você anota (\(symbol))") { TextField("3240", text: $balanceText).keyboardType(.numberPad) }
+                        field("Avisar pra recarregar abaixo de (\(symbol))") { TextField("1000", text: $lowText).keyboardType(.numberPad) }
+                    }
                 }
-                field("avisar pra recarregar abaixo de (\(symbol))") {
-                    TextField("1000", text: $lowText).font(V8Font.mono(17)).keyboardType(.numberPad)
+                if kind == .transitCard || kind == .creditCard {
+                    Section {
+                        Toggle(isOn: $opensWallet) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Abrir no Wallet")
+                                Text("abre o app Wallet; não escolhe um passe").font(.footnote).foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+                if kind != .transitCard && kind != .creditCard && kind != .entryQR {
+                    validitySection
+                }
+                if kind == .entryQR || kind == .railPass {
+                    Section {
+                        field("Texto do QR (colar, ou ler da foto)") { TextField("texto que o leitor lê", text: $qrText) }
+                    }
+                }
+                attachmentSection
+                Section {
+                    if kind == .esim {
+                        field("Instruções do eSIM") { TextField("como instalar e ativar", text: $notes, axis: .vertical).lineLimit(2...8) }
+                    } else {
+                        field("Observação (opcional)") { TextField("", text: $notes, axis: .vertical).lineLimit(1...4) }
+                    }
+                    field("Link (opcional)") {
+                        TextField("https://", text: $link).keyboardType(.URL).textInputAutocapitalization(.never)
+                    }
+                } footer: {
+                    Text("Passaporte, seguro e QR ficam só neste aparelho: nada vai pro export do board.")
+                }
+                if let error { Section { Text(error).foregroundStyle(.red) } }
+            }
+            .navigationTitle(item == nil ? "Novo item" : "Editar item")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancelar") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Salvar", action: save).fontWeight(.semibold)
+                        .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
-            if kind == .transitCard || kind == .creditCard {
-                Toggle(isOn: $opensWallet) {
-                    FormRow("Abrir no Wallet", subtitle: "abre o app Wallet; não escolhe um passe")
-                }
-                .toggleStyle(.must)
-            }
-
-            if kind != .transitCard && kind != .creditCard && kind != .entryQR {
-                validitySection
-            }
-            if kind == .entryQR || kind == .railPass {
-                field("texto do QR (colar, ou ler da foto)") {
-                    TextField("texto que o leitor lê", text: $qrText).font(V8Font.text(15))
-                }
-            }
-
-            attachmentSection
-
-            if kind == .esim {
-                field("instruções do eSIM") {
-                    TextField("como instalar e ativar", text: $notes, axis: .vertical).font(V8Font.text(15)).lineLimit(2...8)
-                }
-            } else {
-                field("observação (opcional)") {
-                    TextField("", text: $notes, axis: .vertical).font(V8Font.text(15)).lineLimit(1...4)
-                }
-            }
-            field("link (opcional)") {
-                TextField("https://", text: $link).font(V8Font.text(15)).keyboardType(.URL).textInputAutocapitalization(.never)
-            }
-
-            Text("Passaporte, seguro e QR ficam só neste aparelho: nada vai pro export do board.").font(V8Font.text(13)).foregroundStyle(V8.mute)
-
-            if let error { Text(error).font(.must.meta).foregroundStyle(Color(hex: 0xC2261D)) }
+            .v9Screen(grouped: true)
         }
         .onAppear(perform: load)
         .fileImporter(isPresented: $picking, allowedContentTypes: [.pdf, .image]) { result in
@@ -127,49 +131,42 @@ struct WalletEditor: View {
     // MARK: Campos
 
     private func field<Content: View>(_ label: String, @ViewBuilder content: () -> Content) -> some View {
-        CutBox(label: label) { content() }
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label).font(.footnote).foregroundStyle(.secondary)
+            content()
+        }
+        .padding(.vertical, 2)
     }
 
     /// Validade: "a partir de" só no passe de trem; "válido até" nos documentos com prazo.
     private var validitySection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        Section {
             if kind == .railPass {
-                Toggle(isOn: $hasFrom) { FormRow("Vale a partir de", subtitle: "a data da viagem no trem") }.toggleStyle(.must)
+                Toggle("Vale a partir de", isOn: $hasFrom)
                 if hasFrom { datePicker($from) }
             }
-            Toggle(isOn: $hasUntil) { FormRow("Tem validade", subtitle: "passaporte, seguro, passe") }.toggleStyle(.must)
+            Toggle("Tem validade (passaporte, seguro, passe)", isOn: $hasUntil)
             if hasUntil { datePicker($until) }
         }
     }
 
     private func datePicker(_ date: Binding<Date>) -> some View {
         DatePicker("Data", selection: date, displayedComponents: .date)
-            .font(.must.body).tint(Color.must.ink)
             .environment(\.timeZone, region.timeZone)
             .environment(\.locale, region.locale)
     }
 
     private var attachmentSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            MonoLabel(kind == .entryQR ? "print ou foto do QR" : "PDF ou foto", color: V8.mute)
-            HStack(spacing: 10) {
-                // Label em Text (não Pill): o label do PhotosPicker não é isolado no main actor.
-                PhotosPicker(selection: $photo, matching: .images) {
-                    Text("FOTO").font(V8Font.mono(11, weight: .semibold)).tracking(0.8).foregroundStyle(V8.ink)
-                        .padding(.horizontal, 12).frame(minHeight: 40)
-                        .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
-                }
-                .buttonStyle(MustPressStyle())
-                Button { picking = true } label: { Pill(attachmentName == nil ? "Arquivo" : "trocar", icon: .exportar) }
-                    .buttonStyle(MustPressStyle())
-                if attachmentName != nil {
-                    Button(action: removeAttachment) { Pill("remover", icon: .remover) }
-                        .buttonStyle(MustPressStyle())
-                }
-            }
+        Section {
+            PhotosPicker(selection: $photo, matching: .images) { Label("Foto", systemImage: "photo") }
+            Button { picking = true } label: { Label(attachmentName == nil ? "Arquivo (PDF ou imagem)" : "Trocar arquivo", systemImage: "doc") }
             if attachmentName != nil {
-                Text("arquivo guardado · fica só neste aparelho").font(V8Font.text(13)).foregroundStyle(V8.mute)
+                Button(role: .destructive, action: removeAttachment) { Label("Remover arquivo", systemImage: "trash") }
             }
+        } header: {
+            Text(kind == .entryQR ? "Print ou foto do QR" : "PDF ou foto")
+        } footer: {
+            if attachmentName != nil { Text("Arquivo guardado · fica só neste aparelho") }
         }
     }
 
