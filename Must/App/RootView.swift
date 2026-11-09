@@ -88,7 +88,7 @@ struct RootView: View {
         // Prompt 32: cada raiz convertida pro V9 tira o `.v8Legacy()` (modo escuro só nas telas V9).
         switch tab {
         case .hoje: HomeView().v8Legacy()
-        case .explorar: ExplorarView().v8Legacy()
+        case .explorar: ExplorarMapaView() // prompt 32 §4: o mapa (V9); as páginas de bairro ficam em ⋯ › Bairros
         case .musts: MustsHubView().v8Legacy()
         case .viagem: ProximosView().v8Legacy()
         }

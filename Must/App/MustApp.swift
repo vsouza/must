@@ -1,3 +1,4 @@
+import CoreLocation
 import SwiftData
 import SwiftUI
 
@@ -367,7 +368,18 @@ enum DebugLaunch {
                 prefetchDays(services: services, context: context, region: region)
             }
             router.select(.explorar)
-        case "explorar", "explorar-trilho", "explorar-recorte", "explorar-recorte-pino", "explorar-recorte-fora", "explorar-kyoto", "explorar-sem-foto": router.select(.explorar) // prompt 31 · 8
+        // prompt 32 §4: a raiz do Explorar é o mapa; as telas do conceito B abrem por ⋯ › Bairros (rota `.guia`).
+        case "explorar", "v9-explorar-recolhida", "v9-explorar-media", "v9-explorar-grande", "v9-explorar-pino", "v9-explorar-indicados":
+            router.select(.explorar)
+        case "v9-explorar-ver": // "Ver no mapa" com 3 Musts de comer
+            router.select(.explorar)
+            let here = location.current ?? CLLocation(latitude: region.defaultCenter.latitude, longitude: region.defaultCenter.longitude)
+            let eat = ((try? context.fetch(FetchDescriptor<Place>())) ?? []).filter { $0.list?.id == "eat" && ($0.lat != 0 || $0.lng != 0) }
+                .sorted { $0.location.distance(from: here) < $1.location.distance(from: here) }
+            router.showOnMap(MapShowcase(title: "comer", placeIds: Array(eat.prefix(3).map(\.id))))
+        case "explorar-trilho", "explorar-recorte", "explorar-recorte-pino", "explorar-recorte-fora", "explorar-kyoto", "explorar-sem-foto":
+            router.select(.explorar)
+            router.push(.guia(date: region.calendar.startOfDay(for: AppClock.now)), on: .explorar)
         case "assistente", "assistente-conversa": router.sheet = .assistant // conversa: `-debugAsk "pergunta"` envia sozinho
         // v9 (prompt 31): barra nova, Quero com pergunta, Bolso com os Atalhos, o `+` e a aba Viagem.
         case "barra": router.select(.hoje)
