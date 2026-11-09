@@ -134,7 +134,7 @@ extension AppRouter.Sheet {
     /// Sheets que ainda são V8 (ficam no claro). As outras já são V9 (Fase 2 do prompt 32).
     var legacyLight: Bool {
         switch self {
-        case .ticketImport, .viagens: return true
+        case .viagens: return true
         default: return false
         }
     }
