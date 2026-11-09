@@ -25,6 +25,7 @@
 		0521A47DDA44A6BC83CF1484 /* FlightStatusService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D79598327FCB5430594A4364 /* FlightStatusService.swift */; };
 		0559AB1F0C1B67030230A3AF /* AssistantWarmTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34295159CAF70FE35C4BB47 /* AssistantWarmTests.swift */; };
 		05A5632ED59A7CF0441E64C7 /* ListCover.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92C27D0DDE386E2B958C43F5 /* ListCover.swift */; };
+		06514F307CD7D8D6772817F8 /* IrBairroView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 198E605588AF448DBAED3306 /* IrBairroView.swift */; };
 		0652B5F2C3142071D331EFC5 /* PocketRulesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69D2CE35646C5AB69AE732BB /* PocketRulesTests.swift */; };
 		06D71C475F926883B092A97F /* TripMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79A03D308AB7DDDF43F1EA39 /* TripMigrationTests.swift */; };
 		06E9F21F2B0216F49D14C515 /* CapaSmartViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0337069BB6F61CEAA2C76B4 /* CapaSmartViews.swift */; };
@@ -305,11 +306,13 @@
 		7FEFB06ED86DB4F51C54E50E /* Proximos.swift in Sources */ = {isa = PBXBuildFile; fileRef = 683B6F127376BF767D65A8D0 /* Proximos.swift */; };
 		8091D7738E1225AE43365DDF /* AssistantSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A5854F219D8EFFC8F94DE0 /* AssistantSnapshot.swift */; };
 		81443345977C727CB448470D /* ColarTextoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B64D1B6B9C678CF295B9B62 /* ColarTextoTests.swift */; };
+		81A3ABB269D7FB96A9166752 /* IrBairro.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74888CF55A73E7E4B6091E90 /* IrBairro.swift */; };
 		827F381522A0CE0E17588B88 /* EventPaste.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8391FD0C8B7A30480FCE9EF4 /* EventPaste.swift */; };
 		838817593500F5CAD1D78EA9 /* DataConfidence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AD855A47632101379E0D769 /* DataConfidence.swift */; };
 		84BC80D387C9068BA8B64472 /* RoutesService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 972BE7D900669A53822A7176 /* RoutesService.swift */; };
 		84F3804ACC921668656A122C /* TicketPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16F7ED70F766E4470988F431 /* TicketPipeline.swift */; };
 		8552449EE103EBC0DEBBC532 /* DayProblemDemo.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDDD0F80798B876B7A813010 /* DayProblemDemo.swift */; };
+		85A67945BBBE7DB2ED3BE0FD /* IrBairroTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B017F6874B88814781B59AB2 /* IrBairroTests.swift */; };
 		85DEF06661EE5CA7B733CDD4 /* DayLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 452BE28FBD83100D5BF71CD7 /* DayLink.swift */; };
 		85EB93503AA3C7CFC40DBBD3 /* SOSSheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DA359AA7FA60B4936787DEB /* SOSSheets.swift */; };
 		85FF5B41404618DAEC523F24 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 988D5ED4FA848499B21CF6FD /* SettingsView.swift */; };
@@ -722,6 +725,7 @@
 		1789F2AC76B621EE0DFA0515 /* ExplorarTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExplorarTests.swift; sourceTree = "<group>"; };
 		18B098156A055B3876CFAC44 /* LightRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LightRules.swift; sourceTree = "<group>"; };
 		19878D26E2BE9AE48855F053 /* TripRegistryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripRegistryTests.swift; sourceTree = "<group>"; };
+		198E605588AF448DBAED3306 /* IrBairroView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IrBairroView.swift; sourceTree = "<group>"; };
 		19EFD690D19C8AFDD98E2B46 /* Connectivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Connectivity.swift; sourceTree = "<group>"; };
 		19F3EE9521FA301D6B89622A /* WantSearch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WantSearch.swift; sourceTree = "<group>"; };
 		1A0026A9B2FF86CB80C7B4E5 /* TicketMatcherTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketMatcherTests.swift; sourceTree = "<group>"; };
@@ -936,6 +940,7 @@
 		732B5F13FE5EC8126CDD2586 /* CorteEtapa2Tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CorteEtapa2Tests.swift; sourceTree = "<group>"; };
 		745317422880B10B468C2413 /* EventsFeedTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventsFeedTests.swift; sourceTree = "<group>"; };
 		7465A8B2F0C5AAD5F25BE2AD /* FilmsProviding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmsProviding.swift; sourceTree = "<group>"; };
+		74888CF55A73E7E4B6091E90 /* IrBairro.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IrBairro.swift; sourceTree = "<group>"; };
 		749DC76B242DE6E4478B5633 /* OfflineMapsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineMapsView.swift; sourceTree = "<group>"; };
 		7586B99859BD255DB4AC2DB0 /* CollectibleMoment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectibleMoment.swift; sourceTree = "<group>"; };
 		7589696EAD8A739DA1C8196C /* ExperiencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperiencesView.swift; sourceTree = "<group>"; };
@@ -1089,6 +1094,7 @@
 		AF67FCD358937B9720749661 /* PhotoDataRows.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoDataRows.swift; sourceTree = "<group>"; };
 		AF88B4FA5C634D9BAC15E982 /* SolverItalyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolverItalyTests.swift; sourceTree = "<group>"; };
 		AFC0A766C4380909AE162B3A /* AtalhosModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AtalhosModel.swift; sourceTree = "<group>"; };
+		B017F6874B88814781B59AB2 /* IrBairroTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IrBairroTests.swift; sourceTree = "<group>"; };
 		B08BD031CB646FB7D36AFF7C /* NewTripSteps4to5.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewTripSteps4to5.swift; sourceTree = "<group>"; };
 		B153C6D708113FA364817E96 /* UpcomingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpcomingTests.swift; sourceTree = "<group>"; };
 		B2D6516769C5F7393159F9FA /* HomeState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeState.swift; sourceTree = "<group>"; };
@@ -1575,6 +1581,8 @@
 			children = (
 				9E16D153F0E8CEBCF78909D9 /* BairrosModel.swift */,
 				9F4F0061A29EDC53D23B6F5F /* BairrosView.swift */,
+				74888CF55A73E7E4B6091E90 /* IrBairro.swift */,
+				198E605588AF448DBAED3306 /* IrBairroView.swift */,
 			);
 			path = Bairros;
 			sourceTree = "<group>";
@@ -1784,6 +1792,7 @@
 				0B09B23123A531606C10D583 /* GuideNudgesTests.swift */,
 				7F834696C3413518EE98CD49 /* HomeLinhaTests.swift */,
 				AD63AB2A6501C8501629D06E /* InFlightCancelTests.swift */,
+				B017F6874B88814781B59AB2 /* IrBairroTests.swift */,
 				D3C50367E9E69A4AC9BBD3E1 /* IrTests.swift */,
 				5092A6F919E95C25C7D6B97B /* JapanTransitTests.swift */,
 				8E95DBB5D221CACCD98CDFCB /* JSONMemoTests.swift */,
@@ -3041,6 +3050,7 @@
 				CC17AB9B630BDDC83197780B /* GuideNudgesTests.swift in Sources */,
 				F4A647358577CA41DB9E87B8 /* HomeLinhaTests.swift in Sources */,
 				6962156FFB3A1FB951288A2A /* InFlightCancelTests.swift in Sources */,
+				85A67945BBBE7DB2ED3BE0FD /* IrBairroTests.swift in Sources */,
 				993C7FCA77A611CC3BA991BB /* IrTests.swift in Sources */,
 				55CF57919CDE99D67C54F835 /* JSONMemoTests.swift in Sources */,
 				01986439F3BF1AC9AE8AF29B /* JapanTransitTests.swift in Sources */,
@@ -3325,6 +3335,8 @@
 				A8C5CE7DA792FB7AF07C8A9E /* Icons.swift in Sources */,
 				9A77B2D4B575DE9C7D2E8DC4 /* ImportView.swift in Sources */,
 				9F15F6515F09E91125A9D6D9 /* IntentParser.swift in Sources */,
+				81A3ABB269D7FB96A9166752 /* IrBairro.swift in Sources */,
+				06514F307CD7D8D6772817F8 /* IrBairroView.swift in Sources */,
 				205D792216B142FEBD43EB70 /* IrView.swift in Sources */,
 				AE8A142630B11DE54BF0B65C /* ItalyRules.swift in Sources */,
 				957F7BD4ACF496661BE22347 /* JSONMemo.swift in Sources */,

@@ -227,7 +227,8 @@ struct HomeView: View {
               fitToday: fitToday,
               openShows: { router.push(.emCartaz, on: .hoje) },
               bolso: { go(.right) },
-              montar: { router.push(.montar(date: today), on: .hoje) })
+              montar: { router.push(.montar(date: today), on: .hoje) },
+              irBairro: { router.push(.irBairro(), on: .hoje) })
     }
 
     private func makeEnv() -> QueroEnv {

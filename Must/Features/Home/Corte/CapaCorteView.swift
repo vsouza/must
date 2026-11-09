@@ -34,6 +34,8 @@ struct CapaCorteView: View {
         var bolso: () -> Void
         /// Montar o dia de hoje (linha da capa quando não há dia).
         var montar: () -> Void
+        /// "Ir pra um bairro": marca os Musts do bairro e monta o trajeto.
+        var irBairro: () -> Void
     }
 
     @Environment(\.tripTheme) private var theme
@@ -252,6 +254,7 @@ struct CapaCorteView: View {
     private var shortcutRows: some View {
         VStack(spacing: 0) {
             if !hasPlan && !upcoming { shortcutRow("Montar o dia de hoje", sub: "roteiro pelo que está aberto e perto", action: actions.montar) }
+            shortcutRow("Ir pra um bairro", sub: "marque os Musts e eu monto o trajeto", action: actions.irBairro)
             shortcutRow("Bolso", sub: "Suica, ingressos, mapa offline, SOS", action: actions.bolso)
         }
         .padding(.bottom, 12)

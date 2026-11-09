@@ -38,6 +38,8 @@ enum Route: Hashable {
     case regrasVolta
     /// Bairros (prompt 18 · C.14): mapa de bolhas e a sheet do bairro. `areaId` abre já com o bairro escolhido (prints).
     case bairros(areaId: String? = nil)
+    /// "Ir pra um bairro": marca os Musts do bairro e monta o trajeto de agora. `areaId` pula o seletor.
+    case irBairro(areaId: String? = nil)
     /// Guia do dia (prompt 18 · C.16): a visão por bairro do dia aceito, meia-noite do dia.
     case guia(date: Date)
 
@@ -185,7 +187,7 @@ final class AppRouter {
         if queroOpen { return true }
         if mapCardOpen, paths[tab]?.last == .mapa || tab == .explorar { return true }
         switch paths[tab]?.last {
-        case .montar, .ir, .comoChegar, .place, .sos, .presente: return true
+        case .montar, .irBairro, .ir, .comoChegar, .place, .sos, .presente: return true
         default: return false
         }
     }
@@ -313,6 +315,7 @@ extension View {
             case .compras: ShoppingView()
             case .regrasVolta: ShoppingRulesView()
             case .bairros(let areaId): BairrosView(initialArea: areaId)
+            case .irBairro(let areaId): IrBairroView(areaId: areaId)
             case .guia(let date): GuiaBairroView(date: date) // abre o Explorar no bairro do dia
             case .bomDia: BomDiaView()
             case .agora: AgoraView()

@@ -422,6 +422,8 @@ enum DebugLaunch {
             GuideNudgeScheduler.logPreview(context: context, region: region, origin: location.current?.coordinate)
         case "bairros": // bairros (prompt 18 · C.14); bairros:shinjuku já abre a sheet do bairro (prints)
             router.push(.bairros(areaId: arg), on: .hoje)
+        case "ir-bairro": // Ir pra um bairro; ir-bairro:shinjuku abre direto o checklist do bairro
+            router.push(.irBairro(areaId: arg), on: .hoje)
         case "ajustar": // o que o "Ajustar" da sheet do bairro abre: Bairros e, por cima, o Montar com o foco no bairro
             let area = arg ?? "shinjuku"
             router.push(.bairros(areaId: area), on: .hoje)

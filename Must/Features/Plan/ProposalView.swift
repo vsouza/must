@@ -12,6 +12,8 @@ struct ProposalView: View {
     /// "Outra": o Montar embaralha o solver e remonta o dia do motor com a semente nova (atualiza `plan`).
     /// `nil` (prints, testes) = só o solver.
     var another: (() async -> Void)? = nil
+    /// "Ir pra um bairro": os Musts marcados. Os que não couberam aparecem numa faixa com o motivo. Vazio = Montar normal.
+    var asked: [SolverPlace] = []
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
@@ -72,6 +74,18 @@ struct ProposalView: View {
                             }
                         }
                         .animation(reduceMotion ? .easeInOut(duration: 0.2) : .snappy(duration: 0.45), value: shown.stops.map(\.id))
+                    }
+                    let missing = IrBairro.missing(planner.proposal, asked: asked)
+                    if !missing.isEmpty {
+                        DayStrip(tone: .ink) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                MonoLabel("FORA DO TRAJETO", size: 10, color: V8.white.opacity(0.7))
+                                ForEach(missing, id: \.name) { m in
+                                    Text("\(m.name) — \(m.reason)").font(V8Font.text(14)).foregroundStyle(V8.white)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                            }
+                        }
                     }
                     if let explanation = planner.proposal?.explanation, !explanation.isEmpty {
                         DayStrip {
