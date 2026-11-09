@@ -261,6 +261,7 @@
 		68FFD48FEA27A165F68F21CF /* FriendsProviding.swift in Sources */ = {isa = PBXBuildFile; fileRef = F139B6AF39593D07B8628601 /* FriendsProviding.swift */; };
 		6962156FFB3A1FB951288A2A /* InFlightCancelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD63AB2A6501C8501629D06E /* InFlightCancelTests.swift */; };
 		696707CE1EF4263AB1569763 /* NavigationStressTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F218A54953D816BEF8F17DD7 /* NavigationStressTests.swift */; };
+		6986F340D421A3F43FDC55FA /* MapStyleDarkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08AA079F39B8C0ED783275FB /* MapStyleDarkTests.swift */; };
 		6B1D76E59DB26263796CFB33 /* PlaceExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EC31260FFD7C170271ED2A1 /* PlaceExtractor.swift */; };
 		6B3A9B753F8DDA7395A53C4C /* Region.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA6E59F40F1B2D3D5518007E /* Region.swift */; };
 		6B8277224F73A746D5E0FD79 /* PlacePanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62985D320484912E83C676DB /* PlacePanel.swift */; };
@@ -387,6 +388,7 @@
 		9CC8B06D8C1B600330DC67A4 /* atom-sample.xml in Resources */ = {isa = PBXBuildFile; fileRef = 69797B6B2B256B44652C1819 /* atom-sample.xml */; };
 		9CD2200A8546E3B5F71FEF4D /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4574509CFEC4FC14741A8455 /* Models.swift */; };
 		9D554FFABA1347A3BAD94CCE /* GiftTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0200D0F7E3AC4742CA41C52 /* GiftTests.swift */; };
+		9ED19E809F03B9033EA7D5DE /* BairrosV9View.swift in Sources */ = {isa = PBXBuildFile; fileRef = 754CEC377A6AFFE1B41EA348 /* BairrosV9View.swift */; };
 		9EF294F1F76304E723EDB13C /* MapSearchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DC9C42C8B821ADC701839EA /* MapSearchTests.swift */; };
 		9F15F6515F09E91125A9D6D9 /* IntentParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB72F5E89393DFD046BC52D8 /* IntentParser.swift */; };
 		A05689C2D9725E4029F56DE1 /* NearbyRanker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F810A340D5DA4290CC357972 /* NearbyRanker.swift */; };
@@ -706,6 +708,7 @@
 		05C93DEF801F0F91C92AC57F /* DayProblem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayProblem.swift; sourceTree = "<group>"; };
 		0630B9FA5F12C5507329752F /* MapMustFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapMustFilter.swift; sourceTree = "<group>"; };
 		073EE5D0C62BCB42F2F0FB7C /* last-trains.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "last-trains.json"; sourceTree = "<group>"; };
+		08AA079F39B8C0ED783275FB /* MapStyleDarkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapStyleDarkTests.swift; sourceTree = "<group>"; };
 		0B09B23123A531606C10D583 /* GuideNudgesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuideNudgesTests.swift; sourceTree = "<group>"; };
 		0BB681F01C2B0680C574194D /* PlaceActionPlanTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceActionPlanTests.swift; sourceTree = "<group>"; };
 		0BED4ED95E26276EF8E801EB /* TicketHardCasesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketHardCasesTests.swift; sourceTree = "<group>"; };
@@ -972,6 +975,7 @@
 		7465A8B2F0C5AAD5F25BE2AD /* FilmsProviding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmsProviding.swift; sourceTree = "<group>"; };
 		74888CF55A73E7E4B6091E90 /* IrBairro.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IrBairro.swift; sourceTree = "<group>"; };
 		749DC76B242DE6E4478B5633 /* OfflineMapsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineMapsView.swift; sourceTree = "<group>"; };
+		754CEC377A6AFFE1B41EA348 /* BairrosV9View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BairrosV9View.swift; sourceTree = "<group>"; };
 		7586B99859BD255DB4AC2DB0 /* CollectibleMoment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectibleMoment.swift; sourceTree = "<group>"; };
 		7589696EAD8A739DA1C8196C /* ExperiencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperiencesView.swift; sourceTree = "<group>"; };
 		75D868B5A981073D5AED5B21 /* ApiBudget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiBudget.swift; sourceTree = "<group>"; };
@@ -1867,6 +1871,7 @@
 				F0D079E0D9E82E2F50BE762D /* MapCardTests.swift */,
 				3F70D89AA17F0F8194D5D3AE /* MapFilterTests.swift */,
 				2DC9C42C8B821ADC701839EA /* MapSearchTests.swift */,
+				08AA079F39B8C0ED783275FB /* MapStyleDarkTests.swift */,
 				40932B512799B8A0AEB85C71 /* MontarTests.swift */,
 				D9E45EB741EE7A4B0C62B1E9 /* MustTests.swift */,
 				58FDDADFE8FA187C786C7EA3 /* NavegacaoV9Tests.swift */,
@@ -2526,6 +2531,7 @@
 		CAA8FD8CACCFD5005E4B9610 /* Guia */ = {
 			isa = PBXGroup;
 			children = (
+				754CEC377A6AFFE1B41EA348 /* BairrosV9View.swift */,
 				36F805C942D29E1682813E17 /* GuiaBairroView.swift */,
 				71224347FB8D44E54B5CF3C3 /* GuiaChapters.swift */,
 				C857ACD7BF83F9BCA26A2C1E /* GuiaModel.swift */,
@@ -3145,6 +3151,7 @@
 				48B4CB9D4E3913E8C4E4655C /* MapCardTests.swift in Sources */,
 				A8BAB3A90753F8DECD9C90A3 /* MapFilterTests.swift in Sources */,
 				9EF294F1F76304E723EDB13C /* MapSearchTests.swift in Sources */,
+				6986F340D421A3F43FDC55FA /* MapStyleDarkTests.swift in Sources */,
 				BFC2698022619D5A838DF1C0 /* MontarTests.swift in Sources */,
 				25F1D69D524D1DB8234C3152 /* MustTests.swift in Sources */,
 				2191C9C9E03D7A8E3D1042F1 /* NavegacaoV9Tests.swift in Sources */,
@@ -3264,6 +3271,7 @@
 				632A0A99D7BF63016ED23AED /* AtalhosPanel.swift in Sources */,
 				C75DC8EFE9DB923D9750F1F7 /* AvisosDoGuiaSection.swift in Sources */,
 				686A165FBE125614E7CB9FA5 /* BairrosModel.swift in Sources */,
+				9ED19E809F03B9033EA7D5DE /* BairrosV9View.swift in Sources */,
 				DCAC8C624A6D32223A8F27CA /* BairrosView.swift in Sources */,
 				A86517F1E14EC151CADEB22C /* Blobs.swift in Sources */,
 				E64CDAF1933374CAA591663A /* BoaNoiteView.swift in Sources */,

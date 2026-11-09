@@ -369,7 +369,7 @@ final class PinView: MLNAnnotationView {
             }
         }
         // Selecionado: 36 pt no acento (o laranja calmo do V9 no claro: o mapa é claro nos dois modos), halo de 25 %.
-        let accent = UIColor(v9Hex: 0xD9572B)
+        let accent = UIColor(v9Hex: 0xD9572B).darkAware(dark: 0xF07A4E, in: traitCollection)
         setSize(36)
         fill(accent, stroke: white, width: 2.5)
         text(glyph, font: .systemFont(ofSize: 15, weight: .bold), color: glyphColor)
@@ -626,5 +626,13 @@ final class YouView: MLNAnnotationView {
         CATransaction.setDisableActions(true)
         cone.setAffineTransform(CGAffineTransform(rotationAngle: CGFloat(degrees * .pi / 180)))
         CATransaction.commit()
+    }
+}
+
+
+extension UIColor {
+    /// Cor clara agora, `dark` (RGB) quando o modo da view for escuro.
+    func darkAware(dark rgb: UInt32, in traits: UITraitCollection) -> UIColor {
+        traits.userInterfaceStyle == .dark ? UIColor(v9Hex: rgb) : self
     }
 }

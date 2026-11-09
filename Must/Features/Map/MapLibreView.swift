@@ -86,8 +86,12 @@ struct MapLibreView: UIViewRepresentable {
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
+    @Environment(\.colorScheme) private var colorScheme
+
     func makeUIView(context: Context) -> MLNMapView {
         let map = MLNMapView(frame: .zero)
+        context.coordinator.dark = colorScheme == .dark
+        map.overrideUserInterfaceStyle = colorScheme == .dark ? .dark : .light
         // Antes do delegate: ligar o delegate já dispara regionDidChange, que chama loadStyle.
         context.coordinator.map = map
         map.delegate = context.coordinator
@@ -102,7 +106,7 @@ struct MapLibreView: UIViewRepresentable {
         map.isZoomEnabled = interactive
         map.minimumZoomLevel = 9
         map.maximumZoomLevel = 18.5
-        map.backgroundColor = UIColor(red: 0xE9 / 255, green: 0xEB / 255, blue: 0xEF / 255, alpha: 1)
+        map.backgroundColor = MapStyleLoader.background(dark: colorScheme == .dark)
         context.coordinator.loadStyle(near: scene.you ?? scene.region.defaultCenter)
         context.coordinator.observePacks()
         context.coordinator.attachTap(map)
@@ -114,6 +118,12 @@ struct MapLibreView: UIViewRepresentable {
         c.parent = self
         map.isScrollEnabled = interactive
         map.isZoomEnabled = interactive
+        if c.dark != (colorScheme == .dark) {
+            c.dark = colorScheme == .dark
+            map.overrideUserInterfaceStyle = c.dark ? .dark : .light
+            map.backgroundColor = MapStyleLoader.background(dark: c.dark)
+            c.themeChanged(near: scene.you ?? scene.region.defaultCenter)
+        }
         if c.styleRegion != scene.region { c.loadStyle(near: scene.you ?? scene.region.defaultCenter) }
         c.apply(scene)
         if let command, command.id != c.lastCommand { c.lastCommand = command.id; c.run(command) }
@@ -131,6 +141,9 @@ struct MapLibreView: UIViewRepresentable {
         private(set) var youHeading: Double?
         private(set) var styleRegion: Region?
         private var tiles: MapTiles = .none
+        /// Modo escuro do sistema: o style escuro é outro arquivo, trocado ao vivo.
+        var dark = false
+        private var styleDark = false
         private var styleReady = false
         private var annotations: [String: PinAnnotation] = [:]
         private var you: YouAnnotation?
@@ -194,13 +207,21 @@ struct MapLibreView: UIViewRepresentable {
             guard let map else { return }
             let region = parent.scene.region
             let picked = MapTiles.pick(region: region, near: center)
-            guard styleRegion != region || picked != tiles else { return }
+            guard styleRegion != region || picked != tiles || styleDark != dark else { return }
             styleRegion = region
+            styleDark = dark
             tiles = picked
             styleReady = false
             signatures = [:]
             if case .none = picked { Log.data.error("mapa: sem mapa baixado, sem MAP_TILES_URL e sem PROTOMAPS_KEY — só fundo") }
-            map.styleURL = MapStyleLoader.styleURL(region: region, tiles: picked)
+            map.styleURL = MapStyleLoader.styleURL(region: region, tiles: picked, dark: dark)
+        }
+
+        /// O sistema trocou claro/escuro: recarrega o style e refaz os pinos (cores resolvidas no modo novo).
+        func themeChanged(near center: CLLocationCoordinate2D) {
+            guard let map else { return }
+            loadStyle(near: map.centerCoordinate.latitude == 0 ? center : map.centerCoordinate)
+            for (_, a) in annotations { (map.view(for: a) as? PinView)?.configure(a.pin) }
         }
 
         nonisolated func mapView(_ mapView: MLNMapView, didFinishLoading style: MLNStyle) {
@@ -219,6 +240,7 @@ struct MapLibreView: UIViewRepresentable {
 
         private static let blue = UIColor(Color.must.blue)
         private static let ink = UIColor(Color.must.ink)
+        private static let darkInk = UIColor(red: 0xF2 / 255, green: 0xF3 / 255, blue: 0xF5 / 255, alpha: 1)
 
         /// Ordem: metrô → estações → amanhã → hoje feito → hoje futuro (contas) → distância.
         private func addRuntimeLayers(_ style: MLNStyle) {
@@ -246,8 +268,8 @@ struct MapLibreView: UIViewRepresentable {
             stations.textFontNames = NSExpression(forConstantValue: [font])
             stations.textFontSize = NSExpression(forConstantValue: 9)
             stations.textLetterSpacing = NSExpression(forConstantValue: localFont ? 0.04 : 0.16)
-            stations.textColor = NSExpression(forConstantValue: Self.ink)
-            stations.textHaloColor = NSExpression(forConstantValue: UIColor(red: 0xE9 / 255, green: 0xEB / 255, blue: 0xEF / 255, alpha: 1))
+            stations.textColor = NSExpression(forConstantValue: dark ? Self.darkInk : Self.ink)
+            stations.textHaloColor = NSExpression(forConstantValue: MapStyleLoader.background(dark: dark))
             stations.textHaloWidth = NSExpression(forConstantValue: 1.2)
             stations.textAnchor = NSExpression(forConstantValue: "left")
             stations.textOffset = NSExpression(forConstantValue: NSValue(cgVector: CGVector(dx: 1.1, dy: 0)))
@@ -293,7 +315,7 @@ struct MapLibreView: UIViewRepresentable {
             style.addLayer(future)
 
             let distance = MLNLineStyleLayer(identifier: "rt-distance", source: source("rt-distance"))
-            distance.lineColor = NSExpression(forConstantValue: Self.ink)
+            distance.lineColor = NSExpression(forConstantValue: dark ? Self.darkInk : Self.ink)
             distance.lineWidth = NSExpression(forConstantValue: 1.6)
             distance.lineDashPattern = NSExpression(forConstantValue: [2.5, 3.75])
             style.addLayer(distance)
