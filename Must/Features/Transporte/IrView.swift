@@ -69,9 +69,9 @@ enum IrSteps {
     }
 }
 
-/// 13 · Ir (prompt 23 §2, `Transporte.png`). Tinta. Numeral "N minutos", modos (a pé/metrô/táxi), passos numerados
-/// com o que tem no caminho, "saia às" e Apple Maps / Cheguei. A lógica (Routes com cache e fake, MapKit, estimativa,
-/// deep links) é a do Como chegar (`ComoChegarModel`); abre com a estimativa e troca quando a rota chega.
+/// Ir (V9, prompt 32 Fase 2): destino, "saia às"/"saia agora", modo e tempo, passos e os botões do Apple Maps / Google Maps.
+/// Lista nativa, fundo do sistema. A lógica (Routes com cache e fake, MapKit, estimativa, deep links) é a do Como chegar
+/// (`ComoChegarModel`); a tela desenha o destino na hora (do board, sem rede) e troca a estimativa quando a rota chega.
 struct IrView: View {
     var placeId: String
 
@@ -80,7 +80,6 @@ struct IrView: View {
     @Environment(Services.self) private var services
     @Environment(\.dayEngine) private var engine
     @Environment(\.modelContext) private var context
-    @Environment(\.dismiss) private var dismiss
 
     @Query private var places: [Place]
     @Query private var trips: [TripInfo]
@@ -94,34 +93,30 @@ struct IrView: View {
 
     var body: some View {
         Group {
-            if let model, let place { content(model, place: place) } else { Color.clear }
+            if let place { content(place) } else { ContentUnavailableView("Lugar não encontrado", systemImage: "mappin.slash") }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .background {
-            ZStack {
-                V8.ink
-                Rings(color: V8.white, count: 1, diameter: 560, opacity: 0.28, offset: CGSize(width: -60, height: -120))
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            }
-            .ignoresSafeArea()
-        }
-        .toolbar(.hidden, for: .navigationBar)
+        .navigationTitle("Ir")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar { ToolbarItem(placement: .topBarTrailing) { V9OfflineChip() } }
+        .v9Screen(grouped: true)
         .task(id: placeId) { await prepare() }
     }
 
+    /// Abre o modelo primeiro (a tela desenha na hora) e só depois lê o dia aceito, que decodifica o plano na main.
     private func prepare() async {
         guard let place, model == nil else { return }
         let now = AppClock.now
+        let anchor = ComoChegarView.anchor(for: place, now: now, meeting: false, calendar: region.calendar)
+        let m = ComoChegarModel(placeName: place.name, destination: place.coordinate, region: region, anchor: anchor,
+                                doorNote: ComoChegarModel.doorLine(place.notes), now: now)
+        model = m
+        await Task.yield()
         // A parada do dia com este lugar: dá o "saia às" do plano.
         let clock = DayClock.read(engine: engine, region: region, context: context, at: now, position: services.location.current?.coordinate)
         if let plan = clock.plan, let s = plan.stops.first(where: { $0.placeId == placeId }) {
             stop = s
             leaveAt = clock.now.flatMap { $0.current.id == s.id ? ($0.arriveBy ?? $0.leaveAt) : nil }
         }
-        let anchor = ComoChegarView.anchor(for: place, now: now, meeting: false, calendar: region.calendar)
-        let m = ComoChegarModel(placeName: place.name, destination: place.coordinate, region: region, anchor: anchor,
-                                doorNote: ComoChegarModel.doorLine(place.notes), now: now)
-        model = m
         await m.load(origin: origin(), routes: services.routes, now: now)
         // Perto (até 15 min a pé), abre em "a pé", como no design.
         if let walk = m.options.first(where: { $0.mode == .walk }), walk.minutes <= 15 { m.selected = .walk }
@@ -133,86 +128,12 @@ struct IrView: View {
         return city.map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lng) } ?? region.defaultCenter
     }
 
-    private func content(_ model: ComoChegarModel, place: Place) -> some View {
-        let option = model.selectedOption
-        let minutes = option?.minutes ?? 0
-        let cash = CashOnly.detect(place.notes, stop?.note, stop?.label)
-        let steps = IrSteps.build(option: option, placeName: place.name, cashOnly: cash, doorNote: model.doorNote,
-                                  region: region, arrives: option == nil ? nil : model.arrives)
-        return ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .top) {
-                    V8CornerButton(systemName: "chevron.left", label: "Voltar", tint: V8.white) { dismiss() }
-                    Spacer(minLength: 12)
-                    SpecStack(lines: ["Ir · \(modeWord(option?.mode))",
-                                      (["chega \(region.timeString(model.arrives))"]
-                                       + [place.queueMinutes.map { "fila \($0) min" }].compactMap { $0 }).joined(separator: " · ")],
-                              color: V8.muteDark, alignment: .trailing)
-                        .padding(.top, 4)
-                }
-                .padding(.top, 10)
-
-                HStack(alignment: .center, spacing: 12) {
-                    BigNumeral("\(minutes)", size: minutes < 10 ? 190 : minutes < 100 ? 130 : 96, color: V8.orange)
-                        .fixedSize()
-                        .padding(.leading, -8)
-                        .redacted(reason: model.loading && model.options.isEmpty ? .placeholder : [])
-                    VStack(alignment: .leading, spacing: 4) {
-                        MonoLabel(minutes == 1 ? "minuto" : "minutos", size: 10.5, color: V8.orange)
-                        Text("até o \(place.name)")
-                            .font(V8Font.display(30))
-                            .foregroundStyle(V8.white)
-                            .lineLimit(2)
-                            .minimumScaleFactor(0.6)
-                        Text(subline(option))
-                            .font(V8Font.text(14))
-                            .foregroundStyle(V8.muteDark)
-                            .lineLimit(1)
-                    }
-                }
-                .padding(.top, 20)
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("\(minutes) minutos até o \(place.name)")
-
-                if !place.trust.coordConfirmed {
-                    MonoLabel("\(PlaceTrust.coordApproximate) · confira no mapa", size: 10.5, color: V8.orange)
-                        .padding(.top, 14)
-                        .accessibilityLabel("Local aproximado. Confira no mapa antes de sair.")
-                }
-
-                modes(model).padding(.top, 26)
-
-                VStack(spacing: 0) {
-                    ForEach(Array(steps.enumerated()), id: \.element.id) { i, step in
-                        if i > 0 { Rectangle().fill(V8.white.opacity(0.12)).frame(height: 1) }
-                        stepRow(step, first: i == 0)
-                    }
-                }
-                .padding(.top, 22)
-
-                leaveCard(model).padding(.top, 26)
-                Color.clear.frame(height: 200)
-            }
-            .padding(.horizontal, 20)
-        }
-        .scrollIndicators(.hidden)
-        .overlay(alignment: .bottom) { actions(model, place: place) }
-    }
-
     /// A pé, metrô, táxi (a ordem do design).
     static func order(_ mode: TravelOption.Mode) -> Int {
         switch mode {
         case .walk: 0
         case .transit: 1
         case .taxi: 2
-        }
-    }
-
-    private func modeWord(_ mode: TravelOption.Mode?) -> String {
-        switch mode {
-        case .walk, nil: "a pé"
-        case .transit: "metrô"
-        case .taxi: "táxi"
         }
     }
 
@@ -227,93 +148,130 @@ struct IrView: View {
         }
     }
 
-    private func modes(_ model: ComoChegarModel) -> some View {
-        ScrollView(.horizontal) {
-            HStack(spacing: 8) {
-                ForEach(model.options.sorted { Self.order($0.mode) < Self.order($1.mode) }) { option in
-                    let on = model.selected == option.mode
-                    Button { model.selected = option.mode } label: {
-                        Text(IrSteps.pill(option, region: region))
-                            .font(V8Font.text(14, weight: .semibold))
-                            .foregroundStyle(on ? V8.ink : V8.white)
-                            .lineLimit(1)
-                            .padding(.horizontal, 16)
-                            .frame(height: 40)
-                            .background(Rectangle().fill(on ? V8.orange : .clear))
-                            .overlay(Rectangle().strokeBorder(on ? .clear : V8.white.opacity(0.4), lineWidth: 1))
+    /// "Saia às 14:16" / "Saia agora": hora do plano, ou agora + trajeto quando não há dia.
+    private func leaveText(_ model: ComoChegarModel) -> (text: String, now: Bool) {
+        let at = leaveAt ?? model.departs
+        let now = AppClock.now
+        return (DayClock.actionText(verb: "Saia", at: at, now: now, region: region), at <= now)
+    }
+
+    private func content(_ place: Place) -> some View {
+        let option = model?.selectedOption
+        let cash = CashOnly.detect(place.notes, stop?.note, stop?.label)
+        let steps = model.map {
+            IrSteps.build(option: option, placeName: place.name, cashOnly: cash, doorNote: $0.doorNote,
+                          region: region, arrives: option == nil ? nil : $0.arrives)
+        } ?? []
+        return List {
+            Section {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(place.name).font(.title2.weight(.bold)).fixedSize(horizontal: false, vertical: true)
+                    if let local = place.nameLocal, !local.isEmpty, local != place.name {
+                        Text("\(local) · mostre ao atendente").font(.subheadline).foregroundStyle(.secondary)
                     }
-                    .buttonStyle(MustPressStyle())
-                    .accessibilityAddTraits(on ? .isSelected : [])
+                    if let model {
+                        let leave = leaveText(model)
+                        Text(leave.text)
+                            .font(.title3.weight(.semibold)).monospacedDigit()
+                            .foregroundStyle(leave.now ? V9.accent : .primary)
+                        Text(([option.map { "\($0.minutes) min" }, "chega \(region.timeString(model.arrives))"]
+                              + [place.queueMinutes.map { "fila \($0) min" }]).compactMap { $0 }.joined(separator: " · "))
+                            .font(.subheadline).foregroundStyle(.secondary).monospacedDigit()
+                        Text(subline(option)).font(.subheadline).foregroundStyle(.secondary)
+                    }
+                    if !place.trust.coordConfirmed {
+                        Label("\(PlaceTrust.coordApproximate) · confira no mapa antes de sair", systemImage: "location.slash")
+                            .font(.subheadline).foregroundStyle(V9.accent)
+                    }
+                }
+                .padding(.vertical, 4)
+                .accessibilityElement(children: .combine)
+            }
+            if let model, !model.options.isEmpty {
+                Section("Como ir") {
+                    ForEach(model.options.sorted { Self.order($0.mode) < Self.order($1.mode) }) { opt in
+                        let on = model.selected == opt.mode
+                        Button { model.selected = opt.mode } label: {
+                            HStack {
+                                Text(IrSteps.pill(opt, region: region)).foregroundStyle(.primary).multilineTextAlignment(.leading)
+                                Spacer(minLength: 8)
+                                if on { Image(systemName: "checkmark").foregroundStyle(V9.accent).accessibilityHidden(true) }
+                            }
+                            .frame(minHeight: 44).contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityAddTraits(on ? .isSelected : [])
+                    }
+                }
+            } else if model?.loading ?? true {
+                Section { HStack(spacing: 10) { ProgressView(); Text("Calculando o trajeto…").foregroundStyle(.secondary) } }
+            }
+            if !steps.isEmpty {
+                Section("Passo a passo") {
+                    ForEach(steps) { step in stepRow(step) }
+                }
+            }
+            if model != nil {
+                Section("Aviso de saída") {
+                    Label {
+                        Text("Live Activity \"saia às\" na tela bloqueada, a partir do dia aceito. Desligar em Ajustes.")
+                            .font(.subheadline)
+                    } icon: { Image(systemName: "bell").foregroundStyle(.secondary) }
+                    .accessibilityElement(children: .combine)
                 }
             }
         }
-        .scrollIndicators(.hidden)
-        .padding(.horizontal, -20)
-        .contentMargins(.horizontal, 20, for: .scrollContent)
+        .safeAreaInset(edge: .bottom) { if let model { actions(model) } }
     }
 
-    private func stepRow(_ step: IrStep, first: Bool) -> some View {
-        HStack(alignment: .top, spacing: 16) {
-            Text("\(step.id)")
-                .font(V8Font.text(15, weight: .bold))
-                .foregroundStyle(first ? V8.ink : V8.white)
-                .frame(width: 32, height: 32)
-                .background(Rectangle().fill(first ? V8.orange : .clear))
-                .overlay(Rectangle().strokeBorder(first ? .clear : V8.white.opacity(0.6), lineWidth: 1))
+    private func stepRow(_ step: IrStep) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Text("\(step.id)").font(.subheadline.weight(.bold)).monospacedDigit()
+                .frame(width: 28, height: 28)
+                .background(step.id == 1 ? V9.accent : V9.fill, in: Circle())
+                .foregroundStyle(step.id == 1 ? Color.white : Color.primary)
+                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 3) {
-                Text(step.title)
-                    .font(V8Font.text(16, weight: .semibold))
-                    .foregroundStyle(V8.white)
-                    .fixedSize(horizontal: false, vertical: true)
+                Text(step.title).font(.body.weight(.semibold)).fixedSize(horizontal: false, vertical: true)
                 if let sub = step.subtitle, !sub.isEmpty {
-                    Text(sub).font(V8Font.text(13)).foregroundStyle(step.onTheWay ? V8.orange : V8.muteDark)
+                    Text(sub).font(.subheadline).foregroundStyle(step.onTheWay ? V9.accent : .secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
-            Spacer(minLength: 0)
         }
-        .padding(.vertical, 14)
+        .padding(.vertical, 2)
         .accessibilityElement(children: .combine)
     }
 
-    /// "Aviso quando for hora de sair": o "saia às" do plano (ou agora + o trajeto, sem plano).
-    private func leaveCard(_ model: ComoChegarModel) -> some View {
-        HStack(spacing: 14) {
-            Text(region.timeString(leaveAt ?? model.departs))
-                .font(V8Font.mono(22)).fontWeight(.semibold)
-                .foregroundStyle(V8.orange)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Aviso quando for hora de sair").font(V8Font.text(15, weight: .bold)).foregroundStyle(V8.white)
-                // A Live Activity "saia às" sai do dia aceito (`OutsideBridge.syncLiveActivity`); este cartão só avisa.
-                Text("Live Activity na tela bloqueada · desligar em Ajustes").font(V8Font.text(12.5)).foregroundStyle(V8.muteDark)
-                    .fixedSize(horizontal: false, vertical: true)
+    private func actions(_ model: ComoChegarModel) -> some View {
+        let target = model.firstStop
+        let mode: MapsLinks.Mode = model.selected == .walk ? .walking : target.walking ? .walking : .transit
+        return VStack(spacing: 10) {
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 10) { mapsButtons(model, target: target, mode: mode) }
+                VStack(spacing: 10) { mapsButtons(model, target: target, mode: mode) }
             }
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 16)
-        .background(Rectangle().fill(V8.graphite))
-    }
-
-    private func actions(_ model: ComoChegarModel, place: Place) -> some View {
-        HStack(spacing: 10) {
-            BigButton(title: "Apple Maps", style: .line, lineColor: V8.white) {
-                let target = model.firstStop
-                MapsLinks.openApple(to: target.coordinate, name: model.placeName,
-                                    mode: model.selected == .walk ? .walking : target.walking ? .walking : .transit)
-            }
-            BigButton(title: "Cheguei", style: .orange, systemImage: "checkmark") {
+            Button {
                 // Chegou: o momento passa a ser "no lugar" — o Ir sai da pilha e o Lugar entra.
                 var path = router.paths[router.tab] ?? []
                 if case .ir = path.last { path.removeLast() }
                 path.append(.place(id: placeId))
                 router.paths[router.tab] = path
-            }
+            } label: { Label("Cheguei", systemImage: "checkmark").frame(maxWidth: .infinity) }
+                .v9Secondary()
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 24)
-        .padding(.bottom, 24) // sem barra de abas nesta tela (`AppRouter.hidesNavBar`)
-        .background(V8.ink.ignoresSafeArea())
-        .overlay(alignment: .top) { Rectangle().fill(V8.white).frame(height: 2) }
+        .padding(.horizontal, V9.gutter)
+        .padding(.vertical, 12)
+        .background(.regularMaterial)
+    }
+
+    @ViewBuilder private func mapsButtons(_ model: ComoChegarModel, target: (coordinate: CLLocationCoordinate2D, walking: Bool),
+                                          mode: MapsLinks.Mode) -> some View {
+        Button { MapsLinks.openApple(to: target.coordinate, name: model.placeName, mode: mode) } label: {
+            Label("Apple Maps", systemImage: "map").frame(maxWidth: .infinity)
+        }.v9Primary()
+        Button { MapsLinks.openGoogle(to: target.coordinate, mode: mode) } label: {
+            Label("Google Maps", systemImage: "arrow.triangle.turn.up.right.diamond").frame(maxWidth: .infinity)
+        }.v9Secondary()
     }
 }
