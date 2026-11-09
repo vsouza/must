@@ -1,14 +1,12 @@
 import SwiftData
 import SwiftUI
 
-/// Carteira (`design/screens/Carteira.png`): cartões empilhados (saldo anotado à mão, validade, "Abrir no Wallet")
-/// e a lista de documentos (eSIM, QR de entrada, seguro, passaporte). Tudo fica no aparelho.
+/// Carteira (V9, prompt 32 Fase 2): lista nativa com os cartões (saldo anotado à mão, validade, "Abrir no Wallet") e os
+/// documentos (eSIM, QR de entrada, seguro, passaporte). Tudo fica no aparelho e abre sem internet.
 struct WalletView: View {
-    @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
     @Environment(RegionStore.self) private var store
     @Environment(AppRouter.self) private var router
-    @Environment(\.tripTheme) private var theme
 
     @Query(sort: [SortDescriptor(\WalletItem.order), SortDescriptor(\WalletItem.createdAt)]) private var items: [WalletItem]
     @Query private var expenses: [Expense]
@@ -30,38 +28,47 @@ struct WalletView: View {
         let cardSpend = TripStats.spent(expenses.filter { $0.method == .card }, in: period, calendar: region.calendar)
         let fxRate = settingsList.first?.fxRate ?? 0
 
-        VStack(spacing: 0) {
-            CutScreenHeader(title: "Carteira", corner: ["\(region.shortName) · central"], subtitle: "Cartões, passes e documentos. Toque e vai.",
-                            height: 220, onBack: { dismiss() }) {
-                CutCornerButton(systemName: "plus", label: "Adicionar à carteira", tint: theme.coverInk) { adding = true }
-            }
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    if region.profile.money?.shoppingList == true {
-                        Button { router.push(.compras, on: router.tab) } label: {
-                            CutRow(title: "Compras da viagem", detail: shopping.isEmpty ? "lista do que trazer" : "\(shopping.count) na lista") {
-                                CutValue(text: "abrir", chevron: true)
-                            }
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    if items.isEmpty {
-                        emptyState
-                    } else {
-                        if !cards.isEmpty {
-                            cardStack(cardSpend: cardSpend, fxRate: fxRate)
-                        }
-                        if !documents.isEmpty {
-                            CutSection(label: "documentos · \(documents.count)", inset: false) { documentList }
+        List {
+            if region.profile.money?.shoppingList == true {
+                Section {
+                    Button { router.push(.compras, on: router.tab) } label: {
+                        V9Row(title: "Compras da viagem", detail: shopping.isEmpty ? "lista do que trazer" : "\(shopping.count) na lista") {
+                            Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
                         }
                     }
-                    V8BarSpacer()
+                    .buttonStyle(.plain)
                 }
             }
-            .scrollIndicators(.hidden)
+            if items.isEmpty {
+                Section { emptyState }
+            } else {
+                if !cards.isEmpty {
+                    Section("Cartões e passes") {
+                        ForEach(cards, id: \.id) { item in
+                            WalletCardView(item: item,
+                                           facts: WalletCardFacts.make(item, region: region, now: now, cardSpend: cardSpend, fxRate: fxRate),
+                                           onTap: { opened = item },
+                                           onWallet: { openURL(WalletRules.walletURL) })
+                        }
+                    }
+                }
+                if !documents.isEmpty {
+                    Section("Documentos · \(documents.count)") {
+                        ForEach(documents, id: \.id) { item in
+                            Button { opened = item } label: { documentRow(item) }.buttonStyle(.plain)
+                        }
+                    }
+                }
+            }
         }
-        .background(V8.paper.ignoresSafeArea())
-        .toolbar(.hidden, for: .navigationBar)
+        .navigationTitle("Carteira")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) { V9OfflineChip() }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button { adding = true } label: { Image(systemName: "plus") }.accessibilityLabel("Adicionar à carteira")
+            }
+        }
+        .v9Screen(grouped: true)
         .onAppear {
             #if DEBUG
             switch DebugFlags.string("debugScreen") {
@@ -75,73 +82,45 @@ struct WalletView: View {
         .sheet(isPresented: $adding) { WalletEditor(item: nil) }
     }
 
-    // MARK: Cartões
-
-    /// Cartões empilhados, cada um girado um pouco (1–2°), como o design.
-    private func cardStack(cardSpend: Double, fxRate: Double) -> some View {
-        VStack(spacing: 0) {
-            ForEach(cards, id: \.id) { item in
-                WalletCardView(item: item,
-                               facts: WalletCardFacts.make(item, region: region, now: now, cardSpend: cardSpend, fxRate: fxRate),
-                               onTap: { opened = item },
-                               onWallet: { openURL(WalletRules.walletURL) })
-            }
-        }
-    }
-
     // MARK: Documentos
-
-    private var documentList: some View {
-        VStack(spacing: 0) {
-            ForEach(documents, id: \.id) { item in
-                Button { opened = item } label: { documentRow(item) }
-                    .buttonStyle(.plain)
-            }
-        }
-    }
 
     private func documentRow(_ item: WalletItem) -> some View {
         let facts = WalletDocumentFacts.make(item, region: region, now: now)
         return HStack(spacing: 12) {
             Text(facts.badge)
-                .font(V8Font.mono(10, weight: .semibold))
-                .foregroundStyle(V8.ink)
+                .font(.caption2.weight(.semibold)).monospaced()
                 .frame(width: 44, height: 44)
-                .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
-            VStack(alignment: .leading, spacing: 1) {
-                Text(item.name).font(V8Font.text(16, weight: .bold)).foregroundStyle(V8.ink).lineLimit(2)
+                .background(V9.fill, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(item.name).font(.body.weight(.semibold)).foregroundStyle(.primary).fixedSize(horizontal: false, vertical: true)
                 if !facts.subtitle.isEmpty {
-                    Text(facts.subtitle).font(V8Font.text(13)).foregroundStyle(V8.mute).lineLimit(2)
+                    Text(facts.subtitle).font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             documentTag(facts)
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .overlay(alignment: .top) { IndexRule() }
+        .frame(minHeight: 44)
         .contentShape(Rectangle())
     }
 
     @ViewBuilder private func documentTag(_ facts: WalletDocumentFacts) -> some View {
         switch facts.emphasis {
-        case .ready: CutTag(text: facts.tag, filled: true, orange: true)
-        case .alert: CutTag(text: facts.tag, filled: true)
-        case nil: CutTag(text: facts.tag)
+        case .ready: Text(facts.tag).font(.footnote.weight(.semibold)).foregroundStyle(V9.accent)
+        case .alert: Text(facts.tag).font(.footnote.weight(.semibold)).foregroundStyle(.red)
+        case nil: Text(facts.tag).font(.footnote).foregroundStyle(.secondary)
         }
     }
 
     // MARK: Vazio
 
     private var emptyState: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            MonoLabel("nada guardado ainda", size: 10, color: V8.mute)
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Nada guardado ainda").font(.headline)
             Text("Toque em + pra adicionar à mão. Trem e o QR do Visit Japan Web entram pelo Trazer ingresso.")
-                .font(V8Font.text(15)).foregroundStyle(V8.ink)
+                .font(.subheadline).foregroundStyle(.secondary)
         }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .overlay(alignment: .bottom) { IndexRule() }
+        .padding(.vertical, 4)
     }
 }

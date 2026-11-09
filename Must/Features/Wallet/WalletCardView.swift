@@ -67,8 +67,8 @@ struct WalletDocumentFacts: Equatable {
     }
 }
 
-/// Cartão da Carteira no corte: faixa inteira de tinta (laranja se o saldo/validade pede atenção), nome, detalhe, o valor em
-/// numeral e a etiqueta. Sem degradê, rotação ou sombra. Toque abre o item.
+/// Cartão da Carteira (V9): linha de lista com nome, valor grande, etiqueta e, quando abre o Wallet, botão visível.
+/// Saldo baixo ou validade acabando = etiqueta vermelha do sistema.
 struct WalletCardView: View {
     let item: WalletItem
     let facts: WalletCardFacts
@@ -77,67 +77,45 @@ struct WalletCardView: View {
     var onWallet: () -> Void
 
     var body: some View {
-        let fill = facts.alert ? V8.orange : V8.ink
-        let text = facts.alert ? V8.ink : V8.white
-        let soft = facts.alert ? V8.ink.opacity(0.75) : V8.muteDark
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .top, spacing: 12) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(item.name).font(V8Font.text(18, weight: .bold)).foregroundStyle(text)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Text(item.detail).font(V8Font.text(13)).foregroundStyle(soft)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                Spacer(minLength: 8)
-                if item.attachmentName != nil, !item.opensWallet {
-                    Text("VOUCHER NO PDF").font(V8Font.mono(10, weight: .semibold)).tracking(0.8).foregroundStyle(text)
-                        .padding(.horizontal, 8).padding(.vertical, 5)
-                        .overlay(Rectangle().stroke(text, lineWidth: 1.5))
-                }
-            }
-            if !facts.label.isEmpty || !facts.value.isEmpty {
-                VStack(alignment: .leading, spacing: 4) {
-                    MonoLabel(facts.label, size: 10, color: soft)
-                    Text(facts.value)
-                        .font(item.kind == .railPass ? V8Font.text(18, weight: .bold) : V8Font.numeral(40))
-                        .foregroundStyle(text)
-                        .lineLimit(2)
-                        .minimumScaleFactor(0.6)
-                }
-                .padding(.top, 18)
-            }
-            HStack(alignment: .center, spacing: 12) {
-                if let tag = facts.tag {
-                    Text(tag.uppercased())
-                        .font(V8Font.mono(10, weight: .semibold)).tracking(0.8)
-                        .foregroundStyle(facts.alert ? V8.orange : text)
-                        .padding(.horizontal, 8).padding(.vertical, 5)
-                        .background(facts.alert ? V8.ink : Color.clear)
-                        .overlay(Rectangle().stroke(text, lineWidth: facts.alert ? 0 : 1.5))
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                Spacer(minLength: 8)
-                if item.opensWallet {
-                    Button(action: onWallet) {
-                        Text("ABRIR NO WALLET ↗")
-                            .font(V8Font.mono(11, weight: .semibold)).tracking(0.8)
-                            .foregroundStyle(text)
-                            .padding(.horizontal, 12).frame(minHeight: 44)
-                            .overlay(Rectangle().stroke(text, lineWidth: 2))
+        VStack(alignment: .leading, spacing: 10) {
+            Button(action: onTap) {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(item.name).font(.headline).foregroundStyle(.primary).fixedSize(horizontal: false, vertical: true)
+                            if !item.detail.isEmpty {
+                                Text(item.detail).font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                        Spacer(minLength: 8)
+                        if item.attachmentName != nil, !item.opensWallet {
+                            Label("Voucher", systemImage: "doc.text").font(.footnote).foregroundStyle(.secondary)
+                        }
                     }
-                    .buttonStyle(.plain)
+                    if !facts.label.isEmpty || !facts.value.isEmpty {
+                        VStack(alignment: .leading, spacing: 2) {
+                            if !facts.label.isEmpty { Text(facts.label).font(.footnote).foregroundStyle(.secondary) }
+                            Text(facts.value)
+                                .font(item.kind == .railPass ? .body.weight(.semibold) : .title.weight(.bold))
+                                .monospacedDigit()
+                                .foregroundStyle(.primary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    if let tag = facts.tag {
+                        Text(tag).font(.footnote.weight(.semibold)).foregroundStyle(facts.alert ? Color.red : Color.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
             }
-            .padding(.top, 14)
+            .buttonStyle(.plain)
+            if item.opensWallet {
+                Button(action: onWallet) { Label("Abrir no Wallet", systemImage: "wallet.pass") }
+                    .v9Secondary()
+            }
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 18)
-        .frame(maxWidth: .infinity, alignment: .topLeading)
-        .background(fill)
-        .overlay(alignment: .bottom) { Rectangle().fill(V8.paper).frame(height: 2) }
-        .contentShape(Rectangle())
-        .onTapGesture(perform: onTap)
-        .accessibilityElement(children: .contain)
-        .accessibilityAddTraits(.isButton)
+        .padding(.vertical, 4)
     }
 }

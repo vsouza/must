@@ -1,21 +1,21 @@
 import SwiftData
 import SwiftUI
 
-/// 08 · Bolso (prompt 23 §2, `Utilidades.png`; Roma em `BolsoIT.png`): o que se consulta dez vezes por dia, numa grade
-/// 2×N, 100 % offline. Conteúdo por país em `PocketRules`; câmbio guardado em Ajustes, saldo anotado da Carteira e
-/// último trem da tabela do app. Nada aqui chama rede.
+/// Bolso (V9, prompt 32 Fase 2): o que se consulta dez vezes por dia, numa lista nativa, 100 % offline. Empilhado a partir da
+/// capa (botão de voltar do sistema). No topo, os atalhos (Suica, ingressos de hoje, mapa offline, SOS, linhas perto).
+/// Conteúdo por país em `PocketRules`; câmbio guardado em Ajustes, saldo anotado da Carteira e último trem da tabela do
+/// app. Nada aqui chama rede.
 struct BolsoView: View {
-    @Environment(\.dismiss) private var dismiss
     @Environment(AppRouter.self) private var router
     @Environment(RegionStore.self) private var store
     @Environment(Services.self) private var services
-    @Environment(\.tripTheme) private var theme
-    @ScaledMetric(relativeTo: .title) private var scale: CGFloat = 1
 
     @Query private var settingsList: [Settings]
     @Query(sort: \WalletItem.order) private var wallet: [WalletItem]
+    @Query private var places: [Place]
 
     @Environment(\.openURL) private var openURL
+    @Environment(\.modelContext) private var modelContext
     @State private var open: PocketCard?
     @State private var showConverter = false
     @State private var showPhrases = false
@@ -34,26 +34,26 @@ struct BolsoView: View {
 
     var body: some View {
         let cards = PocketRules.cards(for: region, context: context)
-        VStack(spacing: 0) {
-            header
-            CutRule()
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    AtalhosPanel { run($0) }
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 18)
-                        .overlay(alignment: .bottom) { IndexRule() }
-                    ForEach(cards) { card in cell(card) }
-                    sosCard
-                    // A linha de confiança: "105 lugares · 94 confirmados · sincronizar" (a mesma de Ajustes).
-                    VStack(spacing: 0) { TrustSyncRows() }.padding(.horizontal, 20)
-                    V8BarSpacer()
+        List {
+            AtalhosPanel { run($0) }
+            Section(region.profile.day?.pocketTitle ?? "Bolso · \(region.shortName)") {
+                ForEach(cards) { card in
+                    Button { tap(card) } label: { PocketCardView(card: card) }
+                        .buttonStyle(.plain)
+                        .accessibilityHint(card.kind == .exchange ? "abre o conversor" : card.kind == .phrases ? "abre as frases com áudio" : "abre o detalhe")
                 }
             }
-            .scrollIndicators(.hidden)
+            Section { sosRow }
+            Section { syncRow }
         }
-        .background(V8.paper.ignoresSafeArea())
-        .toolbar(.hidden, for: .navigationBar)
+        .navigationTitle("Bolso")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) { V9OfflineChip() }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button { router.sheet = .assistant } label: { Image(systemName: "sparkles") }.accessibilityLabel("Assistente")
+            }
+        }
+        .v9Screen(grouped: true)
         .sheet(item: $open) { card in
             PocketDetailSheet(card: card, region: region, onWallet: card.kind == .transitCard ? {
                 open = nil
@@ -70,35 +70,6 @@ struct BolsoView: View {
         }
     }
 
-    /// Bloco do corte: cor do lugar e trama (sem foto), o título e o que o Bolso é.
-    private var header: some View {
-        CutBand(photo: nil) {
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .top, spacing: 10) {
-                    V8CornerButton(systemName: "xmark", label: "Fechar", tint: theme.coverInk) { dismiss() }
-                    DayBandCorners(left: [region.profile.day?.pocketTitle ?? "Bolso · \(region.shortName)", "Tudo funciona offline"], right: [])
-                    Spacer(minLength: 12)
-                    AssistantCorner(tint: theme.coverInk)
-                }
-                Spacer(minLength: 8)
-                Text("Bolso")
-                    .font(V8Font.display(56))
-                    .tracking(-1.6)
-                    .foregroundStyle(theme.coverInk)
-                    .accessibilityAddTraits(.isHeader)
-                Text("O que você consulta dez vezes por dia, numa tela só.")
-                    .font(V8Font.text(14))
-                    .foregroundStyle(theme.coverInk.opacity(0.9))
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 2)
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, 10)
-            .padding(.bottom, 16)
-        }
-        .frame(height: 190 * min(scale, 1.4))
-    }
-
     /// O que um toque nos atalhos do topo faz (o Bolso é uma tela empurrada: as rotas empilham em cima dele).
     private func run(_ action: AtalhosAction) {
         switch action {
@@ -111,28 +82,21 @@ struct BolsoView: View {
 
     // MARK: SOS (prompt 25 · C.3: item fixo do Bolso)
 
-    /// A única faixa laranja do Bolso: é ação (o SOS em si, em `Features/SOS/`, continua tinta).
-    private var sosCard: some View {
+    private var sosRow: some View {
         let numbers = EmergencyKit.bundled.kit(for: region)?.primary.prefix(3).map(\.number) ?? []
         return Button { router.push(.sos) } label: {
-            HStack(spacing: 14) {
-                Text("SOS")
-                    .font(V8Font.numeral(44))
-                    .tracking(-1)
-                    .foregroundStyle(V8.ink)
-                    .frame(width: 100, alignment: .leading)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Preciso de ajuda").font(V8Font.text(16, weight: .bold)).foregroundStyle(V8.ink)
+            HStack(spacing: 12) {
+                Image(systemName: "cross.case.fill").font(.title2).foregroundStyle(.red).accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("SOS · preciso de ajuda").font(.headline).foregroundStyle(.red)
                     Text((numbers + ["hospital", "onde estou"]).joined(separator: " · "))
-                        .font(V8Font.text(13)).foregroundStyle(V8.ink.opacity(0.75)).lineLimit(1)
+                        .font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                Image(systemName: "arrow.up.right").font(.system(size: 16, weight: .bold)).foregroundStyle(V8.ink)
+                Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
             }
-            .padding(.horizontal, 20)
-            .frame(maxWidth: .infinity, minHeight: 84)
-            .background(V8.orange)
-            .overlay(alignment: .bottom) { IndexRule() }
+            .padding(.vertical, 4)
+            .frame(minHeight: 44)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -140,12 +104,27 @@ struct BolsoView: View {
         .accessibilityHint("números de emergência do país, hospital e onde estou; funciona sem internet")
     }
 
-    // MARK: Faixas
-
-    private func cell(_ card: PocketCard) -> some View {
-        Button { tap(card) } label: { PocketCardView(card: card) }
-            .buttonStyle(.plain)
-            .accessibilityHint(card.kind == .exchange ? "abre o conversor" : card.kind == .phrases ? "abre as frases com áudio" : "abre o detalhe")
+    /// A linha de confiança: "105 lugares · 94 confirmados" e sincronizar (só no Wi-Fi), como em Ajustes.
+    private var syncRow: some View {
+        let confidence = BoardConfidence(places)
+        let wifi = services.connectivity.isWiFi
+        return Button {
+            Task { await services.sync.syncPlaces(context: modelContext, region: region) }
+        } label: {
+            HStack {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(confidence.headline).font(.body).foregroundStyle(.primary)
+                    Text(confidence.detail(onWiFi: wifi)).font(.subheadline).foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                Text(confidence.isComplete ? "ok" : "Sincronizar").font(.subheadline).foregroundStyle(confidence.isComplete ? Color.secondary : V9.accent)
+            }
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(services.sync.isSyncingPlaces || confidence.isComplete || !wifi)
+        .accessibilityHint("Busca horário e local no Google, só no Wi-Fi")
     }
 
     private func tap(_ card: PocketCard) {
@@ -157,42 +136,28 @@ struct BolsoView: View {
     }
 }
 
-/// Uma faixa inteira do Bolso: micro-rótulo, valor grande e uma linha de detalhe, régua de 2 pt embaixo. Tinta = o que
-/// vem de fora (câmbio, aviso); papel = o resto; aviso (tom laranja do conteúdo) = papel com filete laranja na esquerda.
+/// Uma linha do Bolso: rótulo pequeno, valor e detalhe, tudo quebrando. Aviso (tom laranja do conteúdo) em acento; o que
+/// vem de fora (câmbio) com o valor em acento.
 struct PocketCardView: View {
     var card: PocketCard
 
-    private var lines: Int { card.value.split(separator: "\n").count }
-    private var ink: Bool { card.tone == .ink }
-
     var body: some View {
-        HStack(alignment: .center, spacing: 12) {
-            VStack(alignment: .leading, spacing: 6) {
-                SpecLabel(card.label, color: ink ? V8.muteDark : V8.mute)
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(card.label.capitalized).font(.footnote.weight(.semibold))
+                    .foregroundStyle(card.tone == .orange ? V9.accent : Color.secondary)
                 Text(card.value.replacingOccurrences(of: "\n", with: " "))
-                    .font(card.kind == .exchange ? V8Font.numeral(40) : V8Font.display(lines >= 3 ? 24 : 28))
-                    .tracking(-0.8)
-                    .foregroundStyle(ink ? V8.orange : V8.ink)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.6)
+                    .font(card.kind == .exchange ? .title2.weight(.bold) : .body.weight(.semibold))
+                    .monospacedDigit()
+                    .foregroundStyle(card.tone == .ink ? V9.accent : Color.primary)
                     .fixedSize(horizontal: false, vertical: true)
-                Text(card.detail)
-                    .font(V8Font.text(13))
-                    .foregroundStyle(ink ? V8.muteDark : V8.ink.opacity(0.75))
-                    .lineLimit(2)
-                    .truncationMode(.tail)
+                Text(card.detail).font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            Image(systemName: "arrow.up.right").font(.system(size: 14, weight: .bold)).foregroundStyle(ink ? V8.white : V8.ink)
+            Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary).accessibilityHidden(true)
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 16)
-        .frame(maxWidth: .infinity, minHeight: 88, alignment: .leading)
-        .background(ink ? V8.ink : Color.clear)
-        .overlay(alignment: .leading) {
-            if card.tone == .orange { Rectangle().fill(V8.orange).frame(width: 8) }
-        }
-        .overlay(alignment: .bottom) { IndexRule(color: V8.ink) }
+        .padding(.vertical, 4)
+        .frame(minHeight: 44)
         .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(card.label): \(card.value.replacingOccurrences(of: "\n", with: " ")). \(card.detail)")

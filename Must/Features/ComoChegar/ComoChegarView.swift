@@ -2,34 +2,42 @@ import CoreLocation
 import SwiftData
 import SwiftUI
 
-/// Como chegar (prompt 17 · A): origem → destino, horários grandes, alternativas, passos com a cor da linha e a porta (Street View).
-/// Abre pelo "Ir agora" do Lugar, pelo Ingresso ("Ir ao encontro") e pelo Hoje.
+/// Como chegar (V9, prompt 32 Fase 2): origem → destino, "sai/chega", alternativas, passos com a cor da linha e a porta
+/// (Street View). Lista nativa; abre pelo "Ir agora" do Lugar, pelo Ingresso ("Ir ao encontro") e pelo Hoje.
 struct ComoChegarView: View {
     var placeId: String
     var meeting = false
 
-    @Environment(\.dismiss) private var dismiss
     @Environment(RegionStore.self) private var store
     @Environment(Services.self) private var services
     @Query private var places: [Place]
     @Query private var trips: [TripInfo]
 
     @State private var model: ComoChegarModel?
-    @Environment(\.tripTheme) private var theme
 
     private var region: Region { store.region }
     private var place: Place? { places.first { $0.id == placeId } }
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            V8.paper.ignoresSafeArea()
+        Group {
             if let model {
                 content(model)
             } else {
-                Micro("calculando o trajeto…").padding(.top, 120)
+                List { Section { HStack(spacing: 10) { ProgressView(); Text("Calculando o trajeto…").foregroundStyle(.secondary) } } }
             }
         }
-        .toolbar(.hidden, for: .navigationBar)
+        .navigationTitle("Como chegar")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) { V9OfflineChip() }
+            if let model {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { Task { await model.swapEnds(routes: services.routes) } } label: { Image(systemName: "arrow.up.arrow.down") }
+                        .accessibilityLabel("Inverter origem e destino")
+                }
+            }
+        }
+        .v9Screen(grouped: true)
         .task(id: placeId) { await prepare() }
     }
 
@@ -61,34 +69,88 @@ struct ComoChegarView: View {
     // MARK: Conteúdo
 
     private func content(_ model: ComoChegarModel) -> some View {
-        VStack(spacing: 0) {
-            CutScreenHeader(title: "Como chegar", corner: ["como chegar · " + Self.sourceLabel(model.selectedOption?.source)],
-                            height: 170, onBack: { dismiss() }) {
-                CutCornerButton(systemName: "arrow.up.arrow.down", label: "Inverter origem e destino", tint: theme.coverInk) {
-                    Task { await model.swapEnds(routes: services.routes) }
+        let option = model.selectedOption
+        let from = ComoChegarModel.originLabel(hasGPS: services.location.current != nil, cityName: nil)
+        return List {
+            Section {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(model.reversed ? "\(model.placeName) → \(from)" : "\(from) → \(model.placeName)")
+                        .font(.headline).fixedSize(horizontal: false, vertical: true)
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        Text(region.timeString(model.departs))
+                        Image(systemName: "arrow.right").font(.title3).foregroundStyle(.secondary).accessibilityHidden(true)
+                        Text(region.timeString(model.arrives))
+                    }
+                    .font(.largeTitle.weight(.bold)).monospacedDigit()
+                    .redacted(reason: model.loading && model.options.isEmpty ? .placeholder : [])
+                    Text(chips(model, option)).font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    if let place, !place.trust.coordConfirmed {
+                        Label("\(PlaceTrust.coordApproximate) · confira no mapa antes de sair", systemImage: "location.slash")
+                            .font(.subheadline).foregroundStyle(V9.accent)
+                    }
+                }
+                .padding(.vertical, 4)
+                .accessibilityElement(children: .combine)
+            }
+            if !model.options.isEmpty {
+                Section("Como ir") {
+                    ForEach(model.options) { opt in
+                        let on = model.selected == opt.mode
+                        Button { model.selected = opt.mode } label: {
+                            HStack {
+                                Text(Self.altLabel(opt, region: region)).foregroundStyle(.primary).multilineTextAlignment(.leading)
+                                Spacer(minLength: 8)
+                                Text("\(opt.minutes) min").monospacedDigit().foregroundStyle(.secondary)
+                                if on { Image(systemName: "checkmark").foregroundStyle(V9.accent).accessibilityHidden(true) }
+                            }
+                            .frame(minHeight: 44).contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityAddTraits(on ? .isSelected : [])
+                    }
                 }
             }
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                if let place, !place.trust.coordConfirmed {
-                    MonoLabel("\(PlaceTrust.coordApproximate) · confira no mapa", size: 10.5, color: V8.orange)
-                        .accessibilityLabel("Local aproximado. Confira no mapa antes de sair.")
+            if let option {
+                Section("Passo a passo · \(Self.sourceLabel(option.source))") {
+                    ForEach(Array(option.steps.enumerated()), id: \.offset) { index, step in
+                        StepRow(step: step, first: index == 0, region: region, departs: model.departs)
+                    }
+                    if option.mode == .transit, option.steps.isEmpty {
+                        StepRow(transitMinutes: option.minutes, region: region, departs: model.departs)
+                    }
+                    if option.mode == .taxi {
+                        StepRow(step: TravelStep(id: 0, kind: .walk, instruction: "Táxi até o lugar · \(option.minutes) min",
+                                                 minutes: option.minutes, meters: option.meters), first: true, region: region,
+                                taxiFare: option.fare.map { region.money($0) + " estimado" })
+                    }
+                    StepRow(end: model.placeName, time: model.arrives, region: region, source: option.source, mode: option.mode)
                 }
-                route(model)
-                times(model)
-                chips(model)
-                alternatives(model)
-                StepsCard(model: model, region: region)
-                if let card = model.card {
-                    StreetViewCardView(card: card, placeName: model.placeName)
-                }
-                Color.clear.frame(height: 110)
             }
-            .padding(.horizontal, 22)
-            .padding(.top, 16)
-        }
+            if let card = model.card {
+                Section("A porta · Street View") { StreetViewCardView(card: card, placeName: model.placeName) }
+            }
         }
         .safeAreaInset(edge: .bottom) { actions(model) }
+    }
+
+    private func chips(_ model: ComoChegarModel, _ option: TravelOption?) -> String {
+        var parts = ["\(option?.minutes ?? 0) min"]
+        if let option, option.mode == .transit, option.source == .routes {
+            parts.append(option.transfers == 0 ? "sem baldeação" : "\(option.transfers) baldeação\(option.transfers > 1 ? "ões" : "")")
+            if let fare = option.fare, let currency = option.fareCurrency {
+                parts.append("\(region.money(fare)) · \(currency == "JPY" ? "Suica" : "tarifa")")
+            }
+        }
+        if let slack = model.slackMinutes { parts.append("\(slack) min antes da reserva") }
+        return parts.joined(separator: " · ")
+    }
+
+    static func altLabel(_ option: TravelOption, region: Region) -> String {
+        switch option.mode {
+        case .transit: "Metrô"
+        case .walk: "A pé"
+        case .taxi: option.fare != nil ? "Táxi · \(region.money(option.fare ?? 0))" : "Táxi"
+        }
     }
 
     /// De onde veio o tempo da alternativa escolhida (no Japão o transporte é sempre Apple Maps).
@@ -100,168 +162,34 @@ struct ComoChegarView: View {
         }
     }
 
-    private func topBar(_ model: ComoChegarModel) -> some View {
-        HStack {
-            IconButton(.voltar, label: "Voltar") { dismiss() }
-            Spacer()
-            Micro("como chegar · " + Self.sourceLabel(model.selectedOption?.source))
-            Spacer()
-            Button {
-                Task { await model.swapEnds(routes: services.routes) }
-            } label: {
-                Image(systemName: "arrow.up.arrow.down")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Color.must.ink)
-                    .frame(width: 40, height: 40)
-                    .background(Circle().fill(Color.must.surface2))
-            }
-            .buttonStyle(MustPressStyle())
-            .accessibilityLabel("Inverter origem e destino")
+    private func actions(_ model: ComoChegarModel) -> some View {
+        let target = model.firstStop
+        return ViewThatFits(in: .horizontal) {
+            HStack(spacing: 10) { buttons(model, target: target) }
+            VStack(spacing: 10) { buttons(model, target: target) }
         }
-        .padding(.top, 8)
+        .padding(.horizontal, V9.gutter)
+        .padding(.vertical, 12)
+        .background(.regularMaterial)
     }
 
-    private func route(_ model: ComoChegarModel) -> some View {
-        let from = ComoChegarModel.originLabel(hasGPS: services.location.current != nil, cityName: nil)
-        let to = model.placeName
-        return Text(model.reversed ? "\(to) → \(from)" : "\(from) → \(to)")
-            .mustSerif(20)
-            .foregroundStyle(Color.must.secondary)
-            .lineLimit(1)
-            .padding(.top, 10)
-    }
-
-    private func times(_ model: ComoChegarModel) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 10) {
-            Text(region.timeString(model.departs)).font(.must.mono(40, .bold))
-            Text("→").font(.must.mono(20)).foregroundStyle(Color.must.secondary)
-            Text(region.timeString(model.arrives)).font(.must.mono(40, .bold))
+    @ViewBuilder private func buttons(_ model: ComoChegarModel, target: (coordinate: CLLocationCoordinate2D, walking: Bool)) -> some View {
+        Button { MapsLinks.openApple(to: target.coordinate, name: model.placeName, mode: target.walking ? .walking : .transit) } label: {
+            Label("Começar", systemImage: "arrow.triangle.turn.up.right.diamond").frame(maxWidth: .infinity)
         }
-        .foregroundStyle(Color.must.ink)
-        .monospacedDigit()
-        .redacted(reason: model.loading && model.options.isEmpty ? .placeholder : [])
-    }
-
-    private func chips(_ model: ComoChegarModel) -> some View {
-        let option = model.selectedOption
-        return FlowLayout(spacing: 8) {
-            Tag("\(option?.minutes ?? 0) min", style: .dark)
-            if let option, option.mode == .transit, option.source == .routes {
-                Tag(option.transfers == 0 ? "sem baldeação" : "\(option.transfers) baldeação\(option.transfers > 1 ? "ões" : "")")
-                if let fare = option.fare, let currency = option.fareCurrency {
-                    Tag("\(region.money(fare)) · \(currency == "JPY" ? "Suica" : "tarifa")")
-                }
-            }
-            if let slack = model.slackMinutes {
-                Tag("\(slack) min antes da reserva", style: .green)
-            }
+        .v9Primary()
+        Menu {
+            Button("Apple Maps · transporte") { MapsLinks.openApple(to: model.end, name: model.placeName, mode: .transit) }
+            Button("Apple Maps · a pé") { MapsLinks.openApple(to: model.end, name: model.placeName) }
+            Button("Google Maps") { MapsLinks.openGoogle(to: model.end, mode: .transit) }
+        } label: {
+            Label("Outros mapas", systemImage: "ellipsis.circle").frame(maxWidth: .infinity)
         }
-    }
-
-    private func alternatives(_ model: ComoChegarModel) -> some View {
-        HStack(spacing: 8) {
-            ForEach(model.options) { option in
-                AlternativeTile(option: option, selected: model.selected == option.mode, region: region) {
-                    model.selected = option.mode
-                }
-            }
-        }
-    }
-
-    @ViewBuilder private func actions(_ model: ComoChegarModel) -> some View {
-        HStack(spacing: 10) {
-            PrimaryButton("Começar", icon: .rota, style: .dark) {
-                let target = model.firstStop
-                MapsLinks.openApple(to: target.coordinate, name: model.placeName, mode: target.walking ? .walking : .transit)
-            }
-            .frame(maxWidth: .infinity)
-            Menu {
-                Button("Apple Maps · transporte") { MapsLinks.openApple(to: model.end, name: model.placeName, mode: .transit) }
-                Button("Apple Maps · a pé") { MapsLinks.openApple(to: model.end, name: model.placeName) }
-                Button("Google Maps") { MapsLinks.openGoogle(to: model.end, mode: .transit) }
-            } label: {
-                Text("Maps ↗")
-                    .font(.must.archivo(16, .bold))
-                    .foregroundStyle(Color.must.ink)
-                    .frame(width: 120, height: 56)
-                    .overlay(Rectangle().stroke(Color.must.lineStrong, lineWidth: 1.5))
-            }
-        }
-        .padding(.horizontal, 22)
-        .padding(.top, 14)
-        .padding(.bottom, 24) // sem barra de abas nesta tela (`AppRouter.hidesNavBar`)
-        .background {
-            LinearGradient(colors: [.white.opacity(0), .white.opacity(0.95), .white], startPoint: .top, endPoint: .bottom)
-                .ignoresSafeArea()
-        }
-    }
-}
-
-// MARK: - Alternativas
-
-private struct AlternativeTile: View {
-    var option: TravelOption
-    var selected: Bool
-    var region: Region
-    var action: () -> Void
-
-    private var label: String {
-        switch option.mode {
-        case .transit: "metrô"
-        case .walk: "a pé"
-        case .taxi: "táxi"
-        }
-    }
-
-    var body: some View {
-        Button(action: action) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(option.mode == .taxi && option.fare != nil ? "\(label) · \(region.money(option.fare ?? 0))" : label)
-                    .font(.must.meta)
-                    .lineLimit(1)
-                Text("\(option.minutes) min").font(.must.mono(18, .bold)).monospacedDigit()
-            }
-            .foregroundStyle(selected ? Color.white : Color.must.ink)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 14)
-            .background(Rectangle().fill(selected ? Color.must.ink : Color.must.surface2))
-        }
-        .buttonStyle(MustPressStyle())
-        .accessibilityAddTraits(selected ? .isSelected : [])
+        .v9Secondary()
     }
 }
 
 // MARK: - Passos
-
-/// Passos com trilho vertical: a pé (pontilhado), transporte (cor oficial da linha + selo).
-private struct StepsCard: View {
-    var model: ComoChegarModel
-    var region: Region
-
-    var body: some View {
-        VStack(spacing: 0) {
-            if let option = model.selectedOption {
-                ForEach(Array(option.steps.enumerated()), id: \.offset) { index, step in
-                    StepRow(step: step, first: index == 0, region: region, departs: model.departs)
-                }
-                if option.mode == .transit, option.steps.isEmpty {
-                    StepRow(transitMinutes: option.minutes, region: region, departs: model.departs)
-                }
-                if option.mode == .taxi {
-                    StepRow(step: TravelStep(id: 0, kind: .walk, instruction: "Táxi até o lugar · \(option.minutes) min",
-                                             minutes: option.minutes, meters: option.meters), first: true, region: region,
-                            taxiFare: option.fare.map { region.money($0) + " estimado" })
-                }
-                StepRow(end: model.placeName, time: model.arrives, region: region, source: option.source, mode: option.mode)
-            }
-        }
-        .padding(.vertical, 18)
-        .padding(.horizontal, 18)
-        .background(Rectangle().fill(Color.white))
-        .overlay(Rectangle().stroke(Color.must.line, lineWidth: 1))
-    }
-}
 
 private struct StepRow: View {
     var time: Date?
@@ -271,7 +199,6 @@ private struct StepRow: View {
     var color: Color
     var lineShort: String?
     var textColor: Color
-    var first: Bool
     var last: Bool
     var region: Region?
     var extraTag: String?
@@ -281,7 +208,6 @@ private struct StepRow: View {
         time = stops?.departs ?? (step.kind == .walk && first ? departs : nil)
         kind = step.kind
         lineShort = step.lineShort
-        self.first = first
         last = false
         self.region = region
         if step.kind == .transit {
@@ -298,7 +224,7 @@ private struct StepRow: View {
             subtitle = "\(step.minutes) min a pé · \(step.meters) m"
             extraTag = taxiFare
         }
-        color = step.colorHex.flatMap(Color.fromRoutesHex) ?? Color.must.ink
+        color = step.colorHex.flatMap(Color.fromRoutesHex) ?? Color.secondary
         textColor = step.textColorHex.flatMap(Color.fromRoutesHex) ?? .white
     }
 
@@ -308,10 +234,9 @@ private struct StepRow: View {
         title = "Trem e metrô · \(transitMinutes) min"
         subtitle = "linhas e plataformas no Apple Maps (Começar)"
         kind = .transit
-        color = Color.must.ink
+        color = Color.secondary
         textColor = .white
         lineShort = nil
-        first = true
         last = false
         self.region = region
         extraTag = nil
@@ -327,10 +252,9 @@ private struct StepRow: View {
         default: "chegada"
         }
         kind = .walk
-        color = Color.must.ink
+        color = Color.secondary
         textColor = .white
         lineShort = nil
-        first = false
         last = true
         self.region = region
         extraTag = nil
@@ -344,50 +268,30 @@ private struct StepRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             Text(time.flatMap { region?.timeString($0) } ?? "")
-                .font(.must.mono(14, .semibold))
+                .font(.subheadline.weight(.semibold)).monospacedDigit()
                 .lineLimit(1).fixedSize()
-                .frame(minWidth: 52, alignment: .leading)
-            rail
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.must.archivo(16, .semibold))
-                    .foregroundStyle(Color.must.ink)
-                    .fixedSize(horizontal: false, vertical: true)
-                if let subtitle {
-                    Text(subtitle).font(.must.meta).foregroundStyle(Color.must.secondary)
-                }
-                if let extraTag {
-                    Tag(extraTag)
-                }
+                .frame(minWidth: 48, alignment: .leading)
+            marker
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title).font(.body.weight(.semibold)).fixedSize(horizontal: false, vertical: true)
+                if let subtitle, !subtitle.isEmpty { Text(subtitle).font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true) }
+                if let extraTag { Text(extraTag).font(.footnote.weight(.semibold)).foregroundStyle(.secondary) }
             }
-            .padding(.bottom, 18)
             Spacer(minLength: 0)
         }
+        .padding(.vertical, 2)
+        .accessibilityElement(children: .combine)
     }
 
-    private var rail: some View {
-        VStack(spacing: 0) {
-            ZStack {
-                if kind == .transit, let lineShort {
-                    Circle().fill(color).frame(width: 24, height: 24)
-                    Text(lineShort).font(.must.mono(11, .bold)).foregroundStyle(textColor)
-                } else {
-                    Circle().stroke(last ? Color.must.ink : Color.must.secondary, lineWidth: 2).background(Circle().fill(last ? Color.must.ink : Color.white))
-                        .frame(width: 12, height: 12)
-                }
-            }
-            .frame(width: 24, height: 24)
-            if !last {
-                Rectangle()
-                    .fill(kind == .transit ? color : Color.clear)
-                    .overlay {
-                        if kind == .walk { Rectangle().stroke(Color.must.secondary, style: StrokeStyle(lineWidth: 2, dash: [3, 3])).frame(width: 2) }
-                    }
-                    .frame(width: 2)
-                    .frame(maxHeight: .infinity)
-            }
+    @ViewBuilder private var marker: some View {
+        if kind == .transit, let lineShort {
+            Text(lineShort).font(.caption2.weight(.bold)).foregroundStyle(textColor)
+                .lineLimit(1).minimumScaleFactor(0.6)
+                .frame(width: 26, height: 26).background(Circle().fill(color))
+        } else {
+            Image(systemName: last ? "mappin.circle.fill" : kind == .transit ? "tram.fill" : "figure.walk")
+                .font(.title3).foregroundStyle(last ? V9.accent : .secondary).frame(width: 26, height: 26)
         }
-        .frame(width: 24)
     }
 }
 
@@ -400,37 +304,16 @@ private struct StreetViewCardView: View {
     @Environment(\.openURL) private var openURL
 
     var body: some View {
-        ZStack(alignment: .bottomLeading) {
+        VStack(alignment: .leading, spacing: 8) {
             if let image = UIImage(contentsOfFile: card.imageFile.path()) {
-                Image(uiImage: image).resizable().scaledToFill()
-            } else {
-                Color.must.surface
+                Image(uiImage: image).resizable().scaledToFill().frame(height: 180).clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .accessibilityLabel("Foto da porta de \(placeName)")
             }
-            VStack(alignment: .leading, spacing: 6) {
-                Micro("street view · a porta").foregroundStyle(.white.opacity(0.9))
-                if let caption = card.caption {
-                    Text(caption).font(.must.archivo(17, .semibold)).foregroundStyle(.white)
-                }
-                HStack {
-                    Text("foto de \(card.date ?? "") · \(card.copyright)")
-                        .font(.must.mono(11))
-                        .foregroundStyle(.white.opacity(0.85))
-                    Spacer()
-                    Button { openURL(card.viewURL) } label: {
-                        Text("Ver 360°").font(.must.archivo(13, .bold)).foregroundStyle(Color.must.ink)
-                            .padding(.horizontal, 12).padding(.vertical, 7)
-                            .background(Rectangle().fill(.white.opacity(0.9)))
-                    }
-                    .buttonStyle(MustPressStyle())
-                }
-            }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(V8.ink)
+            if let caption = card.caption { Text(caption).font(.body.weight(.semibold)).fixedSize(horizontal: false, vertical: true) }
+            Text("Foto de \(card.date ?? "") · \(card.copyright)").font(.footnote).foregroundStyle(.secondary)
+            Button { openURL(card.viewURL) } label: { Label("Ver 360°", systemImage: "view.3d") }.buttonStyle(.bordered)
         }
-        .frame(height: 210)
-        .clipShape(Rectangle())
-        .accessibilityElement(children: .contain)
+        .padding(.vertical, 4)
     }
 }
 

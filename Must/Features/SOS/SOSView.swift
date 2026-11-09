@@ -3,12 +3,12 @@ import SwiftData
 import SwiftUI
 import UIKit
 
-/// SOS (prompt 25 · C, `SOS.png`): tinta, três botões grandes com os números do país da região (o `tel:` só abre o
-/// discador — o app nunca liga sozinho), o seguro com ligar, o hospital perto (lista curada; o Google só como reserva
-/// e só com rede), **onde estou** no idioma local (mostrar em tela cheia, ouvir, copiar), o consulado do Brasil (fora
-/// do Brasil), mais números e frases com áudio. Tudo offline: o kit vem no app e o endereço é o último conhecido.
+/// SOS (V9, prompt 32 Fase 2): lista nativa com os números do país da região em linhas grandes e tocáveis (o `tel:` só
+/// abre o discador — o app nunca liga sozinho), o seguro com ligar, o hospital perto (lista curada; o Google só como
+/// reserva e só com rede), **onde estou** no idioma local (mostrar em tela cheia, ouvir, copiar), o consulado do Brasil
+/// (fora do Brasil), mais números e frases com áudio. Tudo offline: o kit vem no app e o endereço é o último conhecido.
+/// Nenhum texto é truncado: as linhas quebram e crescem com o Dynamic Type.
 struct SOSView: View {
-    @Environment(\.dismiss) private var dismiss
     @Environment(RegionStore.self) private var store
     @Environment(Services.self) private var services
     @Query private var trips: [TripInfo]
@@ -30,44 +30,28 @@ struct SOSView: View {
     private var isHome: Bool { region.country == "BR" }
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            V8.ink.ignoresSafeArea()
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    header.padding(.top, 8)
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Preciso de ajuda")
-                            .font(V8Font.display(44))
-                            .tracking(-1.3)
-                            .foregroundStyle(V8.white)
-                            .lineLimit(2)
-                            .minimumScaleFactor(0.7)
-                            .accessibilityAddTraits(.isHeader)
-                        Text("Toque pra ligar. O número local já está certo pro país onde você está.")
-                            .font(V8Font.text(14))
-                            .foregroundStyle(V8.muteDark)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    .padding(.top, 22)
-                    if let kit {
-                        bigButtons(kit).padding(.top, 22)
-                        lines(kit).padding(.top, 30)
-                    } else {
-                        Text("O kit de emergência deste país não está no app.")
-                            .font(V8Font.text(15))
-                            .foregroundStyle(V8.muteDark)
-                            .padding(.top, 30)
-                    }
-                    footnote.padding(.top, 22)
-                    Color.clear.frame(height: 40)
+        List {
+            if let kit {
+                Section {
+                    ForEach(kit.primary.prefix(3)) { number in SOSNumberRow(number: number) }
+                } header: {
+                    Text("Ligar agora").foregroundStyle(.red)
+                } footer: {
+                    Text("Toque pra abrir o discador. Funciona sem internet; o app nunca liga sozinho.")
                 }
-                .padding(.horizontal, 20)
+                lines(kit)
+            } else {
+                Section { Text("O kit de emergência deste país não está no app.").foregroundStyle(.secondary) }
             }
-            .scrollIndicators(.hidden)
-            BottomFade(color: V8.ink, height: 60)
+            Section {
+                Text("Números conferidos em fonte oficial em \(EmergencyKit.bundled.checked.map(SOSText.checkedDate) ?? "—"). Seguro e saúde ficam só neste aparelho: não vão pro iCloud, pro backup nem pro export.")
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
         }
-        .toolbar(.hidden, for: .navigationBar)
-        .lightStatusBar()
+        .navigationTitle("SOS · \(region.countryName)")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar { ToolbarItem(placement: .topBarTrailing) { V9OfflineChip() } }
+        .v9Screen(grouped: true)
         .onAppear {
             profile = sos.profile()
             address = sos.lastAddress(country: region.country)
@@ -104,34 +88,12 @@ struct SOSView: View {
         try? sos.save(fresh)
     }
 
-    // MARK: Topo
-
-    private var header: some View {
-        HStack(alignment: .top) {
-            V8CornerButton(systemName: "xmark", label: "Fechar", onInk: true) { dismiss() }
-            Spacer(minLength: 12)
-            V8SpecStack(lines: ["SOS · \(region.countryName)", "funciona sem internet"], color: V8.muteDark, alignment: .trailing)
-                .multilineTextAlignment(.trailing)
-                .padding(.top, 6)
-        }
-    }
-
-    // MARK: Botões grandes
-
-    private func bigButtons(_ kit: CountryKit) -> some View {
-        VStack(spacing: 8) {
-            ForEach(Array(kit.primary.prefix(3).enumerated()), id: \.element.id) { index, number in
-                SOSBigButton(number: number, tone: index == 0 ? .orange : index == 1 ? .white : .graphite)
-            }
-        }
-    }
-
     // MARK: Linhas
 
     @ViewBuilder
     private func lines(_ kit: CountryKit) -> some View {
         let hospitals = HospitalCatalog.bundled.nearest(region: region, to: location, cityId: cityId, cityName: cityName)
-        VStack(spacing: 0) {
+        Section("Seu caso") {
             insuranceLine
             if let first = hospitals.first {
                 SOSLine(key: "Hospital perto", value: first.hospital.name,
@@ -140,22 +102,26 @@ struct SOSView: View {
             }
             whereLine
             if !isHome, let consulate = kit.consulate(cityId: cityId, cityName: cityName) {
-                SOSLine(key: "Consulado BR", value: consulate.name,
+                SOSLine(key: "Consulado do Brasil", value: consulate.name,
                         detail: [consulate.phone, consulate.detail].filter { !$0.isEmpty }.joined(separator: " · "),
                         check: consulate.needsCheck) { sheet = .consulate }
-            }
-            if !kit.more.isEmpty {
-                SOSLine(key: "Mais números", value: kit.more.prefix(3).map { "\($0.number) \(SOSText.short($0.title))" }.joined(separator: " · "),
-                        detail: "toque pra ver todos e ligar", check: kit.more.contains { $0.verificar }) { sheet = .numbers }
-            }
-            if !kit.phrases.isEmpty {
-                SOSLine(key: "Frases", value: kit.phrases.prefix(2).map(\.latin).joined(separator: " · "),
-                        detail: kit.phrases.prefix(2).map(\.meaning).joined(separator: " · ") + " · com áudio") { sheet = .phrases }
             }
             if profile.hasHealth {
                 SOSLine(key: "Saúde", value: [profile.bloodType, profile.allergies.isEmpty ? "" : "alergia: \(profile.allergies)"]
                             .filter { !$0.isEmpty }.joined(separator: " · "),
                         detail: "só neste aparelho · toque pra editar") { sheet = .profile }
+            }
+        }
+        if !kit.more.isEmpty || !kit.phrases.isEmpty {
+            Section("Mais") {
+                if !kit.more.isEmpty {
+                    SOSLine(key: "Mais números", value: kit.more.prefix(3).map { "\($0.number) \(SOSText.short($0.title))" }.joined(separator: " · "),
+                            detail: "toque pra ver todos e ligar", check: kit.more.contains { $0.verificar }) { sheet = .numbers }
+                }
+                if !kit.phrases.isEmpty {
+                    SOSLine(key: "Frases", value: kit.phrases.prefix(2).map(\.latin).joined(separator: " · "),
+                            detail: kit.phrases.prefix(2).map(\.meaning).joined(separator: " · ") + " · com áudio") { sheet = .phrases }
+                }
             }
         }
     }
@@ -173,12 +139,17 @@ struct SOSView: View {
     private var whereLine: some View {
         let shown = WhereAmI.display(address, location: location, now: AppClock.now)
         let value = shown?.main ?? "Sem GPS ainda"
-        var detail = [shown?.sub ?? "", shown == nil ? "ligue a localização" : (copied ? "copiado" : "toque pra copiar ou mostrar")]
+        var detail = [shown?.sub ?? "", shown == nil ? "ligue a localização" : (copied ? "copiado" : "toque pra mostrar em tela cheia")]
             .filter { !$0.isEmpty }.joined(separator: " · ")
         if shown?.isStale == true { detail = "último conhecido · " + detail }
         return SOSLine(key: "Onde estou", value: value, detail: detail) {
             guard shown != nil else { return }
             showAddress = true
+        }
+        .swipeActions {
+            if let shown {
+                Button("Copiar") { UIPasteboard.general.string = shown.main; copied = true }
+            }
         }
         .contextMenu {
             if let shown {
@@ -187,79 +158,51 @@ struct SOSView: View {
             }
         }
     }
-
-    private var footnote: some View {
-        Text("Números conferidos em fonte oficial em \(EmergencyKit.bundled.checked.map(SOSText.checkedDate) ?? "—"). Seguro e saúde ficam só neste aparelho: não vão pro iCloud, pro backup nem pro export.")
-            .font(V8Font.text(12))
-            .foregroundStyle(V8.muteDark)
-            .fixedSize(horizontal: false, vertical: true)
-    }
 }
 
 // MARK: - Peças
 
-/// Botão grande (`.big` do design): número gigante à esquerda, o que é e uma linha de ajuda.
-struct SOSBigButton: View {
-    enum Tone { case orange, white, graphite }
+/// Número de emergência: o número grande em vermelho, o que é e a ajuda; a linha inteira abre o discador.
+struct SOSNumberRow: View {
     var number: EmergencyNumber
-    var tone: Tone
-
-    private var fill: Color { tone == .orange ? V8.orange : tone == .white ? V8.white : V8.graphite }
-    private var ink: Color { tone == .graphite ? V8.white : V8.ink }
 
     var body: some View {
-        let content = HStack(spacing: 14) {
-            numeral.frame(width: 92, alignment: .leading)
-            VStack(alignment: .leading, spacing: 2) {
+        let content = HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(number.number)
+                    .font(.largeTitle.weight(.bold)).monospacedDigit()
+                    .foregroundStyle(.red)
+                    .minimumScaleFactor(0.6).lineLimit(1)
                 HStack(spacing: 6) {
                     Text(number.badge != nil ? "\(number.title) · \(number.number)" : number.title)
-                        .font(V8Font.text(15, weight: .bold))
-                        .lineLimit(2)
-                    if number.verificar { V8Tag(text: "conferir", style: tone == .graphite ? .orange : .ink) }
+                        .font(.headline).foregroundStyle(.primary)
+                    if number.verificar { Text("conferir").font(.caption.weight(.semibold)).foregroundStyle(.red) }
                 }
+                .fixedSize(horizontal: false, vertical: true)
                 Text(number.telURL == nil ? "\(number.detail) · disque no teclado" : number.detail)
-                    .font(V8Font.text(11.5))
-                    .opacity(tone == .graphite ? 0.8 : 0.75)
-                    .lineLimit(2)
+                    .font(.subheadline).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            if number.telURL != nil {
+                Image(systemName: "phone.fill").font(.title3).foregroundStyle(.red).accessibilityHidden(true)
+            }
         }
-        .foregroundStyle(ink)
-        .padding(.horizontal, 18)
-        .padding(.vertical, 10)
-        .frame(maxWidth: .infinity, minHeight: 76, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(fill))
-        .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .padding(.vertical, 6)
+        .contentShape(Rectangle())
 
         if let url = number.telURL {
             Link(destination: url) { content }
-                .buttonStyle(MustPressStyle())
+                .buttonStyle(.plain)
                 .accessibilityLabel("\(number.title), ligar \(number.number)")
                 .accessibilityHint("abre o discador")
         } else {
             content.accessibilityElement(children: .combine)
         }
     }
-
-    @ViewBuilder private var numeral: some View {
-        if let badge = number.badge {
-            Text(badge)
-                .font(V8Font.numeral(22))
-                .tracking(-0.8)
-                .lineSpacing(-2)
-                .lineLimit(2)
-                .minimumScaleFactor(0.7)
-        } else {
-            Text(number.number)
-                .font(V8Font.numeral(number.number.count > 4 ? 26 : 40))
-                .tracking(number.number.count > 4 ? -0.6 : -1.6)
-                .lineLimit(1)
-                .minimumScaleFactor(0.5)
-        }
-    }
 }
 
-/// Linha (`.ln`): micro-rótulo à esquerda, valor em negrito e detalhe; à direita, o botão laranja de ligar.
+/// Linha de lista: rótulo pequeno em cima, valor em negrito e detalhe, tudo quebrando; à direita, ligar (quando há).
 struct SOSLine: View {
     var key: String
     var value: String
@@ -271,42 +214,30 @@ struct SOSLine: View {
     var body: some View {
         HStack(spacing: 12) {
             Button(action: action) {
-                HStack(spacing: 12) {
-                    Text(key.uppercased())
-                        .font(V8Font.mono(9, weight: .semibold))
-                        .tracking(0.9)
-                        .foregroundStyle(V8.muteDark)
-                        .lineLimit(2)
-                        .minimumScaleFactor(0.6) // letra grande: encolhe em vez de quebrar "HOSPITAL" no meio
-                        .frame(width: 84, alignment: .leading)
-                    VStack(alignment: .leading, spacing: 2) {
-                        HStack(spacing: 6) {
-                            Text(value).font(V8Font.text(14, weight: .bold)).foregroundStyle(V8.white).lineLimit(1)
-                                .layoutPriority(-1)
-                            if check { V8Tag(text: "conferir", style: .orange).fixedSize() }
-                        }
-                        Text(detail).font(V8Font.text(12)).foregroundStyle(V8.muteDark).lineLimit(1)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(key).font(.footnote.weight(.semibold)).foregroundStyle(.secondary)
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        Text(value).font(.body.weight(.semibold)).foregroundStyle(.primary)
+                        if check { Text("conferir").font(.caption.weight(.semibold)).foregroundStyle(.red) }
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                    Text(detail).font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             if let callURL {
                 Link(destination: callURL) {
-                    Image(systemName: "phone.fill")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(V8.ink)
-                        .frame(width: 40, height: 40)
-                        .background(Circle().fill(V8.orange))
+                    Image(systemName: "phone.fill").font(.title3).foregroundStyle(.red)
+                        .frame(width: 44, height: 44).contentShape(Rectangle())
                 }
                 .accessibilityLabel("Ligar pro seguro")
                 .accessibilityHint("abre o discador")
             }
         }
-        .padding(.vertical, 10)
-        .frame(minHeight: 56)
-        .overlay(alignment: .top) { Rectangle().fill(V8.white.opacity(0.14)).frame(height: 1) }
+        .padding(.vertical, 4)
+        .frame(minHeight: 44)
     }
 }
 
