@@ -166,14 +166,24 @@ struct AreaAssigner: Sendable {
     /// `cityId` é o do lugar (`tokyo1`, `kyoto`, `bh`), não o do bairro.
     func areaId(name: String?, cityId: String, lat: Double, lng: Double) -> String? {
         let city = AreaCatalog.cityGroup(forCityId: cityId)
-        if let name, let id = byName["\(city)|\(AreaName.key(name))"] { return id }
-        guard lat != 0 || lng != 0 else { return nil }
+        let named = name.flatMap { byName["\(city)|\(AreaName.key($0))"] }
+        guard lat != 0 || lng != 0 else { return named }
         let here = CLLocation(latitude: lat, longitude: lng)
         var best: (id: String, meters: CLLocationDistance)?
         for area in areas where AreaCatalog.cityGroup(forCityId: area.cityId) == city {
             let meters = CLLocation(latitude: area.centroid.lat, longitude: area.centroid.lng).distance(from: here)
             if meters <= Self.maxDistance, best == nil || meters < best!.meters { best = (area.id, meters) }
         }
-        return best?.id
+        guard let named else { return best?.id }
+        // O nome vale, salvo quando a coordenada cai dentro de outro bairro e longe do nomeado (bairro da legenda,
+        // não do lugar).
+        if let best, best.id != named, let area = areas.first(where: { $0.id == named }),
+           CLLocation(latitude: area.centroid.lat, longitude: area.centroid.lng).distance(from: here) > Self.nameOverrideDistance {
+            return best.id
+        }
+        return named
     }
+
+    /// Nome do bairro a mais disso da coordenada (que está dentro de outro bairro) não vale.
+    static let nameOverrideDistance: CLLocationDistance = 3000
 }

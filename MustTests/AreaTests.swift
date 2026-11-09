@@ -90,6 +90,17 @@ struct AreaTests {
         #expect(assigner.areaId(name: "Kyoto", cityId: "kyoto", lat: 0, lng: 0) == "kyoto-station")
     }
 
+    /// Yebisu Garden Place guardado de uma legenda com "Shinjuku" (09/11/2026): a coordenada real fica dentro de Ebisu
+    /// e a ~5 km de Shinjuku. O lugar vai pra Ebisu; nome perto do próprio bairro continua valendo.
+    @Test func coordenadaDentroDeOutroBairroVenceONomeLonge() {
+        let assigner = AreaAssigner(areas: AreaCatalog.jp)
+        #expect(assigner.areaId(name: "Shinjuku", cityId: "tokyo1", lat: 35.6424911, lng: 139.7138497) == "ebisu")
+        // ~1,5 km do centro de Shinjuku, fora de qualquer bairro: fica o nome.
+        #expect(assigner.areaId(name: "Shinjuku", cityId: "tokyo1", lat: 35.6896, lng: 139.6850) == "shinjuku")
+        // Longe do nome, mas fora de qualquer bairro: fica o nome.
+        #expect(assigner.areaId(name: "Shinjuku", cityId: "tokyo1", lat: 35.60, lng: 139.60) == "shinjuku")
+    }
+
     @Test func semNomeOuNomeDesconhecidoUsaOCentroideAte1Km2() {
         let assigner = AreaAssigner(areas: AreaCatalog.bh)
         // ~300 m de Savassi, nome que não está na tabela.
