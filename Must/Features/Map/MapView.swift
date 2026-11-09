@@ -84,9 +84,11 @@ struct MapView: View {
         return region.defaultCenter
     }
 
+    @Environment(\.colorScheme) private var colorScheme
+
     var body: some View {
         ZStack {
-            Color(hex: 0xE9EBEF).ignoresSafeArea()
+            Color(uiColor: MapStyleLoader.background(dark: colorScheme == .dark)).ignoresSafeArea()
             MapLibreView(scene: scene, command: cam.command,
                          onCamera: { camera = $0 },
                          onGesture: { cam.userGestured() },
@@ -368,18 +370,21 @@ struct MapView: View {
     private func cardOverlay(_ place: Place) -> some View {
         VStack(spacing: 0) {
             HStack(alignment: .top) {
-                V8CornerButton(systemName: "xmark", label: "Fechar", filled: false) { closeCard() }
-                    .background(Circle().fill(V8.paper.opacity(0.92)))
+                Button(action: closeCard) { Image(systemName: "xmark").frame(width: 22, height: 22) }
+                    .buttonStyle(.glass)
+                    .buttonBorderShape(.circle)
+                    .accessibilityLabel("Fechar")
                 Spacer(minLength: 12)
-                V8SpecStack(lines: MapCardFacts.spec(area: areaName, pin: pinPosition(place), list: place.list?.name),
-                            color: V8.ink, alignment: .trailing)
+                Text(MapCardFacts.spec(area: areaName, pin: pinPosition(place), list: place.list?.name).joined(separator: "\n"))
+                    .font(.footnote)
+                    .foregroundStyle(.primary)
                     .multilineTextAlignment(.trailing)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 6)
-                    .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(V8.paper.opacity(0.88)))
-                    .padding(.top, 12)
+                    .lineLimit(2)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
-            .padding(.horizontal, 20)
+            .padding(.horizontal, 16)
             .padding(.top, 8)
             Spacer(minLength: 0)
             MapPlaceCard(place: place, region: region, now: now, here: here, walkMaxKm: walkMaxKm,
@@ -388,8 +393,8 @@ struct MapView: View {
                          onOpen: { router.push(.place(id: place.id)) },
                          onGo: { router.push(.ir(placeId: place.id)) },
                          onDone: { router.sheet = .expense(placeId: place.id) })
-                .padding(.horizontal, 12)
-                .padding(.bottom, 16)
+                .padding(.horizontal, 8)
+                .padding(.bottom, 8)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
         }
     }
@@ -410,14 +415,14 @@ struct MapView: View {
                                    active: search.isActive, focused: $searchFocused,
                                    onSubmit: submitSearch, onMic: { Task { await speech.toggle() } }, onClear: clearSearch)
                 }
-                .padding(.horizontal, 20)
+                .padding(.horizontal, 16)
                 if search.isActive { MapIntentChips(chips: search.chips, onTap: tapChip) }
                 MapMustPills(total: mustCounts.total, counts: mustCounts.lists, filter: mustFilter,
                              onAll: { mustFilter.showAll() }, onToggle: { mustFilter.toggle($0) })
                 if !search.isActive {
                     legend
-                    if let far = farTarget { farNotice(far.place, target: far.target).padding(.horizontal, 22) }
-                    OfflineMapNudge(here: here?.coordinate, region: region).padding(.horizontal, 22)
+                    if let far = farTarget { farNotice(far.place, target: far.target).padding(.horizontal, 16) }
+                    OfflineMapNudge(here: here?.coordinate, region: region).padding(.horizontal, 16)
                 }
             }
             .padding(.top, 8)
@@ -430,25 +435,25 @@ struct MapView: View {
                     Spacer()
                     VStack(spacing: 10) {
                         roundButton(label: "Centralizar em mim") {
-                            MustIconView(.voceGps, size: 20).foregroundStyle(Color.must.ink)
+                            Image(systemName: "location")
                         } action: { selectedId = nil; cam.resumeAuto(here: here, candidates: candidates, fallback: fallbackCenter) }
                         roundButton(label: "Escala de bairro") {
-                            Text("300").font(.must.mono(13, .semibold)).foregroundStyle(Color.must.ink)
+                            Text("300").font(.footnote.weight(.semibold).monospacedDigit())
                         } action: { selectedId = nil; cam.forceNeighborhood(here?.coordinate ?? fallbackCenter) }
                     }
                 }
-                .padding(.horizontal, 22)
+                .padding(.horizontal, 16)
                 .padding(.bottom, 10)
             }
 
             Group {
-                if search.isActive { resultsCard.padding(.horizontal, 12) } else { sheet(near).padding(.horizontal, 22) }
+                if search.isActive { resultsCard.padding(.horizontal, 8) } else { sheet(near).padding(.horizontal, 8) }
             }
             .overlay(alignment: .bottomTrailing) {
                 Text("© OpenStreetMap · Protomaps")
-                    .font(.must.archivo(9))
-                    .foregroundStyle(Color.must.secondary.opacity(0.9))
-                    .padding(.trailing, 26)
+                    .font(.caption2)
+                    .foregroundStyle(Color.secondary)
+                    .padding(.trailing, 16)
                     .offset(y: 14)
             }
             .padding(.bottom, 12)
@@ -605,18 +610,17 @@ struct MapView: View {
     private func farNotice(_ place: Place, target: MapFocus.Target) -> some View {
         let index = stops.firstIndex { $0.place?.id == place.id }
         let tail = index.map { ", parada \($0 + 1) de hoje." } ?? (place.list.map { ", \($0.displayName)." } ?? ".")
-        let name = Text(Self.withoutGeneric(place.name)).font(.must.archivo(15, .semibold)).foregroundStyle(Color.must.ink)
+        let name = Text(Self.withoutGeneric(place.name)).font(Font.subheadline.weight(.semibold)).foregroundStyle(Color.primary)
         return HStack(alignment: .center, spacing: 12) {
-            MustIconView(.buscar, size: 16).foregroundStyle(Color.must.ink)
-                .frame(width: 38, height: 38).background(Circle().fill(Color.must.surface))
+            Image(systemName: "location.magnifyingglass").foregroundStyle(V9.accent).accessibilityHidden(true)
             Text("Nada a menos de 500 m. Abri o mapa até o mais perto: \(name)\(tail)")
-                .font(.must.serif(16.5)).foregroundStyle(Color.must.ink)
+                .font(Font.body).foregroundStyle(Color.primary)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
-        .glass(cornerRadius: 26)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         .transition(.opacity.combined(with: .move(edge: .top)))
     }
 
@@ -632,14 +636,21 @@ struct MapView: View {
             HStack(spacing: 8) {
                 ForEach(MapLayer.legend) { layer in
                     Button { toggle(layer) } label: { chip(layer) }
-                        .buttonStyle(MustPressStyle())
+                        .buttonStyle(.glass)
                         .accessibilityAddTraits(layers.contains(layer) ? .isSelected : [])
                 }
             }
-            .padding(.horizontal, 22)
+            .padding(.leading, 16)
+            .padding(.trailing, 28)
             .padding(.vertical, 4)
         }
         .scrollIndicators(.hidden)
+        .mask {
+            HStack(spacing: 0) {
+                Rectangle().fill(.black)
+                LinearGradient(colors: [.black, .clear], startPoint: .leading, endPoint: .trailing).frame(width: 28)
+            }
+        }
     }
 
     private func chip(_ layer: MapLayer) -> some View {
@@ -647,38 +658,32 @@ struct MapView: View {
         return HStack(spacing: 7) {
             switch layer {
             case .today:
-                Text("\(stops.filter { !$0.done }.count)").font(.must.mono(10, .semibold)).foregroundStyle(.white)
-                    .frame(width: 18, height: 18).background(Circle().fill(Color.must.ink))
+                Text("\(stops.filter { !$0.done }.count)").font(.caption2.weight(.semibold).monospacedDigit())
+                    .foregroundStyle(Color(.systemBackground))
+                    .frame(width: 18, height: 18).background(Circle().fill(Color.primary))
             case .tomorrow:
-                Circle().strokeBorder(Color.must.blue, style: StrokeStyle(lineWidth: 1.5, dash: [3, 2])).frame(width: 16, height: 16)
+                Circle().strokeBorder(Color.blue, style: StrokeStyle(lineWidth: 1.5, dash: [3, 2])).frame(width: 16, height: 16)
             case .unplanned:
-                Text("E").font(.must.mono(12, .bold)).foregroundStyle(Color.must.ink)
+                Text("E").font(.caption.weight(.bold))
             case .done:
-                Image(systemName: "checkmark").font(.system(size: 12, weight: .bold)).foregroundStyle(Color.must.ink)
+                Image(systemName: "checkmark").font(.caption.weight(.bold))
             case .metro:
-                Capsule().fill(transit.lines.first?.color ?? Color.must.blue).frame(width: 14, height: 4)
+                Capsule().fill(transit.lines.first?.color ?? Color.blue).frame(width: 14, height: 4)
             case .search:
-                MustIconView(.buscar, size: 12).foregroundStyle(Color.must.ink)
+                Image(systemName: "magnifyingglass").font(.caption)
             }
-            Text(layer.label).font(.must.archivo(15, .semibold)).foregroundStyle(Color.must.ink)
+            Text(layer.label).font(.subheadline.weight(on ? .semibold : .regular)).lineLimit(1)
         }
-        .padding(.horizontal, 14)
-        .frame(height: 42)
-        .background(Capsule().fill(Color.white.opacity(on ? 0.96 : 0.6)))
-        .overlay(Capsule().strokeBorder(Color.must.line))
-        .shadow(color: Color(hex: 0x121316, opacity: on ? 0.08 : 0), radius: 8, y: 4)
-        .opacity(on ? 1 : 0.45)
+        .foregroundStyle(Color.primary)
+        .opacity(on ? 1 : 0.55)
     }
 
     private func roundButton<Label: View>(label: String, @ViewBuilder content: () -> Label, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            content()
-                .frame(width: 52, height: 52)
-                .background(Circle().fill(.white))
-                .overlay(Circle().strokeBorder(Color.must.line))
-                .shadow(color: Color(hex: 0x121316, opacity: 0.12), radius: 8, y: 4)
+            content().frame(width: 28, height: 28)
         }
-        .buttonStyle(MustPressStyle())
+        .buttonStyle(.glass)
+        .buttonBorderShape(.circle)
         .accessibilityLabel(label)
     }
 
@@ -699,17 +704,17 @@ struct MapView: View {
             VStack(alignment: .leading, spacing: 0) {
                 if !near.isEmpty {
                     HStack {
-                        Micro("perto de você · 500 m")
+                        Text("Perto de você · 500 m").font(.headline).accessibilityAddTraits(.isHeader)
                         Spacer()
                         let open = near.filter { isOpen($0.place) }.count
-                        Text("\(open) \(open == 1 ? "aberto" : "abertos")").font(.must.archivo(13)).foregroundStyle(Color.must.secondary)
+                        Text("\(open) \(open == 1 ? "aberto" : "abertos")").font(Font.footnote).foregroundStyle(Color.secondary)
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 18)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 16)
                     ScrollView(.horizontal) {
                         HStack(spacing: 10) {
                             ForEach(near.prefix(3)) { item in
-                                Button { selectedId = item.place.id } label: { miniCard(item) }.buttonStyle(MustPressStyle())
+                                Button { selectedId = item.place.id } label: { miniCard(item) }.buttonStyle(.plain)
                             }
                         }
                         .padding(.horizontal, 16)
@@ -719,12 +724,11 @@ struct MapView: View {
                     .padding(.bottom, nextStop == nil ? 16 : 0)
                 }
                 if let stop = nextStop, let place = stop.place {
-                    if !near.isEmpty { RowDivider().padding(.horizontal, 20).padding(.top, 14) }
+                    if !near.isEmpty { Divider().padding(.horizontal, 16).padding(.top, 8) }
                     nextRow(stop: stop, place: place)
                 }
             }
-            .background(Color.white, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
-            .shadow(color: Color(hex: 0x121316, opacity: 0.10), radius: 18, y: 8)
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
         } else {
             emptyCard
         }
@@ -736,22 +740,22 @@ struct MapView: View {
         let color = place.list?.color ?? .eat
         return VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 7) {
-                Text(kanji(place)).font(.must.kanji(14)).foregroundStyle(color.strong)
-                Text(place.name).font(.must.archivo(16, .semibold)).foregroundStyle(Color.must.ink).lineLimit(1)
+                Circle().fill(Color(uiColor: UIColor(v9Hex: ExplorarMapPins.rgb(color)))).frame(width: 8, height: 8).accessibilityHidden(true)
+                Text(place.name).font(Font.body.weight(.semibold)).foregroundStyle(Color.primary).lineLimit(1)
             }
             HStack(spacing: 4) {
                 switch state {
-                case .open: Text("aberto").font(.must.archivo(13, .semibold)).foregroundStyle(Color.must.greenText)
-                case .closed(_, let opensAt): Text(opensAt.map { "abre \($0)" } ?? "fechado").font(.must.archivo(13)).foregroundStyle(Color.must.secondary)
-                case .unknown: Text(place.list?.displayName ?? "").font(.must.archivo(13)).foregroundStyle(Color.must.secondary)
+                case .open: Text("aberto").font(Font.footnote.weight(.semibold)).foregroundStyle(Color(.systemGreen))
+                case .closed(_, let opensAt): Text(opensAt.map { "abre \($0)" } ?? "fechado").font(Font.footnote).foregroundStyle(Color.secondary)
+                case .unknown: Text(place.list?.displayName ?? "").font(Font.footnote).foregroundStyle(Color.secondary)
                 }
-                Text("· \(Self.meters(item.meters))").font(.must.archivo(13)).foregroundStyle(Color.must.secondary)
+                Text("· \(Self.meters(item.meters))").font(Font.footnote).foregroundStyle(Color.secondary)
             }
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
         .frame(minWidth: 150, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(Color.must.line))
+        .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     private func nextRow(stop: Stop, place: Place) -> some View {
@@ -766,23 +770,23 @@ struct MapView: View {
         let leave = leg.map { RoutesService.leaveAt(stop.at, travelMinutes: $0.minutes) }
         return Button { selectedId = place.id } label: {
             HStack(spacing: 14) {
-                Text("\(number)").font(.must.mono(15, .semibold)).foregroundStyle(.white)
-                    .frame(width: 44, height: 44).background(Circle().fill(Color.must.ink))
+                Text("\(number)").font(.subheadline.weight(.semibold).monospacedDigit()).foregroundStyle(Color(.systemBackground))
+                    .frame(width: 44, height: 44).background(Circle().fill(Color.primary))
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(place.name).font(.must.archivo(19, .semibold)).tracking(-0.2).foregroundStyle(Color.must.ink).lineLimit(1)
-                    (Text(region.timeString(stop.at)).font(.must.mono(14, .semibold)).foregroundStyle(Color.must.ink)
+                    Text(place.name).font(.headline).foregroundStyle(Color.primary).lineLimit(2)
+                    (Text(region.timeString(stop.at)).font(Font.subheadline.weight(.semibold).monospacedDigit()).foregroundStyle(Color.primary)
                         + Text(parts.isEmpty ? "" : " · " + parts.joined(separator: " · ")))
-                        .font(.must.archivo(14)).foregroundStyle(Color.must.secondary).lineLimit(2)
+                        .font(Font.subheadline).foregroundStyle(Color.secondary).lineLimit(2)
                         .multilineTextAlignment(.leading)
                 }
                 Spacer(minLength: 4)
                 if let leave, leave > now {
-                    Text("saia \(region.timeString(leave))").font(.must.archivo(15, .semibold)).foregroundStyle(Color.must.greenText)
-                        .padding(.horizontal, 14).frame(height: 38).background(Capsule().fill(Color.must.green))
+                    Text("saia \(region.timeString(leave))").font(.subheadline.weight(.semibold).monospacedDigit()).foregroundStyle(.white)
+                        .padding(.horizontal, 14).frame(minHeight: 38).background(Capsule().fill(V9.accent))
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
         }
         .buttonStyle(.plain)
     }
@@ -790,19 +794,20 @@ struct MapView: View {
     private var emptyCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
-                Text(accepted(0) == nil ? "Nenhum dia montado hoje" : "Dia feito").mustPlace()
-                Text(accepted(0) == nil ? "monte o dia pra ver a rota e as paradas no mapa" : "todas as paradas de hoje estão feitas").mustMeta()
+                Text(accepted(0) == nil ? "Nenhum dia montado hoje" : "Dia feito").font(.headline)
+                Text(accepted(0) == nil ? "Monte o dia pra ver a rota e as paradas no mapa." : "Todas as paradas de hoje estão feitas.")
+                    .font(.subheadline).foregroundStyle(.secondary)
             }
             if accepted(0) == nil {
-                PrimaryButton("Montar o dia", icon: .montarAjustar, style: .dark) {
+                Button("Montar o dia") {
                     router.push(.montar(date: region.calendar.startOfDay(for: now)), on: .hoje)
                 }
+                .v9Primary()
             }
         }
-        .padding(18)
+        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
-        .shadow(color: Color(hex: 0x121316, opacity: 0.10), radius: 18, y: 8)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
     }
 
     static func meters(_ m: CLLocationDistance) -> String {
@@ -926,49 +931,45 @@ struct PlaceSheetCard: View {
                 // Foto principal do lugar (prompt 19): miniatura de 40 pt, cantos 14.
                 PlaceThumb(placeId: place.placeId, refs: place.photoRefs, color: place.list?.color ?? .eat, size: 40, opensViewer: true)
                 if let number {
-                    Text("\(number)").font(.must.mono(15, .semibold)).foregroundStyle(.white)
-                        .frame(width: 44, height: 44).background(Circle().fill(stop?.done == true ? Color.must.green : Color.must.ink))
+                    Text("\(number)").font(Font.subheadline.weight(.semibold).monospacedDigit()).foregroundStyle(Color(.systemBackground))
+                        .frame(width: 44, height: 44).background(Circle().fill(stop?.done == true ? Color.secondary : Color.primary))
                 } else {
-                    Text(String((place.list?.name ?? "•").prefix(1)).uppercased()).font(.must.mono(15, .bold))
+                    Text(String((place.list?.name ?? "•").prefix(1)).uppercased()).font(Font.subheadline.weight(.bold).monospacedDigit())
                         .foregroundStyle((place.list?.color ?? .eat).text)
                         .frame(width: 44, height: 44).background(Circle().fill((place.list?.color ?? .eat).light))
                 }
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Text(place.name).font(.must.archivo(19, .semibold)).tracking(-0.2).foregroundStyle(Color.must.ink).lineLimit(1)
+                        Text(place.name).font(.headline).foregroundStyle(Color.primary).lineLimit(2)
                     }
                     meta(at: at).lineLimit(2).multilineTextAlignment(.leading)
                 }
                 Spacer(minLength: 4)
                 if let leave, leave > now {
-                    Text("saia \(region.timeString(leave))").font(.must.archivo(15, .semibold)).foregroundStyle(Color.must.greenText)
-                        .padding(.horizontal, 14).frame(height: 38).background(Capsule().fill(Color.must.green))
+                    Text("saia \(region.timeString(leave))").font(.subheadline.weight(.semibold).monospacedDigit()).foregroundStyle(.white)
+                        .padding(.horizontal, 14).frame(minHeight: 38).background(Capsule().fill(V9.accent))
                 } else {
                     Button(action: onClose) {
-                        MustIconView(.fechar, size: 14).foregroundStyle(Color.must.secondary).frame(width: 32, height: 32)
+                        Image(systemName: "xmark.circle.fill").font(.title3).foregroundStyle(Color.secondary).frame(width: 44, height: 44)
                     }
                     .accessibilityLabel("Fechar")
                 }
             }
             HStack(spacing: 10) {
                 Button { MapsLinks.openApple(to: place.coordinate, name: place.name, mode: leg?.mode == .walk ? .walking : .transit) } label: {
-                    Text("Apple Maps").sheetButton()
+                    Text("Apple Maps").lineLimit(1).minimumScaleFactor(0.8).frame(maxWidth: .infinity)
                 }
                 Button { MapsLinks.openGoogle(to: place.coordinate, mode: leg?.mode == .walk ? .walking : .transit) } label: {
-                    Text("Google Maps").sheetButton()
+                    Text("Google Maps").lineLimit(1).minimumScaleFactor(0.8).frame(maxWidth: .infinity)
                 }
                 Button(action: number != nil ? onDay : onOpen) {
-                    Text(number != nil ? "Ver o dia" : "Abrir").font(.must.archivo(16, .semibold)).foregroundStyle(Color.must.ink)
-                        .frame(maxWidth: .infinity).frame(height: 50)
-                        .background(Capsule().fill(Color.must.surface))
+                    Text(number != nil ? "Ver o dia" : "Abrir").lineLimit(1).frame(maxWidth: .infinity)
                 }
             }
-            .buttonStyle(MustPressStyle())
+            .buttonStyle(.bordered)
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 18)
-        .background(Color.white, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
-        .shadow(color: Color(hex: 0x121316, opacity: 0.10), radius: 18, y: 8)
+        .padding(16)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
         .contentShape(Rectangle())
         .onTapGesture(perform: onOpen)
     }
@@ -976,23 +977,15 @@ struct PlaceSheetCard: View {
     private func meta(at: Date?) -> Text {
         var pieces: [Text] = []
         if let distance {
-            pieces.append(Text(MapView.meters(distance)).font(.must.mono(15, .semibold)).foregroundStyle(Color.must.ink))
+            pieces.append(Text(MapView.meters(distance)).font(Font.subheadline.weight(.semibold).monospacedDigit()).foregroundStyle(Color.primary))
         }
         if let leg { pieces.append(Text(leg.text)) }
         if let walkMinutes, leg?.mode == .metro { pieces.append(Text("\(walkMinutes) a pé")) }
-        if let at { pieces.append(Text(region.timeString(at)).font(.must.mono(15, .semibold)).foregroundStyle(Color.must.ink)) }
+        if let at { pieces.append(Text(region.timeString(at)).font(Font.subheadline.weight(.semibold).monospacedDigit()).foregroundStyle(Color.primary)) }
         if pieces.isEmpty, let list = place.list { pieces.append(Text(list.displayName)) }
         var out = Text("")
         for (i, p) in pieces.enumerated() { out = i == 0 ? p : Text("\(out) · \(p)") }
-        return out.font(.must.archivo(14)).foregroundStyle(Color.must.secondary)
-    }
-}
-
-private extension Text {
-    func sheetButton() -> some View {
-        font(.must.archivo(16, .semibold)).foregroundStyle(Color.must.ink)
-            .frame(maxWidth: .infinity).frame(height: 50)
-            .overlay(Capsule().strokeBorder(Color.must.lineStrong))
+        return out.font(Font.subheadline).foregroundStyle(Color.secondary)
     }
 }
 
@@ -1010,18 +1003,18 @@ struct ScaleBar: View {
             let width = min(140, max(24, meters / mpp))
             VStack(alignment: .leading, spacing: 2) {
                 Text(meters >= 1000 ? "\(Int(meters / 1000)) km" : "\(Int(meters)) m")
-                    .font(.must.mono(10, .semibold))
-                    .foregroundStyle(Color.must.ink)
+                    .font(Font.caption2.weight(.semibold).monospacedDigit())
+                    .foregroundStyle(Color.primary)
                 Path { p in
                     p.move(to: CGPoint(x: 0, y: 0)); p.addLine(to: CGPoint(x: 0, y: 6))
                     p.addLine(to: CGPoint(x: width, y: 6)); p.addLine(to: CGPoint(x: width, y: 0))
                 }
-                .stroke(Color.must.ink, lineWidth: 1.4)
+                .stroke(Color.primary, lineWidth: 1.4)
                 .frame(width: width, height: 6)
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 6)
-            .background(Capsule().fill(Color.white.opacity(0.75)))
+            .background(.regularMaterial, in: Capsule())
             .accessibilityLabel("Escala: \(Int(meters)) metros")
         }
     }

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Campo do topo do mapa (`MapaFiltro.png`): cápsula tinta com a lupa, o texto e o microfone laranja.
+/// Campo do topo do mapa completo (V9): campo de busca de material do sistema, lupa, texto e microfone.
 struct MapSearchField: View {
     @Binding var text: String
     var placeholder: String
@@ -12,47 +12,45 @@ struct MapSearchField: View {
     var onClear: () -> Void
 
     var body: some View {
-        HStack(spacing: 12) {
-            MustIconView(.buscar, size: 19).foregroundStyle(V8.white).accessibilityHidden(true)
-            TextField("", text: $text, prompt: Text(placeholder).foregroundStyle(V8.muteDark))
-                .font(V8Font.text(17, weight: .semibold))
-                .foregroundStyle(V8.white)
-                .tint(V8.orange)
+        HStack(spacing: 10) {
+            Image(systemName: "magnifyingglass").foregroundStyle(.secondary).accessibilityHidden(true)
+            TextField("", text: $text, prompt: Text(placeholder).foregroundStyle(Color.secondary))
+                .font(.body)
+                .foregroundStyle(.primary)
+                .tint(V9.accent)
                 .focused(focused)
                 .submitLabel(.search)
                 .autocorrectionDisabled()
                 .lineLimit(1)
                 .onSubmit(onSubmit)
                 .accessibilityLabel("Buscar no mapa")
-                .accessibilityHint("o melhor lámen perto de mim agora")
+                .accessibilityHint("por exemplo, o melhor lámen perto de mim agora")
             if active || !text.isEmpty {
                 Button(action: onClear) {
-                    Image(systemName: "xmark").font(.system(size: 13, weight: .bold)).foregroundStyle(V8.muteDark)
-                        .frame(width: 32, height: 32).contentShape(Circle())
+                    Image(systemName: "xmark.circle.fill").font(.title3).foregroundStyle(.secondary)
+                        .frame(width: 44, height: 44).contentShape(Rectangle())
                 }
-                .buttonStyle(MustPressStyle())
+                .buttonStyle(.plain)
                 .accessibilityLabel("Limpar a busca")
             }
             Button(action: onMic) {
-                Image(systemName: listening ? "waveform" : "mic")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(V8.ink)
+                Image(systemName: listening ? "waveform" : "mic.fill")
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(listening ? V9.accent : Color.secondary)
                     .frame(width: 44, height: 44)
-                    .background(Circle().fill(V8.orange))
-                    .contentShape(Circle())
+                    .contentShape(Rectangle())
             }
-            .buttonStyle(MustPressStyle())
+            .buttonStyle(.plain)
             .accessibilityLabel(listening ? "Parar de ouvir" : "Falar")
         }
-        .padding(.leading, 20)
-        .padding(.trailing, 6)
-        .frame(minHeight: 56)
-        .background(Capsule().fill(V8.ink))
-        .shadow(color: V8.ink.opacity(0.18), radius: 12, y: 6)
+        .padding(.leading, 14)
+        .padding(.trailing, 2)
+        .frame(minHeight: 48)
+        .background(.regularMaterial, in: Capsule())
     }
 }
 
-/// Chips do que a busca entendeu (LÁMEN · ABERTO AGORA · MELHOR NOTA · ATÉ 1,5 KM), tocáveis.
+/// Chips do que a busca entendeu (lámen · aberto agora · melhor nota · até 1,5 km), tocáveis.
 struct MapIntentChips: View {
     var chips: [(id: String, text: String)]
     var onTap: (String) -> Void
@@ -62,30 +60,23 @@ struct MapIntentChips: View {
             HStack(spacing: 8) {
                 ForEach(chips, id: \.id) { chip in
                     Button { onTap(chip.id) } label: {
-                        Text(chip.text.uppercased())
-                            .font(V8Font.mono(11, weight: .semibold))
-                            .tracking(1.1)
-                            .lineLimit(1)
-                            .foregroundStyle(chip.id == "offline" ? V8.white : V8.ink)
-                            .padding(.horizontal, 12)
-                            .frame(minHeight: 30)
-                            .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(fill(chip.id)))
+                        Text(chip.text.lowercased()).font(.subheadline.weight(chip.id == "object" ? .semibold : .regular)).lineLimit(1)
                     }
-                    .buttonStyle(MustPressStyle())
+                    .buttonStyle(.glass)
+                    .tint(chip.id == "object" ? V9.accent : nil)
                     .disabled(chip.id == "offline")
                     .accessibilityHint(hint(chip.id))
                 }
             }
-            .padding(.horizontal, 20)
+            .padding(.leading, 16)
+            .padding(.trailing, 28)
         }
         .scrollClipDisabled()
-    }
-
-    private func fill(_ id: String) -> Color {
-        switch id {
-        case "object": V8.orange
-        case "offline": V8.ink
-        default: V8.paper
+        .mask {
+            HStack(spacing: 0) {
+                Rectangle().fill(.black)
+                LinearGradient(colors: [.black, .clear], startPoint: .leading, endPoint: .trailing).frame(width: 28)
+            }
         }
     }
 
@@ -100,7 +91,7 @@ struct MapIntentChips: View {
     }
 }
 
-/// Pílulas do filtro por Must (`MapaFiltro.png`): **Todos N**, **Eat N**… Ativa = tinta; sobre o mapa, fundo papel.
+/// Filtro por Must (Todos N, Eat N…): chips de vidro; ativo = acento.
 struct MapMustPills: View {
     var total: Int
     var counts: [MapMustFilter.Count]
@@ -116,19 +107,26 @@ struct MapMustPills: View {
                     pill("\(c.label) \(c.count)", on: !filter.isAll && filter.listIds.contains(c.id)) { onToggle(c.id) }
                 }
             }
-            .padding(.horizontal, 20)
+            .padding(.leading, 16)
+            .padding(.trailing, 28)
         }
         .scrollClipDisabled()
+        .mask {
+            HStack(spacing: 0) {
+                Rectangle().fill(.black)
+                LinearGradient(colors: [.black, .clear], startPoint: .leading, endPoint: .trailing).frame(width: 28)
+            }
+        }
     }
 
+    @ViewBuilder
     private func pill(_ title: String, on: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            V8FilterChip(title: title, on: on)
-                .background(Capsule().fill(on ? Color.clear : V8.paper))
-                .shadow(color: V8.ink.opacity(on ? 0.16 : 0.06), radius: 6, y: 3)
+        let label = Text(title).font(.subheadline.weight(on ? .semibold : .regular)).lineLimit(1)
+        if on {
+            Button(action: action) { label }.buttonStyle(.glassProminent).tint(V9.accent).accessibilityAddTraits(.isSelected)
+        } else {
+            Button(action: action) { label }.buttonStyle(.glass)
         }
-        .buttonStyle(MustPressStyle())
-        .accessibilityAddTraits(on ? .isSelected : [])
     }
 }
 
@@ -149,23 +147,21 @@ struct MapResultsCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Capsule().fill(V8.ink.opacity(0.18)).frame(width: 40, height: 5).frame(maxWidth: .infinity).padding(.top, 12)
-                .accessibilityHidden(true)
             HStack(alignment: .firstTextBaseline) {
-                Text(title).font(V8Font.display(28)).tracking(-0.8).foregroundStyle(V8.ink).lineLimit(1).minimumScaleFactor(0.8)
+                Text(title).font(.title3.weight(.semibold)).foregroundStyle(Color.primary).lineLimit(2)
                     .accessibilityAddTraits(.isHeader)
                 Spacer(minLength: 8)
                 if searching {
-                    ProgressView().controlSize(.small).tint(V8.ink)
+                    ProgressView().controlSize(.small).tint(Color.primary)
                 } else {
-                    Text(countLine.uppercased()).font(V8Font.mono(11)).tracking(1.1).foregroundStyle(V8.mute).lineLimit(1)
-                        .minimumScaleFactor(0.7)
+                    Text(countLine).font(.footnote).monospacedDigit().foregroundStyle(Color.secondary).lineLimit(2)
+                        .multilineTextAlignment(.trailing)
                 }
             }
-            .padding(.top, 10)
+            .padding(.top, 16)
             .padding(.bottom, 4)
             if items.isEmpty, !searching {
-                Text(emptyText).font(V8Font.text(15)).foregroundStyle(V8.mute).padding(.vertical, 14)
+                Text(emptyText).font(Font.subheadline).foregroundStyle(Color.secondary).padding(.vertical, 14)
                     .fixedSize(horizontal: false, vertical: true)
             }
             ForEach(Array(items.enumerated()), id: \.element.id) { i, item in
@@ -174,49 +170,47 @@ struct MapResultsCard: View {
                     .accessibilityAddTraits(item.id == chosenId ? .isSelected : [])
             }
             HStack(spacing: 10) {
-                V8Button("Ver no Quero…", .line, action: onQuero).foregroundStyle(V8.ink)
-                V8Button(encaixarTitle, .orange, action: onEncaixar)
+                Button("Ver no Quero…", action: onQuero).v9Secondary().frame(maxWidth: .infinity)
+                Button(encaixarTitle, action: onEncaixar).v9Primary().frame(maxWidth: .infinity)
                     .disabled(!canEncaixar)
-                    .opacity(canEncaixar ? 1 : 0.45)
             }
             .padding(.top, 12)
         }
-        .padding(.horizontal, 20)
-        .padding(.bottom, 18)
-        .background(RoundedRectangle(cornerRadius: 40, style: .continuous).fill(V8.paper))
-        .overlay(RoundedRectangle(cornerRadius: 40, style: .continuous).strokeBorder(V8.ink.opacity(0.06)))
-        .shadow(color: V8.ink.opacity(0.18), radius: 24, y: 10)
+        .padding(.horizontal, 16)
+        .padding(.bottom, 16)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
     }
 
     private func row(_ index: Int, _ c: MapSearchCandidate) -> some View {
         let chosen = c.id == (chosenId ?? items.first?.id)
         return HStack(alignment: .center, spacing: 14) {
             Text("\(index)")
-                .font(Font(V8Fonts.bricolage(30, weight: 800, width: 80, opticalSize: 96)))
-                .foregroundStyle(V8.orangeDeep)
-                .frame(width: 30, alignment: .leading)
+                .font(.title2.weight(.bold).monospacedDigit())
+                .foregroundStyle(V9.accent)
+                .frame(width: 28, alignment: .leading)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
-                Text(c.result.name).font(V8Font.text(17, weight: .bold)).foregroundStyle(V8.ink).lineLimit(1)
-                Text(MapSearchModel.meta(c, locale: locale)).font(V8Font.text(13)).foregroundStyle(V8.mute).lineLimit(1)
+                Text(c.result.name).font(Font.body.weight(.semibold)).foregroundStyle(Color.primary).lineLimit(2)
+                Text(MapSearchModel.meta(c, locale: locale)).font(Font.footnote).foregroundStyle(Color.secondary).lineLimit(2)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             VStack(alignment: .trailing, spacing: 3) {
-                Text(Walk.distanceText(c.result.distance)).font(V8Font.mono(11, weight: .semibold)).foregroundStyle(V8.ink)
+                Text(Walk.distanceText(c.result.distance)).font(Font.caption.weight(.semibold).monospacedDigit()).foregroundStyle(Color.primary)
                 if let q = c.queueMinutes, q > 0 {
-                    Text("~\(q) min fila").font(V8Font.mono(11, weight: .semibold)).foregroundStyle(V8.orangeDeep)
+                    Text("~\(q) min fila").font(Font.caption.weight(.semibold).monospacedDigit()).foregroundStyle(V9.accent)
                 } else if !c.onBoard {
                     // Do board já diz na meta ("no seu board").
-                    Text("fora do board").font(V8Font.mono(11)).foregroundStyle(V8.mute)
+                    Text("fora do board").font(Font.caption.monospacedDigit()).foregroundStyle(Color.secondary)
                 }
             }
             .lineLimit(1)
             .fixedSize()
         }
+        .frame(minHeight: 44)
         .padding(.vertical, 8)
         .padding(.horizontal, 6)
-        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(chosen && items.count > 1 ? V8.ink.opacity(0.05) : .clear))
-        .overlay(alignment: .top) { Rectangle().fill(V8.ink.opacity(0.14)).frame(height: 1).opacity(index == 1 ? 0 : 1) }
+        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(chosen && items.count > 1 ? Color.primary.opacity(0.06) : .clear))
+        .overlay(alignment: .top) { Rectangle().fill(Color(.separator)).frame(height: 1).opacity(index == 1 ? 0 : 1) }
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }
