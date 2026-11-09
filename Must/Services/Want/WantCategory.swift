@@ -136,7 +136,14 @@ struct WantCategory: Hashable, Sendable {
     }
 
     /// O objeto é só a palavra genérica da categoria ("comer", "ouvir"): vale o `searchText` e as listas inteiras do board.
-    func isGeneric(_ object: String) -> Bool { keywords.contains(Self.fold(object)) && (searchText != nil) }
+    /// Também vale a frase que só cita a palavra ("rua pra tirar foto", "onde almoço"): sem marca nem prato, é o tipo inteiro.
+    func isGeneric(_ object: String) -> Bool {
+        guard searchText != nil else { return false }
+        let folded = Self.fold(object)
+        if keywords.contains(folded) { return true }
+        let padded = " " + folded.replacingOccurrences(of: "-", with: " ") + " "
+        return keywords.contains { padded.contains(" \($0) ") } && WantBrand.find(in: object) == nil && folded.split(separator: " ").count <= 5
+    }
 
     /// Categoria de uma vontade: a do objeto, senão a da marca, senão a genérica do verbo.
     static func of(_ intent: WantIntent) -> WantCategory? {

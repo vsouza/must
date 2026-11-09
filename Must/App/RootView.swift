@@ -39,7 +39,7 @@ struct RootView: View {
                 }
             }
             Tab("Quero", systemImage: "magnifyingglass", value: RootTab.quero, role: .search) {
-                QueroTabPage().v8Legacy()
+                QueroTabPage()
             }
         }
         .tint(V9.accent)

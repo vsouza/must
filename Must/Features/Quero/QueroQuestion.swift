@@ -51,6 +51,8 @@ enum QueroQuestion {
 struct QueroQuestionState: Equatable, Sendable {
     var text: String
     var answer: String?
+    /// Receitas, lugares com coordenada e avisos (konbini, eventos de hoje).
+    var extras: QueroQuestionExtras?
 }
 
 /// Responde no aparelho, com o retrato do Assistente (board, dia, tempo). Nunca sai pra rede além do que o Assistente já faz.

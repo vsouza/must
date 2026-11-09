@@ -54,6 +54,7 @@
 		1142453E375A47869700D1FD /* SolverItalyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF88B4FA5C634D9BAC15E982 /* SolverItalyTests.swift */; };
 		11A7C5BCF25E152D9C531951 /* DiscoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1332B2144F43EC270FFE4560 /* DiscoverView.swift */; };
 		11F4BA7947C7FD44683E83CE /* FlightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C15A199B7DA9DD73E7FFC50 /* FlightsView.swift */; };
+		12818BC235B2E9E826BBB66A /* ContextRuleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC8E7C8F5FBA5FF84AF5C082 /* ContextRuleTests.swift */; };
 		12EA9BA58876503AD27F40B9 /* MapsLinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE208BD7EAA8E7F3FAC1E77B /* MapsLinks.swift */; };
 		133FE7D83FAFA2850AFF344A /* EmCartazUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C808C571431792472CC5CCF /* EmCartazUITests.swift */; };
 		136519D4039985EED25D5766 /* MontarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9402F5580C133734764AAAE2 /* MontarView.swift */; };
@@ -393,6 +394,7 @@
 		A5564965E802B48376B5BB7C /* PerformanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DAA627C8B6252421E6A7996 /* PerformanceTests.swift */; };
 		A5612E340C054B84E966C1D4 /* TripReadinessTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5D405F1474161A1FDB959C2 /* TripReadinessTests.swift */; };
 		A5840145E08F856926BD1BD3 /* CollectibleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22C0C6B603597BE1CFD08937 /* CollectibleTests.swift */; };
+		A5B12864347A30B107B5A32C /* QueroQuestionPlaces.swift in Sources */ = {isa = PBXBuildFile; fileRef = 243D417E7C7AD4BA0C422D82 /* QueroQuestionPlaces.swift */; };
 		A5CE60D8B6B29EF0FBE94136 /* HomeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FADFA709EC6E6F26C38E2D34 /* HomeModel.swift */; };
 		A5D0D6788434CB54CED73139 /* ColarTextoCloudTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81ADBEA332F02C068F3ED632 /* ColarTextoCloudTests.swift */; };
 		A653778BB8318C9B046608E9 /* MustsHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C42FCB610CD3F0DCA2D3DAF /* MustsHubView.swift */; };
@@ -431,6 +433,7 @@
 		AECAA7B9898D40D2B927ACEC /* TicketQR.swift in Sources */ = {isa = PBXBuildFile; fileRef = D864E1B49CCD1C49891750C2 /* TicketQR.swift */; };
 		AF39A8275B0308E5E26AF515 /* MapRatings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80B7D115A99FE730A613B42B /* MapRatings.swift */; };
 		AFBB4AF71B3221E6DABB9CCE /* CorteLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48F0DE5F738F7D34576217FE /* CorteLogic.swift */; };
+		AFCBA6E3ED0BC10779831A56 /* guia-konbini.json in Resources */ = {isa = PBXBuildFile; fileRef = 9217E8BA7E6F1E818B64EF84 /* guia-konbini.json */; };
 		AFCEFA1CA1D226F379AC0FC9 /* CapaSuggestState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98CE3BDBA2D217867673CB11 /* CapaSuggestState.swift */; };
 		B09AB4744C714F4C31A08095 /* Gallery.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8DF958C7A3147E7A4671A15 /* Gallery.swift */; };
 		B0C661CBAC17AA3F72C7585B /* GuiaChapters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71224347FB8D44E54B5CF3C3 /* GuiaChapters.swift */; };
@@ -610,6 +613,7 @@
 		F551806434D4C2EE9C24C2A0 /* WantSearchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 279A8125E71A78EB6D745861 /* WantSearchTests.swift */; };
 		F6B846402BC402C45FE2F5EE /* domestic-br.json in Resources */ = {isa = PBXBuildFile; fileRef = 9CC941571578B870F1D0E6AD /* domestic-br.json */; };
 		F796BEBC3E64E4D80DE4F6BC /* EventsMapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBDECCC0F6FCE063E39A18B2 /* EventsMapping.swift */; };
+		F80F0EAEA25772838E32C7BC /* QueroAcceptanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 422C3034C5957BFBCDCF3E06 /* QueroAcceptanceTests.swift */; };
 		F88F68F04DF0DE5EC4BCC9DE /* BricolageGrotesque.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C5648D89581F35ECD0F6F139 /* BricolageGrotesque.ttf */; };
 		F894A3532D62F80550579EE3 /* DayPoster.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13650DD58C410E7C58B9CB69 /* DayPoster.swift */; };
 		F90D034EE7D3BFF8620D6C41 /* TicketSamples.swift in Sources */ = {isa = PBXBuildFile; fileRef = 905208A627DD7236B71981BE /* TicketSamples.swift */; };
@@ -753,6 +757,7 @@
 		23249DD22EE3CC5D75564551 /* Log.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Log.swift; sourceTree = "<group>"; };
 		237B6CBB2609F264714CEBF9 /* ColarTextoModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColarTextoModel.swift; sourceTree = "<group>"; };
 		2427CED4225BA61981DA73B4 /* DayLinkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayLinkTests.swift; sourceTree = "<group>"; };
+		243D417E7C7AD4BA0C422D82 /* QueroQuestionPlaces.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueroQuestionPlaces.swift; sourceTree = "<group>"; };
 		249BE4A213B5ED57BBC9CB4E /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		24DC1170328FBE97B0FF639F /* PaceRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaceRules.swift; sourceTree = "<group>"; };
 		2502CD8F01FD295741AB40FD /* SOSProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SOSProfile.swift; sourceTree = "<group>"; };
@@ -831,6 +836,7 @@
 		40932B512799B8A0AEB85C71 /* MontarTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MontarTests.swift; sourceTree = "<group>"; };
 		41F2EEE161DDB25158EE3046 /* NewTripReaders.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewTripReaders.swift; sourceTree = "<group>"; };
 		420EE4D59A018AE862EAA50E /* TripSwitcherTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripSwitcherTests.swift; sourceTree = "<group>"; };
+		422C3034C5957BFBCDCF3E06 /* QueroAcceptanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueroAcceptanceTests.swift; sourceTree = "<group>"; };
 		428F96BEAAAB83D6E54264F5 /* PessoasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PessoasView.swift; sourceTree = "<group>"; };
 		42A529AE230489483D5F5535 /* SwipeBack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwipeBack.swift; sourceTree = "<group>"; };
 		42CF55FAA3B0427D227A1790 /* PlacePhotoStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlacePhotoStore.swift; sourceTree = "<group>"; };
@@ -1028,6 +1034,7 @@
 		90B4BCEC7FD9B6335AF7033C /* TodayContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayContext.swift; sourceTree = "<group>"; };
 		91BE0666599C9AA1BFA54CBD /* bh-lines.geojson */ = {isa = PBXFileReference; path = "bh-lines.geojson"; sourceTree = "<group>"; };
 		9212EEC5AD4AC6E139D9EBAB /* PlaceImport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceImport.swift; sourceTree = "<group>"; };
+		9217E8BA7E6F1E818B64EF84 /* guia-konbini.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "guia-konbini.json"; sourceTree = "<group>"; };
 		9249901293C5FA229AFF4AC2 /* seed-jp.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "seed-jp.json"; sourceTree = "<group>"; };
 		92718E70DD5AC03FF2A232DC /* SchibstedGrotesk.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = SchibstedGrotesk.ttf; sourceTree = "<group>"; };
 		9278CE4A9CF30F816B6DC2F7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -1292,6 +1299,7 @@
 		FA6174248A2F35B056737DA5 /* V8ScreenParts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V8ScreenParts.swift; sourceTree = "<group>"; };
 		FADFA709EC6E6F26C38E2D34 /* HomeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeModel.swift; sourceTree = "<group>"; };
 		FBAC14F513D4246399C640EB /* GoogleRoutes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleRoutes.swift; sourceTree = "<group>"; };
+		FC8E7C8F5FBA5FF84AF5C082 /* ContextRuleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextRuleTests.swift; sourceTree = "<group>"; };
 		FE11D8C2ED0A877468648D71 /* tokyo-lines.geojson */ = {isa = PBXFileReference; path = "tokyo-lines.geojson"; sourceTree = "<group>"; };
 		FEA42B989F6A1E92CFCAF228 /* RegionAutoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegionAutoTests.swift; sourceTree = "<group>"; };
 		FED236518F13E68EAEBCC987 /* MustApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MustApp.swift; sourceTree = "<group>"; };
@@ -1710,6 +1718,7 @@
 			isa = PBXGroup;
 			children = (
 				665DE0BC6E2B17D76CD0A488 /* MapSearch.swift */,
+				243D417E7C7AD4BA0C422D82 /* QueroQuestionPlaces.swift */,
 				34D3551C275A60139698316F /* WantCategory.swift */,
 				7E4D9CA5D8E752AB2E79D6FF /* WantEnterprise.swift */,
 				5732E49FCA1972B6C257821F /* WantOrigin.swift */,
@@ -1779,6 +1788,7 @@
 				2B64D1B6B9C678CF295B9B62 /* ColarTextoTests.swift */,
 				22C0C6B603597BE1CFD08937 /* CollectibleTests.swift */,
 				60208C30EECD5E105DD46FC9 /* ContextContractTests.swift */,
+				FC8E7C8F5FBA5FF84AF5C082 /* ContextRuleTests.swift */,
 				7980E5F33AA9FC2F4C1057C8 /* CorteAcabamentoTests.swift */,
 				732B5F13FE5EC8126CDD2586 /* CorteEtapa2Tests.swift */,
 				635E55993E353F1C88A5FE5D /* CorteTests.swift */,
@@ -1844,6 +1854,7 @@
 				4BC3262DE7A7ABEA33FEABF2 /* ProposalAndCostTests.swift */,
 				3ED71E74006BFAF0B24E307A /* ProximosTests.swift */,
 				AA488548E5855C26BB4C1C3C /* QAScenarioTests.swift */,
+				422C3034C5957BFBCDCF3E06 /* QueroAcceptanceTests.swift */,
 				FF0BD205DD2BE22BE4EB1F5F /* QueroTests.swift */,
 				92EC9A94950F087C9D5AEB7C /* QuestionAnswererTests.swift */,
 				FEA42B989F6A1E92CFCAF228 /* RegionAutoTests.swift */,
@@ -2054,6 +2065,7 @@
 				21D913BB237CF1428036DAA9 /* countries */,
 				35522D8FB226A0B8D7D9264E /* emergency-kit.json */,
 				AB0D1CC2C20A0534FBEE9C8A /* events-sources.json */,
+				9217E8BA7E6F1E818B64EF84 /* guia-konbini.json */,
 				A210A259B0E3A8E5D91B2D56 /* hospitals.json */,
 				7BA25CA47124E3E6E046ED06 /* map-packs.json */,
 				50B7B2806BAB98E03649662B /* seed-bh.json */,
@@ -2970,6 +2982,7 @@
 				F6B846402BC402C45FE2F5EE /* domestic-br.json in Resources */,
 				D8564CC07009A7D41C0FDDD4 /* emergency-kit.json in Resources */,
 				BA9CCB156040FA68252BC86E /* events-sources.json in Resources */,
+				AFCBA6E3ED0BC10779831A56 /* guia-konbini.json in Resources */,
 				A877C740709710FED18CF5C1 /* hospitals.json in Resources */,
 				C2EAB9FF19188F9CFBCF29D7 /* intl-japan.json in Resources */,
 				90E4C6AB7D62BAEA4277C32F /* it-br.json in Resources */,
@@ -3046,6 +3059,7 @@
 				81443345977C727CB448470D /* ColarTextoTests.swift in Sources */,
 				A5840145E08F856926BD1BD3 /* CollectibleTests.swift in Sources */,
 				506F14C555718827D7036CC6 /* ContextContractTests.swift in Sources */,
+				12818BC235B2E9E826BBB66A /* ContextRuleTests.swift in Sources */,
 				5DB32EC9D52A691EDD1C7D27 /* CorteAcabamentoTests.swift in Sources */,
 				3DE0EE9420741A4922D1FD71 /* CorteEtapa2Tests.swift in Sources */,
 				1DACD1AD269F3D5C810AABB7 /* CorteTests.swift in Sources */,
@@ -3111,6 +3125,7 @@
 				B6878DE0C69506B8CED8EF84 /* ProposalAndCostTests.swift in Sources */,
 				A9A3F116BA55739F2D63D274 /* ProximosTests.swift in Sources */,
 				74A382295FB822CD3957318E /* QAScenarioTests.swift in Sources */,
+				F80F0EAEA25772838E32C7BC /* QueroAcceptanceTests.swift in Sources */,
 				24ADADCDC35CF270D713D628 /* QueroTests.swift in Sources */,
 				0A53CBF7CDD05AF21FA96C1D /* QuestionAnswererTests.swift in Sources */,
 				E81A3E6B83DDFFF21E556A41 /* RegionAutoTests.swift in Sources */,
@@ -3471,6 +3486,7 @@
 				E0A0247E08B36E6FE2D8086D /* ProximosView.swift in Sources */,
 				0F1C84ADF931B6B6D7608BFC /* QueroModel.swift in Sources */,
 				09B930D39A115B448FB1989C /* QueroQuestion.swift in Sources */,
+				A5B12864347A30B107B5A32C /* QueroQuestionPlaces.swift in Sources */,
 				3F942E1A8ECAF3D60A79DFA4 /* QueroQuestionSlab.swift in Sources */,
 				D3441F7126460F2DD33BB6B1 /* QueroView.swift in Sources */,
 				D52A953291BBCD6DAB6C3D8B /* QuestionAnswerer.swift in Sources */,
