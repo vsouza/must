@@ -154,9 +154,9 @@ struct ExplorarAgoraList: View {
     }
 
     private func reason(_ card: Suggestion) -> String? {
-        // O mesmo motivo do índice de Hoje: o que é ("no seu board", "luz até 16:36") e a primeira razão do ranker.
-        let parts = [card.meta, card.reasons.first, card.trust].compactMap { $0 }.filter { !$0.isEmpty }
-        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+        // O mesmo motivo de Hoje (uma linha, sem jargão do ranker).
+        let line = SuggestionReason.line(card)
+        return line.isEmpty ? nil : line
     }
 
     private func symbol(_ card: Suggestion) -> String {

@@ -253,11 +253,7 @@ struct HomeView: View {
     }
 
     private func reason(_ card: Suggestion) -> String {
-        // Uma linha: os 2 primeiros motivos (a distância já está no detalhe), mais o aviso de dado estimado.
-        let top = card.reasons.filter { $0 != "perto" }.prefix(2).joined(separator: " · ")
-        let line = top.isEmpty ? card.meta : top
-        guard let trust = card.trust else { return line }
-        return line.isEmpty ? trust : "\(line) · \(trust)"
+        SuggestionReason.line(card)
     }
 
     private func icon(_ card: Suggestion) -> String {

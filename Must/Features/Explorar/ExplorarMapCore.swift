@@ -198,8 +198,21 @@ enum ExplorarMapPins {
                     style = .must(letter: letter(item), rgb: rgb(item.color), state: state)
                 }
             }
-            return MapPin(id: item.id, coordinate: item.coordinate, kind: .v9(style: style, selected: item.id == selected),
-                          placeId: item.placeId, layer: .search)
+            var pin = MapPin(id: item.id, coordinate: item.coordinate, kind: .v9(style: style, selected: item.id == selected),
+                             placeId: item.placeId, layer: .search)
+            pin.accessibilityName = ExplorarMapPins.spoken(item, style: style)
+            return pin
+        }
+    }
+
+    /// Rótulo do VoiceOver: "Fuunji, parada 2" / "Golden Gai, feito" / "Show no Sunplaza, evento" / "Café X, fora do board".
+    static func spoken(_ item: ExplorarMapItem, style: MapPin.V9Style) -> String {
+        switch style {
+        case .stop(let n, _, let done): return "\(item.name), parada \(n)\(done ? ", feita" : "")"
+        case .done: return "\(item.name), feito"
+        case .event: return "\(item.name), evento"
+        case .indicated: return "\(item.name), fora do board"
+        case .must: return item.name
         }
     }
 

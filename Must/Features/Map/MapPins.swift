@@ -84,6 +84,8 @@ struct MapPin: Identifiable, Equatable, Sendable {
     var layer: MapLayer
     /// Selecionado (card aberto) ou o escolhido da busca: disco laranja de 44 pt com halo (`MapaPino.png`).
     var highlighted = false
+    /// O que o VoiceOver lê (nome do lugar). Sem nome, o tipo do pino; nunca o id.
+    var accessibilityName: String?
 
     var coordinate: CLLocationCoordinate2D { CLLocationCoordinate2D(latitude: lat, longitude: lng) }
 
@@ -274,7 +276,7 @@ final class PinView: MLNAnnotationView {
             configureV9(style, selected: selected)
         }
         if pin.highlighted { highlight() }
-        accessibilityLabel = pin.placeId
+        accessibilityLabel = pin.accessibilityName ?? "Lugar no mapa"
     }
 
     /// Pino V9: disco na cor da lista com a letra em branco; feito = cinza com ✓; parada = número; evento = quadrado arredondado

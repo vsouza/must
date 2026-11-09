@@ -203,4 +203,10 @@ struct ExplorarMapTests {
         #expect(ExplorarMapModel.pinState(.open(until: "22:00"), minutesNow: 12 * 60) == .open)
         #expect(ExplorarMapModel.pinState(.closed(opensDay: nil, opensAt: "18:00"), minutesNow: 0) == .closed)
     }
+
+    /// VoiceOver lê o nome do lugar (antes lia o id: "j18").
+    @Test func pinoFalaONomeNuncaOId() {
+        let pins = ExplorarMapPins.pins([must("Fuunji", done: true), event("Jazz"), outside("Café Y")], layers: [.musts], selected: nil)
+        #expect(pins.map(\.accessibilityName) == ["Fuunji, feito", "Jazz, evento", "Café Y, fora do board"])
+    }
 }
