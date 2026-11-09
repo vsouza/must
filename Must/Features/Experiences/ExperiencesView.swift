@@ -3,10 +3,8 @@ import SwiftUI
 
 /// Experiências (design: Experiencias.png). Só colando link ou à mão (decisão de 02/11/2026).
 struct ExperiencesView: View {
-    @Environment(\.dismiss) private var dismiss
     @Environment(AppRouter.self) private var router
     @Environment(RegionStore.self) private var store
-    @Environment(\.tripTheme) private var theme
 
     @Query private var places: [Place]
 
@@ -18,22 +16,22 @@ struct ExperiencesView: View {
 
     var body: some View {
         let rows = ExperienceListModel.rows(places: places, query: query, chip: chip, region: region, now: AppClock.now)
-        CutPage(title: "Experiências", corner: ["Must do · \(region.displayName)", "\(rows.count) salvas"],
-                subtitle: "Aulas, tours, ingressos. Com hora marcada, viram âncora.", height: 220, onBack: { dismiss() },
-                trailing: {
-            // Ingressos e reservas (Reservas mostra os ingressos).
-            CutCornerButton(systemName: "ticket", label: "Ingressos", tint: theme.coverInk) { router.push(.reservations, on: .musts) }
-        }) {
-            CutSearchField(text: $query, placeholder: "Buscar experiência, fornecedor…") { EmptyView() }
-                .padding(.horizontal, 20)
-            chips.padding(.vertical, 14)
-            IndexRule()
-            linkCard
-
+        List {
+            Section {
+                Picker("Filtro", selection: $chip) {
+                    ForEach(ExperienceListModel.Chip.allCases) { option in Text(option.rawValue).tag(option) }
+                }
+                .pickerStyle(.menu)
+                Button { linking = true } label: {
+                    Label("Colar o link de uma experiência", systemImage: "link")
+                }
+            } footer: {
+                Text("Achou no Airbnb, Klook ou GetYourGuide? Eu leio título, preço, duração e ponto de encontro. Com hora marcada, vira âncora do dia.")
+            }
             if rows.isEmpty {
-                emptyState
+                Section { emptyState }
             } else {
-                LazyVStack(spacing: 0) {
+                Section("\(rows.count) \(rows.count == 1 ? "salva" : "salvas")") {
                     ForEach(rows) { row in
                         ExperienceRowCard(row: row, region: region,
                                           onOpen: { router.push(.place(id: row.place.id), on: .musts) })
@@ -41,6 +39,18 @@ struct ExperiencesView: View {
                 }
             }
         }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .searchable(text: $query, prompt: "Buscar experiência, fornecedor…")
+        .navigationTitle("Experiências")
+        .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                // Ingressos e reservas (Reservas mostra os ingressos).
+                Button("Ingressos", systemImage: "ticket") { router.push(.reservations, on: .musts) }
+            }
+        }
+        .v9Screen(grouped: true)
         .scrollDismissesKeyboard(.immediately)
         .onAppear {
             #if DEBUG
@@ -48,41 +58,14 @@ struct ExperiencesView: View {
             #endif
         }
         .sheet(isPresented: $linking) { ExperienceLinkSheet() }
-        .toolbar(.hidden, for: .navigationBar)
-    }
-
-    private var chips: some View {
-        ScrollView(.horizontal) {
-            HStack(spacing: 8) {
-                ForEach(ExperienceListModel.Chip.allCases) { option in
-                    Button { chip = option } label: { Pill(option.rawValue, isOn: chip == option) }
-                        .buttonStyle(.plain)
-                }
-            }
-            .padding(.horizontal, 20)
-        }
-        .scrollIndicators(.hidden)
-    }
-
-    private var linkCard: some View {
-        Button { linking = true } label: {
-            CutRow(title: "Achou no Airbnb, Klook ou GetYourGuide? Cola o link",
-                   detail: "eu leio título, preço, duração e ponto de encontro", tone: .orange) {
-                MustIconView(.colarLink, size: 20).foregroundStyle(V8.ink)
-            }
-        }
-        .buttonStyle(.plain)
     }
 
     private var emptyState: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(query.isEmpty ? "Nenhuma experiência salva ainda." : "Nenhuma experiência com “\(query)”.")
-                .font(V8Font.text(16, weight: .bold)).foregroundStyle(V8.ink)
+        VStack(alignment: .leading, spacing: 6) {
+            Text(query.isEmpty ? "Nenhuma experiência salva ainda." : "Nenhuma experiência com “\(query)”.").font(.headline)
             Text("Cola o link de um tour ou de uma aula acima. Ela entra na Must do, com data e horário se a página trouxer.")
-                .font(V8Font.text(14)).foregroundStyle(V8.mute)
+                .font(.subheadline).foregroundStyle(.secondary)
         }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -97,53 +80,38 @@ struct ExperienceRowCard: View {
     private var info: ExperienceInfo? { row.place.extra?.experience }
 
     var body: some View {
-        HStack(spacing: 0) {
-            ZStack(alignment: .topLeading) {
-                TintedPhoto(url: info?.imageURL, color: .night)
-                Tag(ExperienceSupplier.badge(info?.supplier ?? .other, url: info?.url), style: .dark)
-                    .padding(8)
-            }
-            .frame(width: 118)
-            .frame(maxHeight: .infinity)
-            .clipped()
-
-            VStack(alignment: .leading, spacing: 6) {
+        HStack(alignment: .top, spacing: 12) {
+            TintedPhoto(url: info?.imageURL, color: .night)
+                .frame(width: V9.thumb, height: V9.thumb)
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 4) {
                 Button(action: onOpen) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(row.place.name).font(.must.archivo(16, .semibold)).foregroundStyle(Color.must.ink)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(row.place.name).font(.body.weight(.semibold)).foregroundStyle(.primary)
                             .lineLimit(2).multilineTextAlignment(.leading)
-                        Text(metaLine).font(.must.meta).foregroundStyle(Color.must.secondary).lineLimit(2)
+                        Text(metaLine).font(.footnote).foregroundStyle(.secondary).lineLimit(2)
                             .multilineTextAlignment(.leading)
                     }
                 }
                 .buttonStyle(.plain)
                 HStack(spacing: 8) {
-                    Text(priceText).font(.must.mono(15, .semibold)).foregroundStyle(Color.must.ink)
+                    Text(priceText).font(.subheadline.weight(.semibold)).monospacedDigit()
                     if let session = row.session {
-                        Pill("\(region.shortDayTime(session.at))\(session.bought ? " · ingresso" : " · livre")", style: .green)
+                        J9Tag(text: "\(region.shortDayTime(session.at))\(session.bought ? " · ingresso" : " · livre")", filled: true)
                     }
                 }
                 if let conflict = row.conflicts.first {
-                    Text(conflict)
-                        .font(V8Font.mono(11, weight: .semibold))
-                        .foregroundStyle(V8.paper)
-                        .padding(.horizontal, 8).padding(.vertical, 4)
-                        .background(Rectangle().fill(V8.ink))
+                    Text(conflict).font(.footnote).foregroundStyle(.red)
                 }
                 if let url = info?.url {
-                    Button { openURL(url) } label: {
-                        Text("Ver no \(ExperienceSupplier.badge(info?.supplier ?? .other, url: url))")
-                            .font(.must.archivo(13, .semibold)).foregroundStyle(Color.must.link)
-                    }
-                    .buttonStyle(.plain)
+                    Button("Ver no \(ExperienceSupplier.badge(info?.supplier ?? .other, url: url))") { openURL(url) }
+                        .font(.footnote.weight(.semibold))
+                        .buttonStyle(.borderless)
                 }
             }
-            .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(minHeight: 176, alignment: .leading)
-        .clipShape(Rectangle())
-        .overlay(alignment: .bottom) { IndexRule() }
     }
 
     /// "3h · grupo até 8 · em inglês · ★ 4,9 · 1.240"

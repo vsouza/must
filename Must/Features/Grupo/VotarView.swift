@@ -34,7 +34,6 @@ enum PollSideInfo {
 
 /// Viagem › Grupo › Votar (prompt 32): as votações "A ou B?" da viagem. Nova votação escolhe dois Musts.
 struct VotarView: View {
-    @Environment(\.dismiss) private var dismiss
     @Environment(AppRouter.self) private var router
     @Environment(RegionStore.self) private var store
 
@@ -42,18 +41,24 @@ struct VotarView: View {
     @Query private var places: [Place]
 
     var body: some View {
-        CutPage(title: "Votar", corner: ["Viagem · Grupo", polls.isEmpty ? "nenhuma votação" : "\(polls.count) \(polls.count == 1 ? "votação" : "votações")"],
-                subtitle: "A ou B? Mande o cartaz no grupo e marque o que cada um respondeu.", height: 200, onBack: { dismiss() }) {
-            VStack(alignment: .leading, spacing: 0) {
+        List {
+            Section {
                 ForEach(polls) { poll in row(poll) }
                 if polls.isEmpty {
                     Text("Escolha dois lugares do board e mande “A ou B?” pro grupo.")
-                        .font(V8Font.text(15)).foregroundStyle(V8.mute)
-                        .padding(.horizontal, 20).padding(.top, 20)
+                        .font(.subheadline).foregroundStyle(.secondary)
                 }
+            } header: {
+                Text(polls.isEmpty ? "Nenhuma votação" : "\(polls.count) \(polls.count == 1 ? "votação" : "votações")")
+            } footer: {
+                Text("A ou B? Mande o cartaz no grupo e marque o que cada um respondeu.")
             }
         }
-        .cutFooter("Nova votação") { router.sheet = .aOuB(placeId: nil) }
+        .navigationTitle("Votar")
+        .navigationBarTitleDisplayMode(.inline)
+        .v9Screen(grouped: true)
+        .scrollContentBackground(.hidden)
+        .j9Footer("Nova votação") { router.sheet = .aOuB(placeId: nil) }
     }
 
     private func name(_ id: String) -> String { places.first { $0.id == id }?.name ?? "lugar saiu do board" }
@@ -61,23 +66,19 @@ struct VotarView: View {
     private func row(_ poll: PlacePoll) -> some View {
         let t = PollLogic.tally(poll.votes)
         let winner = poll.winner
+        let status = winner.map { "ganhou \($0.rawValue) · \(poll.addedToDay ? "no dia" : "\(t.a) × \(t.b)")" } ?? (t.a + t.b == 0 ? "sem votos" : "empate \(t.a) × \(t.b)")
         return Button { router.push(.votacao(id: poll.id), on: router.tab) } label: {
             HStack(alignment: .center, spacing: 12) {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 3) {
                     Text("\(name(poll.placeAId)) ou \(name(poll.placeBId))")
-                        .font(V8Font.text(17, weight: .bold)).foregroundStyle(V8.ink).lineLimit(2).multilineTextAlignment(.leading)
-                    MonoLabel(winner.map { "ganhou \($0.rawValue) · \(poll.addedToDay ? "no dia" : "\(t.a) × \(t.b)")" } ?? (t.a + t.b == 0 ? "sem votos" : "empate \(t.a) × \(t.b)"),
-                              size: 10, color: winner == nil ? V8.mute : V8.orangeDeep)
+                        .font(.body).foregroundStyle(.primary).lineLimit(2).multilineTextAlignment(.leading)
+                    Text(status).font(.footnote).foregroundStyle(winner == nil ? Color.secondary : V9.accent)
                 }
                 Spacer(minLength: 8)
-                Image(systemName: "arrow.up.right").font(.system(size: 14, weight: .bold)).foregroundStyle(V8.ink)
+                Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary).accessibilityHidden(true)
             }
-            .padding(.horizontal, 20).padding(.vertical, 14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .overlay(alignment: .bottom) { IndexRule() }
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
     }
 }
 
@@ -104,31 +105,28 @@ struct NovaVotacaoView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            CutScreenHeader(title: "A ou B?", corner: ["Votar", "\(picked.count) de 2"], height: 150, onBack: { dismiss() }, backIcon: "xmark")
+        NavigationStack {
             VStack(spacing: 0) {
                 HStack(spacing: 10) {
                     slot("A", aId)
                     slot("B", bId)
                 }
-                .padding(.horizontal, 20).padding(.vertical, 12)
-                TextField("Buscar no board…", text: $query)
-                    .font(V8Font.text(16)).padding(.horizontal, 12).frame(minHeight: 44)
-                    .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
-                    .padding(.horizontal, 20).padding(.bottom, 10)
-                IndexRule()
-                ScrollView {
-                    LazyVStack(spacing: 0) {
-                        ForEach(shown) { place in
-                            Button { toggle(place) } label: { pickRow(place) }.buttonStyle(.plain)
-                        }
+                .padding(.horizontal, V9.gutter).padding(.vertical, 12)
+                J9SearchField(text: $query, placeholder: "Buscar no board…") { EmptyView() }
+                    .padding(.horizontal, V9.gutter).padding(.bottom, 8)
+                List {
+                    ForEach(shown) { place in
+                        Button { toggle(place) } label: { pickRow(place) }.foregroundStyle(.primary)
                     }
                 }
-                .scrollIndicators(.hidden)
+                .listStyle(.plain)
             }
+            .navigationTitle("A ou B?")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Fechar") { dismiss() } } }
+            .j9Footer("Criar votação", enabled: aId != nil && bId != nil, action: create)
+            .v9Screen()
         }
-        .background(V8.paper.ignoresSafeArea())
-        .cutFooter("Criar votação", enabled: aId != nil && bId != nil, action: create)
         .onAppear {
             guard !loaded else { return }
             loaded = true
@@ -138,31 +136,29 @@ struct NovaVotacaoView: View {
 
     private func slot(_ tag: String, _ id: String?) -> some View {
         HStack(spacing: 8) {
-            Text(tag).font(V8Font.display(22)).foregroundStyle(V8.ink).frame(width: 34, height: 34).background(V8.orange)
+            Text(tag).font(.headline).foregroundStyle(.white).frame(width: 32, height: 32).background(V9.accent, in: Circle())
             Text(id.flatMap { id in places.first { $0.id == id }?.name } ?? "escolha")
-                .font(V8Font.text(14, weight: .semibold)).foregroundStyle(id == nil ? V8.mute : V8.ink).lineLimit(2)
+                .font(.subheadline.weight(.semibold)).foregroundStyle(id == nil ? Color.secondary : Color.primary).lineLimit(2)
             Spacer(minLength: 0)
         }
-        .padding(6)
+        .padding(8)
         .frame(maxWidth: .infinity)
-        .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
+        .background(V9.card, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     private func pickRow(_ place: Place) -> some View {
         let tag = place.id == aId ? "A" : place.id == bId ? "B" : nil
         return HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(place.name).font(V8Font.text(16, weight: .bold)).foregroundStyle(V8.ink).lineLimit(2)
+                Text(place.name).font(.body).lineLimit(2)
                 Text([place.list?.displayName, PollSideInfo.area(place, region: store.region)].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · "))
-                    .font(V8Font.text(13)).foregroundStyle(V8.mute).lineLimit(1)
+                    .font(.footnote).foregroundStyle(.secondary).lineLimit(1)
             }
             Spacer(minLength: 8)
-            if let tag { Text(tag).font(V8Font.mono(13, weight: .bold)).foregroundStyle(V8.ink).frame(width: 30, height: 30).background(V8.orange) }
+            if let tag { Text(tag).font(.subheadline.weight(.bold)).foregroundStyle(.white).frame(width: 30, height: 30).background(V9.accent, in: Circle()) }
         }
-        .padding(.horizontal, 20).padding(.vertical, 11)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .overlay(alignment: .bottom) { Rectangle().fill(V8.rule).frame(height: 1) }
         .contentShape(Rectangle())
+        .accessibilityAddTraits(tag == nil ? [] : .isSelected)
     }
 
     private func toggle(_ place: Place) {

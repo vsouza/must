@@ -30,24 +30,24 @@ struct FlightsView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-            Text(subtitle.uppercased()).font(V8Font.mono(10)).tracking(1).foregroundStyle(V8.mute)
-                .padding(.horizontal, 20).padding(.vertical, 14)
-            IndexRule()
+        List {
             if let flight = current {
-                FlightCardView(flight: flight, region: region, now: now)
+                Section {
+                    FlightCardView(flight: flight, region: region, now: now)
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                } header: {
+                    Text(subtitle).textCase(nil).font(.subheadline)
+                }
                 FlightChecklistView(flight: flight, region: region, now: now) { item in toggle(item, in: flight) }
-                remindersRow
-                statusLine
+                Section { remindersRow } footer: { statusLine }
                 otherFlights(except: flight)
             } else {
                 emptyState
             }
-            V8BarSpacer()
-            }
         }
-        .scrollIndicators(.hidden)
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
         .refreshable { await refreshAll() }
         .task { await refreshAll() }
     }
@@ -93,11 +93,7 @@ struct FlightsView: View {
     private var statusLine: some View {
         let live = FlightStatusUpdater.activeSource() != nil
         let stamp = checkedAt.map { " · \(FlightFormat.time($0, zone: region.timeZone))" } ?? ""
-        return Text(live ? "status ao vivo · AeroDataBox\(stamp)" : "só o horário programado · sem chave de status ao vivo")
-            .font(V8Font.mono(10)).textCase(.uppercase).tracking(1)
-            .foregroundStyle(V8.mute)
-            .padding(20)
-            .frame(maxWidth: .infinity, alignment: .leading)
+        return Text(live ? "Status ao vivo · AeroDataBox\(stamp)" : "Só o horário programado · sem chave de status ao vivo")
     }
 
     // MARK: Lembretes
@@ -105,15 +101,10 @@ struct FlightsView: View {
     private var remindersRow: some View {
         Toggle(isOn: Binding(get: { reminders }, set: { setReminders($0) })) {
             VStack(alignment: .leading, spacing: 2) {
-                Text("Lembrar no horário").font(V8Font.text(16, weight: .bold)).foregroundStyle(V8.ink)
-                Text("check-in, malas e portão · só o que tem hora marcada").font(V8Font.text(13)).foregroundStyle(V8.mute)
-                    .fixedSize(horizontal: false, vertical: true)
+                Text("Lembrar no horário")
+                Text("check-in, malas e portão · só o que tem hora marcada").font(.footnote).foregroundStyle(.secondary)
             }
         }
-        .toggleStyle(.must)
-        .padding(.horizontal, 20)
-        .padding(.vertical, 14)
-        .overlay(alignment: .bottom) { IndexRule() }
     }
 
     /// Ligar pede a permissão agora (nunca antes). Desligar tira o que estava agendado.
@@ -134,38 +125,29 @@ struct FlightsView: View {
     private func otherFlights(except flight: Flight) -> some View {
         let others = upcoming.filter { $0.id != flight.id }
         if !others.isEmpty {
-            CutSection(label: "outros voos · \(others.count)", inset: false) {
-                VStack(spacing: 0) {
-                    ForEach(others) { other in
-                        Button { selectedId = other.id } label: {
-                            HStack {
-                                Text(other.legs.map(\.number).joined(separator: " · ")).font(V8Font.text(16, weight: .bold))
-                                Spacer()
-                                Text(other.routeLabel).font(V8Font.mono(12, weight: .semibold)).foregroundStyle(V8.mute)
-                            }
-                            .foregroundStyle(V8.ink)
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 14)
-                            .frame(minHeight: 56)
-                            .overlay(alignment: .top) { IndexRule() }
-                            .contentShape(Rectangle())
+            Section("Outros voos · \(others.count)") {
+                ForEach(others) { other in
+                    Button { selectedId = other.id } label: {
+                        LabeledContent {
+                            Text(other.routeLabel).monospacedDigit()
+                        } label: {
+                            Text(other.legs.map(\.number).joined(separator: " · "))
                         }
-                        .buttonStyle(.plain)
                     }
+                    .foregroundStyle(.primary)
                 }
             }
         }
     }
 
     private var emptyState: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Nenhum voo ainda.").font(V8Font.text(20, weight: .bold)).foregroundStyle(V8.ink)
-            Text("Traga o e-mail ou o PDF da companhia: o localizador e os trechos entram sozinhos.")
-                .font(V8Font.text(15)).foregroundStyle(V8.mute)
-            GhostButton("Trazer ingresso", icon: .colarLink) { router.sheet = .ticketImport(inboxId: nil) }
-                .padding(.top, 6)
+        Section {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Nenhum voo ainda.").font(.headline)
+                Text("Traga o e-mail ou o PDF da companhia: o localizador e os trechos entram sozinhos.")
+                    .font(.subheadline).foregroundStyle(.secondary)
+                Button("Trazer ingresso ou e-mail") { router.sheet = .ticketImport(inboxId: nil) }.v9Secondary()
+            }
         }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

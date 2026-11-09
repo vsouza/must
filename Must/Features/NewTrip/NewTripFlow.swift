@@ -11,7 +11,7 @@ struct NewTripFlow: View {
 
     var body: some View {
         Group {
-            if let model { content(model) } else { V8.paper.ignoresSafeArea() }
+            if let model { content(model) } else { V9.background.ignoresSafeArea() }
         }
         .onAppear {
             guard model == nil else { return }

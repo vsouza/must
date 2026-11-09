@@ -3,10 +3,8 @@ import SwiftUI
 
 /// Ajustes: Dia / Inteligência / Dados. 5 toques no rótulo de versão abrem a sheet Região.
 struct SettingsView: View {
-    @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
     @Environment(RegionStore.self) private var store
-    @Environment(\.tripTheme) private var theme
     @Query private var settingsList: [Settings]
 
     @State private var showRegion = false
@@ -17,37 +15,31 @@ struct SettingsView: View {
     @State private var exportError: String?
 
     var body: some View {
-        VStack(spacing: 0) {
-            CutScreenHeader(title: "Ajustes", subtitle: "Como o Must monta o seu dia", height: 210, onBack: { dismiss() }) {
-                SpecLabel("Must · \(Self.version) · só pra mim", color: theme.coverInk.opacity(0.9))
-                    .padding(.vertical, 12)
+        Form {
+            RegionPicker()
+            OfflineMapsRow()
+            if let settings = settingsList.first {
+                SettingsSections(settings: settings, region: store.region,
+                                 onExport: exportBoard, onReimport: { showReimport = true })
+            }
+            if let exportError {
+                Section { Text(exportError).font(.footnote).foregroundStyle(.red) }
+            }
+            // O menu de testes (região, simular data/GPS) abre com 5 toques aqui. Não é navegação.
+            Section {
+                Text("Must · \(Self.version) · \(store.region.displayName)")
+                    .font(.footnote).foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity)
                     .contentShape(Rectangle())
                     .onTapGesture(perform: countVersionTap)
                     .accessibilityAddTraits(.isStaticText)
             }
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    RegionPicker()
-                    OfflineMapsRow()
-                    if let settings = settingsList.first {
-                        SettingsSections(settings: settings, region: store.region,
-                                         onExport: exportBoard, onReimport: { showReimport = true })
-                    }
-                    if let exportError {
-                        Text(exportError).font(V8Font.text(13)).foregroundStyle(V8.orangeDeep).padding(20)
-                    }
-                    Text("Must · \(Self.version) · \(store.region.displayName)")
-                        .font(V8Font.mono(11))
-                        .foregroundStyle(V8.mute)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 20)
-                    V8BarSpacer()
-                }
-            }
-            .scrollIndicators(.hidden)
+            .listRowBackground(Color.clear)
         }
-        .background(V8.paper.ignoresSafeArea())
-        .toolbar(.hidden, for: .navigationBar)
+        .navigationTitle("Ajustes")
+        .navigationBarTitleDisplayMode(.large)
+        .v9Screen(grouped: true)
+        .scrollContentBackground(.hidden)
         .sheet(isPresented: $showRegion) { RegionSheet() }
         .sheet(isPresented: $showReimport) { ImportView(mode: .reimport) }
         .fileExporter(isPresented: $showExporter, document: exportDocument, contentType: .json,
@@ -107,10 +99,9 @@ private struct SettingsSections: View {
     private static let startOptions: [Int] = stride(from: 6 * 60, through: 12 * 60, by: 30).map { $0 }
 
     var body: some View {
-        VStack(spacing: 0) {
+        Group {
             day
-            // Liga/desliga de cada aviso (prompt 23 §4): bom dia, saia em 5, golden, último trem, abre agora.
-            AvisosDoGuiaSection()
+            AvisosForm()
             intelligence
             data
         }
@@ -140,79 +131,70 @@ private struct SettingsSections: View {
     // MARK: Dia
 
     private var day: some View {
-        FormSection("Dia") {
+        Section("Dia") {
             Button {
                 budgetText = region.money(settings.perDayBudget, symbol: false)
                 editingBudget = true
             } label: {
-                FormRow("Orçamento padrão", subtitle: "por dia, fora reservas aceitas") {
-                    MonoValue(region.money(settings.perDayBudget), chevron: true)
+                LabeledContent {
+                    HStack(spacing: 6) {
+                        Text(region.money(settings.perDayBudget)).monospacedDigit()
+                        Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
+                    }
+                } label: {
+                    row("Orçamento padrão", "por dia, fora reservas aceitas")
                 }
             }
-            .buttonStyle(.plain)
-            RowDivider()
+            .foregroundStyle(.primary)
             Toggle(isOn: $settings.oneMealPerWindow) {
-                FormRow("Uma refeição por janela", subtitle: "almoço e jantar, exceções pedem confirmação")
+                row("Uma refeição por janela", "almoço e jantar, exceções pedem confirmação")
             }
-            .toggleStyle(.must)
-            RowDivider()
-            Menu {
-                Picker("Andar", selection: $settings.walkMaxKm) {
-                    ForEach(Self.walkOptions, id: \.self) { Text(Self.km($0)).tag($0) }
-                }
-            } label: {
-                FormRow("Andar", subtitle: "máximo entre paradas") { MonoValue(Self.km(settings.walkMaxKm)) }
-            }
-            .buttonStyle(.plain)
-            RowDivider()
-            Menu {
-                Picker("Começar o dia", selection: $settings.dayStartMinutes) {
-                    ForEach(Self.startOptions, id: \.self) { Text(Self.hhmm($0)).tag($0) }
-                }
-            } label: {
-                FormRow("Começar o dia", subtitle: "hora que você costuma sair") { MonoValue(settings.dayStart) }
-            }
-            .buttonStyle(.plain)
+            Picker(selection: $settings.walkMaxKm) {
+                ForEach(Self.walkOptions, id: \.self) { Text(Self.km($0)).tag($0) }
+            } label: { row("Andar", "máximo entre paradas") }
+            Picker(selection: $settings.dayStartMinutes) {
+                ForEach(Self.startOptions, id: \.self) { Text(Self.hhmm($0)).tag($0) }
+            } label: { row("Começar o dia", "hora que você costuma sair") }
+        }
+    }
+
+    private func row(_ title: String, _ subtitle: String?) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+            if let subtitle { Text(subtitle).font(.footnote).foregroundStyle(.secondary) }
         }
     }
 
     // MARK: Inteligência
 
     private var intelligence: some View {
-        FormSection("Inteligência") {
+        Section("Inteligência") {
             Toggle(isOn: $settings.onDeviceAI) {
-                FormRow("Modelo no aparelho", subtitle: OnDeviceAI.unavailableReason.map { "modelo no aparelho indisponível · \($0) · usando palavras-chave" }
-                        ?? "Apple Foundation Models · pt/ja · offline")
+                row("Modelo no aparelho", OnDeviceAI.unavailableReason.map { "Indisponível: \($0). Usando palavras-chave." }
+                    ?? "Apple Foundation Models · pt/ja · offline")
             }
-            .toggleStyle(.must)
-            RowDivider()
             Toggle(isOn: $settings.cloudBoost) {
-                FormRow("Reforço na nuvem", subtitle: Secrets.anthropicKey == nil
-                        ? "Claude Haiku só pra links difíceis · sem chave no Secrets.plist"
-                        : "Claude Haiku só pra links difíceis")
+                row("Reforço na nuvem", Secrets.anthropicKey == nil
+                    ? "Claude Haiku só pra links difíceis · sem chave no Secrets.plist"
+                    : "Claude Haiku só pra links difíceis")
             }
-            .toggleStyle(.must)
-            RowDivider()
             Toggle(isOn: $settings.transcribeVideos) {
                 // TODO: transcrição de vídeo (Gemini Flash, YouTube por URL) — fora do escopo desta versão.
-                FormRow("Transcrever vídeos", subtitle: "Gemini Flash · YouTube por URL · em breve")
+                row("Transcrever vídeos", "Gemini Flash · YouTube por URL · em breve")
             }
-            .toggleStyle(.must)
             .disabled(true)
-            .opacity(0.6)
         }
     }
 
     // MARK: Dados
 
-    /// Status de voo (AeroDataBox): o contador do mês, como o do Google. Zera no mês seguinte.
     private var flightRow: some View {
-        FormRow("Status de voo", subtitle: flightSubtitle) {
-            HStack(spacing: 8) {
-                Rectangle().fill(Secrets.aerodataboxKey == nil ? V8.mute : V8.orange).frame(width: 8, height: 8)
-                MonoValue("\(FlightQuota.used()) / \(FlightQuota.planLimit)")
+        LabeledContent {
+            HStack(spacing: 6) {
+                Circle().fill(Secrets.aerodataboxKey == nil ? Color.secondary : V9.accent).frame(width: 8, height: 8)
+                Text("\(FlightQuota.used()) / \(FlightQuota.planLimit)").monospacedDigit()
             }
-        }
+        } label: { row("Status de voo", flightSubtitle) }
     }
 
     private var flightSubtitle: String {
@@ -222,92 +204,76 @@ private struct SettingsSections: View {
     }
 
     private var data: some View {
-        FormSection("Dados") {
-            Button { router.push(.googleUsage, on: .hoje) } label: {
-                FormRow("Google Maps", subtitle: placesSubtitle) {
-                    HStack(spacing: 8) {
-                        Rectangle().fill(Secrets.googlePlacesKey == nil ? V8.mute : V8.orange).frame(width: 8, height: 8)
-                        MonoValue("\(ApiBudget.placesUsedThisMonth()) usados", chevron: true)
-                    }
+        Group {
+            Section("Dados") {
+                Button { router.push(.googleUsage, on: .hoje) } label: {
+                    LabeledContent {
+                        HStack(spacing: 6) {
+                            Circle().fill(Secrets.googlePlacesKey == nil ? Color.secondary : V9.accent).frame(width: 8, height: 8)
+                            Text("\(ApiBudget.placesUsedThisMonth()) usados").monospacedDigit()
+                            Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
+                        }
+                    } label: { row("Google Maps", placesSubtitle) }
                 }
-            }
-            .buttonStyle(.plain)
-            RowDivider()
-            TrustSyncRows()
-            Button {
-                Task { await services.sync.syncPlaces(context: context, region: region) }
-            } label: {
-                HStack {
-                    if let progress = services.sync.placesProgress {
+                .foregroundStyle(.primary)
+                TrustSyncRows()
+                if let progress = services.sync.placesProgress {
+                    HStack {
                         ProgressView(value: Double(progress.done), total: Double(max(1, progress.total)))
-                            .tint(V8.orange)
-                        Text("\(progress.done)/\(progress.total)").font(.must.mono(13)).foregroundStyle(Color.must.secondary)
-                    } else {
-                        Pill("Sincronizar horários e preço", style: .green, icon: .outraProposta)
-                        Spacer()
+                        Text("\(progress.done)/\(progress.total)").font(.footnote).monospacedDigit().foregroundStyle(.secondary)
                     }
-                }
-            }
-            .buttonStyle(MustPressStyle())
-            .disabled(services.sync.isSyncingPlaces)
-            .padding(.bottom, 14)
-            RowDivider()
-            PhotoDataRows()
-            RowDivider()
-            flightRow
-            RowDivider()
-            FormRow("Tempo", subtitle: region.profile.transit?.weatherLabel ?? "Open-Meteo") {
-                MonoValue(weatherStatus, color: Color.must.secondary)
-            }
-            RowDivider()
-            Toggle(isOn: $settings.flickrPhotos) {
-                FormRow("Fotos de fundo", subtitle: "Google Places e Wikimedia Commons · crédito sempre visível")
-            }
-            .toggleStyle(.must)
-            RowDivider()
-            Toggle(isOn: $settings.peopleTips) {
-                FormRow("Dicas de pessoas", subtitle: "Google, Foursquare e Reddit no Lugar · desligar economiza chamadas")
-            }
-            .toggleStyle(.must)
-            RowDivider()
-            Toggle(isOn: $settings.suggestNearby) {
-                FormRow("Sugerir por perto", subtitle: "Google, Wikipedia e Foursquare · a Home só lê o cache")
-            }
-            .toggleStyle(.must)
-            RowDivider()
-            if region.hasFX {
-                Button {
-                    fxText = (settings.fxRate * region.fxUnit).formatted(.number.locale(region.locale).precision(.fractionLength(2)))
-                    editingFX = true
-                } label: {
-                    FormRow("Moeda", subtitle: settings.fxDate.map { "câmbio salvo \(region.shortDay($0))" }
-                            ?? "câmbio padrão · toque pra atualizar") {
-                        MonoValue("\(region.fxUnitLabel) = \((settings.fxRate * region.fxUnit).formatted(.money("BRL")))", chevron: true)
+                } else {
+                    Button("Sincronizar horários e preço") {
+                        Task { await services.sync.syncPlaces(context: context, region: region) }
                     }
+                    .disabled(services.sync.isSyncingPlaces)
                 }
-                .buttonStyle(.plain)
-            } else {
-                FormRow("Moeda", subtitle: "real · sem câmbio") { MonoValue("R$") }
+                PhotoDataRows()
+                flightRow
+                LabeledContent {
+                    Text(weatherStatus).foregroundStyle(.secondary)
+                } label: { row("Tempo", region.profile.transit?.weatherLabel ?? "Open-Meteo") }
             }
-            RowDivider()
-            FormRow("O que sai do aparelho", subtitle: privacyLine)
-            RowDivider()
-            Button { router.push(.board(edit: false)) } label: {
-                FormRow("Board completo", subtitle: "todos os lugares · editar listas e lugares") {
-                    MustIconView(.avancar, size: 14).foregroundStyle(Color.must.secondary)
+            Section("Fontes") {
+                Toggle(isOn: $settings.flickrPhotos) {
+                    row("Fotos de fundo", "Google Places e Wikimedia Commons · crédito sempre visível")
+                }
+                Toggle(isOn: $settings.peopleTips) {
+                    row("Dicas de pessoas", "Google, Foursquare e Reddit no Lugar · desligar economiza chamadas")
+                }
+                Toggle(isOn: $settings.suggestNearby) {
+                    row("Sugerir por perto", "Google, Wikipedia e Foursquare · a Home só lê o cache")
+                }
+                if region.hasFX {
+                    Button {
+                        fxText = (settings.fxRate * region.fxUnit).formatted(.number.locale(region.locale).precision(.fractionLength(2)))
+                        editingFX = true
+                    } label: {
+                        LabeledContent {
+                            HStack(spacing: 6) {
+                                Text("\(region.fxUnitLabel) = \((settings.fxRate * region.fxUnit).formatted(.money("BRL")))").monospacedDigit()
+                                Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
+                            }
+                        } label: {
+                            row("Moeda", settings.fxDate.map { "câmbio salvo \(region.shortDay($0))" } ?? "câmbio padrão · toque pra atualizar")
+                        }
+                    }
+                    .foregroundStyle(.primary)
+                } else {
+                    LabeledContent { Text("R$") } label: { row("Moeda", "real · sem câmbio") }
                 }
             }
-            .buttonStyle(.plain)
-            RowDivider()
-            Button(action: onExport) {
-                FormRow("Exportar board (.json)") { MustIconView(.exportar, size: 18).foregroundStyle(Color.must.ink) }
-            }
-            .buttonStyle(.plain)
-            RowDivider()
-            Button(action: onReimport) {
-                FormRow("Reimportar") { MustIconView(.avancar, size: 14).foregroundStyle(Color.must.secondary) }
-            }
-            .buttonStyle(.plain)
+            Section {
+                row("O que sai do aparelho", privacyLine)
+                Button { router.push(.board(edit: false)) } label: {
+                    LabeledContent {
+                        Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
+                    } label: { row("Board completo", "todos os lugares · editar listas e lugares") }
+                }
+                .foregroundStyle(.primary)
+                Button("Exportar board (.json)", action: onExport)
+                Button("Reimportar", action: onReimport)
+            } header: { Text("Board e privacidade") }
         }
     }
 
@@ -346,5 +312,55 @@ private struct SettingsSections: View {
         let cleaned = text.replacingOccurrences(of: ".", with: "").replacingOccurrences(of: ",", with: ".")
             .trimmingCharacters(in: .whitespaces)
         return NumberInput.double(cleaned)
+    }
+}
+
+/// Avisos do guia (liga/desliga de cada um), em Form nativo. Mesma lógica do `AvisosDoGuiaSection` do V8.
+private struct AvisosForm: View {
+    @Environment(\.modelContext) private var context
+    @Environment(RegionStore.self) private var store
+    @Environment(Services.self) private var services
+
+    @AppStorage(GuideNudgeScheduler.enabledKey) private var all = true
+    @AppStorage(GuideNudgeScheduler.key(.morning)) private var morning = true
+    @AppStorage(GuideNudgeScheduler.key(.leave)) private var leave = true
+    @AppStorage(GuideNudgeScheduler.key(.golden)) private var golden = true
+    @AppStorage(GuideNudgeScheduler.key(.lastTrain)) private var lastTrain = true
+    @AppStorage(GuideNudgeScheduler.key(.opens)) private var opens = true
+
+    var body: some View {
+        Section {
+            Toggle("Avisos do guia", isOn: $all)
+            if all {
+                row($morning, "Bom dia", "07:20 · o bairro de hoje e a primeira parada")
+                row($leave, "Saia em 5 min", "pra próxima parada · com a Live Activity")
+                row($golden, "Golden em 20 min", "quando o dia tem foto no golden")
+                row($lastTrain, "Último trem", "50 min antes · ou 23:50")
+                row($opens, "Abre agora", "quando um lugar do dia abre depois que você saiu")
+            }
+        } header: { Text("Avisos do guia") } footer: { Text("Só no aparelho · no máximo 1 a cada 45 min.") }
+        .onChange(of: [all, morning, leave, golden, lastTrain, opens]) { _, _ in reschedule() }
+    }
+
+    private func row(_ value: Binding<Bool>, _ title: String, _ subtitle: String) -> some View {
+        Toggle(isOn: value) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                Text(subtitle).font(.footnote).foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private func reschedule() {
+        let region = store.region
+        let origin = services.location.current?.coordinate
+        let context = context
+        Task {
+            if all {
+                await GuideNudgeScheduler.refresh(context: context, region: region, origin: origin, askPermission: false)
+            } else {
+                await GuideNudgeScheduler.disable()
+            }
+        }
     }
 }

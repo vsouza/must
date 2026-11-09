@@ -15,20 +15,18 @@ struct ExperienceLinkSheet: View {
     private var region: Region { store.region }
 
     var body: some View {
-        CutSheet(title: "Colar link", corner: ["Experiências", "Viator · Klook · Airbnb"],
-                 footer: "Ler link", footerEnabled: !model.text.trimmingCharacters(in: .whitespaces).isEmpty && !model.isReading,
-                 footerArrow: false, onFooter: { read() }) {
-            Text("Cola o link de uma experiência. Eu leio o título, o preço, a duração e o ponto de encontro da página.")
-                .font(V8Font.text(15)).foregroundStyle(V8.mute)
-            CutBox(label: "link") {
+        J9Sheet(title: "Colar link", subtitle: "Cola o link de uma experiência. Eu leio o título, o preço, a duração e o ponto de encontro da página.",
+                footer: "Ler link", footerEnabled: !model.text.trimmingCharacters(in: .whitespaces).isEmpty && !model.isReading,
+                onFooter: { read() }) {
+            J9Field(label: "Link (Viator, Klook, Airbnb…)") {
                 TextField("https://www.klook.com/…", text: $model.text)
-                    .font(V8Font.text(16))
                     .keyboardType(.URL)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .submitLabel(.go)
                     .focused($focused)
                     .onSubmit { read() }
+                    .padding(.vertical, 10)
             }
             result
         }
@@ -48,10 +46,10 @@ struct ExperienceLinkSheet: View {
         case .reading:
             HStack(spacing: 10) {
                 ProgressView()
-                Text("Lendo a página…").font(.must.meta).foregroundStyle(Color.must.secondary)
+                Text("Lendo a página…").font(.footnote).foregroundStyle(Color.secondary)
             }
         case .failed(let message):
-            Text(message).font(.must.meta).foregroundStyle(Color.must.secondary)
+            Text(message).font(.footnote).foregroundStyle(Color.secondary)
         case .ready(let draft, let link):
             draftCard(draft, link: link)
         }
@@ -60,24 +58,22 @@ struct ExperienceLinkSheet: View {
     private func draftCard(_ draft: ExperienceDraft, link: ExperienceLink) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                CutTag(text: ExperienceSupplier.badge(link.supplier, url: link.url), filled: true)
+                J9Tag(text: ExperienceSupplier.badge(link.supplier, url: link.url), filled: true)
                 Spacer()
-                MonoLabel(draft.via, size: 10, color: V8.mute)
+                Text(draft.via).font(.footnote).foregroundStyle(.secondary)
             }
-            Text(draft.name).font(V8Font.display(26)).foregroundStyle(V8.ink).fixedSize(horizontal: false, vertical: true)
-            Text(facts(draft)).font(V8Font.text(14)).foregroundStyle(V8.mute)
+            Text(draft.name).font(.title2.weight(.bold)).fixedSize(horizontal: false, vertical: true)
+            Text(facts(draft)).font(.subheadline).foregroundStyle(.secondary)
             if let session = draft.session {
-                CutTag(text: "\(region.shortDayTime(session.at)) · confira no fornecedor")
+                J9Tag(text: "\(region.shortDayTime(session.at)) · confira no fornecedor")
             }
-            CutButton(title: "Adicionar à Must do", filled: true) {
+            J9Button("Adicionar à Must do") {
                 ExperienceStore.add(draft, region: region, context: context)
                 dismiss()
             }
-            CutButton(title: "Ver no \(ExperienceSupplier.badge(link.supplier, url: link.url))") { openURL(link.url) }
+            J9Button("Ver no \(ExperienceSupplier.badge(link.supplier, url: link.url))", prominent: false) { openURL(link.url) }
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
+        .v9Card()
     }
 
     private func facts(_ draft: ExperienceDraft) -> String {

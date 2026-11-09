@@ -23,34 +23,35 @@ struct BuscarNomeView: View {
     private var region: Region { store.region }
 
     var body: some View {
-        ZStack {
-            Color.must.bg.ignoresSafeArea()
-            BlobBackground(style: .custom([
-                Blob(cx: 380, cy: 150, rx: 74, ry: 80, rotation: 8, fill: .green, opacity: 0.6),
-                Blob(cx: 10, cy: 600, rx: 60, ry: 70, rotation: 0, fill: .blue, opacity: 0.5),
-            ]))
-            if let model {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 16) {
-                        topBar
-                        searchField(model)
-                        suggestionList(model)
-                        if let selected = model.selected {
-                            card(model, selected: selected)
-                            Text("Sugestões do Google enquanto digita · as fotos só carregam no escolhido")
-                                .font(.must.meta).foregroundStyle(Color.must.secondary)
-                                .multilineTextAlignment(.center).frame(maxWidth: .infinity)
+        NavigationStack {
+            Group {
+                if let model {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 16) {
+                            searchField(model)
+                            suggestionList(model)
+                            if let selected = model.selected {
+                                card(model, selected: selected)
+                                Text("Sugestões do Google enquanto digita · as fotos só carregam no escolhido")
+                                    .font(.footnote).foregroundStyle(.secondary)
+                                    .multilineTextAlignment(.center).frame(maxWidth: .infinity)
+                            }
                         }
+                        .padding(.horizontal, V9.gutter)
+                        .padding(.top, 8)
+                        .padding(.bottom, 16)
                     }
-                    .padding(.horizontal, 22)
-                    .padding(.top, 8)
-                    .padding(.bottom, 16)
+                    .scrollDismissesKeyboard(.interactively)
+                    .safeAreaInset(edge: .bottom, spacing: 0) { footer(model) }
+                } else {
+                    Color.clear
                 }
-                .scrollDismissesKeyboard(.interactively)
-                .safeAreaInset(edge: .bottom, spacing: 0) { footer(model) }
             }
+            .navigationTitle("Buscar por nome")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Fechar") { dismiss() } } }
+            .v9Screen()
         }
-        .toolbar(.hidden, for: .navigationBar)
         .onAppear {
             guard model == nil else { return }
             let autoChoose = DebugFlags.string("debugScreen")?.hasSuffix(":escolher") == true
@@ -87,58 +88,41 @@ struct BuscarNomeView: View {
 
     // MARK: Partes
 
-    private var topBar: some View {
-        HStack {
-            IconButton(.voltar, label: "Voltar") { dismiss() }
-            Spacer()
-            Micro("adicionar · por nome")
-            Spacer()
-            Color.clear.frame(width: 40, height: 40)
-        }
-    }
-
     private func searchField(_ model: BuscarNomeModel) -> some View {
         HStack(spacing: 10) {
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(Color.must.ink)
+            Image(systemName: "magnifyingglass").foregroundStyle(.secondary).accessibilityHidden(true)
             TextField("nome do lugar", text: Binding(get: { model.query }, set: { model.typed($0, near: biasCenter) }))
                 .accessibilityIdentifier("buscar.query")
-                .font(.must.archivo(20))
                 .focused($focused)
                 .submitLabel(.search)
                 .autocorrectionDisabled()
             if let areaLabel {
                 Text("perto de \(areaLabel)")
-                    .font(.must.archivo(13))
-                    .foregroundStyle(Color.must.ink)
-                    .padding(.horizontal, 12).padding(.vertical, 7)
-                    .background(Capsule().fill(Color.white))
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
         }
-        .padding(.horizontal, 18)
-        .frame(height: 58)
-        .background(Capsule().fill(Color.must.surface2))
-        .overlay(Capsule().stroke(Color.must.ink, lineWidth: 2))
+        .padding(.horizontal, 14)
+        .frame(minHeight: 48)
+        .background(V9.fill, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     @ViewBuilder private func suggestionList(_ model: BuscarNomeModel) -> some View {
         if model.searching && model.suggestions.isEmpty {
-            Micro("buscando…").padding(.leading, 6)
+            Text("Buscando…").font(.footnote).foregroundStyle(.secondary).padding(.leading, 6)
         } else if !model.suggestions.isEmpty {
             VStack(spacing: 0) {
                 ForEach(Array(model.suggestions.enumerated()), id: \.element.id) { index, suggestion in
-                    if index > 0 { RowDivider() }
+                    if index > 0 { J9Divider() }
                     suggestionRow(suggestion, model: model)
                 }
             }
-            .padding(.vertical, 6)
+            .padding(.vertical, 2)
             .padding(.horizontal, 16)
-            .background(RoundedRectangle(cornerRadius: 26, style: .continuous).fill(Color.white))
-            .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).stroke(Color.must.line, lineWidth: 1))
+            .background(V9.card, in: RoundedRectangle(cornerRadius: V9.cornerRadius, style: .continuous))
         } else if model.query.count >= 3, !model.searching {
-            Text("Nenhuma sugestão. Tenta outro nome ou o bairro.").font(.must.meta).foregroundStyle(Color.must.secondary)
+            Text("Nenhuma sugestão. Tenta outro nome ou o bairro.").font(.footnote).foregroundStyle(Color.secondary)
         }
     }
 
@@ -150,33 +134,33 @@ struct BuscarNomeView: View {
             Task { await model.choose(suggestion) }
         } label: {
             HStack(alignment: .center, spacing: 12) {
-                Circle().fill(chosen ? Color.must.ink : Color.must.surface)
+                Circle().fill(chosen ? V9.accent : V9.fill)
                     .frame(width: 44, height: 44)
                     .overlay {
                         if suggestion.isCafe {
-                            MustIconView(.cafe, size: 18).foregroundStyle(chosen ? .white : Color.must.ink)
+                            MustIconView(.cafe, size: 18).foregroundStyle(chosen ? .white : Color.primary)
                         } else {
-                            MustIconView(.pino, size: 18).foregroundStyle(chosen ? .white : Color.must.ink)
+                            MustIconView(.pino, size: 18).foregroundStyle(chosen ? .white : Color.primary)
                         }
                     }
                 VStack(alignment: .leading, spacing: 3) {
                     Text(highlighted(suggestion))
-                        .font(.must.archivo(17, .semibold))
-                        .foregroundStyle(Color.must.ink)
+                        .font(J9.font(17, .semibold))
+                        .foregroundStyle(Color.primary)
                         .lineLimit(2)
                     if !subtitle.isEmpty {
-                        Text(subtitle).font(.must.meta).foregroundStyle(Color.must.secondary).lineLimit(2)
+                        Text(subtitle).font(.footnote).foregroundStyle(Color.secondary).lineLimit(2)
                     }
                 }
                 Spacer(minLength: 0)
                 if onBoard {
-                    Tag("no board", style: .green)
+                    J9Tag(text: "no board")
                 }
             }
             .padding(.vertical, 12)
             .contentShape(Rectangle())
         }
-        .buttonStyle(MustPressStyle())
+        .buttonStyle(.plain)
     }
 
     /// Trecho casado em verde (`text.matches` do Autocomplete).
@@ -184,7 +168,7 @@ struct BuscarNomeView: View {
         var out = AttributedString()
         for segment in suggestion.segments {
             var part = AttributedString(segment.text)
-            if segment.highlighted { part.backgroundColor = Color.must.green.opacity(0.45) }
+            if segment.highlighted { part.backgroundColor = V9.accent.opacity(0.45) }
             out += part
         }
         return out
@@ -197,26 +181,24 @@ struct BuscarNomeView: View {
         let listName = lists.first { $0.id == model.listId(for: selected) }?.displayName
         VStack(alignment: .leading, spacing: 12) {
             photos(model, selected: selected)
-            Text(name).font(.must.archivo(26, .semibold)).foregroundStyle(Color.must.ink).fixedSize(horizontal: false, vertical: true)
+            Text(name).font(J9.font(26, .semibold)).foregroundStyle(Color.primary).fixedSize(horizontal: false, vertical: true)
             metaLine(model, selected: selected)
             if let address = model.details?.address {
-                Text(addressLine(address, model: model, selected: selected)).font(.must.meta).foregroundStyle(Color.must.secondary)
+                Text(addressLine(address, model: model, selected: selected)).font(.footnote).foregroundStyle(Color.secondary)
             }
-            if model.loadingCard { Micro("buscando o card…") }
+            if model.loadingCard { Text("Buscando o card…").font(.footnote).foregroundStyle(.secondary) }
             HStack(spacing: 8) {
-                Tag(listName ?? "escolha uma lista", style: .dark)
+                J9Tag(text: listName ?? "escolha uma lista", filled: true)
                 Menu {
                     ForEach(lists) { list in
                         Button(list.name) { model.listOverride = list.id }
                     }
                 } label: {
-                    Tag("outra lista")
+                    J9Tag(text: "outra lista")
                 }
             }
         }
-        .padding(18)
-        .background(RoundedRectangle(cornerRadius: 26, style: .continuous).fill(Color.must.surface2))
-        .rotationEffect(.degrees(-0.8))
+        .v9Card()
     }
 
     /// Até três fotos (uma grande, duas menores) com o crédito; sem foto, a cor da lista (o card não some).
@@ -236,7 +218,7 @@ struct BuscarNomeView: View {
             .frame(height: 200)
             .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
             if let first = model.photos.first {
-                Credit(first.credit, color: Color.must.ink, url: first.pageURL)
+                Credit(first.credit, color: Color.primary, url: first.pageURL)
                     .padding(10)
             }
         }
@@ -276,7 +258,7 @@ struct BuscarNomeView: View {
         if let open {
             line = line + Text(pieces.isEmpty ? "" : " · ") + Text(open).foregroundStyle(MustColor.eat.text)
         }
-        return line.font(.must.meta).foregroundStyle(Color.must.secondary)
+        return line.font(.footnote).foregroundStyle(Color.secondary)
     }
 
     /// "Endereço · 0,9 km · 12 min a pé" (distância do Autocomplete; sem ela, a da coordenada do Details).
@@ -299,19 +281,17 @@ struct BuscarNomeView: View {
         } ?? false
         return VStack {
             if let selected, let list, model.details != nil {
-                PrimaryButton(onBoard ? "Já está no board" : "Adicionar ao \(list.displayName)", style: .green) {
+                J9Button(onBoard ? "Já está no board" : "Adicionar ao \(list.displayName)") {
                     if model.add(to: list, suggestion: selected, details: model.details, region: region, now: AppClock.now, context: context) != nil {
                         dismiss()
                     }
                 }
                 .disabled(onBoard)
             } else {
-                PrimaryButton("Escolha um lugar", style: .green) {}.disabled(true)
+                J9Button("Escolha um lugar") {}.disabled(true)
             }
         }
-        .padding(.horizontal, 22)
-        .padding(.top, 14)
-        .padding(.bottom, 14)
-        .background(Color.must.bg.opacity(0.96))
+        .padding(V9.gutter)
+        .background(.bar)
     }
 }

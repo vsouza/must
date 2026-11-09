@@ -69,38 +69,49 @@ struct ExpenseView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            CutScreenHeader(title: "Gasto", corner: ["hoje \(region.money(spentToday, symbol: true)) de \(region.money(budget, symbol: false))"],
-                            height: 120, onBack: { dismiss() }, backIcon: "xmark")
+        NavigationStack {
             ScrollView {
                 VStack(spacing: 0) {
                     VStack(alignment: .leading, spacing: 6) {
-                        MonoLabel("quanto foi?", color: V8.mute)
+                        Text("Quanto foi?").font(.subheadline).foregroundStyle(.secondary)
                         HStack(alignment: .firstTextBaseline, spacing: 6) {
-                            Text(region.currencySymbol).font(V8Font.mono(26, weight: .semibold)).foregroundStyle(V8.mute)
+                            Text(region.currencySymbol).font(.title.weight(.semibold)).monospacedDigit().foregroundStyle(.secondary)
                             Text(displayAmount)
-                                .font(V8Font.numeral(76)).tracking(-2)
-                                .foregroundStyle(V8.ink).lineLimit(1).minimumScaleFactor(0.4)
+                                .font(.system(size: 56, weight: .semibold).monospacedDigit())
+                                .lineLimit(1).minimumScaleFactor(0.4)
                         }
-                        Text(fitLine).font(V8Font.text(14)).foregroundStyle(V8.mute)
+                        Text(fitLine).font(.subheadline).foregroundStyle(.secondary)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 18)
-                    .overlay(alignment: .bottom) { IndexRule() }
+                    .padding(.horizontal, V9.gutter)
+                    .padding(.vertical, 12)
+                    .accessibilityElement(children: .combine)
 
-                    placeCard.padding(.horizontal, 20).padding(.top, 16)
+                    placeCard.padding(.horizontal, V9.gutter).padding(.top, 8)
                     categories.padding(.top, 14)
-                    if !people.isEmpty { group.padding(.horizontal, 20).padding(.top, 14) }
-                    keypad.padding(.horizontal, 20).padding(.top, 14)
-                    payment.padding(.horizontal, 20).padding(.top, 14)
+                    if !people.isEmpty { group.padding(.horizontal, V9.gutter).padding(.top, 14) }
+                    keypad.padding(.horizontal, V9.gutter).padding(.top, 14)
+                    payment.padding(.horizontal, V9.gutter).padding(.top, 14)
                     Color.clear.frame(height: 16)
                 }
             }
-            .scrollIndicators(.hidden)
+            .scrollDismissesKeyboard(.interactively)
+            .navigationTitle("Gasto")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Fechar") { dismiss() } }
+                ToolbarItem(placement: .principal) {
+                    VStack(spacing: 0) {
+                        Text("Gasto").font(.headline)
+                        Text("hoje \(region.money(spentToday, symbol: true)) de \(region.money(budget, symbol: false))")
+                            .font(.caption).foregroundStyle(.secondary).monospacedDigit()
+                    }
+                    .accessibilityElement(children: .combine)
+                }
+            }
+            .j9Footer(buttonTitle, enabled: !(amount == 0 && place == nil), action: save)
+            .v9Screen()
         }
-        .background(V8.paper.ignoresSafeArea())
-        .cutFooter(buttonTitle, enabled: !(amount == 0 && place == nil), action: save)
         .sheet(isPresented: $picking) {
             PlacePicker(places: places) { picked in
                 selectedPlaceId = picked?.id
@@ -139,23 +150,21 @@ struct ExpenseView: View {
     private var placeCard: some View {
         HStack(spacing: 14) {
             if let place {
-                KanjiSeal(done: true, size: 36)
+                Image(systemName: "checkmark.circle.fill").font(.title2).foregroundStyle(V9.accent).accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(place.name).font(V8Font.text(17, weight: .bold)).foregroundStyle(V8.ink).lineLimit(2)
-                    Text(placeSubtitle(place)).font(V8Font.text(13)).foregroundStyle(V8.mute).lineLimit(2)
+                    Text(place.name).font(.body.weight(.semibold)).lineLimit(2)
+                    Text(placeSubtitle(place)).font(.footnote).foregroundStyle(.secondary).lineLimit(2)
                 }
             } else {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Sem lugar").font(V8Font.text(17, weight: .bold)).foregroundStyle(V8.ink)
-                    Text("gasto solto · metrô, konbini, gorjeta").font(V8Font.text(13)).foregroundStyle(V8.mute)
+                    Text("Sem lugar").font(.body.weight(.semibold))
+                    Text("gasto solto · metrô, konbini, gorjeta").font(.footnote).foregroundStyle(.secondary)
                 }
             }
             Spacer(minLength: 8)
-            Button { picking = true } label: { Pill("Outro lugar") }
-                .buttonStyle(MustPressStyle())
+            Button("Outro lugar") { picking = true }.buttonStyle(.bordered)
         }
-        .padding(14)
-        .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
+        .v9Card(padding: 12)
     }
 
     private func placeSubtitle(_ place: Place) -> String {
@@ -174,11 +183,11 @@ struct ExpenseView: View {
     private var categories: some View {
         FlowLayout(spacing: 8) {
             ForEach(Self.categoryOrder, id: \.0) { cat, label in
-                Button { category = cat } label: { CutChip(text: label, isOn: (category ?? .other) == cat) }
-                    .buttonStyle(MustPressStyle())
+                Button { category = cat } label: { J9Chip(label, isOn: (category ?? .other) == cat) }
+                    .buttonStyle(.plain)
             }
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, V9.gutter)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
@@ -194,15 +203,15 @@ struct ExpenseView: View {
                         if key == "⌫" {
                             Image(systemName: "delete.left").font(.system(size: 20, weight: .regular))
                         } else {
-                            Text(key).font(.must.mono(key.count > 1 ? 17 : 26, .semibold))
+                            Text(key).font(J9.font(key.count > 1 ? 17 : 26, .semibold).monospacedDigit())
                         }
                     }
-                    .foregroundStyle(key.count > 1 || key == "," ? Color.must.secondary : Color.must.ink)
+                    .foregroundStyle(key.count > 1 || key == "," ? Color.secondary : Color.primary)
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
-                    .overlay(Rectangle().stroke(V8.ink, lineWidth: key.count > 1 || key == "⌫" || key == "," ? 0 : 2))
+                    .background(V9.fill, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
-                .buttonStyle(MustPressStyle())
+                .buttonStyle(.plain)
                 .accessibilityLabel(key == "⌫" ? "Apagar" : key)
             }
         }
@@ -227,16 +236,8 @@ struct ExpenseView: View {
     private var payment: some View {
         FlowLayout(spacing: 8) {
             ForEach(region.profile.money?.paymentMethods?.compactMap(PaymentMethod.init(rawValue:)) ?? [.cash, .card], id: \.self) { m in
-                Button { method = m } label: {
-                    Text(m == .cash ? "pago em dinheiro" : m.label)
-                        .font(V8Font.text(14))
-                        .foregroundStyle(Color.must.ink)
-                        .padding(.horizontal, 14)
-                        .frame(minHeight: 36)
-                        .background(method == m ? V8.orange : Color.clear)
-                        .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
-                }
-                .buttonStyle(MustPressStyle())
+                Button { method = m } label: { J9Chip(m == .cash ? "pago em dinheiro" : m.label, isOn: method == m) }
+                    .buttonStyle(.plain)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -249,15 +250,15 @@ struct ExpenseView: View {
     /// Quem pagou e com quem dividiu. Só aparece com pessoas cadastradas na viagem.
     private var group: some View {
         VStack(alignment: .leading, spacing: 10) {
-            MonoLabel("quem pagou", size: 10, color: V8.mute)
+            Text("Quem pagou").font(.footnote).foregroundStyle(.secondary)
             FlowLayout(spacing: 8) {
                 ForEach([Settlement.me] + people.map(\.name), id: \.self) { name in
                     let on = (paidBy.isEmpty ? Settlement.me : paidBy) == name
-                    Button { paidBy = name == Settlement.me ? "" : name } label: { CutChip(text: personLabel(name), isOn: on) }
-                        .buttonStyle(MustPressStyle())
+                    Button { paidBy = name == Settlement.me ? "" : name } label: { J9Chip(personLabel(name), isOn: on) }
+                        .buttonStyle(.plain)
                 }
             }
-            MonoLabel("dividido com", size: 10, color: V8.mute).padding(.top, 6)
+            Text("Dividido com").font(.footnote).foregroundStyle(.secondary).padding(.top, 6)
             FlowLayout(spacing: 8) {
                 modeChip("Todos", .all)
                 modeChip("Escolher", .choose)
@@ -268,12 +269,12 @@ struct ExpenseView: View {
                     ForEach([Settlement.me] + people.map(\.name), id: \.self) { name in
                         Button {
                             if chosen.contains(name) { chosen.remove(name) } else { chosen.insert(name) }
-                        } label: { CutChip(text: personLabel(name), isOn: chosen.contains(name)) }
-                            .buttonStyle(MustPressStyle())
+                        } label: { J9Chip(personLabel(name), isOn: chosen.contains(name)) }
+                            .buttonStyle(.plain)
                     }
                 }
             }
-            if let share = shareLine { Text(share).font(V8Font.text(13)).foregroundStyle(V8.mute) }
+            if let share = shareLine { Text(share).font(J9.font(13)).foregroundStyle(Color.secondary) }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -282,7 +283,7 @@ struct ExpenseView: View {
         Button {
             splitMode = mode
             if mode == .choose, chosen.isEmpty { chosen = Set([Settlement.me] + people.map(\.name)) }
-        } label: { CutChip(text: title, isOn: splitMode == mode) }.buttonStyle(MustPressStyle())
+        } label: { J9Chip(title, isOn: splitMode == mode) }.buttonStyle(.plain)
     }
 
     /// "R$ 40 por pessoa" — a conta de cabeça antes de registrar.
@@ -336,30 +337,22 @@ private struct PlacePicker: View {
     @State private var query = ""
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            TextField("Buscar no board…", text: $query)
-                .font(V8Font.text(16))
-                .padding(.horizontal, 14)
-                .frame(minHeight: 48)
-                .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
-            ScrollView {
-                VStack(spacing: 0) {
-                    Button { onPick(nil); dismiss() } label: {
-                        FormRow("Sem lugar", subtitle: "gasto solto")
+        NavigationStack {
+            List {
+                Button { onPick(nil); dismiss() } label: { J9Row("Sem lugar", subtitle: "gasto solto") }
+                    .foregroundStyle(.primary)
+                ForEach(places.filter { $0.matches(query) }) { place in
+                    Button { onPick(place); dismiss() } label: {
+                        J9Row(place.name, subtitle: [place.list?.displayName, place.area].compactMap { $0 }.joined(separator: " · "))
                     }
-                    .buttonStyle(.plain)
-                    ForEach(places.filter { $0.matches(query) }) { place in
-                        RowDivider()
-                        Button { onPick(place); dismiss() } label: {
-                            FormRow(place.name, subtitle: [place.list?.displayName, place.area].compactMap { $0 }.joined(separator: " · "))
-                        }
-                        .buttonStyle(.plain)
-                    }
+                    .foregroundStyle(.primary)
                 }
             }
+            .listStyle(.plain)
+            .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Buscar no board…")
+            .navigationTitle("Lugar do gasto")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Fechar") { dismiss() } } }
         }
-        .padding(.horizontal, 22)
-        .padding(.top, 16)
-        .background(V8.paper)
     }
 }

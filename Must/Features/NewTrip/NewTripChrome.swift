@@ -12,129 +12,83 @@ struct NewTripStepFrame<Content: View>: View {
     var onNext: () -> Void
     @ViewBuilder var content: Content
 
-    @Environment(\.tripTheme) private var theme
-    @ScaledMetric(relativeTo: .title) private var scale: CGFloat = 1
-
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            header
-            NewTripProgress(current: model.step)
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    content
+        NavigationStack {
+            VStack(spacing: 0) {
+                NewTripProgress(current: model.step)
+                    .padding(.horizontal, V9.gutter)
+                    .padding(.top, 8)
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(title)
+                            .font(.largeTitle.weight(.bold))
+                            .fixedSize(horizontal: false, vertical: true)
+                            .accessibilityAddTraits(.isHeader)
+                            .padding(.bottom, 4)
+                        Text(model.contextLine).font(.subheadline).foregroundStyle(.secondary)
+                            .padding(.bottom, 16)
+                        content
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, V9.gutter)
+                    .padding(.top, 12)
+                    .padding(.bottom, 24)
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 22)
-                .padding(.bottom, 24)
+                .scrollDismissesKeyboard(.interactively)
             }
-            .scrollIndicators(.hidden)
-            .scrollDismissesKeyboard(.interactively)
-            footer
+            .navigationTitle("Nova viagem · \(model.step) de \(NewTripModel.questionSteps)")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    if model.step == 1 {
+                        Button("Fechar", action: onClose)
+                    } else {
+                        Button("Voltar", systemImage: "chevron.left", action: onBack)
+                    }
+                }
+            }
+            .safeAreaInset(edge: .bottom, spacing: 0) { footer }
+            .v9Screen()
         }
-        .background(V8.paper.ignoresSafeArea())
         .dynamicTypeSize(...DynamicTypeSize.accessibility1)
     }
 
-    /// Bloco do corte: cor do lugar (a da viagem em criação, se já escolheu), numeral do passo gigante e o título.
-    private var header: some View {
-        CutBand(photo: nil, tint: model.draft.colorHex.isEmpty ? nil : UInt32(model.draft.colorHex.dropFirst(), radix: 16)) {
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .top, spacing: 12) {
-                    CutCornerButton(systemName: model.step == 1 ? "xmark" : "chevron.left", label: model.step == 1 ? "Fechar" : "Voltar",
-                                    tint: V8.white, action: model.step == 1 ? onClose : onBack)
-                    Spacer(minLength: 12)
-                    VStack(alignment: .trailing, spacing: 3) {
-                        SpecLabel("Nova viagem · \(model.step) de \(NewTripModel.questionSteps)", color: V8.white.opacity(0.9))
-                        SpecLabel(model.contextLine, color: V8.white.opacity(0.9))
-                    }
-                    .multilineTextAlignment(.trailing)
-                    .accessibilityElement(children: .combine)
-                }
-                Spacer(minLength: 8)
-                HStack(alignment: .bottom, spacing: 12) {
-                    Text(title)
-                        .font(V8Font.display(38)).tracking(-1.6)
-                        .foregroundStyle(V8.white)
-                        .lineLimit(3).minimumScaleFactor(0.6)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .accessibilityAddTraits(.isHeader)
-                    Spacer(minLength: 0)
-                    Text("\(model.step)")
-                        .font(V8Font.numeral(72)).tracking(-4)
-                        .foregroundStyle(V8.white.opacity(0.9))
-                        .accessibilityHidden(true)
-                }
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, 10)
-            .padding(.bottom, 14)
-        }
-        .frame(height: 220 * min(scale, 1.3))
-    }
-
-    private var backButton: some View {
-        Button { model.step == 1 ? onClose() : onBack() } label: {
-            Text("VOLTAR").font(V8Font.mono(12, weight: .semibold)).tracking(1).foregroundStyle(V8.paper)
-                .frame(minWidth: 96, maxHeight: .infinity)
-                .padding(.horizontal, 14)
-                .background(V8.ink)
-        }
-        .buttonStyle(.plain)
-    }
-
-    private var nextButton: some View {
-        Button(action: onNext) {
-            HStack(spacing: 10) {
-                Text(primaryTitle.uppercased()).font(V8Font.mono(14, weight: .semibold)).tracking(1.2)
-                    .lineLimit(2).multilineTextAlignment(.leading)
-                Spacer(minLength: 8)
-                Image(systemName: "arrow.right").font(.system(size: 16, weight: .bold))
-            }
-            .foregroundStyle(V8.ink)
-            .padding(.horizontal, 20)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-            .background(V8.orange)
-            .opacity(primaryEnabled ? 1 : 0.4)
-        }
-        .buttonStyle(.plain)
-        .disabled(!primaryEnabled)
-    }
-
-    /// Voltar (tinta) e Continuar (laranja) de ponta a ponta no pé, régua de tinta em cima.
+    /// Continuar de ponta a ponta no pé (o Voltar fica na barra de cima).
     private var footer: some View {
-        HStack(spacing: 0) { backButton; nextButton }
-            .frame(minHeight: 64)
-            .fixedSize(horizontal: false, vertical: true)
-            .background(V8.orange.ignoresSafeArea(edges: .bottom))
-            .overlay(alignment: .top) { Rectangle().fill(V8.ink).frame(height: 2) }
+        Button(action: onNext) {
+            HStack(spacing: 8) {
+                Text(primaryTitle).multilineTextAlignment(.center)
+                Image(systemName: "arrow.right").accessibilityHidden(true)
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .v9Primary()
+        .disabled(!primaryEnabled)
+        .padding(V9.gutter)
+        .background(.bar)
     }
 }
 
-/// Barra de progresso: 8 segmentos, os do passo e anteriores em laranja.
+/// Barra de progresso do passo (nativa).
 struct NewTripProgress: View {
     var current: Int
 
     var body: some View {
-        HStack(spacing: 0) {
-            ForEach(1...NewTripModel.questionSteps, id: \.self) { i in
-                Rectangle().fill(i <= current ? V8.orange : V8.paper).frame(height: 8)
-                    .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
-            }
-        }
-        .background(V8.ink)
-        .accessibilityElement()
-        .accessibilityLabel("Passo \(min(current, NewTripModel.questionSteps)) de \(NewTripModel.questionSteps)")
+        ProgressView(value: Double(min(current, NewTripModel.questionSteps)), total: Double(NewTripModel.questionSteps))
+            .tint(V9.accent)
+            .accessibilityElement()
+            .accessibilityLabel("Passo \(min(current, NewTripModel.questionSteps)) de \(NewTripModel.questionSteps)")
     }
 }
 
-/// Rótulo de seção (`.spec`): mono caixa alta.
+/// Rótulo de seção.
 struct NewTripSection: View {
     var text: String
     var body: some View {
-        Text(text.uppercased())
-            .font(V8Font.mono(12, weight: .semibold)).tracking(1.4)
-            .foregroundStyle(V8.mute)
-            .padding(.bottom, 12)
+        Text(text)
+            .font(.footnote.weight(.semibold))
+            .foregroundStyle(.secondary)
+            .padding(.bottom, 8)
             .accessibilityAddTraits(.isHeader)
     }
 }
@@ -143,50 +97,45 @@ struct NewTripSection: View {
 struct NewTripNote: View {
     var text: String
     var body: some View {
-        Text(text).font(V8Font.text(15)).foregroundStyle(V8.mute)
+        Text(text).font(J9.font(15)).foregroundStyle(Color.secondary)
             .fixedSize(horizontal: false, vertical: true)
     }
 }
 
-/// Cartão branco de 1 pt de borda (`.card` do design) e o pontilhado das faltas.
+/// Cartão do sistema (ou pontilhado, pras faltas).
 struct NewTripCard<Content: View>: View {
     var dashed = false
     @ViewBuilder var content: Content
 
     var body: some View {
         content
-            .padding(20)
+            .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
+            .background(dashed ? Color.clear : V9.card, in: RoundedRectangle(cornerRadius: V9.cornerRadius, style: .continuous))
             .overlay {
                 if dashed {
-                    Rectangle().strokeBorder(V8.ink.opacity(0.5), style: StrokeStyle(lineWidth: 2, dash: [5, 4]))
-                } else {
-                    Rectangle().strokeBorder(V8.ink, lineWidth: 2)
+                    RoundedRectangle(cornerRadius: V9.cornerRadius, style: .continuous)
+                        .strokeBorder(Color.secondary.opacity(0.6), style: StrokeStyle(lineWidth: 1, dash: [5, 4]))
                 }
             }
     }
 }
 
-extension V8 {
-    static var ruleStrongColor: Color { Color(hex: Hex.ruleStrong) }
-}
-
-/// Etiqueta mono (LIDO, LIDO DO E-MAIL).
+/// Etiqueta ("lido", "lido do e-mail").
 struct NewTripTag: View {
     var text: String
     var filled = false
     var body: some View {
-        Text(text.uppercased())
-            .font(V8Font.mono(11, weight: .bold)).tracking(1)
-            .foregroundStyle(V8.ink)
-            .padding(.horizontal, 12).padding(.vertical, 7)
-            .background(Rectangle().fill(filled ? V8.orange : Color.clear))
-            .overlay(Rectangle().strokeBorder(V8.ink, lineWidth: filled ? 0 : 1.5))
+        Text(text)
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(filled ? Color.white : Color.secondary)
+            .padding(.horizontal, 10).padding(.vertical, 4)
+            .background(filled ? V9.accent : V9.fill, in: Capsule())
             .fixedSize()
     }
 }
 
-/// Botão − / + redondo do passo 3 e 7.
+/// Botão − / + do passo 3 e 7.
 struct NewTripStepper: View {
     var minusLabel: String
     var plusLabel: String
@@ -196,13 +145,8 @@ struct NewTripStepper: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            V8RoundButton(diameter: 44, label: minusLabel, action: onMinus) { size in
-                Rectangle().fill(.foreground).frame(width: 12, height: 2).frame(width: size, height: size)
-            }
-            V8RoundButton(diameter: 44, filled: filledPlus, label: plusLabel, action: onPlus) { size in
-                V8Glyph(.plus).frame(width: size, height: size).foregroundStyle(filledPlus ? V8.white : V8.ink)
-            }
+            J9RoundButton(label: minusLabel, action: onMinus) { _ in Image(systemName: "minus").font(.body.weight(.bold)) }
+            J9RoundButton(filled: filledPlus, label: plusLabel, action: onPlus) { _ in Image(systemName: "plus").font(.body.weight(.bold)) }
         }
-        .foregroundStyle(V8.ink)
     }
 }

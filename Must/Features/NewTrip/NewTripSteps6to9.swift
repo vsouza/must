@@ -18,14 +18,14 @@ struct NewTripStep6: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            option(title: "Colar texto de uma IA ou lista", detail: "a resposta do ChatGPT, nota do celular, e-mail", glyph: .sparkle, filled: true) { sheet = .text }
+            option(title: "Colar texto de uma IA ou lista", detail: "a resposta do ChatGPT, nota do celular, e-mail", glyph: "sparkles", filled: true) { sheet = .text }
             option(title: "Colar links", detail: "Instagram, Maps, blog · um por linha", glyph: nil, system: "link") { sheet = .links }
             option(title: "Importar salvos do Google Maps", detail: "arquivo do Takeout (.json ou .kml)", glyph: nil, system: "mappin.and.ellipse") { importing = true }
-            option(title: "Começar vazio", detail: "você adiciona no caminho", glyph: .plus) {
+            option(title: "Começar vazio", detail: "você adiciona no caminho", glyph: "plus") {
                 model.startedEmpty = true
                 message = "Começa vazio. Dá pra adicionar lugares depois, em Musts."
             }
-            .overlay(alignment: .bottom) { Rectangle().fill(V8.rule).frame(height: 1) }
+            .overlay(alignment: .bottom) { RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color(uiColor: .separator)).frame(height: 1) }
 
             if !model.draft.places.isEmpty { summary.padding(.top, 20) }
             if !message.isEmpty { NewTripNote(text: message).padding(.top, 14) }
@@ -48,26 +48,26 @@ struct NewTripStep6: View {
         }
     }
 
-    private func option(title: String, detail: String, glyph: V8Glyph.Kind?, system: String? = nil, filled: Bool = false,
+    private func option(title: String, detail: String, glyph: String?, system: String? = nil, filled: Bool = false,
                         action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 18) {
                 ZStack {
-                    Rectangle().fill(filled ? V8.ink : .clear)
-                    Rectangle().strokeBorder(V8.ink, lineWidth: 1.5)
-                    if let glyph { V8Glyph(glyph).frame(width: 22, height: 22).foregroundStyle(filled ? V8.white : V8.ink) }
-                    if let system { Image(systemName: system).font(.system(size: 18, weight: .medium)).foregroundStyle(V8.ink) }
+                    RoundedRectangle(cornerRadius: 8, style: .continuous).fill(filled ? Color.primary : .clear)
+                    RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(Color(uiColor: .separator), lineWidth: 1)
+                    if let glyph { Image(systemName: glyph).font(.body.weight(.bold)).foregroundStyle(filled ? Color.white : Color.primary) }
+                    if let system { Image(systemName: system).font(.system(size: 18, weight: .medium)).foregroundStyle(Color.primary) }
                 }
                 .frame(width: 56, height: 56)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(title).font(V8Font.text(19, weight: .bold)).foregroundStyle(V8.ink).fixedSize(horizontal: false, vertical: true)
-                    Text(detail).font(V8Font.text(15)).foregroundStyle(V8.mute).fixedSize(horizontal: false, vertical: true)
+                    Text(title).font(J9.font(19, .bold)).foregroundStyle(Color.primary).fixedSize(horizontal: false, vertical: true)
+                    Text(detail).font(J9.font(15)).foregroundStyle(Color.secondary).fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: 0)
             }
             .multilineTextAlignment(.leading)
             .padding(.vertical, 16)
-            .overlay(alignment: .top) { Rectangle().fill(V8.rule).frame(height: 1) }
+            .overlay(alignment: .top) { RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color(uiColor: .separator)).frame(height: 1) }
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -76,21 +76,20 @@ struct NewTripStep6: View {
     private var summary: some View {
         Button { sheet = .review } label: {
             HStack(alignment: .center, spacing: 14) {
-                Text("\(model.draft.places.count)").font(V8Font.numeral(54)).tracking(-3).foregroundStyle(V8.orange).fixedSize()
+                Text("\(model.draft.places.count)").font(J9.font(54, .semibold).monospacedDigit()).foregroundStyle(V9.accent).fixedSize()
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 4) {
                     Text("\(model.draft.places.count == 1 ? "lugar lido" : "lugares lidos") \(model.placesSource)")
-                        .font(V8Font.text(17, weight: .bold)).foregroundStyle(V8.white)
+                        .font(.headline).foregroundStyle(Color.primary)
                     let breakdown = model.placesBreakdown
                     Text((breakdown.isEmpty ? "" : breakdown + " · ") + "conferir antes de salvar")
-                        .font(V8Font.text(15)).foregroundStyle(V8.muteDark)
+                        .font(J9.font(15)).foregroundStyle(Color.secondary)
                 }
                 .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
             }
             .multilineTextAlignment(.leading)
-            .padding(18)
-            .background(Rectangle().fill(V8.ink))
+            .v9Card()
         }
         .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
@@ -110,15 +109,15 @@ private struct PasteSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text(title).font(V8Font.display(30)).tracking(-1).foregroundStyle(V8.ink)
+            Text(title).font(J9.font(30, .bold)).foregroundStyle(Color.primary)
             NewTripNote(text: prompt)
-            TextEditor(text: $text).font(V8Font.text(15)).scrollContentBackground(.hidden)
-                .padding(10).overlay(Rectangle().strokeBorder(V8.ink, lineWidth: 2))
+            TextEditor(text: $text).font(J9.font(15)).scrollContentBackground(.hidden)
+                .padding(10).overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(Color(uiColor: .separator), lineWidth: 1))
                 .frame(minHeight: 200)
             if !note.isEmpty { NewTripNote(text: note) }
             HStack(spacing: 12) {
-                V8Button("Colar", .line) { text = UIPasteboard.general.string ?? text }.foregroundStyle(V8.ink)
-                V8Button("Ler lugares") {
+                J9Button("Colar", prominent: false) { text = UIPasteboard.general.string ?? text }.foregroundStyle(Color.primary)
+                J9Button("Ler lugares") {
                     let n = isLinks ? model.importLinks(text) : model.importText(text)
                     if n == 0 { note = "Não achei lugares aí. Tente colar mais texto." } else { dismiss(); onDone() }
                 }
@@ -127,7 +126,7 @@ private struct PasteSheet: View {
             }
         }
         .padding(20)
-        .background(V8.paper.ignoresSafeArea())
+        .background(V9.background.ignoresSafeArea())
         .presentationDetents([.large])
     }
 }
@@ -140,23 +139,23 @@ private struct ReviewSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Conferir").font(V8Font.display(30)).tracking(-1).foregroundStyle(V8.ink)
+            Text("Conferir").font(J9.font(30, .bold)).foregroundStyle(Color.primary)
             NewTripNote(text: "\(model.draft.places.count) lugares · \(model.placesBreakdown). Deslize pra tirar o que não é lugar.")
             List {
                 ForEach(Array(model.draft.places.enumerated()), id: \.offset) { _, place in
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(place.name).font(V8Font.text(17, weight: .bold)).foregroundStyle(V8.ink)
-                        Text(cityName(place)).font(V8Font.text(13)).foregroundStyle(V8.mute)
+                        Text(place.name).font(J9.font(17, .bold)).foregroundStyle(Color.primary)
+                        Text(cityName(place)).font(J9.font(13)).foregroundStyle(Color.secondary)
                     }
-                    .listRowBackground(V8.paper)
+                    .listRowBackground(V9.background)
                 }
                 .onDelete { for i in $0.sorted(by: >) { model.removePlace(at: i) } }
             }
             .listStyle(.plain).scrollContentBackground(.hidden)
-            V8Button("Pronto") { dismiss() }
+            J9Button("Pronto") { dismiss() }
         }
         .padding(20)
-        .background(V8.paper.ignoresSafeArea())
+        .background(V9.background.ignoresSafeArea())
         .presentationDetents([.large])
     }
 
@@ -194,9 +193,9 @@ struct NewTripStep7: View {
             }
             NewTripSection(text: "Por dia, por pessoa").padding(.top, 26)
             HStack(alignment: .bottom, spacing: 8) {
-                Text("\(Int(model.draft.perDayBudget ?? 0))").font(V8Font.numeral(150)).tracking(-9).foregroundStyle(V8.orange)
+                Text("\(Int(model.draft.perDayBudget ?? 0))").font(J9.font(150, .semibold).monospacedDigit()).foregroundStyle(V9.accent)
                     .lineLimit(1).minimumScaleFactor(0.4).frame(height: 150 * 0.78).accessibilityHidden(true)
-                Text(symbol).font(V8Font.display(44)).foregroundStyle(V8.ink).padding(.bottom, 10)
+                Text(symbol).font(J9.font(44, .bold)).foregroundStyle(Color.primary).padding(.bottom, 10)
                 Spacer(minLength: 0)
                 NewTripStepper(minusLabel: "Menos", plusLabel: "Mais", filledPlus: true,
                                onMinus: { model.stepBudget(-1) }, onPlus: { model.stepBudget(1) })
@@ -205,32 +204,32 @@ struct NewTripStep7: View {
             .accessibilityElement(children: .contain)
             .accessibilityValue("\(Int(model.draft.perDayBudget ?? 0)) \(model.draft.currency) por dia")
 
-            Rectangle().fill(V8.rule).frame(height: 1).padding(.top, 14)
+            RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color(uiColor: .separator)).frame(height: 1).padding(.top, 14)
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Total da viagem").font(V8Font.text(20, weight: .bold)).foregroundStyle(V8.ink)
-                    Text(totalDetail).font(V8Font.text(15)).foregroundStyle(V8.mute)
+                    Text("Total da viagem").font(J9.font(20, .bold)).foregroundStyle(Color.primary)
+                    Text(totalDetail).font(J9.font(15)).foregroundStyle(Color.secondary)
                 }
                 Spacer(minLength: 8)
                 VStack(alignment: .trailing, spacing: 4) {
-                    Text(money(model.totalBudget, symbol)).font(V8Font.mono(19, weight: .bold)).foregroundStyle(V8.ink)
-                    if let brl = model.totalInReais { Text("≈ " + money(brl, "R$")).font(V8Font.mono(17, weight: .semibold)).foregroundStyle(V8.mute) }
+                    Text(money(model.totalBudget, symbol)).font(J9.font(19, .bold).monospacedDigit()).foregroundStyle(Color.primary)
+                    if let brl = model.totalInReais { Text("≈ " + money(brl, "R$")).font(J9.font(17, .semibold).monospacedDigit()).foregroundStyle(Color.secondary) }
                 }
             }
             .padding(.vertical, 16)
-            Rectangle().fill(V8.rule).frame(height: 1)
+            RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color(uiColor: .separator)).frame(height: 1)
 
             if foreign {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Câmbio").font(V8Font.text(20, weight: .bold)).foregroundStyle(V8.ink)
+                    Text("Câmbio").font(J9.font(20, .bold)).foregroundStyle(Color.primary)
                     HStack(spacing: 8) {
-                        Text("1 \(symbol) = R$").font(V8Font.text(15)).foregroundStyle(V8.mute)
+                        Text("1 \(symbol) = R$").font(J9.font(15)).foregroundStyle(Color.secondary)
                         TextField("", text: Binding(get: { model.fxText.isEmpty ? defaultText : model.fxText }, set: { model.setFX(text: $0) }))
                             .keyboardType(.decimalPad).focused($fxFocused)
-                            .font(V8Font.mono(16, weight: .semibold)).foregroundStyle(V8.ink)
+                            .font(J9.font(16, .semibold).monospacedDigit()).foregroundStyle(Color.primary)
                             .padding(.horizontal, 12).frame(minWidth: 70, maxWidth: 110, minHeight: 40)
-                            .overlay(Rectangle().strokeBorder(V8.ink, lineWidth: 2))
-                        Text("· último câmbio guardado").font(V8Font.text(13)).foregroundStyle(V8.mute).lineLimit(2)
+                            .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(Color(uiColor: .separator), lineWidth: 1))
+                        Text("· último câmbio guardado").font(J9.font(13)).foregroundStyle(Color.secondary).lineLimit(2)
                     }
                 }
                 .padding(.vertical, 16)
@@ -254,7 +253,7 @@ struct NewTripStep7: View {
         return "\(sym) \(n)"
     }
 
-    private func chip(_ text: String, on: Bool) -> some View { V8Pill(text, active: on) }
+    private func chip(_ text: String, on: Bool) -> some View { J9Chip(text, isOn: on) }
 }
 
 // MARK: - 8 · Leve pro bolso
@@ -281,14 +280,14 @@ struct NewTripStep8: View {
                 block(title: "Fotos dos \(model.draft.places.count) lugares",
                       detail: "\(model.draft.places.count * 3 / 2) MB · uma por lugar, 800 px", progress: 0)
             }
-            Rectangle().fill(V8.rule).frame(height: 1)
+            RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color(uiColor: .separator)).frame(height: 1)
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Só no Wi-Fi").font(V8Font.text(19, weight: .bold)).foregroundStyle(V8.ink)
-                    Text("no celular, nada baixa sozinho").font(V8Font.text(15)).foregroundStyle(V8.mute)
+                    Text("Só no Wi-Fi").font(J9.font(19, .bold)).foregroundStyle(Color.primary)
+                    Text("no celular, nada baixa sozinho").font(J9.font(15)).foregroundStyle(Color.secondary)
                 }
                 Spacer()
-                Toggle("Só no Wi-Fi", isOn: $m.draft.wifiOnly).labelsHidden().tint(V8.orange).padding(.trailing, 2)
+                Toggle("Só no Wi-Fi", isOn: $m.draft.wifiOnly).labelsHidden().tint(V9.accent).padding(.trailing, 2)
             }
             .padding(.vertical, 16)
             if lowData {
@@ -316,7 +315,7 @@ struct NewTripStep8: View {
                 block(title: "Mapa · \(city.name)", detail: detail(size: size, phase: phase, installed: installed),
                       progress: progress(phase, installed))
                 if !installed, phase == nil {
-                    Button { maps.download(pack) } label: { V8Pill("Baixar agora", small: true) }
+                    Button { maps.download(pack) } label: { J9Chip("Baixar agora") }
                         .buttonStyle(.plain).padding(.bottom, 14)
                         .disabled(offline)
                 }
@@ -327,9 +326,9 @@ struct NewTripStep8: View {
                 Button {
                     UIPasteboard.general.string = model.tilesCommand(for: city)
                     copied = city.id
-                } label: { V8Pill(copied == city.id ? "Comando copiado" : "Copiar comando do mapa", small: true) }
+                } label: { J9Chip(copied == city.id ? "Comando copiado" : "Copiar comando do mapa") }
                     .buttonStyle(.plain)
-                Text(model.tilesCommand(for: city)).font(V8Font.mono(11)).foregroundStyle(V8.mute).textSelection(.enabled)
+                Text(model.tilesCommand(for: city)).font(J9.font(11).monospacedDigit()).foregroundStyle(Color.secondary).textSelection(.enabled)
                     .padding(.bottom, 14)
             }
         }
@@ -354,33 +353,31 @@ struct NewTripStep8: View {
 
     private func block(title: String, detail: String, progress: Double) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(title).font(V8Font.text(20, weight: .bold)).foregroundStyle(V8.ink)
-            Text(detail).font(V8Font.text(15)).foregroundStyle(V8.mute).fixedSize(horizontal: false, vertical: true)
+            Text(title).font(J9.font(20, .bold)).foregroundStyle(Color.primary)
+            Text(detail).font(J9.font(15)).foregroundStyle(Color.secondary).fixedSize(horizontal: false, vertical: true)
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    Rectangle().fill(V8.ink.opacity(0.15))
-                    Rectangle().fill(V8.orange).frame(width: geo.size.width * progress)
+                    RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color.primary.opacity(0.15))
+                    RoundedRectangle(cornerRadius: 8, style: .continuous).fill(V9.accent).frame(width: geo.size.width * progress)
                 }
             }
             .frame(height: 5).padding(.top, 8)
         }
         .padding(.vertical, 16)
-        .overlay(alignment: .top) { Rectangle().fill(V8.rule).frame(height: 1) }
+        .overlay(alignment: .top) { RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color(uiColor: .separator)).frame(height: 1) }
         .accessibilityElement(children: .combine)
     }
 }
 
 // MARK: - 9 · Pronto
 
-/// A viagem criada: cor do lugar, contagem regressiva em numeral gigante, primeiro dia e o voo. É o "Pronto" do fluxo;
-/// depois de "Abrir a viagem" quem mostra a viagem é a capa do app.
+/// A viagem criada: resumo simples (dias que faltam, cidades, noites, musts, voos) e o botão de abrir. Sem capa colorida.
+/// Depois de "Abrir a viagem" quem mostra a viagem é a Hoje.
 struct NewTripReady: View {
     var model: NewTripModel
     var onOpen: () -> Void
     var onRetry: () -> Void
     var onBack: () -> Void
-
-    private var cover: Color { Color(hex: UInt32(model.draft.colorHex.dropFirst(), radix: 16) ?? 0x0A5C48) }
 
     var body: some View {
         switch model.createState {
@@ -391,75 +388,58 @@ struct NewTripReady: View {
     }
 
     private var creating: some View {
-        ZStack {
-            cover.ignoresSafeArea()
-            Rings(color: .white, count: 3, diameter: 420, opacity: 0.4, offset: CGSize(width: -60, height: -150)).ignoresSafeArea()
-            VStack(spacing: 14) {
-                ProgressView().tint(.white)
-                Text("Montando a viagem…").font(V8Font.text(18, weight: .bold)).foregroundStyle(.white)
-            }
+        VStack(spacing: 14) {
+            ProgressView().controlSize(.large)
+            Text("Montando a viagem…").font(.headline)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .v9Screen()
     }
 
     private func failure(_ message: String) -> some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: 16) {
             Spacer()
-            Text("Quase lá.").font(V8Font.display(40)).tracking(-1.8).foregroundStyle(V8.ink)
+            Text("Quase lá.").font(.largeTitle.bold())
             NewTripNote(text: message)
-            V8Button("Tentar de novo", action: onRetry)
-            V8Button("Voltar e ajustar", .line, action: onBack).foregroundStyle(V8.ink)
+            J9Button("Tentar de novo", action: onRetry)
+            J9Button("Voltar e ajustar", prominent: false, action: onBack)
             Spacer()
         }
-        .padding(20)
+        .padding(V9.gutter)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-        .background(V8.paper.ignoresSafeArea())
+        .v9Screen()
     }
 
     private var firstCity: String { model.draft.cities.first?.name ?? model.draft.name }
 
     private var ready: some View {
-        ZStack(alignment: .topLeading) {
-            cover.ignoresSafeArea()
-            Rings(color: .white, count: 3, diameter: 420, opacity: 0.4, offset: CGSize(width: -60, height: -150)).ignoresSafeArea()
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .top, spacing: 12) {
-                    if let until = model.daysUntilStart {
-                        SpecLabel("Faltam \(until) dias\n\(startLine)", color: .white)
-                    } else {
-                        SpecLabel("Viagem em plano\nsem datas ainda", color: .white)
+        VStack(alignment: .leading, spacing: 0) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    Image(systemName: "checkmark.circle.fill").font(.system(size: 44)).foregroundStyle(V9.accent)
+                        .accessibilityHidden(true)
+                    Text("\(model.draft.name) está pronta").font(.largeTitle.bold()).accessibilityAddTraits(.isHeader)
+                    Text(model.daysUntilStart.map { "Faltam \($0) dias · \(startLine)" } ?? "Viagem em plano, sem datas ainda.")
+                        .font(.body).foregroundStyle(.secondary)
+                    NewTripCard {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("\(model.draft.cities.count) cidades · \(model.draft.totalNights) noites").font(.headline)
+                            Text("\(model.draft.places.count) musts · \(model.draft.flights.count) voos").font(.subheadline).foregroundStyle(.secondary)
+                            if let per = model.draft.perDayBudget, per > 0 {
+                                let sym = NewTripCatalog.currencySymbol(model.draft.currency)
+                                Text("\(sym) \(Int(per)) por dia · \(sym) \((model.totalBudget ?? 0).formatted(.number.locale(NewTripCatalog.locale).precision(.fractionLength(0)))) no total")
+                                    .font(.subheadline).foregroundStyle(.secondary).monospacedDigit()
+                            }
+                        }
                     }
-                    Spacer(minLength: 0)
-                    SpecLabel("\(firstCity) · \(model.draft.currency)\nPronta", color: .white).multilineTextAlignment(.trailing)
+                    Text("Primeiro dia: \(firstCity)").font(.subheadline).foregroundStyle(.secondary)
+                    if let flight = model.draft.flights.first { ticket(flight) }
                 }
-                .padding(.top, 20)
-
-                Spacer(minLength: 24)
-                HStack(alignment: .top) {
-                    SpecLabel("\(model.draft.cities.count) cidades · \(model.draft.totalNights) noites\n\(model.draft.places.count) musts · \(model.draft.flights.count) voos", color: .white)
-                    Spacer(minLength: 8)
-                    if let per = model.draft.perDayBudget, per > 0 {
-                        let sym = NewTripCatalog.currencySymbol(model.draft.currency)
-                        SpecLabel("\(sym) \(Int(per)) por dia\n\(sym) \((model.totalBudget ?? 0).formatted(.number.locale(NewTripCatalog.locale).precision(.fractionLength(0)))) no total", color: .white).multilineTextAlignment(.trailing)
-                    }
-                }
-                Spacer(minLength: 28)
-                HStack(spacing: 10) {
-                    Rectangle().strokeBorder(.white, lineWidth: 2).frame(width: 26, height: 26).overlay(Rectangle().fill(.white).frame(width: 12, height: 12))
-                    SpecLabel(model.draft.name, color: .white)
-                }
-                SpecLabel("Primeiro dia", color: .white.opacity(0.85)).padding(.top, 18)
-                Text(firstCity).font(V8Font.display(64)).tracking(-3).foregroundStyle(.white)
-                    .lineLimit(2).minimumScaleFactor(0.6).padding(.top, 8)
-                Spacer(minLength: 16)
-                if let until = model.daysUntilStart {
-                    BigNumeral("\(until)", size: 200, color: .white).opacity(0.95).frame(height: 156).clipped()
-                }
-                if let flight = model.draft.flights.first { ticket(flight) }
-                V8Button("Abrir a viagem", .orange, icon: .avancar, action: onOpen).padding(.top, 14)
+                .padding(V9.gutter)
             }
-            .padding(.horizontal, 20).padding(.bottom, 12)
+            J9Button("Abrir a viagem", action: onOpen).padding(V9.gutter).background(.bar)
         }
-        .foregroundStyle(.white)
+        .v9Screen()
         .accessibilityElement(children: .contain)
     }
 
@@ -474,18 +454,13 @@ struct NewTripReady: View {
         let z = Airports.airport(f.from)?.timeZone ?? TimeZone(identifier: model.draft.timeZoneId) ?? .current
         let day = f.departure.map { $0.formatted(Date.FormatStyle(timeZone: z).locale(NewTripCatalog.locale).day().month(.abbreviated)).replacingOccurrences(of: ".", with: "").replacingOccurrences(of: " de ", with: " ") } ?? ""
         let hour = f.departure.map { $0.formatted(Date.FormatStyle(timeZone: z).locale(NewTripCatalog.locale).hour().minute()) } ?? ""
-        return HStack(spacing: 12) {
+        return NewTripCard {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Voo · \(day)".uppercased()).font(V8Font.mono(12, weight: .bold)).tracking(1.2).foregroundStyle(V8.orange)
-                Text("\(f.from) → \(f.to) · \(hour)").font(V8Font.text(20, weight: .bold)).foregroundStyle(.white)
+                Text("Voo · \(day)").font(.footnote).foregroundStyle(.secondary)
+                Text("\(f.from) → \(f.to) · \(hour)").font(.title3.weight(.semibold)).monospacedDigit()
                     .lineLimit(2).fixedSize(horizontal: false, vertical: true)
             }
-            Spacer(minLength: 0)
-            Rectangle().fill(V8.paper).frame(width: 48, height: 48)
-                .overlay { V8Glyph(.arrow).frame(width: 18, height: 18).foregroundStyle(V8.ink) }
         }
-        .padding(16)
-        .background(Rectangle().fill(V8.ink))
         .accessibilityElement(children: .combine)
     }
 }

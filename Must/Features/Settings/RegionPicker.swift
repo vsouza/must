@@ -7,25 +7,12 @@ struct RegionPicker: View {
     @Environment(Services.self) private var services
 
     var body: some View {
-        FormSection("Região") {
-            VStack(alignment: .leading, spacing: 12) {
-                // Quatro chips: rolam na horizontal se não couberem (tela estreita, Dynamic Type grande).
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        option("Automático", on: store.isAuto) { store.choose(nil, near: services.location.current?.coordinate) }
-                        ForEach(Region.allCases) { r in
-                            option(Self.label(r), on: !store.isAuto && store.region == r) {
-                                store.choose(r, near: nil)
-                            }
-                        }
-                    }
-                }
-                .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
-                Text(subtitle).font(.must.meta).foregroundStyle(Color.must.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+        Section {
+            Button { store.choose(nil, near: services.location.current?.coordinate) } label: { option("Automático", on: store.isAuto) }
+            ForEach(Region.allCases) { r in
+                Button { store.choose(r, near: nil) } label: { option(Self.label(r), on: !store.isAuto && store.region == r) }
             }
-            .padding(.vertical, 14)
-        }
+        } header: { Text("Região") } footer: { Text(subtitle) }
     }
 
     /// Rótulo curto do chip: "BH", "Japão", "Itália".
@@ -42,7 +29,13 @@ struct RegionPicker: View {
         return "fixo em \(store.region.displayName) · cada região guarda o próprio board"
     }
 
-    private func option(_ title: String, on: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) { Pill(title, isOn: on) }.buttonStyle(MustPressStyle())
+    private func option(_ title: String, on: Bool) -> some View {
+        HStack {
+            Text(title).foregroundStyle(.primary)
+            Spacer()
+            if on { Image(systemName: "checkmark").foregroundStyle(V9.accent).accessibilityHidden(true) }
+        }
+        .contentShape(Rectangle())
+        .accessibilityAddTraits(on ? .isSelected : [])
     }
 }

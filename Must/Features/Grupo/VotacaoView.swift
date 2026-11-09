@@ -32,12 +32,11 @@ struct VotacaoView: View {
             content(poll, a: a, b: b)
         } else {
             VStack(spacing: 14) {
-                Text("Essa votação saiu do ar: um dos lugares saiu do board.").font(V8Font.text(16)).foregroundStyle(V8.ink)
-                BigButton(title: "Voltar", style: .line) { dismiss() }.frame(width: 180)
+                Text("Essa votação saiu do ar: um dos lugares saiu do board.").font(.body)
+                Button("Voltar") { dismiss() }.v9Secondary()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(V8.paper.ignoresSafeArea())
-            .toolbar(.hidden, for: .navigationBar)
+            .v9Screen(grouped: true)
         }
     }
 
@@ -50,18 +49,18 @@ struct VotacaoView: View {
                                         minutesB: PollSideInfo.minutes(b, here: here, walkMax: walkMax))
         let poster = PollPoster(a: sideA, b: sideB, city: region.displayName, coverRGB: TripTheme.forRegion(region).coverRGB)
         let winner = poll.winner
-        return CutPage(title: "A ou B?", corner: ["Votar", "\(a.name) × \(b.name)"], height: 200, onBack: { dismiss() }) {
-            VStack(alignment: .leading, spacing: 0) {
-                sendBlock(poster: poster, message: message)
-                votesBlock(poll)
-                resultBlock(poll, a: a, b: b, winner: winner)
-                if let note {
-                    Text(note).font(V8Font.text(14)).foregroundStyle(V8.mute).padding(.horizontal, 20).padding(.top, 14)
-                }
-            }
+        return List {
+            sendBlock(poster: poster, message: message)
+            votesBlock(poll)
+            resultBlock(poll, a: a, b: b, winner: winner)
+            if let note { Section { Text(note).font(.subheadline).foregroundStyle(.secondary) } }
         }
-        .cutFooter(poll.addedToDay ? "Já está no dia" : (winner.map { "+ dia · \($0 == .a ? a.name : b.name)" } ?? "Marque o vencedor pra pôr no dia"),
-                   enabled: winner != nil && !poll.addedToDay) { addToDay(poll, a: a, b: b) }
+        .navigationTitle("\(a.name) × \(b.name)")
+        .navigationBarTitleDisplayMode(.inline)
+        .v9Screen(grouped: true)
+        .scrollContentBackground(.hidden)
+        .j9Footer(poll.addedToDay ? "Já está no dia" : (winner.map { "+ dia · \($0 == .a ? a.name : b.name)" } ?? "Marque o vencedor pra pôr no dia"),
+                  enabled: winner != nil && !poll.addedToDay) { addToDay(poll, a: a, b: b) }
         .task(id: poster) {
             try? await Task.sleep(for: .milliseconds(150))
             guard !Task.isCancelled else { return }
@@ -74,102 +73,72 @@ struct VotacaoView: View {
     private func sendBlock(poster: PollPoster, message: String) -> some View {
         let width: CGFloat = 130
         let k = width / PollPosterView.size.width
-        return HStack(alignment: .top, spacing: 16) {
-            PollPosterView(poster: poster)
-                .scaleEffect(k, anchor: .topLeading)
-                .frame(width: width, height: PollPosterView.size.height * k, alignment: .topLeading)
-                .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("Prévia do cartaz: \(poster.a.name) ou \(poster.b.name)")
-            VStack(alignment: .leading, spacing: 10) {
-                Text(message).font(V8Font.text(13)).foregroundStyle(V8.mute).fixedSize(horizontal: false, vertical: true)
-                if let posterURL {
-                    ShareLink(item: posterURL, message: Text(message)) { shareLabel("Mandar cartaz + texto", filled: true) }
-                } else {
-                    shareLabel("Preparando cartaz…", filled: true).opacity(0.5)
-                }
-                ShareLink(item: message) { shareLabel("Só o texto", filled: false) }
+        return Section("Mandar pro grupo") {
+            HStack(alignment: .top, spacing: 16) {
+                PollPosterView(poster: poster)
+                    .scaleEffect(k, anchor: .topLeading)
+                    .frame(width: width, height: PollPosterView.size.height * k, alignment: .topLeading)
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("Prévia do cartaz: \(poster.a.name) ou \(poster.b.name)")
+                Text(message).font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            if let posterURL {
+                ShareLink(item: posterURL, message: Text(message)) { Label("Mandar cartaz + texto", systemImage: "square.and.arrow.up") }
+            } else {
+                Label("Preparando cartaz…", systemImage: "hourglass").foregroundStyle(.secondary)
+            }
+            ShareLink(item: message) { Label("Só o texto", systemImage: "text.bubble") }
         }
-        .padding(.horizontal, 20).padding(.vertical, 18)
-        .overlay(alignment: .bottom) { IndexRule() }
-    }
-
-    private func shareLabel(_ title: String, filled: Bool) -> some View {
-        HStack(spacing: 8) {
-            Text(title.uppercased()).font(V8Font.mono(11, weight: .semibold)).tracking(0.8).lineLimit(2).multilineTextAlignment(.leading)
-            Spacer(minLength: 4)
-            Image(systemName: "arrow.up.right").font(.system(size: 12, weight: .bold))
-        }
-        .foregroundStyle(V8.ink)
-        .padding(.horizontal, 12).frame(maxWidth: .infinity, minHeight: 44)
-        .background(filled ? V8.orange : Color.clear)
-        .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
     }
 
     // MARK: Votos
 
     private func votesBlock(_ poll: PlacePoll) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            MonoLabel("o que cada um respondeu", size: 10, color: V8.mute).padding(.horizontal, 20).padding(.vertical, 12)
+        Section {
             ForEach(voters, id: \.self) { person in
                 let mine = poll.votes[person]
                 HStack(spacing: 10) {
-                    Text(person == Settlement.me ? "Você" : person)
-                        .font(V8Font.text(17, weight: .bold)).foregroundStyle(V8.ink).lineLimit(2)
+                    Text(person == Settlement.me ? "Você" : person).lineLimit(2)
                     Spacer(minLength: 8)
                     ForEach(PollSide.allCases, id: \.self) { side in
                         Button { poll.vote(person, side); try? context.save() } label: {
                             Text(side.rawValue)
-                                .font(V8Font.mono(15, weight: .bold))
-                                .foregroundStyle(mine == side ? V8.ink : V8.ink)
+                                .font(.body.weight(.semibold))
+                                .foregroundStyle(mine == side ? Color.white : Color.primary)
                                 .frame(width: 48, height: 44)
-                                .background(mine == side ? V8.orange : Color.clear)
-                                .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
+                                .background(mine == side ? V9.accent : V9.fill, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel("\(person == Settlement.me ? "Você" : person) votou \(side.rawValue)")
                         .accessibilityAddTraits(mine == side ? .isSelected : [])
                     }
                 }
-                .padding(.horizontal, 20).padding(.vertical, 8)
-                .overlay(alignment: .bottom) { Rectangle().fill(V8.rule).frame(height: 1) }
             }
             if people.isEmpty {
-                Button { router.push(.pessoas, on: router.tab) } label: {
-                    Text("Adicione as pessoas do grupo pra marcar o voto de cada uma →")
-                        .font(V8Font.text(14)).foregroundStyle(V8.ink).underline()
-                        .multilineTextAlignment(.leading).padding(.horizontal, 20).padding(.vertical, 12)
-                }
-                .buttonStyle(.plain)
+                Button("Adicione as pessoas do grupo pra marcar o voto de cada uma") { router.push(.pessoas, on: router.tab) }
             }
-        }
-        .overlay(alignment: .bottom) { IndexRule() }
+        } header: { Text("O que cada um respondeu") }
     }
 
     // MARK: Resultado
 
     private func resultBlock(_ poll: PlacePoll, a: Place, b: Place, winner: PollSide?) -> some View {
         let t = PollLogic.tally(poll.votes)
-        return VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .lastTextBaseline, spacing: 10) {
-                Text("\(t.a) × \(t.b)").font(V8Font.numeral(56)).tracking(-1.5).foregroundStyle(winner == nil ? V8.ink : V8.orange)
-                    .lineLimit(1).minimumScaleFactor(0.5)
+        return Section("Resultado") {
+            HStack(alignment: .firstTextBaseline, spacing: 10) {
+                Text("\(t.a) × \(t.b)").font(.largeTitle.weight(.semibold)).monospacedDigit()
+                    .foregroundStyle(winner == nil ? Color.primary : V9.accent)
                 Text(winner.map { "\($0.rawValue) · \($0 == .a ? a.name : b.name)" } ?? (t.a + t.b == 0 ? "sem votos ainda" : "empate"))
-                    .font(V8Font.text(17, weight: .bold)).foregroundStyle(V8.ink).lineLimit(2)
+                    .font(.headline).lineLimit(2)
             }
-            HStack(spacing: 8) {
-                ForEach(PollSide.allCases, id: \.self) { side in
-                    Button { poll.picked = poll.picked == side ? nil : side; try? context.save() } label: {
-                        CutChip(text: "Ficou \(side.rawValue)", isOn: poll.picked == side)
-                    }
-                    .buttonStyle(.plain)
-                }
+            Picker("Ficou", selection: Binding(get: { poll.picked }, set: { poll.picked = $0; try? context.save() })) {
+                Text("—").tag(PollSide?.none)
+                ForEach(PollSide.allCases, id: \.self) { side in Text("Ficou \(side.rawValue)").tag(PollSide?.some(side)) }
             }
+            .pickerStyle(.segmented)
         }
-        .padding(.horizontal, 20).padding(.vertical, 18)
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // MARK: + dia

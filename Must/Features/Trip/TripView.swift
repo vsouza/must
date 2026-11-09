@@ -4,7 +4,6 @@ import SwiftUI
 /// Viagem: gasto total, fileira de dias, selos de bairro (prompt 18 · D.18), um card por trecho de cidade, progresso por lista.
 /// Em BH (sem viagem): o mês, com 済 nos dias feitos e cards por semana — sem inventar viagem.
 struct TripView: View {
-    @Environment(\.dismiss) private var dismiss
     @Environment(AppRouter.self) private var router
     @Environment(RegionStore.self) private var store
     @Environment(\.tripTheme) private var theme
@@ -33,35 +32,32 @@ struct TripView: View {
         let elapsed = TripStats.elapsedDays(period, now: now, calendar: cal)
         let stamps = AreaStamps.earned(areas: AreaCatalog.areas(for: region), places: places.map(HomeState.areaPlace))
 
-        VStack(spacing: 0) {
-            header(period)
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    spendBlock(spent: spent, elapsed: elapsed).padding(.top, 22)
-                    dayRow(cells).padding(.top, 20)
-                    stampRow(stamps).padding(.top, 24)
-                    if let trip { cityCards(trip).padding(.top, 28) } else { weekCards(period: period).padding(.top, 28) }
-                    progressTags.padding(.top, 20)
-                    V8BarSpacer()
+        List {
+            Section {
+                spendBlock(spent: spent, elapsed: elapsed)
+                Button { router.push(.schedule(tab: .voos), on: router.tab) } label: {
+                    Label("Voos e reservas", systemImage: "calendar")
                 }
-                .padding(.horizontal, 22)
+            } header: {
+                Text(subtitle(period: period)).textCase(nil).font(.subheadline)
             }
-            .scrollIndicators(.hidden)
+            Section("Dias") { dayRow(cells) }
+            if !stamps.isEmpty {
+                Section("Bairros com Must feito · \(stamps.count)") { stampRow(stamps) }
+            }
+            if let trip { cityCards(trip) } else { weekCards(period: period) }
+            progressTags
         }
-        .background(V8.paper.ignoresSafeArea())
-        .toolbar(.hidden, for: .navigationBar)
-    }
-
-    // MARK: Topo
-
-    private func header(_ period: ClosedRange<Date>) -> some View {
-        CutScreenHeader(title: trip == nil ? region.displayName : "Viagem",
-                        corner: [trip == nil
-                                 ? "\(region.shortName) · \(monthName(period.lowerBound))"
-                                 : "\(region.displayName) · \(region.dayNumber(period.lowerBound))–\(region.dayNumber(period.upperBound)) \(region.monthShort(period.upperBound))"],
-                        subtitle: subtitle(period: period), height: 210, onBack: { dismiss() }) {
-            CutCornerButton(systemName: "gearshape", label: "Ajustes", tint: theme.coverInk) { router.push(.settings, on: router.tab) }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .navigationTitle(trip == nil ? region.displayName : "Viagem")
+        .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button("Ajustes", systemImage: "gearshape") { router.push(.settings, on: router.tab) }
+            }
         }
+        .v9Screen(grouped: true)
     }
 
     private func monthName(_ date: Date) -> String {
@@ -88,28 +84,15 @@ struct TripView: View {
     // MARK: Gasto
 
     private func spendBlock(spent: Double, elapsed: Int) -> some View {
-        HStack(alignment: .center, spacing: 12) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text(trip == nil ? "Gasto no mês" : "Gasto na viagem").font(V8Font.text(14)).foregroundStyle(Color.must.secondary)
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    MonoNumber(region.money(spent, symbol: false), size: 40)
-                    Text(region.currency).font(V8Font.text(17, weight: .semibold))
-                }
-                .foregroundStyle(Color.must.ink)
-                Text(meta(spent: spent, elapsed: elapsed)).font(.must.meta).foregroundStyle(Color.must.secondary).lineLimit(2)
+        VStack(alignment: .leading, spacing: 4) {
+            Text(trip == nil ? "Gasto no mês" : "Gasto na viagem").font(.subheadline).foregroundStyle(.secondary)
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(region.money(spent, symbol: false)).font(.largeTitle.weight(.semibold)).monospacedDigit()
+                Text(region.currency).font(.headline)
             }
-            Spacer(minLength: 0)
-            Button { router.push(.schedule(tab: .voos), on: router.tab) } label: {
-                MustIconView(.calendario, size: 20)
-                    .foregroundStyle(.white)
-                    .frame(width: 48)
-                    .frame(maxHeight: .infinity)
-                    .background(Rectangle().fill(Color.must.ink))
-            }
-            .buttonStyle(MustPressStyle())
-            .accessibilityLabel("Voos e reservas")
+            Text(meta(spent: spent, elapsed: elapsed)).font(.footnote).foregroundStyle(.secondary).lineLimit(3)
         }
-        .fixedSize(horizontal: false, vertical: true)
+        .accessibilityElement(children: .combine)
     }
 
     private func meta(spent: Double, elapsed: Int) -> String {
@@ -129,35 +112,36 @@ struct TripView: View {
                 HStack(spacing: 8) {
                     ForEach(cells) { cell in
                         Button { open(cell) } label: { dayDot(cell) }
-                            .buttonStyle(MustPressStyle())
+                            .buttonStyle(.plain)
                             .id(cell.date)
                     }
                 }
                 .padding(.vertical, 4)
             }
-            .scrollClipDisabled()
             .onAppear { proxy.scrollTo(cal.startOfDay(for: now), anchor: .center) }
         }
     }
 
     private func dayDot(_ cell: TripStats.DayCell) -> some View {
-        // Datas = quadrados de borda de 2 pt; hoje em tinta, feito em laranja, outra cidade tracejado.
+        // Hoje = acento cheio; feito = acento suave; outra cidade = tracejado.
         let (fill, text): (Color, Color) = switch cell.state {
-        case .done: (V8.orange, V8.ink)
-        case .today: (V8.ink, V8.paper)
-        case .otherCity, .future, .past: (Color.clear, V8.ink)
+        case .done: (V9.accent.opacity(0.25), Color.primary)
+        case .today: (V9.accent, Color.white)
+        case .otherCity, .future, .past: (V9.fill, Color.primary)
         }
         return Text("\(cell.number)")
-            .font(V8Font.mono(14, weight: .semibold))
+            .font(.subheadline.weight(.semibold).monospacedDigit())
             .foregroundStyle(text)
             .frame(width: 44, height: 44)
-            .background(Rectangle().fill(fill))
-            .overlay(Rectangle().stroke(V8.ink, style: StrokeStyle(lineWidth: 2, dash: cell.state == .otherCity ? [4, 3] : [])))
-            .overlay(alignment: .topTrailing) {
-                if trip == nil, cell.state == .done { Image(systemName: "checkmark").font(.system(size: 8, weight: .bold)).foregroundStyle(V8.ink).offset(x: -3, y: 3) }
+            .background(Circle().fill(fill))
+            .overlay {
+                if cell.state == .otherCity { Circle().stroke(Color.secondary, style: StrokeStyle(lineWidth: 1, dash: [3, 3])) }
             }
-            .opacity(cell.state == .past ? 0.5 : 1)
-            .accessibilityLabel("dia \(cell.number)")
+            .overlay(alignment: .topTrailing) {
+                if trip == nil, cell.state == .done { Image(systemName: "checkmark").font(.system(size: 9, weight: .bold)).offset(x: -4, y: 4) }
+            }
+            .opacity(cell.state == .past ? 0.55 : 1)
+            .accessibilityLabel("Dia \(cell.number)" + (cell.state == .today ? ", hoje" : cell.state == .done ? ", feito" : ""))
     }
 
     /// Dia aceito → o Hoje daquele dia; senão → Montar com a data.
@@ -172,41 +156,25 @@ struct TripView: View {
         }
     }
 
-    // MARK: Selos de bairro (prompt 18 · D.18)
+    // MARK: Selos de bairro
 
-    /// Um 済-selo por bairro com must feito (`AreaStamps`): kanji, borda dupla, rotação −6° a −10°.
-    /// Sem bairro feito: uma linha em serif, sem selos vazios.
     private func stampRow(_ areas: [Area]) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            if areas.isEmpty {
-                Text("nenhum selo ainda").mustSerif(18).foregroundStyle(Color.must.secondary)
-            } else {
-                MonoLabel("selos de bairro · \(areas.count)", color: theme.labelColor)
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 14) {
-                        ForEach(Array(areas.enumerated()), id: \.element.id) { index, area in
-                            StationStamp(area.seal, sub: area.stampSub, size: 74, surface: .photo, filled: true,
-                                         rotation: -6 - Double(index % 3) * 2, border: theme.tripColor)
-                        }
-                    }
-                    .padding(.vertical, 6)
-                }
-                .scrollClipDisabled()
+        FlowLayout(spacing: 8, lineSpacing: 8) {
+            ForEach(areas, id: \.id) { area in
+                Text("\(area.seal) · \(area.name)").font(.subheadline.weight(.medium))
+                    .padding(.horizontal, 12).padding(.vertical, 6)
+                    .background(V9.fill, in: Capsule())
             }
         }
     }
 
-    // MARK: Cards por cidade (viagem)
+    // MARK: Cidades (viagem)
 
-    private func cityCards(_ trip: TripInfo) -> some View {
+    @ViewBuilder private func cityCards(_ trip: TripInfo) -> some View {
         let current = trip.city(on: now, calendar: cal)
         let shown = Array(trip.cities.prefix(3))
-        // Pilha com altura do conteúdo (nada de altura fixa): a sobreposição é só a decorativa (−8 pt, abaixo do limite de 12).
-        return VStack(alignment: .leading, spacing: -2) {
-            ForEach(Array(shown.enumerated()), id: \.element.id) { index, city in
-                cityCard(city, trip: trip, isCurrent: city.id == current?.id, isLast: index == shown.count - 1, index: index)
-                    .tripBand(orange: city.id == current?.id || (current == nil && index == 0))
-            }
+        ForEach(Array(shown.enumerated()), id: \.element.id) { index, city in
+            cityCard(city, trip: trip, isCurrent: city.id == current?.id, isLast: index == shown.count - 1, index: index)
         }
     }
 
@@ -232,55 +200,39 @@ struct TripView: View {
         let anchors = reservations.map(\.name) + cityEvents.map(\.title)
         if !anchors.isEmpty { detail.append("\(anchors.count) \(anchors.count == 1 ? "reserva" : "reservas"): \(anchors.prefix(2).joined(separator: ", "))") }
 
-        return VStack(alignment: .leading, spacing: 8) {
+        return Section {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title).font(.title3.weight(.semibold))
+                Text(detail.joined(separator: " · ")).font(.subheadline).foregroundStyle(.secondary)
+                if isLast && !saveForEnd.isEmpty {
+                    Text("\(saveForEnd.count) ficaram pro fim: \(saveForEnd.prefix(3).map(\.name).joined(separator: ", "))")
+                        .font(.subheadline).foregroundStyle(.secondary)
+                }
+            }
+            .accessibilityElement(children: .combine)
+        } header: {
             HStack(spacing: 8) {
                 TripFlag(theme)
-                MonoLabel(label, color: V8.ink)
-                    .lineLimit(1)
+                Text(label).textCase(nil).lineLimit(1)
+                    .foregroundStyle(isCurrent ? V9.accent : Color.secondary)
             }
-            if isLast && !saveForEnd.isEmpty {
-                saveForEndBlock(saveForEnd)
-            } else {
-                Text(title).font(V8Font.text(24, weight: .semibold)).foregroundStyle(Color.must.ink).lineLimit(2)
-                Text(detail.joined(separator: " · ")).font(V8Font.text(13)).lineLimit(1)
-            }
-        }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 22)
-        .frame(maxWidth: .infinity, alignment: .topLeading)
-    }
-
-    /// "ficaram pro fim": o número grande e até três nomes. Altura natural: o texto que quebra empurra o resto.
-    private func saveForEndBlock(_ items: [Place]) -> some View {
-        HStack(alignment: .bottom, spacing: 12) {
-            MonoNumber("\(items.count)", size: 64).foregroundStyle(Color.must.ink).fixedSize()
-            VStack(alignment: .leading, spacing: 2) {
-                Text("ficaram pro fim").font(V8Font.text(19, weight: .semibold)).foregroundStyle(Color.must.ink)
-                Text(items.prefix(3).map(\.name).joined(separator: ", ")).font(V8Font.text(13)).foregroundStyle(V8.ink.opacity(0.7)).lineLimit(2)
-            }
-            .padding(.bottom, 6)
         }
     }
 
-    // MARK: Cards por semana (BH)
+    // MARK: Semanas (BH)
 
-    private func weekCards(period: ClosedRange<Date>) -> some View {
+    @ViewBuilder private func weekCards(period: ClosedRange<Date>) -> some View {
         let today = cal.startOfDay(for: now)
         let weekStart = cal.dateInterval(of: .weekOfYear, for: today)?.start ?? today
         let lastWeek = cal.date(byAdding: .day, value: -7, to: weekStart) ?? weekStart
         let saveForEnd = places.filter { $0.saveForEnd && !$0.isDone }
-        return VStack(alignment: .leading, spacing: -2) {
-            weekCard(start: weekStart, title: "Esta semana")
-                .tripBand(orange: true)
-            weekCard(start: lastWeek, title: "Semana passada")
-                .tripBand(orange: false)
-            VStack(alignment: .leading, spacing: 8) {
-                MonoLabel("fica pro fim · quando você pedir", color: V8.ink)
-                saveForEndBlock(saveForEnd)
+        weekCard(start: weekStart, title: "Esta semana")
+        weekCard(start: lastWeek, title: "Semana passada")
+        if !saveForEnd.isEmpty {
+            Section("Fica pro fim · quando você pedir") {
+                Text("\(saveForEnd.count) · \(saveForEnd.prefix(3).map(\.name).joined(separator: ", "))")
+                    .font(.subheadline).foregroundStyle(.secondary)
             }
-            .padding(.horizontal, 24).padding(.vertical, 22)
-            .frame(maxWidth: .infinity, alignment: .topLeading)
-            .tripBand(orange: false)
         }
     }
 
@@ -289,49 +241,45 @@ struct TripView: View {
         let weekRange = start...end
         let doneCount = places.filter { $0.done.map { weekRange.contains(cal.startOfDay(for: $0.at)) } ?? false }.count
         let spent = TripStats.spent(expenses, in: weekRange, calendar: cal)
-        return VStack(alignment: .leading, spacing: 8) {
-            Micro("\(title) · \(region.shortDay(start))–\(region.shortDay(end))", color: Color.must.ink.opacity(0.7))
-            Text(doneCount == 1 ? "1 must feito" : "\(doneCount) musts feitos").font(V8Font.text(24, weight: .semibold)).foregroundStyle(Color.must.ink)
-            Text("gasto \(region.money(spent))").font(V8Font.text(13))
+        return Section("\(title) · \(region.shortDay(start))–\(region.shortDay(end))") {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(doneCount == 1 ? "1 must feito" : "\(doneCount) musts feitos").font(.title3.weight(.semibold))
+                Text("gasto \(region.money(spent))").font(.subheadline).foregroundStyle(.secondary)
+            }
+            .accessibilityElement(children: .combine)
         }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 22)
-        .frame(maxWidth: .infinity, alignment: .topLeading)
     }
 
     // MARK: Progresso por lista
 
     private var progressTags: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                // Central da viagem: a Carteira (cartões, passes, QR de entrada) fica na mesma fileira.
-                Button { router.push(.carteira, on: router.tab) } label: {
-                    Tag(wallet.isEmpty ? "Carteira" : "Carteira · \(wallet.count)")
+        Section("Listas e carteira") {
+            // Central da viagem: a Carteira (cartões, passes, QR de entrada) fica junto.
+            Button { router.push(.carteira, on: router.tab) } label: {
+                row(wallet.isEmpty ? "Carteira" : "Carteira · \(wallet.count)")
+            }
+            // Compras da viagem: a lista com a previsão e as regras da volta (`money.shoppingList`: Japão).
+            if region.profile.money?.shoppingList == true {
+                Button { router.push(.compras, on: router.tab) } label: {
+                    row(shopping.isEmpty ? "Compras" : "Compras · \(shopping.count)")
                 }
-                .buttonStyle(MustPressStyle())
-                // Compras da viagem (prompt 17 · B): a lista com a previsão e as regras da volta (`money.shoppingList`: Japão).
-                if region.profile.money?.shoppingList == true {
-                    Button { router.push(.compras, on: router.tab) } label: {
-                        Tag(shopping.isEmpty ? "Compras" : "Compras · \(shopping.count)")
-                    }
-                    .buttonStyle(MustPressStyle())
-                }
-                ForEach(TripStats.progress(lists: lists), id: \.list.id) { item in
-                    Button { router.push(.list(id: item.list.id), on: router.tab) } label: {
-                        Tag("\(item.list.name.capitalized) \(item.done)/\(item.total)", dot: item.list.color.strong)
-                    }
-                    .buttonStyle(MustPressStyle())
+            }
+            ForEach(TripStats.progress(lists: lists), id: \.list.id) { item in
+                Button { router.push(.list(id: item.list.id), on: router.tab) } label: {
+                    row(item.list.name.capitalized, value: "\(item.done)/\(item.total)")
                 }
             }
         }
-        .scrollClipDisabled()
+        .foregroundStyle(.primary)
     }
-}
 
-extension View {
-    /// Faixa da Viagem no corte: papel (ou laranja pro que é seu agora) com borda de 2 pt, sem rotação nem cor de lista.
-    fileprivate func tripBand(orange: Bool) -> some View {
-        background(orange ? V8.orange : Color.clear)
-            .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
+    private func row(_ title: String, value: String? = nil) -> some View {
+        HStack {
+            Text(title)
+            Spacer()
+            if let value { Text(value).foregroundStyle(.secondary).monospacedDigit() }
+            Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
+        }
+        .contentShape(Rectangle())
     }
 }
