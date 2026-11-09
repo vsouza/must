@@ -20,6 +20,7 @@ extension Route {
     /// (Fase 1: `.place`, `.linha`, `.agora`, `.mapa`, `.ir`…).
     var legacyLight: Bool {
         switch self {
+        case .linha, .agora, .place: return false
         default: return true
         }
     }

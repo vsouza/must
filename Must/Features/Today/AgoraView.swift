@@ -114,9 +114,14 @@ struct AgoraView: View {
                 Color.clear
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .background(V8.paper.ignoresSafeArea())
-        .toolbar(.hidden, for: .navigationBar)
+        .navigationTitle("Agora")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button { router.sheet = .assistant } label: { Image(systemName: "sparkles") }.accessibilityLabel("Assistente")
+            }
+        }
+        .v9Screen(grouped: true)
         .onAppear(perform: load)
         .task { await clock() }
         .onReceive(NotificationCenter.default.publisher(for: ModelContext.didSave)) { _ in load() }
@@ -151,84 +156,62 @@ struct AgoraView: View {
     }
 
     private func screen(_ c: AgoraContent, current: DayStop) -> some View {
-        VStack(spacing: 0) {
-            band(c, current: current)
-            CutRule()
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    VStack(alignment: .leading, spacing: 0) {
-                        Text(c.title)
-                            .font(V8Font.display(42))
-                            .foregroundStyle(V8.ink)
-                            .lineLimit(2)
-                            .minimumScaleFactor(0.6)
-                        Text(c.meta)
-                            .font(V8Font.text(15))
-                            .foregroundStyle(V8.mute)
-                            .lineLimit(2)
-                            .padding(.top, 6)
-                        if let clock, clock.adjusted {
-                            Text(DayText.adjustedLine(remaining: clock.remaining))
-                                .font(V8Font.text(13, weight: .semibold)).foregroundStyle(V8.orangeDeep).padding(.top, 8)
-                        }
-                        if !c.chips.isEmpty {
-                            ScrollView(.horizontal) {
-                                HStack(spacing: 8) { ForEach(c.chips, id: \.self) { chip in contextChip(chip) } }
-                                    .padding(2)
-                            }
-                            .scrollIndicators(.hidden)
-                            .padding(.top, 12)
-                        }
-                        progressBar(c).padding(.top, 20)
+        List {
+            Section {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("\(c.verb) \(region.timeString(c.time))")
+                        .font(.largeTitle.weight(.bold)).monospacedDigit()
+                        .foregroundStyle(V9.accent)
+                        .accessibilityLabel("\(c.verb) \(region.timeString(c.time)), \(c.countdown)")
+                    Text([c.countdown, c.travel].compactMap { $0 }.joined(separator: " · "))
+                        .font(.subheadline).foregroundStyle(.secondary)
+                    Text(c.title).font(.title2.weight(.semibold)).lineLimit(3).padding(.top, 6)
+                    if !c.meta.isEmpty { Text(c.meta).font(.body).foregroundStyle(.secondary).lineLimit(3) }
+                    if let clock, clock.adjusted {
+                        Text(DayText.adjustedLine(remaining: clock.remaining)).font(.footnote.weight(.semibold)).foregroundStyle(.secondary)
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 18)
-                    .padding(.bottom, 18)
-                    IndexRule()
-                    ForEach(later(c)) { stop in
-                        DayStopRow(stop: stop, index: 0, state: .upcoming, region: region, onTap: openLater(stop))
+                    ProgressView(value: c.progress) {
+                        HStack {
+                            Text("Você").font(.footnote).foregroundStyle(.secondary)
+                            Spacer()
+                            Text(c.progressLabel).font(.footnote).foregroundStyle(.secondary).monospacedDigit()
+                        }
                     }
-                    Color.clear.frame(height: 110)
+                    .tint(V9.accent)
+                    .padding(.top, 6)
+                    .accessibilityLabel("Trajeto até \(c.title): \(Int(c.progress * 100)) por cento do tempo até a saída")
+                }
+                .padding(.vertical, 4)
+                if !c.chips.isEmpty {
+                    ScrollView(.horizontal) {
+                        HStack(spacing: 8) { ForEach(c.chips, id: \.self) { chip in contextChip(chip) } }
+                    }
+                    .scrollIndicators(.hidden)
                 }
             }
-            .scrollIndicators(.hidden)
-            .overlay(alignment: .bottom) {
-                actions(c, current: current)
-                    .padding(.horizontal, 20)
-                    .padding(.top, 28)
-                    .padding(.bottom, 12)
-                    .background {
-                        LinearGradient(colors: [V8.paper.opacity(0), V8.paper], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.3))
-                            .ignoresSafeArea().allowsHitTesting(false)
-                    }
-            }
-        }
-    }
-
-    /// Bloco do bairro da parada de agora: cantos, "saia às" e o numeral gigante (a hora de sair).
-    private func band(_ c: AgoraContent, current: DayStop) -> some View {
-        DayBand(areaId: current.area ?? plan?.bandArea(from: AppClock.now), places: places, height: 300) {
-            VStack(alignment: .leading, spacing: 0) {
-                DayBandCorners(left: ["Agora · \(region.timeString(AppClock.now))", "parada \(c.position)"],
-                               right: [[areaName(current), tempText].compactMap { $0 }.joined(separator: " · "),
-                                       services.connectivity.isOffline ? "sem rede · offline ok" : "offline ok"])
-                Spacer(minLength: 8)
-                HStack(alignment: .lastTextBaseline) {
-                    MonoLabel(c.verb, size: 11, color: theme.coverInk)
-                    Spacer(minLength: 8)
-                    SpecStack(lines: [c.countdown, c.travel].compactMap { $0 }, color: theme.coverInk.opacity(0.9), alignment: .trailing)
+            Section {
+                Button { if let id = current.placeId { router.push(.ir(placeId: id), on: .hoje) } else { router.push(.linha(date: today), on: .hoje) } } label: {
+                    Label(irTitle(c), systemImage: "arrow.triangle.turn.up.right.diamond.fill")
+                        .font(.body.weight(.semibold))
                 }
-                Text(region.timeString(c.time))
-                    .font(V8Font.numeral(118))
-                    .tracking(2)
-                    .foregroundStyle(theme.coverInk)
-                    .padding(.leading, -4)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.5)
-                    .accessibilityElement(children: .ignore)
-                    .accessibilityLabel("\(c.verb) \(region.timeString(c.time)), \(c.countdown)")
+                Button { markDone(current) } label: { Label("Marcar como feito", systemImage: "checkmark.circle") }
+                Button { router.push(.montar(date: today), on: .hoje) } label: { Label("Trocar parada", systemImage: "arrow.up.arrow.down") }
+            }
+            let rest = later(c)
+            if !rest.isEmpty {
+                Section("Depois") {
+                    ForEach(rest) { stop in
+                        V9StopRow(stop: stop, state: .upcoming, region: region, onTap: openLater(stop))
+                    }
+                }
+            }
+            Section {
+                Button { router.push(.linha(date: today), on: .hoje) } label: { Label("Ver o dia todo", systemImage: "list.bullet") }
+            } footer: {
+                Text(services.connectivity.isOffline ? "Sem rede · offline ok" : "Funciona sem internet.")
             }
         }
+        .listStyle(.insetGrouped)
     }
 
     /// O que vem depois: a próxima parada e até mais quatro (do plano, sem as já feitas).
@@ -254,53 +237,12 @@ struct AgoraView: View {
     }
 
     private func contextChip(_ text: String) -> some View {
-        HStack(spacing: 6) {
-            Rectangle().fill(V8.orange).frame(width: 7, height: 7)
-            Text(text).font(V8Font.text(13, weight: .semibold)).foregroundStyle(V8.ink).lineLimit(1)
-        }
-        .padding(.horizontal, 12)
-        .frame(minHeight: 34)
-        .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
-    }
-
-    private func progressBar(_ c: AgoraContent) -> some View {
-        VStack(spacing: 8) {
-            HStack {
-                MonoLabel("Você", color: V8.mute)
-                Spacer(minLength: 8)
-                MonoLabel(c.progressLabel, color: V8.mute)
-                Spacer(minLength: 8)
-                MonoLabel(c.title, color: V8.ink)
-            }
-            GeometryReader { geo in
-                let x = geo.size.width * c.progress
-                ZStack(alignment: .leading) {
-                    Rectangle().fill(V8.ink.opacity(0.15)).frame(height: 6)
-                    Rectangle().fill(V8.orange).frame(width: max(6, x), height: 6)
-                    Rectangle().fill(V8.ink).frame(width: 14, height: 14)
-                        .offset(x: min(max(0, x - 7), geo.size.width - 14))
-                }
-                .frame(maxHeight: .infinity)
-            }
-            .frame(height: 16)
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Trajeto até \(c.title): \(Int(c.progress * 100)) por cento do tempo até a saída")
+        Text(text).font(.subheadline.weight(.medium)).lineLimit(1)
+            .padding(.horizontal, 12).frame(minHeight: 34)
+            .background(V9.fill, in: Capsule())
     }
 
     private var today: Date { region.calendar.startOfDay(for: AppClock.now) }
-
-    private func actions(_ c: AgoraContent, current: DayStop) -> some View {
-        HStack(spacing: 10) {
-            RoundButton(systemImage: "arrow.up.arrow.down", label: "Trocar parada", style: .line, tint: V8.ink, size: 56) {
-                router.push(.montar(date: today), on: .hoje)
-            }
-            BigButton(title: irTitle(c), style: .orange, systemImage: "arrow.up.right") {
-                if let id = current.placeId { router.push(.ir(placeId: id), on: .hoje) } else { router.push(.linha(date: today), on: .hoje) }
-            }
-            RoundButton(systemImage: "checkmark", label: "Marcar como feito", style: .ink, size: 56) { markDone(current) }
-        }
-    }
 
     private func irTitle(_ c: AgoraContent) -> String {
         if let travel = c.travel { return "Ir · \(travel.replacingOccurrences(of: " · ", with: " "))" }
@@ -327,30 +269,22 @@ struct AgoraView: View {
             title = "O dia acabou."
             text = "Todas as paradas passaram. A Boa noite fecha o dia."
         }
-        return VStack(alignment: .leading, spacing: 0) {
-            DayBand(areaId: plan?.bandArea(from: AppClock.now), places: places, height: 300) {
-                VStack(alignment: .leading, spacing: 0) {
-                    DayBandCorners(left: ["Agora · \(region.timeString(AppClock.now))",
-                                          plan == nil ? "sem dia montado" : upcoming != nil ? "antes da primeira parada" : "dia feito"],
-                                   right: [])
-                    Spacer(minLength: 8)
-                    Text(title).font(V8Font.display(44)).foregroundStyle(theme.coverInk).lineLimit(3).minimumScaleFactor(0.6)
-                }
-            }
-            CutRule()
-            VStack(alignment: .leading, spacing: 14) {
-                Text(text).font(V8Font.text(15)).foregroundStyle(V8.mute)
-                if upcoming != nil {
-                    BigButton(title: "Ver o dia", style: .orange, systemImage: "arrow.up.right") { router.push(.linha(date: today), on: .hoje) }
-                } else {
-                    BigButton(title: plan == nil ? "Montar o dia" : "Boa noite", style: .orange, systemImage: "arrow.up.right") {
-                        router.push(plan == nil ? .montar(date: today) : .boaNoite, on: .hoje)
+        return List {
+            Section {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text(title).font(.title2.weight(.semibold))
+                    Text(text).font(.body).foregroundStyle(.secondary)
+                    if upcoming != nil {
+                        Button("Ver o dia") { router.push(.linha(date: today), on: .hoje) }.v9Primary()
+                    } else {
+                        Button(plan == nil ? "Montar o dia" : "Boa noite") {
+                            router.push(plan == nil ? .montar(date: today) : .boaNoite, on: .hoje)
+                        }.v9Primary()
                     }
                 }
+                .padding(.vertical, 6)
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 20)
-            Spacer(minLength: 0)
         }
+        .listStyle(.insetGrouped)
     }
 }
