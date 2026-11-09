@@ -125,6 +125,18 @@ struct PhotoDayTests {
         #expect(p.stop("j18") == nil)
         #expect(p.reason(for: "j18")?.contains("nublado") == true)
     }
+
+    /// Marcado à mão (Ir pra um bairro, pedido por nome): a luz vira preferência, não veto. Entra no horário de funcionamento.
+    @Test func cloudyGoldenKeepsTheSpotYouAskedFor() throws {
+        let w = K.weather(.jp, day: "2026-11-15", cloud: { _ in 85 })
+        let catalog = K.catalog(.jp)
+        let name = try #require(catalog.first { $0.id == "j18" }).name
+        var req = K.request(.jp, day: "2026-11-15", kind: .photo, city: "tokyo1", origin: K.yanaka, weather: w)
+        req.intent.mustInclude = [name]
+        let p = DaySolver.solve(req, catalog: catalog)
+        let stop = try #require(p.stop("j18"), "\(p.reason(for: "j18") ?? "")")
+        #expect(!stop.reason.contains("golden"), "não promete golden com 85% de nuvens")
+    }
 }
 
 struct ArtRulesTests {

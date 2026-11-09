@@ -419,18 +419,20 @@ enum DaySolver {
                             }
                         }
                         let cursorStart = max(cursorMinute + legIn.minutes, startMinute)
-                        guard let pick = options.first(where: { !usedLights.contains($0.0) && max($0.1.lowerBound, cursorStart) <= $0.1.upperBound - 15 }) else {
-                            rejection[p.id] = rejection[p.id] ?? "fora da luz boa"
+                        // Pedido à mão (nome, Ir pra um bairro): a luz vira preferência; sem ela, entra como visita comum.
+                        let asked = ctx.mustInclude.contains(p.id)
+                        let pick = options.first(where: { !usedLights.contains($0.0) && max($0.1.lowerBound, cursorStart) <= $0.1.upperBound - 15 })
+                        let cloud = pick.flatMap { pick in
+                            (pick.0 == .goldenPM || pick.0 == .goldenAM) ? req.weather?.hour(at: ctx.date(pick.1.lowerBound))?.cloud : nil
+                        }
+                        if let pick, (cloud ?? 0) <= 60 {
+                            light = pick.0
+                            start = max(pick.1.lowerBound, cursorStart)
+                            length = max(15, min(45, pick.1.upperBound - start))
+                        } else if !asked {
+                            rejection[p.id] = pick == nil ? (rejection[p.id] ?? "fora da luz boa") : "nublado no golden (\(cloud ?? 0)%)"
                             continue
                         }
-                        if pick.0 == .goldenPM || pick.0 == .goldenAM,
-                           let cloud = req.weather?.hour(at: ctx.date(pick.1.lowerBound))?.cloud, cloud > 60 {
-                            rejection[p.id] = "nublado no golden (\(cloud)%)"
-                            continue
-                        }
-                        light = pick.0
-                        start = max(pick.1.lowerBound, cursorStart)
-                        length = max(15, min(45, pick.1.upperBound - start))
                     }
 
                     // sport: só em horas verdes (temperatura, UV, chuva, ar).
@@ -632,6 +634,10 @@ enum DaySolver {
         let notes = p.notes.lowercased()
         if stop.isException { return "fora da meta do dia" }
         if p.role == .photo, let l = lightAt(stop, ctx: ctx) {
+            // Pedido à mão com o céu fechado: entra, mas sem prometer a luz.
+            if l != .blue, let cloud = ctx.request.weather?.hour(at: stop.at)?.cloud, cloud > 60 {
+                return "você pediu · nublado (\(cloud)%)"
+            }
             return l == .blue ? "hora azul" : (l == .goldenAM ? "golden da manhã" : "golden")
         }
         if let left = daysLeft(p, ctx: ctx), left <= 7 { return endsText(left) }

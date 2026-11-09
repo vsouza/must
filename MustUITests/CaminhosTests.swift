@@ -71,4 +71,34 @@ final class CaminhosTests: MustUITestCase {
         XCTAssertTrue(opened || app.state == .runningForeground)
         assertAlive("cartaz", config)
     }
+
+    /// "Ir pra um bairro" (09/11/2026): marca 3 Musts de Shinjuku e o trajeto só tem eles (ou diz por que ficaram fora).
+    func testIrBairroMontaSoOsMarcados() {
+        launch(config, screen: "ir-bairro:shinjuku")
+        let marked = ["Shinjuku Gyoen", "Ichiran Shinjuku", "Golden Gai"]
+        for name in marked {
+            let row = any("label BEGINSWITH %@", name + ",")
+            guard row.waitForExistence(timeout: 10) else {
+                attachScreenshot("ir-bairro-sem-\(name)")
+                return XCTFail("sem a linha \(name)")
+            }
+            if !row.isHittable { app.swipeUp() }
+            row.tap()
+        }
+        attachScreenshot("ir-bairro-marcados")
+        let montar = any("label ==[c] %@", "Montar trajeto com 3 Musts")
+        XCTAssertTrue(montar.waitForExistence(timeout: 4), "o botão não contou os 3 marcados")
+        montar.tap()
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "Aceitar o dia")).firstMatch
+            .waitForExistence(timeout: 15), "a proposta não abriu")
+        sleep(1)
+        attachScreenshot("ir-bairro-proposta")
+        // Nenhum Must desmarcado do bairro entra.
+        for other in ["Donzoko", "Uoshin", "Ramen Hōsenka", "Ucchan", "HARBS"] {
+            XCTAssertFalse(any("label CONTAINS %@", other).exists, "\(other) entrou sem ser marcado")
+        }
+        // Cada marcado está no trajeto ou na faixa "fora do trajeto".
+        for name in marked { XCTAssertTrue(any("label CONTAINS %@", name).exists, "\(name) sumiu sem motivo") }
+        assertAlive("ir pra um bairro", config)
+    }
 }
