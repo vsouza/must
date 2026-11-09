@@ -114,18 +114,12 @@ v8shots() { # $1 = prefixo (jp|bh|it), $2 = lugar de exemplo, $3 = museu de exem
 }
 
 # prompt 30 · o corte (etapa 1): capa única, puxar a régua, quero… e resultado em duas faixas. `-capaFoto` baixa a foto do
-# Commons uma vez pro bairro (só nos prints); `corte-capa-sem-foto` é o estado sem foto no disco.
 corteshots() { # $1 = prefixo (jp|bh|it)
   local r=$1
-  WAIT=10 shot $r-corte-capa -debugScreen corte-capa -capaFoto
+  WAIT=10 shot $r-hoje -debugScreen hoje
+  WAIT=10 shot $r-hoje-plano -debugScreen hoje-plano
+  WAIT=10 shot $r-hoje-chegou -debugScreen hoje-chegou
   if [ "$r" = "jp" ]; then
-    WAIT=10 shot $r-corte-capa-cartaz -debugScreen corte-capa-cartaz -capaFoto -debugEvents fake  # linha tinta "Em cartaz" no índice
-    WAIT=8 shot $r-corte-capa-sem-foto -debugScreen corte-capa-sem-foto
-    WAIT=10 shot $r-corte-puxando -debugScreen corte-puxando -capaFoto
-    WAIT=10 shot $r-corte-quero -debugScreen corte-quero -capaFoto
-    WAIT=12 shot $r-corte-cafe -debugScreen corte-cafe -capaFoto
-    WAIT=12 shot $r-corte-cafe-offline -debugScreen corte-cafe-offline -capaFoto -debugNetwork offline
-    WAIT=12 shot $r-corte-xxxl-cafe -debugScreen corte-cafe -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
     WAIT=10 shot $r-corte-xxxl-capa -debugScreen corte-capa -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
   fi
 }

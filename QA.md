@@ -784,4 +784,13 @@ Fase 1 tem que estar no iPhone até a noite de 10/11 (a viagem começa em 11/11)
 - `AppRouter.showOnMap(MapShowcase)` / `mapShowcase`: "Ver no mapa" do Quero abre o Explorar só com esses pinos.
 
 ### Gestos que sobraram (item 1)
-(preencher na rodada: cada `DragGesture`/`LongPress` em `Must/Features` com o controle visível equivalente)
+Varredura `grep -rn "DragGesture\|onLongPress\|LongPressGesture" Must/Features` (agente A, 09/11). Saíram de Hoje: `DragGesture` de 4 direções (`CapaSwipe`), alça do Bolso, régua puxável, pegador, cutucão, passo a passo e contador de puxadas. Hoje agora: ✦ Assistente, ⋯ (Bolso · SOS · Minhas viagens), campo "Pedir algo…", "ver o dia", cartão Bom dia/Boa noite com "abrir"/"dispensar".
+
+| Arquivo | Gesto | Controle visível equivalente |
+|---|---|---|
+| `Explorar/ExplorarView.swift` (`swipe`) | deslize lateral troca de bairro | trilho de estações na borda (toque/arrasto, `accessibilityAdjustableAction`); atalho redundante. Dono: agente do Explorar |
+| `Explorar/ExplorarMapOpen.swift` (`nextPinSwipe`) | deslize lateral troca de pino | pinos e lista de itens no recorte; atalho redundante. Dono: Explorar |
+| `Explorar/ExplorarParts.swift` (trilho) | arrasto no trilho | toque em cada estação + `accessibilityAdjustableAction`. Dono: Explorar |
+| `Map/MapPlaceCard.swift` | arrastar o card pra cima/baixo abre/fecha | `accessibilityAction` "Abrir o lugar"; botão "Abrir o lugar" visível no card (`MapPlaceCard` l.194) |
+| `List/PlaceRow.swift` | toque longo = Editar | `accessibilityAction` "Editar"; toque abre o Lugar, que tem "Editar" no menu (`PlaceView` l.354); atalho redundante |
+| `Place/PhotoViewer.swift` | arrastar pra baixo fecha | gesto padrão de visualizador de foto (fechar tem botão ✕) |

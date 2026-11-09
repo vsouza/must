@@ -371,7 +371,7 @@ enum DebugLaunch {
         case "assistente", "assistente-conversa": router.sheet = .assistant // conversa: `-debugAsk "pergunta"` envia sozinho
         // v9 (prompt 31): barra nova, Quero com pergunta, Bolso com os Atalhos, o `+` e a aba Viagem.
         case "barra": router.select(.hoje)
-        case "quero-pergunta": router.select(.hoje)
+        case "quero-pergunta": router.openQuero(text: "dá tempo do Gyoen antes do pôr do sol?")
         case "bolso-novo": router.push(.bolso, on: .hoje)
         case "mais": router.openQuero()
         case "viagem-aba": PresenteDemo.ensure(context: context, region: region); router.select(.viagem)
@@ -486,15 +486,18 @@ enum DebugLaunch {
         case "colecionavel-novo": router.push(.colecao, on: .viagem); CollectibleCelebration.present(for: arg ?? "p01")
         case "trocar-viagem", "viagens": router.select(.hoje); router.sheet = .viagens
         case "fotos-carrossel": router.push(.place(id: arg ?? "j01"), on: .musts)
-        case "quero-nakano", "quero-viagem-futura": router.select(.hoje)
+        case "quero-nakano", "quero-viagem-futura": router.openQuero(text: "comer")
         case "novaviagem1", "novaviagem2", "novaviagem3", "novaviagem4", "novaviagem5", "novaviagem6", "novaviagem7", "novaviagem8", "novaviagem9":
             router.cover = .novaViagem(step: Int(parts[0].dropFirst("novaviagem".count)) ?? 1) // prompt 28 · F3
         case "mapa-pino", "mapa-filtro": router.push(.mapa, on: .hoje) // o agente C lê o debugScreen pra abrir o card/filtro
         case "lugar-amigos", "lugar-emcartaz": router.push(.place(id: arg ?? "j28"), on: .musts)
         case "capa-inteligente": router.select(.hoje)
-        // prompt 30 · o corte: a capa e os estados do gesto (o `HomeView` lê o `debugScreen` e monta cada um).
-        case "corte-capa", "corte-capa-cartaz", "corte-capa-sem-foto", "corte-puxando", "corte-quero", "corte-cafe", "corte-cafe-offline":
+        // r32 · Hoje V9: sem plano (`hoje`), com dia aceito de demonstração e com a faixa "Você chegou em…" (DEBUG).
+        case "corte-capa", "corte-capa-cartaz", "corte-capa-sem-foto": router.select(.hoje)
+        case "hoje-plano":
+            acceptEngineToday(context: context, region: region, engine: engine, areaId: arg ?? (region.country == "BR" ? "savassi" : "shinjuku"))
             router.select(.hoje)
+        case "hoje-chegou": router.select(.hoje) // o HomeView lê o debugScreen e força a proposta
         case "sincronizar":
             router.push(.settings, on: .hoje)
             Task { await services.sync.syncPlaces(context: context, region: region) }

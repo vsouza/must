@@ -87,7 +87,7 @@ struct RootView: View {
     @ViewBuilder private func root(for tab: MustTab) -> some View {
         // Prompt 32: cada raiz convertida pro V9 tira o `.v8Legacy()` (modo escuro só nas telas V9).
         switch tab {
-        case .hoje: HomeView().v8Legacy()
+        case .hoje: HomeView()
         case .explorar: ExplorarView().v8Legacy()
         case .musts: MustsHubView().v8Legacy()
         case .viagem: ProximosView()

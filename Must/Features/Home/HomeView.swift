@@ -2,134 +2,399 @@ import CoreLocation
 import SwiftData
 import SwiftUI
 
-/// 01 · Hoje, a capa do corte (prompt 30 §2, `CorteFluxo.png`): foto tratada em cima, régua preta puxável, papel embaixo.
-/// Gestos: pra cima = Linha do dia; pra baixo (fora da régua) = Bom dia / Boa noite; pra esquerda = Dicas; pra direita
-/// (ou o toque na alça da borda) = Bolso; ← = Assistente. **Arrastar começando na régua** (ou tocar no nome do bairro) abre o "quero…".
-/// Tudo sai de `CapaState` e `CapaSuggestState`, recalculado nos gatilhos; o `body` só desenha.
+/// 01 · Hoje, V9 (prompt 32 §2): uma resposta simples, sem cartaz. Cabeçalho pequeno (dia · bairro, tempo e pôr do sol,
+/// ✦ e ⋯), faixa do GPS, campo "Pedir algo…", a próxima parada com **Ir** (ou 3 "Agora vale" + Montar o dia) e as reservas
+/// e ingressos de hoje. Nenhum destino depende de gesto: tudo tem botão com nome.
+/// Tudo sai de `CapaState` (relógio do dia), `CapaSuggestState` (ranker) e `TodayContextModel` (bairro estável),
+/// recalculado nos gatilhos; o `body` só desenha.
 struct HomeView: View {
     @Environment(AppRouter.self) private var router
     @Environment(RegionStore.self) private var store
     @Environment(Services.self) private var services
+    @Environment(TodayContextModel.self) private var todayContext
     @Environment(\.scenePhase) private var scenePhase
-    @Environment(\.tripTheme) private var theme
     @Environment(\.dayEngine) private var engine
     @Environment(\.modelContext) private var context
     @Environment(\.eventsFeed) private var events
     @Environment(\.showEvents) private var showEvents
+    @Environment(\.openURL) private var openURL
 
     @Query private var places: [Place]
     @Query private var expenses: [Expense]
     @Query private var trips: [TripInfo]
-    @Query(sort: \MustList.order) private var lists: [MustList]
-    @Query private var settingsList: [Settings]
     @Query private var gifts: [Gift]
 
     @State private var state = CapaState()
-    /// "Agora vale" (prompt 26): cartões, linha de estado e card da noite.
+    /// "Agora vale" (prompt 26): o ranker local.
     @State private var suggest = CapaSuggestState()
     @State private var currentArea: Area?
     @State private var saveRefresh: Task<Void, Never>?
-    /// O corte: régua, fenda do quero…, resultado e passo a passo.
-    @State private var corte = CorteState()
-    @Environment(\.openURL) private var openURL
+    @State private var showAreaPicker = false
+    @State private var greetingDismissed: String?
+    @State private var now = AppClock.now
+    /// `hoje-chegou` (DEBUG, prints): força a faixa "Você chegou em…".
+    @State private var debugProposal: Area?
 
     private var region: Region { store.region }
-    private var today: Date { region.calendar.startOfDay(for: AppClock.now) }
-    private var ink: Color { theme.coverInk }
-
-    /// `-capaFoto` (DEBUG, prints): baixa a foto do Commons uma vez pro bairro. Sem a flag, a capa só usa o que já está no disco.
-    private var forcePhoto: Bool { DebugFlags.has("-capaFoto") }
+    private var today: Date { region.calendar.startOfDay(for: now) }
     private var debugScreen: String { DebugFlags.string("debugScreen") ?? "" }
-    /// `quero-nakano` (DEBUG, prints): a capa sai do bairro Nakano com o GPS longe, como no uso real fora do país.
-    @State private var debugArea: Area?
-    /// Foto (só do disco) do bairro buscado no quero, quando não é o da capa.
-    @State private var searchedPhoto: URL?
-    private var photoURL: URL? {
-        guard debugScreen != "corte-capa-sem-foto" else { return nil }
-        let capa = state.photo.flatMap { URL(string: $0.largeURL ?? $0.url) }
-        return CapaState.blockPhoto(searchedAreaId: searchedArea?.id, capaAreaId: state.areaId, searched: searchedPhoto, capa: capa)
-    }
+    private var locationStamp: Double { services.location.current?.timestamp.timeIntervalSince1970 ?? 0 }
 
-    /// O bairro de onde o quero está buscando (escolhido à mão ou o da capa quando o GPS está longe), só com o resultado na tela.
-    private var searchedArea: Area? {
-        guard corte.stage == .result else { return nil }
-        if let area = corte.areaOverride { return area }
-        guard let env = corte.lastEnv, env.originBasis == .area else { return nil }
-        return AreaCatalog.areas(for: region).first { $0.name == env.areaName }
-    }
-
-    private var locationCell: String {
-        guard let here = services.location.current else { return "" }
-        return "\(Int((here.coordinate.latitude * 2000).rounded())),\(Int((here.coordinate.longitude * 2000).rounded()))"
+    private var proposal: Area? { todayContext.proposal ?? debugProposal }
+    private var next: HojeNext? { state.clock.flatMap { HojeLogic.next(clock: $0) } }
+    private var greeting: HojeLogic.Greeting? {
+        HojeLogic.greetingCard(now: now, calendar: region.calendar, dismissedKey: greetingDismissed)
     }
 
     var body: some View {
-        Group {
-            if let content = state.content {
-                CapaCorteView(content: content, areaName: debugArea?.name ?? currentArea?.name ?? content.area, photoURL: photoURL, suggest: suggest,
-                              state: corte, tripId: region.trip.id, hasPlan: state.plan != nil, makeEnv: makeEnv, actions: actions)
+        List {
+            Section {
+                header
+                if let greeting { greetingNotice(greeting) }
+                if let proposal { arrivalNotice(proposal) }
+                V9AskField { router.openQuero() }
+            }
+            .listRowSeparator(.hidden)
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets(top: 6, leading: V9.gutter, bottom: 6, trailing: V9.gutter))
+
+            if let next {
+                nextSection(next)
             } else {
-                theme.cover.ignoresSafeArea()
+                suggestSection
+            }
+
+            let tickets = todayItems
+            if !tickets.isEmpty { ticketsSection(tickets) }
+
+            Section {
+                row("Ir pra um bairro", detail: "marque os Musts e eu monto o trajeto", systemImage: "figure.walk") {
+                    router.push(.irBairro(), on: .hoje)
+                }
             }
         }
-        .contentShape(Rectangle())
-        .gesture(DragGesture(minimumDistance: 30).onEnded { value in
-            guard corte.stage == .rest, corte.pull.phase == .closed, let swipe = CapaSwipe.from(value.translation) else { return }
-            go(swipe)
-        }, including: corte.stage == .rest ? .all : .subviews)
-        .accessibilityAction(named: "Linha do dia") { go(.up) }
-        .accessibilityAction(named: "Assistente") { go(.left) }
-        .accessibilityAction(named: "Bolso") { go(.right) }
-        .overlay(alignment: .trailing) { if corte.stage == .rest { bolsoHandle } }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .v9Screen(grouped: true)
+        .accessibilityAction(named: "Linha do dia") { router.push(.linha(date: today), on: .hoje) }
+        .accessibilityAction(named: "Assistente") { router.sheet = .assistant }
+        .accessibilityAction(named: "Bolso") { router.push(.bolso, on: .hoje) }
+        .sheet(isPresented: $showAreaPicker) { areaPicker }
         .onAppear {
-            corte.answerer = { [context, services, store, engine] text in
-                await QueroAnswerer.answer(text, context: context, region: store.region, services: services,
-                                           useModel: (try? context.fetch(FetchDescriptor<Settings>()).first?.onDeviceAI) ?? true, engine: engine)
+            greetingDismissed = GreetingDismissStore(tripId: region.trip.id).value
+            if debugScreen == "hoje-chegou" {
+                debugProposal = AreaCatalog.areas(for: region).first { $0.id == (region.country == "BR" ? "savassi" : "nakano") }
             }
-            router.setQuero("capa", open: corte.stage != .rest)
             refresh()
-            // `-debugScreen atalhos` (prints): o Bolso (com os Atalhos no topo).
-            if debugScreen == "atalhos", router.paths[.hoje]?.isEmpty ?? true { go(.right) }
         }
         .task { await clock() }
-        .task { await startCorteExtras() }
-        .task(id: locationCell) {
+        .task(id: locationStamp) {
             await resolveCurrentArea()
+            await feedGPS()
             await loadIndicated()
         }
         .task(id: region) { await refreshEvents() }
-        .task(id: searchedArea?.id) {
-            searchedPhoto = nil
-            guard let area = searchedArea else { return }
-            guard let (_, candidates) = CapaState.areaCandidates(region: region, areaId: area.id, places: places),
-                  let photo = await CapaState.diskPhoto(region: region, areaId: area.id, candidates: candidates) else { return }
-            searchedPhoto = URL(string: photo.largeURL ?? photo.url)
-        }
-        .task(id: state.areaId) {
-            await state.loadPhoto(region: region, places: places, services: services, forced: forcePhoto)
-        }
         .onChange(of: scenePhase) { _, phase in if phase == .active { refresh() } }
-        // Presente novo, comprado ou apagado muda a linha laranja da capa (prompt 31).
         .onChange(of: gifts.map { "\($0.id)\($0.boughtAt != nil)" }) { _, _ in recomputeSuggestions(now: AppClock.now) }
-        // O quero aberto esconde a barra de abas (ela flutuava por cima dos chips de vontade).
-        .onChange(of: corte.stage) { _, stage in router.setQuero("capa", open: stage != .rest) }
-        .onDisappear { router.setQuero("capa", open: false) }
         .onReceive(NotificationCenter.default.publisher(for: ModelContext.didSave)) { _ in scheduleRefresh() }
+    }
+
+    // MARK: Cabeçalho
+
+    private var contextName: String {
+        let name = todayContext.context.name
+        return name.isEmpty ? (state.content?.area ?? region.displayName) : name
+    }
+
+    private var dayText: String {
+        "\(DayText.weekdayShort(now, region: region).capitalizedFirst), \(region.shortDay(now))"
+    }
+
+    /// "Tóquio · 18° sol · pôr do sol 16:38" (o `CapaContent` já monta o tempo e o pôr do sol).
+    private var weatherLine: String {
+        (state.content?.topRight ?? []).filter { !$0.isEmpty }.joined(separator: " · ")
+    }
+
+    private var header: some View {
+        HStack(alignment: .top, spacing: 8) {
+            VStack(alignment: .leading, spacing: 4) {
+                Button { showAreaPicker = true } label: {
+                    HStack(spacing: 4) {
+                        Text("\(dayText) · \(contextName)").font(.title3.weight(.semibold)).multilineTextAlignment(.leading)
+                        Image(systemName: "chevron.down").font(.footnote.weight(.semibold)).foregroundStyle(.secondary)
+                    }
+                    .foregroundStyle(.primary)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("\(dayText), \(contextName)")
+                .accessibilityHint("Escolher o bairro")
+                if !weatherLine.isEmpty {
+                    Text(weatherLine).font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            Button { router.sheet = .assistant } label: {
+                Image(systemName: "sparkle").font(.title3).foregroundStyle(V9.accent).frame(width: 44, height: 44).contentShape(Rectangle())
+            }
+            .accessibilityLabel("Assistente")
+            Menu {
+                Button { router.push(.bolso, on: .hoje) } label: { Label("Bolso", systemImage: "bag") }
+                Button { router.push(.sos, on: .hoje) } label: { Label("SOS", systemImage: "cross.case") }
+                Button { router.sheet = .viagens } label: { Label("Minhas viagens", systemImage: "arrow.left.arrow.right") }
+            } label: {
+                Image(systemName: "ellipsis.circle").font(.title3).foregroundStyle(V9.accent).frame(width: 44, height: 44).contentShape(Rectangle())
+            }
+            .accessibilityLabel("Mais")
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func greetingNotice(_ g: HojeLogic.Greeting) -> some View {
+        V9Notice(systemImage: g == .bomDia ? "sun.max" : "moon.stars",
+                 text: g == .bomDia ? "Bom dia · o resumo do dia" : "Boa noite · fechar o dia e olhar amanhã",
+                 actionTitle: "abrir",
+                 action: { router.push(g == .bomDia ? .bomDia : .boaNoite, on: .hoje) },
+                 dismiss: {
+                     let key = HojeLogic.dismissKey(g, now: now, calendar: region.calendar)
+                     GreetingDismissStore(tripId: region.trip.id).dismiss(key)
+                     greetingDismissed = key
+                 })
+    }
+
+    private func arrivalNotice(_ area: Area) -> some View {
+        V9Notice(systemImage: "location", text: "Você chegou em \(area.name)", actionTitle: "ver perto",
+                 action: {
+                     debugProposal = nil
+                     if todayContext.proposal != nil { todayContext.acceptProposal(now: now) } else { todayContext.choose(area, now: now) }
+                     refresh()
+                 },
+                 dismiss: {
+                     debugProposal = nil
+                     todayContext.dismissProposal(now: now)
+                 })
+    }
+
+    // MARK: Com dia
+
+    private func nextSection(_ n: HojeNext) -> some View {
+        Section {
+            VStack(alignment: .leading, spacing: 12) {
+                Text(n.phase == .next ? "Próxima" : "Agora").font(.subheadline).foregroundStyle(.secondary)
+                Text(n.name).font(.title2.weight(.semibold)).lineLimit(2)
+                Text(HojeLogic.detail(n, region: region)).font(.subheadline).foregroundStyle(.secondary).monospacedDigit()
+                if let then = n.thenName, n.phase == .now {
+                    Text("Depois: \(then)").font(.subheadline).foregroundStyle(.secondary).lineLimit(1)
+                }
+                if let placeId = n.placeId {
+                    Button { router.push(.ir(placeId: placeId), on: .hoje) } label: {
+                        Text("Ir").frame(maxWidth: .infinity)
+                    }
+                    .v9Primary()
+                    .accessibilityLabel("Ir pra \(n.name)")
+                }
+            }
+            .padding(.vertical, 6)
+            ForEach(following(n)) { stop in
+                Button { openStop(stop) } label: {
+                    V9Row(title: DayText.head(stop.label), detail: region.timeString(stop.start),
+                          reason: stop.note.isEmpty ? nil : stop.note, thumbnail: thumb(stop.placeId), systemImage: stop.placeId == nil ? "clock" : nil) {
+                        Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
+                    }
+                }
+                .buttonStyle(.plain)
+            }
+            Button { router.push(.linha(date: today), on: .hoje) } label: {
+                HStack { Text("ver o dia"); Spacer(); Image(systemName: "chevron.right").font(.footnote.weight(.semibold)) }
+                    .contentShape(Rectangle())
+            }
+            .foregroundStyle(V9.accent)
+        } header: {
+            Text(state.clock?.adjusted == true ? "Seu dia · ajustei, faltam \(state.clock?.remaining ?? 0)" : "Seu dia")
+        }
+    }
+
+    private func following(_ n: HojeNext) -> [DayStop] {
+        guard let clock = state.clock else { return [] }
+        return HojeLogic.following(clock: clock, after: n.stopId, limit: 3)
+    }
+
+    private func openStop(_ stop: DayStop) {
+        if let id = stop.placeId { router.push(.place(id: id), on: .hoje) } else { router.push(.linha(date: today), on: .hoje) }
+    }
+
+    // MARK: Sem dia
+
+    private var suggestSection: some View {
+        Section {
+            if suggest.cards.isEmpty {
+                Text(suggest.emptyLine.isEmpty ? "Nada aberto por perto agora. Peça algo ou monte o dia." : suggest.emptyLine)
+                    .font(.subheadline).foregroundStyle(.secondary)
+            }
+            ForEach(suggest.cards.prefix(3)) { card in
+                Button { openSuggestion(card) } label: {
+                    V9Row(title: card.title, detail: card.trailing, reason: reason(card), thumbnail: thumb(card.placeId),
+                          systemImage: card.placeId == nil ? icon(card) : nil) {
+                        Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
+                    }
+                }
+                .buttonStyle(.plain)
+            }
+            Button { router.push(.montar(date: today), on: .hoje) } label: {
+                Text("Montar o dia").frame(maxWidth: .infinity)
+            }
+            .v9Primary()
+            .listRowSeparator(.hidden)
+        } header: {
+            Text("Agora vale")
+        } footer: {
+            if !suggest.stateLine.isEmpty { Text(suggest.stateLine) }
+        }
+    }
+
+    private func reason(_ card: Suggestion) -> String {
+        // Uma linha: os 2 primeiros motivos (a distância já está no detalhe), mais o aviso de dado estimado.
+        let top = card.reasons.filter { $0 != "perto" }.prefix(2).joined(separator: " · ")
+        let line = top.isEmpty ? card.meta : top
+        guard let trust = card.trust else { return line }
+        return line.isEmpty ? trust : "\(line) · \(trust)"
+    }
+
+    private func icon(_ card: Suggestion) -> String {
+        switch card.kind {
+        case .event: "ticket"
+        case .gift: "gift"
+        case .light: "sun.horizon"
+        case .rain: "cloud.rain"
+        default: "mappin.and.ellipse"
+        }
+    }
+
+    private func thumb(_ placeId: String?) -> AnyView? {
+        guard let placeId, let p = places.first(where: { $0.id == placeId }), !p.photoRefs.isEmpty else { return nil }
+        return AnyView(PlaceThumb(placeId: p.placeId, refs: p.photoRefs, color: p.list?.color ?? .eat, size: V9.thumb))
+    }
+
+    // MARK: Reservas e ingressos de hoje
+
+    private struct TodayItem: Identifiable {
+        var id: String
+        var name: String
+        var at: Date
+        var placeId: String
+        var ticketId: String?
+        var hasQR: Bool
+    }
+
+    private var todayItems: [TodayItem] {
+        let cal = region.calendar
+        var out: [TodayItem] = []
+        for p in places {
+            if let r = p.reservation, cal.isDate(r.at, inSameDayAs: now) {
+                out.append(TodayItem(id: "res-\(p.id)", name: p.name, at: r.at, placeId: p.id, ticketId: nil, hasQR: false))
+            }
+            for t in p.tickets where cal.isDate(t.at, inSameDayAs: now) {
+                out.append(TodayItem(id: "tk-\(t.id)", name: p.name, at: t.at, placeId: p.id, ticketId: t.id, hasQR: t.qrPayload != nil))
+            }
+        }
+        return out.sorted { $0.at < $1.at }
+    }
+
+    private func ticketsSection(_ items: [TodayItem]) -> some View {
+        Section("Reservas e ingressos de hoje") {
+            ForEach(items) { item in
+                Button {
+                    if let t = item.ticketId { router.push(.ticket(placeId: item.placeId, ticketId: t), on: .hoje) }
+                    else { router.push(.place(id: item.placeId), on: .hoje) }
+                } label: {
+                    V9Row(title: item.name, detail: region.timeString(item.at), reason: item.ticketId == nil ? "reserva" : "ingresso",
+                          systemImage: item.ticketId == nil ? "calendar" : "ticket") {
+                        if item.hasQR { Label("QR", systemImage: "qrcode").labelStyle(.iconOnly).font(.title3).foregroundStyle(V9.accent) }
+                    }
+                }
+                .buttonStyle(.plain)
+                .accessibilityHint(item.hasQR ? "abre o ingresso com o QR" : "abre o lugar")
+            }
+        }
+    }
+
+    private func row(_ title: String, detail: String, systemImage: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            V9Row(title: title, detail: nil, reason: detail, systemImage: systemImage) {
+                Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: Seletor de bairro
+
+    private var pickerAreas: [Area] {
+        let all = AreaCatalog.areas(for: region)
+        let group = todayContext.context.areaId.flatMap { id in all.first { $0.id == id }?.cityId }
+            ?? currentArea?.cityId
+            ?? trips.first?.city(on: now, calendar: region.calendar).map { AreaCatalog.cityGroup(forCityId: $0.id) }
+        let city = group.map { g in all.filter { $0.cityId == g } } ?? []
+        return (city.isEmpty ? all : city).sorted { $0.name < $1.name }
+    }
+
+    private var areaPicker: some View {
+        NavigationStack {
+            List {
+                Button {
+                    todayContext.clearManual(now: now)
+                    showAreaPicker = false
+                    refresh()
+                } label: {
+                    Label("Automático", systemImage: todayContext.context.source == .manual ? "circle" : "checkmark.circle.fill")
+                }
+                Section("Bairros") {
+                    ForEach(pickerAreas) { area in
+                        Button {
+                            todayContext.choose(area, now: now)
+                            showAreaPicker = false
+                            refresh()
+                        } label: {
+                            HStack {
+                                Text(area.name)
+                                Spacer()
+                                if todayContext.context.areaId == area.id { Image(systemName: "checkmark").foregroundStyle(V9.accent) }
+                            }
+                            .contentShape(Rectangle())
+                        }
+                        .foregroundStyle(.primary)
+                    }
+                }
+            }
+            .navigationTitle("Bairro de hoje")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Fechar") { showAreaPicker = false } } }
+        }
+        .presentationDetents([.medium, .large])
     }
 
     // MARK: Gatilhos
 
     private func refresh() {
-        let now = AppClock.now
+        let at = AppClock.now
+        now = at
         let trip = trips.first
-        state.refresh(.init(region: region, now: now, engine: engine, context: context, trip: trip, expenses: expenses,
+        state.refresh(.init(region: region, now: at, engine: engine, context: context, trip: trip, expenses: expenses,
                             currentArea: currentArea, nowWeather: services.sync.now(region: region, trip: trip),
-                            todayWeather: services.sync.weather(on: now, region: region, trip: trip),
+                            todayWeather: services.sync.weather(on: at, region: region, trip: trip),
                             position: services.location.current?.coordinate))
-        recomputeSuggestions(now: now)
+        updateContext(at)
+        recomputeSuggestions(now: at)
     }
 
-    // MARK: Agora vale (prompt 26)
+    /// Alimenta o contexto estável: parada do dia, e a cidade do dia como base (o hotel ainda não tem bairro no modelo).
+    private func updateContext(_ at: Date) {
+        let areas = AreaCatalog.areas(for: region)
+        let stopId = state.clock.flatMap { HojeLogic.dayStopAreaId(clock: $0) }
+        let city = trips.first?.city(on: at, calendar: region.calendar)?.name ?? region.displayName
+        todayContext.update(tripId: region.trip.id, areas: areas, dayStop: stopId.flatMap { id in areas.first { $0.id == id } },
+                            baseAreaId: nil, baseName: city, now: at, calendar: region.calendar)
+    }
 
     private func recomputeSuggestions(now: Date) {
         events.loadCached(region: region)
@@ -148,7 +413,6 @@ struct HomeView: View {
         recomputeSuggestions(now: AppClock.now)
     }
 
-    /// Eventos: o cache já está na tela; a rede (6 h, Wi-Fi, fora do Pouco Dados) atualiza em segundo plano.
     private func refreshEvents() async {
         recomputeSuggestions(now: AppClock.now)
         let center = services.location.current?.coordinate ?? currentArea?.centroid.clCoordinate ?? region.defaultCenter
@@ -179,114 +443,25 @@ struct HomeView: View {
             try? await Task.sleep(for: .seconds(Double(seconds) + 0.5))
             guard !Task.isCancelled else { return }
             refresh()
+            await feedGPS()
         }
     }
 
+    /// O bairro do GPS só serve pra dar (ou não) a proposta; nunca troca o título (prompt 32 §3).
     private func resolveCurrentArea() async {
         guard let here = services.location.current else { return }
         let area = await services.currentArea.area(at: here, region: region)
         guard area != currentArea else { return }
         currentArea = area
-        refresh()
+        recomputeSuggestions(now: AppClock.now)
     }
 
-    private func go(_ swipe: CapaSwipe) {
-        switch CapaSwipe.action(for: swipe, now: AppClock.now, region: region) {
-        case .route(let route): router.push(route, on: .hoje)
-        case nil: break
-        }
-    }
-
-    /// Alça na borda direita da capa: o "toque no canto" que abre o Bolso sem deslizar.
-    private var bolsoHandle: some View {
-        Button { go(.right) } label: {
-            Capsule()
-                .fill(ink.opacity(0.35))
-                .frame(width: 5, height: 46)
-                .frame(width: 28, height: 96)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Bolso")
-        .accessibilityHint("Suica, ingressos, mapa offline, SOS, câmbio, frases e último trem")
-    }
-
-    // MARK: O corte
-
-    private var actions: CapaCorteView.Actions {
-        .init(trips: { router.sheet = .viagens },
-              assistente: { router.sheet = .assistant },
-              continueInAssistant: { text in
-                  corte.close()
-                  router.sheet = .assistantAsk(text: text)
-              },
-              openSuggestion: openSuggestion,
-              openPlace: { router.push(.place(id: $0), on: .hoje) },
-              route: { row in MapsLinks.openApple(to: row.row.result.coordinate, name: row.row.result.name) },
-              addToBoard: addToBoard,
-              fitToday: fitToday,
-              openShows: { router.push(.emCartaz, on: .hoje) },
-              bolso: { go(.right) },
-              montar: { router.push(.montar(date: today), on: .hoje) },
-              irBairro: { router.push(.irBairro(), on: .hoje) })
-    }
-
-    private func makeEnv() -> QueroEnv {
-        let now = AppClock.now
-        let areas = AreaCatalog.areas(for: region)
-        return QueroEnv.make(region: region, now: now, places: places, trip: trips.first, settings: settingsList.first,
-                             plan: state.plan, gps: services.location.current?.coordinate,
-                             online: services.connectivity.status != .offline,
-                             upcoming: QueroEnv.upcomingDays(context: context, areas: areas, today: today),
-                             areaHint: capaArea(areas), shows: showEvents.today(region: region, at: now), gifts: gifts)
-    }
-
-    /// O bairro que a capa mostra (GPS por célula, senão o do dia pelo nome): de onde o quero sai quando o GPS está longe.
-    private func capaArea(_ areas: [Area]) -> Area? {
-        if let debugArea { return debugArea }
-        if let currentArea { return currentArea }
-        guard let name = state.content?.area.lowercased() else { return nil }
-        return areas.first { $0.name.lowercased() == name || $0.aliases.contains { $0.lowercased() == name } }
-    }
-
-    /// "+ board": guarda o lugar de fora na lista certa (a mesma lógica do Quero…).
-    private func addToBoard(_ row: CorteRow) {
-        CorteSave.addToBoard(row, state: corte, env: makeEnv(), lists: lists, services: services, context: context)
-    }
-
-    /// Toque longo: "Encaixar hoje" (prompt 25), o mesmo do Quero….
-    private func fitToday(_ row: CorteRow) {
-        guard CorteSave.fitToday(row, state: corte, env: makeEnv(), lists: lists, services: services, context: context) else { return }
-        corte.close()
-        router.push(.linha(date: today), on: .hoje)
-    }
-
-    /// Os atalhos de DEBUG dos prints (`corte-*`).
-    private func startCorteExtras() async {
-        let screen = debugScreen
-        if screen.isEmpty {
-            try? await Task.sleep(for: .milliseconds(400))
-            return
-        }
-        guard screen.hasPrefix("corte-") || screen.hasPrefix("quero-") else { return }
-        if screen == "quero-nakano" { debugArea = AreaCatalog.areas(for: region).first { $0.id == "nakano" } }
-        try? await Task.sleep(for: .milliseconds(900))
-        switch screen {
-        case "quero-pergunta":
-            corte.open()
-            corte.quero.text = "dá tempo do Gyoen antes do pôr do sol?"
-            corte.submit(makeEnv())
-        case "quero-nakano", "quero-viagem-futura":
-            corte.open()
-            corte.quero.text = "comer"
-            corte.submit(makeEnv())
-        case "corte-puxando": corte.pull.drag(translation: 70)
-        case "corte-quero": corte.open()
-        case "corte-cafe", "corte-cafe-offline":
-            corte.open()
-            corte.quero.text = "café"
-            corte.submit(makeEnv())
-        default: break
-        }
+    /// Cada leitura (e cada minuto parado) vai pro propositor, com o bairro dela (já resolvido fora do main).
+    private func feedGPS() async {
+        guard let here = services.location.current else { return }
+        let area = await services.currentArea.area(at: here, region: region)
+        let group = trips.first?.city(on: AppClock.now, calendar: region.calendar).map { AreaCatalog.cityGroup(forCityId: $0.id) }
+        let inside = area != nil && (group == nil || group == area?.cityId)
+        todayContext.feed(LocationFix(here), area: area, insideTripCity: inside)
     }
 }
