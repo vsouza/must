@@ -15,6 +15,8 @@ final class CapaState {
     private(set) var clock: DayClock?
     /// Dia de chegada, de troca de cidade ou último dia (a linha principal da capa e do Bom dia). `nil` num dia comum.
     private(set) var problem: DayProblem?
+    /// O mesmo dia, com o essencial pra Hoje (chegada, troca de cidade, último dia). `nil` num dia comum.
+    private(set) var special: SpecialDay?
     /// Bairro do dia (do plano) ou do GPS.
     private(set) var areaId: String?
     /// Foto do bairro já no aparelho (ou forçada nos prints).
@@ -46,6 +48,7 @@ final class CapaState {
         dayNow = clock.now
 
         problem = Self.problem(i, calendar: cal)
+        special = problem == nil ? nil : SpecialDay.today(context: i.context, trip: i.trip, region: region, now: i.now)
 
         let areas = AreaCatalog.areas(for: region)
         areaId = plan?.area ?? i.currentArea?.id

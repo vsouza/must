@@ -9,6 +9,8 @@ enum DayFit {
     static let minutes = 25
     /// Depois disso não encaixa nada novo (o dia acaba; o último trem manda).
     static let latestEnd = (hour: 22, minute: 30)
+    /// Quanto o encaixe pode ficar depois do mais cedo possível (segundos): 2 h.
+    static let maxWait: TimeInterval = 2 * 3600
     /// Desvio que ainda conta como "no caminho".
     static let onTheWayMinutes = 10
 
@@ -78,9 +80,14 @@ enum DayFit {
             options.append(Slot(start: start, end: start.addingTimeInterval(length), after: last, before: nil, travelIn: travel(from, here),
                                 detour: travel(from, here)))
         }
+        // Só conta o que não te faz esperar à toa: buraco até `maxWait` depois do mais cedo que cabe. Sem isso, "depois da
+        // última parada" (desvio pequeno por ser o fim do dia) ganhava de um buraco das 16:00 e o café virava "depois do
+        // Bar Trench 22:05" (relatório v9, item 6).
+        guard let earliest = options.map(\.start).min() else { return nil }
+        let reasonable = options.filter { $0.start.timeIntervalSince(earliest) <= maxWait }
         // O mais cedo que fica no caminho (até 10 min de desvio); senão o de menor desvio.
-        if let onTheWay = options.filter({ $0.detour <= onTheWayMinutes }).min(by: { $0.start < $1.start }) { return onTheWay }
-        return options.min { ($0.detour, $0.start) < ($1.detour, $1.start) }
+        if let onTheWay = reasonable.filter({ $0.detour <= onTheWayMinutes }).min(by: { $0.start < $1.start }) { return onTheWay }
+        return reasonable.min { ($0.detour, $0.start) < ($1.detour, $1.start) }
     }
 
     /// A parada do encaixe (card branco de Must, 25 min).
