@@ -1,6 +1,6 @@
 import XCTest
 
-/// Caminhos que só existiam na tela e nunca tinham sido conferidos (09/11/2026): "+ board" num pino de fora no Explorar,
+/// Caminhos que só existiam na tela e nunca tinham sido conferidos (09/11/2026): guardar um pino de fora no Explorar (o mapa),
 /// a busca de loja de um presente no mapa da cidade e o cartaz "A ou B?" pronto pra mandar.
 final class CaminhosTests: MustUITestCase {
     private let config = Config(area: .jp, net: .normal)
@@ -10,21 +10,42 @@ final class CaminhosTests: MustUITestCase {
     }
 
     func testExplorarOutsidePinGoesToBoard() {
-        // Naka-Meguro: é onde as fontes de mentira do Por perto têm lugares de fora do board.
-        launch(config, screen: "explorar-recorte-fora", extra: ["-debugExplorarArea", "naka-meguro"])
-        let plus = app.buttons.matching(NSPredicate(format: "label ==[c] %@", "+ board")).firstMatch
-        guard plus.waitForExistence(timeout: 15) else {
+        // Prompt 32 §4: o caminho visível é Explorar (o mapa) › Camadas › Indicados › pino de fora › Guardar. O debug liga a
+        // camada e seleciona o primeiro de fora em Naka-Meguro (onde as fontes de mentira do Por perto têm lugares).
+        launch(config, screen: "v9-explorar-indicados", extra: ["-debugExplorarArea", "naka-meguro"])
+        let save = app.buttons.matching(NSPredicate(format: "label ==[c] %@", "Guardar no board")).firstMatch
+        guard save.waitForExistence(timeout: 20) else {
             attachScreenshot("explorar-fora-sem-pino")
-            return XCTFail("sem pino de fora selecionado (ou sem o botão + board)")
+            return XCTFail("sem pino de fora selecionado (ou sem o botão Guardar)")
         }
         attachScreenshot("explorar-fora-antes")
-        plus.tap()
-        // O pino vira seu: o bloco troca "+ board" por "Abrir".
+        save.tap()
+        // O pino vira seu: o Lugar resumido troca "Guardar" por "Abrir".
         XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label ==[c] %@", "Abrir")).firstMatch.waitForExistence(timeout: 5),
                       "o pino guardado não virou Must")
         XCTAssertFalse(any("label CONTAINS[c] %@", "não deu pra guardar").exists)
         attachScreenshot("explorar-fora-depois")
         assertAlive("explorar + board", config)
+    }
+
+    func testExplorarMapPanelAndLayers() {
+        // O mapa é a raiz: "Pedir algo…", "Agora vale" abre o médio, "Ver lista" o grande, e o menu Camadas tem as quatro.
+        launch(config, screen: "v9-explorar-recolhida")
+        let summary = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Agora vale")).firstMatch
+        XCTAssertTrue(summary.waitForExistence(timeout: 15), "sem a linha Agora vale no painel")
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Pedir algo")).firstMatch.exists)
+        summary.tap()
+        let list = app.buttons["Ver lista"]
+        XCTAssertTrue(list.waitForExistence(timeout: 5), "o painel não subiu pro médio")
+        list.tap()
+        XCTAssertTrue(app.buttons["Agora vale"].waitForExistence(timeout: 5), "o painel não subiu pro grande")
+        attachScreenshot("explorar-grande")
+        app.buttons["Camadas"].tap()
+        for name in ["Meus Musts", "Hoje", "Agora", "Indicados"] {
+            XCTAssertTrue(any("label BEGINSWITH %@", name).waitForExistence(timeout: 3), "camada \(name) sumiu do menu")
+        }
+        attachScreenshot("explorar-camadas")
+        assertAlive("explorar painel", config)
     }
 
     func testGiftStoreSearchOnCityMap() {

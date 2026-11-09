@@ -125,6 +125,7 @@
 		304931CC76265A963B70CDB0 /* TicketDemo.swift in Sources */ = {isa = PBXBuildFile; fileRef = B88C140CE0E8694D9DEC46D0 /* TicketDemo.swift */; };
 		3113BDAF386AE5E23205A463 /* MapStyleLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8ABA50ADA5CB704BF467CFA /* MapStyleLoader.swift */; };
 		31B6F0B7287ABCA5FA15121D /* MapSearch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 665DE0BC6E2B17D76CD0A488 /* MapSearch.swift */; };
+		3208283FD5E8CCC00143499C /* ExplorarMapTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 394E1244406AD7651A510E28 /* ExplorarMapTests.swift */; };
 		32DE61453E8E3ACE3798E321 /* BolsoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D5AF2353CFC137BC12A870 /* BolsoView.swift */; };
 		34059BC08F4255E5067CC517 /* coliseu-it_PDF-texto.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 3E6C56C6B9A0E419CF3B8520 /* coliseu-it_PDF-texto.pdf */; };
 		345D55FBAF0D045350FAF93E /* FlightTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2FCC18F2FD107CBB17F43DD /* FlightTests.swift */; };
@@ -810,6 +811,7 @@
 		3847B720AFE775247C5B85A9 /* BoardCodecTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardCodecTests.swift; sourceTree = "<group>"; };
 		3878708DC3E7F204DE560538 /* SOSView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SOSView.swift; sourceTree = "<group>"; };
 		38B2DF8690DB2CE16127BA08 /* PhotoBatch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoBatch.swift; sourceTree = "<group>"; };
+		394E1244406AD7651A510E28 /* ExplorarMapTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExplorarMapTests.swift; sourceTree = "<group>"; };
 		3A5C5943257B1D5B2724BAFF /* ChatModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatModel.swift; sourceTree = "<group>"; };
 		3A7F51EA8B63130EF27E29DC /* Tools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tools.swift; sourceTree = "<group>"; };
 		3AD7ACDE8BA73C05DF7FB967 /* ShoppingSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShoppingSync.swift; sourceTree = "<group>"; };
@@ -1809,6 +1811,7 @@
 				E126F76CCCB44867BD3E6DB7 /* EmergencyKitTests.swift */,
 				745317422880B10B468C2413 /* EventsFeedTests.swift */,
 				D87ABAC6821287A24AB7EF71 /* ExperienceTests.swift */,
+				394E1244406AD7651A510E28 /* ExplorarMapTests.swift */,
 				7BB74C441790520DD7BD7D3E /* ExplorarPinTests.swift */,
 				1789F2AC76B621EE0DFA0515 /* ExplorarTests.swift */,
 				93C546271D99E6CB597CC869 /* FilmsTests.swift */,
@@ -3076,6 +3079,7 @@
 				65D5DDC186BF29A87026BCEA /* EmergencyKitTests.swift in Sources */,
 				D81C747D6E1B9B44CA0443AD /* EventsFeedTests.swift in Sources */,
 				C873A054C109C6743931A96E /* ExperienceTests.swift in Sources */,
+				3208283FD5E8CCC00143499C /* ExplorarMapTests.swift in Sources */,
 				0D38BD38164E522AF2E4C766 /* ExplorarPinTests.swift in Sources */,
 				AAFC3C2145EDDB1FFCCB25A9 /* ExplorarTests.swift in Sources */,
 				E8A5D57977D44754170D4FDF /* FilmsTests.swift in Sources */,
