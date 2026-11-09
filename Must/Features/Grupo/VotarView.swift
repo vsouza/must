@@ -12,14 +12,23 @@ enum PollSideInfo {
 
     static func minutes(_ place: Place, here: CLLocation?, walkMax: Double) -> Int? {
         guard let here else { return nil }
-        return PlaceFicha.travelMinutes(place, from: here, walkMaxKm: walkMax)
+        let minutes = PlaceFicha.travelMinutes(place, from: here, walkMaxKm: walkMax)
+        return minutes <= maxMinutes ? minutes : nil
     }
 
     @MainActor
     static func side(_ place: Place, region: Region, here: CLLocation?, walkMax: Double) -> PollPoster.Side {
         let photo = place.photoRefs.first.flatMap { PlacePhotoStore.existing($0) }?.path()
         return PollPoster.Side(name: place.name, area: area(place, region: region),
-                               minutes: minutes(place, here: here, walkMax: walkMax).map { "\($0) min" } ?? "", photoPath: photo)
+                               minutes: minutesText(minutes(place, here: here, walkMax: walkMax)), photoPath: photo)
+    }
+
+    /// Acima disso o lugar é de outra cidade (Tóquio → Kyoto dava "440 min" no cartaz): melhor não dizer nada.
+    nonisolated static let maxMinutes = 90
+
+    nonisolated static func minutesText(_ minutes: Int?) -> String {
+        guard let minutes, minutes <= maxMinutes else { return "" }
+        return "\(minutes) min"
     }
 }
 

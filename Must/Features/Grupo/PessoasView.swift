@@ -65,7 +65,7 @@ struct PessoasView: View {
 
     private var suggestionsBlock: some View {
         VStack(alignment: .leading, spacing: 10) {
-            MonoLabel("de Presentes · toque pra adicionar", size: 10, color: V8.mute)
+            MonoLabel("nomes dos seus Presentes", size: 10, color: V8.mute)
             FlowLayout(spacing: 8) {
                 ForEach(suggestions, id: \.self) { name in
                     Button { insert(name) } label: { CutChip(text: "+ \(name)") }.buttonStyle(.plain)

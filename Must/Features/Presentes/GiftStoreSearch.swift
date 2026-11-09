@@ -42,7 +42,10 @@ enum GiftStoreSearch {
         let folded = board.map { (WantCategory.fold($0.name), CLLocation(latitude: $0.lat, longitude: $0.lng)) }
         var seen = Set<String>()
         var out: [Hit] = []
-        for hit in hits {
+        for var hit in hits {
+            // Nada em japonês na interface: a mesma loja quase sempre vem também com o nome latino.
+            if hasCJK(hit.name) { continue }
+            if hasCJK(hit.address) { hit.address = "" }
             let key = WantCategory.fold(hit.name)
             let here = CLLocation(latitude: hit.lat, longitude: hit.lng)
             let duplicate = folded.contains { $0.0 == key || ($0.1.distance(from: here) < 100 && ($0.0.contains(key) || key.contains($0.0))) }
@@ -51,6 +54,10 @@ enum GiftStoreSearch {
             if out.count == limit { break }
         }
         return out
+    }
+
+    static func hasCJK(_ text: String) -> Bool {
+        text.unicodeScalars.contains { $0.properties.isIdeographic || (0x3040...0x30FF).contains($0.value) }
     }
 
     /// Busca única (ao enviar, nunca a cada tecla). Sem rede ou com erro: vazio.

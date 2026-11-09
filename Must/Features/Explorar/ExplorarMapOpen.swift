@@ -250,8 +250,24 @@ struct ExplorarMapOpen: View {
     private func selectedBlock(_ item: ExplorarItem, listed: [ExplorarItem]) -> some View {
         let ref = model.photoRefs[item.id]?.first
         let url = ref.flatMap { PlacePhotoStore.existing($0) }
-        // Ações em cima da foto: no iPhone 17 o bloco abaixo do mapa tem ~160 pt e a barra cobria os botões.
+        let d = ExplorarTravel.distance(item.meters)
+        // Nome e ações em cima, foto embaixo: com a faixa "agora" sobram ~120 pt sob o mapa, e o nome no pé da foto ficava
+        // escondido atrás dela (os botões apareciam sem dizer de qual lugar eram).
         return VStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                    Text(item.name)
+                        .font(V8Font.display(22, width: 85, weight: 800)).tracking(-0.4).foregroundStyle(V8.ink)
+                        .lineLimit(1).minimumScaleFactor(0.7)
+                    Spacer(minLength: 8)
+                    MonoLabel("\(d.value) \(d.unit) · \(ExplorarTravel.caption(item.meters))", size: 10, color: V8.ink).fixedSize()
+                }
+                Text(item.meta).font(V8Font.text(13)).foregroundStyle(V8.mute).lineLimit(1)
+            }
+            .padding(.horizontal, 20).padding(.vertical, 10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+            .gesture(nextPinSwipe(item, listed: listed))
             HStack(spacing: 0) {
                 actionButton("Ir", filled: true) { MapsLinks.openApple(to: item.coordinate, name: item.name) }
                 dayButton(item)
@@ -268,30 +284,20 @@ struct ExplorarMapOpen: View {
                 MonoLabel(notice, size: 10, color: V8.mute).frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 20).padding(.vertical, 8)
             }
-            CutBand(photo: url, alignment: .bottomLeading) {
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack(alignment: .firstTextBaseline) {
-                        if let n = item.number { MonoLabel("pino \(n)", size: 10, color: V8.white) }
-                        Spacer(minLength: 8)
-                        let d = ExplorarTravel.distance(item.meters)
-                        MonoLabel("\(d.value) \(d.unit) · \(ExplorarTravel.caption(item.meters))", size: 10, color: V8.white)
-                    }
+            CutBand(photo: url, alignment: .topLeading) {
+                HStack {
+                    if let n = item.number { MonoLabel("pino \(n)", size: 10, color: V8.white) }
                     Spacer(minLength: 0)
-                    Text(item.name)
-                        .font(V8Font.display(36, width: 85, weight: 800)).tracking(-1)
-                        .lineLimit(2).minimumScaleFactor(0.5)
-                    Text(item.meta).font(V8Font.text(14)).foregroundStyle(V8.white.opacity(0.9)).lineLimit(1)
                 }
-                .padding(.horizontal, 20).padding(.vertical, 14)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 20).padding(.vertical, 12)
             }
-            .frame(height: 160)
+            .frame(height: 120)
             .clipped()
+            // Deslizar = próximo pino, só no nome e na foto: no bloco inteiro o arrasto engolia o toque dos botões.
+            .contentShape(Rectangle())
+            .gesture(nextPinSwipe(item, listed: listed))
+            .accessibilityHidden(true)
         }
-        .simultaneousGesture(DragGesture(minimumDistance: 30).onEnded { value in
-            guard abs(value.translation.width) > abs(value.translation.height) * 1.5 else { return }
-            if let next = ExplorarLayers.neighbor(of: item.id, in: listed, by: value.translation.width < 0 ? 1 : -1) { select(next) }
-        })
         .accessibilityElement(children: .contain)
         .accessibilityAction(named: "Próximo pino") {
             if let next = ExplorarLayers.neighbor(of: item.id, in: listed, by: 1) { select(next) }
@@ -331,6 +337,13 @@ struct ExplorarMapOpen: View {
             .background(V8.paper)
             .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
             .accessibilityLabel(title)
+    }
+
+    private func nextPinSwipe(_ item: ExplorarItem, listed: [ExplorarItem]) -> some Gesture {
+        DragGesture(minimumDistance: 30).onEnded { value in
+            guard abs(value.translation.width) > abs(value.translation.height) * 1.5 else { return }
+            if let next = ExplorarLayers.neighbor(of: item.id, in: listed, by: value.translation.width < 0 ? 1 : -1) { select(next) }
+        }
     }
 
     private func actionButton(_ title: String, filled: Bool, action: @escaping () -> Void) -> some View {

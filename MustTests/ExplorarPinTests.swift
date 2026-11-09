@@ -147,4 +147,15 @@ struct ExplorarPinTests {
         let out = GiftStoreSearch.outside(hits, board: [("Don Quijote Shinjuku", 35.6950, 139.7010)])
         #expect(out.map(\.name) == ["Daiso Harajuku"])
     }
+
+    @Test func giftOutsideResultsNeverShowJapanese() {
+        let hits = [
+            GiftStoreSearch.Hit(name: "ビックカメラ 渋谷東口店", lat: 35.6590, lng: 139.7030, address: "渋谷1-24-10"),
+            GiftStoreSearch.Hit(name: "Bic Camera Shinjuku", lat: 35.6900, lng: 139.7000, address: "西新宿1丁目5番1号"),
+            GiftStoreSearch.Hit(name: "Bic Camera", lat: 35.6910, lng: 139.7040, address: "Shinjuku 3-Chōme 26-10"),
+        ]
+        let out = GiftStoreSearch.outside(hits, board: [])
+        #expect(out.map(\.name) == ["Bic Camera Shinjuku", "Bic Camera"])
+        #expect(out.map(\.address) == ["", "Shinjuku 3-Chōme 26-10"])
+    }
 }

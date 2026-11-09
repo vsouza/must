@@ -120,7 +120,8 @@ struct ExplorarView: View {
             railActive = true
             railPreview = min(2, max(model.count - 1, 0))
         case "explorar-recorte", "explorar-recorte-pino", "explorar-recorte-fora":
-            model.select(area: "nakano")
+            // `-debugExplorarArea naka-meguro`: onde as fontes de mentira do Por perto têm lugares de fora (UI tests).
+            model.select(area: DebugFlags.string("debugExplorarArea") ?? "nakano")
             mapOpen = true
         default: break
         }
@@ -388,6 +389,11 @@ struct ExplorarView: View {
         let row = ExplorarPinActions.row(for: item, slot: nil, areaId: area.id)
         guard let place = QueroSave.place(for: row, intent: nil, text: "", lists: lists, cityId: env.cityId, region: region,
                                           sync: services.sync, context: context) else { return nil }
+        // Guardado a partir da página do bairro: é desse bairro (senão o pino some da página na hora de virar seu).
+        if (place.area ?? "").isEmpty {
+            place.area = area.id
+            try? context.save()
+        }
         refreshInputs()
         return place.id
     }
