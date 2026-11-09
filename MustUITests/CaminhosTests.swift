@@ -14,7 +14,7 @@ final class CaminhosTests: MustUITestCase {
         // camada e seleciona o primeiro de fora em Naka-Meguro (onde as fontes de mentira do Por perto têm lugares).
         launch(config, screen: "v9-explorar-indicados", extra: ["-debugExplorarArea", "naka-meguro"])
         let save = app.buttons.matching(NSPredicate(format: "label ==[c] %@", "Guardar no board")).firstMatch
-        guard save.waitForExistence(timeout: 20) else {
+        guard save.waitForExistence(timeout: 40) else {
             attachScreenshot("explorar-fora-sem-pino")
             return XCTFail("sem pino de fora selecionado (ou sem o botão Guardar)")
         }
@@ -32,7 +32,11 @@ final class CaminhosTests: MustUITestCase {
         // O mapa é a raiz: "Pedir algo…", "Agora vale" abre o médio, "Ver lista" o grande, e o menu Camadas tem as quatro.
         launch(config, screen: "v9-explorar-recolhida")
         let summary = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Agora vale")).firstMatch
-        XCTAssertTrue(summary.waitForExistence(timeout: 15), "sem a linha Agora vale no painel")
+        // 40 s: a primeira abertura depois de instalar (estilo do mapa e fontes frios) pode levar ~15 s.
+        guard summary.waitForExistence(timeout: 40) else {
+            attachScreenshot("explorar-sem-painel")
+            return XCTFail("sem a linha Agora vale no painel")
+        }
         XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Pedir algo")).firstMatch.exists)
         summary.tap()
         let list = app.buttons["Ver lista"]
@@ -63,7 +67,7 @@ final class CaminhosTests: MustUITestCase {
         field.tap()
         app.typeText("Bic Camera\n")
         let save = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Guardar ")).firstMatch
-        guard save.waitForExistence(timeout: 20) else {
+        guard save.waitForExistence(timeout: 40) else {
             attachScreenshot("loja-sem-resultado")
             return XCTFail("a busca no mapa da cidade não trouxe loja de fora")
         }
