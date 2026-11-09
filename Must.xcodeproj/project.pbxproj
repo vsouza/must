@@ -90,6 +90,7 @@
 		1E7978C66213AF4A1BB5A450 /* PresentesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D1BFD9C5AE314139EDAFA1C /* PresentesView.swift */; };
 		1E7AAC71C8AA6F8967423CA0 /* Settlement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8343C1C616DA3C644E064416 /* Settlement.swift */; };
 		1E8BA12B7B0C98ACB7FC5882 /* NowAccessory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F453DC12283474078AB1B13 /* NowAccessory.swift */; };
+		1F39D18F1F3AA9BB98EAB3D4 /* TicketImportConfidenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BC9B5B3E12B2D72D3410653 /* TicketImportConfidenceTests.swift */; };
 		1FCF495EF4C450F77446E766 /* BarraNativaTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 530EB713C3A53F2A7A86351F /* BarraNativaTests.swift */; };
 		1FDB5B166C904B87CA3B4487 /* EventsSources.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A0CC1C8C12ED0EB34ED1A33 /* EventsSources.swift */; };
 		1FEB3E57CD6862CA2F6FD056 /* Outbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA4E203891AC1CE8BE1BDFEB /* Outbox.swift */; };
@@ -1096,6 +1097,7 @@
 		9A8B878319F3A3CFD0EB2879 /* RegionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegionTests.swift; sourceTree = "<group>"; };
 		9AF1148EFC3CD008FAB60175 /* AreaStampsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AreaStampsTests.swift; sourceTree = "<group>"; };
 		9B23D24A63662CDD8BB529F4 /* MapCamera.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapCamera.swift; sourceTree = "<group>"; };
+		9BC9B5B3E12B2D72D3410653 /* TicketImportConfidenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketImportConfidenceTests.swift; sourceTree = "<group>"; };
 		9C41BA3E27D6A4A003625CCB /* CorteState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CorteState.swift; sourceTree = "<group>"; };
 		9CC941571578B870F1D0E6AD /* domestic-br.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "domestic-br.json"; sourceTree = "<group>"; };
 		9CD8C8F6456C640A41F53D6A /* SeedTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeedTests.swift; sourceTree = "<group>"; };
@@ -1937,6 +1939,7 @@
 				B36E598F6C67D2AADA88CB44 /* TicketCorpus.swift */,
 				CA23CE6FC8CA135BEDFFE697 /* TicketCorpusTests.swift */,
 				0BED4ED95E26276EF8E801EB /* TicketHardCasesTests.swift */,
+				9BC9B5B3E12B2D72D3410653 /* TicketImportConfidenceTests.swift */,
 				1A0026A9B2FF86CB80C7B4E5 /* TicketMatcherTests.swift */,
 				0F9CE3F785580679B015C4ED /* TicketReaderTests.swift */,
 				898728B317F655E684057DBD /* TicketScoring.swift */,
@@ -3227,6 +3230,7 @@
 				BB9473E0A0B6DB731F961957 /* TicketCorpus.swift in Sources */,
 				DB35AFD6395BAEFC27AE86F8 /* TicketCorpusTests.swift in Sources */,
 				FF9C1D3502021EAFCAC8D2BB /* TicketHardCasesTests.swift in Sources */,
+				1F39D18F1F3AA9BB98EAB3D4 /* TicketImportConfidenceTests.swift in Sources */,
 				6E16E2AA9F1FA639A98A22EE /* TicketMatcherTests.swift in Sources */,
 				753E02476613A94EF1BBE9FF /* TicketReaderTests.swift in Sources */,
 				4AE5671FFA1B6228D38B1725 /* TicketScoring.swift in Sources */,

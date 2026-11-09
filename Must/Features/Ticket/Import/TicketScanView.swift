@@ -1,7 +1,7 @@
 import SwiftUI
 import VisionKit
 
-/// TicketScan (`design/screens/TicketScan.png`): câmera com `DataScannerViewController` (VisionKit) e o card "Encontrei".
+/// Escanear (V9): câmera com `DataScannerViewController` (VisionKit), título e Voltar do sistema, e o card "Encontrei".
 struct TicketScanView: View {
     @Bindable var model: TicketImportModel
     var back: () -> Void
@@ -11,59 +11,42 @@ struct TicketScanView: View {
             if TicketScanner.isAvailable {
                 CodeScannerView(onUpdate: { model.scanUpdated($0) }).ignoresSafeArea()
             } else {
-                Color(hex: 0x17181C).ignoresSafeArea()
-                Text("Câmera de leitura indisponível aqui.").mustBody().foregroundStyle(.white)
+                Color.black.ignoresSafeArea()
+                Text("Câmera de leitura indisponível aqui.").foregroundStyle(.white)
             }
-
-            VStack(alignment: .leading, spacing: 0) {
-                HStack {
-                    IconButton(.fechar, style: .glass, label: "Voltar pra entrada", action: back)
-                    Spacer()
-                    Micro("escanear · 2 de 3", color: .white.opacity(0.6))
-                    Spacer()
-                    Color.clear.frame(width: 40, height: 40)
-                }
-                .padding(.top, 8)
-                Text("Aponte pro ingresso").font(.must.archivo(30, .semibold)).foregroundStyle(.white).padding(.top, 18)
-                Text("QR, código de barras ou o papel inteiro — pode ser a tela de outro app")
-                    .mustSerif(18).foregroundStyle(.white.opacity(0.7)).padding(.top, 4)
-                Spacer()
+            VStack(spacing: 12) {
+                Text("Aponte pro ingresso: QR, código de barras ou o papel inteiro.")
+                    .font(.subheadline).multilineTextAlignment(.center)
+                    .padding(12).background(.regularMaterial, in: RoundedRectangle(cornerRadius: V9.cornerRadius, style: .continuous))
                 if let scanned = model.scanned, !scanned.codes.isEmpty || !scanned.text.isEmpty {
                     foundCard(scanned)
                 } else if !TicketScanner.isAvailable {
-                    GhostButton("Voltar e usar Fotos ou Arquivo", action: back).padding(.bottom, 24)
+                    Button("Voltar e usar Fotos ou Arquivo", action: back).v9Secondary()
                 }
             }
-            .padding(.horizontal, 22)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .padding(V9.gutter)
         }
-        .background(Color(hex: 0x17181C))
+        .navigationTitle("Escanear")
+        .navigationBarTitleDisplayMode(.inline)
     }
 
     private func foundCard(_ scanned: TicketImportModel.ScanSnapshot) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .top, spacing: 14) {
-                KanjiSeal(done: true, size: 40)
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Encontrei: \(model.scanPreview ?? "um código")").font(.must.archivo(17, .semibold)).foregroundStyle(Color.must.ink)
-                    if let code = scanned.codes.first {
-                        Text("código \(code)").font(.must.mono(13)).foregroundStyle(Color.must.secondary)
-                    }
-                }
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Encontrei: \(model.scanPreview ?? "um código")", systemImage: "checkmark.circle.fill")
+                .font(.headline)
+            if let code = scanned.codes.first {
+                Text("código \(code)").font(.footnote.monospaced()).foregroundStyle(.secondary).lineLimit(2)
             }
             HStack(spacing: 10) {
-                PrimaryButton("Conferir e salvar") { Task { await model.scannedConfirm() } }
-                GhostButton("Outra foto") {
+                Button("Conferir e salvar") { Task { await model.scannedConfirm() } }.v9Primary()
+                Button("Outra leitura") {
                     model.scanned = nil
                     model.scanPreview = nil
-                }
-                .frame(width: 130)
+                }.v9Secondary()
             }
         }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .padding(.bottom, 24)
+        .v9Card()
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: V9.cornerRadius, style: .continuous))
     }
 }
 
