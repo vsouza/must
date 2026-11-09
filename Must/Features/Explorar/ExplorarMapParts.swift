@@ -38,10 +38,18 @@ struct ExplorarMapTop: View {
                     chip(title: c.label, color: color(of: c.id), on: model.filter.listIds.contains(c.id)) { model.toggle(list: c.id) }
                 }
             }
-            .padding(.horizontal, 12)
+            .padding(.leading, 12)
+            .padding(.trailing, 28)
             .padding(.vertical, 2)
         }
         .scrollIndicators(.hidden)
+        // Esmaece a borda direita (antes do botão de camadas): o chip some aos poucos em vez de cortar seco.
+        .mask {
+            HStack(spacing: 0) {
+                Rectangle().fill(.black)
+                LinearGradient(colors: [.black, .clear], startPoint: .leading, endPoint: .trailing).frame(width: 28)
+            }
+        }
     }
 
     private func color(of listId: String) -> MustColor? {
