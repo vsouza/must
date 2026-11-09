@@ -1,5 +1,5 @@
 <!doctype html><html lang="pt-BR"><head><title>Fluxos v9</title>{{HEAD}}
-<!--size:1600x4190-->
+<!--size:1600x4860-->
 <style>
 body{width:1600px}
 .pg{padding:56px 64px 64px}
@@ -46,6 +46,18 @@ td:nth-child(2){width:330px}
 .rules div:nth-child(-n+2){border-top:none}
 .rules b{font-family:'Martian Mono';font-size:11px;letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:4px}
 .barbig{width:390px;zoom:2.4}
+.nb{background:var(--bone);padding:10px 12px 0;width:390px}
+.nb .now{display:flex;align-items:center;gap:8px;background:var(--paper);border:1px solid #cfcabd;border-radius:22px;padding:8px 14px;margin-bottom:8px;font-size:12px;font-weight:700;letter-spacing:-.01em}
+.nb .now i{width:7px;height:7px;border-radius:50%;background:var(--or);display:block;flex:none}
+.nb .now em{font-style:normal;font-family:'Martian Mono',monospace;font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:var(--g1);margin-left:auto}
+.nb .row{display:flex;gap:8px;align-items:center}
+.nb .glass{flex:1;display:grid;grid-template-columns:repeat(4,1fr);background:var(--paper);border:1px solid #cfcabd;border-radius:30px;padding:5px}
+.nb .glass .c{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0 5px;font-size:9.5px;font-weight:600;color:var(--g1);border-radius:24px}
+.nb .glass .c.on{background:#e4e0d5;color:var(--or)}
+.nb .mag{width:54px;height:54px;border-radius:50%;background:var(--paper);border:1px solid #cfcabd;display:flex;align-items:center;justify-content:center;color:var(--ink)}
+.nb .hm{height:24px;display:flex;align-items:center;justify-content:center}
+.nb .hm i{display:block;width:134px;height:5px;border-radius:3px;background:var(--ink)}
+.tabrow{display:flex;gap:10px;margin-top:10px}
 </style></head><body>
 <div class="pg">
   <div style="display:flex;justify-content:space-between;align-items:flex-start">
@@ -55,18 +67,20 @@ td:nth-child(2){width:330px}
   <div style="display:flex;align-items:flex-end;gap:40px;margin-top:26px">
     <div class="disp" style="font-size:190px">Fluxos</div>
     <div class="disp orc" style="font-size:190px">4</div>
-    <div class="lede" style="margin-bottom:18px"><b>Quatro abas, uma régua, um ✦.</b> Hoje, Explorar, Musts e Viagem. A régua com pegador pede um lugar (quero). O ✦ pergunta (Assistente). Todo o resto mora numa aba, nunca escondido num gesto só.</div>
+    <div class="lede" style="margin-bottom:18px"><b>Quatro abas, uma lupa, uma régua, um ✦.</b> Hoje, Explorar, Musts e Viagem na barra nativa do iOS 26; a lupa à parte é o quero. A régua com pegador também pede um lugar. O ✦ pergunta (Assistente). Nenhum caminho existe só por gesto.</div>
   </div>
 
   <!-- A · barra -->
   <div class="sx">
-    <div class="k"><h2>A barra</h2><span class="mono" style="font-size:12px">faixa de tinta · sem cápsula · sem sombra</span></div>
+    <div class="k"><h2>A barra</h2><span class="mono" style="font-size:12px">nativa do iOS 26 · Liquid Glass · sem fundo próprio</span></div>
     <div style="display:flex;gap:48px;align-items:center">
-      <div class="barbig">{{BAR:explorar}}</div>
+      <div class="barbig"><div class="nb"><div class="now"><i></i><span>Agora: Gyoen · saia às 15:10</span><em>linha ›</em></div><div class="row"><div class="glass">
+<div class="c"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v5l3.5 2"/></svg><span>Hoje</span></div><div class="c on"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3.5 6.5l5.5-2.5 6 2.5 5.5-2.5v13.5l-5.5 2.5-6-2.5-5.5 2.5z"/><path d="M9 4v13.5M15 6.5V20"/></svg><span>Explorar</span></div><div class="c"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 6h12M8 12h12M8 18h12M4 6h.5M4 12h.5M4 18h.5"/></svg><span>Musts</span></div><div class="c"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="7.5" width="17" height="12" rx="2"/><path d="M9 7.5V4.5h6v3"/></svg><span>Viagem</span></div></div><div class="mag"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg></div></div><div class="hm"><i></i></div></div></div>
       <div style="font-size:16px;line-height:1.45;max-width:520px">
-        <p><b>Aba ativa</b> = bloco de papel com filete laranja de 3 pt em cima; as outras ficam na tinta, ícone + rótulo mono.</p>
-        <p style="margin-top:10px"><b>Guia</b> sai da barra e vira a página de bairro do <b>Explorar</b> (que também substitui o Mapa).</p>
-        <p style="margin-top:10px"><b>+</b> = <b>Quero · Guardar</b>: o campo do quero em cima e, embaixo, guardar Link, Vídeo, Foto, Ingresso, Presente, Nome. Segurar o + monta o dia de hoje (como hoje).</p>
+        <p><b>Barra nativa</b> (<span class="mono" style="font-size:12px">TabView</span>): Hoje · Explorar · Musts · Viagem, com tint laranja na aba ativa. Esconde ao rolar pra baixo e volta ao subir.</p>
+        <p style="margin-top:10px"><b>Lupa</b>, separada à direita (papel de busca) = <b>Quero · Guardar</b>. Em cima, o campo do quero; embaixo, "ou guarde": Link · Vídeo · Texto · Ingresso · Presente, e "Buscar por nome". Não existe mais o botão <b>+</b> nem segurar o + pra montar o dia.</p>
+        <p style="margin-top:10px"><b>Faixa "agora"</b> logo acima da barra, como o mini player do Música: "Agora: Gyoen · saia às 15:10"; sem dia, "Montar o dia de hoje". Tocar abre a Linha (ou o Montar). Some nas telas sem barra: Montar, Ir, Lugar, SOS e quero aberto.</p>
+        <p style="margin-top:10px"><b>Guia</b> virou a página de bairro do <b>Explorar</b>; o mapa completo (busca, mapas offline) fica na rota <span class="mono" style="font-size:12px">.mapa</span>.</p>
       </div>
     </div>
   </div>
@@ -75,17 +89,17 @@ td:nth-child(2){width:330px}
   <div class="sx">
     <div class="k"><h2>A capa é o centro</h2><span class="mono" style="font-size:12px">gestos da capa · cada um com um botão equivalente</span></div>
     <div class="cross">
-      <div style="grid-column:2;grid-row:1;text-align:center"><div class="arrow">↑</div><div class="box" style="text-align:left"><b>Linha do dia</b><span>deslizar pra cima. As 9 paradas, deslocamentos como itens. Montar o dia mora aqui.</span></div></div>
+      <div style="grid-column:2;grid-row:1;text-align:center"><div class="arrow">↑</div><div class="box" style="text-align:left"><b>Linha do dia</b><span>deslizar pra cima ou tocar na faixa "agora". As 9 paradas, deslocamentos como itens. Sem dia, a faixa e uma linha da capa oferecem "Montar o dia de hoje".</span></div></div>
       <div style="grid-column:1;grid-row:2;display:flex;align-items:center;gap:18px">
         <img src="Assistente-1.png" style="width:190px;border:3px solid var(--ink)">
-        <div><div class="gx o">← ou ✦</div><div class="box or"><b>Assistente</b><span>deslizar pra esquerda ou tocar no ✦ (canto direito do bloco). Abre em "O que eu sei de hoje": as Dicas viraram a primeira página.</span></div></div>
+        <div><div class="gx o">✦ · ←</div><div class="box or"><b>Assistente</b><span>tocar no ✦ (canto direito do bloco); deslizar pra esquerda é o atalho. Abre em "O que eu sei de hoje": as Dicas viraram a primeira página.</span></div></div>
       </div>
       <div class="c"><img src="Presentes-Perto.png"></div>
       <div style="grid-column:3;grid-row:2;display:flex;align-items:center;gap:18px">
-        <div><div class="gx">→ ou alça</div><div class="box"><b>Bolso</b><span>deslizar pra direita. Junta os Atalhos ("Na mão": Suica, ingressos de hoje, mapa offline, SOS) com o Bolso (câmbio, frases, último trem, tax-free). 100 % offline.</span></div></div>
+        <div><div class="gx">linha Bolso · → · alça</div><div class="box"><b>Bolso</b><span>linha "Bolso" visível na capa; deslizar pra direita e a alça são atalhos. Atalhos no topo (Suica, ingressos de hoje, mapa offline, SOS, linhas perto) e a grade do Bolso embaixo. 100 % offline.</span></div></div>
       </div>
       <div style="grid-column:1;grid-row:1;align-self:end"><div class="gx">⇄ no canto esquerdo</div><div class="box"><b>Minhas viagens</b><span>trocar de viagem, bandeira + moeda em cada linha, nova viagem.</span></div></div>
-      <div style="grid-column:3;grid-row:1;align-self:end"><div class="gx o">puxar a régua · tocar no bairro</div><div class="box or"><b>Quero…</b><span>a fenda laranja abre; resultado em duas faixas (seus Musts mesmo longe · perto agora). Se o texto for pergunta, oferece o Assistente.</span></div></div>
+      <div style="grid-column:3;grid-row:1;align-self:end"><div class="gx o">régua · lupa</div><div class="box or"><b>Quero…</b><span>tocar ou puxar a régua, ou a lupa da barra. A fenda laranja abre; resultado em duas faixas (seus Musts mesmo longe · perto agora). Se o texto for pergunta, oferece o Assistente.</span></div></div>
       <div style="grid-column:2;grid-row:3;text-align:center"><div class="arrow">↓</div><div class="box" style="text-align:left"><b>Bom dia · Boa noite</b><span>deslizar pra baixo fora da régua. Antes das 10h, o briefing; depois das 21h, o fechamento.</span></div></div>
       <div style="grid-column:1;grid-row:3"><div class="gx">toque numa linha</div><div class="box"><b>Lugar · evento</b><span>segurar a linha = encaixar hoje. Presente perto aparece aqui (linha laranja, selo "presente").</span></div></div>
       <div style="grid-column:3;grid-row:3"><div class="gx">aviso local · live activity</div><div class="box ink"><b>O app fala sozinho</b><span>bom dia, saia às, golden, último trem; à noite, SOS na Live Activity.</span></div></div>
@@ -99,11 +113,12 @@ td:nth-child(2){width:330px}
       <div><div class="h o"><span>Hoje</span><span>1</span></div>
         <div class="r"><b>Capa (corte)</b><span>bairro · aberto a 10 min · índice</span></div>
         <div class="r"><b>Agora → Ir → Como chegar</b><span>toque na linha do plano</span></div>
+        <div class="r new"><b>Faixa "agora"</b><span>acima da barra · abre a Linha ou o Montar</span></div>
         <div class="r"><b>Linha do dia ↑</b><span>e Montar / Outra</span></div>
         <div class="r"><b>Bom dia · Boa noite ↓</b></div>
-        <div class="r new"><b>Assistente ← / ✦</b><span>Dicas dentro</span></div>
-        <div class="r new"><b>Bolso →</b><span>Atalhos + Bolso</span></div>
-        <div class="r"><b>Quero (régua)</b></div>
+        <div class="r"><b>Assistente ✦ / ←</b><span>Dicas dentro</span></div>
+        <div class="r new"><b>Bolso</b><span>linha na capa · → é atalho</span></div>
+        <div class="r"><b>Quero (régua ou lupa)</b></div>
         <div class="r"><b>Em cartaz</b><span>linha de evento → lista</span></div>
       </div>
       <div><div class="h o"><span>Explorar</span><span>2</span></div>
@@ -113,31 +128,32 @@ td:nth-child(2){width:330px}
         <div class="r"><b>Guia do bairro</b><span>texto, vizinhos, Musts por hora (era a aba Guia)</span></div>
         <div class="r"><b>Lugar</b></div>
         <div class="r"><b>Quero com origem no bairro</b></div>
+        <div class="r new"><b>Mapa completo</b><span>rota .mapa: busca e mapas offline</span></div>
       </div>
       <div><div class="h"><span>Musts</span><span>3</span></div>
         <div class="r"><b>Board</b><span>listas como faixas</span></div>
         <div class="r"><b>Lista → Lugar</b></div>
-        <div class="r new"><b>Presentes</b><span>faixa fixa no topo do board · por pessoa</span></div>
         <div class="r"><b>Fica pro fim</b></div>
         <div class="r"><b>Must do</b><span>experiências por link</span></div>
         <div class="r"><b>Coleção</b><span>os feitos</span></div>
       </div>
       <div><div class="h"><span>Viagem</span><span>4</span></div>
+        <div class="r"><b>Minhas viagens</b><span>linha fixa no topo · bandeira + moeda</span></div>
+        <div class="r new"><b>Presentes · 5 faltam de 6</b><span>lista fácil: Faltam · Todos · pessoa; caixa, loja e preço; campo "Novo presente…"; deslizar = comprado / apagar com desfazer</span></div>
+        <div class="r new"><b>Grupo</b><span>Pessoas · Votar · Acertar contas · Mandar o dia</span></div>
         <div class="r"><b>Próximos</b><span>ingressos, reservas, voos em ordem</span></div>
         <div class="r"><b>Ingresso</b><span>QR, como chegar, âncora do dia</span></div>
         <div class="r"><b>Carteira · Voos</b></div>
         <div class="r"><b>Compras + regras da volta</b><span>presentes comprados entram aqui</span></div>
-        <div class="r"><b>Gasto e dias · Mandar</b></div>
-        <div class="r"><b>Mapas offline</b></div>
-        <div class="r new"><b>Minhas viagens · SOS · Ajustes</b><span>linhas fixas no fim</span></div>
+        <div class="r"><b>Gasto e dias</b><span>link mais abaixo na aba</span></div>
+        <div class="r"><b>Mapas offline · SOS · Ajustes</b></div>
       </div>
-      <div><div class="h o"><span>+</span><span>·</span></div>
-        <div class="r"><b>Quero…</b><span>o campo, em cima</span></div>
-        <div class="r"><span class="m">guardar</span><b>Link · Vídeo · Texto</b></div>
+      <div><div class="h o"><span>Lupa</span><span>Quero</span></div>
+        <div class="r"><b>Quero…</b><span>o campo, em cima; mesmo quero da régua</span></div>
+        <div class="r"><span class="m">ou guarde</span><b>Link · Vídeo · Texto</b></div>
         <div class="r new"><b>Ingresso</b><span>PDF, foto, .pkpass, câmera</span></div>
         <div class="r new"><b>Presente</b><span>nome, link, vídeo, local, foto</span></div>
         <div class="r"><b>Buscar por nome</b></div>
-        <div class="r"><span class="m">segurar o +</span><b>Montar o dia de hoje</b></div>
       </div>
     </div>
   </div>
@@ -149,12 +165,14 @@ td:nth-child(2){width:330px}
       <tr><th>coisa</th><th>casa</th><th>portas</th></tr>
       <tr><td>Assistente</td><td>tela cheia, por cima da aba atual</td><td>✦ no canto superior direito de todo bloco de foto (capa, Lugar, Lista, Explorar, Presentes) · ← na capa · "Continuar no Assistente" no quero · Siri / <span class="mono">must://assistente</span></td></tr>
       <tr><td>Dicas</td><td>primeira página do Assistente</td><td>as mesmas do Assistente; filtros Agora · bairro · país · Salvas. Some como tela própria.</td></tr>
-      <tr><td>Quero…</td><td>fenda laranja sob o bloco</td><td>puxar a régua com pegador (capa, Lugar, Lista, Explorar, Presentes) · tocar no nome do bairro · + da barra</td></tr>
-      <tr><td>Bolso</td><td>painel que entra da direita</td><td>→ na capa · alça na borda direita · Lugar › "caixa perto" · Viagem</td></tr>
+      <tr><td>Quero…</td><td>fenda laranja sob o bloco</td><td>puxar ou tocar a régua com pegador (capa, Lugar, Lista, Explorar) · tocar no nome do bairro · lupa da barra</td></tr>
+      <tr><td>Bolso</td><td>tela empilhada: Atalhos no topo, grade do Bolso embaixo</td><td>linha "Bolso" na capa · → na capa · alça na borda direita · Lugar › "caixa perto"</td></tr>
       <tr><td>SOS</td><td>tela tinta (fora do corte)</td><td>primeira faixa do Bolso · Viagem (linha fixa) · Quick Action do ícone · Live Activity à noite. Nunca liga sozinho.</td></tr>
-      <tr><td>Ingressos</td><td>Viagem › Próximos</td><td>+ › Ingresso · Share Extension · Bolso (hoje) · Lugar › Ingresso · Live Activity no dia</td></tr>
-      <tr><td>Presentes</td><td>Musts › Presentes</td><td>+ › Presente · quero "presente/comprar…" · linha laranja na capa quando a loja está a 10 min · micro-parada na Linha do dia</td></tr>
-      <tr><td>Explorar</td><td>aba 2</td><td>barra · Lugar › "no mapa" abre o recorte com o pino · Guia/Linha do dia › bairro</td></tr>
+      <tr><td>Ingressos</td><td>Viagem › Próximos</td><td>lupa › Ingresso · Share Extension · Bolso (hoje) · Lugar › Ingresso · Live Activity no dia</td></tr>
+      <tr><td>Presentes</td><td>Viagem › Presentes (lista fácil)</td><td>lupa › Presente · campo "Novo presente…" na própria lista · quero "presente/comprar…" · linha laranja na capa quando a loja está a 10 min · micro-parada na Linha do dia</td></tr>
+      <tr><td>Explorar</td><td>aba 2</td><td>barra · mapa completo pela rota .mapa · Lugar › "no mapa" abre o recorte com o pino · Guia/Linha do dia › bairro</td></tr>
+      <tr><td>Montar o dia</td><td>tela cheia (sem barra)</td><td>faixa "agora" ("Montar o dia de hoje") · linha da capa quando não há dia · Linha do dia</td></tr>
+      <tr><td>Grupo</td><td>Viagem, logo abaixo de Presentes</td><td>Pessoas · Votar (cartaz "A ou B?") · Acertar contas · Mandar o dia; tudo pelo compartilhar do iOS, sem servidor</td></tr>
       <tr><td>Minhas viagens</td><td>tela cheia</td><td>⇄ no canto superior esquerdo da capa · Viagem (linha fixa) · Ajustes › Viagem</td></tr>
     </table>
   </div>
@@ -165,7 +183,9 @@ td:nth-child(2){width:330px}
     <div class="tri">
       <div><div class="h">Sai</div>
         <div class="r"><b>Aba Guia</b><span>era um bairro só; o Explorar mostra todos, com o mesmo conteúdo.</span></div>
-        <div class="r"><b>Rota Mapa (tela solta)</b><span>vira o recorte aberto do Explorar.</span></div>
+        <div class="r"><b>Botão + e segurar o +</b><span>o quero ganhou a lupa da barra; o Montar ganhou a faixa "agora".</span></div>
+        <div class="r"><b>Barra customizada</b><span>faixa de tinta com cápsula própria: dava trabalho pra navegar. Entra a barra nativa.</span></div>
+        <div class="r"><b>Presentes na aba Musts</b><span>moraram no topo do board; agora ficam na Viagem.</span></div>
         <div class="r"><b>Dicas como tela própria</b><span>três telas de "texto que ajuda" (Dicas, Assistente, Quero) confundiam.</span></div>
         <div class="r"><b>Passo a passo e cutucão</b><span>prompt 31 · 1: a régua fala sozinha ("↓ quero").</span></div>
         <div class="r"><b>Botões redondos de IA</b><span>FAB do Mapa e do Dia; o ✦ fica num lugar só.</span></div>
@@ -173,12 +193,12 @@ td:nth-child(2){width:330px}
       <div><div class="h">Junta</div>
         <div class="r"><b>Dicas + Assistente = Assistente</b><span>o app fala primeiro (dicas), você pergunta depois, na mesma tela.</span></div>
         <div class="r"><b>Atalhos + Bolso = Bolso</b><span>"na mão" e "no bolso" eram a mesma promessa em dois painéis.</span></div>
-        <div class="r"><b>Guia + Mapa = Explorar</b><span>bairro e mapa são a mesma pergunta: o que tem ali.</span></div>
+        <div class="r"><b>Guia = Explorar</b><span>o Explorar absorveu o Guia; o mapa completo fica na rota .mapa, aberta de dentro do Explorar.</span></div>
         <div class="r"><b>Indicados fora do board</b><span>saem dos Atalhos: camada "fora do board" no Explorar e faixa tinta do quero.</span></div>
       </div>
       <div><div class="h">Muda</div>
         <div class="r"><b>✦ abre o Assistente</b><span>antes abria Dicas: o ícone de IA prometia conversa e entregava lista.</span></div>
-        <div class="r"><b>← na capa = Assistente</b><span>mesmo destino do ✦; nenhum gesto é a única porta.</span></div>
+        <div class="r"><b>Nenhum caminho só por gesto</b><span>Bolso tem linha na capa, Assistente tem o ✦, Montar tem a faixa "agora", quero tem a lupa. Os gestos viraram atalho.</span></div>
         <div class="r"><b>Quero × pergunta</b><span>quero acha lugar físico; se o texto é pergunta, uma faixa tinta oferece o Assistente com o texto.</span></div>
         <div class="r"><b>Botões quadrados</b><span>⇄, ✦, ←, ✕: 40 pt, borda 2 pt, sem raio.</span></div>
       </div>
@@ -194,6 +214,8 @@ td:nth-child(2){width:330px}
       <div><b>cantos fixos</b>superior esquerdo: ⇄ (capa), ← (empurrada) ou ✕ (tela cheia). Superior direito: ✦. Nada mais nos cantos além de texto mono.</div>
       <div><b>cor por linha inteira</b>laranja = seu (aberto agora / perto / ação) · tinta = de fora do board · papel = plano, fechado ou o resto. Pino segue a mesma regra.</div>
       <div><b>foto só se já está no disco</b>de fora do board nunca baixa foto (linha sem miniatura). Sem foto: bloco com a cor do lugar + trama + arcos.</div>
+      <div><b>barra nativa, sem enfeite</b>Liquid Glass do iOS 26, tint laranja, sem fundo próprio. Telas que escondem a barra: Montar, Ir, Lugar, SOS, quero aberto. Faixa "agora" some junto.</div>
+      <div><b>nenhum caminho só por gesto</b>todo gesto (→ Bolso, ← Assistente, puxar a régua, ↑ Linha) tem um botão ou uma linha visível equivalente.</div>
       <div><b>um numeral por tela</b>quantos abertos, quantos faltam, quantas dicas, quantas viagens. Sempre laranja no papel ou branco no bloco.</div>
     </div>
   </div>
