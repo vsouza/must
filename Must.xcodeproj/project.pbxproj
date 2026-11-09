@@ -510,7 +510,6 @@
 		C873A054C109C6743931A96E /* ExperienceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D87ABAC6821287A24AB7EF71 /* ExperienceTests.swift */; };
 		C8A0BA68A8B6A135BFB9DCE9 /* UniformTypeIdentifiers.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E472129BD157938345D871BF /* UniformTypeIdentifiers.framework */; };
 		C921CC2375678A03499F2454 /* KindsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A68D631FD82CB44E32D3116B /* KindsTests.swift */; };
-		CA7378B09FACBE946E187D68 /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6675C1F44B4037B9EE207B20 /* TodayView.swift */; };
 		CACDE58F204C6209DA312622 /* PresenteItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 435578636CAC7AF66F2A2754 /* PresenteItemView.swift */; };
 		CAE4712642A45CFA58D62F84 /* MustShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F5D9962BB74EFE458C08ABD /* MustShared.swift */; };
 		CB8369892BDB840CE762F320 /* PlacePanelFichaTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EB0211FCC84D9ED73E17DAE /* PlacePanelFichaTests.swift */; };
@@ -954,7 +953,6 @@
 		65D26F12409B094181F965A5 /* ExplorarModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExplorarModel.swift; sourceTree = "<group>"; };
 		65EFC6E06AB0497535D2DFA8 /* ExplorarMapaView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExplorarMapaView.swift; sourceTree = "<group>"; };
 		665DE0BC6E2B17D76CD0A488 /* MapSearch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapSearch.swift; sourceTree = "<group>"; };
-		6675C1F44B4037B9EE207B20 /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
 		66C153FFED846D5383324C01 /* DayEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayEngineTests.swift; sourceTree = "<group>"; };
 		66C941EE35EBDE4F8F3289F5 /* HojeLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HojeLogic.swift; sourceTree = "<group>"; };
 		67244091AE5914D81634B15B /* TripView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripView.swift; sourceTree = "<group>"; };
@@ -2806,7 +2804,6 @@
 				61A720A1C71162BCB57BD0BB /* DayMoments.swift */,
 				CDDD0F80798B876B7A813010 /* DayProblemDemo.swift */,
 				332D29466FF6E504EE389341 /* LinhaDoDiaView.swift */,
-				6675C1F44B4037B9EE207B20 /* TodayView.swift */,
 				D7B1042BAFD7D795F786B882 /* V8DayParts.swift */,
 				7DAD3B1A3A057AF04985CE1D /* V9Line.swift */,
 			);
@@ -3651,7 +3648,6 @@
 				162916E82CC805790AA86B70 /* TipsSection.swift in Sources */,
 				2FC4BF9D806E3E47C9084059 /* TipsSources.swift in Sources */,
 				02D4580BC08CA2E4BA06B70A /* TodayContext.swift in Sources */,
-				CA7378B09FACBE946E187D68 /* TodayView.swift in Sources */,
 				90B9BDB5BF906FA09336079C /* Tools.swift in Sources */,
 				96E0913F9D72F3B10D1248D9 /* Transit.swift in Sources */,
 				B23B6254E346449B432FB1C9 /* TravelMatrix.swift in Sources */,

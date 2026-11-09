@@ -222,7 +222,7 @@ struct TicketView: View {
         } label: { Label("Ir ao encontro", systemImage: "figure.walk").frame(maxWidth: .infinity) }
             .v9Primary()
         Button {
-            router.push(.day(date: region.calendar.startOfDay(for: ticket.at)), on: router.tab)
+            router.push(.linha(date: region.calendar.startOfDay(for: ticket.at)), on: router.tab)
         } label: { Text("Ver o dia").frame(maxWidth: .infinity) }
             .v9Secondary()
     }

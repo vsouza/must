@@ -55,7 +55,6 @@ struct IrBairroView: View {
         .navigationDestination(isPresented: $showProposal) {
             if let planner {
                 ProposalView(planner: planner, plan: nil, another: { another(planner) }, asked: asked)
-                    .toolbar(.hidden, for: .navigationBar)
             }
         }
     }

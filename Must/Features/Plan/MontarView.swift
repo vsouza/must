@@ -71,7 +71,6 @@ struct MontarView: View {
     @Environment(RegionStore.self) private var store
     @Environment(Services.self) private var services
     @Environment(\.dayEngine) private var engine
-    @Environment(\.tripTheme) private var theme
 
     @Query private var places: [Place]
     @Query private var trips: [TripInfo]
@@ -89,7 +88,6 @@ struct MontarView: View {
     @State private var generated: DayPlan?
     @State private var showProposal = false
     @State private var working = false
-    @State private var editingStart = false
     @State private var parsedText = ""
     @FocusState private var textFocused: Bool
 
@@ -98,9 +96,8 @@ struct MontarView: View {
 
     var body: some View {
         Group {
-            if let planner { content(planner) } else { V8.paper.ignoresSafeArea() }
+            if let planner { content(planner) } else { V9.groupedBackground.ignoresSafeArea() }
         }
-        .toolbar(.hidden, for: .navigationBar)
         .onAppear(perform: setUp)
     }
 
@@ -175,239 +172,99 @@ struct MontarView: View {
     // MARK: Tela
 
     private func content(_ planner: DayPlanner) -> some View {
-        VStack(spacing: 0) {
-            header(planner)
-            CutRule()
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    areaSection
-                    paceSection
-                    budgetSection(planner)
-                    includeSection(planner)
-                    Color.clear.frame(height: 120)
+        Form {
+            Section {
+                areaPicker
+                DatePicker("Sai às", selection: Binding(get: { planner.startAt }, set: { planner.startAt = $0 }),
+                           displayedComponents: .hourAndMinute)
+                    .environment(\.timeZone, region.timeZone)
+                    .environment(\.locale, region.locale)
+            } header: {
+                Text("Bairro de hoje")
+            } footer: {
+                if let line = MontarOptions.neighborLine(area.flatMap { id in areas.first { $0.id == id } }, areas: areas) {
+                    Text(line)
                 }
             }
-            .scrollIndicators(.hidden)
-            .scrollDismissesKeyboard(.interactively)
-        }
-        .overlay(alignment: .bottom) {
-            // Botão principal: laranja inteiro no pé, de ponta a ponta, régua de tinta em cima.
-            Button {
-                textFocused = false
-                Task { await generate(planner) }
-            } label: {
-                HStack(spacing: 10) {
-                    Text((working ? "Montando…" : "Gerar o dia · \(pace.rawValue) paradas").uppercased())
-                        .font(V8Font.mono(14, weight: .semibold)).tracking(1.2)
-                        .lineLimit(2).multilineTextAlignment(.leading)
-                    Spacer(minLength: 8)
-                    if !working { Image(systemName: "arrow.up.right").font(.system(size: 16, weight: .bold)) }
+
+            Section("Ritmo") {
+                Picker("Paradas no dia", selection: $pace) {
+                    ForEach(Pace.allCases, id: \.self) { p in Text("\(p.rawValue)").tag(p) }
                 }
-                .foregroundStyle(V8.ink)
-                .padding(.horizontal, 20)
-                .padding(.top, 18)
-                .padding(.bottom, 26)
-                .frame(maxWidth: .infinity, minHeight: 72, alignment: .leading)
-                .background(V8.orange.ignoresSafeArea(edges: .bottom))
-                .overlay(alignment: .top) { Rectangle().fill(V8.ink).frame(height: 2) }
-                .contentShape(Rectangle())
+                .pickerStyle(.segmented)
+                Text(MontarOptions.paceLine(pace)).font(.subheadline).foregroundStyle(.secondary)
             }
-            .buttonStyle(.plain)
-            .disabled(working)
-        }
-        .background(V8.paper.ignoresSafeArea())
-        .navigationDestination(isPresented: $showProposal) {
-            ProposalView(planner: planner, plan: generated, another: { await another(planner) }).toolbar(.hidden, for: .navigationBar)
-        }
-        .sheet(isPresented: $editingStart) { startSheet(planner) }
-    }
 
-    /// Bloco do bairro escolhido (o corte): fechar, hora de sair, "Montar o dia".
-    private func header(_ planner: DayPlanner) -> some View {
-        DayBand(areaId: area, places: places, height: 230) {
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .top) {
-                    V8CornerButton(systemName: "xmark", label: "Fechar", tint: theme.coverInk) { dismiss() }
-                    Spacer(minLength: 12)
-                    Button { editingStart = true } label: {
-                        DayBandCorners(left: [], right: [DayText.dayLine(planner.date, region: region),
-                                                         "a partir das \(region.timeString(planner.startAt))"])
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityHint("Muda a hora de sair")
+            Section("Grana e horário") {
+                Picker("Grana do dia", selection: Binding(get: { planner.budget }, set: { planner.budget = $0 })) {
+                    ForEach(budgetOptions(planner), id: \.self) { value in Text(region.money(value)).tag(value) }
                 }
-                Spacer(minLength: 8)
-                Text("Montar o dia")
-                    .font(V8Font.display(46))
-                    .foregroundStyle(theme.coverInk)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.6)
-                Text("Diga o bairro e o ritmo. O resto eu encaixo nos seus Musts.")
-                    .font(V8Font.text(14))
-                    .foregroundStyle(theme.coverInk.opacity(0.9))
-                    .lineLimit(2)
-                    .padding(.top, 4)
-            }
-        }
-    }
-
-    /// Uma pergunta = uma faixa: micro-rótulo mono, o conteúdo e a régua de 2 pt embaixo.
-    private func band<Content: View>(_ label: String, trailing: String? = nil, @ViewBuilder _ content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .firstTextBaseline) {
-                MonoLabel(label, size: 10, color: V8.mute)
-                Spacer(minLength: 8)
-                if let trailing { MonoLabel(trailing, size: 10, color: V8.ink) }
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, 16)
-            .padding(.bottom, 12)
-            content()
-            Color.clear.frame(height: 18)
-            CorteRule2()
-        }
-    }
-
-    // MARK: Bairro
-
-    private var areaSection: some View {
-        band("Bairro de hoje", trailing: MontarOptions.neighborLine(area.flatMap { id in areas.first { $0.id == id } }, areas: areas)) {
-            if chips.isEmpty {
-                Text("Nenhum Must com bairro ainda: o dia sai da cidade toda.")
-                    .font(V8Font.text(14)).foregroundStyle(V8.mute).padding(.horizontal, 20)
-            }
-            ScrollView(.horizontal) {
-                HStack(spacing: 8) {
-                    ForEach(chips) { chip in
-                        let on = chip.id == area
-                        Button { area = chip.id } label: {
-                            CutChip(text: "\(chip.name) \(chip.count)", isOn: on, minHeight: 44)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("\(chip.name), \(chip.count) Musts")
-                    }
+                Picker("Até que horas", selection: $untilMinutes) {
+                    ForEach(MontarOptions.untilMinutes, id: \.self) { minutes in Text(Self.timeText(minutes)).tag(minutes) }
                 }
             }
-            .scrollIndicators(.hidden)
-            .contentMargins(.horizontal, 20, for: .scrollContent)
-        }
-    }
 
-    // MARK: Ritmo
-
-    private var paceSection: some View {
-        band("Ritmo · paradas no dia") {
-            HStack(spacing: 8) {
-                ForEach(Pace.allCases, id: \.self) { p in
-                    let on = p == pace
-                    Button { pace = p } label: {
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("\(p.rawValue)").font(V8Font.numeral(44)).foregroundStyle(on ? V8.paper : V8.ink)
-                                .lineLimit(1).minimumScaleFactor(0.6)
-                                .accessibilityHidden(true)
-                            Text(MontarOptions.paceLine(p)).font(V8Font.mono(10)).foregroundStyle(on ? V8.paper.opacity(0.85) : V8.mute)
-                                .fixedSize(horizontal: false, vertical: true)
-                                .multilineTextAlignment(.leading)
-                        }
-                        .padding(12)
-                        .frame(maxWidth: .infinity, minHeight: 96, alignment: .topLeading)
-                        .background(on ? V8.ink : Color.clear)
-                        .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("\(p.rawValue) paradas, \(MontarOptions.paceLine(p))")
-                    .accessibilityAddTraits(on ? .isSelected : [])
-                }
+            Section("Incluir") {
+                Toggle(MontarOptions.microLine(region), isOn: includeBinding(.micro))
+                Toggle("Foto no golden" + (golden.map { " (\(region.timeString($0)))" } ?? ""), isOn: includeBinding(.goldenPhoto))
+                Toggle("Compras na volta", isOn: includeBinding(.shopping))
             }
-            .padding(.horizontal, 20)
-        }
-    }
+            .tint(V9.accent)
 
-    // MARK: Grana e horário
-
-    private func budgetSection(_ planner: DayPlanner) -> some View {
-        band("Grana e horário", trailing: "até \(untilText)") {
-            VStack(alignment: .leading, spacing: 12) {
-                Text(region.money(planner.budget))
-                    .font(V8Font.numeral(44)).foregroundStyle(V8.ink)
-                    .lineLimit(1).minimumScaleFactor(0.5)
-                    .accessibilityLabel("Grana do dia \(region.money(planner.budget))")
-                ScrollView(.horizontal) {
-                    HStack(spacing: 8) {
-                        ForEach(MontarOptions.budgets(region), id: \.self) { value in
-                            Button { planner.budget = value } label: {
-                                CutChip(text: region.money(value), isOn: planner.budget == value, minHeight: 44)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                        Button { untilMinutes = MontarOptions.nextUntil(after: untilMinutes) } label: {
-                            CutChip(text: "até \(untilText)", minHeight: 44)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("Até \(untilText)")
-                        .accessibilityHint("Toque pra mudar")
-                    }
-                }
-                .scrollIndicators(.hidden)
-                .padding(.horizontal, -20)
-                .contentMargins(.horizontal, 20, for: .scrollContent)
-            }
-            .padding(.horizontal, 20)
-        }
-    }
-
-    private var untilText: String { String(format: "%02d:%02d", (untilMinutes / 60) % 24, untilMinutes % 60) }
-
-    // MARK: Incluir
-
-    private func includeSection(_ planner: DayPlanner) -> some View {
-        band("Incluir") {
-            VStack(alignment: .leading, spacing: 0) {
-                includeRow(MontarOptions.microLine(region), .micro)
-                includeRow("Foto no golden" + (golden.map { " (\(region.timeString($0)))" } ?? ""), .goldenPhoto)
-                includeRow("Compras na volta", .shopping)
-                TextField("", text: Binding(get: { planner.text }, set: { planner.text = $0 }),
-                          prompt: Text("OU DIGA: TEMPLO CEDO, RAMEN, ANDAR POUCO").font(V8Font.mono(11)).foregroundStyle(V8.mute), axis: .vertical)
-                    .font(V8Font.text(15))
-                    .foregroundStyle(V8.ink)
-                    .tint(V8.orange)
+            Section {
+                TextField("Ou diga: templo cedo, ramen, andar pouco", text: Binding(get: { planner.text }, set: { planner.text = $0 }), axis: .vertical)
                     .lineLimit(1...3)
                     .focused($textFocused)
                     .submitLabel(.done)
                     .onSubmit { Task { await parse(planner) } }
                     .accessibilityIdentifier("montar.ask")
-                    .padding(.vertical, 14)
-                    .overlay(alignment: .top) { Rectangle().fill(V8.ink.opacity(0.2)).frame(height: 1) }
+            } header: {
+                Text("Pedido em texto")
             }
-            .padding(.horizontal, 20)
+        }
+        .scrollDismissesKeyboard(.interactively)
+        .navigationTitle("Montar o dia")
+        .navigationBarTitleDisplayMode(.inline)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            Button {
+                textFocused = false
+                Task { await generate(planner) }
+            } label: {
+                Text(working ? "Montando…" : "Gerar o dia · \(pace.rawValue) paradas").frame(maxWidth: .infinity)
+            }
+            .v9Primary()
+            .disabled(working)
+            .padding(.horizontal, V9.gutter)
+            .padding(.vertical, 10)
+            .background(.bar)
+        }
+        .v9Screen(grouped: true)
+        .navigationDestination(isPresented: $showProposal) {
+            ProposalView(planner: planner, plan: generated, another: { await another(planner) })
         }
     }
 
-    private func includeRow(_ title: String, _ item: DayInclude) -> some View {
-        VStack(spacing: 0) {
-            Rectangle().fill(V8.ink.opacity(0.2)).frame(height: 1)
-            Toggle(isOn: Binding(get: { includes.contains(item) }, set: { on in
-                if on { includes.insert(item) } else { includes.remove(item) }
-            })) {
-                Text(title).font(V8Font.text(15)).foregroundStyle(V8.ink)
+    @ViewBuilder private var areaPicker: some View {
+        if chips.isEmpty {
+            Text("Nenhum Must com bairro ainda: o dia sai da cidade toda.").font(.subheadline).foregroundStyle(.secondary)
+        } else {
+            Picker("Bairro", selection: Binding(get: { area ?? "" }, set: { area = $0 })) {
+                ForEach(chips) { chip in Text("\(chip.name) · \(chip.count)").tag(chip.id) }
             }
-            .tint(V8.orange)
-            .padding(.vertical, 9)
         }
     }
 
-    private func startSheet(_ planner: DayPlanner) -> some View {
-        VStack(spacing: 16) {
-            Text("A que horas você sai?").font(V8Font.display(22)).foregroundStyle(V8.ink).padding(.top, 24)
-            DatePicker("", selection: Binding(get: { planner.startAt }, set: { planner.startAt = $0 }), displayedComponents: .hourAndMinute)
-                .datePickerStyle(.wheel)
-                .labelsHidden()
-                .environment(\.timeZone, region.timeZone)
-                .environment(\.locale, region.locale)
-            BigButton(title: "Pronto", style: .ink) { editingStart = false }.padding(.horizontal, 20)
-        }
-        .presentationDetents([.height(360)])
-        .presentationBackground(V8.paper)
+    private func budgetOptions(_ planner: DayPlanner) -> [Double] {
+        var values = MontarOptions.budgets(region)
+        if !values.contains(planner.budget) { values.append(planner.budget); values.sort() }
+        return values
     }
+
+    private func includeBinding(_ item: DayInclude) -> Binding<Bool> {
+        Binding(get: { includes.contains(item) }, set: { on in
+            if on { includes.insert(item) } else { includes.remove(item) }
+        })
+    }
+
+    private static func timeText(_ minutes: Int) -> String { String(format: "%02d:%02d", (minutes / 60) % 24, minutes % 60) }
 }

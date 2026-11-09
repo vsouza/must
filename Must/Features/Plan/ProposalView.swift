@@ -20,7 +20,6 @@ struct ProposalView: View {
     @Environment(AppRouter.self) private var router
     @Environment(RegionStore.self) private var store
     @Environment(Services.self) private var services
-    @Environment(\.tripTheme) private var theme
 
     @Query private var places: [Place]
     @Query private var trips: [TripInfo]
@@ -47,62 +46,56 @@ struct ProposalView: View {
     private var shown: DayPlan? { (swapped ? nil : plan) ?? planner.proposal.map { Self.dayPlan(from: $0, date: planner.date, budget: planner.budget) } }
 
     var body: some View {
-        VStack(spacing: 0) {
-            band
-            CutRule()
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    if let shown {
-                        if let changeNote { ChangeBanner(diff: changeNote).transition(.opacity) }
-                        VStack(alignment: .leading, spacing: 0) {
-                            if shown.stops.isEmpty {
-                                DayStrip { Text("Nada coube nesse pedido: troque o bairro ou o ritmo.").font(V8Font.text(15)).foregroundStyle(V8.mute) }
-                            }
-                            ForEach(Array(shown.stops.enumerated()), id: \.element.id) { i, stop in
-                                VStack(alignment: .leading, spacing: 0) {
-                                    DayStopRow(stop: stop, index: i + 1, state: .upcoming, region: region, onTap: swapAction(stop))
-                                        .changeHighlight(changed.contains(stop.id))
-                                    if let leg = shown.leg(after: stop) { DayLegRow(leg: leg) }
-                                }
-                                .transition(reduceMotion ? .opacity
-                                            : .asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity), removal: .opacity))
-                            }
-                            if let last = shown.lastTrain {
-                                DayLegRow(leg: DayLeg(mode: .train, minutes: 0, from: "", to: "",
-                                                      detail: "último trem \(last.line) \(region.timeString(last.at))"),
-                                          color: V8.orangeDeep)
-                            }
-                        }
-                        .animation(reduceMotion ? .easeInOut(duration: 0.2) : .snappy(duration: 0.45), value: shown.stops.map(\.id))
+        List {
+            if let shown {
+                if let changeNote {
+                    Section { ChangeBanner(diff: changeNote).transition(.opacity) }
+                }
+                Section {
+                    if shown.stops.isEmpty {
+                        Text("Nada coube nesse pedido: troque o bairro ou o ritmo.").foregroundStyle(.secondary)
                     }
-                    let missing = IrBairro.missing(planner.proposal, asked: asked)
-                    if !missing.isEmpty {
-                        DayStrip(tone: .ink) {
-                            VStack(alignment: .leading, spacing: 4) {
-                                MonoLabel("FORA DO TRAJETO", size: 10, color: V8.white.opacity(0.7))
-                                ForEach(missing, id: \.name) { m in
-                                    Text("\(m.name) — \(m.reason)").font(V8Font.text(14)).foregroundStyle(V8.white)
-                                        .fixedSize(horizontal: false, vertical: true)
-                                }
-                            }
+                    ForEach(shown.stops) { stop in
+                        VStack(alignment: .leading, spacing: 8) {
+                            V9StopRow(stop: stop, state: .upcoming, region: region, onTap: swapAction(stop))
+                            if let leg = shown.leg(after: stop) { V9LegRow(leg: leg) }
                         }
+                        .listRowBackground(changed.contains(stop.id) ? V9.accent.opacity(0.16) : nil)
                     }
-                    if let explanation = planner.proposal?.explanation, !explanation.isEmpty {
-                        DayStrip {
-                            Text(explanation)
-                                .font(V8Font.text(15))
-                                .foregroundStyle(V8.ink)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
+                    if let last = shown.lastTrain {
+                        V9LegRow(leg: DayLeg(mode: .train, minutes: 0, from: "", to: "",
+                                             detail: "último trem \(last.line) \(region.timeString(last.at))"))
                     }
-                    if let error { Text(error).font(V8Font.text(13)).foregroundStyle(V8.orangeDeep).padding(.horizontal, 20).padding(.top, 8) }
-                    Color.clear.frame(height: 190)
+                } header: {
+                    Text(shown.title.isEmpty ? shown.countLine : "\(shown.title) · \(shown.countLine)")
+                } footer: {
+                    if swappable { Text("Toque numa parada do seu board pra trocar por outra.") }
+                }
+                .animation(reduceMotion ? .easeInOut(duration: 0.2) : .snappy(duration: 0.45), value: shown.stops.map(\.id))
+            }
+            let missing = IrBairro.missing(planner.proposal, asked: asked)
+            if !missing.isEmpty {
+                Section("Fora do trajeto") {
+                    ForEach(missing, id: \.name) { m in
+                        Text("\(m.name) — \(m.reason)").fixedSize(horizontal: false, vertical: true)
+                    }
                 }
             }
-            .scrollIndicators(.hidden)
-            .overlay(alignment: .bottom) { actions }
+            if let explanation = planner.proposal?.explanation, !explanation.isEmpty {
+                Section("Por que assim") {
+                    Text(explanation).fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            if let error {
+                Section { Text(error).foregroundStyle(V9.alert) }
+            }
         }
-        .background(V8.paper.ignoresSafeArea())
+        .listStyle(.insetGrouped)
+        .navigationTitle("Seu dia")
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationSubtitle(subtitle)
+        .safeAreaInset(edge: .bottom, spacing: 0) { actions }
+        .v9Screen(grouped: true)
         .onChange(of: shown?.stops ?? []) { old, new in markChanges(from: old, to: new) }
         #if DEBUG
         .onAppear {
@@ -117,35 +110,15 @@ struct ProposalView: View {
         #endif
         .sheet(item: $swapping, onDismiss: { if plan != nil { swapped = true } }) { stop in
             SwapSheet(planner: planner, stop: stop, catalog: places.solverCatalog)
-                .presentationDetents([.large])
-                .presentationCornerRadius(32)
-                .presentationDragIndicator(.hidden)
+                .presentationDetents([.medium, .large])
         }
     }
 
-    /// Bloco do bairro do dia: o numeral gigante = quantas paradas tem a proposta.
-    private var band: some View {
-        DayBand(areaId: shown?.bandArea() ?? planner.focusArea, places: places, height: 250) {
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .top) {
-                    V8CornerButton(systemName: "chevron.left", label: "Voltar ao Montar", tint: theme.coverInk) { dismiss() }
-                    Spacer(minLength: 12)
-                    if let shown {
-                        DayBandCorners(left: [], right: [DayText.dayLine(planner.date, region: region),
-                                                         "\(shown.countLine) · previsto \(region.money(shown.plannedCost))"])
-                    }
-                }
-                Spacer(minLength: 8)
-                HStack(alignment: .bottom, spacing: 10) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        if let title = shown?.title, !title.isEmpty { MonoLabel(title, size: 10, color: theme.coverInk.opacity(0.9)) }
-                        Text("Seu dia").font(V8Font.display(46)).foregroundStyle(theme.coverInk).lineLimit(1).minimumScaleFactor(0.6)
-                    }
-                    Spacer(minLength: 8)
-                    if let shown { DayBandNumeral(value: "\(shown.stops.count)", caption: shown.stops.count == 1 ? "parada" : "paradas") }
-                }
-            }
-        }
+    private var swappable: Bool { shown?.stops.contains { swapAction($0) != nil } ?? false }
+
+    private var subtitle: String {
+        guard let shown else { return DayText.dayLine(planner.date, region: region) }
+        return "\(DayText.dayLine(planner.date, region: region)) · previsto \(region.money(shown.plannedCost))"
     }
 
     /// Must do board que está na proposta do solver: abre o Trocar.
@@ -172,22 +145,21 @@ struct ProposalView: View {
     }
 
     private var actions: some View {
-        HStack(spacing: 10) {
-            BigButton(title: rolling ? "Montando…" : "Outra", style: .line, systemImage: rolling ? nil : "arrow.triangle.2.circlepath",
-                      lineColor: V8.ink, lineFill: V8.paper) { anotherDay() }
-            .frame(maxWidth: 140)
+        HStack(spacing: 12) {
+            Button { anotherDay() } label: {
+                Label(rolling ? "Montando…" : "Outra", systemImage: "arrow.triangle.2.circlepath").frame(maxWidth: .infinity)
+            }
+            .v9Secondary()
             .disabled(rolling)
-            BigButton(title: "Aceitar o dia", style: .orange, systemImage: "checkmark") { accept() }
-                .disabled(planner.proposal?.stops.isEmpty ?? true)
+            Button { accept() } label: {
+                Label("Aceitar o dia", systemImage: "checkmark").frame(maxWidth: .infinity)
+            }
+            .v9Primary()
+            .disabled(planner.proposal?.stops.isEmpty ?? true)
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 24)
-        .padding(.bottom, 24) // sem barra de abas nesta tela (`AppRouter.hidesNavBar`)
-        .background {
-            LinearGradient(colors: [V8.paper.opacity(0), V8.paper], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.25))
-                .ignoresSafeArea()
-                .allowsHitTesting(false)
-        }
+        .padding(.horizontal, V9.gutter)
+        .padding(.vertical, 10)
+        .background(.bar)
     }
 
     /// "Outra": embaralha e remonta; a troca aparece com a animação das linhas (`markChanges`).
@@ -263,70 +235,46 @@ struct SwapSheet: View {
     var body: some View {
         let proposal = planner.proposal
         let alternatives = proposal.map { DaySolver.alternatives(for: stop.id, in: $0, catalog: catalog, filter: filter) } ?? []
-        VStack(alignment: .leading, spacing: 0) {
-            SheetHandle().frame(maxWidth: .infinity)
-            ScrollView {
-                VStack(alignment: .leading, spacing: 14) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Micro("trocar · \(stop.window.label) \(region.timeString(stop.at))")
-                        Text("No lugar do \(stop.place.name)").mustTitle()
-                        Text(pathLine(proposal)).mustSerif(18).foregroundStyle(Color.must.secondary)
+        NavigationStack {
+            List {
+                Section {
+                    Picker("Filtro", selection: $filter) {
+                        ForEach(SwapFilter.allCases) { f in Text(f.label(sub: stop.place.sub, role: stop.place.role)).tag(f) }
                     }
-                    .padding(.top, 22)
-
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
-                            ForEach(SwapFilter.allCases) { f in
-                                Button { filter = f } label: { Pill(f.label(sub: stop.place.sub, role: stop.place.role), isOn: filter == f) }
-                                    .buttonStyle(MustPressStyle())
-                            }
-                        }
-                    }
-                    .scrollClipDisabled()
-                    .padding(.vertical, 10)
-
+                } footer: {
+                    Text(pathLine(proposal))
+                }
+                Section {
                     if alternatives.isEmpty {
-                        Text("Nada elegível nesse filtro, nessa janela.").mustMeta().padding(.vertical, 10)
+                        Text("Nada elegível nesse filtro, nessa janela.").foregroundStyle(.secondary)
                     }
-                    ForEach(Array(alternatives.enumerated()), id: \.element.id) { index, alt in
+                    ForEach(alternatives) { alt in
                         Button {
                             planner.swap(stop.id, with: alt.place)
                             dismiss()
-                        } label: { alternativeRow(alt, highlighted: index == 0) }
-                            .buttonStyle(MustPressStyle())
-                    }
-
-                    do {
-                        Button {
-                            planner.skip(stop.id)
-                            dismiss()
-                        } label: {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Pular \(stop.window.isMeal ? "o \(stop.window.label)" : stop.place.name) no roteiro")
-                                    .font(.must.archivo(19, .semibold)).foregroundStyle(Color.must.secondary)
-                                Text(stop.window.isMeal ? "como na regra: uma refeição por janela, decido na hora" : "fica um respiro no dia")
-                                    .mustMeta()
-                            }
-                            .padding(18)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .card()
-                        }
-                        .buttonStyle(MustPressStyle())
+                        } label: { alternativeRow(alt) }
+                            .buttonStyle(.plain)
                     }
                 }
-                .padding(.horizontal, 22)
-                .padding(.bottom, 20)
+                Section {
+                    Button {
+                        planner.skip(stop.id)
+                        dismiss()
+                    } label: {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Pular \(stop.window.isMeal ? "o \(stop.window.label)" : stop.place.name) no roteiro")
+                            Text(stop.window.isMeal ? "Uma refeição por janela: decido na hora." : "Fica um respiro no dia.")
+                                .font(.subheadline).foregroundStyle(.secondary)
+                        }
+                    }
+                }
             }
-            PrimaryButton("Manter \(stop.place.name)", style: .dark) { dismiss() }
-                .padding(.horizontal, 22)
-                .padding(.bottom, 8)
-        }
-        .background {
-            ZStack(alignment: .topTrailing) {
-                Color.must.bg
-                Ellipse().fill(Blob.Fill.green.gradient).frame(width: 190, height: 130).rotationEffect(.degrees(-20)).offset(x: 40, y: 10)
+            .navigationTitle("No lugar do \(stop.place.name)")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Manter \(stop.place.name)") { dismiss() } }
             }
-            .ignoresSafeArea()
+            .v9Screen(grouped: true)
         }
     }
 
@@ -334,38 +282,30 @@ struct SwapSheet: View {
         guard let proposal, let i = proposal.stops.firstIndex(where: { $0.id == stop.id }) else { return "" }
         let prev = i > 0 ? proposal.stops[i - 1].place.name : "a saída"
         let next = i + 1 < proposal.stops.count ? proposal.stops[i + 1].place.area ?? proposal.stops[i + 1].place.name : nil
-        return "abertos no horário, perto do \(prev)" + (next.map { " → \($0)" } ?? "")
+        return "\(stop.window.label.capitalizedFirst) das \(region.timeString(stop.at)) · abertos no horário, perto do \(prev)" + (next.map { " → \($0)" } ?? "")
     }
 
-    private func alternativeRow(_ alt: SwapAlternative, highlighted: Bool) -> some View {
+    private func alternativeRow(_ alt: SwapAlternative) -> some View {
         let p = alt.place
         let delta = alt.priceDelta == 0 ? (alt.detourMinutes == 0 ? "0 desvio" : (alt.detourMinutes > 0 ? "+\(alt.detourMinutes) min" : "\(alt.detourMinutes) min"))
             : (alt.priceDelta > 0 ? "+" : "−") + region.money(abs(alt.priceDelta))
         return HStack(alignment: .center, spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text(p.name).mustPlace().lineLimit(1)
-                }
-                Text(alt.note).font(.must.archivo(13)).foregroundStyle(highlighted ? MustColor.eat.text : Color.must.secondary).lineLimit(2)
-                if p.sourceKind == .instagram || p.sourceKind == .tiktok {
-                    Text("o que o \(p.sourceKind!.label) mostrou").mustSerif(16).foregroundStyle(MustColor.eat.text)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(p.name).font(.body.weight(.semibold)).lineLimit(2)
+                Text(alt.note).font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
+                if let kind = p.sourceKind, kind == .instagram || kind == .tiktok {
+                    Text("o que o \(kind.label) mostrou").font(.footnote).foregroundStyle(.secondary)
                 }
             }
             Spacer(minLength: 8)
-            VStack(alignment: .trailing, spacing: 4) {
-                Text(region.money(p.cost)).font(.must.mono(14)).foregroundStyle(Color.must.ink)
-                Text(delta).font(.must.mono(13)).foregroundStyle(alt.priceDelta < 0 ? MustColor.eat.text : Color.must.secondary)
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(region.money(p.cost)).monospacedDigit()
+                Text(delta).font(.subheadline).foregroundStyle(.secondary).monospacedDigit()
             }
         }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(highlighted ? Color.clear : Color.white)
-                .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(highlighted ? Color.clear : Color.must.line))
-        }
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
     }
-
 }
 
 /// O que mudou entre duas propostas (o "Outra" ou um Trocar): paradas que entraram, saíram ou trocaram de lugar.
@@ -419,41 +359,23 @@ struct ProposalDiff: Equatable, Sendable {
     var spoken: String { [title, detail].compactMap { $0 }.joined(separator: ". ") }
 }
 
-/// Resumo da troca acima do índice: faixa laranja inteira quando mudou algo, papel quando o dia ficou igual.
+/// Resumo da troca acima das paradas: o que entrou e saiu, ou "mesmo dia" quando nada melhor coube.
 private struct ChangeBanner: View {
     var diff: ProposalDiff
 
     var body: some View {
-        DayStrip(tone: diff.count == 0 ? .paper : .orange) {
-            HStack(alignment: .top, spacing: 10) {
-                Image(systemName: diff.count == 0 ? "equal" : "arrow.triangle.2.circlepath")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(V8.ink)
-                    .padding(.top, 2)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(diff.title.uppercased()).font(V8Font.mono(11, weight: .semibold)).tracking(1.1).foregroundStyle(V8.ink)
-                    if let detail = diff.detail {
-                        Text(detail).font(V8Font.text(14)).foregroundStyle(V8.ink.opacity(0.8))
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: diff.count == 0 ? "equal" : "arrow.triangle.2.circlepath")
+                .foregroundStyle(diff.count == 0 ? Color.secondary : V9.accent)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(diff.title).font(.subheadline.weight(.semibold))
+                if let detail = diff.detail {
+                    Text(detail).font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 }
-                Spacer(minLength: 0)
             }
+            Spacer(minLength: 0)
         }
         .accessibilityElement(children: .combine)
-    }
-}
-
-private extension View {
-    /// Linha que acabou de entrar: faixa laranja leve de largura total e um filete na esquerda, que somem devagar.
-    func changeHighlight(_ on: Bool) -> some View {
-        background(alignment: .leading) {
-            if on {
-                Rectangle()
-                    .fill(V8.orange.opacity(0.22))
-                    .overlay(alignment: .leading) { Rectangle().fill(V8.orange).frame(width: 6) }
-                    .transition(.opacity)
-            }
-        }
     }
 }
