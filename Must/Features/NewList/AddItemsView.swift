@@ -60,29 +60,52 @@ struct AddItemsView: View {
     private var selectionCount: Int { selectedBoard.count + selectedSaved.count + selectedCandidates.count }
 
     var body: some View {
-        VStack(spacing: 0) {
-            CutScreenHeader(title: list?.displayName ?? "Lista", corner: ["nova lista · 2 de 2", "criada agora"],
-                            photo: list?.photo?.url.flatMap(URL.init(string:)), height: 170,
-                            onBack: { dismiss() }) {
-                CutButton(title: "Depois") { finish(openList: false) }
-            }
-            ScrollView {
-                VStack(alignment: .leading, spacing: 14) {
-                    searchField
-                    sourcePills
-                    if let importNote { Text(importNote).font(V8Font.text(13)).foregroundStyle(V8.mute) }
-                    results
+        List {
+            Section {
+                Picker("De onde", selection: $source) {
+                    Text("Places · \(currentCity?.name ?? region.displayName)").tag(SourceFilter.places)
+                    Text("Do board").tag(SourceFilter.board)
+                    ForEach(otherCityNames, id: \.self) { Text($0).tag(SourceFilter.city($0)) }
+                    Text("Salvos no Maps").tag(SourceFilter.saved)
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 16)
-                Color.clear.frame(height: 24)
+                .pickerStyle(.menu)
+                if let importNote { Text(importNote).font(.footnote).foregroundStyle(.secondary) }
             }
-            .scrollIndicators(.hidden)
-            .scrollDismissesKeyboard(.interactively)
+            results
+            Section {
+                Button { showManual = true } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "plus.circle.fill").font(.title2).foregroundStyle(V9.accent).accessibilityHidden(true)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Adicionar à mão").font(.body.weight(.semibold)).foregroundStyle(.primary)
+                            Text(query.isEmpty ? "nome, bairro, preço, janela" : "“\(query)”").font(.subheadline).foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                    }
+                    .contentShape(Rectangle())
+                }
+                Button { showLink = true } label: {
+                    Label("Colar um link", systemImage: "link")
+                }
+            }
         }
-        .background(V8.paper.ignoresSafeArea())
-        .cutFooter(selectionCount == 0 ? "Escolha lugares" : "Adicionar \(selectionCount) à lista",
-                   enabled: selectionCount > 0, arrow: false, action: add)
+        .listStyle(.insetGrouped)
+        .navigationTitle(list?.displayName ?? "Lista")
+        .navigationBarTitleDisplayMode(.inline)
+        .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Buscar nome ou bairro…")
+        .scrollDismissesKeyboard(.interactively)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) { Button("Depois") { finish(openList: false) } }
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            Button(selectionCount == 0 ? "Escolha lugares" : "Adicionar \(selectionCount) à lista", action: add)
+                .v9Primary()
+                .disabled(selectionCount == 0)
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, V9.gutter).padding(.vertical, 10)
+                .background(.regularMaterial)
+        }
+        .v9Screen(grouped: true)
         .task(id: "\(query)|\(source == .places)") { await searchPlaces() }
         .sheet(isPresented: $showManual) {
             EditPlaceView(newInListId: listId, prefillName: query.isEmpty ? nil : query)
@@ -93,58 +116,19 @@ struct AddItemsView: View {
         .fileImporter(isPresented: $showSavedPicker, allowedContentTypes: [UTType(filenameExtension: "kml") ?? .xml, .json, .xml]) { result in
             loadSaved(result)
         }
-    }
-
-    private var searchField: some View {
-        HStack(spacing: 8) {
-            MustIconView(.buscar, size: 16).foregroundStyle(Color.must.secondary)
-            TextField("Buscar nome ou bairro…", text: $query)
-                .font(V8Font.text(16))
-                .autocorrectionDisabled()
-            Button { showLink = true } label: {
-                Text("link").font(V8Font.mono(12, weight: .semibold)).foregroundStyle(.white)
-                    .padding(.horizontal, 9).frame(height: 26)
-                    .background(Rectangle().fill(Color.must.ink))
-            }
-            Button { showManual = true } label: {
-                Text("manual").font(V8Font.mono(12, weight: .semibold)).foregroundStyle(Color.must.ink)
-                    .padding(.horizontal, 9).frame(height: 26)
-            }
-        }
-        .padding(.horizontal, 16)
-        .frame(height: 52)
-        .glass(cornerRadius: 26)
-    }
-
-    private var sourcePills: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                Button { source = .places } label: { Pill("Places · \(currentCity?.name ?? region.displayName)", isOn: source == .places) }
-                Button { source = .board } label: { Pill("Do board", isOn: source == .board) }
-                ForEach(otherCityNames, id: \.self) { name in
-                    Button { source = .city(name) } label: { Pill(name, isOn: source == .city(name)) }
-                }
-                Button {
-                    source = .saved
-                    if saved.isEmpty { showSavedPicker = true }
-                } label: { Pill("Salvos no Maps", isOn: source == .saved) }
-            }
-            .buttonStyle(MustPressStyle())
-        }
-        .scrollClipDisabled()
+        .onChange(of: source) { _, new in if new == .saved && saved.isEmpty { showSavedPicker = true } }
     }
 
     // MARK: Resultados
 
     @ViewBuilder private var results: some View {
-        VStack(spacing: 0) {
+        Section {
             switch source {
             case .places:
                 if let placesNote {
-                    Text(placesNote).font(V8Font.text(13)).foregroundStyle(V8.mute).padding(.vertical, 18)
+                    Text(placesNote).font(.subheadline).foregroundStyle(.secondary)
                 }
-                ForEach(Array(candidates.enumerated()), id: \.element.id) { i, c in
-                    if i > 0 { RowDivider() }
+                ForEach(candidates) { c in
                     let already = places.first { $0.placeId == c.id }
                     checkRow(selected: selectedCandidates.contains(c.id), title: c.name, local: nil,
                              meta: [c.address, already.map { "já está no board · \($0.list?.displayName ?? "")" }].compactMap { $0 }.joined(separator: " · "),
@@ -154,8 +138,7 @@ struct AddItemsView: View {
                     .opacity(already == nil ? 1 : 0.5)
                 }
             case .board, .city:
-                ForEach(Array(boardResults.enumerated()), id: \.element.id) { i, place in
-                    if i > 0 { RowDivider() }
+                ForEach(boardResults) { place in
                     checkRow(selected: selectedBoard.contains(place.id),
                              title: place.name, local: place.nameLocal,
                              meta: [place.area, place.list.map { "já estava no board · \($0.displayName)" }].compactMap { $0 }.joined(separator: " · "),
@@ -165,70 +148,36 @@ struct AddItemsView: View {
                 }
             case .saved:
                 if savedResults.isEmpty {
-                    Button { showSavedPicker = true } label: {
-                        Text("Escolher o arquivo .kml (My Maps) ou o Saved Places.json do Takeout")
-                            .font(.must.meta).foregroundStyle(Color.must.ink).underline()
-                            .multilineTextAlignment(.leading)
-                    }
-                    .padding(.vertical, 18)
+                    Button("Escolher o arquivo .kml (My Maps) ou o Saved Places.json do Takeout") { showSavedPicker = true }
                 }
-                ForEach(Array(savedResults.enumerated()), id: \.element.id) { i, item in
-                    if i > 0 { RowDivider() }
+                ForEach(savedResults) { item in
                     checkRow(selected: selectedSaved.contains(item.id), title: item.name, local: nil,
                              meta: item.note ?? String(format: "%.4f, %.4f", item.lat, item.lng), badge: "Maps") {
                         toggle(&selectedSaved, item.id)
                     }
                 }
             }
-            RowDivider()
-            Button { showManual = true } label: {
-                HStack(spacing: 14) {
-                    MustIconView(.adicionar, size: 18)
-                        .foregroundStyle(color.text)
-                        .frame(width: 32, height: 32)
-                        .background(Rectangle().fill(color.gradient))
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Adicionar à mão").font(V8Font.text(16, weight: .semibold)).foregroundStyle(Color.must.ink)
-                        Text(query.isEmpty ? "nome, bairro, preço, janela" : "“\(query)”").font(V8Font.text(13)).foregroundStyle(V8.mute)
-                    }
-                    Spacer()
-                }
-                .padding(.vertical, 16)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
         }
-        .padding(.horizontal, 20)
-        .background(Color.white, in: Rectangle())
-        .overlay(Rectangle().strokeBorder(Color.must.line))
     }
 
     private func checkRow(selected: Bool, title: String, local: String?, meta: String, badge: String,
                           action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 14) {
-                ZStack {
-                    if selected {
-                        Rectangle().fill(color.strong)
-                        MustIconView(.ok, size: 15).foregroundStyle(color.text)
-                    } else {
-                        Rectangle().strokeBorder(Color(hex: 0xD5D8DD), lineWidth: 1.5)
-                    }
-                }
-                .frame(width: 32, height: 32)
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Text(title).mustPlace().lineLimit(1)
-                        if let local { Text(local).font(.must.kanji(12, bold: false)).foregroundStyle(Color.must.secondary).lineLimit(1) }
-                    }
-                    Text(meta).font(V8Font.text(13)).foregroundStyle(V8.mute).lineLimit(2)
+            HStack(spacing: 12) {
+                Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                    .font(.title2)
+                    .foregroundStyle(selected ? V9.accent : Color.secondary)
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title).font(.body.weight(.semibold)).foregroundStyle(.primary).lineLimit(2)
+                    if let local { Text(local).font(.footnote).foregroundStyle(.secondary).lineLimit(1) }
+                    if !meta.isEmpty { Text(meta).font(.subheadline).foregroundStyle(.secondary).lineLimit(2) }
                 }
                 Spacer(minLength: 8)
-                Text(badge).font(V8Font.mono(11, weight: .semibold)).foregroundStyle(Color.must.ink)
-                    .padding(.horizontal, 8).padding(.vertical, 4)
-                    .background(Rectangle().fill(Color.must.surface))
+                Text(badge).font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                    .padding(.horizontal, 8).padding(.vertical, 3)
+                    .background(V9.fill, in: Capsule())
             }
-            .padding(.vertical, 14)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

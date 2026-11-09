@@ -2,15 +2,13 @@ import CoreLocation
 import SwiftData
 import SwiftUI
 
-/// Filmes gravados no lugar/bairro (`Filmes.png`, `FilmesVazio.png`, prompt 27 §6). Abre com o cache e atualiza por
+/// Filmes gravados no lugar/bairro (V9, prompt 27 §6). Abre com o cache e atualiza por
 /// baixo; BH quase sempre cai no estado vazio, com "Tentar 5 km" e "Ver <cidade> inteira".
 struct FilmsView: View {
     var placeId: String
 
-    @Environment(\.dismiss) private var dismiss
     @Environment(\.films) private var filmsProvider
     @Environment(RegionStore.self) private var store
-    @Environment(\.dynamicTypeSize) private var typeSize
     @Query private var matches: [Place]
 
     @State private var radiusKm = 1.5
@@ -31,35 +29,24 @@ struct FilmsView: View {
 
     var body: some View {
         let list = films ?? []
-        VStack(spacing: 0) {
-            CutScreenHeader(title: "Filmes", corner: ["\(areaLabel) · raio \(radiusText)", films?.isEmpty == false ? "fonte: wikidata · cc0" : "wikidata"],
-                            height: 170, onBack: { dismiss() })
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    HStack(alignment: .lastTextBaseline, spacing: 10) {
-                        BigNumeral("\(list.count)", size: 74, color: list.isEmpty ? V8.mute : V8.orange)
-                        if !list.isEmpty { SpecLabel("no bairro").padding(.bottom, 10) }
-                    }
-                    .padding(.top, 18)
-                    .accessibilityElement(children: .ignore)
-                    .accessibilityLabel("Filmes: \(list.count)")
-                if list.isEmpty, films != nil {
-                    emptyState.padding(.top, 70)
-                } else if !list.isEmpty {
-                    VStack(spacing: 0) {
-                        ForEach(Array(list.enumerated()), id: \.offset) { _, film in row(film) }
-                    }
-                    .padding(.top, 26)
-                    SpecLabel("wikidata · cc0 · cache de 30 dias").padding(.top, 20)
-                }
-                    V8BarSpacer()
-                }
-                .padding(.horizontal, 20)
+        List {
+            Section {
+                Text("\(areaLabel) · raio \(radiusText)").font(.subheadline).foregroundStyle(.secondary)
+            } footer: {
+                Text(list.isEmpty ? "Fonte: Wikidata." : "Fonte: Wikidata · CC0 · cache de 30 dias.")
             }
-            .scrollIndicators(.hidden)
+            if list.isEmpty, films != nil {
+                emptyState
+            } else if !list.isEmpty {
+                Section("\(list.count) no bairro") {
+                    ForEach(Array(list.enumerated()), id: \.offset) { _, film in row(film) }
+                }
+            }
         }
-        .background(V8.paper.ignoresSafeArea())
-        .toolbar(.hidden, for: .navigationBar)
+        .listStyle(.insetGrouped)
+        .navigationTitle("Filmes")
+        .navigationBarTitleDisplayMode(.large)
+        .v9Screen(grouped: true)
         .task(id: radiusKm) { await load() }
     }
 
@@ -70,56 +57,46 @@ struct FilmsView: View {
     // MARK: Linhas
 
     private func row(_ film: Film) -> some View {
-        HStack(alignment: .top, spacing: 16) {
-            Text(FilmsFormat.yearDigits(film.year))
-                .font(V8Font.numeral(50)).foregroundStyle(V8.orange)
-                .lineLimit(1).minimumScaleFactor(0.6)
-                .frame(width: 62, height: 90, alignment: .topTrailing)
-                .padding(.trailing, 2)
-                .background(Rectangle().fill(V8.ink))
-                .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 4) {
-                Text(film.title).font(V8Font.text(20, weight: .bold)).tracking(-0.3).foregroundStyle(V8.ink)
-                    .lineLimit(2).multilineTextAlignment(.leading)
-                let credit = FilmsFormat.credit(film)
-                if !credit.isEmpty { Text(credit).font(V8Font.text(14)).foregroundStyle(V8.mute).lineLimit(1) }
-                let where_ = FilmsFormat.place(film)
-                if !where_.isEmpty {
-                    Text(where_).font(V8Font.text(15, weight: .semibold)).foregroundStyle(V8.ink)
-                        .lineLimit(2).multilineTextAlignment(.leading)
+        Button { if let url = film.url { UIApplication.shared.open(url) } } label: {
+            HStack(alignment: .top, spacing: 12) {
+                Text(FilmsFormat.yearDigits(film.year))
+                    .font(.title3.weight(.semibold).monospacedDigit())
+                    .foregroundStyle(.secondary)
+                    .frame(minWidth: 56, alignment: .leading)
+                    .accessibilityLabel("Ano \(FilmsFormat.yearDigits(film.year))")
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(film.title).font(.body.weight(.semibold)).foregroundStyle(.primary)
+                        .lineLimit(3).multilineTextAlignment(.leading)
+                    let credit = FilmsFormat.credit(film)
+                    if !credit.isEmpty { Text(credit).font(.subheadline).foregroundStyle(.secondary).lineLimit(2) }
+                    let where_ = FilmsFormat.place(film)
+                    if !where_.isEmpty {
+                        Text("Filmado em \(where_)").font(.subheadline).foregroundStyle(.primary)
+                            .lineLimit(3).multilineTextAlignment(.leading)
+                    }
                 }
-                V8Tag(text: "filmado", style: .orange).padding(.top, 4)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
         }
-        .padding(.vertical, 14)
-        .overlay(alignment: .top) { Rectangle().fill(V8.ink.opacity(0.14)).frame(height: 1) }
-        .contentShape(Rectangle())
-        .onTapGesture { if let url = film.url { UIApplication.shared.open(url) } }
+        .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
     }
 
     // MARK: Vazio
 
     private var emptyState: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("Nada filmado aqui, ainda.").font(V8Font.display(34)).tracking(-1).foregroundStyle(V8.ink)
-                .fixedSize(horizontal: false, vertical: true)
-            Text("O Wikidata tem pouco de \(region.displayName). O bloco “Filmes gravados aqui” some do Lugar quando não há resultado: nada de caixa vazia.")
-                .font(V8Font.text(16)).foregroundStyle(V8.mute).fixedSize(horizontal: false, vertical: true)
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: 12) { buttons }
-                VStack(spacing: 12) { buttons }
+        Section {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Nada filmado aqui, ainda.").font(.headline)
+                Text("O Wikidata tem pouco de \(region.displayName). O bloco “Filmes gravados aqui” some do Lugar quando não há resultado.")
+                    .font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
-            .padding(.top, 6)
-            SpecLabel("consultado uma vez · guardado 30 dias · sem internet, mostra o último resultado")
-                .padding(.top, 90)
+            Button("Tentar 5 km") { radiusKm = 5 }.disabled(radiusKm >= 5)
+            Button("Ver \(region.shortName) inteira") { radiusKm = 25 }.disabled(radiusKm >= 25)
+        } footer: {
+            Text("Consultado uma vez, guardado 30 dias. Sem internet, mostra o último resultado.")
         }
-    }
-
-    @ViewBuilder private var buttons: some View {
-        V8Button("Tentar 5 km", .line) { radiusKm = 5 }.disabled(radiusKm >= 5)
-        V8Button("Ver \(region.shortName) inteira", .ink) { radiusKm = 25 }.disabled(radiusKm >= 25)
     }
 
     // MARK: Dados

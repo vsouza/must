@@ -5,7 +5,7 @@ import SwiftUI
 enum BoardSheet: Identifiable, Hashable {
     case move
     case city
-    /// Marcar 済 (swipe): `Place.id`.
+    /// Marcar feito: `Place.id`.
     case done(String)
 
     var id: String {
@@ -17,7 +17,7 @@ enum BoardSheet: Identifiable, Hashable {
     }
 }
 
-/// Barra preta de ações em lote (modo edição, com seleção).
+/// Barra de ações em lote (modo edição, com seleção): material do sistema, botões com nome.
 struct BoardBatchBar: View {
     var count: Int
     /// "Selecionar tudo em Must eat" (nil quando não há lista de foco).
@@ -31,62 +31,33 @@ struct BoardBatchBar: View {
     var onDelete: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 10) {
                 Text("\(count) \(count == 1 ? "selecionado" : "selecionados")")
-                    .font(.must.archivo(17, .semibold))
-                    .foregroundStyle(.white)
+                    .font(.headline)
                 Spacer(minLength: 8)
                 if let focusTitle {
-                    Button(action: onSelectAll) {
-                        Text("Selecionar tudo em \(focusTitle)")
-                            .font(.must.archivo(13, .semibold))
-                            .foregroundStyle(.white)
-                            .lineLimit(1)
-                            .padding(.vertical, 9)
-                            .padding(.horizontal, 12)
-                            .overlay(Capsule().strokeBorder(Color.white.opacity(0.35), lineWidth: 1))
-                    }
-                    .buttonStyle(MustPressStyle())
+                    Button("Selecionar tudo em \(focusTitle)", action: onSelectAll)
+                        .font(.subheadline).lineLimit(1)
                 }
             }
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
-                    BatchChip(title: "Mover pra lista…", action: onMove)
-                    BatchChip(title: saveForEndTitle, action: onSaveForEnd)
-                    BatchChip(title: "Cidade", action: onCity)
-                    BatchChip(title: "Resolver no Places", action: onResolve)
-                    BatchChip(title: "Apagar", destructive: true, action: onDelete)
+                    Button("Mover pra lista…", action: onMove).buttonStyle(.bordered)
+                    Button(saveForEndTitle, action: onSaveForEnd).buttonStyle(.bordered)
+                    Button("Cidade", action: onCity).buttonStyle(.bordered)
+                    Button("Resolver no Places", action: onResolve).buttonStyle(.bordered)
+                    Button("Apagar", role: .destructive, action: onDelete).buttonStyle(.bordered)
                 }
             }
         }
-        .padding(18)
-        .background(RoundedRectangle(cornerRadius: 26, style: .continuous).fill(Color(hex: 0x121316)))
-        .shadow(color: Color(hex: 0x121316, opacity: 0.25), radius: 20, x: 0, y: 12)
-        .padding(.horizontal, 22)
+        .padding(14)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: V9.cornerRadius, style: .continuous))
+        .padding(.horizontal, V9.gutter)
     }
 }
 
-private struct BatchChip: View {
-    var title: String
-    var destructive = false
-    var action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(.must.archivo(14, .semibold))
-                .foregroundStyle(destructive ? Color(hex: 0xFF8A80) : .white)
-                .lineLimit(1)
-                .padding(.vertical, 11)
-                .padding(.horizontal, 15)
-                .background(Capsule().fill(Color.white.opacity(0.12)))
-        }
-        .buttonStyle(MustPressStyle())
-    }
-}
-
-/// Mover pra lista…: as listas, com a cor e a contagem.
+/// Mover pra lista…: as listas e a contagem.
 struct MoveListSheet: View {
     var lists: [MustList]
     var count: Int
@@ -95,40 +66,25 @@ struct MoveListSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            SheetHandle().frame(maxWidth: .infinity)
-            Text("Mover \(count) \(count == 1 ? "lugar" : "lugares")")
-                .font(.must.archivo(22, .semibold))
-                .foregroundStyle(Color.must.ink)
-            ScrollView {
-                VStack(spacing: 0) {
-                    ForEach(lists) { list in
-                        Button {
-                            onPick(list)
-                            dismiss()
-                        } label: {
-                            HStack(spacing: 12) {
-                                Circle().fill(list.color.strong).frame(width: 10, height: 10)
-                                Text(list.displayName)
-                                    .font(.must.archivo(16, .semibold))
-                                    .foregroundStyle(Color.must.ink)
-                                Spacer()
-                                Text("\(list.places.count)")
-                                    .font(.must.mono(13))
-                                    .foregroundStyle(Color.must.secondary)
-                            }
-                            .padding(.vertical, 14)
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        RowDivider()
+        NavigationStack {
+            List(lists) { list in
+                Button {
+                    onPick(list)
+                    dismiss()
+                } label: {
+                    HStack(spacing: 12) {
+                        MustIconView(list.icon, size: 18).foregroundStyle(.secondary).frame(width: 28).accessibilityHidden(true)
+                        Text(list.displayName).foregroundStyle(.primary)
+                        Spacer()
+                        Text("\(list.places.count)").foregroundStyle(.secondary).monospacedDigit()
                     }
+                    .contentShape(Rectangle())
                 }
             }
+            .navigationTitle("Mover \(count) \(count == 1 ? "lugar" : "lugares")")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancelar") { dismiss() } } }
         }
-        .padding(.horizontal, 22)
-        .padding(.bottom, 12)
-        .background(Color.must.bg)
     }
 }
 
@@ -146,35 +102,23 @@ struct CityPickSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            SheetHandle().frame(maxWidth: .infinity)
-            Text("Cidade")
-                .font(.must.archivo(22, .semibold))
-                .foregroundStyle(Color.must.ink)
-            ForEach(options) { option in
+        NavigationStack {
+            List(options) { option in
                 Button {
                     onPick(option)
                     dismiss()
                 } label: {
-                    HStack {
-                        Text(option.title).font(.must.archivo(16, .semibold)).foregroundStyle(Color.must.ink)
-                        Spacer()
-                    }
-                    .padding(.vertical, 14)
-                    .contentShape(Rectangle())
+                    Text(option.title).foregroundStyle(.primary).frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
-                RowDivider()
             }
-            Spacer(minLength: 0)
+            .navigationTitle("Cidade")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancelar") { dismiss() } } }
         }
-        .padding(.horizontal, 22)
-        .padding(.bottom, 12)
-        .background(Color.must.bg)
     }
 }
 
-/// Feito (swipe à direita): quanto foi. Sem valor também marca 済.
+/// Marcar feito: quanto foi. Sem valor também marca como feito.
 struct DoneSheet: View {
     var place: Place
     var region: Region
@@ -184,29 +128,27 @@ struct DoneSheet: View {
     @State private var amount = ""
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            SheetHandle().frame(maxWidth: .infinity)
-            Text(place.name)
-                .font(.must.archivo(22, .semibold))
-                .foregroundStyle(Color.must.ink)
-            Micro("quanto foi?")
-            HStack(spacing: 10) {
-                Text(region.currencySymbol).font(.must.mono(17)).foregroundStyle(Color.must.secondary)
-                TextField("0", text: $amount)
-                    .font(.must.mono(17))
-                    .keyboardType(.decimalPad)
-                    .foregroundStyle(Color.must.ink)
+        NavigationStack {
+            Form {
+                Section {
+                    HStack(spacing: 10) {
+                        Text(region.currencySymbol).foregroundStyle(.secondary)
+                        TextField("0", text: $amount).keyboardType(.decimalPad).monospacedDigit()
+                    }
+                } header: {
+                    Text("Quanto foi?")
+                } footer: {
+                    Text("Pode deixar em branco: marca como feito do mesmo jeito.")
+                }
+                Section {
+                    Button("Marcar feito") { mark() }.v9Primary().frame(maxWidth: .infinity)
+                        .listRowBackground(Color.clear)
+                }
             }
-            .padding(.horizontal, 16)
-            .frame(height: 52)
-            .background(Color.must.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-            Text("Pode deixar em branco: marca como feito do mesmo jeito.").mustMeta()
-            PrimaryButton("Marcar feito") { mark() }
-            Spacer(minLength: 0)
+            .navigationTitle(place.name)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancelar") { dismiss() } } }
         }
-        .padding(.horizontal, 22)
-        .padding(.bottom, 12)
-        .background(Color.must.bg)
     }
 
     private func mark() {

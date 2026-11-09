@@ -8,9 +8,8 @@ struct NewListFlow: View {
     var body: some View {
         NavigationStack(path: $path) {
             NewListView { listId in path.append(listId) }
-                .toolbar(.hidden, for: .navigationBar)
                 .navigationDestination(for: String.self) { id in
-                    AddItemsView(listId: id).toolbar(.hidden, for: .navigationBar)
+                    AddItemsView(listId: id)
                 }
         }
     }
@@ -25,7 +24,7 @@ struct EditListFlow: View {
         if let list = lists.first(where: { $0.id == listId }) {
             NewListView(editing: list)
         } else {
-            Color.must.bg.ignoresSafeArea()
+            V9.groupedBackground.ignoresSafeArea()
         }
     }
 }
@@ -103,38 +102,38 @@ struct NewListView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            CutScreenHeader(title: editing == nil ? "Nova lista" : "Editar lista",
-                            corner: [editing == nil ? "passo 1 de 2" : "editar", cityName], height: 130,
-                            onBack: { dismiss() }, backIcon: "xmark")
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    ListTile(list: preview, height: 170, previewCount: editing?.places.count ?? 0,
-                             previewSubtitle: previewSubtitle, photoURL: shownPhotoURL)
-                        .overlay(alignment: .bottomTrailing) {
-                            if let credit = shownCredit { Credit(credit, color: color.text).padding(10) }
-                        }
-                        .padding(.top, 20)
-
-                    nameSection.padding(.top, 28)
-                    iconSection.padding(.top, 26)
-                    colorSection.padding(.top, 26)
-                    photoSection.padding(.top, 26)
-                    if editing != nil {
-                        subsSection.padding(.top, 26)
-                        orderSection.padding(.top, 26)
-                        deleteSection.padding(.top, 26)
-                    }
-                    Color.clear.frame(height: 24)
+        Form {
+            Section {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(preview.name).font(.headline).lineLimit(2)
+                    Text(previewSubtitle).font(.subheadline).foregroundStyle(.secondary)
+                    if let credit = shownCredit { Text("foto · \(credit)").font(.footnote).foregroundStyle(.secondary) }
                 }
-                .padding(.horizontal, 20)
+                .accessibilityElement(children: .combine)
+            } header: {
+                Text("Prévia")
             }
-            .scrollIndicators(.hidden)
-            .scrollDismissesKeyboard(.interactively)
+            nameSection
+            iconSection
+            photoSection
+            if editing != nil {
+                subsSection
+                orderSection
+                deleteSection
+            }
         }
-        .background(V8.paper.ignoresSafeArea())
-        .cutFooter(editing == nil ? "Criar e adicionar lugares" : "Salvar",
-                   enabled: !name.trimmingCharacters(in: .whitespaces).isEmpty, action: confirm)
+        .scrollDismissesKeyboard(.interactively)
+        .navigationTitle(editing == nil ? "Nova lista" : "Editar lista")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) { Button("Cancelar") { dismiss() } }
+            ToolbarItem(placement: .confirmationAction) {
+                Button(editing == nil ? "Criar" : "Salvar", action: confirm)
+                    .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .accessibilityIdentifier("newlist.confirm")
+            }
+        }
+        .v9Screen(grouped: true)
         .sheet(isPresented: $showIcons) {
             IconGridSheet(selected: $icon).presentationDetents([.medium, .large])
         }
@@ -150,74 +149,43 @@ struct NewListView: View {
     }
 
     private var nameSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            MonoLabel("nome", color: V8.mute)
-            HStack(spacing: 10) {
-                HStack(spacing: 10) {
-                    Text("Must").font(V8Font.text(17)).foregroundStyle(Color.must.secondary)
-                    TextField("kissaten", text: $name)
-                        .accessibilityIdentifier("newlist.name")
-                        .font(V8Font.text(17, weight: .semibold))
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                }
-                .padding(.horizontal, 16)
-                .frame(height: 52)
-                .background(Color.must.surface, in: Rectangle())
+        Section {
+            HStack(spacing: 8) {
+                Text("Must").foregroundStyle(.secondary)
+                TextField("kissaten", text: $name)
+                    .accessibilityIdentifier("newlist.name")
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
             }
+        } header: {
+            Text("Nome")
         }
     }
 
     private var iconSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            MonoLabel("ícone", color: V8.mute)
+        Section("Ícone") {
             let suggested = Self.suggestedIcons.contains(icon) ? Self.suggestedIcons : [icon] + Self.suggestedIcons.dropLast()
             FlowLayout(spacing: 10) {
                 ForEach(suggested) { item in
                     Button { icon = item } label: {
                         MustIconView(item, size: 22)
-                            .foregroundStyle(icon == item ? .white : Color.must.ink)
+                            .foregroundStyle(icon == item ? V9.accent : Color.primary)
                             .frame(width: 44, height: 44)
-                            .background(Rectangle()
-                                .fill(icon == item ? Color.must.ink : Color.must.surface))
+                            .background(icon == item ? V9.accent.opacity(0.14) : V9.fill, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                     }
-                    .buttonStyle(MustPressStyle())
+                    .buttonStyle(.borderless)
                     .accessibilityLabel(item.label)
+                    .accessibilityAddTraits(icon == item ? .isSelected : [])
                 }
                 Button { showIcons = true } label: {
                     Text("+\(MustIcon.allCases.count - suggested.count)")
-                        .font(V8Font.text(13, weight: .semibold))
-                        .foregroundStyle(Color.must.ink)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.primary)
                         .frame(width: 44, height: 44)
-                        .overlay(Rectangle()
-                            .strokeBorder(Color(hex: 0xD5D8DD), style: StrokeStyle(lineWidth: 1.2, dash: [4, 3])))
+                        .background(V9.fill, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                 }
-                .buttonStyle(MustPressStyle())
+                .buttonStyle(.borderless)
                 .accessibilityLabel("Todos os ícones")
-            }
-        }
-    }
-
-    private var colorSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            MonoLabel("cor", color: V8.mute)
-            // 12 cores em linha: rolagem horizontal (sem ela o HStack exige ~480 pt e empurra a tela inteira).
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(MustColor.allCases) { c in
-                        Button { color = c } label: {
-                            Rectangle()
-                                .fill(c.gradient)
-                                .frame(width: 34, height: 34)
-                                .padding(3)
-                                .overlay(Rectangle().strokeBorder(Color.must.ink, lineWidth: color == c ? 2 : 0))
-                        }
-                        .buttonStyle(MustPressStyle())
-                        .accessibilityLabel(c.label)
-                        .accessibilityAddTraits(color == c ? .isSelected : [])
-                    }
-                }
-                .padding(.vertical, 2)
             }
         }
     }
@@ -232,158 +200,135 @@ struct NewListView: View {
 
     /// Edição: a foto atual, com "trocar foto" pra abrir a busca.
     private var currentPhotoRow: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            MonoLabel("foto de fundo", color: V8.mute)
+        Section("Foto de fundo") {
             HStack(spacing: 12) {
                 Text(shownCredit.map { "foto · \($0)" } ?? "sem foto · só a cor")
-                    .font(V8Font.text(13)).foregroundStyle(V8.mute)
+                    .font(.subheadline).foregroundStyle(.secondary)
                     .lineLimit(2)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                Button { searchPhotos = true } label: { Pill("trocar foto") }
-                    .buttonStyle(MustPressStyle())
+                Button("Trocar foto") { searchPhotos = true }
+                    .buttonStyle(.borderless)
                     .fixedSize()
             }
-            .frame(maxWidth: .infinity)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var photoOptions: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 8) {
-                MonoLabel("foto de fundo · Wikimedia CC", color: V8.mute)
-                    .lineLimit(1)
-                    .fixedSize(horizontal: true, vertical: false)
-                Spacer(minLength: 0)
-                Text("busca “\(name.isEmpty ? "…" : name) \(cityName.lowercased())”")
-                    .font(V8Font.text(13)).foregroundStyle(V8.mute)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                    .frame(maxWidth: 180, alignment: .trailing)
-            }
-            .frame(maxWidth: .infinity)
+        Section {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
                     Button { selectedPhoto = nil; photoChanged = true } label: {
-                        Rectangle()
-                            .fill(color.gradient)
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(V9.fill)
                             .frame(width: 84, height: 64)
-                            .overlay(Text("sem foto").font(V8Font.mono(9)).foregroundStyle(color.text))
-                            .overlay(Rectangle().strokeBorder(Color.must.ink, lineWidth: selectedPhoto == nil ? 2 : 0))
+                            .overlay(Text("sem foto").font(.caption).foregroundStyle(.secondary))
+                            .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .strokeBorder(V9.accent, lineWidth: selectedPhoto == nil ? 2 : 0))
                     }
                     ForEach(photos.prefix(4)) { photo in
                         Button { selectedPhoto = photo; photoChanged = true } label: {
-                            TintedPhoto(url: URL(string: photo.url), color: color, tintOpacity: 0.35)
+                            TintedPhoto(url: URL(string: photo.url), color: color, tintOpacity: 0, saturation: 1)
                                 .frame(width: 84, height: 64)
-                                .clipShape(Rectangle())
-                                .overlay(Rectangle().strokeBorder(Color.must.ink, lineWidth: selectedPhoto == photo ? 2 : 0))
+                                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                                .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .strokeBorder(V9.accent, lineWidth: selectedPhoto == photo ? 2 : 0))
                         }
                         .accessibilityLabel("Foto de \(photo.owner)")
                     }
                     if photos.isEmpty {
                         ForEach(0..<3, id: \.self) { _ in
-                            Rectangle().fill(Color.must.surface).frame(width: 84, height: 64)
+                            RoundedRectangle(cornerRadius: 10, style: .continuous).fill(V9.fill).frame(width: 84, height: 64)
                         }
                     }
                 }
-                .buttonStyle(MustPressStyle())
+                .buttonStyle(.borderless)
             }
-            Text(photoNote ?? "Só fotos com licença CC · crédito fica no card · ou sem foto, só a cor.").font(V8Font.text(13)).foregroundStyle(V8.mute)
+        } header: {
+            Text("Foto de fundo · Wikimedia CC")
+        } footer: {
+            Text(photoNote ?? "Só fotos com licença CC, com crédito. Busca “\(name.isEmpty ? "…" : name) \(cityName.lowercased())”. Ou sem foto.")
         }
     }
 
     // MARK: Edição
 
     private var subsSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            MonoLabel("sub-listas", color: V8.mute)
-            if !subs.isEmpty {
-                FlowLayout(spacing: 8) {
-                    ForEach(subs, id: \.self) { sub in
-                        HStack(spacing: 8) {
-                            Text(sub).font(V8Font.text(13, weight: .semibold))
-                            Button { subs.removeAll { $0 == sub } } label: {
-                                MustIconView(.fechar, size: 10).foregroundStyle(Color.must.secondary)
-                            }
-                            .accessibilityLabel("Tirar \(sub)")
-                        }
-                        .foregroundStyle(Color.must.ink)
-                        .padding(.vertical, 9)
-                        .padding(.horizontal, 13)
-                        .background(Rectangle().fill(Color.must.surface))
+        Section {
+            ForEach(subs, id: \.self) { sub in
+                HStack {
+                    Text(sub)
+                    Spacer()
+                    Button { subs.removeAll { $0 == sub } } label: {
+                        Image(systemName: "minus.circle.fill").foregroundStyle(.secondary).frame(width: 44, height: 44)
                     }
+                    .buttonStyle(.borderless)
+                    .accessibilityLabel("Tirar \(sub)")
                 }
             }
             HStack(spacing: 10) {
                 TextField("nova sub-lista, ex.: ramen", text: $newSub)
-                    .font(V8Font.text(16))
                     .submitLabel(.done)
                     .onSubmit(addSub)
                 if !newSub.trimmingCharacters(in: .whitespaces).isEmpty {
-                    Button("Adicionar", action: addSub).font(V8Font.text(14, weight: .semibold)).foregroundStyle(Color.must.ink)
+                    Button("Adicionar", action: addSub).buttonStyle(.borderless).font(.body.weight(.semibold))
                 }
             }
-            .padding(.horizontal, 16)
-            .frame(height: 52)
-            .background(Color.must.surface, in: Rectangle())
-            Text("Tirar uma sub-lista não apaga os lugares: eles ficam sem sub.").font(V8Font.text(13)).foregroundStyle(V8.mute)
+        } header: {
+            Text("Sub-listas")
+        } footer: {
+            Text("Tirar uma sub-lista não apaga os lugares: eles ficam sem sub.")
         }
     }
 
     private var orderSection: some View {
         let position = lists.firstIndex { $0.id == editing?.id } ?? 0
-        return VStack(alignment: .leading, spacing: 10) {
-            MonoLabel("ordem", color: V8.mute)
-            FormSection {
-                FormRow("Posição", subtitle: "\(position + 1) de \(lists.count) · no hub e no board") {
-                    HStack(spacing: 8) {
-                        Button { moveList(-1) } label: { Pill("subir") }
-                            .disabled(position == 0)
-                        Button { moveList(1) } label: { Pill("descer") }
-                            .disabled(position >= lists.count - 1)
-                    }
-                    .buttonStyle(MustPressStyle())
+        return Section {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Posição")
+                    Text("\(position + 1) de \(lists.count) · no hub e no board").font(.footnote).foregroundStyle(.secondary)
                 }
+                Spacer()
+                Button { moveList(-1) } label: { Image(systemName: "arrow.up").frame(width: 44, height: 44) }
+                    .disabled(position == 0)
+                    .accessibilityLabel("Subir")
+                Button { moveList(1) } label: { Image(systemName: "arrow.down").frame(width: 44, height: 44) }
+                    .disabled(position >= lists.count - 1)
+                    .accessibilityLabel("Descer")
             }
+            .buttonStyle(.borderless)
+        } header: {
+            Text("Ordem")
         }
     }
 
     private var deleteSection: some View {
         let count = editing?.places.count ?? 0
         let others = lists.filter { $0.id != editing?.id }
-        return VStack(alignment: .leading, spacing: 10) {
+        return Section {
             if let error {
-                Text(error).font(.must.meta).foregroundStyle(Color(hex: 0xC2261D))
+                Text(error).font(.footnote).foregroundStyle(.red)
             }
-            Button { confirmDelete = true } label: {
-                Text("Apagar lista")
-                    .font(V8Font.text(15, weight: .semibold))
-                    .foregroundStyle(Color(hex: 0xC2261D))
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 52)
-                    .background(Rectangle().fill(.white))
-                    .overlay(Rectangle().strokeBorder(Color(hex: 0xF1C9C6)))
-            }
-            .buttonStyle(MustPressStyle())
-            .confirmationDialog("Apagar \(editing?.displayName ?? "lista")?", isPresented: $confirmDelete, titleVisibility: .visible) {
-                if count == 0 {
-                    Button("Apagar lista", role: .destructive) { deleteList(to: nil) }
-                } else {
-                    ForEach(others) { other in
-                        Button("Levar \(count) \(count == 1 ? "lugar" : "lugares") pra \(other.displayName) e apagar") {
-                            deleteList(to: other)
+            Button("Apagar lista", role: .destructive) { confirmDelete = true }
+                .confirmationDialog("Apagar \(editing?.displayName ?? "lista")?", isPresented: $confirmDelete, titleVisibility: .visible) {
+                    if count == 0 {
+                        Button("Apagar lista", role: .destructive) { deleteList(to: nil) }
+                    } else {
+                        ForEach(others) { other in
+                            Button("Levar \(count) \(count == 1 ? "lugar" : "lugares") pra \(other.displayName) e apagar") {
+                                deleteList(to: other)
+                            }
                         }
                     }
+                } message: {
+                    if count == 0 {
+                        Text("A lista está vazia.")
+                    } else if others.isEmpty {
+                        Text("Cria outra lista antes: os lugares precisam de pra onde ir.")
+                    } else {
+                        Text("Os lugares vão pra outra lista. Nada se perde.")
+                    }
                 }
-            } message: {
-                if count == 0 {
-                    Text("A lista está vazia.")
-                } else if others.isEmpty {
-                    Text("Cria outra lista antes: os lugares precisam de pra onde ir.")
-                } else {
-                    Text("Os lugares vão pra outra lista. Nada se perde.")
-                }
-            }
         }
     }
 
@@ -494,8 +439,7 @@ struct IconGridSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        VStack(spacing: 0) {
-            CutScreenHeader(title: "Ícone", corner: ["\(MustIcon.allCases.count) opções"], height: 110, onBack: { dismiss() }, backIcon: "xmark")
+        NavigationStack {
             ScrollView {
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 5), spacing: 14) {
                     ForEach(MustIcon.allCases.filter { !$0.isTextGlyph }) { icon in
@@ -505,19 +449,23 @@ struct IconGridSheet: View {
                         } label: {
                             VStack(spacing: 5) {
                                 MustIconView(icon, size: 22)
-                                    .foregroundStyle(selected == icon ? V8.paper : V8.ink)
+                                    .foregroundStyle(selected == icon ? V9.accent : Color.primary)
                                     .frame(width: 48, height: 48)
-                                    .background(selected == icon ? V8.ink : Color.clear)
-                                    .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
-                                Text(icon.label).font(V8Font.text(10)).foregroundStyle(Color.must.secondary).lineLimit(1)
+                                    .background(selected == icon ? V9.accent.opacity(0.14) : V9.fill, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                                Text(icon.label).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
                             }
                         }
-                        .buttonStyle(MustPressStyle())
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(icon.label)
+                        .accessibilityAddTraits(selected == icon ? .isSelected : [])
                     }
                 }
-                .padding(22)
+                .padding(V9.gutter)
             }
+            .navigationTitle("Ícone")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Fechar") { dismiss() } } }
         }
-        .background(V8.paper.ignoresSafeArea())
+        .v9Screen()
     }
 }

@@ -1,10 +1,9 @@
 import SwiftData
 import SwiftUI
 
-/// Regras da volta (`design/screens/ComprasRegras.png`): as regras por seção, cada uma com o impacto na sua lista,
+/// Regras da volta (V9, `List` nativa): as regras por seção, cada uma com o impacto na sua lista,
 /// a cota e o reembolso que ainda falta, e as fontes com a data da conferência.
 struct ShoppingRulesView: View {
-    @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
     @Environment(RegionStore.self) private var store
 
@@ -29,22 +28,20 @@ struct ShoppingRulesView: View {
 
     var body: some View {
         let report = self.report
-        VStack(spacing: 0) {
-            CutScreenHeader(title: "Regras da volta", corner: [routeLabel, "conferido \(Self.shortDate(checkedAt))"],
-                            subtitle: "o que vale pra sua lista, com o que você já comprou", height: 200, onBack: { dismiss() })
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    ForEach(ShoppingRuleSection.allCases, id: \.self) { section in
-                        sectionCard(section, report: report)
-                    }
-                    footer.padding(20)
-                    V8BarSpacer()
-                }
+        List {
+            Section {
+                Text("O que vale pra sua lista, com o que você já comprou. Conferido em \(Self.shortDate(checkedAt)).")
+                    .font(.subheadline).foregroundStyle(.secondary)
             }
-            .scrollIndicators(.hidden)
+            ForEach(ShoppingRuleSection.allCases, id: \.self) { section in
+                sectionCard(section, report: report)
+            }
+            footer
         }
-        .background(V8.paper.ignoresSafeArea())
-        .toolbar(.hidden, for: .navigationBar)
+        .listStyle(.insetGrouped)
+        .navigationTitle("Regras da volta")
+        .navigationBarTitleDisplayMode(.large)
+        .v9Screen(grouped: true)
         .alert("Taxa do dólar", isPresented: $editingRate) {
             TextField("5,50", text: $rateText).keyboardType(.decimalPad)
             Button("Salvar") { saveRate() }
@@ -58,20 +55,14 @@ struct ShoppingRulesView: View {
 
     private func sectionCard(_ section: ShoppingRuleSection, report: ShoppingReport) -> some View {
         let rules = pack.rules(in: section)
-        return VStack(alignment: .leading, spacing: 0) {
-            MonoLabel(section.title(from: pack.from), size: 10, color: V8.mute)
-                .padding(.top, 16)
-                .padding(.bottom, 6)
+        return Section {
             ForEach(rules) { rule in
                 ruleRow(rule, impact: report.impact(for: rule.id))
-                if rule.id != rules.last?.id { Rectangle().fill(V8.ink.opacity(0.15)).frame(height: 1) }
             }
             if section == .entering { rateRow(report) }
-            Color.clear.frame(height: 14)
+        } header: {
+            Text(section.title(from: pack.from))
         }
-        .padding(.horizontal, 20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .overlay(alignment: .bottom) { IndexRule() }
     }
 
     private func ruleRow(_ rule: ShoppingRule, impact: ShoppingImpact?) -> some View {
@@ -79,65 +70,59 @@ struct ShoppingRulesView: View {
             toneBadge(rule.tone)
             VStack(alignment: .leading, spacing: 3) {
                 Text(Self.attributed(rule.text))
-                    .font(V8Font.text(15))
-                    .foregroundStyle(V8.ink)
+                    .font(.body)
                     .fixedSize(horizontal: false, vertical: true)
                 if let impact {
-                    Text(impact.text).font(V8Font.text(13)).foregroundStyle(Self.color(impact.tone))
+                    Text(impact.text).font(.subheadline).foregroundStyle(Self.color(impact.tone))
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
         }
-        .padding(.vertical, 10)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
     }
 
     private func rateRow(_ report: ShoppingReport) -> some View {
         HStack(spacing: 8) {
-            Text("taxa: US$ 1 = R$ \(report.brlPerUSD.formatted(.number.locale(Locale(identifier: "pt_BR")).precision(.fractionLength(2))))")
-                .font(V8Font.mono(13)).foregroundStyle(V8.mute)
+            Text("Taxa: US$ 1 = R$ \(report.brlPerUSD.formatted(.number.locale(Locale(identifier: "pt_BR")).precision(.fractionLength(2))))")
+                .font(.subheadline.monospacedDigit()).foregroundStyle(.secondary)
             Spacer(minLength: 8)
-            Button {
+            Button("Mudar") {
                 rateText = report.brlPerUSD.formatted(.number.locale(Locale(identifier: "pt_BR")).precision(.fractionLength(2)))
                 editingRate = true
-            } label: {
-                Text("MUDAR").font(V8Font.mono(11, weight: .semibold)).tracking(1).foregroundStyle(V8.ink).underline()
             }
-            .buttonStyle(MustPressStyle())
+            .buttonStyle(.borderless)
         }
-        .padding(.top, 10)
     }
 
     private func toneBadge(_ tone: ShoppingTone) -> some View {
-        let (symbol, fill, text): (String, Color, Color) = switch tone {
-        case .ok: ("✓", V8.paper, V8.ink)
-        case .warn: ("!", V8.orange, V8.ink)
-        case .no: ("✕", V8.ink, V8.paper)
+        let (symbol, color): (String, Color) = switch tone {
+        case .ok: ("checkmark.circle", .secondary)
+        case .warn: ("exclamationmark.circle", .primary)
+        case .no: ("xmark.circle.fill", .red)
         }
-        return Text(symbol)
-            .font(V8Font.mono(11, weight: .bold))
-            .foregroundStyle(text)
-            .frame(width: 22, height: 22)
-            .background(Rectangle().fill(fill))
-            .overlay(Rectangle().stroke(V8.ink, lineWidth: 1.5))
-            .padding(.top, 2)
+        return Image(systemName: symbol)
+            .font(.title3)
+            .foregroundStyle(color)
+            .frame(width: 26)
+            .accessibilityLabel(tone == .ok ? "Passa" : tone == .warn ? "Atenção" : "Não passa")
     }
 
     // MARK: Rodapé
 
-    private var footer: some View {
+    @ViewBuilder private var footer: some View {
         let sources = Self.sources(pack.rules)
-        return VStack(alignment: .leading, spacing: 8) {
-            MonoLabel("fontes", size: 10, color: V8.mute)
+        Section {
             ForEach(sources, id: \.url) { source in
                 Link(destination: source.url) {
-                    Text("\(source.label) ↗").font(V8Font.text(14, weight: .semibold)).foregroundStyle(V8.ink).underline()
+                    Label(source.label, systemImage: "arrow.up.right.square")
                 }
             }
+        } header: {
+            Text("Fontes")
+        } footer: {
             Text("Cada regra tem a data da conferência e o link oficial. Confira antes de embarcar: as regras mudam.")
-                .font(V8Font.text(13)).foregroundStyle(V8.mute)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // MARK: Ações
@@ -169,9 +154,9 @@ struct ShoppingRulesView: View {
 
     static func color(_ tone: ShoppingTone) -> Color {
         switch tone {
-        case .ok: V8.mute
-        case .warn: V8.orangeDeep
-        case .no: V8.ink
+        case .ok: Color.secondary
+        case .warn: V9.accent
+        case .no: Color.red
         }
     }
 
@@ -216,10 +201,7 @@ extension ShoppingRuleSection {
 
     var tint: Color {
         switch self {
-        case .taxFree: Color(hex: 0xFFE8B8)
-        case .carry: Color.must.surface2
-        case .entering: Color(hex: 0xCFF7DF)
-        case .food: Color(hex: 0xFFDCD2)
+        case .taxFree, .carry, .entering, .food: Color(uiColor: .secondarySystemGroupedBackground)
         }
     }
 }

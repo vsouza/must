@@ -36,9 +36,8 @@ final class DiscoverModel {
     }
 }
 
-/// Por perto, agora (design: Descobrir.png). Nunca push: só daqui e da linha da Home.
+/// Por perto, agora (V9, `List` nativa). Nunca push: só daqui e da linha da Home.
 struct DiscoverView: View {
-    @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
     @Environment(AppRouter.self) private var router
     @Environment(RegionStore.self) private var store
@@ -50,7 +49,7 @@ struct DiscoverView: View {
     @Query private var trips: [TripInfo]
 
     @State private var model = DiscoverModel()
-    /// Bairro do GPS no cabeçalho "Por perto · <bairro>" (prompt 21 · fatia 2).
+    /// Bairro do GPS no título "Por perto · <bairro>".
     @State private var currentArea: Area?
 
     private var region: Region { store.region }
@@ -63,52 +62,60 @@ struct DiscoverView: View {
     var body: some View {
         let now = AppClock.now
         let items = location.map { DiscoverBuilder.ranked(batch: model.batch, places: places, origin: $0, now: now, region: region) } ?? []
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                topBar(now: now).padding(.top, 8)
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(currentArea.map { "Por perto · \($0.name)" } ?? "Por perto, agora").mustTitle()
-                    Text("o que as pessoas gostam aqui — esteja no seu board ou não").mustSerif(18).foregroundStyle(Color.must.secondary)
+        List {
+            Section {
+                Text("\(areaLabel) · \(region.timeString(now)) · raio 600 m. O que as pessoas gostam aqui, esteja no seu board ou não.")
+                    .font(.subheadline).foregroundStyle(.secondary)
+                V9OfflineChip()
+            }
+            if !enabled {
+                notice("Sugestões por perto estão desligadas.", action: ("Abrir Ajustes", { router.push(.settings, on: .hoje) }))
+            } else if let first = items.first {
+                Section {
+                    hero(first)
+                    actions(first)
+                } header: {
+                    Text("Mais indicado")
                 }
-                .padding(.top, 22)
-
-                if !enabled {
-                    notice("Sugestões por perto estão desligadas.", action: ("Abrir Ajustes", { router.push(.settings, on: .hoje) }))
-                        .padding(.top, 26)
-                } else if let first = items.first {
-                    hero(first).padding(.top, 26)
-                    actions(first).padding(.top, 22)
-                    chips.padding(.top, 20)
-                    list(model.filtered(items).filter { $0.id != first.id }).padding(.top, 14)
+                Section {
+                    Picker("Mostrar", selection: $model.filter) {
+                        ForEach(DiscoverModel.Filter.allCases) { Text($0.rawValue).tag($0) }
+                    }
+                    .pickerStyle(.menu)
+                    let rest = model.filtered(items).filter { $0.id != first.id }
+                    if rest.isEmpty {
+                        Text("Nada com esse filtro.").font(.subheadline).foregroundStyle(.secondary)
+                    }
+                    ForEach(Array(rest.enumerated()), id: \.offset) { _, item in row(item) }
+                } header: {
+                    Text("Por perto")
+                } footer: {
                     if model.batch?.places.isEmpty ?? true, !model.loading {
                         Text("Sem fontes externas agora (sem chave ou sem rede). Mostrando só o seu board.")
-                            .font(.must.meta).foregroundStyle(Color.must.secondary).padding(.top, 12)
                     }
-                } else if location == nil {
-                    notice("Sem GPS agora: não sei o que tem perto de você.")
-                        .padding(.top, 26)
-                } else {
-                    notice(model.loading ? "Procurando por perto…" : "Nada por perto no raio de 600 m.")
-                        .padding(.top, 26)
                 }
-                TabBarSpacer()
+            } else if location == nil {
+                notice("Sem GPS agora: não sei o que tem perto de você.")
+            } else {
+                notice(model.loading ? "Procurando por perto…" : "Nada por perto no raio de 600 m.")
             }
-            .padding(.horizontal, 22)
         }
-        .scrollIndicators(.hidden)
-        .background {
-            ZStack {
-                Color.must.bg
-                BlobBackground(style: .home)
+        .listStyle(.insetGrouped)
+        .navigationTitle(currentArea.map { "Por perto · \($0.name)" } ?? "Por perto, agora")
+        .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                // Recarrega o GPS e o cache; a rede só se o cache venceu (30 min).
+                Button { Task { await reload() } } label: { Image(systemName: "arrow.clockwise") }
+                    .accessibilityLabel("Atualizar")
             }
-            .ignoresSafeArea()
         }
+        .v9Screen(grouped: true)
         .task(id: loadKey) { await reload() }
         .task(id: loadKey) {
             guard let here = location else { currentArea = nil; return }
             currentArea = await services.currentArea.area(at: here, region: region)
         }
-        .toolbar(.hidden, for: .navigationBar)
     }
 
     private func reload() async {
@@ -116,70 +123,34 @@ struct DiscoverView: View {
         await model.load(loader: services.nearby, origin: location, region: region, now: AppClock.now)
     }
 
-    // MARK: Topo
-
-    private func topBar(now: Date) -> some View {
-        HStack {
-            IconButton(.voltar, label: "Voltar") { dismiss() }
-            Spacer()
-            Micro("\(areaLabel) · \(region.timeString(now)) · raio 600 m")
-            Spacer()
-            // Recarrega o GPS e o cache; a rede só se o cache venceu (30 min).
-            IconButton(.outraProposta, style: .dark, label: "Atualizar") { Task { await reload() } }
-        }
-    }
-
     private var areaLabel: String {
-        guard let location else { return region.shortName.uppercased() }
+        guard let location else { return region.shortName }
         let near = places.filter { $0.area != nil }.min { $0.location.distance(from: location) < $1.location.distance(from: location) }
-        if let near, near.location.distance(from: location) < 3000, let area = near.area { return area.uppercased() }
+        if let near, near.location.distance(from: location) < 3000, let area = near.area { return area }
         let city = trips.first?.city(on: AppClock.now, calendar: region.calendar)?.name
-        return (city ?? region.displayName).uppercased()
+        return city ?? region.displayName
     }
 
     // MARK: Destaque
 
     private func hero(_ item: NearbyScored) -> some View {
         let c = item.candidate
-        let color = NearbyRanker.suggestedColor(c.place, role: c.role ?? NearbyRanker.role(for: c.place))
-        return VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .top) {
-                Tag(c.isOnBoard ? "no board · \(c.listName ?? "")" : "não está no seu board")
-                Spacer()
-                Micro(Walk.distanceText(c.distance), color: .white.opacity(0.9))
-            }
-            Spacer(minLength: 0)
-            Text(c.place.name)
-                .font(.must.archivo(26, .bold))
-                .foregroundStyle(.white)
-                .lineLimit(2)
-            Text(heroMeta(c))
-                .font(.must.archivo(13))
-                .foregroundStyle(.white.opacity(0.85))
-                .lineLimit(2)
+        return VStack(alignment: .leading, spacing: 4) {
+            Text(c.isOnBoard ? "No board · \(c.listName ?? "")" : "Não está no seu board")
+                .font(.footnote).foregroundStyle(.secondary)
+            Text(c.place.name).font(.title3.weight(.semibold)).lineLimit(3)
+            Text("\(Walk.distanceText(c.distance)) · \(heroMeta(c))").font(.subheadline).foregroundStyle(.secondary).lineLimit(3)
             if let phrase = DiscoverBuilder.phrase(for: c.place) {
-                Text("“\(phrase)”")
-                    .mustSerif(19)
-                    .foregroundStyle(Color(hex: 0xB9F5CF))
-                    .lineLimit(3)
+                Text("“\(phrase)”").font(.subheadline.italic()).lineLimit(4).padding(.top, 2)
             }
         }
-        .padding(22)
-        .frame(maxWidth: .infinity, minHeight: 250, alignment: .leading)
-        .background {
-            ZStack {
-                Color.must.ink
-                RadialGradient(colors: [color.strong.opacity(0.9), .clear], center: .topTrailing, startRadius: 10, endRadius: 280)
-            }
-        }
-        .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
-        .rotationEffect(.degrees(-1.2))
-        .padding(.horizontal, 6)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
     }
 
     /// "4,5 · 10 mil avaliações · fechado agora". Wikipedia não tem nota: só diz de onde veio.
     private func heroMeta(_ c: NearbyCandidate) -> String {
-        if c.isContextOnly { return "contexto · Wikipedia · \(Walk.distanceText(c.distance))" }
+        if c.isContextOnly { return "contexto · Wikipedia" }
         var parts: [String] = []
         if let rating = c.place.rating {
             parts.append(rating.formatted(.number.precision(.fractionLength(1)).locale(region.locale)))
@@ -194,94 +165,50 @@ struct DiscoverView: View {
         let suggested = DiscoverBuilder.suggestedList(for: c, lists: lists)
         return HStack(spacing: 10) {
             if c.isOnBoard {
-                Pill("já no board", isOn: true)
+                Label("Já no board", systemImage: "checkmark").font(.subheadline.weight(.semibold))
             } else if let suggested {
-                PrimaryButton("+ \(suggested.displayName)", style: .green) { add(c, to: suggested) }
+                Button("+ \(suggested.displayName)") { add(c, to: suggested) }.v9Primary()
             }
             Menu {
                 ForEach(lists) { list in
                     Button(list.displayName) { add(c, to: list) }
                 }
             } label: {
-                Text("Outra lista")
-                    .font(.must.archivo(15, .semibold))
-                    .foregroundStyle(Color.must.ink)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 56)
-                    .background(Capsule().fill(suggested == nil && !c.isOnBoard ? Color.must.green : Color.must.surface))
+                Text("Outra lista").frame(minHeight: 28)
             }
+            .buttonStyle(.bordered)
             .disabled(c.isOnBoard)
+            Spacer(minLength: 0)
             Button { MapsLinks.openApple(to: CLLocationCoordinate2D(latitude: c.place.lat, longitude: c.place.lng), name: c.place.name) } label: {
-                MustIconView(.avancar, size: 18)
-                    .foregroundStyle(.white)
-                    .frame(width: 56, height: 56)
-                    .background(Circle().fill(Color.must.ink))
+                Label("Ir", systemImage: "arrow.triangle.turn.up.right.diamond")
             }
-            .buttonStyle(MustPressStyle())
-            .accessibilityLabel("Ir")
+            .buttonStyle(.bordered)
         }
+        .buttonStyle(.borderless)
     }
 
     private func add(_ candidate: NearbyCandidate, to list: MustList) {
         DiscoverBuilder.addToBoard(candidate, list: list, region: region, now: AppClock.now, context: context)
     }
 
-    // MARK: Filtros e lista
-
-    private var chips: some View {
-        ScrollView(.horizontal) {
-            HStack(spacing: 8) {
-                ForEach(DiscoverModel.Filter.allCases) { option in
-                    Button { model.filter = option } label: { Pill(option.rawValue, isOn: model.filter == option) }
-                        .buttonStyle(.plain)
-                }
-            }
-        }
-        .scrollIndicators(.hidden)
-    }
-
-    private func list(_ items: [NearbyScored]) -> some View {
-        VStack(spacing: 0) {
-            if items.isEmpty {
-                Text("Nada com esse filtro.").font(.must.meta).foregroundStyle(Color.must.secondary).padding(18)
-            }
-            ForEach(Array(items.enumerated()), id: \.offset) { index, item in
-                row(item)
-                if index < items.count - 1 { RowDivider().padding(.horizontal, 14) }
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .card()
-    }
+    // MARK: Lista
 
     private func row(_ item: NearbyScored) -> some View {
         let c = item.candidate
-        let role = c.role ?? NearbyRanker.role(for: c.place)
-        let color = NearbyRanker.suggestedColor(c.place, role: role)
-        let content = HStack(spacing: 12) {
-            TintedPhoto(url: nil, color: color)
-                .frame(width: 58, height: 58)
-                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-            VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 6) {
-                    Text(c.place.name).font(.must.archivo(16, .semibold)).foregroundStyle(Color.must.ink).lineLimit(1)
-                    if c.isOnBoard { Tag("no board") }
-                }
-                Text(rowMeta(c)).font(.must.meta).foregroundStyle(Color.must.secondary).lineLimit(1)
-            }
-            Spacer(minLength: 0)
-            if let chip = c.place.sources.compactMap(\.chip).first { Tag(chip) }
-        }
-        .padding(14)
-        .contentShape(Rectangle())
-
+        let label = V9Row(title: c.place.name, detail: rowMeta(c),
+                          reason: c.isOnBoard ? "no board" : (c.place.sources.compactMap(\.chip).first),
+                          systemImage: c.isOnBoard ? "bookmark.fill" : "mappin.circle")
         if let id = c.boardPlaceId {
-            return AnyView(Button { router.push(.place(id: id), on: .hoje) } label: { content }.buttonStyle(MustPressStyle()))
+            return AnyView(Button { router.push(.place(id: id), on: .hoje) } label: { label }.buttonStyle(.plain))
         }
-        return AnyView(Button {
-            if let list = DiscoverBuilder.suggestedList(for: c, lists: lists) { add(c, to: list) }
-        } label: { content }
-        .buttonStyle(MustPressStyle()))
+        return AnyView(HStack {
+            label
+            if let list = DiscoverBuilder.suggestedList(for: c, lists: lists) {
+                Button { add(c, to: list) } label: { Image(systemName: "plus.circle").font(.title2).frame(width: 44, height: 44) }
+                    .buttonStyle(.borderless)
+                    .accessibilityLabel("Adicionar a \(list.displayName)")
+            }
+        })
     }
 
     /// Board: "Must drink · aberto · 180 m · 4,6 · 3,1 mil". De fora: a categoria em pt no lugar do nome da lista.
@@ -301,14 +228,11 @@ struct DiscoverView: View {
     // MARK: Avisos
 
     private func notice(_ text: String, action: (String, () -> Void)? = nil) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(text).font(.must.archivo(15, .semibold)).foregroundStyle(Color.must.ink)
+        Section {
+            Text(text).font(.body)
             if let action {
-                GhostButton(action.0) { action.1() }
+                Button(action.0) { action.1() }
             }
         }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .card()
     }
 }

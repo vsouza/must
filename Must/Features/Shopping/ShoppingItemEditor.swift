@@ -34,85 +34,84 @@ struct ShoppingItemEditor: View {
     private var trimmedName: String { name.trimmingCharacters(in: .whitespacesAndNewlines) }
 
     var body: some View {
-        CutSheet(title: item == nil ? "Novo item" : "Editar item", corner: ["Compras", region.shortName],
-                 footer: "Salvar", footerEnabled: !trimmedName.isEmpty, onFooter: save) {
-            field("nome") { TextField("ramen tonkotsu instantâneo", text: $name).font(V8Font.text(16, weight: .semibold)) }
-
-            VStack(alignment: .leading, spacing: 10) {
-                MonoLabel("categoria", size: 10, color: V8.mute)
-                FlowLayout(spacing: 8) {
-                    ForEach(ShoppingCategory.allCases) { option in
-                        Button { category = option } label: { Pill(option.label, isOn: category == option) }
-                            .buttonStyle(MustPressStyle())
+        NavigationStack {
+            Form {
+                Section {
+                    field("Nome") { TextField("ramen tonkotsu instantâneo", text: $name) }
+                    field("Categoria") {
+                        FlowLayout(spacing: 8) {
+                            ForEach(ShoppingCategory.allCases) { option in
+                                Button { category = option } label: { V9Chip(option.label, isOn: category == option) }
+                                    .buttonStyle(.borderless)
+                            }
+                        }
                     }
                 }
-            }
-
-            VStack(alignment: .leading, spacing: 10) {
-                MonoLabel("loja", size: 10, color: V8.mute)
-                FlowLayout(spacing: 8) {
-                    ForEach(shopStores) { place in
-                        Button {
-                            storeId = place.id
-                            if area.isEmpty { area = place.area ?? "" }
-                        } label: { Pill(place.name, isOn: storeId == place.id) }
-                            .buttonStyle(MustPressStyle())
+                Section("Loja") {
+                    FlowLayout(spacing: 8) {
+                        ForEach(shopStores) { place in
+                            Button {
+                                storeId = place.id
+                                if area.isEmpty { area = place.area ?? "" }
+                            } label: { V9Chip(place.name, isOn: storeId == place.id) }
+                                .buttonStyle(.borderless)
+                        }
+                        Button { storeId = nil } label: { V9Chip("Outra loja", isOn: storeId == nil) }
+                            .buttonStyle(.borderless)
                     }
-                    Button { storeId = nil } label: { Pill("outra loja", isOn: storeId == nil) }
-                        .buttonStyle(MustPressStyle())
+                    if storeId == nil {
+                        field("Nome da loja") { TextField("Map Camera", text: $storeName) }
+                    }
+                    field("Bairro (opcional)") { TextField("Shinjuku", text: $area) }
                 }
-                if storeId == nil {
-                    field("nome da loja") { TextField("Map Camera", text: $storeName).font(V8Font.text(15)) }
+                Section {
+                    field("Preço total estimado (\(region.currencySymbol))") {
+                        TextField("95000", text: $estText).monospacedDigit().keyboardType(.numberPad)
+                    }
+                    Stepper("Quantidade: \(qty)", value: $qty, in: 1...99)
                 }
-            }
-
-            field("bairro (opcional)") { TextField("Shinjuku", text: $area).font(V8Font.text(15)) }
-            field("preço total estimado (\(region.currencySymbol))") {
-                TextField("95000", text: $estText).font(V8Font.mono(17)).keyboardType(.numberPad)
-            }
-
-            CutBox(label: "quantidade") {
-                Stepper("\(qty)", value: $qty, in: 1...99).font(V8Font.mono(15))
-            }
-
-            VStack(alignment: .leading, spacing: 10) {
-                MonoLabel("situação", size: 10, color: V8.mute)
-                FlowLayout(spacing: 8) {
-                    ForEach(ShoppingStatus.allCases) { option in
-                        Button { status = option } label: { Pill(option.label, isOn: status == option) }
-                            .buttonStyle(MustPressStyle())
+                Section("Situação") {
+                    Picker("Situação", selection: $status) {
+                        ForEach(ShoppingStatus.allCases) { Text($0.label).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                    if status == .bought {
+                        field("Quanto pagou (opcional, \(region.currencySymbol))") {
+                            TextField("o estimado, se vazio", text: $paidText).monospacedDigit().keyboardType(.numberPad)
+                        }
+                    }
+                    Toggle(isOn: $taxFree) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Tem recibo tax-free")
+                            Text("entra no reembolso da saída, se a loja/dia passar de \(ShoppingReport.money(ShoppingRules.pack(for: region).limits.taxFreeMinYen, currency: region == .it ? "EUR" : "JPY"))")
+                                .font(.footnote).foregroundStyle(.secondary)
+                        }
                     }
                 }
-            }
-
-            if status == .bought {
-                field("quanto pagou (opcional, \(region.currencySymbol))") {
-                    TextField("o estimado, se vazio", text: $paidText).font(V8Font.mono(17)).keyboardType(.numberPad)
+                Section {
+                    if category == .food {
+                        field("Ingredientes (a checagem de porco e leite cru lê daqui)") {
+                            TextField("arroz, caldo de porco, tempero…", text: $ingredients, axis: .vertical).lineLimit(2...6)
+                        }
+                    }
+                    field("Observação (volume, sabor…)") {
+                        TextField("720 ml · sabor matcha", text: $notes, axis: .vertical).lineLimit(1...4)
+                    }
+                } footer: {
+                    Text("Comprado vira gasto de compras e marca a loja como visitada. Os alertas da volta aparecem na própria lista.")
+                }
+                if item != nil {
+                    Section { Button("Apagar", role: .destructive) { confirmDelete = true } }
                 }
             }
-
-            Toggle(isOn: $taxFree) {
-                FormRow("Tem recibo tax-free", subtitle: "entra no reembolso da saída, se a loja/dia passar de \(ShoppingReport.money(ShoppingRules.pack(for: region).limits.taxFreeMinYen, currency: region == .it ? "EUR" : "JPY"))")
-            }
-            .toggleStyle(.must)
-
-            if category == .food {
-                field("ingredientes (a checagem de porco e leite cru lê daqui)") {
-                    TextField("arroz, caldo de porco, tempero…", text: $ingredients, axis: .vertical)
-                        .font(V8Font.text(15)).lineLimit(2...6)
-                }
-            }
-            field("observação (volume, sabor…)") {
-                TextField("720 ml · sabor matcha", text: $notes, axis: .vertical).font(V8Font.text(15)).lineLimit(1...4)
-            }
-
-            Text("Comprado vira gasto de compras e marca a loja como visitada. Os alertas da volta aparecem na própria lista.")
-                .font(V8Font.text(13)).foregroundStyle(V8.mute)
-
-            if item != nil {
-                CutButton(title: "Apagar") { confirmDelete = true }
+            .navigationTitle(item == nil ? "Novo item" : "Editar item")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancelar") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) { Button("Salvar", action: save).disabled(trimmedName.isEmpty) }
             }
         }
+        .v9Screen(grouped: true)
         .onAppear(perform: load)
         .confirmationDialog("Apagar \(item?.name ?? "item")?", isPresented: $confirmDelete, titleVisibility: .visible) {
             Button("Apagar", role: .destructive) {
@@ -125,8 +124,8 @@ struct ShoppingItemEditor: View {
         }
     }
 
-    private func field<C: View>(_ label: String, @ViewBuilder _ content: () -> C) -> some View {
-        CutBox(label: label) { content() }
+    private func field<C: View>(_ label: String, @ViewBuilder _ content: @escaping () -> C) -> some View {
+        V9Field(label) { content() }
     }
 
     private func load() {
