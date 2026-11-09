@@ -338,15 +338,6 @@ struct QueroView: View {
                 HStack(spacing: 8) { ProgressView(); Text("pensando no aparelho…").foregroundStyle(.secondary) }
             }
             if let extras = q.extras {
-                ForEach(extras.recipes) { r in
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(r.title).font(.body.weight(.semibold))
-                        Text(r.ingredients.joined(separator: " + ")).font(.subheadline).foregroundStyle(.secondary)
-                        Text(r.step).font(.subheadline)
-                        Text(r.when).font(.footnote).foregroundStyle(.secondary)
-                    }
-                    .accessibilityElement(children: .combine)
-                }
                 ForEach(extras.places) { p in
                     V9Row(title: p.name, detail: Walk.distanceText(p.distance), reason: p.note ?? p.address, systemImage: "mappin.circle.fill") {
                         Button { MapsLinks.openApple(to: p.coordinate, name: p.name) } label: {
@@ -355,6 +346,15 @@ struct QueroView: View {
                         .buttonStyle(.plain).foregroundStyle(V9.accent)
                         .accessibilityLabel("Ir até \(p.name)")
                     }
+                }
+                ForEach(extras.recipes) { r in
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(r.title).font(.body.weight(.semibold))
+                        Text(r.ingredients.joined(separator: " + ")).font(.subheadline).foregroundStyle(.secondary)
+                        Text(r.step).font(.subheadline)
+                        Text(r.when).font(.footnote).foregroundStyle(.secondary)
+                    }
+                    .accessibilityElement(children: .combine)
                 }
                 if let note = extras.note { Label(note, systemImage: "wifi.slash").font(.footnote).foregroundStyle(.secondary) }
             }
@@ -382,23 +382,20 @@ struct QueroView: View {
                 } else if let failure {
                     Text(failure).font(.footnote).foregroundStyle(V9.alert)
                 }
-                if let row {
-                    fitCard(row)
-                    HStack(spacing: 10) {
-                        Button("Só guardar") { guardar(row) }.v9Secondary()
+                if let row { fitCard(row) }
+                HStack(spacing: 10) {
+                    if let showcase {
+                        Button { router.showOnMap(showcase) } label: {
+                            Label("Ver no mapa", systemImage: "map").frame(maxWidth: .infinity)
+                        }
+                        .v9Secondary()
+                        .accessibilityHint("abre o mapa só com estes lugares")
+                    }
+                    if let row {
                         Button(row.slot == nil ? "Não cabe hoje" : "Encaixar hoje") { encaixar(row) }
                             .v9Primary()
                             .disabled(row.slot == nil)
                     }
-                }
-                if let showcase {
-                    Button {
-                        router.showOnMap(showcase)
-                    } label: {
-                        Label("Ver no mapa", systemImage: "map").frame(maxWidth: .infinity)
-                    }
-                    .v9Secondary()
-                    .accessibilityHint("abre o mapa só com estes lugares")
                 }
             }
             .padding(.horizontal, V9.gutter)
@@ -415,11 +412,12 @@ struct QueroView: View {
                 .foregroundStyle(V9.accent)
             VStack(alignment: .leading, spacing: 2) {
                 Text(fitTitle(row)).font(.subheadline.weight(.semibold)).lineLimit(2)
-                Text(fitDetail(row)).font(.footnote).foregroundStyle(.secondary).lineLimit(2)
             }
             Spacer(minLength: 0)
+            Button("Só guardar") { guardar(row) }
+                .font(.subheadline.weight(.semibold))
+                .frame(minHeight: 44)
         }
-        .accessibilityElement(children: .combine)
     }
 
     private func fitTitle(_ row: QueroRow) -> String {
