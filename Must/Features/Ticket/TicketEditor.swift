@@ -31,90 +31,70 @@ struct TicketEditor: View {
     private var sortedSessions: [EventSession] { sessions.sorted { $0.at < $1.at } }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                SheetHandle().frame(maxWidth: .infinity)
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(ticket == nil ? "Novo ingresso" : "Ingresso").mustTitle()
-                        Text(placeName).mustMeta()
-                    }
-                    Spacer()
-                    Button(action: save) {
-                        Text("Salvar").font(.must.archivo(15, .semibold)).foregroundStyle(.white)
-                            .padding(.horizontal, 18).frame(height: 40)
-                            .background(Capsule().fill(Color.must.ink))
-                    }
-                    .buttonStyle(MustPressStyle())
-                }
-
+        NavigationStack {
+            Form {
                 if !sortedSessions.isEmpty {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Micro("sessão")
-                        FlowLayout(spacing: 8) {
-                            Button { sessionId = nil } label: { Pill("sem sessão", isOn: sessionId == nil) }.buttonStyle(MustPressStyle())
+                    Section("Sessão") {
+                        Picker("Sessão", selection: Binding(get: { sessionId }, set: { id in
+                            sessionId = id
+                            if let id, let s = sortedSessions.first(where: { $0.id == id }) { at = s.at }
+                        })) {
+                            Text("Sem sessão").tag(String?.none)
                             ForEach(sortedSessions) { s in
-                                Button {
-                                    sessionId = s.id
-                                    at = s.at
-                                } label: { Pill("\(region.shortDay(s.at)) \(region.timeString(s.at))", isOn: sessionId == s.id) }
-                                .buttonStyle(MustPressStyle())
+                                Text("\(region.shortDay(s.at)) \(region.timeString(s.at))").tag(Optional(s.id))
                             }
                         }
                     }
                 }
-
-                DatePicker("Quando", selection: $at, displayedComponents: [.date, .hourAndMinute])
-                    .font(.must.body).tint(Color.must.ink)
-                    .environment(\.timeZone, region.timeZone)
-                    .environment(\.locale, region.locale)
-
-                field("código de confirmação") { TextField("BR-7K2M-9931", text: $confirmation).font(.must.mono(17)).textInputAutocapitalization(.characters) }
-                field("código do QR (colar)") { TextField("texto que o leitor lê", text: $qrText).font(.must.archivo(15)) }
-
-                VStack(alignment: .leading, spacing: 10) {
-                    Micro("PDF ou foto")
-                    HStack(spacing: 10) {
-                        GhostButton(pdfName == nil ? "Anexar" : "Trocar arquivo", icon: .colarLink) { picking = true }
-                        if pdfName != nil {
-                            Button { pdfName = nil } label: { Pill("remover", icon: .remover) }.buttonStyle(MustPressStyle())
-                        }
-                    }
-                    if pdfName != nil { Text("arquivo anexado · fica só neste aparelho").mustMeta() }
-                }
-
-                Stepper(value: $people, in: 1...12) {
-                    HStack {
-                        Text("Pessoas").mustBody()
-                        Spacer()
-                        Text("\(people)").font(.must.mono(15))
-                    }
-                }
-
-                field("pago (\(region.currencySymbol), total)") { TextField("24.000", text: $paidText).font(.must.mono(17)).keyboardType(.numberPad) }
-
-                Toggle(isOn: $hasCancel) { FormRow("Cancela grátis até", subtitle: "depois disso, cobra") }.toggleStyle(.must)
-                if hasCancel {
-                    DatePicker("Até", selection: $cancelUntil, displayedComponents: [.date, .hourAndMinute])
-                        .font(.must.body).tint(Color.must.ink)
+                Section {
+                    DatePicker("Quando", selection: $at, displayedComponents: [.date, .hourAndMinute])
                         .environment(\.timeZone, region.timeZone)
                         .environment(\.locale, region.locale)
+                    field("Código de confirmação") { TextField("BR-7K2M-9931", text: $confirmation).textInputAutocapitalization(.characters) }
+                    field("Código do QR (colar)") { TextField("texto que o leitor lê", text: $qrText) }
                 }
-
-                if let error { Text(error).font(.must.meta).foregroundStyle(Color(hex: 0xC2261D)) }
-
+                Section {
+                    Button { picking = true } label: { Label(pdfName == nil ? "Anexar PDF ou foto" : "Trocar arquivo", systemImage: "paperclip") }
+                    if pdfName != nil {
+                        Button(role: .destructive) { pdfName = nil } label: { Label("Remover arquivo", systemImage: "trash") }
+                    }
+                } footer: {
+                    if pdfName != nil { Text("Arquivo anexado · fica só neste aparelho") }
+                }
+                Section {
+                    Stepper(value: $people, in: 1...12) {
+                        HStack { Text("Pessoas"); Spacer(); Text("\(people)").monospacedDigit().foregroundStyle(.secondary) }
+                    }
+                    field("Pago (\(region.currencySymbol), total)") { TextField("24.000", text: $paidText).keyboardType(.numberPad) }
+                }
+                Section {
+                    Toggle(isOn: $hasCancel) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Cancela grátis até")
+                            Text("depois disso, cobra").font(.footnote).foregroundStyle(.secondary)
+                        }
+                    }
+                    if hasCancel {
+                        DatePicker("Até", selection: $cancelUntil, displayedComponents: [.date, .hourAndMinute])
+                            .environment(\.timeZone, region.timeZone)
+                            .environment(\.locale, region.locale)
+                    }
+                }
+                if let error { Section { Text(error).foregroundStyle(.red) } }
                 if let onRemove {
-                    GhostButton("Remover ingresso", icon: .remover) {
-                        onRemove()
-                        dismiss()
+                    Section {
+                        Button(role: .destructive) { onRemove(); dismiss() } label: { Label("Remover ingresso", systemImage: "trash") }
                     }
                 }
             }
-            .padding(.horizontal, 22)
-            .padding(.bottom, 40)
+            .navigationTitle(ticket == nil ? "Novo ingresso" : "Ingresso")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancelar") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) { Button("Salvar", action: save).fontWeight(.semibold) }
+            }
+            .v9Screen(grouped: true)
         }
-        .scrollIndicators(.hidden)
-        .background(Color.must.bg)
         .onAppear(perform: load)
         .fileImporter(isPresented: $picking, allowedContentTypes: [.pdf, .image]) { result in
             switch result {
@@ -139,14 +119,11 @@ struct TicketEditor: View {
     }
 
     private func field<Content: View>(_ label: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Micro(label)
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label).font(.footnote).foregroundStyle(.secondary)
             content()
-                .foregroundStyle(Color.must.ink)
-                .padding(.horizontal, 16)
-                .frame(height: 52)
-                .background(Color.must.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         }
+        .padding(.vertical, 2)
     }
 
     private func load() {
@@ -205,41 +182,38 @@ struct TicketsEditor: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                SheetHandle().frame(maxWidth: .infinity)
-                HStack {
-                    Text("Ingressos").mustTitle()
-                    Spacer()
-                    Button("Pronto") { dismiss() }
-                        .font(.must.archivo(15, .semibold)).foregroundStyle(.white)
-                        .padding(.horizontal, 18).frame(height: 40)
-                        .background(Capsule().fill(Color.must.ink))
-                }
-                Text("Cada ingresso vira âncora do dia, como a reserva. Ele aparece em Reservas.").mustMeta()
-                if tickets.isEmpty {
-                    Text("Nenhum ingresso anexado.").mustMeta().padding(.vertical, 8)
-                } else {
-                    VStack(spacing: 0) {
+        NavigationStack {
+            List {
+                Section {
+                    if tickets.isEmpty {
+                        Text("Nenhum ingresso anexado.").foregroundStyle(.secondary)
+                    } else {
                         ForEach(tickets.sorted { $0.at < $1.at }) { t in
-                            RowDivider()
                             Button { editing = .edit(t) } label: {
-                                FormRow("\(region.shortDay(t.at)) · \(region.timeString(t.at))",
-                                        subtitle: [t.confirmation, t.pdfName == nil ? nil : "PDF"].compactMap { $0 }.joined(separator: " · ")) {
-                                    MustIconView(.avancar, size: 14).foregroundStyle(Color.must.secondary)
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("\(region.shortDay(t.at)) · \(region.timeString(t.at))").font(.body.weight(.semibold)).foregroundStyle(.primary)
+                                        let sub = [t.confirmation, t.pdfName == nil ? nil : "PDF"].compactMap { $0 }.joined(separator: " · ")
+                                        if !sub.isEmpty { Text(sub).font(.subheadline).foregroundStyle(.secondary) }
+                                    }
+                                    Spacer(minLength: 8)
+                                    Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
                                 }
+                                .frame(minHeight: 44).contentShape(Rectangle())
                             }
                             .buttonStyle(.plain)
                         }
                     }
+                } footer: {
+                    Text("Cada ingresso vira âncora do dia, como a reserva. Ele aparece em Reservas.")
                 }
-                PrimaryButton("Anexar ingresso", icon: .colarLink, style: .dark) { editing = .new }
+                Section { Button { editing = .new } label: { Label("Anexar ingresso", systemImage: "plus") } }
             }
-            .padding(.horizontal, 22)
-            .padding(.bottom, 40)
+            .navigationTitle("Ingressos")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Pronto") { dismiss() }.fontWeight(.semibold) } }
+            .v9Screen(grouped: true)
         }
-        .scrollIndicators(.hidden)
-        .background(Color.must.bg)
         .sheet(item: $editing) { target in
             let current: Ticket? = if case .edit(let t) = target { t } else { nil }
             TicketEditor(ticket: current, sessions: sessions, region: region, placeName: placeName,
