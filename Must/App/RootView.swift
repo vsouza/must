@@ -31,7 +31,7 @@ struct RootView: View {
                 Tab(tab.title, systemImage: tab.systemImage, value: RootTab.main(tab)) {
                     NavigationStack(path: router.path(for: tab)) {
                         root(for: tab)
-                            .toolbar(.hidden, for: .navigationBar)
+                            .toolbar(tab == .viagem ? .visible : .hidden, for: .navigationBar)
                             .mustDestinations()
                     }
                     // Telas que escondiam a barra (Montar, Ir, Lugar, SOS, quero aberto…).
@@ -90,7 +90,7 @@ struct RootView: View {
         case .hoje: HomeView().v8Legacy()
         case .explorar: ExplorarView().v8Legacy()
         case .musts: MustsHubView().v8Legacy()
-        case .viagem: ProximosView().v8Legacy()
+        case .viagem: ProximosView()
         }
     }
 }

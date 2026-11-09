@@ -20,59 +20,64 @@ struct ProximosView: View {
     private var region: Region { store.region }
     private var cal: Calendar { region.calendar }
 
+    @Query private var people: [Companion]
+    @Query private var polls: [PlacePoll]
+
     var body: some View {
         let now = AppClock.now
         let items = upcoming(now: now)
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                header(now: now).padding(.top, 8)
-                minhasViagens.padding(.top, 14)
-                presentesLinha.padding(.top, 10)
-                // Grupo na raiz da aba (antes ficava escondido em Viagem › Gasto e dias).
-                GrupoBlock(onInk: true).padding(.top, 22)
-                HStack(alignment: .firstTextBaseline, spacing: 14) {
-                    Text("Próximos")
-                        .font(V8Font.display(52))
-                        .tracking(-1.6)
-                        .foregroundStyle(V8.white)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.6)
-                        .accessibilityAddTraits(.isHeader)
-                    BigNumeral("\(items.count)", size: 74, color: V8.orange)
-                }
-                .padding(.top, 22)
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("Próximos: \(items.count)")
-                SpecLabel("Só o que ainda vai acontecer · passou, some", color: V8.muteDark)
-                    .padding(.top, 14)
+        List {
+            Section {
+                minhasViagens
+                presentesLinha
+            }
+            Section {
                 if items.isEmpty {
-                    empty.padding(.top, 28)
+                    emptyRow
                 } else {
-                    // Faixas de ponta a ponta com régua (o corte): reserva laranja, o resto papel.
-                    VStack(spacing: 0) {
-                        ForEach(items) { item in
-                            Button { open(item) } label: { ProximoCard(item: item, region: region, now: now, leave: leaveLine(item)) }
-                                .buttonStyle(.plain)
-                        }
+                    ForEach(items) { item in
+                        Button { open(item) } label: { ProximoCard(item: item, region: region, now: now, leave: leaveLine(item)) }
+                            .buttonStyle(.plain)
                     }
-                    .padding(.horizontal, -20)
-                    .padding(.top, 22)
                 }
-                links.padding(.top, 30)
-                V8BarSpacer()
+            } header: {
+                Text(items.isEmpty ? "Próximos" : "Próximos · \(items.count)")
+            } footer: {
+                Text("Só o que ainda vai acontecer. Passou, some.")
             }
-            .padding(.horizontal, 20)
-        }
-        .scrollIndicators(.hidden)
-        .background {
-            ZStack(alignment: .topLeading) {
-                V8.ink
-                Rings(color: V8.white, count: 1, diameter: 560, opacity: 0.32, offset: CGSize(width: -150, height: -210))
+            Section("Carteira") {
+                link("Carteira", "cartões, passes, QR de entrada", "creditcard") { router.push(.carteira) }
+                link("Voos e reservas", "status e checklist", "airplane") { router.push(.schedule(tab: .voos)) }
             }
-            .ignoresSafeArea()
+            Section {
+                link("SOS", "emergência, seguro, hospital, consulado", "cross.case.fill", alert: true) { router.push(.sos) }
+            }
+            Section("Viagem") {
+                link("Mapas offline", "baixar a cidade no Wi-Fi", "map") { router.push(.offlineMaps) }
+                link("Bolso", "regras locais, atalhos, dinheiro", "bag") { router.push(.bolso) }
+                link("Coleção", "um card por lugar feito · mandar", "rectangle.stack") { router.push(.colecao) }
+                link("Compras", "lista, cota e regras da volta", "cart") { router.push(.compras) }
+                link("Gasto e dias", "orçamento e o que já foi gasto", "chart.pie") { router.push(.trip) }
+                link("Mandar a viagem", "PDF um dia por página · cartaz · link", "square.and.arrow.up") { router.sheet = .mandar(date: nil) }
+            }
+            Section(people.isEmpty ? "Grupo · só você" : "Grupo · você + \(people.count)") {
+                link("Pessoas", people.isEmpty ? "quem viaja com você" : people.prefix(3).map(\.name).joined(separator: ", "), "person.2") { router.push(.pessoas, on: router.tab) }
+                link("Votar", polls.isEmpty ? "A ou B? entre dois lugares" : "\(polls.filter { $0.winner == nil }.count) sem vencedor", "hand.thumbsup") { router.push(.votar, on: router.tab) }
+                link("Acertar contas", "dividir os gastos do grupo", "plusminus") { router.push(.acertar, on: router.tab) }
+                link("Mandar o dia", "cartaz, link e PDF de hoje", "paperplane") { router.sheet = .mandar(date: cal.startOfDay(for: now)) }
+            }
+            Section {
+                link("Ajustes", "região, dados, mapas, nuvem", "gearshape") { router.push(.settings) }
+            }
         }
-        .toolbar(.hidden, for: .navigationBar)
-        .lightStatusBar() // tinta no topo
+        .navigationTitle("Viagem")
+        .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button { router.sheet = .assistant } label: { Image(systemName: "sparkles") }.accessibilityLabel("Assistente")
+            }
+        }
+        .v9Screen(grouped: true)
         #if DEBUG
         .task {
             if DebugFlags.string("debugScreen") == "proximos" { ProximosDemo.ensure(context: context, region: region) }
@@ -80,108 +85,66 @@ struct ProximosView: View {
         #endif
     }
 
-    // MARK: Topo
+    // MARK: Linhas
 
-    private func header(now: Date) -> some View {
-        let trip = trips.first?.hasTrip == true ? trips.first : nil
-        let line = Proximos.tripLine(start: trip?.start, end: trip?.end, now: now, calendar: cal, month: region.monthShort)
-        return HStack(alignment: .top) {
-            V8SpecStack(lines: ["Viagem · \(region.shortName)", line ?? "sem viagem marcada · \(region.displayName)"], color: V8.muteDark)
-                .padding(.top, 14)
-            Spacer(minLength: 12)
-            HStack(spacing: 8) {
-                V8CornerButton(systemName: "creditcard", label: "Carteira", onInk: true) { router.push(.carteira) }
-                AssistantCorner(onInk: true)
-            }
-        }
-    }
-
-    /// Linha fixa do topo da aba (v9): a viagem de agora com bandeira e moeda; tocar abre Minhas viagens (o mesmo ⇄ da capa).
+    /// Linha fixa do topo da aba: a viagem de agora com bandeira (única cor do país) e moeda; abre Minhas viagens.
     private var minhasViagens: some View {
         Button { router.sheet = .viagens } label: {
             HStack(spacing: 12) {
-                TripFlag(theme, size: 26)
+                TripFlag(theme, size: 28)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Minhas viagens").font(V8Font.text(16, weight: .bold)).foregroundStyle(V8.white).lineLimit(1)
+                    Text("Minhas viagens").font(.body.weight(.semibold))
                     Text("\(region.displayName) · \(TripSwitcherModel.currencyLabel(region))")
-                        .font(V8Font.mono(10)).tracking(0.8).textCase(.uppercase)
-                        .foregroundStyle(V8.muteDark).lineLimit(1)
+                        .font(.subheadline).foregroundStyle(.secondary).lineLimit(1)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                Image(systemName: "arrow.left.arrow.right").font(.system(size: 16, weight: .semibold)).foregroundStyle(V8.white)
+                Spacer(minLength: 8)
+                Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
             }
-            .padding(.horizontal, 14)
-            .frame(maxWidth: .infinity, minHeight: 56)
-            .overlay(Rectangle().strokeBorder(V8.white, lineWidth: 2))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Minhas viagens, \(region.displayName), moeda \(TripSwitcherModel.currencyLabel(region))")
     }
 
-    /// Linha fixa logo abaixo de "Minhas viagens": "Presentes · 5 faltam de 6" abre a lista.
+    /// "Presentes · 5 faltam de 6" abre a lista.
     private var presentesLinha: some View {
         let pending = GiftLogic.pendingCount(gifts) > 0
         return Button { router.push(.presentes) } label: {
             HStack(spacing: 12) {
-                Image(systemName: "gift").font(.system(size: 20, weight: .regular)).foregroundStyle(V8.white).frame(width: 26)
+                Image(systemName: "gift").font(.title3).foregroundStyle(.secondary).frame(width: 28)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Presentes").font(V8Font.text(16, weight: .bold)).foregroundStyle(V8.white).lineLimit(1)
-                    Text(GiftLogic.pendingOfText(gifts))
-                        .font(V8Font.mono(10)).tracking(0.8).textCase(.uppercase)
-                        .foregroundStyle(pending ? V8.orange : V8.muteDark).lineLimit(1)
+                    Text("Presentes").font(.body.weight(.semibold))
+                    Text(GiftLogic.pendingOfText(gifts)).font(.subheadline).foregroundStyle(pending ? V9.accent : .secondary).lineLimit(1)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                Image(systemName: "arrow.up.right").font(.system(size: 16, weight: .semibold)).foregroundStyle(V8.white)
+                Spacer(minLength: 8)
+                Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
             }
-            .padding(.horizontal, 14)
-            .frame(maxWidth: .infinity, minHeight: 56)
-            .overlay(Rectangle().strokeBorder(V8.white, lineWidth: 2))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Presentes, \(GiftLogic.pendingOfText(gifts))")
     }
 
-    private var empty: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("Nada marcado pela frente.")
-                .font(V8Font.display(26))
-                .foregroundStyle(V8.white)
-            Text("Reserva, ingresso, trem e voo aparecem aqui em ordem, e somem quando passam.")
-                .font(V8Font.text(15))
-                .foregroundStyle(V8.muteDark)
-                .fixedSize(horizontal: false, vertical: true)
-            V8Button("Trazer ingresso", .orange, icon: .colarLink) { router.sheet = .ticketImport(inboxId: nil) }
+    private var emptyRow: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Nada marcado pela frente.").font(.headline)
+            Text("Reserva, ingresso, trem e voo aparecem aqui em ordem, e somem quando passam.").font(.subheadline).foregroundStyle(.secondary)
+            Button("Trazer ingresso") { router.sheet = .ticketImport(inboxId: nil) }.v9Primary()
         }
+        .padding(.vertical, 4)
     }
 
-    /// Resto da Viagem (Nav.png: Próximos · Carteira · Voos · Compras · Mapas offline).
-    private var links: some View {
-        VStack(spacing: 0) {
-            link("Coleção", "um card por lugar feito · mandar") { router.push(.colecao) }
-            link("Carteira", "cartões, passes, QR de entrada") { router.push(.carteira) }
-            link("Voos e reservas", "status e checklist") { router.push(.schedule(tab: .voos)) }
-            link("Compras", "lista, cota e regras da volta") { router.push(.compras) }
-            link("Mapas offline", "baixar a cidade no Wi-Fi") { router.push(.offlineMaps) }
-            link("Gasto e dias", "orçamento e o que já foi gasto") { router.push(.trip) }
-            // Prompt 25 · B.5: a viagem inteira em PDF (um dia por página), o cartaz e o link do dia.
-            link("Mandar a viagem", "PDF um dia por página · cartaz · link") { router.sheet = .mandar(date: nil) }
-        }
-    }
-
-    private func link(_ title: String, _ meta: String, action: @escaping () -> Void) -> some View {
+    private func link(_ title: String, _ meta: String, _ icon: String, alert: Bool = false, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 12) {
+                Image(systemName: icon).font(.title3).foregroundStyle(alert ? V9.alert : .secondary).frame(width: 28)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(title).font(V8Font.text(16, weight: .semibold)).foregroundStyle(V8.white)
-                    Text(meta).font(V8Font.text(13)).foregroundStyle(V8.muteDark).lineLimit(1)
+                    Text(title).font(.body.weight(.semibold)).foregroundStyle(alert ? V9.alert : .primary)
+                    Text(meta).font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
                 }
                 Spacer(minLength: 8)
-                Image(systemName: "arrow.up.right").font(.system(size: 14, weight: .semibold)).foregroundStyle(V8.muteDark)
+                Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
             }
-            .padding(.vertical, 13)
-            .overlay(alignment: .top) { Rectangle().fill(V8.white.opacity(0.12)).frame(height: 1) }
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -235,7 +198,7 @@ struct ProximosView: View {
     }
 }
 
-/// Um bilhete: etiqueta (tipo · dia) e rótulo à direita; hora grande com a rota; título e meta.
+/// Um próximo (V9): tipo e dia, hora em dígitos tabulares, título e detalhe; reserva leva o ponto do acento.
 struct ProximoCard: View {
     var item: Proximos.Item
     var region: Region
@@ -243,41 +206,23 @@ struct ProximoCard: View {
     var leave: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .center) {
-                V8Tag(text: "\(item.kind.label) · \(Proximos.dayLabel(item.at, now: now, calendar: region.calendar))", style: .ink)
-                Spacer(minLength: 8)
-                if let corner = item.corner {
-                    SpecLabel(corner, color: item.kind == .reservation ? V8.ink : V8.mute)
+        HStack(alignment: .top, spacing: 14) {
+            Text(region.timeString(item.at))
+                .font(.title2.weight(.semibold)).monospacedDigit()
+                .fixedSize()
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 6) {
+                    if item.kind == .reservation { Circle().fill(V9.accent).frame(width: 8, height: 8).accessibilityHidden(true) }
+                    Text("\(item.kind.label.capitalizedFirst) · \(Proximos.dayLabel(item.at, now: now, calendar: region.calendar))")
+                        .font(.footnote).foregroundStyle(.secondary).lineLimit(1)
                 }
+                Text(item.title).font(.body.weight(.semibold)).lineLimit(2)
+                let detail = [item.route, item.detail, leave, item.corner].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
+                if !detail.isEmpty { Text(detail).font(.subheadline).foregroundStyle(.secondary).lineLimit(3) }
             }
-            HStack(alignment: .lastTextBaseline, spacing: 12) {
-                Text(region.timeString(item.at))
-                    .font(V8Font.numeral(44))
-                    .tracking(-1.4)
-                    .foregroundStyle(V8.ink)
-                    .fixedSize()
-                if let route = item.route {
-                    SpecLabel(route, color: item.kind == .reservation ? V8.ink : V8.mute)
-                }
-            }
-            Text(item.title)
-                .font(V8Font.text(18, weight: .bold))
-                .foregroundStyle(V8.ink)
-                .lineLimit(2)
-            let detail = [item.detail, leave].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
-            if !detail.isEmpty {
-                Text(detail)
-                    .font(V8Font.text(14))
-                    .foregroundStyle(V8.ink.opacity(0.72))
-                    .lineLimit(2)
-            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(item.kind == .reservation ? V8.orange : V8.paper)
-        .overlay(alignment: .bottom) { Rectangle().fill(V8.ink).frame(height: 2) }
+        .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }
 }

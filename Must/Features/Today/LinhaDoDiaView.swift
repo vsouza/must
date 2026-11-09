@@ -28,27 +28,42 @@ struct LinhaDoDiaView: View {
     private var dayKey: String { BoardDates(timeZone: region.timeZone).dayString(date) }
 
     var body: some View {
-        VStack(spacing: 0) {
-            band
-            CutRule()
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    if plan != nil { controls }
-                    if let plan {
-                        if !shows.isEmpty { showsBand }
-                        if let clock, clock.adjusted { adjustedNote(clock) }
-                        timeline(plan)
-                    } else if loaded {
-                        empty.padding(.horizontal, 20).padding(.top, 36)
-                    }
-                    Color.clear.frame(height: 130)
+        List {
+            if let plan {
+                Section {
+                    summary(plan)
+                    if let clock, clock.adjusted { adjustedNote(clock) }
+                    if !shows.isEmpty { showsRow }
                 }
+                Section {
+                    timeline(plan)
+                } header: {
+                    Text("Paradas")
+                }
+                Section {
+                    Button { router.push(.montar(date: region.calendar.startOfDay(for: date)), on: .hoje) } label: {
+                        Label("Ajustar o dia", systemImage: "slider.horizontal.3")
+                    }
+                    Button { router.sheet = .mandar(date: region.calendar.startOfDay(for: date)) } label: {
+                        Label("Mandar o dia · cartaz, link, PDF", systemImage: "paperplane")
+                    }
+                }
+            } else if loaded {
+                empty
             }
-            .scrollIndicators(.hidden)
-            .overlay(alignment: .bottom) { BottomFade(color: V8.paper, height: 150) }
         }
-        .background(V8.paper.ignoresSafeArea())
-        .toolbar(.hidden, for: .navigationBar)
+        .listStyle(.insetGrouped)
+        .navigationTitle(DayText.dayLine(date, region: region))
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button { router.push(.mapa, on: .hoje) } label: { Label("Mapa", systemImage: "map") }
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button { router.sheet = .assistant } label: { Image(systemName: "sparkles") }.accessibilityLabel("Assistente")
+            }
+        }
+        .v9Screen(grouped: true)
         .onAppear(perform: load)
         .onReceive(NotificationCenter.default.publisher(for: ModelContext.didSave)) { _ in load() }
     }
@@ -71,86 +86,17 @@ struct LinhaDoDiaView: View {
         loaded = true
     }
 
-    // MARK: Topo (o corte)
+    // MARK: Resumo
 
-    /// Bloco do bairro do dia: cantos, "Dia N" e o numeral gigante = quantas paradas.
-    private var band: some View {
-        DayBand(areaId: plan?.bandArea(from: nowId == nil ? nil : AppClock.now), places: places) {
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .top) {
-                    V8CornerButton(systemName: "chevron.left", label: "Voltar", tint: theme.coverInk) { dismiss() }
-                    Spacer(minLength: 12)
-                    DayBandCorners(left: [], right: [DayText.dayLine(date, region: region),
-                                                     plan.map { "\($0.anchors.count == 1 ? "1 âncora" : "\($0.anchors.count) âncoras")"
-                                                         + (shows.isEmpty ? "" : " · \(shows.count) em cartaz")
-                                                         + " · \(region.money($0.spent)) de \(region.money($0.budget, symbol: false))" } ?? "sem dia montado"])
-                }
-                Spacer(minLength: 8)
-                HStack(alignment: .bottom, spacing: 12) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        if let title = plan?.title, !title.isEmpty { MonoLabel(title, size: 10, color: theme.coverInk.opacity(0.9)) }
-                        Text("Dia \(numeral)")
-                            .font(V8Font.display(46))
-                            .foregroundStyle(theme.coverInk)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.6)
-                    }
-                    Spacer(minLength: 8)
-                    if let plan { DayBandNumeral(value: "\(plan.stops.count)", caption: plan.stops.count == 1 ? "parada" : "paradas") }
-                }
-            }
+    private func summary(_ plan: DayPlan) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            if !plan.title.isEmpty { Text(plan.title).font(.headline) }
+            let anchors = plan.anchors.count == 1 ? "1 âncora" : "\(plan.anchors.count) âncoras"
+            Text("\(plan.stops.count) \(plan.stops.count == 1 ? "parada" : "paradas") · \(anchors) · \(region.money(plan.spent)) de \(region.money(plan.budget, symbol: false))")
+                .font(.subheadline).foregroundStyle(.secondary).monospacedDigit()
+            if let n = plan.dayNumber { Text("Dia \(n)").font(.footnote).foregroundStyle(.secondary) }
         }
-    }
-
-    private var numeral: String {
-        plan?.dayNumber.map(String.init) ?? region.dayNumber(date)
-    }
-
-    /// Linha | Mapa e, embaixo do dia, "Mandar o dia" por extenso (prompt 32: o ícone sozinho ninguém achava).
-    private var controls: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            toggle
-            Button { router.sheet = .mandar(date: region.calendar.startOfDay(for: date)) } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: "paperplane").font(.system(size: 15, weight: .bold))
-                    Text("MANDAR O DIA").font(V8Font.mono(12, weight: .semibold)).tracking(1).lineLimit(1)
-                    Spacer(minLength: 8)
-                    Text("cartaz · link · PDF").font(V8Font.text(12)).foregroundStyle(V8.mute).lineLimit(1)
-                }
-                .foregroundStyle(V8.ink)
-                .padding(.horizontal, 14)
-                .frame(maxWidth: .infinity, minHeight: 48)
-                .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Mandar o dia")
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
-        .overlay(alignment: .bottom) { IndexRule() }
-    }
-
-    /// Linha | Mapa (o Mapa é a tela do mapa do dia).
-    private var toggle: some View {
-        HStack(spacing: 0) {
-            Text("LINHA")
-                .font(V8Font.mono(11, weight: .semibold)).tracking(1)
-                .foregroundStyle(V8.white)
-                .padding(.horizontal, 16)
-                .frame(minHeight: 40)
-                .background(V8.ink)
-                .accessibilityAddTraits(.isSelected)
-            Button { router.push(.mapa, on: .hoje) } label: {
-                Text("MAPA")
-                    .font(V8Font.mono(11, weight: .semibold)).tracking(1)
-                    .foregroundStyle(V8.ink)
-                    .padding(.horizontal, 16)
-                    .frame(minHeight: 40)
-            }
-            .buttonStyle(.plain)
-        }
-        .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
+        .accessibilityElement(children: .combine)
     }
 
     // MARK: Em cartaz
@@ -158,24 +104,17 @@ struct LinhaDoDiaView: View {
     /// O que está em cartaz hoje (cache do aparelho; o motor decide se vira micro-parada).
     private var shows: [ShowEvent] { showEvents.today(region: region, at: date) }
 
-    /// Faixa tinta "Em cartaz hoje" (`DiaEmCartaz.png`): leva à tela Em cartaz.
-    private var showsBand: some View {
+    private var showsRow: some View {
         let first = shows[0]
         let more = shows.count > 1 ? " +\(shows.count - 1)" : ""
         return Button { router.push(.emCartaz, on: .hoje) } label: {
-            DayStrip(tone: .ink) {
-                HStack(spacing: 12) {
-                    Text("EM CARTAZ HOJE").font(V8Font.mono(11, weight: .bold)).tracking(1.4).foregroundStyle(V8.orange).lineLimit(1).fixedSize()
-                    Text(first.title + more).font(V8Font.text(16, weight: .bold)).foregroundStyle(V8.white).lineLimit(1)
-                    Spacer(minLength: 4)
-                    Image(systemName: "arrow.up.right").font(.system(size: 14, weight: .bold)).foregroundStyle(V8.white)
-                }
-                .frame(minHeight: 32)
+            HStack {
+                Label("Em cartaz hoje: \(first.title)\(more)", systemImage: "ticket").lineLimit(2)
+                Spacer(minLength: 4)
+                Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
             }
-            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Em cartaz hoje: \(first.title)\(more)")
     }
 
     // MARK: Linha
@@ -183,31 +122,24 @@ struct LinhaDoDiaView: View {
     /// "Atrasou? Ajustei: faltam 5 paradas" (nunca "você deveria"): o resto do dia foi refeito a partir de agora.
     private func adjustedNote(_ clock: DayClock) -> some View {
         VStack(alignment: .leading, spacing: 3) {
-            Text(DayText.adjustedLine(remaining: clock.remaining))
-                .font(V8Font.text(15, weight: .semibold)).foregroundStyle(V8.ink)
+            Text(DayText.adjustedLine(remaining: clock.remaining)).font(.subheadline.weight(.semibold))
             Text("Ficou pra depois: " + clock.skipped.map { DayText.head($0.label) }.joined(separator: ", "))
-                .font(V8Font.text(12.5)).foregroundStyle(V8.mute).lineLimit(2)
+                .font(.footnote).foregroundStyle(.secondary).lineLimit(3)
         }
-        .padding(.horizontal, 20).padding(.vertical, 12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .overlay(alignment: .bottom) { IndexRule() }
         .accessibilityElement(children: .combine)
     }
 
-    private func timeline(_ plan: DayPlan) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            ForEach(Array(plan.stops.enumerated()), id: \.element.id) { i, stop in
-                let state = LinhaStopState.of(stop, nowId: nowId, doneIds: doneIds, skippedIds: clock?.skippedIds ?? [])
-                DayStopRow(stop: stop, index: i + 1, state: state, region: region, onTap: tapAction(stop, state: state))
-                if let leg = plan.leg(after: stop) {
-                    DayLegRow(leg: leg)
-                }
+    @ViewBuilder private func timeline(_ plan: DayPlan) -> some View {
+        ForEach(plan.stops, id: \.id) { stop in
+            let state = LinhaStopState.of(stop, nowId: nowId, doneIds: doneIds, skippedIds: clock?.skippedIds ?? [])
+            V9StopRow(stop: stop, state: state, region: region, onTap: tapAction(stop, state: state))
+            if let leg = plan.leg(after: stop) {
+                V9LegRow(leg: leg).listRowSeparator(.hidden)
             }
-            if let last = plan.lastTrain {
-                DayLegRow(leg: DayLeg(mode: .train, minutes: 0, from: "", to: "",
-                                      detail: "último trem \(last.line) \(region.timeString(last.at))"),
-                          color: V8.orangeDeep)
-            }
+        }
+        if let last = plan.lastTrain {
+            Label("último trem \(last.line) \(region.timeString(last.at))", systemImage: "tram.fill")
+                .font(.footnote).foregroundStyle(V9.alert)
         }
     }
 
@@ -217,18 +149,15 @@ struct LinhaDoDiaView: View {
         return { router.push(.place(id: placeId), on: .hoje) }
     }
 
-    private var empty: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("Nada montado pra este dia.")
-                .font(V8Font.display(28))
-                .foregroundStyle(V8.ink)
-            Text("Diga o bairro e o ritmo; o resto sai dos seus Musts, com as micro-paradas e os deslocamentos.")
-                .font(V8Font.text(15))
-                .foregroundStyle(V8.mute)
-            BigButton(title: "Montar o dia", style: .orange, systemImage: "arrow.up.right") {
-                router.push(.montar(date: region.calendar.startOfDay(for: date)), on: .hoje)
+    @ViewBuilder private var empty: some View {
+        Section {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Nada montado pra este dia.").font(.title3.weight(.semibold))
+                Text("Diga o bairro e o ritmo; o resto sai dos seus Musts, com as micro-paradas e os deslocamentos.")
+                    .font(.subheadline).foregroundStyle(.secondary)
+                Button("Montar o dia") { router.push(.montar(date: region.calendar.startOfDay(for: date)), on: .hoje) }.v9Primary()
             }
-            .padding(.top, 8)
+            .padding(.vertical, 6)
         }
     }
 }

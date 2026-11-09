@@ -439,6 +439,13 @@ enum DebugLaunch {
             acceptEngineToday(context: context, region: region, engine: engine, areaId: arg)
             router.select(.hoje)
         case "bom-dia", "corte-bomdia": router.push(.bomDia, on: .hoje)
+        case "v9-linha", "v9-agora": // r32/E: aceita o dia de hoje (motor v8) e abre a Linha ou o Agora
+            acceptEngineToday(context: context, region: region, engine: engine, areaId: arg)
+            if parts[0] == "v9-linha" {
+                router.push(.linha(date: region.calendar.startOfDay(for: AppClock.now)), on: .hoje)
+            } else {
+                router.push(.agora, on: .hoje)
+            }
         case "agora", "corte-agora": router.push(.agora, on: .hoje)
         case "dia", "linha", "corte-dia": router.push(.linha(date: region.calendar.startOfDay(for: AppClock.now)), on: .hoje)
         case "ir": router.push(.ir(placeId: arg ?? "j05"), on: .hoje)
