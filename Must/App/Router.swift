@@ -163,6 +163,17 @@ final class AppRouter {
     }
 
     func leaveQuero() { queroSelected = false }
+
+    /// "Ver no mapa" (prompt 32 §6): abre o Explorar (o mapa) mostrando só estes pinos. O Explorar consome e zera.
+    var mapShowcase: MapShowcase?
+
+    func showOnMap(_ showcase: MapShowcase) {
+        sheet = nil
+        queroSelected = false
+        paths[.explorar] = []
+        tab = .explorar
+        mapShowcase = showcase
+    }
     var paths: [MustTab: [Route]] = [:]
     var sheet: Sheet?
     var cover: Cover?
@@ -293,6 +304,7 @@ extension View {
     /// Destinos comuns das pilhas de navegação.
     func mustDestinations() -> some View {
         navigationDestination(for: Route.self) { route in
+            Group {
             switch route {
             case .list(let id, let sub): ListView(listId: id, initialSub: sub)
             case .saveForEnd: ListView(listId: nil, initialSub: nil, saveForEndOnly: true)
@@ -339,6 +351,21 @@ extension View {
             case .votacao(let id): VotacaoView(pollId: id)
             case .acertar: AcertarView()
             }
+            }
+            .v8Legacy(route.legacyLight)
         }
     }
+}
+
+/// Pedido de "Ver no mapa": só estes lugares (ids do board) e/ou pontos de fora do board, com um título pro chip.
+struct MapShowcase: Equatable, Identifiable {
+    struct Point: Equatable, Hashable {
+        var name: String
+        var lat: Double
+        var lng: Double
+    }
+    var id = UUID()
+    var title: String
+    var placeIds: [String] = []
+    var outside: [Point] = []
 }

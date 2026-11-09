@@ -27,7 +27,7 @@ struct MustApp: App {
                 .environment(\.showEvents, Self.showEvents(regionStore)).environment(\.films, WikidataFilms.shared)
                 // Nova viagem (prompt 28): o fluxo entrega o rascunho, o store grava e abre.
                 .environment(\.tripCreator, StoreTripCreator(store: regionStore))
-                .preferredColorScheme(.light)
+                // Prompt 32 §5: o app segue o aparelho (modo escuro); telas V8 ficam no claro com `.v8Legacy()`.
                 // Fonte padrão: `Text` sem fonte explícita sai em Schibsted (texto v8), não em SF.
                 .font(V8Font.text(15))
                 .dynamicTypeSize(...DynamicTypeSize.mustCap)

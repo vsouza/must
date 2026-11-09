@@ -773,3 +773,15 @@ acessibilidade que o XCUITest pede ao app a cada gesto (cresce com o número de 
 - [ ] Internet ruim real: metrô (sinal caindo), Modo de Pouco Dados, Wi-Fi do hotel com portal — o `flaky`/`dropping` só
   simulam o que passa pelo `HTTP`; MapLibre (tiles) e MapKit têm rede própria.
 - [ ] Colar texto com o Apple Intelligence de verdade: 5.000 caracteres responde antes dos 20 s ou cai nas palavras-chave.
+
+## Rodada 32 · v9 navegação simples (09/11/2026)
+Fase 1 tem que estar no iPhone até a noite de 10/11 (a viagem começa em 11/11).
+
+### r32/0 · contrato (orquestrador)
+- `Must/DesignSystem/V9/V9.swift`: `V9.accent` (#D9572B claro / #F07A4E escuro, é o `.tint` do app), `V9.alert` (`.red`), fundos do sistema, `.v9Screen()`, `.v9Card()`, `.v9Primary()`, `V9AskField` ("Pedir algo…", toque), `V9SectionHeader`, `V9Row` (miniatura 56 pt + motivo), `V9Notice` (faixa com ação e ✕).
+- Modo escuro: o app segue o aparelho (`UIUserInterfaceStyle` saiu; sem `.preferredColorScheme(.light)` global). Telas ainda V8 ficam no claro por `.v8Legacy()` (raízes das abas em `RootView`, `Route.legacyLight`, `AppRouter.Sheet.legacyLight`, covers). Cada tela convertida tira o wrapper.
+- `Must/Services/Context/TodayContext.swift`: `ContextRule` (à mão › parada do dia › confirmado › hotel/cidade), `ArrivalProposer` (stub; agente C), `TodayContextModel` no environment (criado na `RootView`).
+- `AppRouter.showOnMap(MapShowcase)` / `mapShowcase`: "Ver no mapa" do Quero abre o Explorar só com esses pinos.
+
+### Gestos que sobraram (item 1)
+(preencher na rodada: cada `DragGesture`/`LongPress` em `Must/Features` com o controle visível equivalente)

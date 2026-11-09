@@ -116,10 +116,13 @@ struct Prompt31QueroTests {
         WantSearchCache(directory: URL.temporaryDirectory.appending(path: "p31-\(UUID().uuidString)"))
     }
 
+    /// Meio-dia em Tóquio (fixo): com `Date()`, depois das 23h de Tóquio o show "daqui a 1 h" já era amanhã.
+    private static let noon = ISO8601DateFormatter().date(from: "2026-11-13T03:00:00Z")!
+
     private func input(_ text: String, online: Bool = true, shows: [ShowEvent] = []) throws -> WantSearchInput {
         let center = CLLocationCoordinate2D(latitude: nakano.centroid.lat, longitude: nakano.centroid.lng)
         var i = WantSearchInput(intent: try #require(WantParser.parseLocal(text)), region: .jp, center: center, cityGroup: "tokyo",
-                                online: online, board: [], now: Date())
+                                online: online, board: [], now: Self.noon)
         i.shows = shows
         return i
     }
@@ -160,7 +163,7 @@ struct Prompt31QueroTests {
         let ate = await WantSearch.run(try input("comer"), provider: Stub(hits: []), extras: wiki, cache: cache())
         #expect(ate.results.isEmpty)
 
-        let now = Date()
+        let now = Self.noon
         let show = ShowEvent(id: "s1", kind: .show, title: "Jazz no Nakano", venue: "Sunplaza", lat: 35.7062, lng: 139.6655,
                              startsAt: now.addingTimeInterval(3600), source: .feed)
         let heard = await WantSearch.run(try input("ouvir", shows: [show]), provider: Stub(hits: []), cache: cache())

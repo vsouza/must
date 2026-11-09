@@ -11,6 +11,8 @@ enum RootTab: Hashable {
 struct RootView: View {
     @Environment(AppRouter.self) private var router
     @Environment(RegionStore.self) private var store
+    /// Contexto estável de Hoje (prompt 32 §3): um por árvore (a árvore é recriada ao trocar de região).
+    @State private var todayContext = TodayContextModel()
 
     private var selection: Binding<RootTab> {
         Binding(get: { router.queroSelected ? .quero : .main(router.tab) },
@@ -37,13 +39,14 @@ struct RootView: View {
                 }
             }
             Tab("Quero", systemImage: "magnifyingglass", value: RootTab.quero, role: .search) {
-                QueroTabPage()
+                QueroTabPage().v8Legacy()
             }
         }
-        .tint(V8.orange)
+        .tint(V9.accent)
         .tabBarMinimizeBehavior(.onScrollDown)
         .modifier(NowAccessoryModifier(enabled: !router.hidesNavBar && !router.queroSelected))
         .sheet(item: $router.sheet) { sheet in
+            Group {
             switch sheet {
             case .addLink(let url, let listId): AddLinkView(initialURL: url, preferredListId: listId)
             case .editPlace(let id): EditPlaceView(placeId: id)
@@ -58,9 +61,13 @@ struct RootView: View {
             case .presenteNovo(let source): PresenteNovoView(source: source)
             case .aOuB(let placeId): NovaVotacaoView(placeId: placeId)
             }
+            }
+            .v8LegacySheet(sheet.legacyLight)
         }
+        .environment(todayContext)
         .collectibleCelebration()
         .fullScreenCover(item: $router.cover) { cover in
+            Group {
             switch cover {
             case .newList: NewListFlow()
             case .editList(let id): EditListFlow(listId: id)
@@ -72,15 +79,18 @@ struct RootView: View {
                 EmptyView()
                 #endif
             }
+            }
+            .v8LegacySheet()
         }
     }
 
     @ViewBuilder private func root(for tab: MustTab) -> some View {
+        // Prompt 32: cada raiz convertida pro V9 tira o `.v8Legacy()` (modo escuro só nas telas V9).
         switch tab {
-        case .hoje: HomeView() // capa do dia (agente C)
-        case .explorar: ExplorarView() // Explorar (prompt 31 · 8): o bairro em página, mapa em recorte
-        case .musts: MustsHubView()
-        case .viagem: ProximosView() // Próximos (agente D)
+        case .hoje: HomeView().v8Legacy()
+        case .explorar: ExplorarView().v8Legacy()
+        case .musts: MustsHubView().v8Legacy()
+        case .viagem: ProximosView().v8Legacy()
         }
     }
 }
@@ -116,6 +126,15 @@ private struct PlaceholderScreen: View {
                 TabBarSpacer()
             }
             .padding(.horizontal, 22)
+        }
+    }
+}
+
+extension AppRouter.Sheet {
+    /// Sheets que ainda são V8 (ficam no claro). Tirar daqui ao converter.
+    var legacyLight: Bool {
+        switch self {
+        default: return true
         }
     }
 }
