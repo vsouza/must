@@ -103,6 +103,6 @@ struct V8ComponentsTests {
         // O PNG (1024, RGB sem alpha) é gerado por `scripts/gen-icons.py --app-icon`; aqui, que o app aponta pra ele.
         let icons = Bundle.main.object(forInfoDictionaryKey: "CFBundleIcons") as? [String: Any]
         let primary = icons?["CFBundlePrimaryIcon"] as? [String: Any]
-        #expect((primary?["CFBundleIconName"] as? String) == "AppIcon")
+        #expect((primary?["CFBundleIconName"] as? String) == "AppIconV8")
     }
 }

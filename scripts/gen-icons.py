@@ -5,7 +5,7 @@ Uso: python3 scripts/gen-icons.py              (rodar da raiz do repo; tudo)
      python3 scripts/gen-icons.py --app-icon   (só o ícone do app; precisa de Pillow)
 - Must/Resources/Assets.xcassets/Icons/<nome>.imageset (SVG, template, vetor preservado)
 - Must/DesignSystem/MustIcon.swift (gerado — não editar à mão)
-- Must/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png (1024×1024, RGB sem alpha)
+- Must/Resources/Assets.xcassets/AppIconV8.appiconset/AppIcon.png (1024×1024, RGB sem alpha)
 
 Ícone do app (v8, opção A de design/v8/screens/Icone.png, "Você está aqui"): fundo tinta #121212, dois arcos
 brancos a 45 % e um ponto laranja #FF4A1C no centro. Nunca muda com a viagem.
@@ -37,7 +37,7 @@ def app_icon():
     c = size * ss / 2
     d.ellipse([c - r, c - r, c + r, c + r], fill=orange)
     img = img.resize((size, size), Image.LANCZOS).convert("RGB")
-    out = os.path.join(ROOT, "Must", "Resources", "Assets.xcassets", "AppIcon.appiconset")
+    out = os.path.join(ROOT, "Must", "Resources", "Assets.xcassets", "AppIconV8.appiconset")
     os.makedirs(out, exist_ok=True)
     img.save(os.path.join(out, "AppIcon.png"), optimize=True)
     json.dump({"images": [{"filename": "AppIcon.png", "idiom": "universal", "platform": "ios", "size": "1024x1024"}],
