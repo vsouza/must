@@ -235,7 +235,7 @@ struct V8PaperBackground: View {
     }
 }
 
-/// Folga da barra v8 no fim das telas roláveis (cápsula de 66 pt + margem).
+/// Respiro no fim das telas roláveis. A barra nativa e a faixa "agora" já entram na safe area (antes: 110 pt da cápsula v8).
 struct V8BarSpacer: View {
-    var body: some View { Color.clear.frame(height: 110) }
+    var body: some View { Color.clear.frame(height: 24) }
 }

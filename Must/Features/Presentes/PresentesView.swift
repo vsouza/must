@@ -26,6 +26,8 @@ struct PresentesView: View {
     /// Apagado com desfazer: some da lista na hora e só sai do banco depois de alguns segundos.
     @State private var deleted: Gift?
     @State private var deleteTask: Task<Void, Never>?
+    /// O que acabou de entrar pelo campo: o grupo da pessoa pode estar fora da tela, então a linha do campo confirma.
+    @State private var justAdded: (title: String, person: String)?
 
     private var region: Region { store.region }
     private var money: GiftMoney { GiftMoney(region: region, userRate: settingsList.first?.fxRate) }
@@ -238,6 +240,22 @@ struct PresentesView: View {
     // MARK: Adicionar rápido
 
     private func addField(groups: [GiftGroup]) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if let justAdded {
+                Text("✓ \(justAdded.title) → \(justAdded.person)")
+                    .font(V8Font.mono(11, weight: .semibold)).foregroundStyle(V8.ink)
+                    .lineLimit(1).truncationMode(.middle)
+                    .padding(.top, 10)
+                    .accessibilityLabel("Adicionado: \(justAdded.title), em \(justAdded.person)")
+            }
+            addFieldRow
+        }
+        .padding(.horizontal, 20)
+        .listRowBackground(V8.paper).listRowSeparator(.hidden).listRowInsets(EdgeInsets())
+        .overlay(alignment: .top) { Rectangle().fill(V8.ink).frame(height: 2) }
+    }
+
+    private var addFieldRow: some View {
         HStack(spacing: 4) {
             Image(systemName: "plus").font(.system(size: 15, weight: .semibold)).foregroundStyle(V8.mute)
                 .frame(width: 44, height: 44).padding(.leading, -10)
@@ -250,10 +268,9 @@ struct PresentesView: View {
                 .onSubmit { addDraft() }
                 .accessibilityLabel("Novo presente")
                 .accessibilityHint("Escreva o nome, ou nome pra Ana, ou cole um link")
+                .onChange(of: draft) { _, new in if !new.isEmpty { justAdded = nil } }
         }
-        .padding(.horizontal, 20).frame(minHeight: 56)
-        .listRowBackground(V8.paper).listRowSeparator(.hidden).listRowInsets(EdgeInsets())
-        .overlay(alignment: .top) { Rectangle().fill(V8.ink).frame(height: 2) }
+        .frame(minHeight: 56)
     }
 
     private func addDraft() {
@@ -272,6 +289,7 @@ struct PresentesView: View {
         context.insert(gift)
         try? context.save()
         draft = ""
+        justAdded = (gift.title, gift.personName)
         tick += 1
         if case .person(let name) = filter, name != gift.personName { filter = .all }
         fieldFocused = true
@@ -281,6 +299,7 @@ struct PresentesView: View {
 
     private func remove(_ gift: Gift) {
         commitDelete()
+        justAdded = nil
         withAnimation(.snappy(duration: 0.2)) { deleted = gift }
         tick += 1
         deleteTask = Task {
