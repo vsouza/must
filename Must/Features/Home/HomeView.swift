@@ -52,6 +52,7 @@ struct HomeView: View {
                 header
                 if let greeting { greetingNotice(greeting) }
                 if let proposal { arrivalNotice(proposal) }
+                V9OfflineChip()
                 V9AskField { router.openQuero() }
             }
             .listRowSeparator(.hidden)

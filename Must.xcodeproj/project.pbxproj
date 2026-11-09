@@ -399,6 +399,7 @@
 		A27ECA7ABAE53D4DB78F8978 /* DayMoments.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61A720A1C71162BCB57BD0BB /* DayMoments.swift */; };
 		A2D11F25618E141D5992AC75 /* TicketScanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA2EEDA6A4AFC91D299B1F6D /* TicketScanView.swift */; };
 		A38687E6AFE416F43343A255 /* Checklists.swift in Sources */ = {isa = PBXBuildFile; fileRef = A16DDE8C735137628D242159 /* Checklists.swift */; };
+		A392D8D35929BED9564BFED4 /* SaiaAgoraTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF654EC5D467DC670285DB5B /* SaiaAgoraTests.swift */; };
 		A4ABDFDB23B8DB772156E82D /* Tips.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D464D945A49E20B455A3BEA /* Tips.swift */; };
 		A5564965E802B48376B5BB7C /* PerformanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DAA627C8B6252421E6A7996 /* PerformanceTests.swift */; };
 		A5612E340C054B84E966C1D4 /* TripReadinessTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5D405F1474161A1FDB959C2 /* TripReadinessTests.swift */; };
@@ -1332,6 +1333,7 @@
 		FF0BD205DD2BE22BE4EB1F5F /* QueroTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueroTests.swift; sourceTree = "<group>"; };
 		FF11AD668C7A5ABD6D00BFF6 /* VotacaoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VotacaoView.swift; sourceTree = "<group>"; };
 		FF1415EDD1ABCA2BF1F72647 /* kyoto.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = kyoto.json; sourceTree = "<group>"; };
+		FF654EC5D467DC670285DB5B /* SaiaAgoraTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaiaAgoraTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1895,6 +1897,7 @@
 				9A8B878319F3A3CFD0EB2879 /* RegionTests.swift */,
 				B7C18807325F06EC8A47A2D2 /* ResilienciaFixtures.swift */,
 				90722947563B581F69918265 /* RobustnessTests.swift */,
+				FF654EC5D467DC670285DB5B /* SaiaAgoraTests.swift */,
 				9CD8C8F6456C640A41F53D6A /* SeedTests.swift */,
 				E884E5C34972411E3851FCFF /* ServiceParsingTests.swift */,
 				3F295BE963047F784C80504E /* ShoppingITTests.swift */,
@@ -3173,6 +3176,7 @@
 				D5F4B5ABE702F8B2B2C9DADB /* ResilienciaFixtures.swift in Sources */,
 				9BD85A3E47B254E4CEFABFC0 /* RobustnessTests.swift in Sources */,
 				F38D395F85801D13E2ADC4F9 /* SOSTests.swift in Sources */,
+				A392D8D35929BED9564BFED4 /* SaiaAgoraTests.swift in Sources */,
 				2186C2D630E29F138D951F86 /* SeedTests.swift in Sources */,
 				3D9F337FE572341152D2EF55 /* ServiceParsingTests.swift in Sources */,
 				9847AE23C8F8D5C3CC1D6CFA /* ShoppingITTests.swift in Sources */,

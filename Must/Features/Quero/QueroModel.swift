@@ -108,7 +108,11 @@ final class QueroModel {
     var category: WantCategory? { intent.flatMap(WantCategory.of) }
 
     /// Busca a vontade. Uma de cada vez: a nova cancela a anterior (nunca duas chamadas pro mesmo texto).
+    /// O dia do último pedido (pro motivo do "Hoje não cabe").
+    private(set) var lastPlan: DayPlan?
+
     func submit(_ env: QueroEnv) {
+        lastPlan = env.plan
         let typed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !typed.isEmpty else { return }
         searchTask?.cancel()

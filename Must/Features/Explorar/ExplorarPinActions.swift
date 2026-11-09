@@ -14,7 +14,7 @@ enum ExplorarPinActions {
         /// Cabe hoje neste buraco.
         case fit(DayFit.Slot)
         /// O dia não tem vaga (ou o lugar fecha antes).
-        case noFit
+        case noFit(reason: String)
     }
 
     /// O resultado do Quero equivalente ao pino (seu Must = board; de fora = Google/MapKit).
@@ -28,7 +28,7 @@ enum ExplorarPinActions {
         if item.inPlan { return .inDay(time: item.planTime) }
         let slot = DayFit.slot(at: item.coordinate, plan: env.plan, now: env.now, region: env.region, origin: env.origin,
                                walkMaxKm: env.walkMaxKm)
-        return slot.map(Day.fit) ?? .noFit
+        return slot.map(Day.fit) ?? .noFit(reason: DayFit.noFitReason(plan: env.plan, now: env.now, region: env.region))
     }
 
     /// A linha pra `QueroSave.place`/`encaixar`.

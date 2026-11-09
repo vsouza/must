@@ -49,6 +49,12 @@ struct DayClock: Sendable {
     /// "saia" / "chegue".
     var actionVerb: String { now?.arriveBy != nil ? "chegue" : "saia" }
 
+    /// "saia às 14:16" ou, passada a hora, "saia agora" (relatório v9: "saia às 14:16" continuava às 14:20). Hoje e a faixa
+    /// "agora" usam este texto, então dizem a mesma coisa.
+    static func actionText(verb: String, at time: Date, now: Date, region: Region) -> String {
+        time <= now ? "\(verb) agora" : "\(verb) às \(region.timeString(time))"
+    }
+
     /// Posição (de 1) da parada de agora no dia inteiro.
     var position: Int? { now.flatMap { n in plan?.position(of: n.current) } }
 

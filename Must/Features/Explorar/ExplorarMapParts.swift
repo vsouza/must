@@ -286,6 +286,8 @@ struct ExplorarPlaceSummary: View {
             }
             if let notice {
                 Text(notice).font(.footnote).foregroundStyle(.secondary)
+            } else if case .noFit(let why)? = pinDay {
+                Text("Não cabe hoje: \(why).").font(.footnote).foregroundStyle(.secondary)
             }
         }
         .padding(.top, 4)

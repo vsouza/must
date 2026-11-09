@@ -295,6 +295,7 @@ struct ExplorarMapaView: View {
         VStack(spacing: 0) {
             VStack(spacing: 10) {
                 grabber(available: available)
+                V9OfflineChip()
                 V9AskField { router.openQuero() }
                 if model.selected == nil { summaryRow }
             }

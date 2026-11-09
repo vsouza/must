@@ -804,3 +804,13 @@ Relatório: `docs/relatorio-viajante-v9.md`; prints em `docs/qa-v9/` (`ONLY=v9 E
 - [x] Gestos: 9 usos no grep; 2 novos na lista (pegador do Explorar: botão + ajuste VoiceOver, ok; `TripSwitcherSheet` deslizar = Arquivar/Apagar **sem controle visível**: pendente).
 - [x] Dynamic Type (XXXL no simulador; o app limita em .xxxLarge): Hoje, Explorar médio e pino, Quero, Lugar e Viagem sem corte nem sobreposição.
 - Pendências abertas: tela Ir ainda V8; "Não cabe hoje" sem motivo (pino e Quero); "saia às" no passado sem tratamento; chip offline; sugestão de horário sem sentido no Quero. Corrigidos no `main` c9ed42f: motivo "Agora vale" e rótulo VoiceOver dos pinos.
+
+### Rodada 32 · fase 1 · correções depois da QA (09/11/2026, orquestrador)
+- Faixa "agora" relê o dia a cada gravação (aceitar o dia deixava "Montar o dia de hoje" por até 1 min).
+- Faixa "agora" fica no claro sobre o mapa e as telas V8 (no escuro sumia).
+- "saia às 14:16" vira "saia agora" passada a hora (Hoje e faixa, mesmo texto: `DayClock.actionText`).
+- Chip "sem internet · offline ok" em Hoje e no painel do Explorar.
+- "Não cabe hoje" com motivo (pino do mapa e Pedir): tarde, fecha antes, dia cheio.
+- Minhas viagens: ⋯ visível com Arquivar/Apagar (o deslize virou atalho).
+- Motivo do "Agora vale" em uma linha sem jargão; pinos falam o nome no VoiceOver.
+- Fica pra Fase 2: tela Ir e SOS em V9; mapa escuro; Quero sugerindo encaixe tarde demais (café 16h → depois de 22:05).

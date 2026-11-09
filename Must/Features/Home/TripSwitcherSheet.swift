@@ -41,8 +41,24 @@ struct TripSwitcherSheet: View {
             ForEach(rows) { row in
                 SwipeToActRow(enabled: row.region.trip.kind != .home, openRow: $openSwipe, id: row.id,
                               onArchive: { store.archive(row.region.rawValue) }, onDelete: { confirmDelete = row }) {
-                    Button { select(row) } label: { TripRowView(row: row) }
-                        .buttonStyle(MustPressStyle())
+                    HStack(spacing: 0) {
+                        Button { select(row) } label: { TripRowView(row: row) }
+                            .buttonStyle(MustPressStyle())
+                        // Prompt 32 §1: Arquivar/Apagar com controle visível (o deslize fica como atalho).
+                        if row.region.trip.kind != .home {
+                            Menu {
+                                Button("Arquivar", systemImage: "archivebox") { store.archive(row.region.rawValue) }
+                                Button("Apagar", systemImage: "trash", role: .destructive) { confirmDelete = row }
+                            } label: {
+                                Image(systemName: "ellipsis.circle")
+                                    .font(.system(size: 20, weight: .regular))
+                                    .foregroundStyle(V8.ink)
+                                    .frame(width: 44, height: 44)
+                                    .contentShape(Rectangle())
+                            }
+                            .accessibilityLabel("Mais ações de \(row.title)")
+                        }
+                    }
                 }
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel("\(row.title). \(row.subtitle). Moeda \(TripSwitcherModel.currencyLabel(row.region)). \(row.tag.rawValue)\(row.isActive ? ". Ativa" : "")")
@@ -62,7 +78,7 @@ struct TripSwitcherSheet: View {
                     .accessibilityLabel("Nova viagem. Destino, datas, cidades, voos, Musts")
                     .padding(.top, 14)
             }
-            Text("Trocar não apaga nada · cada viagem tem o próprio board, gastos e mapas\nDeslize pra arquivar ou apagar · automático: datas de hoje, depois o GPS (Ajustes › Região)")
+            Text("Trocar não apaga nada · cada viagem tem o próprio board, gastos e mapas\n⋯ (ou deslizar) pra arquivar ou apagar · automático: datas de hoje, depois o GPS (Ajustes › Região)")
                 .font(V8Font.mono(10))
                 .tracking(1)
                 .textCase(.uppercase)

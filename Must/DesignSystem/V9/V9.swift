@@ -196,3 +196,20 @@ struct V9Notice: View {
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: V9.cornerRadius, style: .continuous))
     }
 }
+
+/// "sem internet · offline ok" (CLAUDE.md, premissa: offline é estado normal, não erro). Só aparece sem rede.
+struct V9OfflineChip: View {
+    @Environment(Services.self) private var services: Services?
+
+    var body: some View {
+        if services?.connectivity.status == .offline {
+            Label("sem internet · offline ok", systemImage: "wifi.slash")
+                .font(.footnote.weight(.medium))
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(V9.fill, in: Capsule())
+                .accessibilityLabel("Sem internet. O app funciona offline com o que já está no aparelho.")
+        }
+    }
+}

@@ -421,7 +421,10 @@ struct QueroView: View {
     }
 
     private func fitTitle(_ row: QueroRow) -> String {
-        guard let slot = row.slot else { return model.intent?.when == .amanha ? "Fica pra amanhã" : "Hoje não cabe" }
+        guard let slot = row.slot else {
+            if model.intent?.when == .amanha { return "Fica pra amanhã" }
+            return "Hoje não cabe · " + DayFit.noFitReason(plan: model.lastPlan, now: AppClock.now, region: region)
+        }
         if let after = slot.after { return "Encaixa hoje depois do \(short(after.label))" }
         if let before = slot.before { return "Encaixa hoje antes do \(short(before.label))" }
         return "Cabe agora · \(row.minutes) min até lá"

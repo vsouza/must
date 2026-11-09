@@ -64,11 +64,11 @@ enum NowAccessoryLine {
         case .running:
             guard let now = clock.now else { return "Montar o dia de hoje" }
             let name = now.current.label
-            if let at = clock.actionTime { return "Agora: \(name) · \(clock.actionVerb) às \(region.timeString(at))" }
+            if let at = clock.actionTime { return "Agora: \(name) · \(DayClock.actionText(verb: clock.actionVerb, at: at, now: clock.at, region: region))" }
             return "Agora: \(name)"
         case .before:
             guard let up = clock.upcoming else { return "Seu dia" }
-            return "Próxima: \(up.stop.label) · \(clock.actionVerb) às \(region.timeString(up.leaveAt))"
+            return "Próxima: \(up.stop.label) · \(DayClock.actionText(verb: clock.actionVerb, at: up.leaveAt, now: clock.at, region: region))"
         case .finished: return "Dia concluído · ver a Linha"
         }
     }

@@ -19,6 +19,8 @@ struct HojeNext: Equatable, Sendable {
     var legMinutes: Int?
     var legMode: DayLegMode?
     var thenName: String?
+    /// Quando o relógio foi lido (pra "saia agora" depois da hora).
+    var readAt: Date = .distantPast
 }
 
 enum HojeLogic {
@@ -33,14 +35,16 @@ enum HojeLogic {
             let leg = target.flatMap { plan.leg(before: $0) }
             return HojeNext(phase: .now, stopId: now.current.id, placeId: now.current.placeId, name: DayText.head(now.current.label),
                             startsAt: now.current.start, actionAt: action, verb: clock.actionVerb,
-                            legMinutes: leg?.minutes, legMode: leg?.mode, thenName: target.map { DayText.head($0.label) })
+                            legMinutes: leg?.minutes, legMode: leg?.mode, thenName: target.map { DayText.head($0.label) },
+                            readAt: clock.at)
         case .before:
             guard let up = clock.upcoming else { return nil }
             let leg = plan.leg(before: up.stop)
             let after = plan.stops.drop { $0.id != up.stop.id }.dropFirst().first
             return HojeNext(phase: .next, stopId: up.stop.id, placeId: up.stop.placeId, name: DayText.head(up.stop.label),
                             startsAt: up.stop.start, actionAt: action, verb: "saia",
-                            legMinutes: leg?.minutes, legMode: leg?.mode, thenName: after.map { DayText.head($0.label) })
+                            legMinutes: leg?.minutes, legMode: leg?.mode, thenName: after.map { DayText.head($0.label) },
+                            readAt: clock.at)
         }
     }
 
@@ -48,8 +52,8 @@ enum HojeLogic {
     static func line(_ n: HojeNext, region: Region) -> String {
         var parts: [String]
         switch n.phase {
-        case .next: parts = ["Próxima: \(n.name)", region.timeString(n.startsAt), "\(n.verb) às \(region.timeString(n.actionAt))"]
-        case .now: parts = ["Agora: \(n.name)", "\(n.verb) às \(region.timeString(n.actionAt))"]
+        case .next: parts = ["Próxima: \(n.name)", region.timeString(n.startsAt), action(n, region: region)]
+        case .now: parts = ["Agora: \(n.name)", action(n, region: region)]
         }
         if let m = n.legMinutes, m > 0 { parts.append(legText(m, mode: n.legMode)) }
         return parts.joined(separator: " · ")
@@ -58,9 +62,13 @@ enum HojeLogic {
     /// A mesma linha sem o nome (o cartão já tem o nome em título): "12:10 · saia às 11:55 · a pé 6 min".
     static func detail(_ n: HojeNext, region: Region) -> String {
         var parts = n.phase == .next ? [region.timeString(n.startsAt)] : []
-        parts.append("\(n.verb) às \(region.timeString(n.actionAt))")
+        parts.append(action(n, region: region))
         if let m = n.legMinutes, m > 0 { parts.append(legText(m, mode: n.legMode)) }
         return parts.joined(separator: " · ")
+    }
+
+    static func action(_ n: HojeNext, region: Region) -> String {
+        DayClock.actionText(verb: n.verb, at: n.actionAt, now: n.readAt, region: region)
     }
 
     static func legText(_ minutes: Int, mode: DayLegMode?) -> String {

@@ -12,6 +12,17 @@ enum DayFit {
     /// Desvio que ainda conta como "no caminho".
     static let onTheWayMinutes = 10
 
+    /// Por que não cabe hoje (CLAUDE.md: "não dá hoje" sempre com motivo; relatório v9 item 2).
+    static func noFitReason(plan: DayPlan?, now: Date, region: Region, closesAt: Date? = nil) -> String {
+        let day = region.calendar.startOfDay(for: plan?.date ?? now)
+        let latest = day.addingTimeInterval(Double(latestEnd.hour * 60 + latestEnd.minute) * 60)
+        let end = now.addingTimeInterval(Double(minutes) * 60)
+        if let closesAt, end > closesAt { return "fecha antes de dar tempo" }
+        if end > latest { return "já é tarde pra hoje" }
+        if let stops = plan?.stops, !stops.isEmpty { return "o dia de hoje está cheio" }
+        return "não dá tempo hoje"
+    }
+
     struct Slot: Hashable, Sendable {
         var start: Date
         var end: Date

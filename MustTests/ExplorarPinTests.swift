@@ -41,7 +41,7 @@ struct ExplorarPinTests {
         } else {
             Issue.record("devia caber às 14h")
         }
-        #expect(ExplorarPinActions.day(for: item("a"), env: env(hour: 22, minute: 20)) == .noFit)
+        #expect(ExplorarPinActions.day(for: item("a"), env: env(hour: 22, minute: 20)) == .noFit(reason: "já é tarde pra hoje"))
     }
 
     @Test func onlyOutsidePinsCanBeSaved() {
