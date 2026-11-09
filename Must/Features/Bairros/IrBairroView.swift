@@ -124,7 +124,7 @@ struct IrBairroView: View {
         let n = rows.filter { checked.contains($0.id) }.count
         return VStack(spacing: 0) {
             header(title: entry.area.name,
-                   sub: "\(rows.count) Musts · \(entry.openCount) abertos agora",
+                   sub: "\(rows.count) \(rows.count == 1 ? "Must" : "Musts") · \(entry.openCount) \(entry.openCount == 1 ? "aberto" : "abertos") agora",
                    back: { if areaId == nil { selected = nil } else { dismiss() } })
             ScrollView {
                 VStack(spacing: 0) {
@@ -187,7 +187,7 @@ struct IrBairroView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .disabled(n == 0 || working)
+        .allowsHitTesting(n > 0 && !working)
         .accessibilityLabel(n == 0 ? "Montar trajeto, marque ao menos um Must" : "Montar trajeto com \(n) Musts")
     }
 
