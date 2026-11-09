@@ -4,16 +4,9 @@ import SwiftUI
 import Testing
 @testable import Must
 
-/// Atalhos (prompt 25 · D): gesto, grade e linhas perto — tudo do aparelho.
+/// Atalhos (prompt 25 · D): grade e linhas perto — tudo do aparelho.
 @MainActor
 struct AtalhosTests {
-    @Test func deslizePraDireitaAbreOBolsoComOsAtalhos() {
-        let now = Region.jp.calendar.date(from: DateComponents(year: 2026, month: 11, day: 15, hour: 14, minute: 20))!
-        #expect(CapaSwipe.action(for: .right, now: now, region: .jp) == .route(.bolso))
-        #expect(CapaSwipe.action(for: .left, now: now, region: .jp) == .route(.dicas))
-        #expect(CapaSwipe.action(for: .down, now: now, region: .jp) == nil)
-    }
-
     @Test func suicaNoJapaoCarteiraNoBrasil() {
         let jp = AtalhosRules.walletCard(region: .jp, transitName: "Suica", balance: 1240, notedNote: nil, walletCount: 3)
         #expect(jp.label == "Wallet" && jp.title.contains("Suica"))

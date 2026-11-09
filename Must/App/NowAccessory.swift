@@ -26,15 +26,18 @@ struct NowAccessory: View {
                 }
             } label: {
                 HStack(spacing: 8) {
-                    Circle().fill(V8.orange).frame(width: 8, height: 8).accessibilityHidden(true)
+                    Circle().fill(V9.accent).frame(width: 8, height: 8).accessibilityHidden(true)
                     Text(line)
                         .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.primary)
                         .lineLimit(1)
                         .truncationMode(.tail)
                         .minimumScaleFactor(0.8)
                     Spacer(minLength: 0)
                     Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(.secondary).accessibilityHidden(true)
                 }
+                .font(.body)
+                .fontDesign(.default)
                 .padding(.horizontal, 16)
                 .frame(maxWidth: .infinity)
                 .contentShape(Rectangle())

@@ -67,24 +67,14 @@ struct CapaTests {
         #expect(CapaContent.evening(day, region: .jp) == "e Shinjuku Gyoen no golden")
     }
 
-    // MARK: Gestos
+    // MARK: Bom dia / Boa noite (cartão de Hoje; nada troca a tela sozinho)
 
-    @Test func gestoPeloEixoDominante() {
-        #expect(CapaSwipe.from(CGSize(width: 10, height: -120)) == .up)
-        #expect(CapaSwipe.from(CGSize(width: 5, height: 90)) == .down)
-        #expect(CapaSwipe.from(CGSize(width: -100, height: 20)) == .left)
-        #expect(CapaSwipe.from(CGSize(width: 100, height: -30)) == .right)
-        #expect(CapaSwipe.from(CGSize(width: 20, height: 30)) == nil)
-    }
-
-    @Test func praBaixoDependeDaHora() {
-        #expect(CapaSwipe.route(for: .down, now: at(7, 20), region: .jp) == .bomDia)
-        #expect(CapaSwipe.route(for: .down, now: at(9, 59), region: .jp) == .bomDia)
-        #expect(CapaSwipe.route(for: .down, now: at(14, 20), region: .jp) == nil)
-        #expect(CapaSwipe.route(for: .down, now: at(21, 0), region: .jp) == .boaNoite)
-        #expect(CapaSwipe.route(for: .down, now: at(0, 30), region: .jp) == .boaNoite)
-        #expect(CapaSwipe.route(for: .up, now: at(14, 20), region: .jp) == .linha(date: tokyo.startOfDay(for: at(14, 20))))
-        #expect(CapaSwipe.route(for: .left, now: at(14, 20), region: .jp) == .dicas)
-        #expect(CapaSwipe.route(for: .right, now: at(14, 20), region: .jp) == .bolso)
+    @Test func cartaoPorHorario() {
+        let cal = Region.jp.calendar
+        #expect(HojeLogic.greeting(now: at(7, 20), calendar: cal) == .bomDia)
+        #expect(HojeLogic.greeting(now: at(9, 59), calendar: cal) == .bomDia)
+        #expect(HojeLogic.greeting(now: at(14, 20), calendar: cal) == nil)
+        #expect(HojeLogic.greeting(now: at(21, 0), calendar: cal) == .boaNoite)
+        #expect(HojeLogic.greeting(now: at(0, 30), calendar: cal) == .boaNoite)
     }
 }
