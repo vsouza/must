@@ -117,35 +117,65 @@ final class QueroModel {
             intent = nil
             phase = .idle
             question = QueroQuestionState(text: typed, answer: nil)
-            searchTask = Task { [weak self] in
-                guard let self else { return }
-                let answer = await self.answerer?(typed) ?? QueroQuestion.fallback
-                guard !Task.isCancelled, self.question?.text == typed else { return }
-                self.question?.answer = answer
-            }
+        } else {
+            question = nil
+            giftRows = GiftLogic.isGiftWant(typed, people: env.giftPeople) ? env.giftRows : []
+            phase = .searching
+        }
+        searchTask = Task { [weak self] in await self?.perform(typed, env) }
+    }
+
+    /// O trabalho do `submit`, esperável (os testes de aceitação chamam direto, sem rede).
+    func perform(_ typed: String, _ env: QueroEnv) async {
+        if QueroQuestion.isQuestion(typed) {
+            if question?.text != typed { question = QueroQuestionState(text: typed, answer: nil) }
+            let extras = await QueroQuestionPlaces.resolve(typed, env: env, provider: provider)
+            let answer: String
+            if let fixed = extras?.answer { answer = fixed } else { answer = await self.answerer?(typed) ?? QueroQuestion.fallback }
+            guard !Task.isCancelled, question?.text == typed else { return }
+            question?.answer = answer
+            question?.extras = extras
             return
         }
         question = nil
         giftRows = GiftLogic.isGiftWant(typed, people: env.giftPeople) ? env.giftRows : []
         phase = .searching
-        searchTask = Task { [weak self] in
-            guard let self else { return }
-            guard var intent = await WantParser.parse(typed, useModel: env.useModel) else {
-                self.phase = self.giftRows.isEmpty ? .idle : .done
-                return
-            }
-            if let forced = self.verbOverride, forced != intent.verb {
-                intent.verb = forced
-                // Categoria genérica do verbo antigo não vale pro novo ("comer" → "ver").
-                if let c = intent.category, WantVerb(rawValue: c) != nil { intent.category = forced.rawValue }
-            }
-            guard !Task.isCancelled else { return }
-            if intent.when == nil, let when = self.defaultWhen { intent.when = when }
-            self.intent = intent
-            let output = await WantSearch.run(Self.input(intent, env), provider: self.provider, extras: self.extras)
-            guard !Task.isCancelled else { return }
-            self.apply(output, intent: intent, env: env)
+        guard var intent = await WantParser.parse(typed, useModel: env.useModel) else {
+            phase = giftRows.isEmpty ? .idle : .done
+            return
         }
+        if let forced = verbOverride, forced != intent.verb {
+            intent.verb = forced
+            // Categoria genérica do verbo antigo não vale pro novo ("comer" → "ver").
+            if let c = intent.category, WantVerb(rawValue: c) != nil { intent.category = forced.rawValue }
+        }
+        guard !Task.isCancelled else { return }
+        if intent.when == nil, let when = defaultWhen { intent.when = when }
+        self.intent = intent
+        let output = await WantSearch.run(Self.input(intent, env), provider: provider, extras: extras)
+        guard !Task.isCancelled else { return }
+        apply(output, intent: intent, env: env)
+    }
+
+    // MARK: Ver no mapa
+
+    /// Todos os lugares do resultado com coordenada: do board (por id) e de fora (pontos). `nil` = nada pra mostrar.
+    func showcase(title: String? = nil) -> MapShowcase? {
+        var ids: [String] = []
+        var outside: [MapShowcase.Point] = []
+        func add(_ r: WantResult) {
+            if let id = r.boardPlaceId { if !ids.contains(id) { ids.append(id) } }
+            else if r.lat != 0 || r.lng != 0 { outside.append(.init(name: r.name, lat: r.lat, lng: r.lng)) }
+        }
+        rows.forEach { add($0.result) }
+        question?.extras?.places.forEach(add)
+        for g in giftRows where g.coordinate.latitude != 0 || g.coordinate.longitude != 0 {
+            if let id = g.storeId { if !ids.contains(id) { ids.append(id) } }
+            else { outside.append(.init(name: g.storeName, lat: g.coordinate.latitude, lng: g.coordinate.longitude)) }
+        }
+        guard !ids.isEmpty || !outside.isEmpty else { return nil }
+        let name = title ?? question?.extras?.mapTitle ?? text.trimmingCharacters(in: .whitespacesAndNewlines)
+        return MapShowcase(title: name, placeIds: ids, outside: outside)
     }
 
     func choose(_ verb: WantVerb, env: QueroEnv) {
@@ -182,12 +212,22 @@ final class QueroModel {
                 : DayFit.slot(at: r.coordinate, plan: env.plan, now: env.now, region: env.region, origin: env.origin,
                               walkMaxKm: env.walkMaxKm, closesAt: closes)
             let areaId = assigner.areaId(name: r.area, cityId: env.cityId, lat: r.lat, lng: r.lng)
-            return QueroRow(result: r, minutes: max(1, minutes), slot: slot, meta: meta(r, intent: intent),
+            var metaText = meta(r, intent: intent)
+            if WantCategory.of(intent)?.label == "foto", let light = lightNote(r, env: env) { metaText += " · " + light }
+            return QueroRow(result: r, minutes: max(1, minutes), slot: slot, meta: metaText,
                             otherDay: otherDay(r, areaId: areaId, intent: intent, env: env), areaId: areaId)
         }
         let fits = rows.filter { $0.slot != nil }.sorted { ($0.minutes, $0.id) < ($1.minutes, $1.id) }
         let rest = rows.filter { $0.slot == nil }.sorted { ($0.minutes, $0.id) < ($1.minutes, $1.id) }
         return Array((fits + rest).prefix(limit))
+    }
+
+    /// Luz dourada de hoje no lugar ("luz dourada 17:02–17:41", ou "luz dourada já passou") pro pedido de foto.
+    static func lightNote(_ r: WantResult, env: QueroEnv) -> String? {
+        let day = SunService.day(env.now, r.coordinate, timeZone: env.region.timeZone)
+        guard let golden = day.goldenPM else { return nil }
+        if env.now >= golden.end { return "luz dourada já passou" }
+        return "luz dourada \(env.region.timeString(golden.start))–\(env.region.timeString(golden.end))"
     }
 
     /// "relógios · tax-free · até 22h · 300 m" / "loja da marca · Grand Seiko… · até 19h".

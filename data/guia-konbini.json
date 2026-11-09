@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "recipes": [
+    {"id": "highball", "kind": "drink", "title": "Highball de whisky", "ingredients": ["whisky em garrafinha ou lata", "água com gás", "copo de gelo", "limão em fatia"], "step": "Encha o copo de gelo, coloque 1 parte de whisky e 3 de água com gás, esprema o limão e misture devagar.", "when": "fim da tarde, depois de andar o dia todo"},
+    {"id": "chuhai-sorvete", "kind": "drink", "title": "Chūhai com sorvete", "ingredients": ["chūhai de limão em lata", "sorvete de baunilha em copo"], "step": "Abra a lata, solte duas colheres de sorvete dentro do copo e despeje o chūhai por cima. Vira um float.", "when": "noite quente, na volta pro hotel"},
+    {"id": "cafe-gelado-leite", "kind": "drink", "title": "Café gelado com leite", "ingredients": ["café gelado em copo lacrado", "leite", "gelo"], "step": "Misture metade café, metade leite sobre bastante gelo. Se quiser doce, um sachê de xarope.", "when": "manhã, antes de sair"},
+    {"id": "cha-limao-gas", "kind": "drink", "title": "Chá gelado com limão e gás", "ingredients": ["chá preto ou verde gelado", "água com gás", "limão em fatia", "gelo"], "step": "Metade chá, metade água com gás, gelo e uma fatia de limão. Leve e sem álcool.", "when": "meio da tarde, pra recarregar"},
+    {"id": "onigiri-caldo", "kind": "snack", "title": "Onigiri com sopa quente", "ingredients": ["2 onigiris (salmão e ameixa)", "sopa de missô instantânea", "água quente do balcão"], "step": "Peça água quente no caixa para a sopa instantânea e esquente os onigiris se a loja tiver micro-ondas.", "when": "almoço rápido ou jantar leve"},
+    {"id": "sanduiche-ovo", "kind": "snack", "title": "Sanduíche de ovo e leite", "ingredients": ["sanduíche de ovo", "leite ou iogurte de beber", "uma fruta cortada"], "step": "É o café da manhã clássico de konbini: simples, barato e dá energia até o almoço.", "when": "café da manhã"},
+    {"id": "doce-cafe", "kind": "snack", "title": "Sobremesa de konbini", "ingredients": ["mochi de sorvete ou pudim", "café quente de máquina"], "step": "Pegue o doce na geladeira e o café na máquina do balcão; vale sentar num banco da rua.", "when": "depois do jantar"}
+  ]
+}

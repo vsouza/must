@@ -2,13 +2,14 @@ import CoreLocation
 import SwiftData
 import SwiftUI
 
-/// Quero… (prompt 25 · A, `Quero.png`): uma vontade ("comprar um Seiko") vira lugar físico perto de hoje e uma parada.
-/// Texto ou voz; o parser no aparelho entende o verbo e o objeto; a busca é só de lugar físico (Places com tipo, lojas de
-/// marca, o board). Cada linha diz se **cabe hoje** e a que horas. Não é chat: três toques.
-/// Link / Texto / Nome (o Adicionar de antes) ficam como abas secundárias.
+/// Pedir (Quero, prompt 32 §6, visual V9): uma vontade ("comprar um Seiko") vira lugar físico perto de hoje e termina
+/// **sempre num lugar no mapa** ("Ver no mapa"). Texto ou voz; o parser no aparelho entende o verbo e o objeto; a busca é
+/// só de lugar físico. Duas faixas: **seus Musts** (mesmo longe, na cidade de hoje) e **aqui perto agora** (fora do board).
+/// Pergunta ("dá tempo…?", "que drink monto no 7-Eleven?") vira resposta curta + "Continuar no Assistente" + o lugar mais perto.
+/// Link / Vídeo / Texto / Ingresso / Presente ficam embaixo ("ou guarde").
 struct QueroView: View {
     var initialText: String?
-    /// Página da aba de busca (iOS 26): sem ✕, sem forçar o escuro no app inteiro; "fechar" volta pra aba anterior.
+    /// Página da aba de busca (iOS 26): "fechar" volta pra aba anterior.
     var inTab = false
 
     @Environment(\.dismiss) private var systemDismiss
@@ -17,6 +18,7 @@ struct QueroView: View {
     @Environment(AppRouter.self) private var router
     @Environment(RegionStore.self) private var store
     @Environment(Services.self) private var services
+    @Environment(TodayContextModel.self) private var todayContext
     @Environment(\.showEvents) private var showEvents
 
     @Query(sort: \MustList.order) private var lists: [MustList]
@@ -62,30 +64,21 @@ struct QueroView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            V8PaperBackground(dark: true)
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    header.padding(.top, 8)
-                    Text("Quero…")
-                        .font(V8Font.display(44))
-                        .tracking(-1.2)
-                        .foregroundStyle(V8.white)
-                        .padding(.top, 14)
-                        .accessibilityAddTraits(.isHeader)
-                    field.padding(.top, 14)
-                    verbs.padding(.top, 12)
-                    secondaryTabs.padding(.top, 12)
-                    results.padding(.top, 22)
-                    Color.clear.frame(height: 230)
-                }
-                .padding(.horizontal, 20)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                header
+                field
+                verbs
+                results
+                guardarSection
             }
-            .scrollIndicators(.hidden)
-            .scrollDismissesKeyboard(.interactively)
-            bottom
+            .padding(.horizontal, V9.gutter)
+            .padding(.top, 8)
+            .padding(.bottom, 24)
         }
-        .modifier(QueroDark(inTab: inTab))
+        .scrollDismissesKeyboard(.interactively)
+        .safeAreaInset(edge: .bottom, spacing: 0) { bottom }
+        .v9Screen()
         .sheet(item: $secondary) { mode in
             switch mode {
             case .name: BuscarNomeView(initialQuery: model.intent?.object ?? model.text, preferredListId: nil)
@@ -118,72 +111,74 @@ struct QueroView: View {
     // MARK: Topo
 
     private var header: some View {
-        HStack(alignment: .top) {
-            if !inTab { V8CornerButton(systemName: "xmark", label: "Fechar", onInk: true) { dismiss() } }
-            Spacer(minLength: 12)
-            V8SpecStack(lines: ["\(areaName) · \(region.timeString(now))",
-                                model.verb == .comprar || model.verb == nil ? "só lojas físicas, nesta cidade" : "só lugares de verdade, nesta cidade"],
-                        color: V8.muteDark, alignment: .trailing)
-                .multilineTextAlignment(.trailing)
-                .padding(.top, 14)
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Pedir algo").font(.largeTitle.bold()).accessibilityAddTraits(.isHeader)
+                Spacer(minLength: 8)
+                if !inTab {
+                    Button("Fechar") { dismiss() }
+                }
+            }
+            Text("\(areaName) · \(region.timeString(now)) · só lugares de verdade, nesta cidade")
+                .font(.subheadline).foregroundStyle(.secondary).monospacedDigit()
         }
     }
 
     private var field: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "sparkle")
-                .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(V8.white)
-                .accessibilityHidden(true)
-            TextField("", text: $model.text, prompt: Text("comprar um Seiko").foregroundStyle(V8.muteDark))
-                .font(V8Font.text(17, weight: .semibold))
-                .foregroundStyle(V8.white)
-                .tint(V8.orange)
+        HStack(spacing: 10) {
+            Image(systemName: "magnifyingglass").foregroundStyle(.secondary).accessibilityHidden(true)
+            TextField("", text: $model.text, prompt: Text("comprar um Seiko").foregroundStyle(.secondary))
                 .focused($focused)
                 .submitLabel(.search)
                 .autocorrectionDisabled()
                 .onSubmit { model.submit(env()) }
                 .accessibilityLabel("O que você quer")
             Button { Task { await speech.toggle() } } label: {
-                Text(speech.isListening ? "ouvindo…" : "ou fale")
-                    .font(V8Font.mono(11, weight: .semibold))
-                    .tracking(1.1)
-                    .textCase(.uppercase)
-                    .foregroundStyle(speech.isListening ? V8.orange : V8.muteDark)
-                    .lineLimit(1)
-                    .fixedSize()
-                    .padding(.vertical, 10)
+                Image(systemName: speech.isListening ? "waveform" : "mic.fill")
+                    .frame(width: 44, height: 44)
+                    .foregroundStyle(speech.isListening ? V9.accent : .secondary)
                     .contentShape(Rectangle())
             }
-            .buttonStyle(MustPressStyle())
+            .buttonStyle(.plain)
             .accessibilityLabel(speech.isListening ? "Parar de ouvir" : "Falar")
         }
-        .padding(.horizontal, 18)
-        .frame(minHeight: 58)
-        .background(Rectangle().fill(V8.graphite))
+        .padding(.leading, 12)
+        .frame(minHeight: 48)
+        .background(V9.fill, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(alignment: .bottomLeading) {
             if speech.state == .denied || speech.state == .unavailable {
                 Text(speech.state == .denied ? "voz desligada nos Ajustes do iPhone" : "voz indisponível agora")
-                    .font(V8Font.text(12)).foregroundStyle(V8.muteDark).offset(y: 22)
+                    .font(.footnote).foregroundStyle(.secondary).offset(y: 22)
             }
         }
+        .padding(.bottom, speech.state == .denied || speech.state == .unavailable ? 18 : 0)
     }
 
     private var verbs: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
                 ForEach(WantVerb.allCases, id: \.self) { verb in
-                    Button { model.choose(verb, env: env()) } label: { V8FilterChip(title: verb.label, on: model.verb == verb, onInk: true) }
-                        .buttonStyle(MustPressStyle())
+                    let on = model.verb == verb
+                    Button { model.choose(verb, env: env()) } label: {
+                        Text(verb.label.capitalized)
+                            .font(.subheadline.weight(.semibold))
+                            .padding(.horizontal, 14)
+                            .frame(minHeight: 36)
+                            .foregroundStyle(on ? Color.white : Color.primary)
+                            .background(on ? V9.accent : V9.fill, in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityAddTraits(on ? .isSelected : [])
                 }
             }
-            .padding(.horizontal, 20)
+            .padding(.horizontal, V9.gutter)
         }
-        .padding(.horizontal, -20)
-        .scrollClipDisabled()
+        .padding(.horizontal, -V9.gutter)
     }
 
-    /// Guardar (v9): Link · Vídeo · Texto · Ingresso · Presente em chips quadrados, e "Buscar por nome" embaixo.
+    // MARK: Guardar
+
+    /// Guardar (v9): Link · Vídeo · Texto · Ingresso · Presente, e "Buscar por nome" embaixo.
     enum Guardar: CaseIterable, Hashable {
         case link, video, text, ticket, gift
 
@@ -198,27 +193,25 @@ struct QueroView: View {
         }
     }
 
-    private var secondaryTabs: some View {
+    private var guardarSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            MonoLabel("ou guarde", size: 9, color: V8.muteDark)
+            V9SectionHeader("Ou guarde")
             CorteFlow(spacing: 8) {
                 ForEach(Guardar.allCases, id: \.self) { item in
-                    Button { guardar(item) } label: { V8FilterChip(title: item.label, on: false, onInk: true) }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("Guardar \(item.label.lowercased())")
+                    Button { guardar(item) } label: {
+                        Text(item.label).font(.subheadline.weight(.semibold))
+                            .padding(.horizontal, 14).frame(minHeight: 44)
+                            .background(V9.fill, in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Guardar \(item.label.lowercased())")
                 }
             }
-            Button { secondary = .name } label: {
-                Text("Buscar por nome")
-                    .font(V8Font.text(13, weight: .semibold))
-                    .underline()
-                    .foregroundStyle(V8.white)
-                    .padding(.vertical, 8)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(MustPressStyle())
-            .accessibilityLabel("Buscar por nome")
+            Button("Buscar por nome") { secondary = .name }
+                .font(.subheadline.weight(.semibold))
+                .frame(minHeight: 44)
         }
+        .padding(.top, 8)
     }
 
     private func guardar(_ item: Guardar) {
@@ -230,7 +223,7 @@ struct QueroView: View {
         }
     }
 
-    /// Fecha o Quero… e roda depois que a sheet sai (o `router` não abre sheet por cima de sheet).
+    /// Fecha o Quero e roda depois que a sheet sai (o `router` não abre sheet por cima de sheet).
     private func later(_ body: @escaping @MainActor () -> Void) {
         if inTab { body(); return }
         dismiss()
@@ -242,125 +235,189 @@ struct QueroView: View {
 
     // MARK: Resultado
 
+    private var boardRows: [QueroRow] { model.rows.filter { $0.result.origin == .board } }
+    private var nearRows: [QueroRow] { model.rows.filter { $0.result.origin != .board } }
+
     @ViewBuilder private var results: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            if let question = model.question {
-                QueroQuestionSlab(question: question) {
-                    let text = question.text
-                    later { router.sheet = .assistantAsk(text: text) }
-                }
-                .padding(.horizontal, -20)
-                .padding(.bottom, 14)
-            }
+        VStack(alignment: .leading, spacing: 14) {
+            if let question = model.question { questionCard(question) }
             if model.offline {
-                chip("sem internet · a busca volta quando a rede voltar")
+                notice("sem internet · seus Musts", "wifi.slash")
             } else if let notice = model.notice {
-                chip(notice)
+                self.notice(notice, "info.circle")
             }
             if let understood = model.understood {
-                HStack(alignment: .firstTextBaseline) {
-                    Text("\(Text("Entendi: ").foregroundStyle(V8.muteDark))\(Text(understood.object).font(V8Font.text(14, weight: .bold)).foregroundStyle(V8.white))\(Text(" · \(understood.rest)").foregroundStyle(V8.muteDark))")
-                        .font(V8Font.text(14))
-                        .lineLimit(2)
-                    Spacer(minLength: 8)
-                    if model.phase == .done { MonoLabel("\(model.rows.count)", color: V8.muteDark) }
-                }
-                .padding(.bottom, 4)
+                (Text("Entendi: ").foregroundStyle(.secondary) + Text(understood.object).bold() + Text(" · \(understood.rest)").foregroundStyle(.secondary))
+                    .font(.subheadline)
             }
-            if !model.giftRows.isEmpty {
-                GiftWantBand(rows: model.giftRows,
-                             onGo: { MapsLinks.openApple(to: $0.coordinate, name: $0.storeName) },
-                             onOpen: { row in
-                                 router.sheet = nil
-                                 router.push(row.storeId.map { .place(id: $0) } ?? .presente(id: row.giftId), on: .viagem)
-                             })
-                    .padding(.horizontal, -20)
-                    .padding(.bottom, 12)
-            }
+            if !model.giftRows.isEmpty { giftSection }
             switch model.phase {
             case .idle where model.question != nil:
                 EmptyView()
             case .idle:
-                Text("Diga o que quer — comprar, comer, ver. Eu acho o lugar de verdade, perto de hoje, e vejo se cabe no dia.")
-                    .font(V8Font.text(15)).foregroundStyle(V8.muteDark).fixedSize(horizontal: false, vertical: true)
+                Text("Diga o que quer: comprar, comer, ver. Eu acho o lugar de verdade, perto de hoje, e vejo se cabe no dia.")
+                    .font(.body).foregroundStyle(.secondary)
             case .searching:
-                Text("procurando perto de \(areaName)…").font(V8Font.text(14)).foregroundStyle(V8.muteDark).padding(.vertical, 12)
+                HStack(spacing: 8) { ProgressView(); Text("procurando perto de \(areaName)…").foregroundStyle(.secondary) }
+                    .padding(.vertical, 8)
             case .done:
                 if model.rows.isEmpty && model.giftRows.isEmpty {
                     Text(model.offline ? "Nada no aparelho pra isso ainda." : "Nenhum lugar físico por perto pra isso. Tente outra palavra.")
-                        .font(V8Font.text(15)).foregroundStyle(V8.muteDark).padding(.vertical, 12)
+                        .foregroundStyle(.secondary)
                 }
-                ForEach(Array(model.rows.enumerated()), id: \.element.id) { i, row in
-                    Button { model.selectedId = row.id } label: {
-                        QueroRowView(index: i + 1, row: row, selected: row.id == (model.selected?.id), region: region)
-                    }
-                    .buttonStyle(.plain)
-                }
+                if !boardRows.isEmpty { rowsSection("Seus Musts", rows: boardRows) }
+                if !nearRows.isEmpty { rowsSection("Aqui perto agora", rows: nearRows) }
                 if !model.rows.isEmpty || model.dropped > 0 {
-                    MonoLabel(model.footer(region: region), size: 10, color: V8.muteDark)
-                        .lineLimit(3)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(.top, 10)
+                    Text(model.footer(region: region)).font(.footnote).foregroundStyle(.secondary)
                 }
             }
         }
     }
 
-    private func chip(_ text: String) -> some View {
-        HStack(spacing: 6) {
-            Circle().fill(V8.orange).frame(width: 6, height: 6)
-            Text(text).font(V8Font.text(13, weight: .semibold)).foregroundStyle(V8.white).lineLimit(2)
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .background(Capsule().fill(V8.graphite))
-        .padding(.bottom, 8)
+    private func notice(_ text: String, _ icon: String) -> some View {
+        Label(text, systemImage: icon)
+            .font(.subheadline.weight(.semibold))
+            .padding(.horizontal, 12).padding(.vertical, 8)
+            .background(V9.fill, in: Capsule())
     }
 
-    // MARK: Embaixo: o encaixe e as duas ações
+    private func rowsSection(_ title: String, rows: [QueroRow]) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            V9SectionHeader(title)
+            ForEach(rows) { row in
+                let selected = row.id == model.selected?.id
+                Button { model.selectedId = row.id } label: {
+                    V9Row(title: row.result.name, detail: row.meta, reason: reason(row),
+                          systemImage: row.result.origin == .board ? "star.circle.fill" : "mappin.circle") {
+                        Button { MapsLinks.openApple(to: row.result.coordinate, name: row.result.name) } label: {
+                            Text("Ir").font(.subheadline.weight(.semibold)).frame(minWidth: 44, minHeight: 44)
+                        }
+                        .buttonStyle(.plain).foregroundStyle(V9.accent)
+                        .accessibilityLabel("Ir até \(row.result.name)")
+                    }
+                    .padding(.vertical, 6).padding(.horizontal, 10)
+                    .background(selected ? V9.fill : Color.clear, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .accessibilityAddTraits(selected ? .isSelected : [])
+            }
+        }
+    }
+
+    /// "\(min) min · cabe 15:10" / "hoje não cabe · sáb · Ginza".
+    private func reason(_ row: QueroRow) -> String {
+        let walk = "\(row.minutes) min"
+        if let slot = row.slot { return "\(walk) · cabe \(region.timeString(slot.start))" }
+        return [walk, row.otherDay ?? "hoje não cabe"].joined(separator: " · ")
+    }
+
+    private var giftSection: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            V9SectionHeader("Presentes que faltam")
+            ForEach(model.giftRows) { g in
+                V9Row(title: "\(g.title) · \(g.person)", detail: g.storeName,
+                      reason: "\(g.minutes) min · \(g.isOpen ? "aberta" : "fechada agora")", systemImage: "gift") {
+                    Button { MapsLinks.openApple(to: g.coordinate, name: g.storeName) } label: {
+                        Text("Ir").font(.subheadline.weight(.semibold)).frame(minWidth: 44, minHeight: 44)
+                    }
+                    .buttonStyle(.plain).foregroundStyle(V9.accent)
+                    .accessibilityLabel("Ir até \(g.storeName)")
+                }
+            }
+        }
+    }
+
+    // MARK: Pergunta
+
+    private func questionCard(_ q: QueroQuestionState) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Isso é uma pergunta", systemImage: "sparkles").font(.subheadline.weight(.semibold)).foregroundStyle(V9.accent)
+            if let answer = q.answer {
+                Text(answer).font(.body)
+            } else {
+                HStack(spacing: 8) { ProgressView(); Text("pensando no aparelho…").foregroundStyle(.secondary) }
+            }
+            if let extras = q.extras {
+                ForEach(extras.places) { p in
+                    V9Row(title: p.name, detail: Walk.distanceText(p.distance), reason: p.note ?? p.address, systemImage: "mappin.circle.fill") {
+                        Button { MapsLinks.openApple(to: p.coordinate, name: p.name) } label: {
+                            Text("Ir").font(.subheadline.weight(.semibold)).frame(minWidth: 44, minHeight: 44)
+                        }
+                        .buttonStyle(.plain).foregroundStyle(V9.accent)
+                        .accessibilityLabel("Ir até \(p.name)")
+                    }
+                }
+                ForEach(extras.recipes) { r in
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(r.title).font(.body.weight(.semibold))
+                        Text(r.ingredients.joined(separator: " + ")).font(.subheadline).foregroundStyle(.secondary)
+                        Text(r.step).font(.subheadline)
+                        Text(r.when).font(.footnote).foregroundStyle(.secondary)
+                    }
+                    .accessibilityElement(children: .combine)
+                }
+                if let note = extras.note { Label(note, systemImage: "wifi.slash").font(.footnote).foregroundStyle(.secondary) }
+            }
+            Button {
+                let text = q.text
+                later { router.sheet = .assistantAsk(text: text) }
+            } label: {
+                Label("Continuar no Assistente", systemImage: "arrow.right").frame(maxWidth: .infinity)
+            }
+            .v9Secondary()
+            .accessibilityHint("abre o Assistente com a sua pergunta")
+        }
+        .v9Card()
+    }
+
+    // MARK: Embaixo: ver no mapa, encaixe e guardar
 
     @ViewBuilder private var bottom: some View {
-        VStack(spacing: 10) {
-            if let saved {
-                Text(saved).font(V8Font.text(15, weight: .bold)).foregroundStyle(V8.orange)
-            } else if let failure {
-                Text(failure).font(V8Font.text(13)).foregroundStyle(V8.orange)
-            }
-            if let row = model.selected, model.phase == .done {
-                fitCard(row)
+        let showcase = model.showcase()
+        let row = model.phase == .done ? model.selected : nil
+        if showcase != nil || row != nil || saved != nil || failure != nil {
+            VStack(spacing: 10) {
+                if let saved {
+                    Text(saved).font(.subheadline.weight(.semibold)).foregroundStyle(V9.accent)
+                } else if let failure {
+                    Text(failure).font(.footnote).foregroundStyle(V9.alert)
+                }
+                if let row { fitCard(row) }
                 HStack(spacing: 10) {
-                    BigButton(title: "Só guardar", style: .line, lineColor: V8.white, lineFill: V8.ink) { guardar(row) }
-                    BigButton(title: row.slot == nil ? "Não cabe hoje" : "Encaixar hoje", style: .orange,
-                              systemImage: row.slot == nil ? nil : "arrow.up.right") { encaixar(row) }
-                        .disabled(row.slot == nil)
-                        .opacity(row.slot == nil ? 0.45 : 1)
+                    if let showcase {
+                        Button { router.showOnMap(showcase) } label: {
+                            Label("Ver no mapa", systemImage: "map").frame(maxWidth: .infinity)
+                        }
+                        .v9Secondary()
+                        .accessibilityHint("abre o mapa só com estes lugares")
+                    }
+                    if let row {
+                        Button(row.slot == nil ? "Não cabe hoje" : "Encaixar hoje") { encaixar(row) }
+                            .v9Primary()
+                            .disabled(row.slot == nil)
+                    }
                 }
             }
+            .padding(.horizontal, V9.gutter)
+            .padding(.vertical, 10)
+            .frame(maxWidth: .infinity)
+            .background(.regularMaterial)
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 36)
-        .padding(.bottom, 10)
-        .background(BottomFade(color: V8.ink, height: 300).allowsHitTesting(false))
     }
 
     private func fitCard(_ row: QueroRow) -> some View {
-        HStack(spacing: 14) {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
             Text(row.slot.map { region.timeString($0.start) } ?? "—")
-                .font(V8Font.mono(22, weight: .semibold))
-                .foregroundStyle(V8.orange)
-                .lineLimit(1)
-                .fixedSize()
+                .font(.title3.weight(.semibold).monospacedDigit())
+                .foregroundStyle(V9.accent)
             VStack(alignment: .leading, spacing: 2) {
-                Text(fitTitle(row)).font(V8Font.text(15, weight: .bold)).foregroundStyle(V8.white).lineLimit(2)
-                Text(fitDetail(row)).font(V8Font.text(13)).foregroundStyle(V8.muteDark).lineLimit(2)
+                Text(fitTitle(row)).font(.subheadline.weight(.semibold)).lineLimit(2)
             }
             Spacer(minLength: 0)
+            Button("Só guardar") { guardar(row) }
+                .font(.subheadline.weight(.semibold))
+                .frame(minHeight: 44)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(V8.graphite))
-        .accessibilityElement(children: .combine)
     }
 
     private func fitTitle(_ row: QueroRow) -> String {
@@ -373,12 +430,12 @@ struct QueroView: View {
     private func fitDetail(_ row: QueroRow) -> String {
         let name = short(row.result.name)
         guard let slot = row.slot else {
-            return row.otherDay.map { "Só guardar deixa no board · \($0)" } ?? "o dia está cheio até 22:30 · Só guardar deixa no board"
+            return row.otherDay.map { "Só guardar deixa no board · \($0)" } ?? "o dia está cheio · Só guardar deixa no board"
         }
         var parts: [String] = []
         if let before = slot.before {
             parts.append(slot.detour <= 10 ? "\(name) fica no caminho pro \(short(before.label))" : "desvio de \(slot.detour) min antes do \(short(before.label))")
-        } else if env().plan == nil {
+        } else if plan == nil {
             parts.append("sem dia montado: vira a parada de agora")
         }
         parts.append("\(DayFit.minutes) min lá dentro")
@@ -404,7 +461,7 @@ struct QueroView: View {
         saved = row.result.boardPlaceId != nil ? "\(place.name) já está no board" : "Guardado em \(place.list?.name.capitalized ?? listName)"
         Task {
             try? await Task.sleep(for: .milliseconds(700))
-            dismiss()
+            saved = nil
         }
     }
 
@@ -432,70 +489,25 @@ struct QueroView: View {
 
     private var planArea: Area? { plan?.area.flatMap { id in areas.first { $0.id == id } } }
 
+    /// O bairro que a capa mostra (prompt 32 §3): serve de origem quando o GPS está fora da cidade da viagem.
+    private var contextArea: Area? { todayContext.context.areaId.flatMap { id in areas.first { $0.id == id } } }
+
     private var gpsArea: Area? {
         guard let here = services.location.current?.coordinate else { return nil }
         let id = AreaAssigner(areas: areas).areaId(name: nil, cityId: city?.id ?? region.rawValue, lat: here.latitude, lng: here.longitude)
         return id.flatMap { id in areas.first { $0.id == id } }
     }
 
-    private var areaName: String { planArea?.name ?? gpsArea?.name ?? city?.name ?? region.displayName }
+    private var areaName: String { contextArea?.name ?? planArea?.name ?? gpsArea?.name ?? city?.name ?? region.displayName }
 
     private func env() -> QueroEnv {
-        QueroEnv.make(region: region, now: now, places: places, trip: trip, settings: settingsList.first, plan: plan,
-                      gps: services.location.current?.coordinate, online: services.connectivity.status != .offline,
-                      upcoming: QueroEnv.upcomingDays(context: context, areas: areas, today: today),
-                      areaHint: planArea ?? gpsArea, shows: showEvents.today(region: region, at: now), gifts: gifts)
-    }
-}
-
-/// Linha do Quero… (`.r` do `Quero.html`): índice laranja, nome, meta, e à direita o tempo e "cabe HH:MM".
-private struct QueroRowView: View {
-    var index: Int
-    var row: QueroRow
-    var selected: Bool
-    var region: Region
-
-    var body: some View {
-        HStack(alignment: .center, spacing: 12) {
-            Text("\(index)")
-                .font(Font(V8Fonts.bricolage(28, weight: 800, width: 80, opticalSize: 96)))
-                .tracking(-1)
-                .foregroundStyle(V8.orange)
-                .frame(width: 30, alignment: .leading)
-                .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(row.result.name)
-                    .font(V8Font.text(16, weight: .bold))
-                    .foregroundStyle(V8.white)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                Text(row.meta).font(V8Font.text(12)).foregroundStyle(V8.muteDark).lineLimit(1).truncationMode(.tail)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            VStack(alignment: .trailing, spacing: 3) {
-                Text("\(row.minutes) min").font(V8Font.mono(10, weight: .semibold)).foregroundStyle(V8.white)
-                if let slot = row.slot {
-                    Text("cabe \(region.timeString(slot.start))").font(V8Font.mono(10, weight: .semibold)).foregroundStyle(V8.orange)
-                } else if let other = row.otherDay {
-                    Text(other).font(V8Font.mono(10, weight: .semibold)).foregroundStyle(V8.muteDark)
-                }
-            }
-            .lineLimit(1)
-            .fixedSize()
-        }
-        .padding(.vertical, 12)
-        .padding(.horizontal, selected ? 12 : 0)
-        .background {
-            if selected { RoundedRectangle(cornerRadius: 14, style: .continuous).fill(V8.white.opacity(0.08)) }
-        }
-        .padding(.horizontal, selected ? -12 : 0)
-        .overlay(alignment: .top) {
-            if !selected && index > 1 { Rectangle().fill(V8.white.opacity(0.14)).frame(height: 1) }
-        }
-        .contentShape(Rectangle())
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(selected ? .isSelected : [])
-        .accessibilityHint(row.slot.map { "cabe hoje às \(region.timeString($0.start))" } ?? "hoje não cabe")
+        var e = QueroEnv.make(region: region, now: now, places: places, trip: trip, settings: settingsList.first, plan: plan,
+                              gps: services.location.current?.coordinate, online: services.connectivity.status != .offline,
+                              upcoming: QueroEnv.upcomingDays(context: context, areas: areas, today: today),
+                              areaHint: contextArea ?? planArea ?? gpsArea, shows: showEvents.today(region: region, at: now), gifts: gifts)
+        // Seus Musts da cidade de hoje entram mesmo longe (a faixa "Seus Musts").
+        e.boardAnyDistance = true
+        return e
     }
 }
 
@@ -503,21 +515,7 @@ extension AddMode: Identifiable {
     var id: Self { self }
 }
 
-
-/// Na sheet o Quero força o tema escuro da janela; na aba isso pintaria o app inteiro, então só a página fica escura.
-private struct QueroDark: ViewModifier {
-    var inTab: Bool
-
-    func body(content: Content) -> some View {
-        if inTab {
-            content.environment(\.colorScheme, .dark).lightStatusBar()
-        } else {
-            content.preferredColorScheme(.dark)
-        }
-    }
-}
-
-/// A aba de busca da barra nativa: o Quero… como página. `token` recria a página quando alguém pede um texto novo.
+/// A aba de busca da barra nativa: o Pedir como página. `token` recria a página quando alguém pede um texto novo.
 struct QueroTabPage: View {
     @Environment(AppRouter.self) private var router
 

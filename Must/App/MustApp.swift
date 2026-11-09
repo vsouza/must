@@ -456,6 +456,8 @@ enum DebugLaunch {
         // prompt 25 (contrato): Atalhos é um painel sobre a capa (o agente 25/1 lê `-debugScreen atalhos`).
         case "atalhos": router.select(.hoje)
         case "quero": router.openQuero(text: arg) // quero:quero comprar um Seiko
+        case "v9-quero-seiko": router.openQuero(text: "quero comprar um Seiko")
+        case "v9-quero-konbini": router.openQuero(text: "que drink monto no 7-Eleven?")
         case "compartilhar", "mandar": router.sheet = .mandar(date: region.calendar.startOfDay(for: AppClock.now))
         case "sos": router.push(.sos, on: .hoje)
         // prompt 31 · Presentes: a lista de exemplo (PresenteDemo) e cada tela.
