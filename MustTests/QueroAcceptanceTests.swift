@@ -28,7 +28,7 @@ struct QueroAcceptanceTests {
     }
 
     private func ask(_ text: String, env: QueroEnv, provider: (any WantPlacesSearching)? = FakeWantPlaces()) async -> QueroModel {
-        let model = QueroModel(text: text, provider: provider)
+        let model = QueroModel(text: text, provider: provider, questionCache: temp())
         await model.perform(text, env)
         return model
     }

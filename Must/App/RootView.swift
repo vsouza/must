@@ -31,7 +31,7 @@ struct RootView: View {
                 Tab(tab.title, systemImage: tab.systemImage, value: RootTab.main(tab)) {
                     NavigationStack(path: router.path(for: tab)) {
                         root(for: tab)
-                            .toolbar(tab == .viagem ? .visible : .hidden, for: .navigationBar)
+                            .toolbar(tab == .viagem || tab == .musts ? .visible : .hidden, for: .navigationBar)
                             .mustDestinations()
                     }
                     // Telas que escondiam a barra (Montar, Ir, Lugar, SOS, quero aberto…).
@@ -52,8 +52,8 @@ struct RootView: View {
             case .editPlace(let id): EditPlaceView(placeId: id)
             case .newPlace(let listId): EditPlaceView(newInListId: listId)
             case .expense(let placeId): ExpenseView(placeId: placeId)
-            case .assistant: AssistantView().presentationCornerRadius(0)
-            case .assistantAsk(let text): AssistantView(initialQuestion: text).presentationCornerRadius(0)
+            case .assistant: AssistantView()
+            case .assistantAsk(let text): AssistantView(initialQuestion: text)
             case .ticketImport(let inboxId): TicketImportFlow(inboxId: inboxId)
             case .buscarNome(let query, let listId): BuscarNomeView(initialQuery: query, preferredListId: listId)
             case .mandar(let date): MandarView(date: date)
@@ -80,7 +80,7 @@ struct RootView: View {
                 #endif
             }
             }
-            .v8LegacySheet()
+            .v8LegacySheet(cover == .gallery)
         }
     }
 
@@ -89,7 +89,7 @@ struct RootView: View {
         switch tab {
         case .hoje: HomeView()
         case .explorar: ExplorarMapaView() // prompt 32 §4: o mapa (V9); as páginas de bairro ficam em ⋯ › Bairros
-        case .musts: MustsHubView().v8Legacy()
+        case .musts: MustsHubView()
         case .viagem: ProximosView()
         }
     }
@@ -131,10 +131,11 @@ private struct PlaceholderScreen: View {
 }
 
 extension AppRouter.Sheet {
-    /// Sheets que ainda são V8 (ficam no claro). Tirar daqui ao converter.
+    /// Sheets que ainda são V8 (ficam no claro). As outras já são V9 (Fase 2 do prompt 32).
     var legacyLight: Bool {
         switch self {
-        default: return true
+        case .ticketImport, .viagens: return true
+        default: return false
         }
     }
 }

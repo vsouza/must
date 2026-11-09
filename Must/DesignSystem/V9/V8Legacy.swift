@@ -16,12 +16,11 @@ extension View {
 }
 
 extension Route {
-    /// Rotas que ainda são V8 (ficam no claro). Cada agente tira daqui as rotas que converteu pro V9
-    /// (Fase 1: `.place`, `.linha`, `.agora`, `.mapa`, `.ir`…).
+    /// Rotas que ainda são V8 (ficam no claro). As outras já são V9 (Fases 1 e 2 do prompt 32).
     var legacyLight: Bool {
         switch self {
-        case .linha, .agora, .place: return false
-        default: return true
+        case .montar, .day, .bomDia, .boaNoite, .guia, .bairros, .irBairro, .mapa: return true
+        default: return false
         }
     }
 }

@@ -96,11 +96,14 @@ final class QueroModel {
     @ObservationIgnored let provider: (any WantPlacesSearching)?
     /// Fontes além do Google (Wikipedia pro "ver"). Os prints com Places falso e os testes não saem pra rede.
     @ObservationIgnored let extras: WantExtras?
+    /// Cache das buscas de pergunta (konbini). Os testes passam um próprio: o `.shared` fica no disco e guarda o que outra rodada deixou.
+    @ObservationIgnored let questionCache: WantSearchCache
 
-    init(text: String = "", provider: (any WantPlacesSearching)?, extras: WantExtras? = nil) {
+    init(text: String = "", provider: (any WantPlacesSearching)?, extras: WantExtras? = nil, questionCache: WantSearchCache = .shared) {
         self.text = text
         self.provider = provider
         self.extras = extras
+        self.questionCache = questionCache
     }
 
     var verb: WantVerb? { verbOverride ?? intent?.verb }
@@ -133,7 +136,7 @@ final class QueroModel {
     func perform(_ typed: String, _ env: QueroEnv) async {
         if QueroQuestion.isQuestion(typed) {
             if question?.text != typed { question = QueroQuestionState(text: typed, answer: nil) }
-            let extras = await QueroQuestionPlaces.resolve(typed, env: env, provider: provider)
+            let extras = await QueroQuestionPlaces.resolve(typed, env: env, provider: provider, cache: questionCache)
             let answer: String
             if let fixed = extras?.answer { answer = fixed } else { answer = await self.answerer?(typed) ?? QueroQuestion.fallback }
             guard !Task.isCancelled, question?.text == typed else { return }
