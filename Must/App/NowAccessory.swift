@@ -9,9 +9,13 @@ struct NowAccessory: View {
     @Environment(Services.self) private var services
     @Environment(\.dayEngine) private var engine
     @Environment(\.modelContext) private var context
+    /// Dia aceito/refeito/feito grava no SwiftData: a faixa relê na hora, igual a Hoje (sem esperar o próximo minuto,
+    /// senão Hoje diz "Próxima: X" e a faixa ainda diz "Montar o dia de hoje").
+    @State private var saves = 0
 
     var body: some View {
         TimelineView(.everyMinute) { _ in
+            let _ = saves
             let region = store.region
             let now = AppClock.now
             let today = region.calendar.startOfDay(for: now)
@@ -45,6 +49,7 @@ struct NowAccessory: View {
             .buttonStyle(.plain)
             .accessibilityHint(clock.phase == .noPlan ? "monta o dia de hoje" : "abre a linha do dia")
         }
+        .onReceive(NotificationCenter.default.publisher(for: ModelContext.didSave).receive(on: RunLoop.main)) { _ in saves &+= 1 }
     }
 }
 
