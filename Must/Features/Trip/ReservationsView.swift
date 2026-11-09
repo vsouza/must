@@ -3,11 +3,9 @@ import SwiftUI
 
 /// Reservas: as âncoras da viagem — reservas e ingressos dos lugares e eventos sem lugar (trem, voo, dia inteiro).
 struct ReservationsView: View {
-    @Environment(\.dismiss) private var dismiss
     @Environment(AppRouter.self) private var router
     @Environment(RegionStore.self) private var store
     @Environment(Services.self) private var services
-    @Environment(\.tripTheme) private var theme
 
     @Query private var places: [Place]
     @Query(sort: \TripEvent.at) private var events: [TripEvent]
@@ -87,45 +85,38 @@ struct ReservationsView: View {
     var body: some View {
         let all = items
         let next = all.first { !$0.done && ($0.allDay ? region.calendar.startOfDay(for: $0.at) >= region.calendar.startOfDay(for: now) : $0.at >= now) }
-        VStack(spacing: 0) {
-            if !embedded {
-                CutScreenHeader(title: "Reservas", corner: [trips.first?.hasTrip == true ? "âncoras da viagem" : "âncoras do mês"],
-                                subtitle: "O dia se monta em volta delas", height: 200, onBack: { dismiss() }) {
-                    CutCornerButton(systemName: "plus", label: "Novo evento", tint: theme.coverInk) { editing = .new }
+        List {
+            Section {
+                Text(all.count == 1 ? "1 marcada · o dia se monta em volta" : "\(all.count) marcadas · o dia se monta em volta")
+                    .font(.subheadline).foregroundStyle(.secondary)
+                Button { router.sheet = .ticketImport(inboxId: nil) } label: {
+                    Label("Trazer ingresso (PDF, foto ou link)", systemImage: "ticket")
+                }
+                Button { editing = .new } label: { Label("Novo evento", systemImage: "plus") }
+            }
+            if let next {
+                Section("Próxima · \(region.calendar.isDate(next.at, inSameDayAs: now) ? "hoje" : region.shortDay(next.at))") {
+                    nextCard(next)
                 }
             }
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    HStack(alignment: .center, spacing: 12) {
-                        BigNumeral("\(all.count)", size: 64, color: V8.orange).fixedSize()
-                        SpecLabel(all.count == 1 ? "marcada\no dia se monta em volta" : "marcadas\no dia se monta em volta")
-                        Spacer(minLength: 8)
-                        if embedded {
-                            CutCornerButton(systemName: "plus", label: "Novo evento") { editing = .new }
-                        }
+            if all.isEmpty {
+                Section {
+                    Text("Nada marcado ainda. Reserva de lugar entra pelo Editar lugar; trem, voo e passeio de dia inteiro, pelo Novo evento.")
+                        .font(.subheadline).foregroundStyle(.secondary)
+                }
+            } else {
+                Section(trips.first?.hasTrip == true ? "Âncoras da viagem" : "Âncoras do mês") {
+                    ForEach(all) { item in
+                        Button { open(item) } label: { row(item) }.foregroundStyle(.primary)
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 14)
-                    .overlay(alignment: .bottom) { IndexRule() }
-
-                    Button { router.sheet = .ticketImport(inboxId: nil) } label: {
-                        CutRow(title: "Trazer ingresso", detail: "PDF, foto ou link") { CutValue(text: "abrir", chevron: true) }
-                    }
-                    .buttonStyle(.plain)
-
-                    if let next { nextCard(next) }
-                    list(all)
-                    if all.isEmpty {
-                        Text("Nada marcado ainda. Reserva de lugar entra pelo Editar lugar; trem, voo e passeio de dia inteiro, pelo +.")
-                            .font(V8Font.text(14)).foregroundStyle(V8.mute).padding(20)
-                    }
-                    V8BarSpacer()
                 }
             }
-            .scrollIndicators(.hidden)
         }
-        .background(V8.paper.ignoresSafeArea())
-        .toolbar(.hidden, for: .navigationBar)
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(V9.groupedBackground)
+        .navigationTitle(embedded ? "" : "Reservas")
+        .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $editing) { target in
             switch target {
             case .new: EventEditor(event: nil, region: region)
@@ -143,72 +134,57 @@ struct ReservationsView: View {
             if leave > now, today { parts.append("saia \(region.timeString(leave))") }
         }
         return Button { open(item) } label: {
-            VStack(alignment: .leading, spacing: 8) {
-                MonoLabel("próxima · \(today ? "hoje" : region.shortDay(item.at))", size: 10, color: V8.ink)
+            VStack(alignment: .leading, spacing: 4) {
                 HStack(alignment: .firstTextBaseline) {
-                    Text(item.title).font(V8Font.text(22, weight: .bold)).foregroundStyle(V8.ink).lineLimit(2)
+                    Text(item.title).font(.headline).lineLimit(2)
                     Spacer()
-                    if !item.allDay { Text(region.timeString(item.at)).font(V8Font.numeral(40)).foregroundStyle(V8.ink) }
+                    if !item.allDay { Text(region.timeString(item.at)).font(.title2.weight(.semibold)).monospacedDigit().foregroundStyle(V9.accent) }
                 }
-                Text(parts.joined(separator: " · ")).font(V8Font.text(14)).foregroundStyle(V8.ink.opacity(0.8)).lineLimit(2)
+                Text(parts.joined(separator: " · ")).font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
                     .multilineTextAlignment(.leading)
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(V8.orange)
-            .overlay(alignment: .bottom) { IndexRule() }
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
-    }
-
-    private func list(_ all: [Item]) -> some View {
-        VStack(spacing: 0) {
-            ForEach(all) { item in
-                Button { open(item) } label: { row(item) }.buttonStyle(.plain)
-            }
-        }
+        .foregroundStyle(.primary)
     }
 
     private func row(_ item: Item) -> some View {
-        HStack(alignment: .top, spacing: 16) {
+        HStack(alignment: .top, spacing: 14) {
             VStack(spacing: 0) {
-                Text(region.dayNumber(item.at)).font(V8Font.numeral(34)).foregroundStyle(V8.ink)
-                Text(region.monthShort(item.at).uppercased()).font(V8Font.mono(10)).tracking(1).foregroundStyle(V8.mute)
+                Text(region.dayNumber(item.at)).font(.title2.weight(.semibold)).monospacedDigit()
+                Text(region.monthShort(item.at)).font(.caption).foregroundStyle(.secondary)
             }
-            .frame(width: 52)
-            VStack(alignment: .leading, spacing: 4) {
-                Text(item.title).font(V8Font.text(17, weight: .bold)).foregroundStyle(V8.ink).lineLimit(2)
-                Text(item.meta).font(V8Font.text(13)).foregroundStyle(V8.mute).lineLimit(2).multilineTextAlignment(.leading)
+            .frame(width: 48)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(item.title).font(.body.weight(.semibold)).lineLimit(2)
+                Text(item.meta).font(.subheadline).foregroundStyle(.secondary).lineLimit(2).multilineTextAlignment(.leading)
+                tag(item)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            tag(item)
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 14)
-        .overlay(alignment: .bottom) { IndexRule() }
-        .opacity(item.done ? 0.5 : 1)
+        .opacity(item.done ? 0.55 : 1)
         .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
     }
 
     @ViewBuilder private func tag(_ item: Item) -> some View {
         let cal = region.calendar
         let todayCity = trips.first?.city(on: now, calendar: cal)
         if item.done && item.place != nil {
-            CutTag(text: "feito")
+            J9Tag(text: "feito")
         } else if cal.isDate(item.at, inSameDayAs: now) {
-            CutTag(text: "hoje", filled: true)
+            J9Tag(text: "hoje", filled: true)
         } else if item.ticket != nil {
-            CutTag(text: "ingresso")
+            J9Tag(text: "ingresso")
         } else if item.weatherDependent {
-            CutTag(text: "tempo")
+            J9Tag(text: "tempo")
         } else if let event = item.event {
-            CutTag(text: event.allDay ? "dia" : event.kind.tag)
+            J9Tag(text: event.allDay ? "dia" : event.kind.tag)
         } else if let cityId = item.cityId, let city = trips.first?.city(id: cityId), city.name != todayCity?.name {
-            CutTag(text: city.name)
+            J9Tag(text: city.name)
         } else if trips.first?.hasTrip == true {
-            CutTag(text: "viagem")
+            J9Tag(text: "viagem")
         }
     }
 
@@ -237,39 +213,50 @@ struct EventEditor: View {
     @State private var confirmDelete = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            SheetHandle().frame(maxWidth: .infinity)
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    HStack(alignment: .firstTextBaseline) {
-                        Text(event == nil ? "Novo evento" : "Evento").font(V8Font.display(34)).tracking(-1).foregroundStyle(V8.ink)
-                        Spacer()
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("Shinkansen → Kyoto, Nara · dia inteiro…", text: $title)
+                } header: { Text("O quê") }
+                Section {
+                    Picker("Tipo", selection: $kind) {
+                        ForEach(TripEventKind.allCases.filter { $0 != .flight }) { k in Text(k.label.capitalized).tag(k) }
                     }
-                    CutField(label: "o quê", text: $title, placeholder: "Shinkansen → Kyoto, Nara · dia inteiro…")
-                    FlowLayout(spacing: 8, lineSpacing: 8) {
-                        ForEach(TripEventKind.allCases.filter { $0 != .flight }) { k in
-                            Button { kind = k; if k == .dayTrip { allDay = true } } label: { Pill(k.label.capitalized, isOn: kind == k, icon: k.icon) }
-                                .buttonStyle(.plain)
+                    .onChange(of: kind) { _, k in if k == .dayTrip { allDay = true } }
+                    Toggle(isOn: $allDay) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Dia inteiro")
+                            Text("sem hora marcada").font(.footnote).foregroundStyle(.secondary)
                         }
                     }
-                    Toggle(isOn: $allDay) { FormRow("Dia inteiro", subtitle: "sem hora marcada") }.toggleStyle(.must)
                     DatePicker("Quando", selection: $at, displayedComponents: allDay ? [.date] : [.date, .hourAndMinute])
-                        .font(V8Font.text(16)).tint(V8.orange)
                         .environment(\.timeZone, region.timeZone)
                         .environment(\.locale, region.locale)
-                    CutField(label: "nota", text: $note, placeholder: "Nozomi 215 · vagão 8, ônibus 07:35…")
-                    Toggle(isOn: $weatherDependent) { FormRow("Depende do tempo", subtitle: "só vale com céu limpo") }.toggleStyle(.must)
-                    if event != nil {
-                        GhostButton("Remover evento", icon: .remover) { confirmDelete = true }
+                }
+                Section("Nota") {
+                    TextField("Nozomi 215 · vagão 8, ônibus 07:35…", text: $note, axis: .vertical)
+                    Toggle(isOn: $weatherDependent) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Depende do tempo")
+                            Text("só vale com céu limpo").font(.footnote).foregroundStyle(.secondary)
+                        }
                     }
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 8)
-                .padding(.bottom, 20)
+                if event != nil {
+                    Section { Button("Remover evento", role: .destructive) { confirmDelete = true } }
+                }
             }
+            .navigationTitle(event == nil ? "Novo evento" : "Evento")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancelar") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Salvar", action: save).disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
+            }
+            .v9Screen(grouped: true)
+            .scrollContentBackground(.hidden)
         }
-        .background(V8.paper)
-        .cutFooter("Salvar", enabled: !title.trimmingCharacters(in: .whitespaces).isEmpty, action: save)
         .onAppear(perform: load)
         .confirmationDialog("Remover \(title)?", isPresented: $confirmDelete, titleVisibility: .visible) {
             Button("Remover", role: .destructive) {

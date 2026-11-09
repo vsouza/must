@@ -27,54 +27,45 @@ struct RegionSheet: View {
     private enum Expanded { case date, gps }
 
     var body: some View {
-        CutSheet(title: "Região", corner: ["escondido", "5 toques na versão"],
-                 subtitle: "troca board, cidades, moeda, metrô e fontes de dados de uma vez",
-                 height: 190, footer: "Fechar", footerArrow: false, onFooter: { dismiss() }) {
-            ForEach(store.trips.map(Region.init(trip:))) { region in
-                RegionOption(region: region, selected: region == store.region,
-                             subtitle: subtitle(for: region)) { select(region) }
-            }
-
-            FormSection {
-                Button { liveData.toggle() } label: {
-                    FormRow("Dados ao vivo (Places, tempo)") {
-                        StatusChip(text: liveData ? "ligado" : "desligado", on: liveData)
+        NavigationStack {
+            Form {
+                Section {
+                    ForEach(store.trips.map(Region.init(trip:))) { region in
+                        RegionOption(region: region, selected: region == store.region,
+                                     subtitle: subtitle(for: region)) { select(region) }
                     }
+                } header: { Text("Região") } footer: {
+                    Text("Troca board, cidades, moeda, metrô e fontes de dados de uma vez. Cada região tem o próprio board e os próprios gastos; trocar não apaga nada.")
                 }
-                .buttonStyle(.plain)
-                RowDivider()
-                dateRow
-                RowDivider()
-                gpsRow
-                RowDivider()
-                cloudRow
-                RowDivider()
-                Button(action: exportLogs) {
-                    FormRow("Exportar logs", subtitle: "último dia · só esta abertura do app") {
-                        if exportingLogs { ProgressView() } else {
-                            MustIconView(.avancar, size: 14).foregroundStyle(Color.must.secondary)
+
+                Section("Testes") {
+                    Toggle("Dados ao vivo (Places, tempo)", isOn: $liveData)
+                    dateRow
+                    gpsRow
+                    cloudRow
+                    Button(action: exportLogs) {
+                        LabeledContent {
+                            if exportingLogs { ProgressView() }
+                        } label: {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Exportar logs")
+                                Text("último dia · só esta abertura do app").font(.footnote).foregroundStyle(.secondary)
+                            }
                         }
                     }
+                    .foregroundStyle(.primary)
+                    Button("Zerar o board desta região", role: .destructive) { confirmReset = true }
                 }
-                .buttonStyle(.plain)
-                RowDivider()
-                Button { confirmReset = true } label: {
-                    FormRow("Zerar o board desta região", titleColor: V8.orangeDeep)
+
+                if let error = store.lastError {
+                    Section { Text("Erro no armazenamento: \(error)").font(.footnote).foregroundStyle(.red) }
                 }
-                .buttonStyle(.plain)
             }
-            .padding(.top, 6)
-
-            if let error = store.lastError {
-                Text("Erro no armazenamento: \(error)").font(.must.meta).foregroundStyle(V8.orangeDeep)
-            }
-
-            Text("Cada região tem o próprio board e os próprios gastos. Trocar não apaga nada.")
-                .font(.must.meta)
-                .foregroundStyle(Color.must.secondary)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: .infinity)
-                .padding(.top, 6)
+            .navigationTitle("Região")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Fechar") { dismiss() } } }
+            .v9Screen(grouped: true)
+            .scrollContentBackground(.hidden)
         }
         .presentationDetents([.large])
         .confirmationDialog("Zerar o board de \(store.region.displayName)?", isPresented: $confirmReset, titleVisibility: .visible) {
@@ -137,35 +128,31 @@ struct RegionSheet: View {
     private var dateRow: some View {
         VStack(alignment: .leading, spacing: 0) {
             Button { toggle(.date) } label: {
-                FormRow("Simular data e hora") {
-                    MonoValue(simDateOn ? store.region.shortDayTime(AppClock.now) : "off",
-                              color: simDateOn ? Color.must.ink : Color.must.ink)
+                LabeledContent("Simular data e hora") {
+                    Text(simDateOn ? store.region.shortDayTime(AppClock.now) : "off").monospacedDigit()
                 }
             }
-            .buttonStyle(.plain)
+            .foregroundStyle(.primary)
             if expanded == .date {
                 VStack(alignment: .leading, spacing: 12) {
                     DatePicker("Data e hora", selection: $simDate)
-                        .font(.must.body)
                         .environment(\.timeZone, store.region.timeZone)
                         .environment(\.locale, store.region.locale)
-                        .tint(Color.must.ink)
                     HStack(spacing: 8) {
-                        Button { DevOverrides.simulate(date: simDate); simDateOn = true } label: { Pill("Usar", style: .green) }
+                        Button("Usar") { DevOverrides.simulate(date: simDate); simDateOn = true }.buttonStyle(.borderedProminent).tint(V9.accent)
                         if let preset = datePreset {
-                            Button { simDate = preset.date } label: { Pill(preset.label) }
+                            Button(preset.label) { simDate = preset.date }.buttonStyle(.bordered)
                         }
-                        Button { simDate = Date() } label: { Pill("agora") }
-                        Spacer()
+                        Button("Agora") { simDate = Date() }.buttonStyle(.bordered)
                         if simDateOn {
-                            Button { DevOverrides.stopSimulatingDate(); simDateOn = false } label: { Pill("Desligar", isOn: true) }
+                            Button("Desligar") { DevOverrides.stopSimulatingDate(); simDateOn = false }.buttonStyle(.bordered)
                         }
                     }
-                    .buttonStyle(MustPressStyle())
+                    .controlSize(.small)
                     Text("O relógio continua andando a partir da data escolhida.")
-                        .font(.must.meta).foregroundStyle(Color.must.secondary)
+                        .font(.footnote).foregroundStyle(.secondary)
                 }
-                .padding(.bottom, 14)
+                .padding(.vertical, 8)
             }
         }
     }
@@ -174,13 +161,10 @@ struct RegionSheet: View {
 
     /// Força o % de nuvens da previsão (frase do golden no Lugar photo, solver de fotografia).
     private var cloudRow: some View {
-        FormRow("Simular nuvens") {
-            HStack(spacing: 6) {
-                ForEach([-1, 20, 80], id: \.self) { v in
-                    Button { simCloud = v } label: { Pill(v < 0 ? "real" : "\(v)%", isOn: simCloud == v) }
-                        .buttonStyle(MustPressStyle())
-                }
-            }
+        Picker("Simular nuvens", selection: $simCloud) {
+            Text("real").tag(-1)
+            Text("20%").tag(20)
+            Text("80%").tag(80)
         }
     }
 
@@ -214,48 +198,43 @@ struct RegionSheet: View {
     private var gpsRow: some View {
         VStack(alignment: .leading, spacing: 0) {
             Button { toggle(.gps) } label: {
-                FormRow("Simular GPS") { MonoValue(gpsLabel) }
+                LabeledContent("Simular GPS") { Text(gpsLabel).monospacedDigit() }
             }
-            .buttonStyle(.plain)
+            .foregroundStyle(.primary)
             if expanded == .gps {
                 VStack(alignment: .leading, spacing: 12) {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
-                            ForEach(presets, id: \.name) { preset in
-                                Button { useGPS(preset.coordinate) } label: { Pill(preset.name, isOn: gpsLabel == preset.name) }
-                                    .buttonStyle(MustPressStyle())
-                            }
+                    FlowLayout(spacing: 8) {
+                        ForEach(presets, id: \.name) { preset in
+                            Button(preset.name) { useGPS(preset.coordinate) }
+                                .buttonStyle(.bordered).tint(gpsLabel == preset.name ? V9.accent : nil)
                         }
                     }
                     HStack(spacing: 8) {
                         TextField("lat", text: $latText)
                         TextField("lng", text: $lngText)
                     }
-                    .font(V8Font.mono(14))
                     .keyboardType(.numbersAndPunctuation)
-                    .textFieldStyle(.plain)
-                    .padding(.horizontal, 12)
-                    .frame(height: 40)
-                    .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
+                    .textFieldStyle(.roundedBorder)
                     HStack(spacing: 8) {
-                        Button {
+                        Button("Usar") {
                             if let lat = Double(latText.replacingOccurrences(of: ",", with: ".")),
                                let lng = Double(lngText.replacingOccurrences(of: ",", with: ".")) {
                                 useGPS(CLLocationCoordinate2D(latitude: lat, longitude: lng))
                             }
-                        } label: { Pill("Usar", style: .green) }
-                        Spacer()
+                        }
+                        .buttonStyle(.borderedProminent).tint(V9.accent)
                         if simGPSOn {
-                            Button {
+                            Button("Desligar") {
                                 DevOverrides.stopSimulatingGPS()
                                 simGPSOn = false
                                 services.location.refreshOverrides()
-                            } label: { Pill("Desligar", isOn: true) }
+                            }
+                            .buttonStyle(.bordered)
                         }
                     }
-                    .buttonStyle(MustPressStyle())
+                    .controlSize(.small)
                 }
-                .padding(.bottom, 14)
+                .padding(.vertical, 8)
             }
         }
     }
@@ -292,7 +271,7 @@ struct RegionSheet: View {
     }
 }
 
-/// Faixa de uma região: tinta cheia quando selecionada, borda de 2 pt quando não.
+/// Linha de uma região: marca de seleção à direita, sublinha com moeda e metrô.
 private struct RegionOption: View {
     var region: Region
     var selected: Bool
@@ -301,39 +280,17 @@ private struct RegionOption: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 16) {
-                ZStack {
-                    if selected {
-                        Rectangle().fill(V8.orange)
-                        MustIconView(.ok, size: 16).foregroundStyle(V8.ink)
-                    } else {
-                        Rectangle().strokeBorder(V8.ink, lineWidth: 2)
-                    }
-                }
-                .frame(width: 28, height: 28)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Text(region.displayName).font(V8Font.text(19, weight: .semibold))
-                    }
-                    .foregroundStyle(selected ? V8.paper : V8.ink)
-                    Text(subtitle)
-                        .font(V8Font.text(13))
-                        .foregroundStyle(selected ? V8.muteDark : V8.mute)
-                        .multilineTextAlignment(.leading)
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(region.displayName).font(.body.weight(.semibold)).foregroundStyle(.primary)
+                    Text(subtitle).font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.leading)
                 }
                 Spacer(minLength: 8)
-                Text(region.utcOffsetLabel)
-                    .font(V8Font.mono(14, weight: .semibold))
-                    .foregroundStyle(selected ? V8.paper : V8.mute)
+                Text(region.utcOffsetLabel).font(.footnote).monospacedDigit().foregroundStyle(.secondary)
+                if selected { Image(systemName: "checkmark").foregroundStyle(V9.accent).accessibilityHidden(true) }
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 22)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(selected ? V8.ink : Color.clear)
-            .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
+            .contentShape(Rectangle())
         }
-        .buttonStyle(MustPressStyle())
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
 }

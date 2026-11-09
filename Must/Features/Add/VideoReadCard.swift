@@ -29,23 +29,23 @@ struct VideoReadCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Ler o vídeo").font(.must.archivo(17, .semibold)).foregroundStyle(Color.must.ink)
+            Text("Ler o vídeo").font(J9.font(17, .semibold)).foregroundStyle(Color.primary)
             if let progress = model.videoProgress {
                 reading(progress)
             } else {
                 steps
                 PhotosPicker(selection: $picked, matching: .videos, preferredItemEncoding: .current) {
-                    Pill("Escolher a gravação", style: .green)
+                    J9Chip("Escolher a gravação", prominent: true)
                 }
                 .accessibilityIdentifier("video-escolher")
                 if loadFailed {
-                    Text("Não consegui abrir esse vídeo.").font(.must.meta).foregroundStyle(Color(hex: 0xC2261D))
+                    Text("Não consegui abrir esse vídeo.").font(.footnote).foregroundStyle(Color.red)
                 }
                 ForEach(model.videoNotes, id: \.self) { note in
-                    Text(note).mustMeta().foregroundStyle(Color.must.secondary)
+                    Text(note).mustMeta().foregroundStyle(Color.secondary)
                 }
                 Text("Fala e texto da tela são lidos no aparelho. O vídeo não é guardado.")
-                    .mustMeta().foregroundStyle(Color.must.secondary)
+                    .mustMeta().foregroundStyle(Color.secondary)
             }
         }
         .padding(20)
@@ -76,21 +76,21 @@ struct VideoReadCard: View {
 
     private func step(_ n: Int, _ text: String) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 12) {
-            Text("\(n)").font(.must.mono(12, .semibold)).foregroundStyle(Color.must.greenText)
-                .frame(width: 22, height: 22).background(Rectangle().fill(Color.must.green))
-            Text(text).font(.must.archivo(14)).foregroundStyle(Color.must.ink).fixedSize(horizontal: false, vertical: true)
+            Text("\(n)").font(J9.font(12, .semibold).monospacedDigit()).foregroundStyle(V9.accent)
+                .frame(width: 22, height: 22).background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(V9.accent))
+            Text(text).font(J9.font(14)).foregroundStyle(Color.primary).fixedSize(horizontal: false, vertical: true)
         }
     }
 
     private func reading(_ progress: VideoProgress) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            ProgressView(value: progress.fraction).tint(Color.must.ink)
+            ProgressView(value: progress.fraction).tint(Color.primary)
             Text(progress.label).mustMeta()
             Button { model.cancelVideo() } label: {
-                Text("Cancelar").font(.must.archivo(14, .semibold)).foregroundStyle(Color.must.ink).underline()
+                Text("Cancelar").font(J9.font(14, .semibold)).foregroundStyle(Color.primary).underline()
                     .padding(.vertical, 6)
             }
-            .buttonStyle(MustPressStyle())
+            .buttonStyle(.plain)
         }
     }
 }

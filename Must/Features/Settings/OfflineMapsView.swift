@@ -3,7 +3,6 @@ import SwiftUI
 
 /// Ajustes › Mapas offline: baixar a cidade inteira pra usar o mapa sem internet, e apagar pra liberar espaço.
 struct OfflineMapsView: View {
-    @Environment(\.dismiss) private var dismiss
     @Environment(RegionStore.self) private var store
     @Environment(Services.self) private var services
     @State private var confirmDelete: MapPack?
@@ -11,18 +10,17 @@ struct OfflineMapsView: View {
     private var maps: OfflineMaps { services.maps }
 
     var body: some View {
-        CutPage(title: "Mapas offline", corner: ["Ajustes · mapa"], subtitle: "Baixe a cidade e o mapa funciona sem internet",
-                height: 210, onBack: { dismiss() }) {
+        Form {
             storage
             ForEach(regionsInOrder) { region in
                 section(region)
             }
-            Text(footer)
-                .font(V8Font.text(13))
-                .foregroundStyle(V8.mute)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(20)
+            Section {} footer: { Text(footer) }
         }
+        .navigationTitle("Mapas offline")
+        .navigationBarTitleDisplayMode(.inline)
+        .v9Screen(grouped: true)
+        .scrollContentBackground(.hidden)
         .refreshable { await maps.refreshManifest() }
         .task { await maps.refreshManifest() }
         .confirmationDialog(confirmDelete.map { "Apagar o mapa de \($0.title)?" } ?? "",
@@ -43,14 +41,20 @@ struct OfflineMapsView: View {
     // MARK: Espaço
 
     private var storage: some View {
-        FormSection {
-            FormRow("No iPhone", subtitle: storageSubtitle) {
-                MonoValue(maps.installedBytes == 0 ? "0 MB" : size(maps.installedBytes))
+        Section {
+            LabeledContent {
+                Text(maps.installedBytes == 0 ? "0 MB" : size(maps.installedBytes)).monospacedDigit()
+            } label: {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("No iPhone")
+                    Text(storageSubtitle).font(.footnote).foregroundStyle(.secondary)
+                }
             }
             if !maps.isConfigured {
-                RowDivider()
-                FormRow("Servidor de mapas desligado", subtitle: "falta MAP_TILES_URL no Secrets.plist",
-                        titleColor: Color(hex: 0xC2261D))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Servidor de mapas desligado").foregroundStyle(.red)
+                    Text("falta MAP_TILES_URL no Secrets.plist").font(.footnote).foregroundStyle(.secondary)
+                }
             }
         }
     }
@@ -83,23 +87,12 @@ struct OfflineMapsView: View {
         let packs = MapPack.catalog.filter { $0.region == region }
         let missing = packs.filter { !maps.isInstalled($0.id) && maps.phases[$0.id] == nil }
         let missingBytes = missing.compactMap { maps.bytes($0.id) }.reduce(0, +)
-        return FormSection(Self.sectionTitle(region)) {
-            ForEach(Array(packs.enumerated()), id: \.element.id) { index, pack in
-                if index > 0 { RowDivider() }
-                row(pack)
-            }
+        return Section(Self.sectionTitle(region)) {
+            ForEach(packs) { pack in row(pack) }
             if missing.count > 1, maps.isConfigured {
-                RowDivider()
-                Button {
+                Button(missingBytes > 0 ? "Baixar todas · \(size(missingBytes))" : "Baixar todas") {
                     missing.forEach(maps.download)
-                } label: {
-                    HStack {
-                        Pill(missingBytes > 0 ? "Baixar todas · \(size(missingBytes))" : "Baixar todas", style: .green)
-                        Spacer()
-                    }
                 }
-                .buttonStyle(MustPressStyle())
-                .padding(.vertical, 14)
             }
         }
     }
@@ -111,19 +104,17 @@ struct OfflineMapsView: View {
         return HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 8) {
-                    Text(pack.title).font(.must.archivo(16, .semibold)).foregroundStyle(Color.must.ink)
-                    if isHere { Tag("você está aqui", style: .green) }
+                    Text(pack.title)
+                    if isHere { Text("você está aqui").font(.caption.weight(.semibold)).foregroundStyle(V9.accent) }
                 }
                 Text(subtitle(pack, installed: installed, phase: phase))
-                    .font(.must.meta)
-                    .foregroundStyle(phase.isFailure ? Color(hex: 0xC2261D) : Color.must.secondary)
+                    .font(.footnote)
+                    .foregroundStyle(phase.isFailure ? Color.red : Color.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 8)
             trailing(pack, installed: installed, phase: phase)
         }
-        .padding(.vertical, 14)
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func subtitle(_ pack: MapPack, installed: Bool, phase: OfflineMaps.Phase?) -> String {
@@ -140,46 +131,38 @@ struct OfflineMapsView: View {
         switch phase {
         case .downloading(let fraction):
             HStack(spacing: 10) {
-                Text("\(Int(fraction * 100))%").font(.must.mono(13)).foregroundStyle(Color.must.secondary)
-                    .monospacedDigit()
+                Text("\(Int(fraction * 100))%").font(.footnote).foregroundStyle(.secondary).monospacedDigit()
                 Button { maps.cancel(pack.id) } label: {
-                    ZStack {
-                        Rectangle().stroke(V8.ink.opacity(0.2), lineWidth: 2)
-                        Rectangle().trim(from: 0, to: max(0.02, fraction))
-                            .stroke(V8.orange, style: StrokeStyle(lineWidth: 2, lineCap: .butt))
-                        MustIconView(.fechar, size: 12).foregroundStyle(V8.ink)
+                    Gauge(value: max(0.02, fraction)) { Text("Cancelar") } currentValueLabel: {
+                        Image(systemName: "xmark").font(.caption2)
                     }
+                    .gaugeStyle(.accessoryCircularCapacity).tint(V9.accent).scaleEffect(0.6)
                     .frame(width: 44, height: 44)
-                    .animation(.linear(duration: 0.2), value: fraction)
                 }
-                .buttonStyle(MustPressStyle())
+                .buttonStyle(.borderless)
                 .accessibilityLabel("Cancelar download")
             }
         case .verifying:
             HStack(spacing: 8) {
                 ProgressView().controlSize(.small)
-                Text("conferindo").font(.must.mono(13)).foregroundStyle(Color.must.secondary)
+                Text("conferindo").font(.footnote).foregroundStyle(.secondary)
             }
         case .failed:
-            Button { maps.download(pack) } label: { Pill("Tentar de novo") }
-                .buttonStyle(MustPressStyle())
+            Button("Tentar de novo") { maps.download(pack) }.buttonStyle(.bordered)
         case nil:
             if installed {
                 HStack(spacing: 8) {
                     if maps.hasUpdate(pack.id) {
-                        Button { maps.download(pack) } label: { Pill("Atualizar", style: .green) }
-                            .buttonStyle(MustPressStyle())
+                        Button("Atualizar") { maps.download(pack) }.buttonStyle(.borderedProminent).tint(V9.accent)
                     } else {
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundStyle(V8.ink)
-                            .accessibilityLabel("Baixado")
+                        Image(systemName: "checkmark").foregroundStyle(.secondary).accessibilityLabel("Baixado")
                     }
-                    IconButton(.remover, size: 34, label: "Apagar \(pack.title)") { confirmDelete = pack }
+                    Button(role: .destructive) { confirmDelete = pack } label: { Image(systemName: "trash") }
+                        .buttonStyle(.borderless)
+                        .accessibilityLabel("Apagar \(pack.title)")
                 }
             } else if maps.isConfigured {
-                Button { maps.download(pack) } label: { Pill("Baixar") }
-                    .buttonStyle(MustPressStyle())
+                Button("Baixar") { maps.download(pack) }.buttonStyle(.bordered)
             }
         }
     }
@@ -207,13 +190,17 @@ struct OfflineMapsRow: View {
     @Environment(Services.self) private var services
 
     var body: some View {
-        FormSection("Mapa") {
+        Section("Mapa") {
             NavigationLink(value: Route.offlineMaps) {
-                FormRow("Mapas offline", subtitle: subtitle) {
-                    MonoValue(services.maps.installedCount == 0 ? "baixar" : "\(services.maps.installedCount)", chevron: true)
+                LabeledContent {
+                    Text(services.maps.installedCount == 0 ? "baixar" : "\(services.maps.installedCount)").monospacedDigit()
+                } label: {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Mapas offline")
+                        Text(subtitle).font(.footnote).foregroundStyle(.secondary)
+                    }
                 }
             }
-            .buttonStyle(.plain)
         }
     }
 
@@ -252,34 +239,30 @@ struct OfflineMapNudge: View {
             .map { " · " + $0.formatted(.byteCount(style: .file).locale(Locale(identifier: "pt_BR"))) } ?? ""
         return HStack(spacing: 12) {
             Image(systemName: "arrow.down.circle")
-                .font(.system(size: 17, weight: .medium))
-                .foregroundStyle(Color.must.ink)
-                .frame(width: 38, height: 38)
-                .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
+                .font(.title3)
+                .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
-                Text(pack.title).font(.must.archivo(15, .semibold)).foregroundStyle(Color.must.ink).lineLimit(1)
-                Text(status(phase, bytes: bytes)).font(.must.meta).foregroundStyle(Color.must.secondary)
+                Text(pack.title).font(.subheadline.weight(.semibold)).lineLimit(1)
+                Text(status(phase, bytes: bytes)).font(.footnote).foregroundStyle(.secondary).lineLimit(2)
             }
             Spacer(minLength: 0)
             switch phase {
             case .downloading, .verifying:
                 ProgressView().controlSize(.small)
             default:
-                Button { services.maps.download(pack) } label: { Pill("Baixar", style: .green) }
-                    .buttonStyle(MustPressStyle())
+                Button("Baixar") { services.maps.download(pack) }.buttonStyle(.borderedProminent).tint(V9.accent).controlSize(.small)
                 Button {
                     withAnimation { dismissed = (dismissed.split(separator: ",").map(String.init) + [pack.id]).joined(separator: ",") }
                 } label: {
-                    MustIconView(.fechar, size: 12).foregroundStyle(Color.must.secondary).frame(width: 28, height: 28)
+                    Image(systemName: "xmark").font(.footnote.weight(.semibold)).foregroundStyle(.secondary).frame(width: 44, height: 44)
                 }
-                .buttonStyle(MustPressStyle())
                 .accessibilityLabel("Agora não")
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .background(V8.paper)
-        .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
+        .padding(.leading, 12)
+        .padding(.vertical, 4)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: V9.cornerRadius, style: .continuous))
         .task { if services.maps.manifest?[pack.id] == nil { await services.maps.refreshManifest() } }
     }
 

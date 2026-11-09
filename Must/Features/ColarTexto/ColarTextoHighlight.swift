@@ -85,28 +85,28 @@ enum ColarTextoHighlight {
         case .eat:
             piece.backgroundColor = Color(hex: 0xB9F5CF)
             piece.foregroundColor = Color(hex: 0x0B2A18)
-            piece.font = .must.archivo(15, .semibold)
+            piece.font = J9.font(15, .semibold)
         case .see:
             piece.backgroundColor = Color(hex: 0xDCCFFF)
             piece.foregroundColor = Color(hex: 0x2E1065)
-            piece.font = .must.archivo(15, .semibold)
+            piece.font = J9.font(15, .semibold)
         case .drink:
             piece.backgroundColor = Color(hex: 0x9FD6FF)
             piece.foregroundColor = Color(hex: 0x0F3B8C)
-            piece.font = .must.archivo(15, .semibold)
+            piece.font = J9.font(15, .semibold)
         case .other:
             piece.backgroundColor = Color(hex: 0xE9EBEF)
             piece.foregroundColor = Color(hex: 0x121316)
-            piece.font = .must.archivo(15, .semibold)
+            piece.font = J9.font(15, .semibold)
         case .area:
-            piece.foregroundColor = Color(hex: 0x121316)
-            piece.font = .must.archivo(15, .semibold)
+            piece.foregroundColor = Color.primary
+            piece.font = J9.font(15, .semibold)
             piece.uiKit.underlineStyle = [.single, .patternDash]
-            piece.uiKit.underlineColor = UIColor(red: 0.07, green: 0.07, blue: 0.08, alpha: 1)
+            piece.uiKit.underlineColor = UIColor.label
         case .link:
-            piece.backgroundColor = Color(hex: 0x121316)
-            piece.foregroundColor = .white
-            piece.font = .must.mono(12)
+            piece.backgroundColor = V9.fill
+            piece.foregroundColor = Color.primary
+            piece.font = J9.font(12).monospacedDigit()
         case .tip:
             piece.uiKit.underlineStyle = .single
             piece.uiKit.underlineColor = UIColor(red: 1, green: 0.69, blue: 0.125, alpha: 1)

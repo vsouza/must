@@ -27,72 +27,39 @@ struct ImportView: View {
     private var region: Region { store.region }
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            Color.must.bg.ignoresSafeArea()
-            BlobBackground(style: .custom([
-                Blob(cx: 360, cy: 262, rx: 125, ry: 78, rotation: -8, fill: .green),
-                Blob(cx: 10, cy: 470, rx: 100, ry: 62, rotation: 14, fill: .sky),
-            ]))
-
+        NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    header
+                VStack(alignment: .leading, spacing: 16) {
+                    Text(mode == .firstRun ? "Primeiro uso · 1 de 2" : "Reimportar · \(region.shortName)")
+                        .font(.footnote).foregroundStyle(.secondary)
+                    Text("O whiteboard vira listas; o Must cuida do resto.").font(.body).foregroundStyle(.secondary)
                     cards
-                        .padding(.top, 34)
                     form
-                        .padding(.top, -22)
                     Text("Tudo fica no iPhone · exporta de volta como .json quando quiser")
-                        .font(.must.meta)
-                        .foregroundStyle(Color.must.secondary)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .frame(maxWidth: .infinity)
-                        .padding(.top, 14)
                 }
-                .padding(.horizontal, 22)
+                .padding(.horizontal, V9.gutter)
                 .padding(.bottom, 24)
             }
             .scrollDismissesKeyboard(.interactively)
-
-            PrimaryButton(mode == .firstRun ? "Começar" : "Pronto", icon: .avancar, iconTrailing: true) { finish() }
-                .padding(.horizontal, 22)
-                .padding(.top, 28)
-                .padding(.bottom, 8)
-                .background {
-                    LinearGradient(colors: [.white.opacity(0), .white.opacity(0.96), .white],
-                                   startPoint: .top, endPoint: .bottom)
-                        .ignoresSafeArea()
-                }
+            .navigationTitle("Traz o seu board")
+            .navigationBarTitleDisplayMode(.large)
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                J9Button(mode == .firstRun ? "Começar" : "Pronto") { finish() }
+                    .padding(V9.gutter)
+                    .background(.bar)
+            }
+            .v9Screen(grouped: true)
         }
         .fileImporter(isPresented: $showPicker, allowedContentTypes: [.json]) { result in
             handlePicked(result)
         }
     }
 
-    // MARK: Topo
-
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 26) {
-            HStack {
-                ZStack {
-                    Circle().fill(Color.must.ink)
-                    Image(systemName: "checkmark").font(.system(size: 14, weight: .bold)).foregroundStyle(.white)
-                }
-                .frame(width: 36, height: 36)
-                Spacer()
-                Micro(mode == .firstRun ? "primeiro uso · 1 de 2" : "reimportar · \(region.shortName)")
-            }
-            .padding(.top, 8)
-
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Traz o seu board").mustTitle()
-                Text("o whiteboard vira listas; o Must cuida do resto")
-                    .mustSerif(18)
-                    .foregroundStyle(Color.must.secondary)
-            }
-        }
-    }
-
-    // MARK: Cards empilhados
+    // MARK: Resumo
 
     private var resolvedCount: Int { places.filter { $0.placeId != nil && $0.hours != nil }.count }
 
@@ -101,45 +68,22 @@ struct ImportView: View {
     }
 
     private var cards: some View {
-        ZStack(alignment: .topLeading) {
-            VStack(alignment: .leading, spacing: 8) {
-                Micro(fileName.map { "\($0) · lido" } ?? "board.json · lido", color: MustColor.eat.text)
-                HStack(alignment: .firstTextBaseline, spacing: 12) {
-                    MonoNumber("\(places.count)", size: 44)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("lugares em \(lists.count) listas").font(.must.archivo(19, .semibold))
-                        Text(breakdown).font(.must.archivo(13)).lineLimit(2)
-                    }
-                }
+        VStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(fileName.map { "\($0) · lido" } ?? "board.json · lido").font(.footnote).foregroundStyle(.secondary)
+                Text("\(places.count) lugares em \(lists.count) listas").font(.title3.weight(.semibold))
+                Text(breakdown).font(.subheadline).foregroundStyle(.secondary).lineLimit(3)
             }
-            .padding(.horizontal, 22)
-            .padding(.vertical, 20)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .frame(height: 160, alignment: .top)
-            .stackCard(color: .eat, rotation: -2)
-            .padding(.leading, 56)
-            .padding(.trailing, -40)
-
-            VStack(alignment: .leading, spacing: 8) {
-                Micro("resolvidos no Google Places", color: MustColor.drink.text)
-                HStack(alignment: .firstTextBaseline, spacing: 12) {
-                    MonoNumber("\(resolvedCount)", size: 44)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("com horário e preço").font(.must.archivo(19, .semibold))
-                        Text("\(places.count - resolvedCount) pendentes · resolve na 1ª sincronização")
-                            .font(.must.archivo(13)).lineLimit(2)
-                    }
-                }
+            .v9Card(grouped: true)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Resolvidos no Google Places").font(.footnote).foregroundStyle(.secondary)
+                Text("\(resolvedCount) com horário e preço").font(.title3.weight(.semibold))
+                Text("\(places.count - resolvedCount) pendentes · resolve na 1ª sincronização")
+                    .font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
             }
-            .padding(.horizontal, 22)
-            .padding(.vertical, 20)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .frame(height: 140, alignment: .top)
-            .stackCard(color: .drink, rotation: 1.2)
-            .padding(.trailing, -20)
-            .offset(y: 132)
+            .v9Card(grouped: true)
         }
-        .frame(height: 290, alignment: .top)
+        .accessibilityElement(children: .contain)
     }
 
     // MARK: Formulário
@@ -147,31 +91,31 @@ struct ImportView: View {
     @ViewBuilder private var form: some View {
         VStack(alignment: .leading, spacing: 0) {
             boardRow
-            RowDivider()
+            J9Divider()
             tripRows
-            RowDivider()
+            J9Divider()
             if let settings = settingsList.first {
                 BudgetRow(settings: settings, region: region)
-                RowDivider()
+                J9Divider()
             }
             locationRow
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 6)
-        .glass(cornerRadius: 26)
+        .padding(.horizontal, V9.gutter)
+        .padding(.vertical, 2)
+        .background(V9.groupedCard, in: RoundedRectangle(cornerRadius: V9.cornerRadius, style: .continuous))
     }
 
     private var boardRow: some View {
         VStack(alignment: .leading, spacing: 6) {
-            FormRow("Board", subtitle: fileName ?? "seed-\(region.rawValue).json · já está no app") {
-                Button { showPicker = true } label: { Pill("Escolher .json") }
-                    .buttonStyle(MustPressStyle())
+            J9Row("Board", subtitle: fileName ?? "seed-\(region.rawValue).json · já está no app") {
+                Button { showPicker = true } label: { J9Chip("Escolher .json") }
+                    .buttonStyle(.plain)
             }
             if let resultText {
-                Text(resultText).font(.must.meta).foregroundStyle(MustColor.eat.text).padding(.bottom, 10)
+                Text(resultText).font(.footnote).foregroundStyle(Color.secondary).padding(.bottom, 10)
             }
             if let errorText {
-                Text(errorText).font(.must.meta).foregroundStyle(Color(hex: 0xC2261D)).padding(.bottom, 10)
+                Text(errorText).font(.footnote).foregroundStyle(Color.red).padding(.bottom, 10)
             }
         }
     }
@@ -180,20 +124,20 @@ struct ImportView: View {
         if let trip = trips.first {
             TripRows(trip: trip, region: region, editing: $editingTrip)
         } else {
-            FormRow("Viagem", subtitle: "sem viagem · dia a dia na cidade") { MonoValue("—") }
+            J9Row("Viagem", subtitle: "sem viagem · dia a dia na cidade") { J9Value("—") }
         }
     }
 
     private var locationRow: some View {
         let location = services.location
-        return FormRow("Localização", subtitle: "só enquanto usa · pra “perto de você”") {
+        return J9Row("Localização", subtitle: "só enquanto usa · pra “perto de você”") {
             if location.isAuthorized {
-                Tag("permitido", dot: Color.must.green)
+                J9Tag(text: "permitido")
             } else if location.isDenied {
-                Tag("negado · Ajustes do iOS", dot: Color(hex: 0xC2261D))
+                J9Tag(text: "negado · Ajustes do iOS")
             } else {
-                Button { location.requestAuthorization() } label: { Pill("Permitir", style: .green) }
-                    .buttonStyle(MustPressStyle())
+                Button { location.requestAuthorization() } label: { J9Chip("Permitir", prominent: true) }
+                    .buttonStyle(.plain)
             }
         }
     }
@@ -232,17 +176,17 @@ private struct BudgetRow: View {
     var region: Region
 
     var body: some View {
-        FormRow("Orçamento por dia", subtitle: "dá pra mudar a cada manhã") {
+        J9Row("Orçamento por dia", subtitle: "dá pra mudar a cada manhã") {
             HStack(spacing: 6) {
-                Text(region.currencySymbol).font(.must.mono(17, .semibold))
+                Text(region.currencySymbol).font(J9.font(17, .semibold).monospacedDigit())
                 TextField("0", value: $settings.perDayBudget,
                           format: .number.locale(Locale(identifier: "pt_BR")).precision(.fractionLength(0...2)))
-                    .font(.must.mono(17, .semibold))
+                    .font(J9.font(17, .semibold).monospacedDigit())
                     .keyboardType(.decimalPad)
                     .multilineTextAlignment(.trailing)
                     .fixedSize()
             }
-            .foregroundStyle(Color.must.ink)
+            .foregroundStyle(Color.primary)
         }
     }
 }
@@ -257,7 +201,7 @@ private struct TripRows: View {
         if trip.hasTrip {
             VStack(alignment: .leading, spacing: 0) {
                 Button { withAnimation(.snappy) { editing.toggle() } } label: {
-                    FormRow("Viagem", subtitle: "lida do board · toque pra editar") { MonoValue(rangeLabel) }
+                    J9Row("Viagem", subtitle: "lida do board · toque pra editar") { J9Value(rangeLabel) }
                 }
                 .buttonStyle(.plain)
                 if editing {
@@ -265,25 +209,25 @@ private struct TripRows: View {
                         DatePicker("Ida", selection: binding(\.start), displayedComponents: .date)
                         DatePicker("Volta", selection: binding(\.end), displayedComponents: .date)
                     }
-                    .font(.must.body)
-                    .tint(Color.must.ink)
+                    .font(.body)
+                    .tint(Color.primary)
                     .environment(\.timeZone, region.timeZone)
                     .environment(\.locale, region.locale)
                     .padding(.bottom, 12)
                 }
             }
         } else {
-            FormRow("Viagem", subtitle: "sem viagem · dia a dia em \(trip.cities.first?.name ?? region.displayName)") {
-                MonoValue("—")
+            J9Row("Viagem", subtitle: "sem viagem · dia a dia em \(trip.cities.first?.name ?? region.displayName)") {
+                J9Value("—")
             }
         }
-        RowDivider()
+        J9Divider()
         VStack(alignment: .leading, spacing: 0) {
-            FormRow("Cidades", subtitle: trip.hasTrip ? "na ordem da viagem" : "cidade de casa")
+            J9Row("Cidades", subtitle: trip.hasTrip ? "na ordem da viagem" : "cidade de casa")
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
                     ForEach(Array(trip.cities.enumerated()), id: \.element.id) { index, city in
-                        Pill(cityLabel(city), isOn: index == 0)
+                        J9Chip(cityLabel(city), isOn: index == 0)
                     }
                 }
             }

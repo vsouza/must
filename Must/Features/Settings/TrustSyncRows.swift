@@ -16,17 +16,21 @@ struct TrustSyncRows: View {
         Button {
             Task { await services.sync.syncPlaces(context: context, region: store.region) }
         } label: {
-            FormRow(confidence.headline, subtitle: confidence.detail(onWiFi: wifi)) {
+            LabeledContent {
                 if let progress = services.sync.placesProgress {
-                    MonoValue("\(progress.done)/\(progress.total)", color: Color.must.secondary)
+                    Text("\(progress.done)/\(progress.total)").monospacedDigit().foregroundStyle(.secondary)
                 } else {
-                    MonoValue(confidence.isComplete ? "ok" : "sincronizar", chevron: !confidence.isComplete)
+                    Text(confidence.isComplete ? "ok" : "sincronizar").foregroundStyle(.secondary)
+                }
+            } label: {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(confidence.headline)
+                    Text(confidence.detail(onWiFi: wifi)).font(.footnote).foregroundStyle(.secondary)
                 }
             }
         }
-        .buttonStyle(.plain)
+        .foregroundStyle(.primary)
         .disabled(syncing || confidence.isComplete || !wifi)
         .accessibilityHint("Busca horário e local no Google, só no Wi-Fi")
-        RowDivider()
     }
 }

@@ -49,29 +49,29 @@ struct AddLinkResults: View {
         HStack(spacing: 10) {
             if let badge = source.badge {
                 Text(badge)
-                    .font(.must.mono(10, .semibold))
-                    .foregroundStyle(.white)
+                    .font(J9.font(10, .semibold).monospacedDigit())
+                    .foregroundStyle(.secondary)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 4)
-                    .background(Rectangle().fill(Color.must.ink))
+                    .background(V9.fill, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
             }
             VStack(alignment: .leading, spacing: 1) {
-                Text(headline).font(.must.archivo(13, .semibold)).foregroundStyle(Color.must.ink).lineLimit(1)
-                Text(summary).font(.must.archivo(11.5)).foregroundStyle(Color.must.secondary).lineLimit(1)
+                Text(headline).font(J9.font(13, .semibold)).foregroundStyle(Color.primary).lineLimit(1)
+                Text(summary).font(J9.font(11.5)).foregroundStyle(Color.secondary).lineLimit(1)
             }
             Spacer(minLength: 4)
             Button { model.reset() } label: {
                 Text("Trocar")
-                    .font(.must.archivo(13, .semibold))
-                    .foregroundStyle(Color.must.ink)
+                    .font(J9.font(13, .semibold))
+                    .foregroundStyle(Color.primary)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 8)
-                    .background(Rectangle().fill(.white))
+                    .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(V9.card))
             }
-            .buttonStyle(MustPressStyle())
+            .buttonStyle(.plain)
         }
         .padding(12)
-        .background(Color.must.surface, in: Rectangle())
+        .background(V9.card, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 
     // MARK: Lista
@@ -86,18 +86,18 @@ struct AddLinkResults: View {
     /// "Lista · [Must eat · Mercado] · um por lugar…": a pílula verde escolhe pra todos os marcados.
     private var listLine: some View {
         HStack(spacing: 8) {
-            Text("Lista").font(.must.archivo(12)).foregroundStyle(Color.must.secondary)
+            Text("Lista").font(J9.font(12)).foregroundStyle(Color.secondary)
             Menu {
                 ForEach(lists) { list in
                     Button(list.displayName) { model.setList(list.id) }
                 }
             } label: {
-                Pill(batchLabel, style: .green)
+                J9Chip(batchLabel, prominent: true)
             }
             Button { model.perPlaceLists.toggle() } label: {
-                Pill("um por lugar…", style: model.perPlaceLists ? .dark : .default)
+                J9Chip("um por lugar…", isOn: model.perPlaceLists)
             }
-            .buttonStyle(MustPressStyle())
+            .buttonStyle(.plain)
             Spacer(minLength: 0)
         }
     }
@@ -105,14 +105,14 @@ struct AddLinkResults: View {
     private func resultList(_ layout: LinkMapLayout) -> some View {
         VStack(spacing: 0) {
             ForEach(Array(model.matches.enumerated()), id: \.element.id) { index, match in
-                if index > 0 { Rectangle().fill(Color.must.line).frame(height: 1) }
+                if index > 0 { RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color(uiColor: .separator)).frame(height: 1) }
                 row(match, number: layout.number(for: match.id))
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 2)
-        .background(Rectangle().fill(Color.white))
-        .overlay(Rectangle().strokeBorder(Color.must.line))
+        .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(V9.card))
+        .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(Color(uiColor: .separator)))
     }
 
     private func row(_ match: MatchedPlace, number: Int?) -> some View {
@@ -126,15 +126,15 @@ struct AddLinkResults: View {
             VStack(alignment: .leading, spacing: 3) {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text(match.existing?.name ?? match.extracted.name)
-                        .font(.must.archivo(16, .semibold))
-                        .foregroundStyle(Color.must.ink)
+                        .font(J9.font(16, .semibold))
+                        .foregroundStyle(Color.primary)
                         .strikethrough(!match.located)
                         .lineLimit(1)
                     if let local = match.extracted.nameLocal ?? match.existing?.nameLocal {
-                        Text(local).font(.must.kanji(11, bold: false)).foregroundStyle(Color.must.secondary).lineLimit(1)
+                        Text(local).font(.footnote).foregroundStyle(Color.secondary).lineLimit(1)
                     }
                 }
-                Text(meta(match)).font(.must.archivo(12)).foregroundStyle(Color.must.secondary).lineLimit(1)
+                Text(meta(match)).font(J9.font(12)).foregroundStyle(Color.secondary).lineLimit(1)
                 if model.perPlaceLists && match.existing == nil && on { listChip(match) }
             }
             Spacer(minLength: 4)
@@ -148,15 +148,15 @@ struct AddLinkResults: View {
 
     private func numberBadge(_ number: Int?, selected: Bool) -> some View {
         Text(number.map(String.init) ?? "–")
-            .font(.must.mono(12, .semibold))
-            .foregroundStyle(number == nil ? Color.must.secondary : (selected ? Color.must.greenText : .white))
+            .font(J9.font(12, .semibold).monospacedDigit())
+            .foregroundStyle(selected ? Color.white : Color.primary)
             .frame(width: 28, height: 28)
-            .background(Rectangle().fill(number == nil ? Color.must.surface : (selected ? Color.must.green : Color.must.ink)))
+            .background(Circle().fill(selected ? V9.accent : V9.fill))
     }
 
     @ViewBuilder private func trailing(_ match: MatchedPlace, on: Bool) -> some View {
         if match.existing != nil {
-            tag("no board", fill: Color.must.surface)
+            tag("no board", fill: V9.card)
         } else if !match.located {
             Button {
                 model.toggle(match.id)
@@ -164,33 +164,33 @@ struct AddLinkResults: View {
                 if on {
                     checkDisc(on: true)
                 } else {
-                    tag("manter", fill: .white, stroke: true)
+                    tag("manter", fill: V9.fill)
                 }
             }
-            .buttonStyle(MustPressStyle())
+            .buttonStyle(.plain)
         } else {
             Button { model.toggle(match.id) } label: { checkDisc(on: on) }
-                .buttonStyle(MustPressStyle())
+                .buttonStyle(.plain)
         }
     }
 
     private func checkDisc(on: Bool) -> some View {
         ZStack {
-            Rectangle().fill(on ? Color.must.green : Color.white)
-            Rectangle().strokeBorder(Color.must.line, lineWidth: on ? 0 : 1)
-            if on { MustIconView(.ok, size: 13).foregroundStyle(Color.must.greenText) }
+            Circle().fill(on ? V9.accent : V9.fill)
+            if on { Image(systemName: "checkmark").font(.caption.weight(.bold)).foregroundStyle(.white) }
         }
-        .frame(width: 26, height: 26)
+        .frame(width: 28, height: 28)
+        .frame(minWidth: 44, minHeight: 44)
     }
 
     private func tag(_ text: String, fill: Color, stroke: Bool = false) -> some View {
         Text(text)
-            .font(.must.archivo(12, .semibold))
-            .foregroundStyle(Color.must.ink)
+            .font(J9.font(12, .semibold))
+            .foregroundStyle(Color.primary)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
-            .background(Rectangle().fill(fill))
-            .overlay(Rectangle().strokeBorder(stroke ? Color.must.line : .clear))
+            .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(fill))
+            .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(stroke ? Color(uiColor: .separator) : .clear))
     }
 
     /// Seletor de lista da linha (só no modo "um por lugar…").
@@ -202,11 +202,11 @@ struct AddLinkResults: View {
             }
         } label: {
             Text(current?.displayName ?? "escolher lista")
-                .font(.must.archivo(11, .semibold))
-                .foregroundStyle(Color.must.ink)
+                .font(J9.font(11, .semibold))
+                .foregroundStyle(Color.primary)
                 .padding(.horizontal, 9)
                 .padding(.vertical, 4)
-                .background(Rectangle().fill(Color.must.surface))
+                .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(V9.card))
         }
     }
 

@@ -158,7 +158,7 @@ struct LinkPlacesMap: View {
         }
         .overlay(alignment: .topTrailing) { expandButton }
         .frame(height: 226)
-        .clipShape(Rectangle())
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .onAppear { command = layout.command }
         .onChange(of: layout) { command = layout.command }
         .fullScreenCover(isPresented: $expanded) {
@@ -169,13 +169,13 @@ struct LinkPlacesMap: View {
     /// "Tsukiji · 380 m entre eles · 34 min de você".
     private var chip: some View {
         Text(chipText)
-            .font(.must.archivo(11, .semibold))
-            .foregroundStyle(Color.must.ink)
+            .font(J9.font(11, .semibold))
+            .foregroundStyle(Color.primary)
             .lineLimit(1)
             .padding(.horizontal, 10)
             .padding(.vertical, 5)
-            .background(V8.paper)
-            .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
+            .background(V9.background)
+            .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Color(uiColor: .separator), lineWidth: 1))
             .padding(10)
     }
 
@@ -199,12 +199,12 @@ struct LinkPlacesMap: View {
         Button { expanded = true } label: {
             Image(systemName: "arrow.up.left.and.arrow.down.right")
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(Color.must.ink)
-                .frame(width: 34, height: 34)
-                .background(V8.paper)
-                .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
+                .foregroundStyle(Color.primary)
+                .frame(width: 44, height: 44)
+                .background(V9.background)
+                .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Color(uiColor: .separator), lineWidth: 1))
         }
-        .buttonStyle(MustPressStyle())
+        .buttonStyle(.plain)
         .padding(10)
         .accessibilityLabel("Abrir o mapa em tela cheia")
     }
@@ -223,17 +223,17 @@ struct LinkMapPlaceholder: View {
                 Color(hex: 0xE9EBEF)
                 if let ring = layout.area {
                     let shape = RingShape(points: ring.map(project))
-                    shape.fill(Color.must.green.opacity(0.08))
-                    shape.stroke(Color.must.green.opacity(0.35), style: StrokeStyle(lineWidth: 1.5, dash: [3, 4]))
+                    shape.fill(V9.accent.opacity(0.08))
+                    shape.stroke(V9.accent.opacity(0.35), style: StrokeStyle(lineWidth: 1.5, dash: [3, 4]))
                 }
                 ForEach(layout.pins) { pin in
                     let selected = pin.id == selectedId
                     Button { onSelect(pin.id) } label: {
                         Text("\(pin.number)")
-                            .font(.must.mono(selected ? 14 : 12, .semibold))
-                            .foregroundStyle(.white)
+                            .font(J9.font(selected ? 14 : 12, .semibold).monospacedDigit())
+                            .foregroundStyle(Color.white)
                             .frame(width: selected ? 34 : 28, height: selected ? 34 : 28)
-                            .background(Circle().fill(Color.must.ink))
+                            .background(Circle().fill(selected ? V9.accent : Color.gray))
                     }
                     .buttonStyle(.plain)
                     .position(project(pin.point))
@@ -272,7 +272,7 @@ struct LinkPlacesFullMap: View {
             MapLibreView(scene: layout.scene(selectedId: selectedId, region: region), command: command,
                          onSelect: { onSelect($0.id) }, interactive: true)
                 .ignoresSafeArea()
-            IconButton(.fechar, label: "Fechar") { dismiss() }
+            J9IconButton(systemName: "xmark", label: "Fechar") { dismiss() }
                 .padding(.top, 8)
                 .padding(.leading, 16)
         }

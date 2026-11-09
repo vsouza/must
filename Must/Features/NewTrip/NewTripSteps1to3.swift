@@ -88,10 +88,10 @@ struct NewTripStep1: View {
         VStack(alignment: .leading, spacing: 0) {
             NewTripSection(text: "Destino")
             HStack(spacing: 14) {
-                Image(systemName: "magnifyingglass").font(.system(size: 18, weight: .semibold)).foregroundStyle(V8.ink)
-                TextField("", text: $query, prompt: Text("país ou cidade").foregroundStyle(V8.mute))
-                    .font(V8Font.text(22, weight: .semibold))
-                    .foregroundStyle(V8.ink)
+                Image(systemName: "magnifyingglass").font(.system(size: 18, weight: .semibold)).foregroundStyle(Color.primary)
+                TextField("", text: $query, prompt: Text("país ou cidade").foregroundStyle(Color.secondary))
+                    .font(J9.font(22, .semibold))
+                    .foregroundStyle(Color.primary)
                     .focused($focused)
                     .submitLabel(.done)
                     .autocorrectionDisabled()
@@ -99,11 +99,11 @@ struct NewTripStep1: View {
                     .onChange(of: query) { _, text in search.update(text, online: !offline) }
             }
             .padding(.horizontal, 22).frame(minHeight: 66)
-            .overlay(Rectangle().strokeBorder(V8.ink, lineWidth: 2))
+            .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(Color(uiColor: .separator), lineWidth: 1))
 
             if offline {
                 Text("sem internet · digite à mão, o resto funciona")
-                    .font(V8Font.text(13)).foregroundStyle(V8.mute).padding(.top, 10)
+                    .font(J9.font(13)).foregroundStyle(Color.secondary).padding(.top, 10)
             }
 
             VStack(spacing: 0) {
@@ -112,8 +112,8 @@ struct NewTripStep1: View {
                 if !query.trimmingCharacters(in: .whitespaces).isEmpty, countries.isEmpty, search.hits.isEmpty {
                     Button { useTyped() } label: {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Usar “\(query.trimmingCharacters(in: .whitespaces))”").font(V8Font.text(17, weight: .bold))
-                            Text("destino digitado à mão").font(V8Font.text(15)).foregroundStyle(V8.mute)
+                            Text("Usar “\(query.trimmingCharacters(in: .whitespaces))”").font(J9.font(17, .bold))
+                            Text("destino digitado à mão").font(J9.font(15)).foregroundStyle(Color.secondary)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 16)
                     }
@@ -135,21 +135,21 @@ struct NewTripStep1: View {
     private var selectedManual: some View {
         HStack(spacing: 14) {
             radio(color: current)
-            Text(model.draft.name).font(V8Font.text(20, weight: .bold)).foregroundStyle(V8.ink)
+            Text(model.draft.name).font(J9.font(20, .bold)).foregroundStyle(Color.primary)
             Spacer()
-            V8Glyph(.check).frame(width: 22, height: 22).foregroundStyle(V8.ink)
+            Image(systemName: "checkmark").font(.body.weight(.bold)).frame(width: 22, height: 22).foregroundStyle(Color.primary)
         }
         .padding(.vertical, 16)
     }
 
     private var current: Color {
-        model.draft.colorHex.isEmpty ? V8.mute : Color(hex: UInt32(model.draft.colorHex.dropFirst(), radix: 16) ?? 0x121212)
+        model.draft.colorHex.isEmpty ? Color.secondary : Color(hex: UInt32(model.draft.colorHex.dropFirst(), radix: 16) ?? 0x121212)
     }
 
     private func radio(color: Color, dim: Bool = false) -> some View {
         ZStack {
-            Rectangle().fill(color)
-            Rectangle().fill(V8.paper).frame(width: 14, height: 14)
+            RoundedRectangle(cornerRadius: 8, style: .continuous).fill(color)
+            RoundedRectangle(cornerRadius: 8, style: .continuous).fill(V9.background).frame(width: 14, height: 14)
         }
         .frame(width: 44, height: 44).opacity(dim ? 0.6 : 1)
     }
@@ -167,16 +167,16 @@ struct NewTripStep1: View {
             HStack(spacing: 16) {
                 radio(color: swatch, dim: taken)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(country.name).font(V8Font.text(20, weight: .bold)).lineLimit(1)
+                    Text(country.name).font(J9.font(20, .bold)).lineLimit(1)
                     Text(taken ? "você já tem uma viagem aqui" : country.subtitle)
-                        .font(V8Font.text(15)).lineLimit(2).fixedSize(horizontal: false, vertical: true)
+                        .font(J9.font(15)).lineLimit(2).fixedSize(horizontal: false, vertical: true)
                 }
-                .foregroundStyle(taken ? V8.mute.opacity(0.75) : V8.ink, V8.mute)
+                .foregroundStyle(taken ? Color.secondary.opacity(0.75) : Color.primary, Color.secondary)
                 Spacer(minLength: 4)
-                if selected && !taken { V8Glyph(.check).frame(width: 22, height: 22).foregroundStyle(V8.ink) }
+                if selected && !taken { Image(systemName: "checkmark").font(.body.weight(.bold)).frame(width: 22, height: 22).foregroundStyle(Color.primary) }
             }
             .padding(.vertical, 16)
-            .overlay(alignment: .top) { Rectangle().fill(V8.rule).frame(height: 1) }
+            .overlay(alignment: .top) { RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color(uiColor: .separator)).frame(height: 1) }
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -190,17 +190,17 @@ struct NewTripStep1: View {
             Task { await pick(hit) }
         } label: {
             HStack(spacing: 16) {
-                radio(color: V8.mute, dim: true)
+                radio(color: Color.secondary, dim: true)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(hit.title).font(V8Font.text(18, weight: .bold)).lineLimit(1)
-                    Text(hit.subtitle.isEmpty ? "cidade" : hit.subtitle).font(V8Font.text(15)).foregroundStyle(V8.mute).lineLimit(1)
+                    Text(hit.title).font(J9.font(18, .bold)).lineLimit(1)
+                    Text(hit.subtitle.isEmpty ? "cidade" : hit.subtitle).font(J9.font(15)).foregroundStyle(Color.secondary).lineLimit(1)
                 }
-                .foregroundStyle(V8.ink)
+                .foregroundStyle(Color.primary)
                 Spacer()
                 if resolving { ProgressView() }
             }
             .padding(.vertical, 16)
-            .overlay(alignment: .top) { Rectangle().fill(V8.rule).frame(height: 1) }
+            .overlay(alignment: .top) { RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color(uiColor: .separator)).frame(height: 1) }
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -236,11 +236,11 @@ struct NewTripStep1: View {
                 let hex = NewTripCatalog.hex(rgb)
                 let on = model.draft.colorHex.uppercased() == hex
                 Button { model.draft.colorHex = hex } label: {
-                    Rectangle().fill(Color(hex: rgb))
+                    RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color(hex: rgb))
                         .aspectRatio(1, contentMode: .fit)
                         .padding(5)
                         .overlay {
-                            if on { Rectangle().strokeBorder(V8.ink, lineWidth: 2.5) }
+                            if on { RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(Color(uiColor: .separator), lineWidth: 1) }
                         }
                         .frame(minWidth: 44)
                 }
@@ -261,29 +261,29 @@ struct NewTripStep2: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .firstTextBaseline) {
-                Text(monthTitle).font(V8Font.display(30)).tracking(-1).foregroundStyle(V8.ink)
+                Text(monthTitle).font(J9.font(30, .bold)).foregroundStyle(Color.primary)
                 Spacer()
                 HStack(spacing: 4) {
-                    Button { model.shiftMonth(-1) } label: { V8Glyph(.back).frame(width: 14, height: 14).frame(width: 44, height: 44) }
+                    Button { model.shiftMonth(-1) } label: { Image(systemName: "chevron.left").font(.body.weight(.bold)).frame(width: 14, height: 14).frame(width: 44, height: 44) }
                         .accessibilityLabel("Mês anterior")
-                    Button { model.shiftMonth(1) } label: { V8Glyph(.back).rotationEffect(.degrees(180)).frame(width: 14, height: 14).frame(width: 44, height: 44) }
+                    Button { model.shiftMonth(1) } label: { Image(systemName: "chevron.left").font(.body.weight(.bold)).rotationEffect(.degrees(180)).frame(width: 14, height: 14).frame(width: 44, height: 44) }
                         .accessibilityLabel("Próximo mês")
                 }
-                .foregroundStyle(V8.ink).buttonStyle(.plain)
+                .foregroundStyle(Color.primary).buttonStyle(.plain)
             }
             weekdays.padding(.top, 10)
             grid.padding(.top, 6)
 
             if let until = model.daysUntilStart, let start = model.draft.start {
                 HStack(alignment: .bottom, spacing: 16) {
-                    Text("\(until)").font(V8Font.numeral(96)).tracking(-5.8).foregroundStyle(V8.orange)
+                    Text("\(until)").font(J9.font(96, .semibold).monospacedDigit()).foregroundStyle(V9.accent)
                         .lineLimit(1).fixedSize()
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(until == 1 ? "dia pra embarcar" : "dias pra embarcar").font(V8Font.text(20, weight: .bold)).foregroundStyle(V8.ink)
+                        Text(until == 1 ? "dia pra embarcar" : "dias pra embarcar").font(J9.font(20, .bold)).foregroundStyle(Color.primary)
                         if let end = model.draft.end, let days = model.tripDays {
-                            SpecLabel("\(short(start)) → \(short(end)) · \(days) dias")
+                            J9Label("\(short(start)) → \(short(end)) · \(days) dias")
                         } else {
-                            SpecLabel("escolha a volta")
+                            J9Label("escolha a volta")
                         }
                     }
                     .padding(.bottom, 6)
@@ -295,7 +295,7 @@ struct NewTripStep2: View {
             }
 
             Button { model.clearDates() } label: {
-                V8Pill(model.draft.start == nil ? "Ainda não sei" : "Ainda não sei · limpar datas", active: model.draft.start == nil)
+                J9Chip(model.draft.start == nil ? "Ainda não sei" : "Ainda não sei · limpar datas", isOn: model.draft.start == nil)
             }
             .buttonStyle(.plain).padding(.top, 22)
             NewTripNote(text: "Sem datas a viagem fica em plano (como Roma) e a capa mostra só o destino.").padding(.top, 12)
@@ -317,7 +317,7 @@ struct NewTripStep2: View {
     private var weekdays: some View {
         HStack(spacing: 0) {
             ForEach(["seg", "ter", "qua", "qui", "sex", "sáb", "dom"], id: \.self) { d in
-                Text(d.uppercased()).font(V8Font.mono(11, weight: .semibold)).tracking(1.2).foregroundStyle(V8.mute)
+                Text(d.uppercased()).font(J9.font(11, .semibold).monospacedDigit()).foregroundStyle(Color.secondary)
                     .frame(maxWidth: .infinity)
             }
         }
@@ -354,14 +354,14 @@ struct NewTripStep2: View {
                     if inside || (isStart && end != nil) || isEnd {
                         // A faixa liga ida e volta; nas pontas só metade, e quebra nas pontas da semana.
                         HStack(spacing: 0) {
-                            Rectangle().fill(isStart ? .clear : V8.orange.opacity(0.22))
-                            Rectangle().fill(isEnd ? .clear : V8.orange.opacity(0.22))
+                            RoundedRectangle(cornerRadius: 8, style: .continuous).fill(isStart ? .clear : V9.accent.opacity(0.22))
+                            RoundedRectangle(cornerRadius: 8, style: .continuous).fill(isEnd ? .clear : V9.accent.opacity(0.22))
                         }
                         .frame(height: 40)
                     }
-                    if isStart || isEnd { Rectangle().fill(V8.orange).frame(height: 40) }
+                    if isStart || isEnd { RoundedRectangle(cornerRadius: 8, style: .continuous).fill(V9.accent).frame(height: 40) }
                     Text("\(cal.component(.day, from: day))")
-                        .font(V8Font.mono(17, weight: .bold)).foregroundStyle(V8.ink)
+                        .font(J9.font(17, .bold).monospacedDigit()).foregroundStyle(Color.primary)
                 }
                 .frame(maxWidth: .infinity, minHeight: 44)
                 .contentShape(Rectangle())
@@ -394,13 +394,13 @@ struct NewTripStep3: View {
             VStack(spacing: 0) {
                 ForEach(Array(model.draft.cities.enumerated()), id: \.element.id) { i, city in row(i, city) }
             }
-            .overlay(alignment: .top) { Rectangle().fill(V8.rule).frame(height: 1) }
+            .overlay(alignment: .top) { RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color(uiColor: .separator)).frame(height: 1) }
 
             addButton.padding(.top, 20)
             if adding { addPanel.padding(.top, 14) }
 
             let check = model.nightsCheck
-            Text(checkText(check)).font(V8Font.text(15)).foregroundStyle(check.matches ? V8.mute : V8.orangeDeep)
+            Text(checkText(check)).font(J9.font(15)).foregroundStyle(check.matches ? Color.secondary : V9.accent)
                 .fixedSize(horizontal: false, vertical: true).padding(.top, 18)
         }
     }
@@ -430,7 +430,7 @@ struct NewTripStep3: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 16)
-        .overlay(alignment: .bottom) { Rectangle().fill(V8.rule).frame(height: 1) }
+        .overlay(alignment: .bottom) { RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color(uiColor: .separator)).frame(height: 1) }
         .contextMenu {
             Button("Tirar \(city.name)", role: .destructive) { model.removeCity(id: city.id) }
         }
@@ -448,33 +448,33 @@ struct NewTripStep3: View {
             }
             .disabled(i == model.draft.cities.count - 1).accessibilityLabel("Descer \(city.name)")
         }
-        .foregroundStyle(V8.mute).buttonStyle(.plain)
-        Text("\(i + 1)").font(V8Font.numeral(34)).foregroundStyle(V8.orangeDeep).frame(width: 30)
+        .foregroundStyle(Color.secondary).buttonStyle(.plain)
+        Text("\(i + 1)").font(J9.font(34, .semibold).monospacedDigit()).foregroundStyle(V9.accent).frame(width: 30)
             .accessibilityHidden(true)
     }
 
     private func info(_ i: Int, _ city: NewTripDraft.City) -> some View {
         VStack(alignment: .leading, spacing: 3) {
-            Text(city.name).font(V8Font.text(21, weight: .bold)).foregroundStyle(V8.ink).lineLimit(2)
-            Text(detail(i, city)).font(V8Font.text(14)).foregroundStyle(V8.mute).lineLimit(3)
+            Text(city.name).font(J9.font(21, .bold)).foregroundStyle(Color.primary).lineLimit(2)
+            Text(detail(i, city)).font(J9.font(14)).foregroundStyle(Color.secondary).lineLimit(3)
         }
     }
 
     private func nights(_ city: NewTripDraft.City) -> some View {
         HStack(spacing: 8) {
-            V8RoundButton(diameter: 44, label: "Menos uma noite em \(city.name)", action: {
+            J9RoundButton(diameter: 44, label: "Menos uma noite em \(city.name)", action: {
                 model.setNights(city.nights - 1, cityId: city.id)
-            }) { size in Rectangle().fill(.foreground).frame(width: 12, height: 2).frame(width: size, height: size) }
+            }) { size in RoundedRectangle(cornerRadius: 8, style: .continuous).fill(.foreground).frame(width: 12, height: 2).frame(width: size, height: size) }
             VStack(spacing: 2) {
-                Text("\(city.nights)").font(V8Font.mono(22, weight: .bold)).foregroundStyle(V8.ink)
-                SpecLabel(city.nights == 1 ? "noite" : "noites").fixedSize()
+                Text("\(city.nights)").font(J9.font(22, .bold).monospacedDigit()).foregroundStyle(Color.primary)
+                J9Label(city.nights == 1 ? "noite" : "noites").fixedSize()
             }
             .frame(minWidth: 46)
-            V8RoundButton(diameter: 44, label: "Mais uma noite em \(city.name)", action: {
+            J9RoundButton(diameter: 44, label: "Mais uma noite em \(city.name)", action: {
                 model.setNights(city.nights + 1, cityId: city.id)
-            }) { size in V8Glyph(.plus).frame(width: size, height: size) }
+            }) { size in Image(systemName: "plus").font(.body.weight(.bold)).frame(width: size, height: size) }
         }
-        .foregroundStyle(V8.ink)
+        .foregroundStyle(Color.primary)
     }
 
     private func detail(_ i: Int, _ city: NewTripDraft.City) -> String {
@@ -492,14 +492,14 @@ struct NewTripStep3: View {
     private var addButton: some View {
         Button { adding.toggle() } label: {
             HStack(spacing: 16) {
-                Rectangle().fill(V8.orange).frame(width: 52, height: 52)
-                    .overlay { V8Glyph(.plus).frame(width: 22, height: 22).foregroundStyle(V8.ink) }
-                Text("Adicionar cidade").font(V8Font.text(18, weight: .bold)).foregroundStyle(V8.ink)
+                RoundedRectangle(cornerRadius: 8, style: .continuous).fill(V9.accent).frame(width: 52, height: 52)
+                    .overlay { Image(systemName: "plus").font(.body.weight(.bold)).frame(width: 22, height: 22).foregroundStyle(Color.primary) }
+                Text("Adicionar cidade").font(J9.font(18, .bold)).foregroundStyle(Color.primary)
                 Spacer()
             }
             .padding(14)
-            .background(Rectangle()
-                .strokeBorder(V8.ruleStrongColor, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4])))
+            .background(RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .strokeBorder(Color(uiColor: .separator), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4])))
         }
         .buttonStyle(.plain)
     }
@@ -512,17 +512,17 @@ struct NewTripStep3: View {
                     HStack(spacing: 8) {
                         ForEach(suggestions, id: \.name) { s in
                             Button { model.addCity(name: s.name, latitude: s.latitude, longitude: s.longitude); adding = false } label: {
-                                V8Pill(s.name)
+                                J9Chip(s.name)
                             }.buttonStyle(.plain)
                         }
                     }
                 }
                 .scrollIndicators(.hidden)
             }
-            TextField("", text: $typed, prompt: Text(offline ? "nome da cidade (à mão)" : "buscar cidade").foregroundStyle(V8.mute))
-                .font(V8Font.text(18, weight: .semibold)).foregroundStyle(V8.ink)
+            TextField("", text: $typed, prompt: Text(offline ? "nome da cidade (à mão)" : "buscar cidade").foregroundStyle(Color.secondary))
+                .font(J9.font(18, .semibold)).foregroundStyle(Color.primary)
                 .padding(.horizontal, 18).frame(minHeight: 52)
-                .overlay(Rectangle().strokeBorder(V8.ink, lineWidth: 2))
+                .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(Color(uiColor: .separator), lineWidth: 1))
                 .focused($focused).submitLabel(.done).autocorrectionDisabled()
                 .onSubmit { commitTyped() }
                 .onChange(of: typed) { _, t in search.update(t, online: !offline) }
@@ -536,15 +536,15 @@ struct NewTripStep3: View {
                     }
                 } label: {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(hit.title).font(V8Font.text(16, weight: .bold))
-                        Text(hit.subtitle).font(V8Font.text(13)).foregroundStyle(V8.mute).lineLimit(1)
+                        Text(hit.title).font(J9.font(16, .bold))
+                        Text(hit.subtitle).font(J9.font(13)).foregroundStyle(Color.secondary).lineLimit(1)
                     }
-                    .foregroundStyle(V8.ink).frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 6)
+                    .foregroundStyle(Color.primary).frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 6)
                 }
                 .buttonStyle(.plain)
             }
             if !typed.trimmingCharacters(in: .whitespaces).isEmpty {
-                Button { commitTyped() } label: { V8Pill("Usar “\(typed.trimmingCharacters(in: .whitespaces))”", active: true) }
+                Button { commitTyped() } label: { J9Chip("Usar “\(typed.trimmingCharacters(in: .whitespaces))”", isOn: true) }
                     .buttonStyle(.plain)
             }
         }

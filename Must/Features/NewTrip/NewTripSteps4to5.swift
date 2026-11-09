@@ -23,14 +23,14 @@ private struct NewTripAction: View {
         Button(action: action) {
             HStack(spacing: 8) {
                 if let icon { Image(systemName: icon).font(.system(size: 14, weight: .semibold)) }
-                Text(title).font(V8Font.text(16, weight: .semibold)).lineLimit(1).fixedSize()
+                Text(title).font(J9.font(16, .semibold)).lineLimit(1).fixedSize()
             }
-            .foregroundStyle(V8.ink)
+            .foregroundStyle(Color.primary)
             .padding(.horizontal, 18).frame(minHeight: 48)
-            .overlay(Rectangle().strokeBorder(V8.ink, lineWidth: 2))
+            .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(Color(uiColor: .separator), lineWidth: 1))
             .contentShape(Rectangle())
         }
-        .buttonStyle(MustPressStyle())
+        .buttonStyle(.plain)
     }
 }
 
@@ -65,22 +65,22 @@ struct NewTripStep4: View {
             NewTripCard {
                 VStack(alignment: .leading, spacing: 10) {
                     HStack(alignment: .top, spacing: 10) {
-                        Text(city.lodgingName ?? "").font(V8Font.text(22, weight: .bold)).foregroundStyle(V8.ink)
+                        Text(city.lodgingName ?? "").font(J9.font(22, .bold)).foregroundStyle(Color.primary)
                             .fixedSize(horizontal: false, vertical: true)
                         Spacer(minLength: 4)
                         if city.lodgingFromEmail { NewTripTag(text: "Lido do e-mail", filled: true) }
                     }
                     if let address = city.lodgingAddress {
-                        Text(address).font(V8Font.text(16)).foregroundStyle(V8.mute).fixedSize(horizontal: false, vertical: true)
+                        Text(address).font(J9.font(16)).foregroundStyle(Color.secondary).fixedSize(horizontal: false, vertical: true)
                     }
                     HStack(alignment: .top, spacing: 24) {
                         VStack(alignment: .leading, spacing: 4) {
-                            SpecLabel("Entrada")
-                            Text(stamp(city.checkIn, in: z)).font(V8Font.text(17, weight: .bold)).foregroundStyle(V8.ink)
+                            J9Label("Entrada")
+                            Text(stamp(city.checkIn, in: z)).font(J9.font(17, .bold)).foregroundStyle(Color.primary)
                         }
                         VStack(alignment: .leading, spacing: 4) {
-                            SpecLabel("Saída")
-                            Text(stamp(city.checkOut, in: z)).font(V8Font.text(17, weight: .bold)).foregroundStyle(V8.ink)
+                            J9Label("Saída")
+                            Text(stamp(city.checkOut, in: z)).font(J9.font(17, .bold)).foregroundStyle(Color.primary)
                         }
                     }
                 }
@@ -94,8 +94,8 @@ struct NewTripStep4: View {
         Button { neighborhoodFor = city } label: {
             NewTripCard {
                 VStack(alignment: .leading, spacing: 6) {
-                    SpecLabel("Só o bairro")
-                    Text(hood).font(V8Font.text(22, weight: .bold)).foregroundStyle(V8.ink)
+                    J9Label("Só o bairro")
+                    Text(hood).font(J9.font(22, .bold)).foregroundStyle(Color.primary)
                 }
             }
         }
@@ -106,7 +106,7 @@ struct NewTripStep4: View {
         NewTripCard(dashed: true) {
             VStack(alignment: .leading, spacing: 14) {
                 Text("Falta a hospedagem \(NewTripModel.preposition(city.name) == "no" ? "do" : "de") \(city.name)")
-                    .font(V8Font.text(20, weight: .bold)).foregroundStyle(V8.ink).fixedSize(horizontal: false, vertical: true)
+                    .font(J9.font(20, .bold)).foregroundStyle(Color.primary).fixedSize(horizontal: false, vertical: true)
                 ViewThatFits(in: .horizontal) {
                     HStack(spacing: 10) { actions(city) }
                     VStack(alignment: .leading, spacing: 10) { actions(city) }
@@ -144,12 +144,12 @@ private struct LodgingSheet: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
-                Text("Hospedagem · \(city?.name ?? "")").font(V8Font.display(30)).tracking(-1).foregroundStyle(V8.ink)
+                Text("Hospedagem · \(city?.name ?? "")").font(J9.font(30, .bold)).foregroundStyle(Color.primary)
                 NewTripSection(text: "Colar reserva")
                 TextEditor(text: $pasted)
-                    .font(V8Font.text(15)).scrollContentBackground(.hidden)
+                    .font(J9.font(15)).scrollContentBackground(.hidden)
                     .frame(minHeight: 110)
-                    .padding(10).overlay(Rectangle().strokeBorder(V8.ink, lineWidth: 2))
+                    .padding(10).overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(Color(uiColor: .separator), lineWidth: 1))
                 HStack(spacing: 10) {
                     NewTripAction(title: "Colar do clipboard", icon: "doc.on.clipboard") {
                         pasted = UIPasteboard.general.string ?? pasted
@@ -161,11 +161,11 @@ private struct LodgingSheet: View {
                 NewTripSection(text: "Conferir").padding(.top, 10)
                 field("Nome", text: $name)
                 field("Endereço", text: $address)
-                DatePicker("Entrada", selection: $checkIn).font(V8Font.text(16, weight: .semibold))
-                DatePicker("Saída", selection: $checkOut).font(V8Font.text(16, weight: .semibold))
+                DatePicker("Entrada", selection: $checkIn).font(J9.font(16, .semibold))
+                DatePicker("Saída", selection: $checkOut).font(J9.font(16, .semibold))
                 HStack(spacing: 12) {
-                    V8Button("Cancelar", .line) { dismiss() }.foregroundStyle(V8.ink)
-                    V8Button("Salvar") {
+                    J9Button("Cancelar", prominent: false) { dismiss() }.foregroundStyle(Color.primary)
+                    J9Button("Salvar") {
                         model.setLodging(cityId: cityId, name: name.trimmingCharacters(in: .whitespaces),
                                          address: address.trimmingCharacters(in: .whitespaces),
                                          checkIn: checkIn, checkOut: checkOut, fromEmail: fromEmail)
@@ -176,23 +176,23 @@ private struct LodgingSheet: View {
                 }
                 if city?.lodgingName != nil {
                     Button("Tirar hospedagem", role: .destructive) { model.clearLodging(cityId: cityId); dismiss() }
-                        .font(V8Font.text(15, weight: .semibold))
+                        .font(J9.font(15, .semibold))
                 }
             }
             .padding(20)
         }
         .environment(\.timeZone, cityZone)
-        .background(V8.paper.ignoresSafeArea())
+        .background(V9.background.ignoresSafeArea())
         .presentationDetents([.large])
         .onAppear(perform: load)
     }
 
     private func field(_ label: String, text: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            SpecLabel(label)
-            TextField("", text: text).font(V8Font.text(18, weight: .semibold)).foregroundStyle(V8.ink)
+            J9Label(label)
+            TextField("", text: text).font(J9.font(18, .semibold)).foregroundStyle(Color.primary)
                 .padding(.horizontal, 16).frame(minHeight: 50)
-                .overlay(Rectangle().strokeBorder(V8.ink, lineWidth: 2))
+                .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(Color(uiColor: .separator), lineWidth: 1))
         }
     }
 
@@ -227,21 +227,21 @@ private struct NeighborhoodSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Só o bairro").font(V8Font.display(30)).tracking(-1).foregroundStyle(V8.ink)
+            Text("Só o bairro").font(J9.font(30, .bold)).foregroundStyle(Color.primary)
             NewTripNote(text: "Sem reserva ainda: o dia parte desse bairro. Dá pra trocar por uma hospedagem depois.")
-            TextField("", text: $text, prompt: Text("ex.: Chiado").foregroundStyle(V8.mute))
-                .font(V8Font.text(20, weight: .semibold)).foregroundStyle(V8.ink)
+            TextField("", text: $text, prompt: Text("ex.: Chiado").foregroundStyle(Color.secondary))
+                .font(J9.font(20, .semibold)).foregroundStyle(Color.primary)
                 .padding(.horizontal, 18).frame(minHeight: 56)
-                .overlay(Rectangle().strokeBorder(V8.ink, lineWidth: 2))
+                .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(Color(uiColor: .separator), lineWidth: 1))
                 .submitLabel(.done)
             HStack(spacing: 12) {
-                V8Button("Cancelar", .line) { dismiss() }.foregroundStyle(V8.ink)
-                V8Button("Salvar") { model.setNeighborhood(cityId: cityId, text); dismiss() }
+                J9Button("Cancelar", prominent: false) { dismiss() }.foregroundStyle(Color.primary)
+                J9Button("Salvar") { model.setNeighborhood(cityId: cityId, text); dismiss() }
             }
             Spacer()
         }
         .padding(20)
-        .background(V8.paper.ignoresSafeArea())
+        .background(V9.background.ignoresSafeArea())
         .presentationDetents([.medium])
         .onAppear { text = model.draft.cities.first { $0.id == cityId }?.neighborhoodOnly ?? "" }
     }
@@ -274,7 +274,7 @@ struct NewTripStep5: View {
             if model.draft.flights.isEmpty {
                 NewTripCard(dashed: true) {
                     Text("Nenhum voo ainda. Cole o e-mail, fotografe o cartão ou digite à mão.")
-                        .font(V8Font.text(17, weight: .semibold)).foregroundStyle(V8.ink)
+                        .font(J9.font(17, .semibold)).foregroundStyle(Color.primary)
                 }
             }
             ViewThatFits(in: .horizontal) {
@@ -308,19 +308,19 @@ struct NewTripStep5: View {
             HStack(alignment: .center, spacing: 10) {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(spacing: 12) {
-                        Text(f.from).font(V8Font.display(34, width: 78)).tracking(-1.6)
-                        V8Glyph(.arrow).frame(width: 16, height: 16).foregroundStyle(V8.orangeDeep)
-                        Text(f.to).font(V8Font.display(34, width: 78)).tracking(-1.6)
+                        Text(f.from).font(.system(.title, weight: .bold))
+                        Image(systemName: "arrow.right").font(.body.weight(.bold)).frame(width: 16, height: 16).foregroundStyle(V9.accent)
+                        Text(f.to).font(.system(.title, weight: .bold))
                     }
-                    .foregroundStyle(V8.ink)
+                    .foregroundStyle(Color.primary)
                     Text("\(f.number) · \(stamp(f.departure, in: dz)) → \(stamp(f.arrival, in: az, withDay: false))")
-                        .font(V8Font.text(15)).foregroundStyle(V8.mute).fixedSize(horizontal: false, vertical: true)
+                        .font(J9.font(15)).foregroundStyle(Color.secondary).fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: 4)
                 VStack(spacing: 8) {
                     NewTripTag(text: "Lido")
                     Button { model.removeFlight(at: index) } label: {
-                        Text("Tirar").font(V8Font.text(13, weight: .semibold)).foregroundStyle(V8.mute).frame(minHeight: 32)
+                        Text("Tirar").font(J9.font(13, .semibold)).foregroundStyle(Color.secondary).frame(minHeight: 32)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Tirar voo \(f.number)")
@@ -355,11 +355,11 @@ private struct FlightSheet: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
-                Text(title).font(V8Font.display(30)).tracking(-1).foregroundStyle(V8.ink)
+                Text(title).font(J9.font(30, .bold)).foregroundStyle(Color.primary)
                 switch mode {
                 case .email:
-                    TextEditor(text: $pasted).font(V8Font.text(15)).scrollContentBackground(.hidden).frame(minHeight: 130)
-                        .padding(10).overlay(Rectangle().strokeBorder(V8.ink, lineWidth: 2))
+                    TextEditor(text: $pasted).font(J9.font(15)).scrollContentBackground(.hidden).frame(minHeight: 130)
+                        .padding(10).overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(Color(uiColor: .separator), lineWidth: 1))
                     HStack(spacing: 10) {
                         NewTripAction(title: "Colar do clipboard", icon: "doc.on.clipboard") {
                             pasted = UIPasteboard.general.string ?? pasted
@@ -371,38 +371,38 @@ private struct FlightSheet: View {
                     PhotosPicker(selection: $picked, matching: .images) {
                         HStack(spacing: 8) {
                             Image(systemName: "camera").font(.system(size: 14, weight: .semibold))
-                            Text(reading ? "Lendo…" : "Escolher foto do cartão").font(V8Font.text(16, weight: .semibold))
+                            Text(reading ? "Lendo…" : "Escolher foto do cartão").font(J9.font(16, .semibold))
                         }
-                        .foregroundStyle(V8.ink).padding(.horizontal, 18).frame(minHeight: 48)
-                        .overlay(Rectangle().strokeBorder(V8.ink, lineWidth: 2))
+                        .foregroundStyle(Color.primary).padding(.horizontal, 18).frame(minHeight: 48)
+                        .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(Color(uiColor: .separator), lineWidth: 1))
                     }
                     .onChange(of: picked) { _, item in Task { await readPhoto(item) } }
                 case .hand:
                     field("Voo (ex.: TP 82)", $number)
                     HStack(spacing: 10) { field("De (GRU)", $from); field("Para (LIS)", $to) }
-                    DatePicker("Partida", selection: $departure).font(V8Font.text(16, weight: .semibold))
-                    DatePicker("Chegada", selection: $arrival).font(V8Font.text(16, weight: .semibold))
-                    Toggle("É o voo de volta", isOn: $isReturn).font(V8Font.text(16, weight: .semibold)).tint(V8.orange)
+                    DatePicker("Partida", selection: $departure).font(J9.font(16, .semibold))
+                    DatePicker("Chegada", selection: $arrival).font(J9.font(16, .semibold))
+                    Toggle("É o voo de volta", isOn: $isReturn).font(J9.font(16, .semibold)).tint(V9.accent)
                 }
                 if !message.isEmpty { NewTripNote(text: message) }
                 ForEach(Array(legs.enumerated()), id: \.offset) { _, leg in
                     NewTripCard {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("\(leg.from) → \(leg.to)").font(V8Font.text(20, weight: .bold)).foregroundStyle(V8.ink)
+                            Text("\(leg.from) → \(leg.to)").font(J9.font(20, .bold)).foregroundStyle(Color.primary)
                             Text("\(leg.number) · \(stamp(leg.departure, in: Airports.airport(leg.from)?.timeZone ?? tripZone))")
-                                .font(V8Font.text(15)).foregroundStyle(V8.mute)
+                                .font(J9.font(15)).foregroundStyle(Color.secondary)
                         }
                     }
                 }
                 HStack(spacing: 12) {
-                    V8Button("Cancelar", .line) { dismiss() }.foregroundStyle(V8.ink)
-                    V8Button(mode == .hand ? "Adicionar" : "Adicionar \(legs.count)") { save() }
+                    J9Button("Cancelar", prominent: false) { dismiss() }.foregroundStyle(Color.primary)
+                    J9Button(mode == .hand ? "Adicionar" : "Adicionar \(legs.count)") { save() }
                         .opacity(canSave ? 1 : 0.4).disabled(!canSave)
                 }
             }
             .padding(20)
         }
-        .background(V8.paper.ignoresSafeArea())
+        .background(V9.background.ignoresSafeArea())
         .presentationDetents([.large])
         .onAppear {
             let base = model.draft.start ?? Date()
@@ -425,11 +425,11 @@ private struct FlightSheet: View {
 
     private func field(_ label: String, _ text: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            SpecLabel(label)
-            TextField("", text: text).font(V8Font.text(18, weight: .semibold)).foregroundStyle(V8.ink)
+            J9Label(label)
+            TextField("", text: text).font(J9.font(18, .semibold)).foregroundStyle(Color.primary)
                 .textInputAutocapitalization(.characters).autocorrectionDisabled()
                 .padding(.horizontal, 16).frame(minHeight: 50)
-                .overlay(Rectangle().strokeBorder(V8.ink, lineWidth: 2))
+                .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(Color(uiColor: .separator), lineWidth: 1))
         }
     }
 

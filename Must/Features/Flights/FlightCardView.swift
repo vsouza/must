@@ -1,12 +1,11 @@
 import SwiftUI
 
-/// Card do próximo voo (`design/screens/Voos.png`): preto, girado; rota, horários, status, assento, franquia, portão e saída.
+/// Card do próximo voo: rota, horários, status, assento, franquia, portão e saída pro aeroporto. Cartão do sistema
+/// (sem fundo preto, sem giro); funciona no claro e no escuro.
 struct FlightCardView: View {
     let flight: Flight
     let region: Region
     let now: Date
-
-    private var amber: Color { Color(hex: 0xFFB020) }
 
     var body: some View {
         if let first = flight.legs.first, let last = flight.legs.last {
@@ -19,11 +18,10 @@ struct FlightCardView: View {
         let toZone = FlightFormat.zone(last.to, fallback: region.timeZone)
         return VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .top, spacing: 10) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(headline(first: first, zone: fromZone))
-                        .font(V8Font.mono(11)).textCase(.uppercase).foregroundStyle(V8.muteDark).lineLimit(2)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(headline(first: first, zone: fromZone)).font(.footnote).foregroundStyle(.secondary).lineLimit(2)
                     if !flight.pnr.isEmpty {
-                        Text("PNR \(flight.pnr)").font(V8Font.mono(12, weight: .semibold)).foregroundStyle(.white)
+                        Text("PNR \(flight.pnr)").font(.subheadline.weight(.semibold)).monospacedDigit()
                     }
                 }
                 Spacer(minLength: 8)
@@ -42,16 +40,13 @@ struct FlightCardView: View {
 
             FlowLayout(spacing: 8, lineSpacing: 8) {
                 ForEach(chips(first: first, last: last), id: \.self) { chip in
-                    Text(chip.uppercased()).font(V8Font.mono(10, weight: .semibold)).tracking(0.6).foregroundStyle(.white)
+                    Text(chip).font(.footnote.weight(.medium))
                         .padding(.horizontal, 10).padding(.vertical, 6)
-                        .overlay(Rectangle().stroke(Color.white.opacity(0.7), lineWidth: 1.5))
+                        .background(V9.fill, in: Capsule())
                 }
             }
         }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(V8.ink)
-        .overlay(alignment: .bottom) { Rectangle().fill(V8.paper).frame(height: 2) }
+        .v9Card(grouped: true)
     }
 
     private func headline(first: FlightSegment, zone: TimeZone) -> String {
@@ -66,10 +61,10 @@ struct FlightCardView: View {
 
     private func endpoint(code: String, time: String, sub: String?, day: String?, alignment: HorizontalAlignment) -> some View {
         VStack(alignment: alignment, spacing: 4) {
-            Text(code.isEmpty ? "?" : code).font(V8Font.numeral(54)).foregroundStyle(.white).lineLimit(1).minimumScaleFactor(0.5)
-            Text(time).font(V8Font.mono(13, weight: .semibold)).foregroundStyle(.white)
-            if let sub { Text(sub).font(V8Font.mono(11)).foregroundStyle(V8.muteDark) }
-            if let day { Text(day).font(V8Font.mono(11)).foregroundStyle(V8.muteDark) }
+            Text(code.isEmpty ? "?" : code).font(.largeTitle.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.5)
+            Text(time).font(.subheadline.weight(.semibold)).monospacedDigit()
+            if let sub { Text(sub).font(.footnote).foregroundStyle(.secondary) }
+            if let day { Text(day).font(.footnote).foregroundStyle(.secondary) }
         }
     }
 
@@ -86,17 +81,8 @@ struct FlightCardView: View {
             if !via.isEmpty { lines.append("via \(via)") }
         }
         return VStack(spacing: 6) {
-            Text(lines.joined(separator: " · ")).font(V8Font.mono(11)).foregroundStyle(V8.muteDark)
-                .multilineTextAlignment(.center)
-            HStack(spacing: 0) {
-                Rectangle().fill(V8.orange).frame(width: 8, height: 8)
-                Rectangle().fill(.white.opacity(0.5)).frame(height: 2)
-                ForEach(0..<max(0, connections), id: \.self) { _ in
-                    Rectangle().fill(.white).frame(width: 7, height: 7)
-                    Rectangle().fill(.white.opacity(0.5)).frame(height: 2)
-                }
-                Rectangle().fill(.white).frame(width: 8, height: 8)
-            }
+            Text(lines.joined(separator: " · ")).font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
+            Image(systemName: "airplane").foregroundStyle(.secondary).accessibilityHidden(true)
         }
         .frame(maxWidth: .infinity)
     }
@@ -108,11 +94,11 @@ struct FlightCardView: View {
     }
 
     private func statusPill(_ status: FlightStatus) -> some View {
-        Text(status.label.uppercased())
-            .font(V8Font.mono(11, weight: .semibold)).tracking(0.8)
-            .foregroundStyle(V8.ink)
-            .padding(.horizontal, 10).padding(.vertical, 6)
-            .background(status.isAlert ? V8.paper : V8.orange, in: Rectangle())
+        Text(status.label)
+            .font(.footnote.weight(.semibold))
+            .foregroundStyle(status.isAlert ? Color.red : Color.primary)
+            .padding(.horizontal, 10).padding(.vertical, 5)
+            .background((status.isAlert ? Color.red : V9.accent).opacity(0.15), in: Capsule())
     }
 
     /// Assento, franquia, portão (ou a contagem até a partida) e a saída pro aeroporto.

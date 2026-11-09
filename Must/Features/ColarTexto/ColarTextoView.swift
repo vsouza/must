@@ -34,7 +34,7 @@ struct ColarTextoView: View {
         VStack(alignment: .leading, spacing: 14) {
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
-                    Micro("cole o texto")
+                    J9Label("cole o texto")
                     Spacer()
                     PasteButton(payloadType: String.self) { strings in
                         guard let text = strings.first else { return }
@@ -42,21 +42,21 @@ struct ColarTextoView: View {
                     }
                     .labelStyle(.titleOnly)
                     .buttonBorderShape(.capsule)
-                    .tint(Color.must.ink)
+                    .tint(Color.primary)
                 }
                 TextField("cola a resposta da IA, a lista do WhatsApp ou uma nota", text: $model.text, axis: .vertical)
                     .accessibilityIdentifier("colar.text")
-                    .font(.must.serif(18))
+                    .font(.body)
                     .lineLimit(6...18)
             }
             .padding(18)
-            .background(Color.must.surface, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
+            .background(V9.card, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
 
             Text("Lugar, dia, dica e link aparecem marcados antes de salvar. O texto fica no aparelho.")
-                .font(.must.meta)
-                .foregroundStyle(Color.must.secondary)
+                .font(.footnote)
+                .foregroundStyle(Color.secondary)
 
-            PrimaryButton("Ler texto", icon: .avancar, iconTrailing: true, style: .dark) {
+            J9Button("Ler texto") {
                 Task { await model.analyze(model.text, env: env) }
             }
             .disabled(emptyText)
@@ -67,7 +67,7 @@ struct ColarTextoView: View {
     private var reading: some View {
         HStack(spacing: 10) {
             ProgressView()
-            Text("Lendo o texto…").font(.must.meta).foregroundStyle(Color.must.secondary)
+            Text("Lendo o texto…").font(.footnote).foregroundStyle(Color.secondary)
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -96,43 +96,43 @@ struct ColarTextoView: View {
         let long = rest.count > 260
         return VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .firstTextBaseline) {
-                Micro(sourceHeader)
+                J9Label(sourceHeader)
                 Spacer()
                 Button { model.edit() } label: {
                     Text("trocar")
-                        .font(.must.archivo(13, .semibold))
-                        .foregroundStyle(Color.must.ink)
+                        .font(J9.font(13, .semibold))
+                        .foregroundStyle(Color.primary)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 8)
-                        .background(Capsule().fill(.white))
+                        .background(Capsule().fill(V9.card))
                 }
-                .buttonStyle(MustPressStyle())
+                .buttonStyle(.plain)
             }
             Text(ColarTextoHighlight.attributed(model.shown, from: start, spans: model.spans()))
-                .font(.must.archivo(15))
+                .font(J9.font(15))
                 .lineSpacing(4)
-                .foregroundStyle(Color.must.ink)
+                .foregroundStyle(Color.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .frame(maxHeight: textOpen ? nil : Self.collapsedHeight, alignment: .top)
                 .clipped()
-                .mask { Rectangle().fill(fade(open: textOpen || !long)) }
+                .mask { RoundedRectangle(cornerRadius: 8, style: .continuous).fill(fade(open: textOpen || !long)) }
                 .overlay(alignment: .bottomTrailing) {
                     if long && !textOpen {
                         Button { textOpen = true } label: {
                             Text("ver tudo")
-                                .font(.must.archivo(13, .semibold))
-                                .foregroundStyle(Color.must.ink)
+                                .font(J9.font(13, .semibold))
+                                .foregroundStyle(Color.primary)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 7)
-                                .background(Capsule().fill(.white))
+                                .background(Capsule().fill(V9.card))
                                 .shadow(color: .black.opacity(0.08), radius: 6, y: 2)
                         }
-                        .buttonStyle(MustPressStyle())
+                        .buttonStyle(.plain)
                     }
                 }
         }
         .padding(18)
-        .background(Color.must.surface2, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
+        .background(V9.card, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
     }
 
     /// Cabeçalho: "COLADO · CHATGPT · 1.840 CAR." (a origem só quando o texto diz).
@@ -178,8 +178,8 @@ struct ColarTextoView: View {
         var ink: UInt32
         var body: some View {
             VStack(alignment: .leading, spacing: 2) {
-                Text("\(number)").font(.must.archivo(24, .bold))
-                Text(label).font(.must.archivo(12))
+                Text("\(number)").font(J9.font(24, .bold))
+                Text(label).font(J9.font(12))
             }
             .foregroundStyle(Color(hex: ink))
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -192,18 +192,18 @@ struct ColarTextoView: View {
     private var queuedBanner: some View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "wifi.slash")
-                .foregroundStyle(Color.must.ink)
+                .foregroundStyle(Color.primary)
             VStack(alignment: .leading, spacing: 3) {
                 Text(waiting == 1 ? "Sem internet · 1 esperando internet" : "Sem internet · \(waiting) esperando internet")
-                    .font(.must.archivo(14, .semibold))
+                    .font(J9.font(14, .semibold))
                 Text("A conferência no Places fica na fila e sai quando a rede voltar. Dá pra salvar já.")
-                    .font(.must.meta)
-                    .foregroundStyle(Color.must.secondary)
+                    .font(.footnote)
+                    .foregroundStyle(Color.secondary)
             }
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.must.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .background(V9.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
     // MARK: Dias
@@ -219,11 +219,14 @@ struct ColarTextoView: View {
                 if group.id >= 0 {
                     let seal = stamp(for: group)
                     // Kanji do bairro do dia; sem linha própria no catálogo, a linha pequena diz o número ("dia 2").
-                    StationStamp(seal.text, sub: seal.sub ?? group.number.map { "dia \($0)" }, size: 52, surface: .paper, rotation: -8)
+                    Text(seal.text).font(.footnote.weight(.bold)).monospacedDigit()
+                        .padding(.horizontal, 8).padding(.vertical, 6)
+                        .background(V9.fill, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .accessibilityHidden(true)
                 }
                 Text(group.id >= 0 ? "\(group.title) · dia sugerido" : group.title)
-                    .font(.must.archivo(17, .semibold))
-                    .foregroundStyle(Color.must.ink)
+                    .font(J9.font(17, .semibold))
+                    .foregroundStyle(Color.primary)
                     .lineLimit(2)
                     .onTapGesture { if group.id >= 0 { model.focus(group.id) } }
                 Spacer(minLength: 4)
@@ -231,42 +234,42 @@ struct ColarTextoView: View {
                     let on = model.dayOn.contains(group.id)
                     Button { model.toggleDay(group.id) } label: {
                         Text(on ? "virar dia \(number)" : "não vira dia")
-                            .font(.must.archivo(12, .semibold))
-                            .foregroundStyle(on ? Color.must.ink : Color.must.secondary)
+                            .font(J9.font(12, .semibold))
+                            .foregroundStyle(on ? Color.primary : Color.secondary)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 7)
-                            .background(Capsule().fill(Color.must.surface))
+                            .background(Capsule().fill(V9.card))
                     }
-                    .buttonStyle(MustPressStyle())
+                    .buttonStyle(.plain)
                 }
             }
-            Rectangle().fill(Color.must.line).frame(height: 1).padding(.vertical, 10)
+            RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color(uiColor: .separator)).frame(height: 1).padding(.vertical, 10)
             ForEach(Array(rows.enumerated()), id: \.element.id) { index, match in
-                if index > 0 { Rectangle().fill(Color.must.line).frame(height: 1) }
+                if index > 0 { RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color(uiColor: .separator)).frame(height: 1) }
                 row(match)
             }
             if !open, !hidden.isEmpty {
-                Rectangle().fill(Color.must.line).frame(height: 1)
+                RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color(uiColor: .separator)).frame(height: 1)
                 Button { model.toggleExpanded(group.id) } label: {
                     HStack(spacing: 12) {
-                        Circle().strokeBorder(Color.must.lineStrong, lineWidth: 1.5).frame(width: 26, height: 26)
+                        Circle().strokeBorder(Color(uiColor: .separator), lineWidth: 1.5).frame(width: 26, height: 26)
                         VStack(alignment: .leading, spacing: 2) {
                             Text("+ " + hidden.map { $0.extracted.name }.joined(separator: ", "))
-                                .font(.must.archivo(15))
-                                .foregroundStyle(Color.must.secondary)
+                                .font(J9.font(15))
+                                .foregroundStyle(Color.secondary)
                                 .lineLimit(1)
-                            Text("\(hidden.count) mais · toque pra ver").font(.must.meta).foregroundStyle(Color.must.secondary)
+                            Text("\(hidden.count) mais · toque pra ver").font(.footnote).foregroundStyle(Color.secondary)
                         }
                         Spacer(minLength: 0)
                     }
                     .padding(.vertical, 10)
                 }
-                .buttonStyle(MustPressStyle())
+                .buttonStyle(.plain)
             }
         }
         .padding(18)
-        .background(RoundedRectangle(cornerRadius: 26, style: .continuous).fill(Color.white))
-        .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(Color.must.line))
+        .background(RoundedRectangle(cornerRadius: 26, style: .continuous).fill(V9.card))
+        .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(Color(uiColor: .separator)))
         .shadow(color: Color(hex: 0x121316, opacity: 0.06), radius: 15, x: 0, y: 10)
     }
 
@@ -289,23 +292,23 @@ struct ColarTextoView: View {
         return HStack(alignment: .center, spacing: 12) {
             Button { model.toggle(match.id) } label: {
                 ZStack {
-                    Circle().fill(on ? Color.must.green : Color.white)
-                    Circle().strokeBorder(Color.must.lineStrong, lineWidth: on ? 0 : 1.5)
-                    if on { MustIconView(.ok, size: 13).foregroundStyle(Color.must.greenText) }
+                    Circle().fill(on ? V9.accent : V9.fill)
+                    if on { Image(systemName: "checkmark").font(.caption.weight(.bold)).foregroundStyle(.white) }
                 }
-                .frame(width: 26, height: 26)
+                .frame(width: 28, height: 28)
+                .frame(minWidth: 44, minHeight: 44)
             }
-            .buttonStyle(MustPressStyle())
+            .buttonStyle(.plain)
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 8) {
                     Text(match.extracted.name)
-                        .font(.must.archivo(17, .semibold))
-                        .foregroundStyle(Color.must.ink)
+                        .font(J9.font(17, .semibold))
+                        .foregroundStyle(Color.primary)
                         .strikethrough(model.placesChecked && !match.located)
                         .lineLimit(1)
                     if let chip = chip(for: match) {
                         Text(chip.text)
-                            .font(.must.archivo(11, .semibold))
+                            .font(J9.font(11, .semibold))
                             .foregroundStyle(chip.ink)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 3)
@@ -314,8 +317,8 @@ struct ColarTextoView: View {
                     }
                 }
                 Text(meta(match))
-                    .font(.must.archivo(13))
-                    .foregroundStyle(Color.must.secondary)
+                    .font(J9.font(13))
+                    .foregroundStyle(Color.secondary)
                     .lineLimit(2)
             }
             Spacer(minLength: 0)
@@ -365,25 +368,25 @@ struct ColarTextoView: View {
 
     private var linksCard: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Micro("links")
+            J9Label("links")
             ForEach(model.linkStatus.keys.sorted(), id: \.self) { link in
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text(link.replacingOccurrences(of: "https://", with: "").replacingOccurrences(of: "http://", with: ""))
-                        .font(.must.mono(12))
-                        .foregroundStyle(Color.must.ink)
+                        .font(J9.font(12).monospacedDigit())
+                        .foregroundStyle(Color.primary)
                         .lineLimit(1)
                         .truncationMode(.middle)
                     Spacer(minLength: 4)
                     Text(model.linkStatus[link] ?? "")
-                        .font(.must.archivo(12))
-                        .foregroundStyle(Color.must.secondary)
+                        .font(J9.font(12))
+                        .foregroundStyle(Color.secondary)
                 }
             }
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(Color.white))
-        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Color.must.line))
+        .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(V9.card))
+        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Color(uiColor: .separator)))
     }
 
     private func tipsCard(_ tips: [TravelTip]) -> some View {
@@ -394,19 +397,19 @@ struct ColarTextoView: View {
                     Image(systemName: "lightbulb.fill").foregroundStyle(Color(hex: 0x4A2E00))
                 }
                 .frame(width: 36, height: 36)
-                Text("Dicas · vão pras notas").font(.must.archivo(17, .semibold)).foregroundStyle(Color.must.ink)
+                Text("Dicas · vão pras notas").font(J9.font(17, .semibold)).foregroundStyle(Color.primary)
             }
             ForEach(Array(tips.enumerated()), id: \.offset) { _, tip in
                 Text("“\(tip.text)” → \(destination(tip))")
-                    .font(.must.archivo(14))
-                    .foregroundStyle(Color.must.ink)
+                    .font(J9.font(14))
+                    .foregroundStyle(Color.primary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 26, style: .continuous).fill(Color.white))
-        .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(Color.must.line))
+        .background(RoundedRectangle(cornerRadius: 26, style: .continuous).fill(V9.card))
+        .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(Color(uiColor: .separator)))
     }
 
     private func destination(_ tip: TravelTip) -> String {
@@ -432,28 +435,17 @@ struct ColarTextoActions: View {
         let count = model.included.count
         let days = model.dayNumbersOn
         HStack(spacing: 10) {
-            Button { save(withDays: false) } label: {
-                Text("Só salvar")
-                    .font(.must.archivo(15, .bold))
-                    .foregroundStyle(Color.must.ink)
-                    .frame(width: 116, height: 52)
-                    .overlay(Capsule().strokeBorder(Color.must.lineStrong, lineWidth: 1))
-                    .contentShape(Capsule())
-            }
-            .buttonStyle(MustPressStyle())
-            .disabled(count == 0)
-            PrimaryButton(title(count: count, days: days), style: .dark) {
+            Button("Só salvar") { save(withDays: false) }
+                .v9Secondary()
+                .disabled(count == 0)
+            J9Button(title(count: count, days: days)) {
                 save(withDays: !days.isEmpty)
             }
             .disabled(count == 0)
         }
         .opacity(count == 0 ? 0.5 : 1)
-        .padding(.horizontal, 22)
-        .padding(.top, 24)
-        .padding(.bottom, 8)
-        .background {
-            LinearGradient(colors: [.white.opacity(0), .white], startPoint: .top, endPoint: .center).ignoresSafeArea()
-        }
+        .padding(V9.gutter)
+        .background(.bar)
     }
 
     private func title(count: Int, days: [Int]) -> String {
