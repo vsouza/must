@@ -1,5 +1,6 @@
 import CoreLocation
 import Foundation
+import UIKit
 
 /// Fonte dos tiles da base: arquivo baixado (offline), o mesmo PMTiles lido do R2, ou Protomaps hospedado.
 enum MapTiles: Equatable, Sendable {
@@ -47,16 +48,22 @@ enum MapTiles: Equatable, Sendable {
 
 /// Monta o style "papel em relevo" pra região: tiles, fontes dos rótulos (Zen Kaku no Japão) e grava em Caches.
 enum MapStyleLoader {
+    /// Fundo do mapa (atrás dos tiles e do halo dos rótulos).
+    static func background(dark: Bool) -> UIColor {
+        dark ? UIColor(red: 0x1B / 255, green: 0x1D / 255, blue: 0x22 / 255, alpha: 1)
+             : UIColor(red: 0xE9 / 255, green: 0xEB / 255, blue: 0xEF / 255, alpha: 1)
+    }
+
     static let japaneseFont = "Zen Kaku Gothic New Medium"
 
-    static func styleURL(region: Region, tiles: MapTiles, bundle: Bundle = .main) -> URL? {
+    static func styleURL(region: Region, tiles: MapTiles, dark: Bool = false, bundle: Bundle = .main) -> URL? {
         guard let template = bundle.url(forResource: "must-relief.style", withExtension: "json", subdirectory: "MapStyle"),
               let data = try? Data(contentsOf: template),
               var style = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             Log.data.error("mapa: style não encontrado no bundle")
             return nil
         }
-        style = customize(style, region: region, tiles: tiles)
+        style = customize(style, region: region, tiles: tiles, dark: dark)
         let name: String = switch tiles {
         case .local(let n, _): n
         case .remote(let n, _): "\(n)-remote"
@@ -65,14 +72,14 @@ enum MapStyleLoader {
         }
         let folder = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0].appending(path: "map-style")
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-        let url = folder.appending(path: "must-relief-\(name).json")
+        let url = folder.appending(path: "must-relief-\(name)\(dark ? "-dark" : "").json")
         guard let out = try? JSONSerialization.data(withJSONObject: style) else { return nil }
         try? out.write(to: url, options: .atomic)
         return url
     }
 
     /// Troca a fonte dos tiles e, no Japão, a fonte dos rótulos. Sem tiles, deixa só o fundo.
-    static func customize(_ style: [String: Any], region: Region, tiles: MapTiles) -> [String: Any] {
+    static func customize(_ style: [String: Any], region: Region, tiles: MapTiles, dark: Bool = false) -> [String: Any] {
         var style = style
         var layers = style["layers"] as? [[String: Any]] ?? []
         if let url = tiles.sourceURL {
@@ -91,7 +98,55 @@ enum MapStyleLoader {
                 return layer
             }
         }
+        if dark { layers = layers.map(darkened) }
         style["layers"] = layers
+        if dark { style["name"] = ((style["name"] as? String) ?? "must-relief") + "-dark" }
         return style
+    }
+
+    // MARK: Variante escura (só cores: mesmas camadas, fontes, sprites e glyphs)
+
+    /// Cor clara do style → cor escura equivalente.
+    static let darkPalette: [String: String] = [
+        "#E9EBEF": "#1B1D22", // fundo e halo dos rótulos
+        "#E1EEE7": "#1F2B25", // parque
+        "#D9E4EF": "#16263A", // água
+        "#C9CDD3": "#464B54", // ruas pequenas (pontos)
+        "#DADDE3": "#30343B", // ruas médias
+        "#CFD3DB": "#3B4049", // ruas grandes
+        "#121316": "#000000", // sombra do quarteirão
+        "#F7F8FA": "#2A2D34", // quarteirão
+        "#FFFFFF": "#3A3E47", // brilho do quarteirão
+        "#F3F4F6": "#262930", // quarteirão em zoom baixo
+        "#9AA0A8": "#9AA1AC", // rótulo de rua
+        "#5FAE7E": "#7FC79C", // rótulo de parque
+        "#A9AEB6": "#8E949E", // rótulo de bairro
+    ]
+
+    private static func darkOverrides(_ id: String) -> [String: Any] {
+        switch id {
+        case "city-labels": ["text-color": "#F2F3F5", "text-halo-color": "#1B1D22"]
+        case "block-shadow": ["fill-opacity": 0.4]
+        case "block-highlight": ["line-opacity": 0.7]
+        case "park-dots": ["fill-opacity": 0.25]
+        default: [:]
+        }
+    }
+
+    static func darkened(_ layer: [String: Any]) -> [String: Any] {
+        var layer = layer
+        guard var paint = layer["paint"] as? [String: Any] else { return layer }
+        for (key, value) in paint { paint[key] = recolor(value) }
+        if let id = layer["id"] as? String {
+            for (k, v) in darkOverrides(id) { paint[k] = v }
+        }
+        layer["paint"] = paint
+        return layer
+    }
+
+    private static func recolor(_ value: Any) -> Any {
+        if let text = value as? String { return darkPalette[text.uppercased()] ?? text }
+        if let list = value as? [Any] { return list.map(recolor) }
+        return value
     }
 }

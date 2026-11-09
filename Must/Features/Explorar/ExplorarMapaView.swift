@@ -36,6 +36,9 @@ struct ExplorarMapaView: View {
     @State private var detent: ExplorarDetent = .collapsed
     @State private var collapsedHeight: CGFloat = 132
     @State private var drag: CGFloat = 0
+    /// Altura do cabeçalho do painel (pegador, chip, campo) e do conteúdo do pino: o painel do pino tem a altura justa.
+    @State private var headerHeight: CGFloat = 0
+    @State private var pinContentHeight: CGFloat = 0
     @State private var booted = false
     @State private var pinDay: ExplorarPinActions.Day?
     @State private var notice: String?
@@ -59,7 +62,7 @@ struct ExplorarMapaView: View {
     var body: some View {
         GeometryReader { geo in
             let available = max(collapsedHeight, geo.size.height - topReserve)
-            let height = panelHeight(available: available)
+            let height = fitted(panelHeight(available: available))
             ZStack(alignment: .top) {
                 map(bottomInset: height)
                     .ignoresSafeArea()
@@ -287,6 +290,12 @@ struct ExplorarMapaView: View {
         return min(max(base + drag, collapsedHeight), available)
     }
 
+    /// Com um pino aberto, o painel cobre só o que o conteúdo precisa (sem vazio embaixo); nunca passa da altura da posição.
+    private func fitted(_ height: CGFloat) -> CGFloat {
+        guard model.selected != nil, drag == 0, detent != .large, pinContentHeight > 0, headerHeight > 0 else { return height }
+        return min(height, max(collapsedHeight, headerHeight + pinContentHeight + 8))
+    }
+
     private func setDetent(_ d: ExplorarDetent) {
         withAnimation(reduceMotion ? .easeOut(duration: 0.12) : .snappy(duration: 0.3)) { detent = d }
     }
@@ -302,6 +311,7 @@ struct ExplorarMapaView: View {
             .padding(.horizontal, 16)
             .padding(.bottom, 10)
             .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { h in
+                headerHeight = h
                 if model.selected == nil, abs(h - collapsedHeight) > 1 { collapsedHeight = h }
             }
             if let item = model.selected {
@@ -312,6 +322,7 @@ struct ExplorarMapaView: View {
                                          onOpen: { open(item) }, onSave: { save(item) })
                         .padding(.horizontal, 16)
                         .padding(.bottom, 16)
+                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { pinContentHeight = $0 }
                 }
                 .scrollBounceBehavior(.basedOnSize)
             } else if detent == .medium || (detent == .collapsed && drag > 20) {
