@@ -11,65 +11,52 @@ struct PlaceDragItem: Codable, Hashable, Transferable, Sendable {
     }
 }
 
-/// Uma linha do board no padrão índice do corte (`ListIndexRow`): distância (ou bairro) em mono grande à esquerda, nome,
-/// meta em mono/cinza, estado em mono cinza e régua de 2 pt embaixo. Sem miniatura. Feito fica a 55%.
+/// Distância curta pra linha ("350 m", "2,4 km").
+enum BoardDistance {
+    static func text(_ meters: Double) -> String {
+        if meters < 950 { return "\(Int((meters / 10).rounded()) * 10) m" }
+        return meters.formatted(.number.precision(.fractionLength(1)).locale(Locale(identifier: "pt_BR")).scale(0.001)) + " km"
+    }
+}
+
+/// Uma linha do board (V9): miniatura, nome, meta (distância, bairro, horário, preço) e o estado em texto.
 /// Em modo edição, a bolinha de seleção.
 struct BoardRow: View {
     var place: Place
     var region: Region
     var isEditing: Bool
     var isSelected: Bool
-    /// Onde você está (distância até o lugar quando é perto); nil = mostra o bairro.
+    /// Onde você está (distância até o lugar quando é perto); nil = só o bairro.
     var here: CLLocation?
 
-    private var big: (value: String, unit: String)? {
-        if let here, !place.approx, place.lat != 0 || place.lng != 0 {
-            let meters = here.distance(from: CLLocation(latitude: place.lat, longitude: place.lng))
-            if meters < 50_000 {
-                let parts = CorteSplit.distanceParts(meters)
-                return (parts.value, parts.unit == "m" ? "metros" : parts.unit)
-            }
-        }
-        if let area = place.area, !area.isEmpty { return (String(area.prefix(3)).uppercased(), area) }
-        return nil
+    private var distance: String? {
+        guard let here, !place.approx, place.lat != 0 || place.lng != 0 else { return nil }
+        let meters = here.distance(from: CLLocation(latitude: place.lat, longitude: place.lng))
+        return meters < 50_000 ? BoardDistance.text(meters) : nil
     }
 
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
             if isEditing { SelectMark(on: isSelected) }
+            PlaceThumb(placeId: place.placeId, refs: place.photoRefs, color: place.list?.color ?? .eat, size: 48)
             VStack(alignment: .leading, spacing: 2) {
-                Text(big?.value ?? "·")
-                    .font(V8Font.mono(22, weight: .semibold)).foregroundStyle(V8.ink)
-                    .lineLimit(1).minimumScaleFactor(0.6)
-                Text((big?.unit ?? "").uppercased())
-                    .font(V8Font.mono(8.5)).tracking(0.8).foregroundStyle(V8.mute).lineLimit(1)
-            }
-            .frame(width: 76, alignment: .leading)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(place.name).font(V8Font.text(17, weight: .semibold)).foregroundStyle(V8.ink).lineLimit(2)
+                Text(place.name).font(.body.weight(.semibold)).lineLimit(2)
                 if !meta.isEmpty {
-                    Text(meta).font(V8Font.mono(10.5)).foregroundStyle(V8.mute).lineLimit(1).truncationMode(.tail)
+                    Text(meta).font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
+                }
+                if let state {
+                    Text(state).font(.footnote).foregroundStyle(.secondary).lineLimit(1)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            if let state {
-                Text(state.uppercased())
-                    .font(V8Font.mono(9.5)).tracking(0.8).foregroundStyle(V8.mute).lineLimit(1)
-                    .fixedSize()
-            }
         }
-        .padding(.vertical, 12)
-        .frame(minHeight: 64)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(isSelected ? V8.ink.opacity(0.08) : Color.clear)
-        .overlay(alignment: .bottom) { CorteRule2() }
-        .opacity(place.isDone ? 0.55 : 1)
+        .opacity(place.isDone ? 0.6 : 1)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(isEditing ? .isButton : [])
         .accessibilityValue(isEditing ? (isSelected ? "selecionado" : "não selecionado") : "")
     }
 
-    /// "feito" / "sem horário" / "fica pro fim": um estado só, em cinza (laranja é só pra ação e "agora").
+    /// "feito" / "sem horário" / "fica pro fim": um estado só, em cinza.
     private var state: String? {
         if place.isDone { return "feito" }
         if place.hours?.hasPeriods != true { return "sem horário" }
@@ -84,8 +71,9 @@ struct BoardRow: View {
             return out.joined(separator: " · ")
         }
         var out: [String] = []
+        if let distance { out.append(distance) }
         if let sub = place.sub { out.append(sub) }
-        if big != nil, let area = place.area, big?.unit != area { out.append(area) }
+        if let area = place.area, !area.isEmpty { out.append(area) }
         if let window = place.windows.first { out.append(window.label) }
         if let queue = place.queueMinutes, queue > 0 { out.append(queue >= 60 ? "fila \(queue / 60)h" : "fila \(queue) min") }
         if let kind = place.source?.kind, kind != .board, kind != .manual { out.append("veio de \(kind.label)") }
@@ -94,75 +82,41 @@ struct BoardRow: View {
     }
 }
 
-/// Bolinha de seleção 24 pt: preta com ✓ quando marcada.
+/// Bolinha de seleção do sistema: cheia com ✓ quando marcada.
 struct SelectMark: View {
     var on: Bool
 
     var body: some View {
-        ZStack {
-            Circle()
-                .fill(on ? Color.must.ink : Color.white)
-                .overlay(Circle().strokeBorder(on ? Color.must.ink : Color(hex: 0xD9DCE1), lineWidth: 1.6))
-            if on {
-                MustIconView(.ok, size: 12).foregroundStyle(.white)
-            }
-        }
-        .frame(width: 24, height: 24)
-        .accessibilityHidden(true)
+        Image(systemName: on ? "checkmark.circle.fill" : "circle")
+            .font(.title2)
+            .foregroundStyle(on ? V9.accent : Color.secondary)
+            .frame(width: 28, height: 28)
+            .accessibilityHidden(true)
     }
 }
 
-/// Cabeçalho de grupo = uma faixa inteira (prompt 30): régua dura de 12 pt, o nome da lista gigante (Bricolage), a contagem em
-/// mono, as sub-listas em mono e "editar lista" quadrado. Sem ponto de cor (a cor do Must saiu na v8).
+/// Cabeçalho de grupo (V9): nome da lista, contagem, sub-listas e "Editar lista" visível.
 struct BoardGroupHeader: View {
     var group: BoardGroup
     var onEditList: (() -> Void)?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            CutRule()
-            HStack(alignment: .firstTextBaseline, spacing: 12) {
-                Text(group.title)
-                    .font(V8Font.display(40))
-                    .tracking(-1.4)
-                    .foregroundStyle(V8.ink)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.6)
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("\(group.title) · \(group.places.count)")
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+                    .textCase(nil)
                     .accessibilityAddTraits(.isHeader)
-                Spacer(minLength: 8)
-                Text("\(group.places.count)")
-                    .font(V8Font.mono(22, weight: .semibold))
-                    .foregroundStyle(V8.ink)
-                    .accessibilityLabel("\(group.places.count) lugares")
-            }
-            .padding(.horizontal, 22)
-            .padding(.top, 14)
-            HStack(alignment: .center, spacing: 8) {
                 if !group.subCounts.isEmpty {
-                    Text(group.subCounts.map { "\($0.name) \($0.count)" }.joined(separator: " · ").uppercased())
-                        .font(V8Font.mono(9.5)).tracking(0.8)
-                        .foregroundStyle(V8.mute)
-                        .lineLimit(1)
-                }
-                Spacer(minLength: 8)
-                if let onEditList {
-                    Button(action: onEditList) {
-                        Text("EDITAR LISTA")
-                            .font(V8Font.mono(10, weight: .semibold)).tracking(0.8)
-                            .foregroundStyle(V8.ink)
-                            .padding(.horizontal, 10).padding(.vertical, 8)
-                            .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
+                    Text(group.subCounts.map { "\($0.name) \($0.count)" }.joined(separator: " · "))
+                        .font(.footnote).foregroundStyle(.secondary).textCase(nil).lineLimit(1)
                 }
             }
-            .padding(.horizontal, 22)
-            .padding(.top, 6)
-            .padding(.bottom, 10)
-            CorteRule2()
+            Spacer(minLength: 8)
+            if let onEditList {
+                Button("Editar lista", action: onEditList).font(.subheadline).textCase(nil)
+            }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .contentShape(Rectangle())
     }
 }

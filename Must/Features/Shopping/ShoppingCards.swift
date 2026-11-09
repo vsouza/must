@@ -1,21 +1,10 @@
 import SwiftUI
 
-// Peças da tela Compras (prompt 17 · B): cor e ícone de cada categoria, o card horizontal, o chip de regra.
+// Peças da tela Compras (V9): ícone de cada categoria, a linha do item, a regra.
 
 extension ShoppingCategory {
-    /// Cor da categoria na fileira e no card: claro → forte (a mesma escala dos Musts).
-    var tint: (light: Color, strong: Color) {
-        switch self {
-        case .cameras: (Color(hex: 0xE9EBEF), Color(hex: 0x121316))
-        case .food: (Color(hex: 0xFFD27A), Color(hex: 0xFFB020))
-        case .tech: (Color(hex: 0x9FD6FF), Color(hex: 0x2B7BFF))
-        case .gifts: (Color(hex: 0xFFB3CF), Color(hex: 0xFF4D8D))
-        case .pharmacy: (Color(hex: 0xB8F2EA), Color(hex: 0x14B8A6))
-        case .home: (Color(hex: 0xB9F5CF), Color(hex: 0x22DD7E))
-        case .clothes: (Color(hex: 0xDCCFFF), Color(hex: 0x8B5CF6))
-        case .other: (Color(hex: 0xE9EBEF), Color(hex: 0x8A94A6))
-        }
-    }
+    /// Cor da categoria: neutra no V9 (a cor só aparece como ponto de ação e "agora").
+    var tint: (light: Color, strong: Color) { (Color(uiColor: .tertiarySystemFill), Color.secondary) }
 
     /// Ícone do set do Must quando existe; senão um SF Symbol (fallback do design/icons/README.md).
     var icon: MustIcon? {
@@ -57,22 +46,7 @@ struct ShoppingIcon: View {
     }
 }
 
-/// Bloco de cor da categoria (a "miniatura" do item, sem foto nesta fatia).
-struct ShoppingTile: View {
-    var category: ShoppingCategory
-    var size: CGFloat
-
-    var body: some View {
-        Rectangle()
-            .fill(category == .cameras ? V8.ink : category.tint.strong)
-            .frame(width: size, height: size)
-            .overlay {
-                ShoppingIcon(category: category, size: size * 0.45, color: .white)
-            }
-    }
-}
-
-/// Card horizontal de um item (150 pt): bloco de cor, tag de status, nome, loja e preço em mono.
+/// Linha de um item (V9): ícone da categoria, nome, loja/bairro, preço em número tabular e o status em texto.
 struct ShoppingItemCard: View {
     var item: ShoppingItem
     var storeName: String
@@ -82,40 +56,30 @@ struct ShoppingItemCard: View {
 
     var body: some View {
         Button(action: onTap) {
-            VStack(alignment: .leading, spacing: 0) {
-                ZStack(alignment: .topLeading) {
-                    item.category.tint.light.opacity(0.45)
-                    ShoppingIcon(category: item.category, size: 34)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    statusTag.padding(8)
+            HStack(alignment: .center, spacing: 12) {
+                ShoppingIcon(category: item.category, size: 24, color: .secondary)
+                    .frame(width: 32)
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(item.name).font(.body.weight(.semibold)).foregroundStyle(.primary).lineLimit(2)
+                    if !meta.isEmpty { Text(meta).font(.subheadline).foregroundStyle(.secondary).lineLimit(2) }
+                    Text(statusText).font(.footnote).foregroundStyle(item.isBought ? Color.secondary : V9.accent)
                 }
-                .frame(height: 80)
-                .clipped()
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(item.name).font(.must.archivo(17, .semibold)).foregroundStyle(Color.must.ink)
-                        .lineLimit(2).fixedSize(horizontal: false, vertical: true)
-                    Text(meta).font(.must.archivo(13)).foregroundStyle(Color.must.secondary).lineLimit(1)
-                    Text(ShoppingReport.money(item.committedAmount, currency: currency))
-                        .font(.must.mono(15, .semibold)).foregroundStyle(Color.must.ink).lineLimit(1)
-                        .minimumScaleFactor(0.7)
-                        .padding(.top, 4)
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 10)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                Spacer(minLength: 8)
+                Text(ShoppingReport.money(item.committedAmount, currency: currency))
+                    .font(.body.monospacedDigit()).foregroundStyle(.primary).lineLimit(1).minimumScaleFactor(0.7)
             }
-            .frame(width: 150, alignment: .topLeading)
-            .background(Color.must.surface2, in: Rectangle())
             .contentShape(Rectangle())
         }
-        .buttonStyle(MustPressStyle())
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
     }
 
-    @ViewBuilder private var statusTag: some View {
+    private var statusText: String {
         switch item.status {
-        case .want: Tag("quero")
-        case .mustHave: Tag("quero muito", style: .dark)
-        case .bought: Tag("comprado", style: .green)
+        case .want: "quero"
+        case .mustHave: "quero muito"
+        case .bought: "comprado"
         }
     }
 
@@ -126,33 +90,26 @@ struct ShoppingItemCard: View {
     }
 }
 
-/// Chip de regra na seção "Comidinhas pra levar": verde (ok), âmbar (atenção) ou vermelho (não passa).
+/// Regra na seção "Comidinhas pra levar": ícone + texto (ok, atenção ou não passa); só o vermelho do sistema chama atenção.
 struct ShoppingRuleChip: View {
     var text: String
     var tone: ShoppingTone
 
     var body: some View {
-        Text(text)
-            .font(.must.archivo(13, .semibold))
-            .foregroundStyle(foreground)
-            .padding(.vertical, 7)
-            .padding(.horizontal, 12)
-            .background(background, in: Rectangle())
-    }
-
-    private var foreground: Color {
-        switch tone {
-        case .ok: Color(hex: 0x0B2A18)
-        case .warn: Color(hex: 0x4A2E00)
-        case .no: Color(hex: 0x5A1A0E)
+        Label {
+            Text(text).font(.body).foregroundStyle(tone == .no ? Color.red : Color.primary).lineLimit(3)
+        } icon: {
+            Image(systemName: symbol).foregroundStyle(tone == .no ? Color.red : Color.secondary)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityLabel(text + (tone == .ok ? ", passa" : tone == .warn ? ", atenção" : ", não passa"))
     }
 
-    private var background: Color {
+    private var symbol: String {
         switch tone {
-        case .ok: MustColor.eat.light
-        case .warn: Color(hex: 0xFFE3A3)
-        case .no: MustColor.sport.light
+        case .ok: "checkmark.circle"
+        case .warn: "exclamationmark.circle"
+        case .no: "xmark.circle.fill"
         }
     }
 }

@@ -45,7 +45,7 @@ struct GiftMoney {
     }
 }
 
-/// A caixa do checklist: 22 pt, borda de 2 pt; marcada = tinta cheia com ✓. É um botão "Marcar comprado".
+/// A caixa do checklist: círculo do sistema (marcado = ✓ cheio). É um botão "Marcar comprado", alvo de 44 pt.
 struct GiftCheckbox: View {
     var done: Bool
     var onInk = false
@@ -53,16 +53,11 @@ struct GiftCheckbox: View {
 
     var body: some View {
         Button(action: action) {
-            ZStack {
-                Rectangle().fill(done ? (onInk ? V8.orange : V8.ink) : Color.clear)
-                Rectangle().stroke(onInk ? V8.white : V8.ink, lineWidth: 2)
-                if done {
-                    Image(systemName: "checkmark").font(.system(size: 13, weight: .heavy)).foregroundStyle(onInk ? V8.ink : V8.white)
-                }
-            }
-            .frame(width: 22, height: 22)
-            .frame(width: 44, height: 44)
-            .contentShape(Rectangle())
+            Image(systemName: done ? "checkmark.circle.fill" : "circle")
+                .font(.title2)
+                .foregroundStyle(done ? V9.accent : Color.secondary)
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(done ? "Comprado" : "Marcar comprado")

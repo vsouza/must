@@ -50,28 +50,42 @@ struct EditPlaceView: View {
     }
 
     var body: some View {
-        CutSheet(title: isNew ? "Novo lugar" : "Editar lugar", corner: ["Board", region.shortName],
-                 subtitle: isNew ? nil : draft.name, height: 150,
-                 footer: "Salvar", footerId: "edit.save", onFooter: save) {
-            nameFields
-            listPicker
-            cityAndPrice
-            areaField
-            placesCard
-            windowsPicker
-            if let kind = lists.first(where: { $0.id == draft.listId })?.kind, kind != .place {
-                KindExtraFields(kind: kind, extra: $draft.extra, region: region)
+        NavigationStack {
+            Form {
+                Section {
+                    nameFields
+                    listPicker
+                    cityAndPrice
+                    areaField
+                }
+                Section { placesCard }
+                Section { windowsPicker }
+                if let kind = lists.first(where: { $0.id == draft.listId })?.kind, kind != .place {
+                    Section(kindTitle(kind)) { KindExtraFields(kind: kind, extra: $draft.extra, region: region) }
+                }
+                Section { notesField }
+                Section { sourcePicker }
+                Section { locationRow }
+                if let error {
+                    Section { Text(error).foregroundStyle(.red) }
+                }
+                if !isNew {
+                    Section {
+                        Button("Remover do board", role: .destructive) { confirmDelete = true }
+                    }
+                }
             }
-            notesField
-            sourcePicker
-            locationRow
-            if let error {
-                Text(error).font(.must.meta).foregroundStyle(V8.orangeDeep)
-            }
-            if !isNew {
-                CutButton(title: "Remover do board") { confirmDelete = true }
+            .scrollDismissesKeyboard(.interactively)
+            .navigationTitle(isNew ? "Novo lugar" : "Editar lugar")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancelar") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Salvar", action: save).accessibilityIdentifier("edit.save")
+                }
             }
         }
+        .v9Screen(grouped: true)
         .onAppear(perform: load)
         .sheet(isPresented: $editingReservation) {
             ReservationEditor(reservation: $draft.reservation, region: region)
@@ -87,16 +101,24 @@ struct EditPlaceView: View {
         }
     }
 
+    private func kindTitle(_ kind: ListKind) -> String {
+        switch kind {
+        case .photo: "Foto"
+        case .art: "Arte"
+        case .sport: "Esporte"
+        case .experience: "Experiência"
+        case .place: "Lugar"
+        }
+    }
+
     // MARK: Seções
 
-    private var nameFields: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            field("nome") {
-                TextField("Nome do lugar", text: $draft.name).font(V8Font.text(17)).accessibilityIdentifier("edit.name")
-            }
-            field("nome local · mostre ao atendente") {
-                TextField("opcional", text: $draft.nameLocal).font(.must.kanji(17, bold: false)).accessibilityIdentifier("edit.nameLocal")
-            }
+    @ViewBuilder private var nameFields: some View {
+        field("Nome") {
+            TextField("Nome do lugar", text: $draft.name).accessibilityIdentifier("edit.name")
+        }
+        field("Nome local · mostre ao atendente") {
+            TextField("opcional", text: $draft.nameLocal).accessibilityIdentifier("edit.nameLocal")
         }
     }
 
@@ -112,91 +134,93 @@ struct EditPlaceView: View {
     }
 
     private var listPicker: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            MonoLabel("lista", color: V8.mute)
+        field("Lista") {
             FlowLayout(spacing: 8) {
                 ForEach(listChoices, id: \.self) { choice in
                     let selected = draft.listId == choice.listId && draft.sub == choice.sub
                     Button {
                         draft.listId = choice.listId
                         draft.sub = choice.sub
-                    } label: { Pill(choice.label, style: selected ? .green : .default) }
-                        .buttonStyle(MustPressStyle())
+                    } label: { V9Chip(choice.label, isOn: selected) }
+                        .buttonStyle(.borderless)
                 }
             }
         }
     }
 
-    private var cityAndPrice: some View {
-        HStack(alignment: .top, spacing: 14) {
-            VStack(alignment: .leading, spacing: 10) {
-                MonoLabel("cidade", color: V8.mute)
+    @ViewBuilder private var cityAndPrice: some View {
+        if let cities = trips.first?.cities, cities.count > 1 {
+            field("Cidade") {
                 FlowLayout(spacing: 8) {
-                    ForEach(trips.first?.cities ?? []) { city in
+                    ForEach(cities) { city in
                         Button { draft.cityId = city.id } label: {
-                            Pill(trips.first?.label(for: city, region: region) ?? city.name, isOn: draft.cityId == city.id)
+                            V9Chip(trips.first?.label(for: city, region: region) ?? city.name, isOn: draft.cityId == city.id)
                         }
-                        .buttonStyle(MustPressStyle())
+                        .buttonStyle(.borderless)
                     }
                 }
             }
-            field("preço · \(region.currencySymbol)") {
-                TextField("0", text: $draft.priceText).font(V8Font.mono(17)).keyboardType(.decimalPad).accessibilityIdentifier("edit.price")
-            }
-            .frame(width: 130)
+        }
+        field("Preço · \(region.currencySymbol)") {
+            TextField("0", text: $draft.priceText).monospacedDigit().keyboardType(.decimalPad).accessibilityIdentifier("edit.price")
         }
     }
 
     private var areaField: some View {
-        field("bairro") {
-            TextField("Savassi, Naka-Meguro…", text: $draft.area).font(V8Font.text(17)).accessibilityIdentifier("edit.area")
+        field("Bairro") {
+            TextField("Savassi, Naka-Meguro…", text: $draft.area).accessibilityIdentifier("edit.area")
         }
     }
 
-    private var placesCard: some View {
-        FormSection {
-            Button {
-                if draft.placeId != nil {
-                    draft.placeId = nil
-                    draft.hours = nil
-                    draft.placesOn = false
-                } else {
-                    draft.placesOn.toggle()
-                }
-            } label: {
-                FormRow("Google Places", subtitle: placesSubtitle) {
-                    StatusChip(text: draft.placeId != nil ? "ligado" : (draft.placesOn ? "pendente" : "desligado"),
-                               on: draft.placeId != nil)
-                }
+    @ViewBuilder private var placesCard: some View {
+        Button {
+            if draft.placeId != nil {
+                draft.placeId = nil
+                draft.hours = nil
+                draft.placesOn = false
+            } else {
+                draft.placesOn.toggle()
             }
-            .buttonStyle(.plain)
-            RowDivider()
-            Button { editingReservation = true } label: {
-                FormRow("Reserva", subtitle: "vira âncora do dia") {
-                    MonoValue(draft.reservation.map {
-                        "\(region.shortDay($0.at)) \(region.timeString($0.at))"
-                    } ?? "nenhuma", chevron: true)
-                }
-            }
-            .buttonStyle(.plain)
-            RowDivider()
-            Button { editingTickets = true } label: {
-                FormRow("Ingresso", subtitle: "PDF, QR ou código · vira âncora do dia") {
-                    MonoValue(draft.tickets.isEmpty ? "nenhum" : "\(draft.tickets.count)", chevron: true)
-                }
-            }
-            .buttonStyle(.plain)
-            RowDivider()
-            Toggle(isOn: $draft.saveForEnd) {
-                FormRow("Fica pro fim", subtitle: "só entra nos últimos dias da cidade")
-            }
-            .toggleStyle(.must)
-            RowDivider()
-            Toggle(isOn: $draft.allowBudgetException) {
-                FormRow("Vale a exceção", subtitle: "pode estourar o orçamento do dia")
-            }
-            .toggleStyle(.must)
+        } label: {
+            infoRow("Google Places", subtitle: placesSubtitle,
+                    value: draft.placeId != nil ? "ligado" : (draft.placesOn ? "pendente" : "desligado"))
         }
+        .buttonStyle(.plain)
+        Button { editingReservation = true } label: {
+            infoRow("Reserva", subtitle: "vira âncora do dia",
+                    value: draft.reservation.map { "\(region.shortDay($0.at)) \(region.timeString($0.at))" } ?? "nenhuma", chevron: true)
+        }
+        .buttonStyle(.plain)
+        Button { editingTickets = true } label: {
+            infoRow("Ingresso", subtitle: "PDF, QR ou código · vira âncora do dia",
+                    value: draft.tickets.isEmpty ? "nenhum" : "\(draft.tickets.count)", chevron: true)
+        }
+        .buttonStyle(.plain)
+        Toggle(isOn: $draft.saveForEnd) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Fica pro fim")
+                Text("só entra nos últimos dias da cidade").font(.footnote).foregroundStyle(.secondary)
+            }
+        }
+        Toggle(isOn: $draft.allowBudgetException) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Vale a exceção")
+                Text("pode estourar o orçamento do dia").font(.footnote).foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private func infoRow(_ title: String, subtitle: String, value: String, chevron: Bool = false) -> some View {
+        HStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                Text(subtitle).font(.footnote).foregroundStyle(.secondary).lineLimit(2)
+            }
+            Spacer(minLength: 8)
+            Text(value).foregroundStyle(.secondary).monospacedDigit().lineLimit(1)
+            if chevron { Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary) }
+        }
+        .contentShape(Rectangle())
     }
 
     private var placesSubtitle: String {
@@ -211,77 +235,63 @@ struct EditPlaceView: View {
     }
 
     private var windowsPicker: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            MonoLabel("melhor janela", color: V8.mute)
+        field("Melhor janela") {
             FlowLayout(spacing: 8) {
                 ForEach(DayWindow.allCases) { window in
                     let on = draft.windows.contains(window)
                     Button {
                         if on { draft.windows.remove(window) } else { draft.windows.insert(window) }
-                    } label: { Pill(window.label.capitalized, isOn: on) }
-                        .buttonStyle(MustPressStyle())
+                    } label: { V9Chip(window.label.capitalized, isOn: on) }
+                        .buttonStyle(.borderless)
                 }
             }
         }
     }
 
     private var notesField: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            MonoLabel("notas do board", color: V8.mute)
+        field("Notas do board") {
             TextField("o que pedir, onde sentar, quando ir…", text: $draft.notes, axis: .vertical)
                 .accessibilityIdentifier("edit.notes")
-                .font(V8Font.text(16))
                 .lineLimit(3...8)
-                .padding(12)
-                .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
         }
     }
 
-    private var sourcePicker: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            MonoLabel("fonte", color: V8.mute)
+    @ViewBuilder private var sourcePicker: some View {
+        field("Fonte") {
             FlowLayout(spacing: 8) {
                 ForEach(SourceKind.allCases, id: \.self) { kind in
-                    Button { draft.sourceKind = kind } label: { Pill(kind.label, isOn: draft.sourceKind == kind) }
-                        .buttonStyle(MustPressStyle())
+                    Button { draft.sourceKind = kind } label: { V9Chip(kind.label, isOn: draft.sourceKind == kind) }
+                        .buttonStyle(.borderless)
                 }
             }
-            if draft.sourceKind != .board && draft.sourceKind != .manual {
-                TextField("link", text: $draft.sourceURL)
-                    .accessibilityIdentifier("edit.link")
-                    .font(V8Font.mono(14))
-                    .keyboardType(.URL)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .padding(.horizontal, 12)
-                    .frame(minHeight: 48)
-                    .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
-            }
+        }
+        if draft.sourceKind != .board && draft.sourceKind != .manual {
+            TextField("link", text: $draft.sourceURL)
+                .accessibilityIdentifier("edit.link")
+                .keyboardType(.URL)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
         }
     }
 
-    private var locationRow: some View {
-        FormSection {
-            FormRow("Localização", subtitle: draft.approx ? "aproximada · resolve no Places" : "confirmada") {
-                Button {
-                    if let c = services.location.current?.coordinate {
-                        draft.lat = c.latitude
-                        draft.lng = c.longitude
-                        draft.approx = false
-                    }
-                } label: { Pill("Usar minha posição", icon: .voceGps) }
-                    .buttonStyle(MustPressStyle())
-                    .disabled(services.location.current == nil)
-            }
-            Text(String(format: "%.5f, %.5f", draft.lat, draft.lng))
-                .font(V8Font.mono(12))
-                .foregroundStyle(Color.must.secondary)
-                .padding(.bottom, 12)
+    @ViewBuilder private var locationRow: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Localização")
+            Text(draft.approx ? "aproximada · resolve no Places" : "confirmada").font(.footnote).foregroundStyle(.secondary)
+            Text(String(format: "%.5f, %.5f", draft.lat, draft.lng)).font(.footnote.monospacedDigit()).foregroundStyle(.secondary)
         }
+        Button("Usar minha posição") {
+            if let c = services.location.current?.coordinate {
+                draft.lat = c.latitude
+                draft.lng = c.longitude
+                draft.approx = false
+            }
+        }
+        .disabled(services.location.current == nil)
     }
 
-    private func field<Content: View>(_ label: String, @ViewBuilder content: () -> Content) -> some View {
-        CutBox(label: label) { content() }
+    private func field<Content: View>(_ label: String, @ViewBuilder content: @escaping () -> Content) -> some View {
+        V9Field(label) { content() }
     }
 
     // MARK: Ações
@@ -448,27 +458,34 @@ struct ReservationEditor: View {
     @State private var note = ""
 
     var body: some View {
-        CutSheet(title: "Reserva", corner: ["Lugar", region.shortName], height: 130, footer: "Pronto", footerArrow: false, onFooter: {
-            reservation = Reservation(at: at, party: party, note: note.isEmpty ? nil : note)
-            dismiss()
-        }) {
-            DatePicker("Quando", selection: $at)
-                .font(V8Font.text(15))
-                .tint(V8.orange)
-                .environment(\.timeZone, region.timeZone)
-                .environment(\.locale, region.locale)
-            CutBox(label: "pessoas") {
-                Stepper(value: $party, in: 1...12) {
-                    Text("\(party)").font(V8Font.mono(15))
+        NavigationStack {
+            Form {
+                Section {
+                    DatePicker("Quando", selection: $at)
+                        .environment(\.timeZone, region.timeZone)
+                        .environment(\.locale, region.locale)
+                    Stepper("Pessoas: \(party)", value: $party, in: 1...12)
+                    TextField("Nota: confirmado por e-mail, pede pontualidade…", text: $note)
+                }
+                if reservation != nil {
+                    Section {
+                        Button("Remover reserva", role: .destructive) { reservation = nil; dismiss() }
+                    }
                 }
             }
-            CutBox(label: "nota") {
-                TextField("confirmado por e-mail, pede pontualidade…", text: $note).font(V8Font.text(15))
-            }
-            if reservation != nil {
-                CutButton(title: "Remover reserva") { reservation = nil; dismiss() }
+            .navigationTitle("Reserva")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancelar") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Pronto") {
+                        reservation = Reservation(at: at, party: party, note: note.isEmpty ? nil : note)
+                        dismiss()
+                    }
+                }
             }
         }
+        .v9Screen(grouped: true)
         .onAppear {
             if let r = reservation {
                 at = r.at

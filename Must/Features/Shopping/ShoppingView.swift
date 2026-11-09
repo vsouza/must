@@ -1,14 +1,12 @@
 import SwiftData
 import SwiftUI
 
-/// Compras (`design/screens/Compras.png`): previsto e já gasto, cota do Brasil, fileira de categorias que filtra,
-/// um bloco por categoria (cards horizontais) e "Comidinhas pra levar" com os chips das regras.
+/// Compras (V9, `List` nativa): previsto e já gasto, cota do Brasil, categoria que filtra, uma seção por categoria
+/// e "Comidinhas pra levar" com as regras.
 struct ShoppingView: View {
-    @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
     @Environment(AppRouter.self) private var router
     @Environment(RegionStore.self) private var store
-    @Environment(\.tripTheme) private var theme
 
     @Query(sort: [SortDescriptor(\ShoppingItem.createdAt)]) private var items: [ShoppingItem]
     @Query private var places: [Place]
@@ -32,27 +30,30 @@ struct ShoppingView: View {
 
     var body: some View {
         let report = makeReport(items)
-        VStack(spacing: 0) {
-            header(report)
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    alertsRow(report)
-                    if items.isEmpty {
-                        emptyState.padding(.top, 26).padding(.horizontal, 22)
-                    } else {
-                        totalCard(report)
-                        categoryStrip.padding(.top, 22).padding(.horizontal, 22)
-                        ForEach(visibleCategories, id: \.self) { category in
-                            section(category).padding(.top, 30).padding(.horizontal, 22)
-                        }
-                    }
-                    V8BarSpacer()
+        List {
+            alertsRow(report)
+            if items.isEmpty {
+                emptyState
+            } else {
+                totalCard(report)
+                if presentCategories.count > 1 {
+                    Section { categoryPicker }
+                }
+                ForEach(visibleCategories, id: \.self) { category in
+                    section(category)
                 }
             }
-            .scrollIndicators(.hidden)
         }
-        .background(V8.paper.ignoresSafeArea())
-        .toolbar(.hidden, for: .navigationBar)
+        .listStyle(.insetGrouped)
+        .navigationTitle("Compras")
+        .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button { adding = true } label: { Image(systemName: "plus") }
+                    .accessibilityLabel("Adicionar à lista")
+            }
+        }
+        .v9Screen(grouped: true)
         .onAppear {
             ShoppingFlightSync.refresh(context: context, region: region)
             #if DEBUG
@@ -69,24 +70,26 @@ struct ShoppingView: View {
 
     // MARK: Topo
 
-    private func header(_ report: ShoppingReport) -> some View {
-        let bought = items.filter(\.isBought).count
-        return CutScreenHeader(title: "Compras",
-                               corner: ["\(region.shortName) · \(items.count) \(items.count == 1 ? "item" : "itens")", "\(bought) comprados"],
-                               height: 200, onBack: { dismiss() }) {
-            CutCornerButton(systemName: "plus", label: "Adicionar à lista", tint: theme.coverInk) { adding = true }
-        }
-    }
-
-    /// Faixa de ação: as regras da volta (laranja = pede atenção).
+    /// Linha das regras da volta (alerta em vermelho do sistema quando há).
     private func alertsRow(_ report: ShoppingReport) -> some View {
         let alerts = report.alerts.count
-        return Button { router.push(.regrasVolta, on: router.tab) } label: {
-            CutRow(title: "Regras da volta", detail: "\(alerts) \(alerts == 1 ? "alerta" : "alertas")", tone: alerts > 0 ? .orange : .paper) {
-                CutValue(text: "ver", chevron: true)
+        return Section {
+            Button { router.push(.regrasVolta, on: router.tab) } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: alerts > 0 ? "exclamationmark.triangle.fill" : "checkmark.shield")
+                        .font(.title3).foregroundStyle(alerts > 0 ? Color.red : Color.secondary).frame(width: 28)
+                        .accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Regras da volta").font(.body.weight(.semibold)).foregroundStyle(.primary)
+                        Text("\(alerts) \(alerts == 1 ? "alerta" : "alertas")").font(.subheadline).foregroundStyle(.secondary)
+                    }
+                    Spacer(minLength: 8)
+                    Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
+                }
+                .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
         }
-        .buttonStyle(.plain)
     }
 
     // MARK: Previsto e cota
@@ -101,63 +104,31 @@ struct ShoppingView: View {
         let plannedShare = max(0, min(1 - boughtShare, report.usedUSD / report.limits.airAllowanceUSD - boughtShare))
         let planned = report.regionAmount(yen: report.planned)
         let refund = report.regionAmount(yen: tax.refund)
-        return VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("previsto").font(.must.archivo(14)).foregroundStyle(.white.opacity(0.7))
-                Spacer()
-                HStack(spacing: 6) {
-                    Text("já gasto").font(.must.archivo(13)).foregroundStyle(.white.opacity(0.7))
-                    Text(ShoppingReport.money(report.regionAmount(yen: report.spent), currency: currency))
-                        .font(.must.mono(14, .semibold)).foregroundStyle(V8.orange)
+        return Section {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text("Previsto").font(.subheadline).foregroundStyle(.secondary)
+                    Spacer()
+                    Text("já gasto \(ShoppingReport.money(report.regionAmount(yen: report.spent), currency: currency))")
+                        .font(.subheadline.monospacedDigit())
                 }
-            }
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(alignment: .firstTextBaseline, spacing: 10) {
-                    Text(symbol).font(.must.mono(26, .semibold)).foregroundStyle(.white)
-                    MonoNumber(ShoppingReport.yen(planned), size: 34).foregroundStyle(.white)
-                        .dynamicTypeSize(...DynamicTypeSize.xLarge)
-                        .lineLimit(1).minimumScaleFactor(0.6)
-                }
+                Text("\(symbol) \(ShoppingReport.yen(planned))")
+                    .font(.largeTitle.weight(.semibold).monospacedDigit())
+                    .lineLimit(1).minimumScaleFactor(0.6)
                 Text("≈ \(ShoppingReport.money(report.amount(yen: report.planned, in: other), currency: other)) · volta ~\(symbol)\(ShoppingReport.compact(refund))")
-                    .font(.must.mono(13)).foregroundStyle(.white.opacity(0.75))
-                    .lineLimit(2)
+                    .font(.subheadline.monospacedDigit()).foregroundStyle(.secondary).lineLimit(2)
+                ProgressView(value: min(1, boughtShare + plannedShare)).tint(V9.accent)
+                Text("Cota do Brasil: \(ShoppingReport.usdText(report.usedUSD)) de \(ShoppingReport.usdText(report.limits.airAllowanceUSD))")
+                    .font(.subheadline)
+                Text("Tax-free a receber \(ShoppingReport.money(refund, currency: currency))")
+                    .font(.subheadline).foregroundStyle(.secondary)
             }
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    Rectangle().fill(.white.opacity(0.16))
-                    HStack(spacing: 0) {
-                        Rectangle().fill(V8.orange).frame(width: geo.size.width * boughtShare)
-                        Rectangle().fill(V8.white.opacity(0.55)).frame(width: geo.size.width * plannedShare)
-                    }
-                }
-            }
-            .frame(height: 8)
-            let cota = HStack(alignment: .firstTextBaseline, spacing: 0) {
-                Text("cota do Brasil: ").font(.must.archivo(13)).foregroundStyle(.white.opacity(0.7))
-                Text(ShoppingReport.usdText(report.usedUSD)).font(.must.archivo(13, .semibold)).foregroundStyle(.white)
-                Text(" de \(ShoppingReport.usdText(report.limits.airAllowanceUSD))").font(.must.archivo(13)).foregroundStyle(.white.opacity(0.7))
-            }
-            let taxText = Text("tax-free a receber \(ShoppingReport.money(refund, currency: currency))")
-                .font(.must.archivo(13)).foregroundStyle(.white.opacity(0.85))
-            // Uma linha se couber; senão cota e tax-free empilhados, alinhados à esquerda (sem truncar).
-            ViewThatFits(in: .horizontal) {
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    cota.fixedSize()
-                    Spacer(minLength: 4)
-                    taxText.fixedSize()
-                }
-                VStack(alignment: .leading, spacing: 4) {
-                    cota.fixedSize()
-                    taxText.fixedSize()
-                }
-            }
+            .padding(.vertical, 4)
+            .accessibilityElement(children: .combine)
         }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Rectangle().fill(Color.must.ink))
     }
 
-    // MARK: Fileira de categorias
+    // MARK: Categorias
 
     private var presentCategories: [ShoppingCategory] {
         ShoppingCategory.allCases.filter { category in items.contains { $0.category == category } }
@@ -168,35 +139,14 @@ struct ShoppingView: View {
         return presentCategories
     }
 
-    private var categoryStrip: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(alignment: .top, spacing: 14) {
-                ForEach(presentCategories) { category in
-                    Button { filter = filter == category ? nil : category } label: { stripTile(category) }
-                        .buttonStyle(MustPressStyle())
-                }
+    private var categoryPicker: some View {
+        Picker("Categoria", selection: $filter) {
+            Text("Todas · \(items.count)").tag(ShoppingCategory?.none)
+            ForEach(presentCategories) { category in
+                Text("\(category.label) · \(items.filter { $0.category == category }.count)").tag(ShoppingCategory?.some(category))
             }
-            .padding(.vertical, 2)
         }
-        .scrollClipDisabled()
-    }
-
-    private func stripTile(_ category: ShoppingCategory) -> some View {
-        let count = items.filter { $0.category == category }.count
-        let selected = filter == category
-        return VStack(spacing: 6) {
-            ShoppingTile(category: category, size: 58)
-                .overlay {
-                    if selected { Rectangle().strokeBorder(Color.must.ink, lineWidth: 2.5).padding(-4) }
-                }
-            Text("\(category.label) · \(count)")
-                .font(.must.archivo(11, .semibold))
-                .foregroundStyle(Color.must.ink)
-                .multilineTextAlignment(.center)
-                .lineLimit(2)
-                .minimumScaleFactor(0.8)
-                .frame(width: 96)
-        }
+        .pickerStyle(.menu)
     }
 
     // MARK: Seções
@@ -206,28 +156,23 @@ struct ShoppingView: View {
         if category == .food {
             foodSection(list)
         } else if !list.isEmpty {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text(category.label).font(.must.archivo(20, .semibold)).foregroundStyle(Color.must.ink)
-                    Spacer(minLength: 8)
-                    Text(areas(list)).font(.must.archivo(13)).foregroundStyle(Color.must.secondary).lineLimit(1)
-                }
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        ForEach(list) { item in
-                            ShoppingItemCard(item: item, storeName: storeName(item), currency: makeReport(items).currency(of: item)) {
-                                editing = item
-                            }
-                        }
+            Section {
+                ForEach(list) { item in
+                    ShoppingItemCard(item: item, storeName: storeName(item), currency: makeReport(items).currency(of: item)) {
+                        editing = item
                     }
-                    .padding(.vertical, 2)
                 }
-                .scrollClipDisabled()
+            } header: {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(category.label).font(.headline).foregroundStyle(.primary).textCase(nil)
+                    Spacer(minLength: 8)
+                    Text(areas(list)).font(.footnote).textCase(nil).lineLimit(1)
+                }
             }
         }
     }
 
-    /// "Comidinhas pra levar": um chip por item, com a regra que ele passa ou não passa.
+    /// "Comidinhas pra levar": uma linha por item, com a regra que ele passa ou não passa.
     @ViewBuilder private func foodSection(_ list: [ShoppingItem]) -> some View {
         if !list.isEmpty {
             let report = makeReport(items)
@@ -236,37 +181,32 @@ struct ShoppingView: View {
             let litres = report.liquorLitres
             let limit = report.limits.liquorLitres
             let stores = Array(Set(list.map(storeName).filter { !$0.isEmpty })).sorted().prefix(2).joined(separator: " · ")
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text(ShoppingCategory.food.label).font(.must.archivo(20, .semibold)).foregroundStyle(Color.must.ink)
-                    Spacer(minLength: 8)
-                    Text(stores.isEmpty ? "" : "no fim · \(stores)").font(.must.archivo(13)).foregroundStyle(Color.must.secondary).lineLimit(1)
-                }
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(food) { item in
-                            Button { editing = item } label: {
-                                ShoppingRuleChip(text: chipText(item), tone: chipTone(item))
-                            }
-                            .buttonStyle(MustPressStyle())
-                        }
-                        if !alcohol.isEmpty {
-                            ShoppingRuleChip(text: "álcool \(ShoppingReport.litres(litres)) de \(ShoppingReport.litres(limit)) L",
-                                             tone: litres > limit ? .no : .warn)
-                        }
+            Section {
+                ForEach(food) { item in
+                    Button { editing = item } label: {
+                        ShoppingRuleChip(text: chipText(item), tone: chipTone(item))
                     }
-                    .padding(.vertical, 2)
+                    .buttonStyle(.plain)
                 }
-                .scrollClipDisabled()
+                if !alcohol.isEmpty {
+                    ShoppingRuleChip(text: "álcool \(ShoppingReport.litres(litres)) de \(ShoppingReport.litres(limit)) L",
+                                     tone: litres > limit ? .no : .warn)
+                }
+            } header: {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(ShoppingCategory.food.label).font(.headline).foregroundStyle(.primary).textCase(nil)
+                    Spacer(minLength: 8)
+                    Text(stores.isEmpty ? "" : "no fim · \(stores)").font(.footnote).textCase(nil).lineLimit(1)
+                }
             }
         }
     }
 
     private func chipText(_ item: ShoppingItem) -> String {
         let name = item.qty > 1 ? "\(item.name) × \(item.qty)" : item.name
-        if item.flags.isEmpty { return "\(name) · lacrado ✓" }
+        if item.flags.isEmpty { return "\(name) · lacrado" }
         let labels = item.flags.map(\.label).joined(separator: ", ")
-        return "\(name) · \(labels) ✗"
+        return "\(name) · \(labels)"
     }
 
     private func chipTone(_ item: ShoppingItem) -> ShoppingTone {
@@ -290,12 +230,12 @@ struct ShoppingView: View {
     // MARK: Vazio
 
     private var emptyState: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Micro("nada na lista ainda")
-            Text("Toque em + pra anotar o que quer trazer. As regras da volta conferem cada item.").mustMeta()
+        Section {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Nada na lista ainda").font(.headline)
+                Text("Toque em + pra anotar o que quer trazer. As regras da volta conferem cada item.")
+                    .font(.subheadline).foregroundStyle(.secondary)
+            }
         }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.must.surface2, in: Rectangle())
     }
 }

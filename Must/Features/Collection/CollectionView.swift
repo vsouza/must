@@ -1,14 +1,13 @@
 import SwiftData
 import SwiftUI
 
-/// Coleção (`Colecao.png`): um card por "feito". Título + numeral, Cidade · Lista · Data, Organizar (fixar até 3 na
+/// Coleção (V9, `List` nativa): um card por "feito". Agrupar por cidade/lista, Organizar (fixar até 3 na
 /// Vitrine, esconder), seções com contagem ("Tóquio 14 de 52"), grade de 3 colunas e espaços tracejados "a fazer".
 /// Tudo derivado de `Place.done`; nada vai pra rede.
 struct CollectionView: View {
     @Environment(AppRouter.self) private var router
     @Environment(RegionStore.self) private var store
     @Environment(\.modelContext) private var context
-    @Environment(\.dismiss) private var dismiss
 
     @Query private var places: [Place]
 
@@ -31,35 +30,37 @@ struct CollectionView: View {
         let done = slots.compactMap(\.collectible)
         let rare = done.filter(\.isRare).count
 
-        VStack(spacing: 0) {
-            header(done: done.count, total: slots.count, rare: rare)
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    HStack(alignment: .center, spacing: 12) {
-                        BigNumeral("\(done.count)", size: 74, color: V8.orange).fixedSize()
-                        SpecLabel("feitos\n\(rare) raros")
-                        Spacer(minLength: 0)
-                    }
-                    .padding(.top, 18)
-                    .accessibilityElement(children: .ignore)
-                    .accessibilityLabel("Coleção: \(done.count) feitos")
-                    controls.padding(.top, 16)
-                    if done.isEmpty {
-                        empty.padding(.top, 30)
-                    } else {
-                        if !showcase.isEmpty || organizing { vitrine(showcase).padding(.top, 28) }
-                        ForEach(sections) { section in
-                            sectionView(section).padding(.top, 26)
-                        }
-                    }
-                    V8BarSpacer()
+        List {
+            Section {
+                Text("\(done.count) feitos de \(slots.count) · \(rare) raros · \(region.countryName)")
+                    .font(.subheadline).foregroundStyle(.secondary)
+                Picker("Agrupar por", selection: Binding(get: { group }, set: { group = $0; prefs.group = $0 })) {
+                    ForEach(CollectionPrefs.Group.allCases, id: \.self) { Text($0.label).tag($0) }
                 }
-                .padding(.horizontal, 20)
+                .pickerStyle(.segmented)
             }
-            .scrollIndicators(.hidden)
+            if done.isEmpty {
+                Section {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Nada na coleção ainda.").font(.headline)
+                        Text("Cada lugar que você marca como feito vira um card, com número, bairro e data. Os com ingresso ou reserva são os raros.")
+                            .font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            } else {
+                if !showcase.isEmpty || organizing { vitrine(showcase) }
+                ForEach(sections) { section in sectionView(section) }
+            }
         }
-        .background(V8.paper.ignoresSafeArea())
-        .toolbar(.hidden, for: .navigationBar)
+        .listStyle(.insetGrouped)
+        .navigationTitle("Coleção")
+        .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(organizing ? "Pronto" : "Organizar") { withAnimation(.snappy) { organizing.toggle() } }
+            }
+        }
+        .v9Screen(grouped: true)
         .sheet(item: $detail) { item in CollectibleDetailView(item: item, tint: tint) }
         .onAppear {
             guard !loaded else { return }
@@ -71,99 +72,50 @@ struct CollectionView: View {
         #endif
     }
 
-    // MARK: Topo
-
-    private func header(done: Int, total: Int, rare: Int) -> some View {
-        CutScreenHeader(title: "Coleção",
-                        corner: ["Coleção · \(region.countryName)", "\(done) feitos de \(total)",
-                                 CollectibleText.dateLabel(AppClock.now, timeZoneId: region.timeZone.identifier, withYear: true)
-                                     .split(separator: " ").dropFirst().joined(separator: " ")],
-                        height: 200, onBack: { dismiss() })
-    }
-
-    private var controls: some View {
-        HStack(spacing: 12) {
-            HStack(spacing: 0) {
-                ForEach(CollectionPrefs.Group.allCases, id: \.self) { g in
-                    Button {
-                        group = g
-                        prefs.group = g
-                    } label: {
-                        Text(g.label)
-                            .font(V8Font.text(15, weight: .bold))
-                            .foregroundStyle(group == g ? V8.paper : V8.ink)
-                            .padding(.horizontal, 16)
-                            .frame(minHeight: 44)
-                            .background(Rectangle().fill(group == g ? V8.ink : .clear))
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityAddTraits(group == g ? .isSelected : [])
-                }
-            }
-            .overlay(Rectangle().strokeBorder(V8.ink, lineWidth: 2))
-            Spacer(minLength: 0)
-            Button { withAnimation(.snappy) { organizing.toggle() } } label: {
-                Text(organizing ? "Pronto" : "Organizar")
-                    .font(V8Font.text(15, weight: .bold))
-                    .foregroundStyle(organizing ? V8.white : V8.ink)
-                    .padding(.horizontal, 18)
-                    .frame(minHeight: 44)
-                    .background(Rectangle().fill(organizing ? V8.ink : .clear))
-                    .overlay(Rectangle().strokeBorder(V8.ink, lineWidth: 2))
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-        }
-    }
-
-    private var empty: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Nada na coleção ainda.").font(V8Font.display(26)).foregroundStyle(V8.ink)
-            Text("Cada lugar que você marca como feito vira um card, com número, bairro e data. Os com ingresso ou reserva são os raros.")
-                .font(V8Font.text(15)).foregroundStyle(V8.mute).fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
     // MARK: Vitrine e seções
 
     private func vitrine(_ items: [Collectible]) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            sectionHeader("Vitrine", right: "\(items.count) fixados")
+        Section {
             if items.isEmpty {
-                Text("Toque num card em Organizar pra fixar até 3 aqui.").font(V8Font.text(14)).foregroundStyle(V8.mute)
-            }
-            ScrollView(.horizontal) {
-                LazyHStack(spacing: 16) {
-                    ForEach(items) { item in
-                        card(item, width: 150, height: 150, compactNumeral: false)
+                Text("Toque num card em Organizar pra fixar até 3 aqui.").font(.subheadline).foregroundStyle(.secondary)
+            } else {
+                ScrollView(.horizontal) {
+                    LazyHStack(spacing: 16) {
+                        ForEach(items) { item in
+                            card(item, width: 150, height: 150, compactNumeral: false)
+                        }
                     }
+                    .padding(.vertical, 4)
                 }
+                .scrollIndicators(.hidden)
+                .listRowInsets(EdgeInsets(top: 8, leading: V9.gutter, bottom: 8, trailing: V9.gutter))
             }
-            .scrollIndicators(.hidden)
-            .scrollClipDisabled()
+        } header: {
+            sectionHeader("Vitrine", right: "\(items.count) fixados")
         }
     }
 
     private func sectionView(_ section: CollectionSection) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            sectionHeader(section.title, right: section.total.map { "\(section.done.count) de \($0)" } ?? "\(section.done.count)")
+        Section {
             ScrollView(.horizontal) {
                 LazyHStack(spacing: 8) {
                     ForEach(section.done) { item in card(item, width: 106, height: 138, compactNumeral: true) }
                     ForEach(section.todo) { slot in todoCard(slot) }
                 }
+                .padding(.vertical, 4)
             }
             .scrollIndicators(.hidden)
-            .scrollClipDisabled()
+            .listRowInsets(EdgeInsets(top: 8, leading: V9.gutter, bottom: 8, trailing: V9.gutter))
+        } header: {
+            sectionHeader(section.title, right: section.total.map { "\(section.done.count) de \($0)" } ?? "\(section.done.count)")
         }
     }
 
     private func sectionHeader(_ title: String, right: String) -> some View {
         HStack(alignment: .firstTextBaseline) {
-            Text(title).font(V8Font.display(26)).foregroundStyle(V8.ink).lineLimit(1).accessibilityAddTraits(.isHeader)
+            Text(title).font(.headline).foregroundStyle(.primary).textCase(nil).lineLimit(1).accessibilityAddTraits(.isHeader)
             Spacer(minLength: 8)
-            SpecLabel(right, color: V8.mute)
+            Text(right).font(.footnote.monospacedDigit()).textCase(nil)
         }
     }
 
@@ -177,36 +129,37 @@ struct CollectionView: View {
                     if organizing { organizeBadge(item, pinned: isPinned) }
                 }
         }
-        .buttonStyle(MustPressStyle())
+        .buttonStyle(.plain)
         .accessibilityLabel("\(item.title), nº \(item.order)\(item.isRare ? ", raro" : "")")
         .accessibilityHint(organizing ? "Fixar na vitrine" : "Abrir o card")
     }
 
     private func organizeBadge(_ item: Collectible, pinned isPinned: Bool) -> some View {
         HStack(spacing: 6) {
-            Image(systemName: isPinned ? "pin.fill" : "pin").font(.system(size: 13, weight: .bold))
-                .frame(width: 28, height: 28)
-                .background(Rectangle().fill(isPinned ? V8.orange : V8.white)).foregroundStyle(V8.ink)
+            Image(systemName: isPinned ? "pin.fill" : "pin").font(.footnote.weight(.bold))
+                .frame(width: 32, height: 32)
+                .background(.regularMaterial, in: Circle())
+                .foregroundStyle(isPinned ? V9.accent : Color.primary)
             Button { toggleHidden(item.id) } label: {
-                Image(systemName: "eye.slash").font(.system(size: 13, weight: .bold))
-                    .frame(width: 28, height: 28).background(Rectangle().fill(V8.white)).foregroundStyle(V8.ink)
+                Image(systemName: "eye.slash").font(.footnote.weight(.bold))
+                    .frame(width: 32, height: 32).background(.regularMaterial, in: Circle()).foregroundStyle(.primary)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Esconder")
         }
-        .padding(8)
+        .padding(6)
     }
 
     private func todoCard(_ slot: CollectionSlot) -> some View {
-        Rectangle()
-            .strokeBorder(V8.mute.opacity(0.5), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+        RoundedRectangle(cornerRadius: 10, style: .continuous)
+            .strokeBorder(Color.secondary.opacity(0.5), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
             .frame(width: 106, height: 138)
             .overlay(alignment: .bottomLeading) {
                 VStack(alignment: .leading, spacing: 3) {
-                    SpecLabel("A fazer", color: V8.mute)
-                    Text(CollectibleText.latinOnly(slot.name)).font(V8Font.text(14, weight: .semibold)).foregroundStyle(V8.mute).lineLimit(2)
+                    Text("A fazer").font(.caption).foregroundStyle(.secondary)
+                    Text(CollectibleText.latinOnly(slot.name)).font(.footnote.weight(.semibold)).foregroundStyle(.secondary).lineLimit(2)
                 }
-                .padding(12)
+                .padding(10)
             }
             .accessibilityElement(children: .combine)
     }

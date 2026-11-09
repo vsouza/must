@@ -2,12 +2,11 @@ import CoreLocation
 import SwiftData
 import SwiftUI
 
-/// Luz de hoje (Luz.png): o dia pela luz — faixas azul/golden/dura, spots por hora, museu no sol alto.
+/// Luz de hoje (V9): o dia pela luz — faixas azul/golden/dura, spots por hora, museu no sol alto.
 /// Usa o dia aceito quando é de fotografia; senão, a sugestão do solver pra um dia de fotografia.
 struct LightDayView: View {
     let date: Date
 
-    @Environment(\.dismiss) private var dismiss
     @Environment(AppRouter.self) private var router
     @Environment(RegionStore.self) private var store
     @Environment(Services.self) private var services
@@ -41,51 +40,25 @@ struct LightDayView: View {
         let sun = SunService.day(date.addingTimeInterval(12 * 3600), center, timeZone: region.timeZone)
         let weather = services.sync.weather(on: date, region: region, trip: trips.first)
         let rows = self.rows(sun: sun, weather: weather)
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                topBar.padding(.top, 8)
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Luz de hoje").mustTitle()
-                    Text(headline(sun, weather: weather)).mustSerif(18).foregroundStyle(MustGradient.goldText)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .padding(.top, 20)
-
-                dayLine(sun, weather: weather).padding(.top, 18)
-                spots(rows, sun: sun, weather: weather).padding(.top, 14)
-                TabBarSpacer()
+        List {
+            Section {
+                Text(headline(sun, weather: weather)).font(.subheadline).foregroundStyle(.secondary)
+                dayLine(sun, weather: weather)
+            } header: {
+                Text("\(KindLines.weekdayDay(date, region: region)) · \(region.monthShort(date)) · dia de fotografia")
             }
-            .padding(.horizontal, 22)
+            spots(rows, sun: sun, weather: weather)
         }
-        .scrollIndicators(.hidden)
-        .background(alignment: .top) {
-            ZStack(alignment: .top) {
-                Color.must.bg
-                LinearGradient(stops: [.init(color: Color(hex: 0xFFF6E8), location: 0), .init(color: Color(hex: 0xFFE1B8), location: 0.45),
-                                       .init(color: MustGradient.goldStrong, location: 0.78), .init(color: Color(hex: 0x8C9BFF), location: 1)],
-                               startPoint: .top, endPoint: .bottom)
-                    .opacity(0.85)
-                    .frame(height: 380)
-                    .overlay(alignment: .bottom) {
-                        LinearGradient(colors: [.white.opacity(0), .white], startPoint: .top, endPoint: .bottom).frame(height: 140)
-                    }
+        .listStyle(.insetGrouped)
+        .navigationTitle("Luz de hoje")
+        .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button { router.push(.montar(date: date)) } label: { Image(systemName: "calendar.badge.plus") }
+                    .accessibilityLabel("Montar dia de fotografia")
             }
-            .ignoresSafeArea()
         }
-        .toolbar(.hidden, for: .navigationBar)
-    }
-
-    // MARK: Topo
-
-    private var topBar: some View {
-        HStack(spacing: 10) {
-            IconButton(.voltar, style: .glass, label: "Voltar") { dismiss() }
-            Spacer(minLength: 4)
-            Micro("\(KindLines.weekdayDay(date, region: region)) · \(region.monthShort(date)) · dia de fotografia", color: MustGradient.goldText)
-                .lineLimit(1).minimumScaleFactor(0.8)
-            Spacer(minLength: 4)
-            IconButton(.ajustes, style: .glass, label: "Montar dia de fotografia") { router.push(.montar(date: date)) }
-        }
+        .v9Screen(grouped: true)
     }
 
     /// "10h26 de sol · céu limpo até 18h · golden curto, 50 min"
@@ -115,25 +88,24 @@ struct LightDayView: View {
     private func dayLine(_ sun: SunDay, weather: DayWeather?) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             LightTimeline(sun: sun, now: isToday ? now : nil, region: region, coordinate: center)
-            FlowLayout(spacing: 6) {
+            VStack(alignment: .leading, spacing: 4) {
                 if let g = sun.goldenPM {
-                    TintTag("golden \(region.timeString(g.start))–\(region.timeString(g.end))", bg: MustGradient.goldStrong, fg: MustGradient.goldText)
+                    Text("Golden \(region.timeString(g.start))–\(region.timeString(g.end))").monospacedDigit()
                 }
                 if let b = sun.bluePM {
-                    TintTag("azul \(region.timeString(b.start))–\(region.timeString(b.end))", bg: MustGradient.duskLight, fg: MustGradient.duskText)
+                    Text("Hora azul \(region.timeString(b.start))–\(region.timeString(b.end))").monospacedDigit()
                 }
                 let peak = Int(sun.noonElevation.rounded())
-                Tag(peak < 45 ? "sol baixo o dia todo · \(peak)° no pico" : "sol alto 11–15h · \(peak)° no pico")
+                Text(peak < 45 ? "Sol baixo o dia todo · \(peak)° no pico" : "Sol alto 11–15h · \(peak)° no pico")
                 if let a = weather?.hour(at: isToday ? now : date.addingTimeInterval(9 * 3600))?.cloud,
                    let g = sun.goldenPM, let b = weather?.hour(at: g.start)?.cloud {
-                    Tag("nuvens \(a)% → \(b)%")
+                    Text("Nuvens \(a)% → \(b)%").monospacedDigit()
                 }
             }
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
         }
-        .padding(.horizontal, 16).padding(.vertical, 14)
-        .background(Color.white.opacity(0.92), in: RoundedRectangle(cornerRadius: 26, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(Color.white.opacity(0.7)))
-        .shadow(color: Color(hex: 0x121316, opacity: 0.08), radius: 15, y: 10)
+        .padding(.vertical, 4)
     }
 
     // MARK: Spots por hora
@@ -214,74 +186,54 @@ struct LightDayView: View {
         if let b = sun.bluePM, (b.start...b.end).contains(at) { return ("hora azul", KindPalette.blue) }
         if let b = sun.blueAM, (b.start...b.end).contains(at) { return ("hora azul", KindPalette.blue) }
         if let h = sun.hardLight, h.contains(at) { return ("luz dura", KindPalette.hard) }
-        return ("noite", Color.must.ink)
+        return ("noite", Color.primary)
     }
 
-    private func spots(_ rows: [Row], sun: SunDay, weather: DayWeather?) -> some View {
+    @ViewBuilder private func spots(_ rows: [Row], sun: SunDay, weather: DayWeather?) -> some View {
         let next = rows.first { !$0.done && !$0.past }?.id
-        return VStack(alignment: .leading, spacing: 0) {
+        Section {
             if rows.isEmpty {
                 Text("Nenhum spot pra hoje. Adicione lugares na lista Must photo ou monte um dia de fotografia.")
-                    .mustMeta().padding(.vertical, 18)
+                    .font(.subheadline).foregroundStyle(.secondary)
             }
-            ForEach(Array(rows.enumerated()), id: \.element.id) { i, r in
-                if i > 0 && r.id != next && rows[i - 1].id != next { RowDivider() }
+            ForEach(rows) { r in
                 Button { if let id = r.placeId { router.push(.place(id: id)) } } label: {
                     rowView(r, isNext: r.id == next, sun: sun)
                 }
-                .buttonStyle(MustPressStyle())
+                .buttonStyle(.plain)
             }
-            if let line = tomorrowLine(sun: sun) {
-                Text(line).mustSerif(15).foregroundStyle(Color.must.secondary).padding(.top, 12).padding(.bottom, 6)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
+        } header: {
+            Text("Spots por hora")
+        } footer: {
+            if let line = tomorrowLine(sun: sun) { Text(line) }
         }
-        .padding(.horizontal, 16).padding(.vertical, 4)
-        .background(Color.white, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(Color.must.line))
-        .shadow(color: Color(hex: 0x121316, opacity: 0.06), radius: 15, y: 10)
     }
 
     private func rowView(_ r: Row, isNext: Bool, sun: SunDay) -> some View {
         let l = light(r.time, sun: sun)
-        return HStack(alignment: .center, spacing: 14) {
-            Text(region.timeString(r.time)).font(.must.mono(14, .semibold))
-                .foregroundStyle(isNext ? MustGradient.goldText : Color.must.ink)
+        return HStack(alignment: .center, spacing: 12) {
+            Text(region.timeString(r.time)).font(.body.weight(.semibold).monospacedDigit())
+                .foregroundStyle(isNext ? V9.accent : Color.primary)
                 .lineLimit(1).fixedSize()
-                .frame(minWidth: 50, alignment: .leading)
-            // A barra é a luz da hora (golden, dura, azul); refeição fica na cor da lista.
-            Capsule().fill(r.color == .eat ? MustColor.eat.strong : l.color).frame(width: 5, height: 34)
-            VStack(alignment: .leading, spacing: 3) {
+                .frame(minWidth: 52, alignment: .leading)
+            // A barra é a luz da hora (golden, dura, azul): dado, não decoração.
+            Capsule().fill(l.color).frame(width: 4, height: 34).accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
                 HStack(alignment: .firstTextBaseline, spacing: 5) {
-                    Text(r.name).font(.must.archivo(16, .semibold)).foregroundStyle(Color.must.ink).multilineTextAlignment(.leading)
-                    if r.done { Image(systemName: "checkmark").font(.system(size: 10, weight: .semibold)).foregroundStyle(Color.must.secondary) }
+                    Text(r.name).font(.body.weight(.semibold)).multilineTextAlignment(.leading)
+                    if r.done { Image(systemName: "checkmark").font(.footnote).foregroundStyle(.secondary) }
                 }
-                Text(r.meta).font(.must.archivo(13)).foregroundStyle(Color.must.secondary).multilineTextAlignment(.leading)
+                Text(r.meta).font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 6)
             if isNext {
-                Text("próximo").font(.must.archivo(13, .semibold)).foregroundStyle(.white)
-                    .padding(.horizontal, 14).frame(minHeight: 34).background(Capsule().fill(Color.must.ink))
-            } else if r.kind == .art {
-                TintTag("art", bg: MustColor.art.light, fg: MustColor.art.text)
-            } else if r.kind == .place, let c = r.color {
-                Tag(c.label, dot: c.strong)
+                Text("próximo").font(.footnote.weight(.semibold)).foregroundStyle(V9.accent)
             }
         }
-        .padding(.vertical, 12)
-        .padding(.horizontal, isNext ? 10 : 0)
-        .background {
-            if isNext {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(LinearGradient(colors: [MustGradient.goldLight.opacity(0.85), MustGradient.goldStrong.opacity(0.5)],
-                                         startPoint: .topLeading, endPoint: .bottomTrailing))
-            }
-        }
-        .padding(.horizontal, isNext ? -10 : 0)
-        .padding(.vertical, isNext ? 4 : 0)
-        .opacity(r.done || r.past ? 0.5 : 1)
+        .opacity(r.done || r.past ? 0.55 : 1)
         .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
     }
 
     /// "Amanhã: 70% de nuvens à tarde — se quiser outro golden, é hoje."
@@ -310,7 +262,7 @@ struct LightTimeline: View {
             let barY: CGFloat = 22, barH: CGFloat = 10
             func x(_ t: Date) -> CGFloat { CGFloat(t.timeIntervalSince(start) / end.timeIntervalSince(start)) * size.width }
             let track = Path(roundedRect: CGRect(x: 0, y: barY, width: size.width, height: barH), cornerRadius: 5)
-            ctx.fill(track, with: .color(Color.must.line))
+            ctx.fill(track, with: .color(Color(uiColor: .quaternarySystemFill)))
             func band(_ i: DateInterval?, _ color: Color) {
                 guard let i else { return }
                 ctx.fill(Path(roundedRect: CGRect(x: x(i.start), y: barY, width: max(2, x(i.end) - x(i.start)), height: barH), cornerRadius: 3),
@@ -321,8 +273,8 @@ struct LightTimeline: View {
             band(sun.goldenPM, KindPalette.goldArc)
             band(sun.blueAM, KindPalette.blue)
             band(sun.bluePM, KindPalette.blue)
-            let mono = Font.must.mono(9, .semibold)
-            let grey = Color.must.secondary
+            let mono = Font.caption2.monospacedDigit().weight(.semibold)
+            let grey = Color.secondary
             if let r = sun.sunrise { ctx.draw(Text(region.timeString(r)).font(mono).foregroundStyle(grey), at: CGPoint(x: max(0, x(r) - 14), y: 50), anchor: .leading) }
             let peak = Int(sun.noonElevation.rounded())
             ctx.draw(Text("\(region.timeString(sun.solarNoon)) pico \(peak)°").font(mono).foregroundStyle(grey), at: CGPoint(x: x(sun.solarNoon), y: 50), anchor: .center)
@@ -330,9 +282,9 @@ struct LightTimeline: View {
             if let e = sun.bluePM?.end { ctx.draw(Text(region.timeString(e)).font(mono).foregroundStyle(grey), at: CGPoint(x: min(size.width, x(e) + 14), y: 50), anchor: .trailing) }
             if let now, now > start, now < end {
                 let nx = x(now)
-                ctx.stroke(Path { $0.move(to: CGPoint(x: nx, y: 6)); $0.addLine(to: CGPoint(x: nx, y: barY + barH + 4)) }, with: .color(Color.must.ink), lineWidth: 2.5)
-                ctx.fill(Path(ellipseIn: CGRect(x: nx - 4, y: 2, width: 8, height: 8)), with: .color(Color.must.ink))
-                ctx.draw(Text(region.timeString(now)).font(mono).foregroundStyle(Color.must.ink), at: CGPoint(x: nx, y: 60), anchor: .center)
+                ctx.stroke(Path { $0.move(to: CGPoint(x: nx, y: 6)); $0.addLine(to: CGPoint(x: nx, y: barY + barH + 4)) }, with: .color(Color.primary), lineWidth: 2.5)
+                ctx.fill(Path(ellipseIn: CGRect(x: nx - 4, y: 2, width: 8, height: 8)), with: .color(Color.primary))
+                ctx.draw(Text(region.timeString(now)).font(mono).foregroundStyle(Color.primary), at: CGPoint(x: nx, y: 60), anchor: .center)
             }
         }
         .frame(height: 66)
