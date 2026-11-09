@@ -31,11 +31,15 @@ struct AtalhosPanel: View {
     private var now: Date { AppClock.now }
     private var today: Date { region.calendar.startOfDay(for: now) }
 
+    /// Conteúdo pra dentro de uma `List`: a seção dos atalhos e a das linhas perto.
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            grid
-            linesSection.padding(.top, 26)
+        Section("Atalhos") {
+            ForEach(cards) { card in
+                Button { tap(card) } label: { AtalhoCardView(card: card) }
+                    .buttonStyle(.plain)
+            }
         }
+        linesSection
     }
 
     private func close(_ action: AtalhosAction?) { if let action { onAction(action) } }
@@ -44,21 +48,6 @@ struct AtalhosPanel: View {
 
     private var cards: [AtalhoCard] {
         [walletCard, todayCard, mapCard, AtalhosRules.sosCard(region: region)]
-    }
-
-    private var grid: some View {
-        let columns = AtalhosRules.columns(for: typeSize)
-        let rows = stride(from: 0, to: cards.count, by: columns).map { Array(cards[$0..<min($0 + columns, cards.count)]) }
-        return Grid(horizontalSpacing: 10, verticalSpacing: 10) {
-            ForEach(rows, id: \.first?.id) { row in
-                GridRow {
-                    ForEach(row) { card in
-                        Button { tap(card) } label: { AtalhoCardView(card: card) }
-                            .buttonStyle(MustPressStyle())
-                    }
-                }
-            }
-        }
     }
 
     private var transitCard: WalletItem? {
@@ -140,19 +129,22 @@ struct AtalhosPanel: View {
     }
 
     @ViewBuilder private var linesSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            if let lines = nearbyLines {
-                SectionHead(title: "Linhas perto", trailing: "\(lines.station) · \(lines.walkMinutes) min")
-                FlowLayout(spacing: 6) {
+        if let lines = nearbyLines {
+            Section {
+                FlowLayout(spacing: 8) {
                     ForEach(lines.lines) { line in AtalhoLineChip(line: line) }
                 }
+                .padding(.vertical, 4)
                 if let note = lines.note {
-                    MonoLabel(note, size: 10, color: V8.mute).lineLimit(2).fixedSize(horizontal: false, vertical: true)
+                    Text(note).font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 }
-            } else {
-                SectionHead(title: "Linhas perto", trailing: nil)
+            } header: {
+                Text("Linhas perto · \(lines.station) · \(lines.walkMinutes) min")
+            }
+        } else {
+            Section("Linhas perto") {
                 Text(region.profile.transit?.noStationText ?? "Nenhuma estação a pé daqui.")
-                    .font(V8Font.text(14)).foregroundStyle(V8.mute).fixedSize(horizontal: false, vertical: true)
+                    .font(.subheadline).foregroundStyle(.secondary)
             }
         }
     }
@@ -164,83 +156,44 @@ struct AtalhosPanel: View {
     }
 }
 
-/// Card da grade (`.a` do `Atalhos.html`): rótulo mono, título 16/700 em até duas linhas, detalhe de uma linha.
+/// Linha de atalho: rótulo pequeno, título e detalhe quebrando (nada cortado); chevron à direita. Alerta = vermelho do sistema.
 struct AtalhoCardView: View {
     var card: AtalhoCard
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text(card.label.uppercased())
-                .font(V8Font.mono(9, weight: .semibold))
-                .tracking(0.9)
-                .foregroundStyle(labelColor)
-                .lineLimit(2)
-            Spacer(minLength: 8)
-            Text(card.title)
-                .font(V8Font.text(17, weight: .bold))
-                .tracking(-0.2)
-                .foregroundStyle(ink)
-                .lineLimit(2)
-                .minimumScaleFactor(0.7)
-                .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: 8)
-            Text(card.detail)
-                .font(V8Font.text(12))
-                .foregroundStyle(ink.opacity(0.75))
-                .lineLimit(1)
-                .truncationMode(.tail)
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, minHeight: 104, maxHeight: .infinity, alignment: .topLeading)
-        .background(Rectangle().fill(fill))
-        .overlay {
-            if card.tone == .white || card.tone == .alert {
-                Rectangle().strokeBorder(card.tone == .alert ? V8.orange : V8.ink, lineWidth: 2)
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(card.label).font(.footnote.weight(.semibold)).foregroundStyle(card.tone == .alert ? Color.red : Color.secondary)
+                Text(card.title.replacingOccurrences(of: "\n", with: " ")).font(.body.weight(.semibold)).foregroundStyle(.primary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(card.detail).font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary).accessibilityHidden(true)
         }
+        .padding(.vertical, 4)
+        .frame(minHeight: 44)
+        .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(card.label): \(card.title.replacingOccurrences(of: "\n", with: " ")). \(card.detail)")
     }
-
-    private var fill: Color {
-        switch card.tone {
-        case .ink: V8.ink
-        case .orange: V8.orange
-        case .white, .alert: V8.white
-        }
-    }
-
-    private var ink: Color { card.tone == .ink ? V8.white : V8.ink }
-
-    private var labelColor: Color {
-        switch card.tone {
-        case .ink: V8.muteDark
-        case .alert: V8.orangeDeep
-        default: V8.ink.opacity(0.75)
-        }
-    }
 }
 
-/// Chip de linha (`.ln`): círculo na cor oficial com o código, nome latino.
+/// Chip de linha: círculo na cor oficial com o código, nome latino.
 private struct AtalhoLineChip: View {
     var line: AtalhoLine
 
     var body: some View {
-        HStack(spacing: 5) {
+        HStack(spacing: 6) {
             Text(line.code)
-                .font(V8Font.mono(8, weight: .bold))
-                .foregroundStyle(V8.white)
-                .lineLimit(1)
-                .minimumScaleFactor(0.6)
-                .frame(width: 20, height: 20)
+                .font(.caption2.weight(.bold)).foregroundStyle(.white)
+                .lineLimit(1).minimumScaleFactor(0.6)
+                .frame(width: 24, height: 24)
                 .background(Circle().fill(Color(hex: line.rgb == 0 ? V8.Hex.ink : line.rgb)))
-            Text(line.name).font(V8Font.text(12, weight: .semibold)).foregroundStyle(V8.ink).lineLimit(1)
+            Text(line.name).font(.footnote.weight(.semibold)).lineLimit(1)
         }
-        .padding(.leading, 3)
-        .padding(.trailing, 9)
-        .frame(minHeight: 26)
-        .background(Rectangle().fill(V8.paper))
-        .overlay(Rectangle().strokeBorder(V8.ink, lineWidth: 2))
+        .padding(.leading, 4).padding(.trailing, 10).padding(.vertical, 4)
+        .background(V9.fill, in: Capsule())
         .accessibilityElement(children: .combine)
         .accessibilityLabel("linha \(line.name)")
     }

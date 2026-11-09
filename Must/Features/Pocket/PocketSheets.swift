@@ -1,7 +1,7 @@
 import AVFoundation
 import SwiftUI
 
-/// Detalhe de um card do Bolso: o valor grande e as linhas do país. Saldo da Suica leva pra Carteira (anotar à mão).
+/// Detalhe de um card do Bolso (V9): o valor e as linhas do país numa lista nativa. Saldo da Suica leva pra Carteira.
 struct PocketDetailSheet: View {
     var card: PocketCard
     var region: Region
@@ -10,49 +10,33 @@ struct PocketDetailSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .top) {
-                    V8SpecStack(lines: [card.label, "offline"]).padding(.top, 14)
-                    Spacer()
-                    V8CornerButton(systemName: "xmark", label: "Fechar") { dismiss() }
-                }
-                Text(card.value.replacingOccurrences(of: "\n", with: " "))
-                    .font(V8Font.display(40))
-                    .tracking(-1.2)
-                    .foregroundStyle(V8.ink)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 22)
-                Text(card.detail)
-                    .font(V8Font.text(15))
-                    .foregroundStyle(V8.mute)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 4)
-                VStack(alignment: .leading, spacing: 0) {
-                    ForEach(Array(card.more.enumerated()), id: \.offset) { index, line in
-                        HStack(alignment: .firstTextBaseline, spacing: 12) {
-                            Text(String(format: "%02d", index + 1))
-                                .font(V8Font.mono(11))
-                                .foregroundStyle(V8.orangeDeep)
-                            Text(line)
-                                .font(V8Font.text(15))
-                                .foregroundStyle(V8.ink)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                        .padding(.vertical, 12)
-                        Rectangle().fill(V8.ink.opacity(0.12)).frame(height: 1)
+        NavigationStack {
+            List {
+                Section {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(card.value.replacingOccurrences(of: "\n", with: " ")).font(.title.weight(.bold)).monospacedDigit()
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text(card.detail).font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                     }
+                    .padding(.vertical, 4)
+                    .accessibilityElement(children: .combine)
                 }
-                .padding(.top, 20)
+                if !card.more.isEmpty {
+                    Section {
+                        ForEach(Array(card.more.enumerated()), id: \.offset) { _, line in
+                            Text(line).fixedSize(horizontal: false, vertical: true)
+                        }
+                    } footer: { Text("Funciona sem internet.") }
+                }
                 if let onWallet {
-                    V8Button("Anotar o saldo na Carteira", .ink, action: onWallet).padding(.top, 24)
+                    Section { Button("Anotar o saldo na Carteira", action: onWallet) }
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 16)
-            .padding(.bottom, 30)
+            .navigationTitle(card.label.capitalized)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Fechar") { dismiss() } } }
+            .v9Screen(grouped: true)
         }
-        .background(V8.paper.ignoresSafeArea())
     }
 }
 
@@ -83,37 +67,32 @@ struct PocketConverterSheet: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .top) {
-                V8SpecStack(lines: ["Câmbio · offline", rateLine]).padding(.top, 14)
-                Spacer()
-                V8CornerButton(systemName: "xmark", label: "Fechar") { dismiss() }
+        NavigationStack {
+            Form {
+                Section {
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        Text(toBRL ? foreignSymbol : "R$").font(.title2).foregroundStyle(.secondary)
+                        TextField("0", text: $text)
+                            .font(.largeTitle.weight(.semibold)).monospacedDigit()
+                            .keyboardType(.decimalPad)
+                            .focused($focused)
+                            .accessibilityLabel("Valor em \(toBRL ? foreignSymbol : "reais")")
+                    }
+                } footer: { Text("Câmbio offline · \(rateLine)") }
+                Section("Vale") {
+                    Text(result).font(.largeTitle.weight(.bold)).monospacedDigit().foregroundStyle(V9.accent)
+                        .minimumScaleFactor(0.5).lineLimit(1)
+                }
+                Section {
+                    Button(toBRL ? "Trocar: reais → \(foreignSymbol)" : "Trocar: \(foreignSymbol) → reais") { toBRL.toggle() }
+                }
             }
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(toBRL ? foreignSymbol : "R$").font(V8Font.display(34)).foregroundStyle(V8.mute)
-                TextField("0", text: $text)
-                    .font(V8Font.numeral(54))
-                    .foregroundStyle(V8.ink)
-                    .keyboardType(.decimalPad)
-                    .focused($focused)
-                    .accessibilityLabel("Valor em \(toBRL ? foreignSymbol : "reais")")
-            }
-            .padding(.top, 26)
-            Rectangle().fill(V8.ink.opacity(0.2)).frame(height: 1)
-            Text(result)
-                .font(V8Font.numeral(44))
-                .foregroundStyle(V8.orangeDeep)
-                .lineLimit(1)
-                .minimumScaleFactor(0.5)
-                .padding(.top, 14)
-            V8Button(toBRL ? "Trocar: reais → \(foreignSymbol)" : "Trocar: \(foreignSymbol) → reais", .line) { toBRL.toggle() }
-                .padding(.top, 22)
-            Spacer(minLength: 0)
+            .navigationTitle("Câmbio")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Fechar") { dismiss() } } }
+            .v9Screen(grouped: true)
+            .onAppear { focused = true }
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 16)
-        .background(V8.paper.ignoresSafeArea())
-        .onAppear { focused = true }
     }
 
     private var rateLine: String {
@@ -132,47 +111,33 @@ struct PocketPhrasesSheet: View {
 
     var body: some View {
         let phrases = PocketRules.phrases(for: region)
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .top) {
-                    V8SpecStack(lines: ["Frases · \(phrases.count)", "toque pra ouvir · offline"]).padding(.top, 14)
-                    Spacer()
-                    V8CornerButton(systemName: "xmark", label: "Fechar") { dismiss() }
-                }
-                Text("Frases").font(V8Font.display(44)).tracking(-1.3).foregroundStyle(V8.ink).padding(.top, 20)
-                VStack(spacing: 0) {
+        NavigationStack {
+            List {
+                Section {
                     ForEach(phrases) { phrase in
                         Button { speaker.speak(phrase.speech, language: PocketRules.country(region).speechLanguage) } label: {
-                            HStack(alignment: .center, spacing: 14) {
+                            HStack(spacing: 14) {
                                 VStack(alignment: .leading, spacing: 3) {
-                                    Text(phrase.latin).font(V8Font.text(18, weight: .bold)).foregroundStyle(V8.ink)
-                                        .fixedSize(horizontal: false, vertical: true)
-                                    Text(phrase.meaning).font(V8Font.text(14)).foregroundStyle(V8.mute)
-                                        .fixedSize(horizontal: false, vertical: true)
+                                    Text(phrase.latin).font(.headline).foregroundStyle(.primary).fixedSize(horizontal: false, vertical: true)
+                                    Text(phrase.meaning).font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                                 }
                                 Spacer(minLength: 8)
                                 Image(systemName: speaker.speaking == phrase.speech ? "speaker.wave.2.fill" : "speaker.wave.2")
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundStyle(V8.ink)
-                                    .frame(width: 40, height: 40)
-                                    .background(Circle().fill(speaker.speaking == phrase.speech ? V8.orange : V8.white))
+                                    .font(.title3).foregroundStyle(speaker.speaking == phrase.speech ? V9.accent : .secondary)
+                                    .frame(width: 44, height: 44)
                             }
-                            .padding(.vertical, 12)
                             .contentShape(Rectangle())
                         }
-                        .buttonStyle(.plain)
                         .accessibilityLabel("\(phrase.latin), \(phrase.meaning)")
                         .accessibilityHint("toca o áudio")
-                        Rectangle().fill(V8.ink.opacity(0.12)).frame(height: 1)
                     }
-                }
-                .padding(.top, 14)
+                } footer: { Text("\(phrases.count) frases · toque pra ouvir · funciona sem internet") }
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 16)
-            .padding(.bottom, 30)
+            .navigationTitle("Frases")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Fechar") { dismiss() } } }
+            .v9Screen(grouped: true)
         }
-        .background(V8.paper.ignoresSafeArea())
     }
 }
 
