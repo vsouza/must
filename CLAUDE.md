@@ -51,7 +51,7 @@ O app tem que ser **bem visual** (foto em todo lugar que mostra um lugar ou bair
 - Commits pequenos, mensagem em português, um prompt = um ou mais commits.
 
 ## Como o trabalho está dividido
-Os prompts em `prompts/` são executados em ordem (01 → 25; a rodada atual é a `prompts/RODADA-22.md` (23 + 24 com agentes em paralelo); depois dela, o `25-produto-dia-a-dia.md` e o `26-capa-inteligente.md` em paralelo; o 22 foi substituído). Cada um diz o que entregar e como verificar. Antes de cada prompt, olhar os PNGs das telas citadas.
+Os prompts em `prompts/` são executados em ordem (01 → 32). **A rodada atual é o `prompts/32-v9-navegacao-simples.md` (09/11/2026): ele para o que estiver em andamento do prompt 31 e tem prioridade sobre o corte (prompt 30) e sobre a navegação de `design/v9/README.md` onde os dois discordam.** Cada prompt diz o que entregar e como verificar. Antes de cada prompt, olhar os PNGs das telas citadas.
 
 ## Tema da viagem (03/11/2026, pedido do Vinicius) — prompt 20
 - Ao entrar numa viagem/região, o app ganha a **bandeira do país** (círculo 22 pt ao lado da data, vetor, offline) e um **tom leve** do país: lavado no topo das telas principais, tinta dos selos, ponto dos títulos de seção e da aba ativa, rótulo da cidade.
@@ -122,3 +122,11 @@ Os prompts em `prompts/` são executados em ordem (01 → 25; a rodada atual é 
 - Sem servidor: tudo passa pelo compartilhar do iOS (WhatsApp) e fica só no aparelho. Bloco **Grupo** na aba Viagem: Pessoas (`Companion`) · Votar (`PlacePoll`, cartaz "A ou B?" 1080×1920, você marca os votos; vencedor ganha "+ dia") · Acertar contas (`Expense.paidBy`/`splitWith`, lógica em `Must/Services/Group/Settlement.swift`, em centavos inteiros) · Mandar o dia.
 - O quero responde perguntas sem IA com `QuestionAnswerer` (dá tempo, preço, horário, como chego, vale a pena, agora) a partir do board, `DayClock` e `DaySolver`; nunca inventa número.
 - Rótulos do mapa só em letras latinas: o style usa `name:en` quando a feição tem `script` (não latina), senão `name`.
+
+## v9 · navegação simples (09/11/2026, pedido do Vinicius) — prompt 32 · vale sobre o corte e o prompt 31
+- Base: `docs/v9-analise-e-navegacao.md`. Premissas da Mad Owl: simplicidade, sofisticação, inovação; zero UX; HIG é regra; offline e zero travamento; IA obrigatória e invisível.
+- **Zero gesto escondido**: todo destino tem controle visível com nome; gesto só como atalho redundante; nada abre por deslize lateral. Quero abre por toque no campo "Pedir algo…" ou pela aba de busca; sem régua puxável, cutucão ou passo a passo.
+- **Contexto estável**: escolhido à mão › parada do dia › último confirmado › hotel/cidade. GPS só propõe ("Você chegou em X · ver perto") com precisão < 100 m e parado ≥ 2 min; no Explorar o contexto é o centro do mapa.
+- **Hoje** é uma resposta simples (próxima parada com Ir, ou 3 "Agora vale" com motivo + Montar o dia), sem cartaz, foto de fundo ou numeral gigante. **Explorar** é o mapa com sheet nativa de três alturas e camadas (Meus Musts, Hoje, Agora, Indicados).
+- **Visual calmo (V9)**: fundos e texto do sistema, modo escuro, um acento laranja dessaturado (#D9572B claro / #F07A4E escuro) só em ação e "agora", SF Pro com Dynamic Type, materiais do sistema. Sem trama, arcos, régua preta ou numeral gigante nas telas da Fase 1.
+
