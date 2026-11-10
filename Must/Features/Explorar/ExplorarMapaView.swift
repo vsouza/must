@@ -304,11 +304,11 @@ struct ExplorarMapaView: View {
         VStack(spacing: 0) {
             VStack(spacing: 10) {
                 grabber(available: available)
-                V9OfflineChip()
-                V9AskField { router.openQuero() }
+                offlineChip
+                askField
                 if model.selected == nil { summaryRow }
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, 20)
             .padding(.bottom, 10)
             .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { h in
                 headerHeight = h
@@ -320,8 +320,7 @@ struct ExplorarMapaView: View {
                                          pinDay: pinDay, notice: notice, photoRefs: model.photoRefs[item.id] ?? [],
                                          onClose: { select(nil) }, onGo: { go(item) }, onFit: { fit(item) },
                                          onOpen: { open(item) }, onSave: { save(item) })
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 16)
+                        .padding(.bottom, 76)
                         .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { pinContentHeight = $0 }
                 }
                 .scrollBounceBehavior(.basedOnSize)
@@ -334,17 +333,10 @@ struct ExplorarMapaView: View {
         }
         .frame(maxWidth: .infinity)
         .frame(height: height, alignment: .top)
-        // Material como camada atrás (não `.background(_:in:)`): dentro do ScrollView o texto `.secondary` com vibrância
-        // do material sumia (a vibrância não alcança a camada do scroll).
-        .background {
-            UnevenRoundedRectangle(topLeadingRadius: 28, bottomLeadingRadius: 20, bottomTrailingRadius: 20, topTrailingRadius: 28,
-                                   style: .continuous)
-                .fill(.regularMaterial)
-        }
-        .clipShape(UnevenRoundedRectangle(topLeadingRadius: 28, bottomLeadingRadius: 20, bottomTrailingRadius: 20,
-                                          topTrailingRadius: 28, style: .continuous))
-        .padding(.horizontal, 8)
-        .padding(.bottom, 6)
+        // O corte: papel de ponta a ponta com régua preta grossa em cima, sem raio e sem sombra; fica no claro com o mapa escuro.
+        .background(V8.paper.ignoresSafeArea(edges: .bottom))
+        .overlay(alignment: .top) { Rectangle().fill(V8.ink).frame(height: 6) }
+        .v8Legacy()
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Painel do mapa")
     }
@@ -352,7 +344,7 @@ struct ExplorarMapaView: View {
     /// Pegador: toque sobe um degrau (no grande, recolhe); arrastar muda a altura (atalho, como a sheet do sistema).
     private func grabber(available: CGFloat) -> some View {
         Button { setDetent(detent.next) } label: {
-            Capsule().fill(Color.secondary.opacity(0.5)).frame(width: 36, height: 5)
+            Rectangle().fill(V8.orange).frame(width: 40, height: 4)
                 .frame(maxWidth: .infinity, minHeight: 22)
                 .contentShape(Rectangle())
         }
@@ -384,17 +376,16 @@ struct ExplorarMapaView: View {
         HStack(spacing: 8) {
             Button { setDetent(detent == .collapsed ? .medium : .collapsed) } label: {
                 HStack(spacing: 8) {
-                    Circle().fill(V9.accent).frame(width: 8, height: 8).accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(detent == .large ? "No mapa · \(model.visible.count)" : model.summaryLine)
-                            .font(.subheadline.weight(.semibold)).foregroundStyle(.primary)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text((detent == .large ? "No mapa · \(model.visible.count)" : model.summaryLine).uppercased())
+                            .font(V8Font.mono(11, weight: .semibold)).tracking(1).foregroundStyle(V8.ink)
                         if let area = model.centerArea?.name {
-                            Text("perto de \(area)").font(.footnote).foregroundStyle(.secondary).lineLimit(1)
+                            Text("perto de \(area)").font(V8Font.text(13)).foregroundStyle(V8.mute).lineLimit(1)
                         }
                     }
                     Spacer(minLength: 4)
                     Image(systemName: detent == .collapsed ? "chevron.up" : "chevron.down")
-                        .font(.footnote.weight(.semibold)).foregroundStyle(.secondary)
+                        .font(.system(size: 12, weight: .bold)).foregroundStyle(V8.ink)
                         .accessibilityHidden(true)
                 }
                 .frame(minHeight: 44)
@@ -403,11 +394,38 @@ struct ExplorarMapaView: View {
             .buttonStyle(.plain)
             .accessibilityHint(detent == .collapsed ? "Mostra os 3 lugares que valem agora perto do centro do mapa" : "Recolhe o painel")
             if detent != .collapsed {
-                Button(detent == .large ? "Agora vale" : "Ver lista") { setDetent(detent == .large ? .medium : .large) }
-                    .font(.subheadline)
-                    .buttonStyle(.bordered)
-                    .buttonBorderShape(.capsule)
+                Button { setDetent(detent == .large ? .medium : .large) } label: {
+                    CutChip(text: detent == .large ? "Agora vale" : "Ver lista", minHeight: 44)
+                }
+                .buttonStyle(.plain)
             }
+        }
+    }
+
+    /// "Pedir algo…": campo visível com nome, borda de 2 pt (abre o Quero).
+    private var askField: some View {
+        Button { router.openQuero() } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "magnifyingglass").font(.system(size: 15, weight: .bold))
+                Text("PEDIR ALGO…").font(V8Font.mono(12, weight: .semibold)).tracking(1).lineLimit(1)
+                Spacer(minLength: 0)
+                Image(systemName: "mic.fill").font(.system(size: 14, weight: .bold)).accessibilityHidden(true)
+            }
+            .foregroundStyle(V8.ink)
+            .padding(.horizontal, 12)
+            .frame(maxWidth: .infinity, minHeight: 48)
+            .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Pedir algo")
+        .accessibilityHint("Abre o Quero")
+    }
+
+    @ViewBuilder private var offlineChip: some View {
+        if services.connectivity.status == .offline {
+            CutTag(text: "sem internet · offline ok", filled: true)
+                .accessibilityLabel("Sem internet. O app funciona offline com o que já está no aparelho.")
         }
     }
 
