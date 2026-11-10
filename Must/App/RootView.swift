@@ -131,11 +131,6 @@ private struct PlaceholderScreen: View {
 }
 
 extension AppRouter.Sheet {
-    /// Sheets que ainda são V8 (ficam no claro). As outras já são V9 (Fase 2 do prompt 32).
-    var legacyLight: Bool {
-        switch self {
-        case .viagens: return true
-        default: return false
-        }
-    }
+    /// Sheets que ainda são V8 (ficam no claro). Desde a Fase 2 do prompt 32, nenhuma: voltar com um `case` se surgir.
+    var legacyLight: Bool { false }
 }
