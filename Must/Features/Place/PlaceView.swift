@@ -2,7 +2,7 @@ import CoreLocation
 import SwiftData
 import SwiftUI
 
-/// Lugar V9 (prompt 32 §5): uma tela só, "chegue por onde chegar". Foto normal em cima (cor cheia, sem texto por cima, crédito
+/// Lugar no corte (rodada 33, sobre o V9 do prompt 32 §5): uma tela só, "chegue por onde chegar". Foto normal em cima (cor cheia, sem texto por cima, crédito
 /// embaixo), nome, estado ("aberto até 22h", com a regra de confiança do `PlaceTrust`), ações visíveis Ir · Encaixar hoje ·
 /// Guardar · Dicas · Feito (`PlaceActionPlan`) e as seções em cartões do sistema. Nome local "mostre ao atendente" continua
 /// sendo o único lugar com escrita local. Foto: uma por lugar, do disco; sem nada no disco, uma `/media` só pro Lugar aberto.
@@ -90,7 +90,7 @@ struct PlaceView: View {
                             onPaste: { router.sheet = .addLink(url: nil, listId: nil) },
                             // TODO(r23:A): fluxo próprio de foto do cartaz (Vision + EventExtractor); por ora o leitor de ingresso.
                             onPoster: { router.sheet = .ticketImport(inboxId: nil) })
-                .padding(.bottom, 28)
+                .padding(.horizontal, 20).padding(.vertical, 16)
         }
     }
 
@@ -104,22 +104,21 @@ struct PlaceView: View {
         return ScrollViewReader { proxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    hero(place)
-                    VStack(alignment: .leading, spacing: 20) {
-                        titleBlock(place, anchor: anchor, stop: stop)
-                        actionBar(place, anchor: anchor, inDay: stop != nil)
-                        if let anchor { anchorCard(anchor, place: place) }
-                        fichaCard(anchor != nil ? anchorCells(place, anchor: anchor!)
-                                  : PlaceFicha.cells(place, region: region, now: now, here: here, walkMaxKm: walkMax, queueFirst: true))
-                        notaCard(place)
-                        lowerSection(place)
-                    }
-                    .padding(.horizontal, V9.gutter)
-                    .padding(.top, 16)
-                    .padding(.bottom, 32)
+                    band(place, anchor: anchor, stop: stop)
+                    CutRule()
+                    creditStrip(place)
+                    distanceStrip(place, anchor: anchor)
+                    fichaBlock(anchor != nil ? anchorCells(place, anchor: anchor!)
+                               : PlaceFicha.cells(place, region: region, now: now, here: here, walkMaxKm: walkMax, queueFirst: true))
+                    if let anchor { anchorBlock(anchor, place: place) }
+                    actionBar(place, anchor: anchor, inDay: stop != nil)
+                    notaBlock(place)
+                    lowerSection(place)
+                    V8BarSpacer()
                 }
             }
             .scrollIndicators(.hidden)
+            .ignoresSafeArea(edges: .top)
             #if DEBUG
             .task {
                 let screen = DebugFlags.string("debugScreen") ?? ""
@@ -142,15 +141,9 @@ struct PlaceView: View {
                 scrollToTips = false
             }
         }
-        .navigationTitle(place.name)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) { moreMenu(place) }
-            ToolbarItem(placement: .topBarTrailing) {
-                Button { router.sheet = .assistant } label: { Image(systemName: "sparkles") }.accessibilityLabel("Assistente")
-            }
-        }
-        .v9Screen(grouped: true)
+        .background(V8.paper.ignoresSafeArea())
+        .toolbar(.hidden, for: .navigationBar)
+        .v8Legacy()
         .onAppear { services.sync.refreshIfStale(place, region: region) }
         // Marcou "Feito" (folha de gasto): o momento do colecionável (prompt 27 §4, agente D).
         .onChange(of: place.isDone) { was, isDone in
@@ -175,38 +168,68 @@ struct PlaceView: View {
         }
     }
 
-    // MARK: Foto
+    // MARK: Foto (o corte: P&B x cor do lugar, nome em Bricolage, régua)
 
-    /// Foto normal (cor cheia, sem tinta e sem texto por cima), placeholder de cor enquanto não há; crédito sempre embaixo.
-    @ViewBuilder private func hero(_ place: Place) -> some View {
+    /// Bloco da foto: a foto que já está no disco (tratada) ou só a cor do lugar; cantos fixos ← e ✦ · …; nome grande embaixo.
+    /// Toque na foto abre ela inteira, em cor.
+    private func band(_ place: Place, anchor: PlaceFicha.Anchor?, stop: (number: Int, total: Int, isNow: Bool, at: Date)?) -> some View {
         let url = photoURL(place, page: galleryPage)
-        if url != nil || !noPhotos {
-            VStack(alignment: .leading, spacing: 6) {
-                V8Photo(url: url, placeholder: Color(uiColor: .secondarySystemFill))
-                    .frame(maxWidth: .infinity)
-                    .frame(height: typeSize >= .accessibility1 ? 200 : 260)
-                    .overlay {
-                        if url == nil {
-                            Image(systemName: "photo").font(.largeTitle).foregroundStyle(.tertiary).accessibilityHidden(true)
-                        }
-                    }
-                    .contentShape(Rectangle())
-                    .onTapGesture { if url != nil { viewer = ViewerStart(page: galleryPage) } }
-                    .accessibilityHidden(url == nil)
-                    .accessibilityLabel("Foto de \(place.name)")
-                    .accessibilityAddTraits(.isButton)
-                HStack(spacing: 8) {
-                    creditLine(place)
+        let local = PlaceFicha.localLine(place)
+        var tags: [String] = []
+        if let stop { tags.append(stop.isNow ? "agora · parada \(stop.number)/\(stop.total)" : "parada \(stop.number) · \(region.timeString(stop.at))") }
+        else if place.isDone, let done = place.done { tags.append("feito · \(region.shortDay(done.at))") }
+        let live = PlaceEmCartaz.nowCount(emCartaz(place), now: now, calendar: region.calendar)
+        if live > 0 { tags.append("em cartaz · \(live) agora") }
+        return CutBand(photo: url) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(alignment: .top, spacing: 10) {
+                    CutCornerButton(systemName: "chevron.left", label: "Voltar", tint: V8.white) { dismiss() }
                     Spacer(minLength: 8)
-                    if pages(place) > 1 {
-                        Button { withAnimation { galleryPage = (galleryPage + 1) % pages(place) } } label: {
-                            Label("Próxima foto", systemImage: "photo.on.rectangle")
-                                .font(.footnote)
-                        }
-                    }
+                    SpecStack(lines: PlaceFicha.specLines(place), color: V8.white.opacity(0.9), alignment: .trailing)
+                    moreMenu(place)
+                    CutCornerButton(systemName: "sparkles", label: "Assistente", tint: V8.white) { router.sheet = .assistant }
                 }
-                .padding(.horizontal, V9.gutter)
+                .padding(.top, 58)
+                Spacer(minLength: 12)
+                VStack(alignment: .leading, spacing: 6) {
+                    if !tags.isEmpty {
+                        Text(tags.joined(separator: " · ").uppercased()).font(V8Font.mono(10, weight: .semibold)).tracking(1)
+                            .foregroundStyle(V8.white).lineLimit(2)
+                    }
+                    Text(place.name)
+                        .font(V8Font.display(48)).tracking(-1.5)
+                        .lineLimit(3).minimumScaleFactor(0.55)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .accessibilityAddTraits(.isHeader)
+                    // Nome local "mostre ao atendente": o único lugar com escrita local na interface.
+                    if !local.isEmpty { Text(local).font(V8Font.text(15)).opacity(0.9).lineLimit(2) }
+                }
             }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 16)
+        }
+        .frame(height: typeSize >= .accessibility1 ? 440 : 390)
+        .contentShape(Rectangle())
+        .onTapGesture { if url != nil { viewer = ViewerStart(page: galleryPage) } }
+        .accessibilityElement(children: .contain)
+    }
+
+    /// Crédito da foto (sempre visível quando há foto) e "próxima foto".
+    @ViewBuilder private func creditStrip(_ place: Place) -> some View {
+        if photoURL(place, page: galleryPage) != nil || pages(place) > 1 {
+            HStack(spacing: 8) {
+                creditLine(place)
+                Spacer(minLength: 8)
+                if pages(place) > 1 {
+                    Button { withAnimation { galleryPage = (galleryPage + 1) % pages(place) } } label: {
+                        Text("PRÓXIMA FOTO").font(V8Font.mono(10, weight: .semibold)).tracking(0.8).foregroundStyle(V8.ink)
+                            .padding(.horizontal, 8).frame(minHeight: 44).contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 20).padding(.vertical, 2)
+            .overlay(alignment: .bottom) { IndexRule() }
         }
     }
 
@@ -219,39 +242,43 @@ struct PlaceView: View {
             Button {
                 if let url = photo?.pageURL { UIApplication.shared.open(url) }
             } label: {
-                Text(text).font(.caption).foregroundStyle(.secondary).lineLimit(2).multilineTextAlignment(.leading)
+                Text(text.uppercased()).font(V8Font.mono(8.5)).tracking(0.6).foregroundStyle(V8.mute).lineLimit(1).minimumScaleFactor(0.7).multilineTextAlignment(.leading)
             }
             .buttonStyle(.plain)
             .accessibilityLabel(photo?.credit ?? "foto")
         }
     }
 
-    // MARK: Nome, estado, ações
+    // MARK: Estado e ações
 
-    private func titleBlock(_ place: Place, anchor: PlaceFicha.Anchor?, stop: (number: Int, total: Int, isNow: Bool, at: Date)?) -> some View {
+    /// Numeral de distância (com significado) + "aberto até ..." (regra de confiança do `PlaceTrust`). Sem GPS, só o estado.
+    @ViewBuilder private func distanceStrip(_ place: Place, anchor: PlaceFicha.Anchor?) -> some View {
         let status = PlaceFicha.openTag(place, region: region, now: now)
-        var detail: [String] = []
-        if let stop {
-            detail.append(stop.isNow ? "agora · parada \(stop.number) de \(stop.total)" : "parada \(stop.number) · \(region.timeString(stop.at))")
-        } else if place.isDone, let done = place.done {
-            detail.append("feito · \(region.shortDay(done.at))")
+        let distance = here.flatMap { place.distance(from: $0) }
+        let kinds = [anchor == nil ? PlaceFicha.queueTag(place, region: region) : nil, PlaceFicha.coordTag(place)].compactMap { $0 }
+        if status != nil || distance != nil || !kinds.isEmpty {
+            HStack(alignment: .center, spacing: 14) {
+                if let distance {
+                    let km = distance >= 1000
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(km ? (distance / 1000).formatted(.number.locale(Locale(identifier: "pt_BR")).precision(.fractionLength(1)))
+                             : "\(max(10, Int((distance / 10).rounded()) * 10))")
+                            .font(V8Font.display(44, width: 78, weight: 800)).tracking(-2).foregroundStyle(V8.orange).lineLimit(1)
+                        Text(km ? "KM DAQUI" : "METROS DAQUI").font(V8Font.mono(8.5)).tracking(0.8).foregroundStyle(V8.mute)
+                    }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("a \(Walk.distanceText(distance)) daqui")
+                }
+                VStack(alignment: .leading, spacing: 4) {
+                    if let status { Text(status).font(V8Font.text(17, weight: .bold)).foregroundStyle(V8.ink).fixedSize(horizontal: false, vertical: true) }
+                    if !kinds.isEmpty { Text(kinds.joined(separator: " · ")).font(V8Font.text(13)).foregroundStyle(V8.mute) }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(.horizontal, 20).padding(.vertical, 14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .overlay(alignment: .bottom) { IndexRule() }
         }
-        if anchor == nil, let q = PlaceFicha.queueTag(place, region: region) { detail.append(q) }
-        if let coord = PlaceFicha.coordTag(place) { detail.append(coord) }
-        let live = PlaceEmCartaz.nowCount(emCartaz(place), now: now, calendar: region.calendar)
-        if live > 0 { detail.append("em cartaz · \(live) agora") }
-        let kind = PlaceFicha.specLines(place).joined(separator: " · ")
-        return VStack(alignment: .leading, spacing: 6) {
-            Text(place.name).font(.largeTitle.weight(.bold)).lineLimit(3).accessibilityAddTraits(.isHeader)
-            Text(kind).font(.subheadline).foregroundStyle(.secondary)
-            if let status { Text(status).font(.headline).foregroundStyle(stop?.isNow == true ? V9.accent : .primary) }
-            if !detail.isEmpty { Text(detail.joined(separator: " · ")).font(.subheadline).foregroundStyle(.secondary) }
-            // Nome local "mostre ao atendente": o único lugar com escrita local na interface.
-            let local = PlaceFicha.localLine(place)
-            if !local.isEmpty { Text(local).font(.subheadline).foregroundStyle(.secondary) }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityElement(children: .combine)
     }
 
     private var tipsLabel: String {
@@ -264,59 +291,88 @@ struct PlaceView: View {
                              isDone: place.isDone, tipsCount: tips.tips.count)
     }
 
-    /// Ir (primário) · Feito, e em grade: Encaixar hoje · Guardar · Dicas. Tudo visível, nada só por gesto.
+    /// Ir (bloco laranja de ponta a ponta) e, em grade de blocos de régua: Encaixar hoje · Guardar · Dicas · Feito. Tudo visível.
     private func actionBar(_ place: Place, anchor: PlaceFicha.Anchor?, inDay: Bool) -> some View {
         let plan = actionPlan(place, anchor: anchor, inDay: inDay)
-        return VStack(spacing: 10) {
+        return VStack(spacing: 0) {
             Button { router.push(.ir(placeId: place.id)) } label: {
-                Label(plan.goTitle, systemImage: "arrow.triangle.turn.up.right.diamond.fill").frame(maxWidth: .infinity)
+                HStack {
+                    Text(plan.goTitle.uppercased()).font(V8Font.mono(14, weight: .semibold)).tracking(1.2)
+                    Spacer(minLength: 8)
+                    Image(systemName: "arrow.up.right").font(.system(size: 16, weight: .bold))
+                }
+                .foregroundStyle(V8.ink)
+                .padding(.horizontal, 20)
+                .frame(maxWidth: .infinity, minHeight: 60, alignment: .leading)
+                .background(V8.orange)
+                .contentShape(Rectangle())
             }
-            .v9Primary()
+            .buttonStyle(.plain)
+            .accessibilityLabel(plan.goTitle)
             .contextMenu {
                 Button("Apple Maps · a pé") { MapsLinks.openApple(to: place.coordinate, name: place.name) }
                 Button("Apple Maps · transporte") { MapsLinks.openApple(to: place.coordinate, name: place.name, mode: .transit) }
                 Button("Google Maps") { MapsLinks.openGoogle(to: place.coordinate, mode: .transit) }
             }
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 10)], spacing: 10) {
-                Button {
+            HStack(spacing: 0) {
+                block(plan.fitTitle, enabled: plan.fitEnabled) {
                     let at = DayInsert.suggestedTime(now: now, region: region, place: place)
                     DayInsert.add(place, at: at, region: region, context: context)
                     addedAt = at
-                } label: { Label(plan.fitTitle, systemImage: "calendar.badge.plus").frame(maxWidth: .infinity) }
-                    .disabled(!plan.fitEnabled)
-                Button {
+                }
+                block(plan.saveTitle, filled: plan.saveIsOn) {
                     place.saveForEnd.toggle()
                     try? context.save()
-                } label: { Label(plan.saveTitle, systemImage: plan.saveIsOn ? "bookmark.fill" : "bookmark").frame(maxWidth: .infinity) }
-                Button { tipsVisible = true; scrollToTips = true } label: {
-                    Label(plan.tipsTitle, systemImage: "text.bubble").frame(maxWidth: .infinity)
                 }
-                Button {
-                    if plan.doneIsUndo { PlaceActions.undoDone(place, context: context) } else { router.sheet = .expense(placeId: place.id) }
-                } label: { Label(plan.doneTitle, systemImage: plan.doneIsUndo ? "arrow.uturn.backward" : "checkmark.circle").frame(maxWidth: .infinity) }
             }
-            .v9Secondary()
+            HStack(spacing: 0) {
+                block(plan.tipsTitle) { tipsVisible = true; scrollToTips = true }
+                block(plan.doneTitle) {
+                    if plan.doneIsUndo { PlaceActions.undoDone(place, context: context) } else { router.sheet = .expense(placeId: place.id) }
+                }
+            }
         }
+        .overlay(alignment: .bottom) { IndexRule() }
     }
 
-    /// O bilhete da âncora (reserva/ingresso): hora, quem, nota; com QR abre o ingresso.
-    private func anchorCard(_ anchor: PlaceFicha.Anchor, place: Place) -> some View {
+    /// Bloco quadrado da grade de ações: borda de régua, mono caixa alta; `filled` = tinta cheia.
+    private func block(_ title: String, enabled: Bool = true, filled: Bool = false, action: @escaping () -> Void) -> some View {
+        Button { if enabled { action() } } label: {
+            Text(title.uppercased()).font(V8Font.mono(12, weight: .semibold)).tracking(1)
+                .foregroundStyle(filled ? V8.paper : V8.ink)
+                .opacity(enabled ? 1 : 0.4)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity, minHeight: 56)
+                .background(filled ? V8.ink : Color.clear)
+                .overlay(Rectangle().stroke(V8.ink, lineWidth: 1))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(title)
+        .accessibilityAddTraits(enabled ? [] : .isStaticText)
+    }
+
+    /// O bilhete da âncora (reserva/ingresso): hora grande, quem, nota; com QR abre o ingresso.
+    private func anchorBlock(_ anchor: PlaceFicha.Anchor, place: Place) -> some View {
         Button {
             if let id = anchor.ticketId { router.push(.ticket(placeId: place.id, ticketId: id)) }
         } label: {
             HStack(alignment: .firstTextBaseline, spacing: 14) {
-                Text(region.timeString(anchor.at)).font(.title.weight(.semibold)).monospacedDigit().fixedSize()
+                Text(region.timeString(anchor.at)).font(V8Font.mono(26, weight: .semibold)).foregroundStyle(V8.ink).fixedSize()
                 VStack(alignment: .leading, spacing: 2) {
                     let people = anchor.people.map { " · \($0) \($0 == 1 ? "pessoa" : "pessoas")" } ?? ""
                     Text("\(anchor.kind == .ticket ? "Ingresso" : "Reserva") · \(Proximos.dayLabel(anchor.at, now: now, calendar: region.calendar))\(people)")
-                        .font(.body.weight(.semibold))
+                        .font(V8Font.text(16, weight: .bold)).foregroundStyle(V8.ink)
                     let note = anchorNote(anchor)
-                    if !note.isEmpty { Text(note).font(.subheadline).foregroundStyle(.secondary) }
+                    if !note.isEmpty { Text(note).font(V8Font.text(13)).foregroundStyle(V8.ink.opacity(0.8)) }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                if anchor.hasQR { Image(systemName: "qrcode").font(.title3).foregroundStyle(V9.accent).accessibilityLabel("QR salvo") }
+                if anchor.hasQR { Image(systemName: "qrcode").font(.title3).foregroundStyle(V8.ink).accessibilityLabel("QR salvo") }
             }
-            .v9Card(grouped: true)
+            .padding(.horizontal, 20).padding(.vertical, 14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(V8.orange)
+            .overlay(alignment: .bottom) { IndexRule() }
         }
         .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
@@ -359,44 +415,42 @@ struct PlaceView: View {
 
     // MARK: Ficha e nota
 
-    /// Ficha: rótulo à esquerda, valor à direita, em lista agrupada. No Dynamic Type grande o valor desce pra baixo do rótulo.
-    private func fichaCard(_ cells: [PlaceFicha.Cell]) -> some View {
+    /// Ficha: rótulo mono à esquerda, valor à direita, uma régua de 2 pt entre as linhas. No Dynamic Type grande o valor desce.
+    private func fichaBlock(_ cells: [PlaceFicha.Cell]) -> some View {
         VStack(spacing: 0) {
-            ForEach(Array(cells.enumerated()), id: \.element.label) { i, cell in
+            ForEach(cells, id: \.label) { cell in
                 ViewThatFits(in: .horizontal) {
                     HStack(alignment: .firstTextBaseline, spacing: 12) {
-                        Text(cell.label.capitalizedFirst).font(.subheadline).foregroundStyle(.secondary).fixedSize()
+                        MonoLabel(cell.label, size: 10, color: V8.mute).fixedSize()
                         Spacer(minLength: 8)
-                        Text(cell.value).font(.body).monospacedDigit().multilineTextAlignment(.trailing)
+                        Text(cell.value).font(V8Font.mono(13, weight: .semibold)).foregroundStyle(V8.ink).multilineTextAlignment(.trailing)
                     }
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(cell.label.capitalizedFirst).font(.subheadline).foregroundStyle(.secondary)
-                        Text(cell.value).font(.body).monospacedDigit()
+                        MonoLabel(cell.label, size: 10, color: V8.mute)
+                        Text(cell.value).font(V8Font.mono(13, weight: .semibold)).foregroundStyle(V8.ink)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .padding(.vertical, 11)
+                .padding(.horizontal, 20).padding(.vertical, 12)
+                .overlay(alignment: .bottom) { IndexRule() }
                 .accessibilityElement(children: .combine)
-                if i < cells.count - 1 { Divider() }
             }
         }
-        .padding(.horizontal, 16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(V9.groupedCard, in: RoundedRectangle(cornerRadius: V9.cornerRadius, style: .continuous))
     }
 
-    /// "Sua nota": linha de cartão, toque edita.
-    private func notaCard(_ place: Place) -> some View {
+    /// "Sua nota": linha de papel, toque edita.
+    private func notaBlock(_ place: Place) -> some View {
         Button { router.sheet = .editPlace(id: place.id) } label: {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Sua nota").font(.subheadline).foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 6) {
+                MonoLabel("sua nota", size: 10, color: V8.mute)
                 Text(place.notes.isEmpty ? "Sem nota ainda. Toque pra escrever." : place.notes)
-                    .font(.body)
-                    .foregroundStyle(place.notes.isEmpty ? .secondary : .primary)
-                    .multilineTextAlignment(.leading)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .font(V8Font.text(15)).foregroundStyle(place.notes.isEmpty ? V8.mute : V8.ink)
+                    .multilineTextAlignment(.leading).fixedSize(horizontal: false, vertical: true)
             }
-            .v9Card(grouped: true)
+            .padding(.horizontal, 20).padding(.vertical, 14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .overlay(alignment: .bottom) { IndexRule() }
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityHint("editar a nota")
@@ -406,29 +460,25 @@ struct PlaceView: View {
 
     // MARK: Seções (painel do tipo, dicas, amigos, filmes)
 
-    /// Painéis ainda no desenho antigo ficam num cartão claro fixo (legíveis no modo escuro) até a Fase 2 redesenhar.
+    /// Painéis (tipo, dicas, amigos, filmes) em faixa de papel com régua embaixo.
     private func legacyCard<C: View>(@ViewBuilder _ content: () -> C) -> some View {
         content()
             .padding(.vertical, 10)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(V8.paper, in: RoundedRectangle(cornerRadius: V9.cornerRadius, style: .continuous))
+            .background(V8.paper)
+            .overlay(alignment: .bottom) { IndexRule() }
             .environment(\.colorScheme, .light)
     }
 
     private func linkRow(_ title: String, systemImage: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 12) {
-                Image(systemName: systemImage).foregroundStyle(.secondary).frame(width: 28).accessibilityHidden(true)
-                Text(title).font(.body).foregroundStyle(.primary).frame(maxWidth: .infinity, alignment: .leading)
-                Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
-            }
-            .v9Card(grouped: true)
+            CutRow(title: title) { Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundStyle(V8.ink) }
         }
         .buttonStyle(.plain)
     }
 
     private func lowerSection(_ place: Place) -> some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: 0) {
             emCartazBlock(place, onInk: false)
             if let panel = kindPanel(place) { legacyCard { panel }.id("panel") }
             if PocketRules.cashOnly(notes: place.notes) || region.profile.money?.cashCommon == true {
@@ -493,7 +543,7 @@ struct PlaceView: View {
                 Button("Desfazer feito", systemImage: "arrow.uturn.backward") { PlaceActions.undoDone(place, context: context) }
             }
         } label: {
-            Image(systemName: "ellipsis.circle")
+            Image(systemName: "ellipsis").font(.system(size: 16, weight: .bold)).foregroundStyle(V8.white).frame(width: 44, height: 44).overlay(Rectangle().stroke(V8.white, lineWidth: 2)).contentShape(Rectangle())
         }
         .accessibilityLabel("Mais")
     }
