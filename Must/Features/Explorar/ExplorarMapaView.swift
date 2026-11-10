@@ -62,7 +62,7 @@ struct ExplorarMapaView: View {
     var body: some View {
         GeometryReader { geo in
             let available = max(collapsedHeight, geo.size.height - topReserve)
-            let height = fitted(panelHeight(available: available))
+            let height = fitted(panelHeight(available: available), available: available)
             ZStack(alignment: .top) {
                 map(bottomInset: height)
                     .ignoresSafeArea()
@@ -291,9 +291,10 @@ struct ExplorarMapaView: View {
     }
 
     /// Com um pino aberto, o painel cobre só o que o conteúdo precisa (sem vazio embaixo); nunca passa da altura da posição.
-    private func fitted(_ height: CGFloat) -> CGFloat {
+    /// Pino aberto: o painel mede o cartão inteiro (ações incluídas, acima da faixa "agora"), até 85% da tela.
+    private func fitted(_ height: CGFloat, available: CGFloat) -> CGFloat {
         guard model.selected != nil, drag == 0, detent != .large, pinContentHeight > 0, headerHeight > 0 else { return height }
-        return min(height, max(collapsedHeight, headerHeight + pinContentHeight + 8))
+        return min(available * 0.85, max(collapsedHeight, headerHeight + pinContentHeight + 8))
     }
 
     private func setDetent(_ d: ExplorarDetent) {

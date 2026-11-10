@@ -70,7 +70,8 @@ struct QueroView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     fieldBlock
-                    verbs
+                    // Com resultado, os chips saem: o que foi achado sobe (o campo continua aberto pra mudar o pedido).
+                    if !hasResult { verbs }
                     results
                     guardarSection
                 }
@@ -127,7 +128,7 @@ struct QueroView: View {
                 }
                 Spacer(minLength: 6)
                 Text(hasResult ? "Quero em \(areaName)" : "\(areaName), quero")
-                    .font(V8Font.display(hasResult ? 34 : 46))
+                    .font(V8Font.display(hasResult ? 28 : 46))
                     .tracking(-1.2)
                     .lineLimit(2)
                     .minimumScaleFactor(0.6)
@@ -138,7 +139,7 @@ struct QueroView: View {
             .padding(.top, 10)
             .padding(.bottom, 14)
         }
-        .frame(height: hasResult ? 140 : 190)
+        .frame(height: hasResult ? 104 : 190)
     }
 
     /// O campo grande "quero ___" no bloco laranja (`CorteFluxo.png` tela 2).
