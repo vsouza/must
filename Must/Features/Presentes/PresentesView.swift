@@ -6,8 +6,10 @@ import SwiftUI
 /// a caixa marca comprado (e abre o painel do valor pago); "perto" em laranja só no marcador; campo "Novo presente…" no fim
 /// (aceita "nome pra Ana", "nome — Ana" e link colado). Deslizar: comprado / apagar (com desfazer). Toque na linha abre a ficha.
 struct PresentesView: View {
-      @Environment(\.modelContext) private var context
+    @Environment(\.modelContext) private var context
     @Environment(AppRouter.self) private var router
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.tripTheme) private var theme
     @Environment(RegionStore.self) private var store
     @Environment(Services.self) private var services
 
@@ -42,15 +44,8 @@ struct PresentesView: View {
         let near = Dictionary(nearby.map { ($0.giftId, $0) }, uniquingKeysWith: { a, _ in a })
         let groups = GiftLogic.groups(filter.apply(gifts), nearby: Set(near.keys))
         list(groups: groups, near: near)
-            .navigationTitle("Presentes")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button { adding = true } label: { Image(systemName: "plus") }
-                        .accessibilityLabel("Novo presente com detalhes")
-                }
-            }
-            .v9Screen(grouped: true)
+            .toolbar(.hidden, for: .navigationBar)
+            .v8Legacy()
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 VStack(spacing: 8) {
                     if let deleted { undoBar(deleted) }
@@ -82,23 +77,41 @@ struct PresentesView: View {
 
     // MARK: Filtro
 
+    /// Faltam · Todos · pessoa: chips à vista.
     private var filters: some View {
         let people = GiftLogic.people(gifts)
-        return Picker("Mostrar", selection: $filter) {
-            Text("Faltam").tag(GiftFilter.pending)
-            Text("Todos").tag(GiftFilter.all)
-            if people.count > 1 { ForEach(people, id: \.self) { Text($0).tag(GiftFilter.person($0)) } }
+        var items: [CutChipRow.Item] = [.init(id: "pending", title: "Faltam", on: filter == .pending),
+                                        .init(id: "all", title: "Todos", on: filter == .all)]
+        if people.count > 1 { for p in people { items.append(.init(id: "p:\(p)", title: p, on: filter == .person(p))) } }
+        return CutChipRow(items: items) { id in
+            if id == "pending" { filter = .pending } else if id == "all" { filter = .all } else { filter = .person(String(id.dropFirst(2))) }
         }
-        .pickerStyle(.menu)
     }
 
     // MARK: Lista
 
+    private func clearRow<V: View>(_ view: V) -> some View {
+        view.listRowInsets(EdgeInsets()).listRowSeparator(.hidden).listRowBackground(V8.paper)
+    }
+
     private func list(groups: [GiftGroup], near: [String: GiftNearby]) -> some View {
+        VStack(spacing: 0) {
+        CutScreenHeader(title: "Presentes", corner: ["Viagem · \(region.shortName)", GiftLogic.pendingOfText(gifts)], height: 170,
+                                         onBack: { dismiss() }) {
+                    CutCornerButton(systemName: "plus", label: "Novo presente com detalhes", tint: theme.coverInk) { adding = true }
+                }
         List {
             Section {
-                Text(summary).font(.subheadline).foregroundStyle(.secondary)
-                if !gifts.isEmpty { filters }
+                clearRow(HStack(alignment: .center, spacing: 12) {
+                    BigNumeral("\(GiftLogic.pendingCount(gifts))", size: 64, color: V8.orange).fixedSize()
+                    SpecLabel("faltam\n\(summary.replacingOccurrences(of: GiftLogic.pendingText(gifts) + " · ", with: ""))")
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal, 20).padding(.vertical, 14)
+                .overlay(alignment: .bottom) { IndexRule() }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("\(GiftLogic.pendingCount(gifts)) faltam. \(summary)"))
+                if !gifts.isEmpty { clearRow(filters.padding(.vertical, 12)) }
             }
             if gifts.isEmpty {
                 note("Cole um link ou escreva o que alguém pediu. \u{201C}Kit Kat pra Ana\u{201D} já põe na lista da Ana.")
@@ -112,23 +125,36 @@ struct PresentesView: View {
                     groupHeader(group)
                 }
             }
-            Section { addField(groups: groups) }
+            Section { clearRow(addField(groups: groups)) }
+            clearRow(Color.clear.frame(height: 24))
         }
-        .listStyle(.insetGrouped)
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
         .scrollDismissesKeyboard(.interactively)
+        }
+        .background(V8.paper.ignoresSafeArea())
     }
 
     private func note(_ text: String) -> some View {
-        Section { Text(text).font(.body).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true) }
+        Section {
+            clearRow(Text(text).font(V8Font.text(15)).foregroundStyle(V8.mute).fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 20).padding(.vertical, 12))
+        }
     }
 
     private func groupHeader(_ group: GiftGroup) -> some View {
         HStack(alignment: .firstTextBaseline) {
-            Text(group.person).font(.headline).foregroundStyle(.primary).lineLimit(1)
+            Text(group.person).font(V8Font.display(22)).tracking(-0.4).foregroundStyle(V8.ink).lineLimit(1)
             Spacer(minLength: 8)
-            Text(money.text(group.subtotal)).font(.subheadline.monospacedDigit()).lineLimit(1)
+            Text(money.text(group.subtotal)).font(V8Font.mono(13, weight: .semibold)).foregroundStyle(V8.ink).lineLimit(1)
         }
         .textCase(nil)
+        .padding(.horizontal, 20).padding(.top, 14).padding(.bottom, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(V8.paper)
+        .overlay(alignment: .top) { IndexRule() }
+        .overlay(alignment: .bottom) { IndexRule() }
+        .listRowInsets(EdgeInsets())
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
     }
@@ -137,27 +163,41 @@ struct PresentesView: View {
         let place = GiftLogic.store(of: gift, places: places)
         let dim = gift.isBought
         return HStack(alignment: .center, spacing: 0) {
-            GiftCheckbox(done: gift.isBought, onInk: false) { toggle(gift) }
-                .padding(.leading, -8)
+            Button { toggle(gift) } label: {
+                ZStack {
+                    Rectangle().fill(dim ? V8.ink : Color.clear)
+                    Rectangle().stroke(V8.ink, lineWidth: 2)
+                    if dim { Image(systemName: "checkmark").font(.system(size: 13, weight: .bold)).foregroundStyle(V8.paper) }
+                }
+                .frame(width: 26, height: 26)
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(dim ? "Comprado" : "Marcar comprado")
+            .padding(.leading, 12)
             Button { router.push(.presente(id: gift.id), on: .viagem) } label: {
                 HStack(alignment: .center, spacing: 10) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(GiftLogic.titleWithQty(gift))
-                            .font(.body.weight(.semibold))
+                            .font(V8Font.text(17, weight: .bold))
                             .strikethrough(dim)
-                            .foregroundStyle(dim ? Color.secondary : Color.primary)
+                            .foregroundStyle(dim ? V8.mute : V8.ink)
                             .lineLimit(3)
                         if let line = meta(gift, storeName: place?.name) {
-                            Text(line).font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
+                            Text(line).font(V8Font.text(13)).foregroundStyle(V8.mute).lineLimit(2)
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     if near != nil, !dim {
-                        Label("perto", systemImage: "location.fill")
-                            .font(.footnote.weight(.semibold)).foregroundStyle(V9.accent)
-                            .fixedSize()
+                        HStack(spacing: 5) {
+                            Circle().fill(V8.orange).frame(width: 7, height: 7)
+                            Text("PERTO").font(V8Font.mono(10, weight: .semibold)).tracking(0.8).foregroundStyle(V8.orangeDeep)
+                        }
+                        .fixedSize()
                     }
                 }
+                .padding(.vertical, 10)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -166,16 +206,24 @@ struct PresentesView: View {
                 Button { editing = gift } label: { Label("Editar", systemImage: "pencil") }
                 Button(role: .destructive) { remove(gift) } label: { Label("Apagar", systemImage: "trash") }
             } label: {
-                Image(systemName: "ellipsis.circle").font(.title3).foregroundStyle(.secondary)
+                Image(systemName: "ellipsis")
+                    .font(.system(size: 15, weight: .bold)).foregroundStyle(V8.ink)
+                    .frame(width: 40, height: 40)
+                    .overlay(Rectangle().stroke(V8.ink, lineWidth: 2))
                     .frame(width: 44, height: 44).contentShape(Rectangle())
             }
             .accessibilityLabel("Ações de \(gift.title)")
+            .padding(.trailing, 8)
         }
+        .overlay(alignment: .bottom) { IndexRule() }
+        .listRowInsets(EdgeInsets())
+        .listRowSeparator(.hidden)
+        .listRowBackground(V8.paper)
         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
             Button(role: .destructive) { remove(gift) } label: { Label("Apagar", systemImage: "trash") }
         }
         .swipeActions(edge: .leading, allowsFullSwipe: true) {
-            Button { toggle(gift) } label: { Label(gift.isBought ? "Falta" : "Comprado", systemImage: "checkmark") }.tint(V9.accent)
+            Button { toggle(gift) } label: { Label(gift.isBought ? "Falta" : "Comprado", systemImage: "checkmark") }.tint(V8.orange)
         }
         .accessibilityElement(children: .contain)
         .accessibilityHint(near != nil && !dim ? "Loja perto e aberta" : "")
@@ -199,8 +247,10 @@ struct PresentesView: View {
     private func addField(groups: [GiftGroup]) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
-                Image(systemName: "plus").foregroundStyle(.secondary).frame(width: 28).accessibilityHidden(true)
+                Image(systemName: "plus").font(.system(size: 15, weight: .bold)).foregroundStyle(V8.ink).frame(width: 28).accessibilityHidden(true)
                 TextField("Novo presente…", text: $draft)
+                    .font(V8Font.text(16))
+                    .tint(V8.orange)
                     .focused($fieldFocused)
                     .submitLabel(.done)
                     .onSubmit { addDraft() }
@@ -208,17 +258,19 @@ struct PresentesView: View {
                     .accessibilityHint("Escreva o nome, ou nome pra Ana, ou cole um link")
                     .onChange(of: draft) { _, new in if !new.isEmpty { justAdded = nil } }
                 if !draft.isEmpty {
-                    Button("Adicionar") { addDraft() }.font(.subheadline.weight(.semibold))
+                    Button { addDraft() } label: { CutChip(text: "Adicionar", isOn: true, minHeight: 36) }.buttonStyle(.plain)
                 }
             }
-            .frame(minHeight: 44)
+            .frame(minHeight: 48)
             if let justAdded {
                 Text("✓ \(justAdded.title) → \(justAdded.person)")
-                    .font(.footnote).foregroundStyle(.secondary)
+                    .font(V8Font.mono(11)).foregroundStyle(V8.mute)
                     .lineLimit(1).truncationMode(.middle)
                     .accessibilityLabel("Adicionado: \(justAdded.title), em \(justAdded.person)")
             }
         }
+        .padding(.horizontal, 20)
+        .overlay(alignment: .bottom) { IndexRule() }
     }
 
     private func addDraft() {
@@ -268,18 +320,17 @@ struct PresentesView: View {
 
     private func undoBar(_ gift: Gift) -> some View {
         HStack {
-            Text("Apagado: \(gift.title)").font(.subheadline).lineLimit(1)
+            Text("Apagado: \(gift.title)").font(V8Font.text(14)).foregroundStyle(V8.paper).lineLimit(1)
             Spacer(minLength: 8)
             Button("Desfazer") {
                 deleteTask?.cancel(); deleteTask = nil
                 withAnimation(.snappy(duration: 0.2)) { deleted = nil }
             }
-            .font(.subheadline.weight(.semibold))
+            .font(V8Font.mono(12, weight: .semibold)).foregroundStyle(V8.orange)
             .frame(minHeight: 44)
         }
-        .padding(.horizontal, 16)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: V9.cornerRadius, style: .continuous))
-        .padding(.horizontal, V9.gutter)
+        .padding(.horizontal, 20)
+        .background(V8.ink)
         .transition(.move(edge: .bottom))
     }
 

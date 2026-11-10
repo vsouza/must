@@ -18,6 +18,7 @@ struct MustsHubView: View {
     @State private var openOnly = false
     @AppStorage(MustsPrefs.noPhotosKey) private var noPhotos = false
     @State private var openNow = OpenNowIndex()
+    @Environment(\.tripTheme) private var theme
 
     private var region: Region { store.region }
     private var now: Date { AppClock.now }
@@ -48,68 +49,95 @@ struct MustsHubView: View {
         }
         let done = scoped.filter(\.isDone).count
         let ids = Set(scoped.map(\.id))
-        List {
-            Section {
-                filters
-            } header: {
-                Text("\(scoped.count) lugares · \(done) feitos")
-            }
-            Section("Listas") {
-                ForEach(lists) { list in
-                    let inList = list.places.filter { ids.contains($0.id) }
-                    Button { router.push(list.kind == .experience ? .experiences : .list(id: list.id), on: .musts) } label: {
-                        MustsIndexRow(list: list, meta: MustsMeta.line(list: list, places: inList, snapshot: snapshot, region: region, now: now),
-                                      count: inList.count, done: inList.filter(\.isDone).count)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            Section {
-                let later = places.filter { $0.saveForEnd && !$0.isDone }.count
-                if later > 0 {
-                    extraRow("Fica pro fim · \(later)", meta: trips.first?.hasTrip == true ? "entram nos últimos dias da cidade" : "quando você pedir", icon: "flag.checkered") {
-                        router.push(.saveForEnd, on: .musts)
+        VStack(spacing: 0) {
+        CutScreenHeader(title: "Musts", corner: ["Musts · \(activeCity ?? region.shortName)", "\(lists.count) listas"], height: 160) {
+                    CutCornerButton(systemName: "plus", label: "Adicionar por link", tint: theme.coverInk) {
+                        router.sheet = .addLink(url: nil, listId: nil)
                     }
                 }
-                extraRow("Ver tudo · editar", meta: "o board inteiro", icon: "square.grid.2x2") { router.push(.board(edit: false), on: .musts) }
-                extraRow("Nova lista", meta: "nome, tipo e sub-listas", icon: "plus.circle") { router.cover = .newList }
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 0) {
+                HStack(alignment: .center, spacing: 12) {
+                    BigNumeral("\(scoped.count)", size: 74, color: V8.orange).fixedSize()
+                    SpecLabel("lugares\n\(done) feitos")
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 18)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("\(scoped.count) lugares, \(done) feitos")
+                filters.padding(.top, 16)
+                VStack(spacing: 0) {
+                    ForEach(Array(lists.enumerated()), id: \.element.id) { index, list in
+                        let inList = list.places.filter { ids.contains($0.id) }
+                        Button { router.push(list.kind == .experience ? .experiences : .list(id: list.id), on: .musts) } label: {
+                            MustsIndexRow(index: String(format: "%02d", index + 1), list: list,
+                                          meta: MustsMeta.line(list: list, places: inList, snapshot: snapshot, region: region, now: now),
+                                          count: inList.count, done: inList.filter(\.isDone).count)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .overlay(alignment: .top) { IndexRule() }
+                .padding(.top, 16)
+                extras
+                V8BarSpacer()
             }
         }
-        .navigationTitle("Musts")
-        .navigationBarTitleDisplayMode(.large)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button { router.sheet = .addLink(url: nil, listId: nil) } label: { Image(systemName: "plus") }
-                    .accessibilityLabel("Adicionar por link")
-            }
+        .scrollIndicators(.hidden)
         }
-        .v9Screen(grouped: true)
+        .background(V8.paper.ignoresSafeArea())
+        .toolbar(.hidden, for: .navigationBar)
+        .v8Legacy()
     }
 
-    /// Cidade (se houver mais de uma) e filtros como um menu e interruptores: tudo visível, nada escondido.
-    @ViewBuilder private var filters: some View {
-        if !cityNames.isEmpty {
-            Picker("Cidade", selection: Binding(get: { activeCity ?? "" }, set: { city = $0.isEmpty ? nil : $0; cityPicked = true })) {
-                Text("Todas").tag("")
-                ForEach(cityNames, id: \.self) { Text($0).tag($0) }
+    private var filters: some View {
+        var items = cityNames.map { CutChipRow.Item(id: "city:\($0)", title: $0, on: activeCity == $0) }
+        items.append(.init(id: "near", title: "Perto", on: near))
+        items.append(.init(id: "open", title: "Abertos", on: openOnly))
+        items.append(.init(id: "nophoto", title: "Sem foto", on: noPhotos))
+        return CutChipRow(items: items) { id in
+            switch id {
+            case "near": near.toggle()
+            case "open": openOnly.toggle()
+            case "nophoto": noPhotos.toggle()
+            default:
+                let name = String(id.dropFirst("city:".count))
+                city = activeCity == name ? nil : name
+                cityPicked = true
             }
         }
-        Toggle("Perto (até 2 km)", isOn: $near)
-        Toggle("Abertos agora", isOn: $openOnly)
-        Toggle("Sem foto (gasta menos dados)", isOn: $noPhotos)
     }
 
-    private func extraRow(_ title: String, meta: String, icon: String, action: @escaping () -> Void) -> some View {
+    /// Fica pro fim, o board inteiro e a lista nova.
+    private var extras: some View {
+        let later = places.filter { $0.saveForEnd && !$0.isDone }.count
+        return VStack(spacing: 0) {
+            if later > 0 {
+                extraRow("Fica pro fim · \(later)", meta: trips.first?.hasTrip == true ? "entram nos últimos dias da cidade" : "quando você pedir") {
+                    router.push(.saveForEnd, on: .musts)
+                }
+            }
+            extraRow("Ver tudo · editar", meta: "o board inteiro") { router.push(.board(edit: false), on: .musts) }
+            extraRow("Nova lista", meta: "nome, tipo e sub-listas") { router.cover = .newList }
+        }
+        .padding(.top, 8)
+    }
+
+    private func extraRow(_ title: String, meta: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 12) {
-                Image(systemName: icon).font(.title3).foregroundStyle(.secondary).frame(width: 28).accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(title).font(.body.weight(.semibold))
-                    Text(meta).font(.subheadline).foregroundStyle(.secondary).lineLimit(1)
+                    Text(title).font(V8Font.text(16, weight: .semibold)).foregroundStyle(V8.ink)
+                    Text(meta).font(V8Font.text(13)).foregroundStyle(V8.mute).lineLimit(1)
                 }
                 Spacer(minLength: 8)
-                Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
+                Image(systemName: "arrow.up.right").font(.system(size: 13, weight: .semibold)).foregroundStyle(V8.mute)
             }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 14)
+            .frame(minHeight: 44)
+            .overlay(alignment: .bottom) { IndexRule() }
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -121,30 +149,35 @@ enum MustsPrefs {
     static let noPhotosKey = "v8.lists.noPhotos"
 }
 
-/// Linha de uma lista: ícone da lista (ponto da cor do Must), nome, meta e a contagem à direita.
+/// Linha do índice de listas: número grande, ponto da cor da lista, nome, meta; à direita a contagem e os feitos.
 struct MustsIndexRow: View {
+    var index: String
     var list: MustList
     var meta: String
     var count: Int
     var done: Int
 
     var body: some View {
-        HStack(alignment: .center, spacing: 12) {
-            MustIconView(list.icon, size: 20)
-                .foregroundStyle(.secondary)
-                .frame(width: 32)
+        HStack(alignment: .center, spacing: 14) {
+            Text(index)
+                .font(V8Font.numeral(40))
+                .tracking(-1.5)
+                .foregroundStyle(V8.orangeDeep)
+                .frame(width: 66, alignment: .leading)
                 .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(list.displayName).font(.body.weight(.semibold)).lineLimit(2)
-                Text(meta).font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(list.displayName).font(V8Font.text(18, weight: .bold)).foregroundStyle(V8.ink).lineLimit(2)
+                Text(meta).font(V8Font.text(14)).foregroundStyle(V8.mute).lineLimit(2)
             }
             Spacer(minLength: 8)
-            VStack(alignment: .trailing, spacing: 2) {
-                Text("\(count)").font(.body.weight(.semibold)).monospacedDigit()
-                Text(done == 1 ? "1 feito" : "\(done) feitos").font(.footnote).foregroundStyle(.secondary).monospacedDigit()
+            VStack(alignment: .trailing, spacing: 3) {
+                Text("\(count)").font(V8Font.mono(13).weight(.bold)).foregroundStyle(V8.ink)
+                Text(done == 1 ? "1 feito" : "\(done) feitos").font(V8Font.mono(12)).foregroundStyle(V8.mute)
             }
-            Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary).accessibilityHidden(true)
         }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
+        .overlay(alignment: .bottom) { IndexRule() }
         .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(list.displayName), \(count) lugares, \(done) feitos. \(meta)")

@@ -11,6 +11,7 @@ struct BoardView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
     @Environment(AppRouter.self) private var router
+    @Environment(\.tripTheme) private var theme
     @Environment(RegionStore.self) private var store
     @Environment(Services.self) private var services
 
@@ -34,57 +35,46 @@ struct BoardView: View {
     private var focusGroup: BoardGroup? { model.focusListId.flatMap { id in groups.first { $0.list?.id == id } } }
 
     var body: some View {
+        VStack(spacing: 0) {
+        boardHeader
         List {
             Section {
-                Picker("Agrupar", selection: groupingBinding) {
-                    ForEach(BoardGrouping.allCases, id: \.self) { Text($0.label).tag($0) }
-                }
-                .pickerStyle(.segmented)
-                .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                countRow
+                    .listRowInsets(EdgeInsets())
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(V8.paper)
+                CutSearchField(text: searchText, placeholder: "Nome, bairro, nota, fonte…") { EmptyView() }
+                    .padding(.horizontal, 20)
+                    .listRowInsets(EdgeInsets())
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(V8.paper)
+                controls
+                    .padding(.vertical, 12)
+                    .listRowInsets(EdgeInsets())
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(V8.paper)
                 if groups.isEmpty {
                     Text(query.isFiltering ? "Nada com “\(query.text)” no board." : "Nenhum lugar no board.")
-                        .font(.subheadline).foregroundStyle(.secondary)
+                        .font(V8Font.text(14)).foregroundStyle(V8.mute)
                         .frame(maxWidth: .infinity).padding(.vertical, 12)
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(V8.paper)
                 }
-            } footer: {
-                Text("\(places.count) lugares · \(lists.count) listas")
             }
             ForEach(groups) { group in groupSection(group) }
+            Color.clear.frame(height: 24)
+                .listRowInsets(EdgeInsets())
+                .listRowSeparator(.hidden)
+                .listRowBackground(V8.paper)
         }
-        .listStyle(.insetGrouped)
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
         .scrollDismissesKeyboard(.immediately)
         .environment(\.editMode, $editMode)
-        .navigationTitle("Tudo")
-        .navigationBarTitleDisplayMode(.large)
-        .searchable(text: searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Nome, bairro, nota, fonte…")
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    Picker("Ordenar", selection: sortBinding) {
-                        ForEach(BoardSort.allCases) { Text($0.label).tag($0) }
-                    }
-                    Section("Filtrar") {
-                        ForEach(BoardFilter.allCases) { filter in
-                            Button {
-                                model.query.filter = query.filter == filter ? nil : filter
-                            } label: {
-                                if query.filter == filter { Label(chipTitle(filter), systemImage: "checkmark") } else { Text(chipTitle(filter)) }
-                            }
-                        }
-                    }
-                } label: { Image(systemName: "line.3.horizontal.decrease.circle") }
-                    .accessibilityLabel("Ordenar e filtrar")
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                Button { showNameSearch = true } label: { Image(systemName: "plus") }
-                    .accessibilityLabel("Adicionar por nome")
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                Button(editing ? "Pronto" : "Editar") { editMode = editing ? .inactive : .active }
-            }
         }
-        .v9Screen(grouped: true)
+        .background(V8.paper.ignoresSafeArea())
+        .toolbar(.hidden, for: .navigationBar)
+        .v8Legacy()
         .safeAreaInset(edge: .bottom) {
             if (editing && !model.selection.isEmpty) || message != nil {
                 bottomBar.padding(.bottom, 8)
@@ -135,6 +125,52 @@ struct BoardView: View {
         }
     }
 
+    // MARK: Topo
+
+    private var boardHeader: some View {
+        CutScreenHeader(title: "Tudo", corner: ["Board · \(region.shortName)", "\(lists.count) listas"], height: 170,
+                        onBack: { dismiss() }) {
+            HStack(spacing: 8) {
+                CutCornerButton(systemName: "plus", label: "Adicionar por nome", tint: theme.coverInk) { showNameSearch = true }
+            }
+        }
+    }
+
+    /// Numeral = quantos lugares; "Quero…" visível ao lado.
+    private var countRow: some View {
+        HStack(alignment: .center, spacing: 12) {
+            BigNumeral("\(places.count)", size: 64, color: V8.orange).fixedSize()
+            SpecLabel("lugares\n\(places.filter(\.isDone).count) feitos")
+            Spacer(minLength: 8)
+            Button { router.openQuero() } label: { CutChip(text: "Quero…") }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Quero algo do board")
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 16)
+        .accessibilityElement(children: .contain)
+    }
+
+    /// Agrupar, ordenar, filtrar e editar: tudo à vista, como chips.
+    private var controls: some View {
+        var items: [CutChipRow.Item] = BoardGrouping.allCases.map { .init(id: "g:\($0.rawValue)", title: $0.label, on: query.grouping == $0) }
+        items.append(.init(id: "sort", title: "Ordenar · \(query.sort.label)", on: false))
+        for filter in BoardFilter.allCases { items.append(.init(id: "f:\(filter.rawValue)", title: chipTitle(filter), on: query.filter == filter)) }
+        items.append(.init(id: "edit", title: editing ? "Pronto" : "Editar", on: editing))
+        return CutChipRow(items: items) { id in
+            if id == "edit" {
+                editMode = editing ? .inactive : .active
+            } else if id == "sort" {
+                let all = BoardSort.allCases
+                if let i = all.firstIndex(of: query.sort) { model.query.sort = all[(i + 1) % all.count] }
+            } else if id.hasPrefix("g:") {
+                if let g = BoardGrouping.allCases.first(where: { "g:\($0.rawValue)" == id }) { model.query.grouping = g }
+            } else if let f = BoardFilter.allCases.first(where: { "f:\($0.rawValue)" == id }) {
+                model.query.filter = query.filter == f ? nil : f
+            }
+        }
+    }
+
     // MARK: Grupos
 
     private func groupSection(_ group: BoardGroup) -> some View {
@@ -149,12 +185,18 @@ struct BoardView: View {
                              here: services.location.current)
                     if !editing { rowMenu(place) }
                 }
+                .padding(.leading, 20)
+                .padding(.vertical, 6)
                 .contentShape(Rectangle())
                 .onTapGesture { tap(place) }
                 .draggable(PlaceDragItem(id: place.id))
+                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 8))
+                .listRowSeparator(.hidden)
+                .listRowBackground(V8.paper)
+                .overlay(alignment: .bottom) { IndexRule() }
                 .swipeActions(edge: .leading, allowsFullSwipe: false) {
                     Button { sheet = .done(place.id) } label: { Label("Feito", systemImage: "checkmark") }
-                        .tint(V9.accent)
+                        .tint(V8.orange)
                 }
                 .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                     Button(role: .destructive) { pendingDelete = [place.id] } label: { Label("Apagar", systemImage: "trash") }
@@ -164,29 +206,35 @@ struct BoardView: View {
             }
             .onMove(perform: reorderable ? { reorder(group, $0, $1) } : nil)
             if collapsed {
-                Button("Mostrar mais \(group.places.count - shown.count) em \(group.title)") { model.expanded.insert(group.id) }
+                Button { model.expanded.insert(group.id) } label: {
+                    Text("Mostrar mais \(group.places.count - shown.count) em \(group.title)")
+                        .font(V8Font.mono(11, weight: .semibold)).tracking(0.8).textCase(.uppercase)
+                        .foregroundStyle(V8.ink)
+                        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                        .padding(.leading, 20)
+                }
+                .buttonStyle(.plain)
+                .listRowInsets(EdgeInsets())
+                .listRowSeparator(.hidden)
+                .listRowBackground(V8.paper)
             }
         } header: {
             BoardGroupHeader(group: group, onEditList: group.list.map { list in { router.cover = .editList(id: list.id) } })
+                .listRowInsets(EdgeInsets())
                 .dropDestination(for: PlaceDragItem.self) { (items: [PlaceDragItem], _: CGPoint) -> Bool in
                     drop(items, onto: group)
                 }
         }
+        .listSectionSeparator(.hidden)
     }
 
     /// Mesmas ações do deslizar, num menu visível na linha.
     private func rowMenu(_ place: Place) -> some View {
-        Menu {
-            Button { sheet = .done(place.id) } label: { Label("Marcar feito", systemImage: "checkmark") }
-            Button { toggleSaveForEnd([place]) } label: {
-                Label(place.saveForEnd ? "Tirar do fim" : "Fica pro fim", systemImage: "clock")
-            }
-            Button(role: .destructive) { pendingDelete = [place.id] } label: { Label("Apagar", systemImage: "trash") }
-        } label: {
-            Image(systemName: "ellipsis.circle").font(.title3).foregroundStyle(.secondary)
-                .frame(width: 44, height: 44).contentShape(Rectangle())
-        }
-        .accessibilityLabel("Ações de \(place.name)")
+        PlaceRowMenu(place: place, onOpen: { router.push(.place(id: place.id)) },
+                     onDone: { sheet = .done(place.id) },
+                     onSaveForEnd: { toggleSaveForEnd([place]) },
+                     onEdit: { router.sheet = .editPlace(id: place.id) },
+                     onDelete: { pendingDelete = [place.id] })
     }
 
     // MARK: Barra de lote

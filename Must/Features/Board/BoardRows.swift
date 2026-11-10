@@ -19,8 +19,8 @@ enum BoardDistance {
     }
 }
 
-/// Uma linha do board (V9): miniatura, nome, meta (distância, bairro, horário, preço) e o estado em texto.
-/// Em modo edição, a bolinha de seleção.
+/// Uma linha do board (corte): miniatura, nome, meta (bairro, horário, preço), o estado em texto e a distância em numeral
+/// mono à direita. Em modo edição, a caixa de seleção quadrada.
 struct BoardRow: View {
     var place: Place
     var region: Region
@@ -39,16 +39,21 @@ struct BoardRow: View {
         HStack(alignment: .center, spacing: 12) {
             if isEditing { SelectMark(on: isSelected) }
             PlaceThumb(placeId: place.placeId, refs: place.photoRefs, color: place.list?.color ?? .eat, size: 48)
+                .clipShape(Rectangle())
             VStack(alignment: .leading, spacing: 2) {
-                Text(place.name).font(.body.weight(.semibold)).lineLimit(2)
+                Text(place.name).font(V8Font.text(16, weight: .bold)).foregroundStyle(V8.ink).lineLimit(2)
                 if !meta.isEmpty {
-                    Text(meta).font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
+                    Text(meta).font(V8Font.text(13)).foregroundStyle(V8.mute).lineLimit(2)
                 }
                 if let state {
-                    Text(state).font(.footnote).foregroundStyle(.secondary).lineLimit(1)
+                    Text(state.uppercased()).font(V8Font.mono(10, weight: .semibold)).tracking(0.8)
+                        .foregroundStyle(place.saveForEnd && !place.isDone ? V8.orangeDeep : V8.mute).lineLimit(1)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            if let distance, !isEditing, !place.isDone {
+                Text(distance).font(V8Font.mono(14, weight: .bold)).foregroundStyle(V8.ink).lineLimit(1).fixedSize()
+            }
         }
         .opacity(place.isDone ? 0.6 : 1)
         .accessibilityElement(children: .combine)
@@ -56,11 +61,11 @@ struct BoardRow: View {
         .accessibilityValue(isEditing ? (isSelected ? "selecionado" : "não selecionado") : "")
     }
 
-    /// "feito" / "sem horário" / "fica pro fim": um estado só, em cinza.
+    /// "feito" / "sem horário" / "fica pro fim": um estado só, em texto.
     private var state: String? {
         if place.isDone { return "feito" }
-        if place.hours?.hasPeriods != true { return "sem horário" }
         if place.saveForEnd { return "fica pro fim" }
+        if place.hours?.hasPeriods != true { return "sem horário" }
         return nil
     }
 
@@ -71,7 +76,6 @@ struct BoardRow: View {
             return out.joined(separator: " · ")
         }
         var out: [String] = []
-        if let distance { out.append(distance) }
         if let sub = place.sub { out.append(sub) }
         if let area = place.area, !area.isEmpty { out.append(area) }
         if let window = place.windows.first { out.append(window.label) }
@@ -82,41 +86,51 @@ struct BoardRow: View {
     }
 }
 
-/// Bolinha de seleção do sistema: cheia com ✓ quando marcada.
+/// Caixa de seleção quadrada: cheia de tinta com ✓ quando marcada.
 struct SelectMark: View {
     var on: Bool
 
     var body: some View {
-        Image(systemName: on ? "checkmark.circle.fill" : "circle")
-            .font(.title2)
-            .foregroundStyle(on ? V9.accent : Color.secondary)
-            .frame(width: 28, height: 28)
-            .accessibilityHidden(true)
+        ZStack {
+            Rectangle().fill(on ? V8.ink : Color.clear)
+            Rectangle().stroke(V8.ink, lineWidth: 2)
+            if on { Image(systemName: "checkmark").font(.system(size: 12, weight: .bold)).foregroundStyle(V8.paper) }
+        }
+        .frame(width: 24, height: 24)
+        .accessibilityHidden(true)
     }
 }
 
-/// Cabeçalho de grupo (V9): nome da lista, contagem, sub-listas e "Editar lista" visível.
+/// Cabeçalho de grupo (corte): micro-rótulo mono com a lista e a contagem, sub-listas e "Editar lista" visível.
 struct BoardGroupHeader: View {
     var group: BoardGroup
     var onEditList: (() -> Void)?
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text("\(group.title) · \(group.places.count)")
-                    .font(.headline)
-                    .foregroundStyle(.primary)
+                    .font(V8Font.display(22)).tracking(-0.4)
+                    .foregroundStyle(V8.ink)
                     .textCase(nil)
+                    .lineLimit(2)
                     .accessibilityAddTraits(.isHeader)
                 if !group.subCounts.isEmpty {
                     Text(group.subCounts.map { "\($0.name) \($0.count)" }.joined(separator: " · "))
-                        .font(.footnote).foregroundStyle(.secondary).textCase(nil).lineLimit(1)
+                        .font(V8Font.mono(11)).foregroundStyle(V8.mute).textCase(nil).lineLimit(1)
                 }
             }
             Spacer(minLength: 8)
             if let onEditList {
-                Button("Editar lista", action: onEditList).font(.subheadline).textCase(nil)
+                Button(action: onEditList) { CutChip(text: "Editar lista", minHeight: 36) }
+                    .buttonStyle(.plain)
             }
         }
+        .padding(.horizontal, 20)
+        .padding(.top, 20)
+        .padding(.bottom, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(V8.paper)
+        .overlay(alignment: .bottom) { IndexRule() }
     }
 }
