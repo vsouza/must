@@ -116,6 +116,7 @@
 		293AA86827E4B24BB3C9F966 /* StartupSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = B641C5F378BAE625AB9EC389 /* StartupSync.swift */; };
 		2A3B5E803BB2D63031091E1A /* WalletDemo.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDA371C417B2B9F722B417BE /* WalletDemo.swift */; };
 		2BBE5013A361E4C3286625EE /* TicketEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3840ECE0F90F2549AFD6169B /* TicketEditor.swift */; };
+		2BF9B8436F6069180B2AAA74 /* PlaceRowMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF63C867AA09E9E4BE002537 /* PlaceRowMenu.swift */; };
 		2C0131EBCD18D1AC71E3E4C3 /* Group.swift in Sources */ = {isa = PBXBuildFile; fileRef = C47A54CD20188B94B99C8A65 /* Group.swift */; };
 		2C7065146324462F28DCE27B /* ColarTextoModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 237B6CBB2609F264714CEBF9 /* ColarTextoModel.swift */; };
 		2D002E77D1700CE3097993E5 /* V8Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 897C9F43BE0507A3E020BDFC /* V8Components.swift */; };
@@ -311,6 +312,7 @@
 		7C4B4DAB8DC551763A3141F2 /* V9Line.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DAD3B1A3A057AF04985CE1D /* V9Line.swift */; };
 		7C92011B66DB89ACD7A05C4B /* tokyocheapo-events.xml in Resources */ = {isa = PBXBuildFile; fileRef = 4951EC86E9EA941B4767895F /* tokyocheapo-events.xml */; };
 		7D8F5E416C711C28C3E45DC0 /* CurrentAreaService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 320E13FD89A4E3EDFCCA580C /* CurrentAreaService.swift */; };
+		7D91AB41D693B842F6D14279 /* CutChipRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E762557A70DF72584E8EDB8 /* CutChipRow.swift */; };
 		7E96E557BAF7375FE8A7E34C /* TripSwitcherTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 420EE4D59A018AE862EAA50E /* TripSwitcherTests.swift */; };
 		7ECF6F2D7B7A5CD02EE07741 /* DayProblemTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D76659507335176207322F99 /* DayProblemTests.swift */; };
 		7F456549CD866F3E56308A20 /* PhotoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EEE4426948C34EEC1760344 /* PhotoService.swift */; };
@@ -887,6 +889,7 @@
 		4D992925DC54DAC9FB74D5CB /* AIPlaceExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIPlaceExtractor.swift; sourceTree = "<group>"; };
 		4E4BD87DCADB35A5CAEE421B /* VideoReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoReaderTests.swift; sourceTree = "<group>"; };
 		4E63098BC20939AB29E6FFFA /* MicroStops.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicroStops.swift; sourceTree = "<group>"; };
+		4E762557A70DF72584E8EDB8 /* CutChipRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CutChipRow.swift; sourceTree = "<group>"; };
 		4E949E43766D47C72D4AE4B4 /* GeneratedAreas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneratedAreas.swift; sourceTree = "<group>"; };
 		4ED7B13AFB24194D16FBE4EC /* ImportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportView.swift; sourceTree = "<group>"; };
 		4F85FDAC58E26C57ACABA07A /* BoardQuery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardQuery.swift; sourceTree = "<group>"; };
@@ -1212,6 +1215,7 @@
 		CEA9433C369F5E569448A38F /* Typography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Typography.swift; sourceTree = "<group>"; };
 		CEEEB2224A2D1E0E55462753 /* PlaceMatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceMatcher.swift; sourceTree = "<group>"; };
 		CF2C1A85C5C5D0FBAA5A5121 /* SpeechInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechInput.swift; sourceTree = "<group>"; };
+		CF63C867AA09E9E4BE002537 /* PlaceRowMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceRowMenu.swift; sourceTree = "<group>"; };
 		CF9F5C248DD585A265D4D4B5 /* EmCartazView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmCartazView.swift; sourceTree = "<group>"; };
 		D0722A5D164A93EF485022ED /* Collectible.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Collectible.swift; sourceTree = "<group>"; };
 		D11DDAB70F40C5BF814253FA /* AreaIndex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AreaIndex.swift; sourceTree = "<group>"; };
@@ -1698,6 +1702,7 @@
 		420EF28B6F2A4788DA77A29A /* Musts */ = {
 			isa = PBXGroup;
 			children = (
+				4E762557A70DF72584E8EDB8 /* CutChipRow.swift */,
 				92C27D0DDE386E2B958C43F5 /* ListCover.swift */,
 				0C42FCB610CD3F0DCA2D3DAF /* MustsHubView.swift */,
 			);
@@ -2548,6 +2553,7 @@
 				4F85FDAC58E26C57ACABA07A /* BoardQuery.swift */,
 				76824D324E16F3429F510F1D /* BoardRows.swift */,
 				20884CC264F303FB66B5E0E6 /* BoardView.swift */,
+				CF63C867AA09E9E4BE002537 /* PlaceRowMenu.swift */,
 			);
 			path = Board;
 			sourceTree = "<group>";
@@ -3294,6 +3300,7 @@
 				1A80837B3150B52E78448AE7 /* Connectivity.swift in Sources */,
 				E547EA2E6628AFD1565AC0DC /* CountryProfile.swift in Sources */,
 				7D8F5E416C711C28C3E45DC0 /* CurrentAreaService.swift in Sources */,
+				7D91AB41D693B842F6D14279 /* CutChipRow.swift in Sources */,
 				891A2BA9FDC35F3C55A32123 /* CutControls.swift in Sources */,
 				FEB7681C72F19436E46A74AE /* CutParts.swift in Sources */,
 				095BAD0D1DABF8A5C04861FD /* CutScreen.swift in Sources */,
@@ -3497,6 +3504,7 @@
 				6F9FDEA4AD47A0A01AD6C254 /* PlacePhotoResolver.swift in Sources */,
 				B6EE234FF05CEA7052D4BCBE /* PlacePhotoStore.swift in Sources */,
 				DC9065D7211FD2C3437A4DF2 /* PlaceResolver.swift in Sources */,
+				2BF9B8436F6069180B2AAA74 /* PlaceRowMenu.swift in Sources */,
 				204A9E0456F7D62DB845D418 /* PlaceThumb.swift in Sources */,
 				23E5F5CBB10426C71A2EDFBB /* PlaceView.swift in Sources */,
 				64B398891C6575CFBFC186E2 /* PlacesService.swift in Sources */,
