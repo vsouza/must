@@ -63,6 +63,7 @@ struct RootView: View {
             }
             }
             .v8LegacySheet(sheet.legacyLight)
+            .tint(V9.accent)
         }
         .environment(todayContext)
         .collectibleCelebration()
@@ -81,6 +82,7 @@ struct RootView: View {
             }
             }
             .v8LegacySheet(cover == .gallery)
+            .tint(V9.accent)
         }
     }
 
