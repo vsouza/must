@@ -372,11 +372,6 @@ ${=W} dev.simDate -float $(epoch 2026-11-15T18:10:00+09:00)
 ${=W} dev.simLat -float 35.6909; ${=W} dev.simLng -float 139.7003
 WAIT=10 shot jp-explorar -debugScreen explorar                  # ExplorarB-1
 WAIT=10 shot jp-explorar-trilho -debugScreen explorar-trilho    # ExplorarB-2
-WAIT=10 shot jp-explorar-recorte -debugScreen explorar-recorte  # ExplorarB-3
-WAIT=12 shot jp-explorar-recorte-pino -debugScreen explorar-recorte-pino
-WAIT=12 shot jp-explorar-recorte-fora -debugScreen explorar-recorte-fora
-WAIT=10 shot jp-explorar-kyoto -debugScreen explorar-kyoto      # ExplorarB-4
-WAIT=10 shot jp-explorar-sem-foto -debugScreen explorar-sem-foto
 WAIT=10 shot jp-xxxl-explorar -debugScreen explorar -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL
 if [ "${ONLY:-}" != "explorar" ]; then
 

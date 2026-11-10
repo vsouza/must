@@ -170,38 +170,6 @@ struct Prompt31QueroTests {
         #expect(heard.results.contains { $0.name == "Jazz no Nakano" && $0.note?.hasPrefix("em cartaz hoje") == true })
     }
 
-    // MARK: Vazio com motivo
-
-    @Test func vazioDizOPorqueEOferecePraAmpliar() {
-        let normal = CorteEmpty.total(query: "comer", areaName: "Nakano", offline: false, note: nil, radiusMeters: nil)
-        #expect(normal.reason.contains("2 km") && normal.reason.contains("Nakano") && normal.canWiden)
-        let wide = CorteEmpty.total(query: "comer", areaName: "Nakano", offline: false, note: nil, radiusMeters: CorteEmpty.widenedMeters)
-        #expect(wide.reason.contains("5 km") && !wide.canWiden)
-        let offline = CorteEmpty.total(query: "comer", areaName: "Nakano", offline: true, note: nil, radiusMeters: nil)
-        #expect(offline.reason.hasPrefix("sem internet") && !offline.canWiden)
-        #expect(CorteEmpty.outsideLine(offline: false, note: "sem chave do Google") == "sem chave do Google · só seus Musts")
-        #expect(CorteEmpty.outsideLine(offline: false, note: nil) == nil)
-    }
-
-    @Test func outroBairroOferecePertoSemRepetirOAtual() {
-        let from = CLLocationCoordinate2D(latitude: nakano.centroid.lat, longitude: nakano.centroid.lng)
-        let near = CorteEmpty.nearbyAreas(AreaCatalog.areas(for: .jp), from: from, cityGroup: "tokyo", excluding: "Nakano")
-        #expect(!near.isEmpty && near.count <= 6 && !near.contains { $0.name == "Nakano" })
-    }
-
-    @Test func ampliarEEscolherBairroAjustamABusca() {
-        let state = CorteState(makeModel: { QueroModel(provider: nil) })
-        let base = QueroEnv(region: .jp, now: Date(), plan: nil, center: toquio, origin: toquio, areaName: "Tóquio", cityGroup: "tokyo",
-                            cityId: "tokyo1", online: true, board: [], useModel: false)
-        #expect(state.adjusted(base).radiusMeters == nil)
-        state.widen(base)
-        #expect(state.adjusted(base).radiusMeters == CorteEmpty.widenedMeters)
-        state.pickArea(nakano, env: base)
-        #expect(state.adjusted(base).areaName == "Nakano" && state.adjusted(base).origin.latitude == nakano.centroid.lat)
-        state.close()
-        #expect(state.adjusted(base).radiusMeters == nil)
-    }
-
     // MARK: Carrossel e viagens
 
     @Test func carrosselAbreComTodasAsFotosDoLugar() throws {

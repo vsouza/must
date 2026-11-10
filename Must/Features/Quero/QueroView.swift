@@ -196,7 +196,7 @@ struct QueroView: View {
     private var guardarSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             V9SectionHeader("Ou guarde")
-            CorteFlow(spacing: 8) {
+            FlowLayout(spacing: 8) {
                 ForEach(Guardar.allCases, id: \.self) { item in
                     Button { guardar(item) } label: {
                         Text(item.label).font(.subheadline.weight(.semibold))

@@ -618,33 +618,3 @@ struct V8Pill: View {
             .accessibilityAddTraits(active ? .isSelected : [])
     }
 }
-
-/// Botão redondo v8 (`BotoesFontes.png`): 44 (glifo 18), 36 (glifo 16) ou 52 (glifo 20), contorno de 1,8 pt.
-struct V8RoundButton<Glyph: View>: View {
-    var diameter: CGFloat
-    var filled: Bool
-    var label: String
-    var action: () -> Void
-    @ViewBuilder var glyph: (CGFloat) -> Glyph
-
-    init(diameter: CGFloat = 44, filled: Bool = false, label: String, action: @escaping () -> Void,
-         @ViewBuilder glyph: @escaping (CGFloat) -> Glyph) {
-        self.diameter = diameter
-        self.filled = filled
-        self.label = label
-        self.action = action
-        self.glyph = glyph
-    }
-
-    var body: some View {
-        Button(action: action) {
-            glyph(ButtonMetrics.roundGlyph(diameter: diameter))
-                .frame(width: diameter, height: diameter)
-                .background(Rectangle().fill(filled ? V8.ink : .clear))
-                .overlay(Rectangle().strokeBorder(.foreground, lineWidth: 2))
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(MustPressStyle())
-        .accessibilityLabel(label)
-    }
-}

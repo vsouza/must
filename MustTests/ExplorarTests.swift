@@ -88,18 +88,6 @@ struct ExplorarTests {
         #expect(ExplorarRail.station(atFraction: -1, count: 10) == 0)
     }
 
-    @Test func railWindowKeepsTheCurrentStation() {
-        let list = (0..<20).map { i -> ExplorarStation in
-            var a = AreaCatalog.jp[0]
-            a.id = "a\(i)"
-            return ExplorarStation(area: a, minutes: i, mark: .other)
-        }
-        let window = ExplorarRailView.window(list, currentId: "a15")
-        #expect(window.count == ExplorarRailView.maxRows)
-        #expect(window.contains { $0.id == "a15" })
-        #expect(ExplorarRailPanel.window(list, around: "a15").contains { $0.id == "a15" })
-    }
-
     // MARK: Camadas e lista ↔ pinos
 
     @Test func layersFilterOwnOutsideAndOpenNow() {
@@ -154,20 +142,6 @@ struct ExplorarTests {
     }
 
     // MARK: Projeção e distância
-
-    @Test func projectionPutsTheCenterInTheMiddleAndNorthUp() {
-        let area = AreaCatalog.jp.first { $0.id == "shinjuku" }!
-        let p = ExplorarSnapshot.projection(for: area)
-        let mid = p.point(area.centroid.clCoordinate)
-        #expect(abs(mid.x - 88) < 0.01 && abs(mid.y - 88) < 0.01)
-        let north = p.point(CLLocationCoordinate2D(latitude: area.centroid.lat + 0.002, longitude: area.centroid.lng))
-        #expect(north.y < mid.y && abs(north.x - mid.x) < 0.01)
-        // 900 m cabem em 176 pt: o canto do quadro está a ~450 m do centro.
-        let r = p.rect
-        let edge = CLLocation(latitude: area.centroid.lat, longitude: r.maxLng).distance(from: CLLocation(latitude: area.centroid.lat, longitude: area.centroid.lng))
-        #expect(abs(edge - 450) < 15)
-        #expect(r.contains(lat: area.centroid.lat, lng: area.centroid.lng))
-    }
 
     @Test func travelTextWalksUnderOneAndAHalfKm() {
         #expect(ExplorarTravel.distance(240).value == "240" && ExplorarTravel.distance(240).unit == "m")

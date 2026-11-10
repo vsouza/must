@@ -58,7 +58,7 @@ struct FriendsSection: View {
                 Text("Amigos que foram").font(V8Font.display(28)).tracking(-0.8).foregroundStyle(V8.ink)
                     .lineLimit(2).accessibilityAddTraits(.isHeader)
                 Spacer(minLength: 8)
-                if isSample { V8Tag(text: "exemplo · lista fixa", style: .paper) }
+                if isSample { Text("exemplo · lista fixa").font(.caption.weight(.semibold)).foregroundStyle(.secondary) }
             }
             .padding(.bottom, 10)
             ForEach(Array(shown.enumerated()), id: \.element.id) { offset, visit in
