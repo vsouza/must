@@ -150,7 +150,7 @@ struct TripView: View {
         if cell.state == .today && accepted {
             router.select(.hoje)
         } else if accepted {
-            router.push(.day(date: cell.date), on: router.tab)
+            router.push(.linha(date: cell.date), on: router.tab)
         } else {
             router.push(.montar(date: cell.date), on: .hoje)
         }

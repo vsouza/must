@@ -84,8 +84,6 @@ struct DataConfidenceTests {
         #expect(!guess.label.contains("ABERTO"))
         #expect(guess.label.hasSuffix("HORÁRIO NÃO CONFIRMADO"))
         #expect(guess.trust == "horário estimado · local aproximado")
-        let line = CorteIndexLine(guess)
-        #expect(line.trust == "horário estimado · local aproximado")
     }
 
     @Test func numeralNaoContaHorarioDesconhecidoComoAberto() {
@@ -109,26 +107,6 @@ struct DataConfidenceTests {
 
     private func at(_ h: Int, _ m: Int) -> Date {
         region.calendar.date(from: DateComponents(year: 2026, month: 11, day: 15, hour: h, minute: m))!
-    }
-
-    @Test func dahojeSoAfirmaAbertoComHorario() {
-        #expect(CorteSplit.reason(row(until: "19h", minutes: 8, fits: true), isBoard: true) == "do seu board · aberto até 19h")
-        #expect(CorteSplit.reason(row(until: nil, minutes: 8, fits: true), isBoard: true) == "do seu board · horário não confirmado")
-    }
-
-    @Test func naoDaHojeSempreTemMotivo() {
-        // Chega depois de fechar: "a 26 min e fecha 17h".
-        #expect(CorteSplit.reason(row(until: "17h", minutes: 26, fits: false), isBoard: true, now: at(16, 40), region: region)
-                == "a 26 min e fecha 17h")
-        // Fecha cedo, mas dava pra chegar: o dia é que não cabe.
-        #expect(CorteSplit.reason(row(until: "15h", minutes: 5, fits: false), isBoard: true, now: at(10, 0), region: region)
-                == "fecha 15h · não cabe no dia")
-        // Sem horário: diz que não sabe, nunca "não dá hoje" seco.
-        #expect(CorteSplit.reason(row(until: nil, minutes: 5, fits: false), isBoard: true, now: at(10, 0), region: region)
-                == "dia cheio · horário não confirmado")
-        let r = CorteSplit.line(row(until: "15h", minutes: 26, fits: false), meters: 2_100, origin: shinjuku, region: region,
-                                walkMaxKm: 1.5, now: at(14, 50))
-        #expect(!r.reason.isEmpty && r.reason != "não dá hoje")
     }
 
     @Test func lugarSemHorarioDizNaoConfirmado() {

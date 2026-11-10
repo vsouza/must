@@ -328,8 +328,8 @@ enum DebugLaunch {
         case "editar-lista": router.cover = .editList(id: arg ?? "eat")
         case "lista": router.push(.list(id: arg ?? "eat"), on: .musts)
         // prompt 30 · etapa 2: o corte no Lugar, na Lista e no Board (o `PlaceView`/`ListView` lêem o `debugScreen` pro quero aberto).
-        case "corte-lugar", "corte-lugar-quero", "corte-lugar-puxando": router.push(.place(id: arg ?? "p01"), on: .musts)
-        case "corte-lista", "corte-lista-quero", "corte-lista-puxando": router.push(.list(id: arg ?? "eat"), on: .musts)
+        case "corte-lugar", "corte-lugar-quero": router.push(.place(id: arg ?? "p01"), on: .musts)
+        case "corte-lista", "corte-lista-quero": router.push(.list(id: arg ?? "eat"), on: .musts)
         case "corte-board", "corte-board-filtro": router.push(.board(edit: false), on: .musts)
         case "fim": router.push(.saveForEnd, on: .musts)
         case "lugar": router.push(.place(id: arg ?? "p01"), on: .musts)
@@ -377,7 +377,7 @@ enum DebugLaunch {
             let eat = ((try? context.fetch(FetchDescriptor<Place>())) ?? []).filter { $0.list?.id == "eat" && ($0.lat != 0 || $0.lng != 0) }
                 .sorted { $0.location.distance(from: here) < $1.location.distance(from: here) }
             router.showOnMap(MapShowcase(title: "comer", placeIds: Array(eat.prefix(3).map(\.id))))
-        case "explorar-trilho", "explorar-recorte", "explorar-recorte-pino", "explorar-recorte-fora", "explorar-kyoto", "explorar-sem-foto":
+        case "explorar-trilho":
             router.select(.explorar)
             router.push(.guia(date: region.calendar.startOfDay(for: AppClock.now)), on: .explorar)
         case "assistente", "assistente-conversa": router.sheet = .assistant // conversa: `-debugAsk "pergunta"` envia sozinho
@@ -505,7 +505,7 @@ enum DebugLaunch {
         case "lugar-amigos", "lugar-emcartaz": router.push(.place(id: arg ?? "j28"), on: .musts)
         case "capa-inteligente": router.select(.hoje)
         // r32 · Hoje V9: sem plano (`hoje`), com dia aceito de demonstração e com a faixa "Você chegou em…" (DEBUG).
-        case "corte-capa", "corte-capa-cartaz", "corte-capa-sem-foto": router.select(.hoje)
+        case "corte-capa": router.select(.hoje)
         case "hoje-plano":
             acceptEngineToday(context: context, region: region, engine: engine, areaId: arg ?? (region.country == "BR" ? "savassi" : "shinjuku"))
             router.select(.hoje)

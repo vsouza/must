@@ -12,8 +12,6 @@ enum Route: Hashable {
     case montar(date: Date, focusArea: String? = nil)
     case trip
     case reservations
-    /// Um dia aceito que não é hoje.
-    case day(date: Date)
     /// Luz de hoje (dia de fotografia), meia-noite do dia.
     case light(date: Date)
     /// Board completo (Musts › Ver tudo · editar). `edit` abre já em modo edição (prints de QA).
@@ -314,7 +312,6 @@ extension View {
             case .montar(let date, let focusArea): MontarView(date: date, focusArea: focusArea)
             case .trip: TripView()
             case .reservations: ReservationsView()
-            case .day(let date): TodayView(date: date)
             case .light(let date): LightDayView(date: date)
             case .board(let edit): BoardView(startEditing: edit)
             case .ticket(let placeId, let ticketId): TicketView(placeId: placeId, ticketId: ticketId)
@@ -352,7 +349,6 @@ extension View {
             case .acertar: AcertarView()
             }
             }
-            .v8Legacy(route.legacyLight)
         }
     }
 }

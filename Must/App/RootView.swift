@@ -62,7 +62,6 @@ struct RootView: View {
             case .aOuB(let placeId): NovaVotacaoView(placeId: placeId)
             }
             }
-            .v8LegacySheet(sheet.legacyLight)
             .tint(V9.accent)
         }
         .environment(todayContext)
@@ -130,9 +129,4 @@ private struct PlaceholderScreen: View {
             .padding(.horizontal, 22)
         }
     }
-}
-
-extension AppRouter.Sheet {
-    /// Sheets que ainda são V8 (ficam no claro). Desde a Fase 2 do prompt 32, nenhuma: voltar com um `case` se surgir.
-    var legacyLight: Bool { false }
 }

@@ -52,7 +52,6 @@ struct BomDiaView: View {
     @Query private var places: [Place]
     @Query private var trips: [TripInfo]
     @Query private var wallet: [WalletItem]
-    @Environment(\.tripTheme) private var theme
 
     @State private var plan: DayPlan?
     @State private var items: [MorningItem] = []
@@ -67,45 +66,29 @@ struct BomDiaView: View {
     private var dayKey: String { BoardDates(timeZone: region.timeZone).dayString(today) }
 
     var body: some View {
-        VStack(spacing: 0) {
-            DayBand(areaId: plan?.bandArea(from: now), places: places, height: 270) {
-                VStack(alignment: .leading, spacing: 0) {
-                    DayBandCorners(left: [DayText.dayLine(now, region: region), "\(region.timeString(now)) · \(DayText.wakeWord(now, region: region))"], right: specRight)
-                    Spacer(minLength: 8)
-                    HStack(alignment: .bottom, spacing: 10) {
-                        Text(DayText.greeting(now, region: region))
-                            .font(V8Font.display(56))
-                            .foregroundStyle(theme.coverInk)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.5)
-                            .accessibilityAddTraits(.isHeader)
-                        Spacer(minLength: 4)
-                        if let plan { DayBandNumeral(value: "\(plan.stops.count)", caption: "paradas hoje", size: 88) }
-                    }
-                }
+        List {
+            Section {
+                if let problem { problemRow(problem) }
+                Text(sentence).font(.body.weight(.semibold)).fixedSize(horizontal: false, vertical: true)
             }
-            CutRule()
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    if let problem { problemStrip(problem) }
-                    Text(sentence)
-                        .font(V8Font.text(17, weight: .semibold))
-                        .foregroundStyle(V8.ink)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 16)
-                    IndexRule()
-                    anchors
-                    checklist
-                    Color.clear.frame(height: 110)
-                }
+            anchors
+            checklist
+            if let plan, let train = MorningText.firstTrain(plan, after: now) {
+                Section("Primeiro trem") { trainRow(train, plan: plan) }
             }
-            .scrollIndicators(.hidden)
-            .overlay(alignment: .bottom) { buttons }
         }
-        .background(V8.paper.ignoresSafeArea())
-        .toolbar(.hidden, for: .navigationBar)
+        .listStyle(.insetGrouped)
+        .navigationTitle(DayText.greeting(now, region: region))
+        .navigationBarTitleDisplayMode(.large)
+        .navigationSubtitle(subtitle)
+        .safeAreaInset(edge: .bottom, spacing: 0) { buttons }
+        .v9Screen(grouped: true)
         .onAppear(perform: load)
+    }
+
+    /// "sáb · 15 nov · Tóquio · dia 3": o que antes ia nos cantos do bloco.
+    private var subtitle: String {
+        ([DayText.dayLine(now, region: region)] + specRight).filter { !$0.isEmpty }.joined(separator: " · ")
     }
 
     private func load() {
@@ -138,83 +121,63 @@ struct BomDiaView: View {
         checked = Set(UserDefaults.standard.stringArray(forKey: MorningChecklist.checkedKey(dayKey)) ?? [])
     }
 
-    /// Dia de chegada / de trem / último dia: a linha principal do Bom dia, em tinta (o mundo lá fora).
-    private func problemStrip(_ problem: DayProblem) -> some View {
-        DayStrip(tone: .ink) {
-            VStack(alignment: .leading, spacing: 4) {
-                MonoLabel(problem.title, size: 9, color: V8.orange)
-                Text(problem.headline).font(V8Font.text(16, weight: .bold)).foregroundStyle(V8.white).fixedSize(horizontal: false, vertical: true)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
+    /// Dia de chegada / de trem / último dia: a linha principal do Bom dia.
+    private func problemRow(_ problem: DayProblem) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(problem.title).font(.footnote.weight(.semibold)).foregroundStyle(V9.accent)
+            Text(problem.headline).font(.body.weight(.semibold)).fixedSize(horizontal: false, vertical: true)
         }
         .accessibilityElement(children: .combine)
     }
 
     // MARK: Âncoras
 
-    private func head(_ title: String, _ trailing: String?) -> some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text(title).font(V8Font.display(22)).foregroundStyle(V8.ink).lineLimit(1).minimumScaleFactor(0.8)
-            Spacer(minLength: 8)
-            if let trailing { MonoLabel(trailing, color: V8.mute) }
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, 18)
-        .padding(.bottom, 10)
-        .overlay(alignment: .bottom) { IndexRule() }
-    }
-
     @ViewBuilder private var anchors: some View {
         let anchors = plan?.anchors ?? []
-        VStack(alignment: .leading, spacing: 0) {
-            head("Hoje você já tem", anchors.isEmpty ? nil : (anchors.count == 1 ? "1 âncora" : "\(anchors.count) âncoras"))
+        Section {
             if anchors.isEmpty {
-                DayStrip {
-                    Text(plan == nil ? "Nada marcado ainda: monte o dia e as âncoras aparecem aqui." : "Nenhuma âncora hoje: o dia é livre.")
-                        .font(V8Font.text(14))
-                        .foregroundStyle(V8.mute)
-                }
+                Text(plan == nil ? "Nada marcado ainda: monte o dia e as âncoras aparecem aqui." : "Nenhuma âncora hoje: o dia é livre.")
+                    .foregroundStyle(.secondary)
             }
-            ForEach(Array(anchors.enumerated()), id: \.element.id) { i, stop in
-                DayStopRow(stop: stop, index: i + 1, state: .upcoming, region: region,
-                           onTap: stop.placeId.map { id in { router.push(.place(id: id), on: .hoje) } })
+            ForEach(anchors) { stop in
+                V9StopRow(stop: stop, state: .upcoming, region: region,
+                          onTap: stop.placeId.map { id in { router.push(.place(id: id), on: .hoje) } })
             }
+        } header: {
+            Text("Hoje você já tem")
+        } footer: {
+            if !anchors.isEmpty { Text(anchors.count == 1 ? "1 âncora" : "\(anchors.count) âncoras") }
         }
     }
 
     // MARK: Antes de sair
 
     private var checklist: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            head("Antes de sair", items.count == 1 ? "1 item" : "\(items.count) itens")
-            if items.isEmpty {
-                DayStrip { Text("Nada a levar além do de sempre.").font(V8Font.text(14)).foregroundStyle(V8.mute) }
-            }
+        Section {
+            if items.isEmpty { Text("Nada a levar além do de sempre.").foregroundStyle(.secondary) }
             ForEach(items) { item in
                 Button { toggle(item) } label: { checkRow(item, on: checked.contains(item.id)) }
                     .buttonStyle(.plain)
             }
-            if let plan, let train = MorningText.firstTrain(plan, after: now) { trainRow(train, plan: plan) }
+        } header: {
+            Text("Antes de sair")
+        } footer: {
+            if !items.isEmpty { Text(items.count == 1 ? "1 item" : "\(items.count) itens") }
         }
     }
 
     private func checkRow(_ item: MorningItem, on: Bool) -> some View {
-        HStack(spacing: 14) {
-            ZStack {
-                Rectangle().fill(on ? V8.ink : .clear)
-                Rectangle().stroke(V8.ink, lineWidth: 2)
-                if on { Image(systemName: "checkmark").font(.system(size: 11, weight: .heavy)).foregroundStyle(V8.orange) }
-            }
-            .frame(width: 22, height: 22)
-            Text(item.text).font(V8Font.text(15, weight: .semibold)).foregroundStyle(V8.ink)
-                .strikethrough(on, color: V8.ink)
-                .opacity(on ? 0.55 : 1)
+        HStack(spacing: 12) {
+            Image(systemName: on ? "checkmark.circle.fill" : "circle")
+                .font(.title3)
+                .foregroundStyle(on ? V9.accent : Color.secondary)
+                .accessibilityHidden(true)
+            Text(item.text)
+                .strikethrough(on)
+                .foregroundStyle(on ? Color.secondary : Color.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
-        .frame(minHeight: 52)
-        .overlay(alignment: .bottom) { IndexRule() }
+        .frame(minHeight: 44)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityLabel(item.text)
@@ -226,24 +189,19 @@ struct BomDiaView: View {
         UserDefaults.standard.set(checked.sorted(), forKey: MorningChecklist.checkedKey(dayKey))
     }
 
-    /// Primeiro trem útil: faixa tinta (o mundo lá fora), hora em número grande.
+
+    /// Primeiro trem útil: hora, linha e destino.
     private func trainRow(_ leg: DayLeg, plan: DayPlan) -> some View {
         let parts = leg.detail.components(separatedBy: " · ")
         let to = plan.stops.first { $0.id == leg.to }.map { DayText.head($0.label) }
-        return DayStrip(tone: .ink) {
-            HStack(spacing: 14) {
-                Text(leg.departAt.map(region.timeString) ?? "\(leg.minutes)′")
-                    .font(V8Font.numeral(26)).tracking(0.5)
-                    .foregroundStyle(V8.orange)
-                    .frame(width: 88, alignment: .leading)
-                    .lineLimit(1).minimumScaleFactor(0.6)
-                VStack(alignment: .leading, spacing: 2) {
-                    MonoLabel("primeiro trem", size: 8.5, color: V8.muteDark)
-                    Text(parts.first ?? leg.detail).font(V8Font.text(15, weight: .bold)).foregroundStyle(V8.white).lineLimit(1)
-                    Text(([to.map { "até \($0)" }] + parts.dropFirst().map(Optional.some)).compactMap { $0 }.joined(separator: " · "))
-                        .font(V8Font.text(12)).foregroundStyle(V8.muteDark).lineLimit(1)
-                }
-                Spacer(minLength: 0)
+        let detail = ([to.map { "até \($0)" }] + parts.dropFirst().map(Optional.some)).compactMap { $0 }.joined(separator: " · ")
+        return HStack(spacing: 12) {
+            Text(leg.departAt.map(region.timeString) ?? "\(leg.minutes) min")
+                .font(.body.weight(.semibold)).monospacedDigit()
+                .frame(minWidth: 56, alignment: .leading)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(parts.first ?? leg.detail).font(.body.weight(.semibold)).lineLimit(2)
+                if !detail.isEmpty { Text(detail).font(.subheadline).foregroundStyle(.secondary).lineLimit(2) }
             }
         }
         .accessibilityElement(children: .combine)
@@ -253,17 +211,18 @@ struct BomDiaView: View {
     // MARK: Botões
 
     private var buttons: some View {
-        HStack(spacing: 10) {
-            BigButton(title: "Ver o dia", style: .line, lineColor: V8.ink, lineFill: V8.paper) { router.push(.linha(date: today), on: .hoje) }
-            BigButton(title: "Ajustar o dia", style: .ink, systemImage: "arrow.up.right") { router.push(.montar(date: today), on: .hoje) }
+        HStack(spacing: 12) {
+            Button { router.push(.linha(date: today), on: .hoje) } label: {
+                Text("Ver o dia").frame(maxWidth: .infinity)
+            }
+            .v9Secondary()
+            Button { router.push(.montar(date: today), on: .hoje) } label: {
+                Text("Ajustar o dia").frame(maxWidth: .infinity)
+            }
+            .v9Primary()
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 30)
-        .padding(.bottom, 12)
-        .background {
-            LinearGradient(colors: [V8.paper.opacity(0), V8.paper], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.25))
-                .ignoresSafeArea()
-                .allowsHitTesting(false)
-        }
+        .padding(.horizontal, V9.gutter)
+        .padding(.vertical, 10)
+        .background(.bar)
     }
 }

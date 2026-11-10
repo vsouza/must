@@ -173,7 +173,6 @@ struct GiftTests {
         let card = try? #require(cards.first { $0.kind == .gift })
         #expect(card?.title == "Don Quijote")
         #expect(card?.meta.contains("presente pra Ana e Pedro") == true)
-        #expect(card.map { CorteIndexLine($0).tone } == .orange)
         // Sem GiftNearby, nada de linha de presente.
         #expect(SuggestionEngine.suggest(SuggestInputs(region: region, now: now, here: here, places: [])).allSatisfy { $0.kind != .gift })
     }

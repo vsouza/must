@@ -55,46 +55,4 @@ struct CorteAcabamentoTests {
         let line = try #require(CorteShowLine.make(events: [expo], now: Self.now, region: Self.region, here: Self.here))
         #expect(line.big == "hoje" && !line.countsNearby)
     }
-
-    @Test func indiceColocaAEmCartazEmSegundoOuPrimeiroSeAcontecendo() throws {
-        let cards = [Self.card("a"), Self.card("b"), Self.card("c")]
-        let calm = CorteShowLine(big: "22:00", unit: "hoje", title: "X", reason: "em cartaz · 1 hoje", countsNearby: false)
-        let live = CorteShowLine(big: "20:00", unit: "hoje", title: "X", reason: "em cartaz · 1 hoje", countsNearby: true)
-        #expect(CorteIndexLine.index(cards: cards, show: calm, limit: 4).map(\.id) == ["a", "emcartaz", "b", "c"])
-        #expect(CorteIndexLine.index(cards: cards, show: live, limit: 4).map(\.id) == ["emcartaz", "a", "b", "c"])
-        // Sem espaço, a linha não some: ocupa a última visível.
-        #expect(CorteIndexLine.index(cards: cards, show: calm, limit: 1).map(\.id) == ["emcartaz"])
-        #expect(CorteIndexLine.index(cards: cards, show: nil, limit: 2).map(\.id) == ["a", "b"])
-        #expect(CorteIndexLine.index(cards: [], show: calm, limit: 3).map(\.id) == ["emcartaz"])
-        let row = try #require(CorteIndexLine.index(cards: [], show: calm, limit: 3).first)
-        #expect(row.tone == .ink && row.card == nil && row.isShows)
-    }
-
-    private static func card(_ id: String) -> Suggestion {
-        Suggestion(id: id, kind: .must, style: .ink, label: "MUST", trailing: "100 m", title: id, meta: "", reasons: [],
-                   placeId: id, eventId: nil, coordinate: nil, url: nil, score: 0, urgencyMinutes: nil)
-    }
-
-    // MARK: Arrasto compartilhado
-
-    @Test func arrastoSegueODedoTravaNoLimiteEVoltaAntes() {
-        let pull = CutPull()
-        pull.drag(translation: 50)
-        #expect(pull.phase == .pulling && pull.offset == 50)
-        pull.release()
-        #expect(pull.phase == .closed && pull.offset == 0)
-        pull.drag(translation: 200)
-        #expect(pull.isOpen && pull.offset == CutPull.limit && pull.openedTicks == 1)
-    }
-
-    @Test func alturasDoBlocoEncolhemEAFendaAbre() {
-        let h = CutFrame.heights(pull: 110, rest: 300)
-        #expect(h.band == 300 - 0.4 * 110 && h.slit == 1.4 * 110)
-        let zero = CutFrame.heights(pull: 0, rest: 300)
-        #expect(zero.band == 300 && zero.slit == 0)
-        #expect(CutFrame.heights(pull: 500, rest: 300).slit == 1.4 * 110) // nunca passa do limite
-        // A capa usa a mesma conta.
-        let capa = CorteLayout.heights(stage: .rest, pull: 70, rest: 300)
-        #expect(capa.band == CutFrame.heights(pull: 70, rest: 300).band)
-    }
 }

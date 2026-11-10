@@ -58,9 +58,10 @@ struct DiaRecebidoView: View {
             .fixedSize(horizontal: false, vertical: true)
             .padding(.top, 4)
         if let plan {
-            VStack(alignment: .leading, spacing: 6) {
-                ForEach(Array(plan.stops.enumerated()), id: \.element.id) { i, stop in
-                    DayStopRow(stop: stop, index: i + 1, state: .upcoming, region: region, onTap: tap(stop))
+            VStack(alignment: .leading, spacing: 12) {
+                ForEach(plan.stops) { stop in
+                    V9StopRow(stop: stop, state: .upcoming, region: region, onTap: tap(stop))
+                    Divider()
                 }
             }
             .padding(.top, 20)
