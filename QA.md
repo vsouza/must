@@ -814,3 +814,15 @@ Relatório: `docs/relatorio-viajante-v9.md`; prints em `docs/qa-v9/` (`ONLY=v9 E
 - Minhas viagens: ⋯ visível com Arquivar/Apagar (o deslize virou atalho).
 - Motivo do "Agora vale" em uma linha sem jargão; pinos falam o nome no VoiceOver.
 - Fica pra Fase 2: tela Ir e SOS em V9; mapa escuro; Quero sugerindo encaixe tarde demais (café 16h → depois de 22:05).
+
+### Rodada 32 · fase 2 (09/11/2026, orquestrador)
+Sete agentes em worktree (Sonnet), merge um a um com a suíte inteira verde: **1243 testes** no fim (25 saíram junto com o código do corte; 4 entraram com o ingresso).
+- **G · dia vivo**: `ReplanSummary` (o que saiu do dia e por quê, sem culpa) + aviso "Atrasou? Ajustei" com **Ajustar** em Hoje (só confirma; o plano refeito não é gravado — gravar exige persistir o aceito no `DayEngineV8`); `SpecialDay.detect` (chegada, troca de cidade, último dia) em Hoje, só com dado que existe; encaixe do Quero com espera máxima de 2 h (`DayFit.maxWait`); faixa "agora" em Hoje mostra "Depois: X" / "Pedir algo…" em vez de repetir o cartão; cabeçalho em uma linha.
+- **F · na rua**: Ir, SOS, Bolso/Atalhos, Carteira, Ingresso, Como chegar em V9. Ir desenha na hora e lê o dia aceito depois (era ~8 s em branco na abertura fria do simulador; conferir no iPhone).
+- **H · mapa**: style escuro (mesmas camadas/fontes, só cores) trocado ao vivo; chips com fade; painel do pino na altura do conteúdo; Mapa completo, Bairros (`BairrosV9View`) e Ir pro bairro em V9.
+- **I · Musts e listas**, **J · Viagem e entrada**, **M · importar ingresso** (salvar em um toque quando todos os campos vêm com confiança ≥ 0,8), **L · dia** (Montar, Proposta, Bom dia, Boa noite) em V9.
+- **L · limpeza**: corte apagado (`Home/Corte`, `Today/Corte`, `Cut*`, `V8Cut`, Explorar de páginas, `V8ScreenParts`, rota `.day`), −5,6 mil linhas. Não existe mais rota nem sheet no claro forçado; `v8LegacySheet` só na Gallery (DEBUG).
+- **Orquestrador**: Minhas viagens em V9 (List, bandeira, ⋯ e deslize do sistema); `.tint(V9.accent)` nas sheets e telas cheias (dentro delas o acento voltava pro azul); `QueroModel(questionCache:)` — o teste do konbini lia o cache em disco deixado por outra rodada (falha intermitente); Assistente com raio nativo.
+- **Prints** (claro e escuro, JP, simulador): Hoje, Musts, Tudo, Must eat, Ir, SOS, Bolso, Carteira, Ingresso, Como chegar, Assistente, Ajustes, Viagem, Agenda, Reservas, Mapa, Guia, Explorar, Montar, Proposta, Bom dia, Boa noite, Minhas viagens, Trazer ingresso, Conferir, Presentes. Nenhum texto sumido no escuro nem cortado. Botão de lista com `.foregroundStyle(.primary)` pinta com o acento: usar `Color.primary` (corrigido em Trazer ingresso).
+- **Sobras V8 ainda em uso**: `MonoLabel`, `V8Glyph`, `V8Tag`/`V8Photo` (Lugar, Em cartaz, cartão do mapa), `V8NavBar`/`TabBarSpacer` (galeria), `CollectibleMoment` e o cartaz de compartilhar (de propósito). Desenhos v9 completos no canvas não foram feitos: as telas seguem o padrão de Hoje/Lugar/Viagem.
+- **Não conferido**: Dynamic Type XXXL nas telas da fase 2 (só o SOS); iPhone com GPS real.

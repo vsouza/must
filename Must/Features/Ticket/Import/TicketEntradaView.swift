@@ -138,8 +138,8 @@ private struct SourceLabel: View {
     var body: some View {
         Label {
             VStack(alignment: .leading, spacing: 2) {
-                Text(title).foregroundStyle(.primary)
-                Text(detail).font(.subheadline).foregroundStyle(.secondary)
+                Text(title).foregroundStyle(Color.primary)
+                Text(detail).font(.subheadline).foregroundStyle(Color.secondary)
             }
         } icon: {
             Image(systemName: symbol).foregroundStyle(V9.accent)
